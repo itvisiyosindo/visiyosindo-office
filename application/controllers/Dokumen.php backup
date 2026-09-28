@@ -1,0 +1,431 @@
+<?php
+
+use FontLib\Table\Type\post;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Dokumen extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_dokumen');
+        $this->load->model('md_all');
+    }
+	
+	function id_navbar(){
+		$id_navbar = "dokumen";
+		return $id_navbar;
+	}
+
+    public function index($kode)
+    {
+		grantAccessFor('all');
+        
+        if($kode == "rahasia"){
+            $page_data['switch']		= $this->id_navbar();
+    		$page_data['page_name']  	= 'dokumen/v_dok_rahasia';
+            $page_data['page_title'] 	= 'Dokumen Rahasia';
+            $page_data['page_desc']  	= 'Management Data Dokumen Rahasia';
+            $page_data['list_kategori'] = $this->md_dokumen->getAktif('kategori');
+            $this->load->view('index', $page_data);
+        }else if($kode == "umum"){
+            $page_data['switch']		= $this->id_navbar();
+    		$page_data['page_name']  	= 'dokumen/v_dok_umum';
+            $page_data['page_title'] 	= 'Dokumen Umum';
+            $page_data['page_desc']  	= 'Management Data Dokumen Umum';
+            $page_data['list_kategori'] = $this->md_dokumen->getAktif('kategori');
+            $this->load->view('index', $page_data);
+        }else if($kode == "product"){
+            $page_data['switch']		= $this->id_navbar();
+    		$page_data['page_name']  	= 'dokumen/v_dok_product';
+            $page_data['page_title'] 	= 'Dokumen Product';
+            $page_data['page_desc']  	= 'Management Data Dokumen Product';
+            $page_data['list_kategori'] = $this->md_dokumen->getKategoriProductAktif();
+            $this->load->view('index', $page_data);
+        }else if($kode == "kategori"){
+            $page_data['switch']		= $this->id_navbar();
+    		$page_data['page_name']  	= 'dokumen/v_kategori_dok';
+            $page_data['page_title'] 	= 'Kategori Dokumen';
+            $page_data['page_desc']  	= 'Management Data Kategori Dokumen';
+            $this->load->view('index', $page_data);
+        }
+    }
+
+    public function add($kode)
+    {
+        grantAccessFor('all');
+        
+        if($kode == "rahasia"){
+            $data['nama_dokumen']   = $this->input->post('nama');
+            $data['file']           = $this->input->post('file');
+            $data['id_kategori']    = $this->input->post('kategori');
+            checkEmptyForm($data);
+            $data['created_by']     = sessPenggunaId();
+            $this->md_all->reset_increment('dokumen_rahasia');
+            $this->md_dokumen->add($kode, $data);
+    
+            //add log
+            $aksi = 'Tambah Dokumen Rahasia';
+            $ket = 'Menambahkan data dokumen - ' . $data['nama_dokumen'];
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
+            
+        }else if($kode == "umum"){
+            $data['nama_dokumen']   = $this->input->post('nama');
+            $data['file']           = $this->input->post('file');
+            $data['id_kategori']    = $this->input->post('kategori');
+            checkEmptyForm($data);
+            $data['created_by']     = sessPenggunaId();
+            $this->md_all->reset_increment('dokumen_umum');
+            $this->md_dokumen->add($kode, $data);
+    
+            //add log
+            $aksi = 'Tambah Dokumen Umum';
+            $ket = 'Menambahkan data dokumen - ' . $data['nama_dokumen'];
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
+        }else if($kode == "product"){
+            $data['nama_dokumen']   = $this->input->post('nama');
+            $data['file']           = $this->input->post('file');
+            $data['id_kategori']    = $this->input->post('kategori');
+            checkEmptyForm($data);
+            $data['created_by']     = sessPenggunaId();
+            $this->md_all->reset_increment('dokumen_product');
+            $this->md_dokumen->add($kode, $data);
+    
+            //add log
+            $aksi = 'Tambah Dokumen Product';
+            $ket = 'Menambahkan data dokumen - ' . $data['nama_dokumen'];
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');    
+        }else if($kode == "kategori"){
+            $data['nama']       = $this->input->post('nama');
+            $data['deskripsi']  = $this->input->post('deskripsi');
+            checkEmptyForm($data);
+            $data['created_by'] = sessPenggunaId();
+            $this->md_all->reset_increment('dokumen_kategori');
+            $this->md_dokumen->add($kode, $data);
+    
+            //add log
+            $aksi = 'Tambah Kategori Dokumen';
+            $ket = 'Menambahkan data kategori dokumen - ' . $data['nama'];
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
+        }else if($kode == "kategoriproduct"){
+            $data['keterangan']       = $this->input->post('keterangan');
+            checkEmptyForm($data);
+            $data['created_by'] = sessPenggunaId();
+            $this->md_all->reset_increment('masterdokumenproduct');
+            $this->md_dokumen->add('kategoriproduct', $data);
+    
+            //add log
+            $aksi = 'Tambah Kategori Dokumen Product';
+            $ket = 'Menambahkan data kategori dokumen prodcuct- ' . $data['keterangan'];
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
+        }
+    }
+
+    public function edit($kode, $param1)
+    {
+        grantAccessFor('all');
+        
+        if($kode == "rahasia"){
+            $id = decrypt($param1);
+            $dt = $this->md_dokumen->getById($kode, $id);
+            foreach ($dt as $row) {
+                $row->id = encrypt($row->id);
+            }
+            echo json_encode($dt);
+            die;
+            
+        }else if($kode == "umum"){
+            $id = decrypt($param1);
+            $dt = $this->md_dokumen->getById($kode, $id);
+            foreach ($dt as $row) {
+                $row->id = encrypt($row->id);
+            }
+            echo json_encode($dt);
+            die;
+        }else if($kode == "product"){
+            $id = decrypt($param1);
+            $dt = $this->md_dokumen->getById($kode, $id);
+            foreach ($dt as $row) {
+                $row->id = encrypt($row->id);
+            }
+            echo json_encode($dt);
+            die;
+        }else if($kode == "kategori"){
+            $id = decrypt($param1);
+            $dt = $this->md_dokumen->getById($kode, $id);
+            foreach ($dt as $row) {
+                $row->id = encrypt($row->id);
+            }
+            echo json_encode($dt);
+            die;
+        }
+    }
+
+    public function delete($kode, $idDokumen)
+    {
+        grantAccessFor('all');
+        
+        if($kode == "rahasia"){
+            $id_dokumen    = decrypt($idDokumen);
+            $data['status'] = 0;
+            $this->md_dokumen->update($kode, ['id' => $id_dokumen], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id_dokumen);
+            $aksi = 'Hapus Master Data';
+            $ket = 'Menghapus data dokumen - ' . $temp[0]->nama_dokumen;
+            addlog($aksi, $ket);
+    
+            ajaxReturnDie('success', 'dokumen berhasil dihapus', 'reload_table');
+            
+        }else if($kode == "umum"){
+            $id_dokumen    = decrypt($idDokumen);
+            $data['status'] = 0;
+            $this->md_dokumen->update($kode, ['id' => $id_dokumen], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id_dokumen);
+            $aksi = 'Hapus Master Data';
+            $ket = 'Menghapus data dokumen - ' . $temp[0]->nama_dokumen;
+            addlog($aksi, $ket);
+    
+            ajaxReturnDie('success', 'dokumen berhasil dihapus', 'reload_table');
+        }else if($kode == "product"){
+            $id_dokumen    = decrypt($idDokumen);
+            $data['status'] = 0;
+            $this->md_dokumen->update($kode, ['id' => $id_dokumen], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id_dokumen);
+            $aksi = 'Hapus Master Data';
+            $ket = 'Menghapus data dokumen - ' . $temp[0]->nama_dokumen;
+            addlog($aksi, $ket);
+    
+            ajaxReturnDie('success', 'dokumen berhasil dihapus', 'reload_table');    
+        }else if($kode == "kategori"){
+            $id_delete    = decrypt($idDokumen);
+            $data['status'] = 0;
+            $this->md_dokumen->update($kode, ['id' => $id_delete], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id_delete);
+            $aksi = 'Hapus Master Data';
+            $ket = 'Menghapus data kategori dokumen - ' . $temp[0]->nama;
+            addlog($aksi, $ket);
+    
+            ajaxReturnDie('success', 'kategori dokumen berhasil dihapus', 'reload_table');
+        }
+    }
+
+    public function update($kode, $param = "")
+    {
+        grantAccessFor('all');
+        
+        if($kode == "rahasia"){
+            $id = decrypt($this->input->post('id_dokumen'));
+            $data['nama_dokumen']   = $this->input->post('nama');
+            $data['id_kategori']    = $this->input->post('kategori');
+            $data['file']           = $this->input->post('file');
+            $data['last_updated_by']= sessPenggunaId();
+            $data['last_updated_at']= date('y-m-d H:i:s');
+            checkEmptyForm($data);
+            $this->md_dokumen->update($kode, ['id' => $id], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id);
+            $aksi = 'Edit Master Data';
+            $ket = 'Mengedit data dokumen - ' . $temp[0]->nama_dokumen;
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data berhasil diupdate', 'reload_table');
+            
+        }else if($kode == "umum"){
+            $id = decrypt($this->input->post('id_dokumen'));
+            $data['nama_dokumen']   = $this->input->post('nama');
+            $data['id_kategori']    = $this->input->post('kategori');
+            $data['file']           = $this->input->post('file');
+            $data['last_updated_by']= sessPenggunaId();
+            $data['last_updated_at']= date('y-m-d H:i:s');
+            checkEmptyForm($data);
+            $this->md_dokumen->update($kode, ['id' => $id], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id);
+            $aksi = 'Edit Master Data';
+            $ket = 'Mengedit data dokumen - ' . $temp[0]->nama_dokumen;
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data berhasil diupdate', 'reload_table');
+        }else if($kode == "product"){
+            $id = decrypt($this->input->post('id_dokumen'));
+            $data['nama_dokumen']   = $this->input->post('nama');
+            $data['id_kategori']    = $this->input->post('kategori');
+            $data['file']           = $this->input->post('file');
+            $data['last_updated_by']= sessPenggunaId();
+            $data['last_updated_at']= date('y-m-d H:i:s');
+            checkEmptyForm($data);
+            $this->md_dokumen->update($kode, ['id' => $id], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id);
+            $aksi = 'Edit Master Data';
+            $ket = 'Mengedit data dokumen - ' . $temp[0]->nama_dokumen;
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data berhasil diupdate', 'reload_table');
+        }else if($kode == "kategori"){
+            $id = decrypt($this->input->post('id_update'));
+            $data['nama']           = $this->input->post('nama');
+            $data['last_updated_by']= sessPenggunaId();
+            $data['last_updated_at']= date('y-m-d H:i:s');
+            checkEmptyForm($data);
+            $this->md_dokumen->update($kode, ['id' => $id], $data);
+    
+            //add log
+            $temp = $this->md_dokumen->getById($kode, $id);
+            $aksi = 'Edit Master Data Kategori Dokumen';
+            $ket = 'Mengedit data kategori dokumen - ' . $temp[0]->nama;
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data berhasil diupdate', 'reload_table');
+        }
+
+        
+    }
+
+    public function paginationproduct($id){
+         $dt             = $this->md_dokumen->getAllProduct(decrypt($id));
+            $start          = $this->input->post('start');
+            $data           = array();
+            foreach ($dt['data'] as $row) {
+                $id         = encrypt($row->id_dokumen);
+                $li_btn     = '
+                    <center>
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="dokumen/delete/product/'.$id.'"><i class="bx bx-trash"></i></button>
+                    </div>
+                    </center>';
+                $link_download = '<a href="' . $row->file . '"><i class="fas fa-download"></i> Download</a>';
+                $th = array();
+                $th[] = ++$start . '.';
+                $th[] = $row->nama_dokumen;
+                $th[] = $row->kategori;
+                $th[] = $link_download;
+                if (isAdmin() || isGa() || sessPenggunaId()=='74' || sessPenggunaId()=='83' || sessPenggunaId()=='84' || sessPenggunaId()=='86') {
+                    $th[] = $li_btn;
+                }
+                $data[] = $th;
+            }
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;
+    }
+    public function pagination($kode)
+    {
+        //grantAccessFor(['Administrator', 'Staf Admin', 'Marketing']);
+		grantAccessFor('all');
+        
+        if($kode == "rahasia"){
+            $dt             = $this->md_dokumen->getAll($kode);
+            $start          = $this->input->post('start');
+            $data           = array();
+            foreach ($dt['data'] as $row) {
+                $id       = encrypt($row->id_dokumen);
+                $li_btn   = '
+                    <center>
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="dokumen/delete/'.$kode.'/'.$id.'"><i class="bx bx-trash"></i></button>
+                    </div>
+                    </center>';
+                $link_download = '<a href="' . $row->file . '"><i class="fas fa-download"></i> Download</a>';
+                $th = array();
+                $th[] = ++$start . '.';
+                $th[] = $row->nama_dokumen;
+                $th[] = $row->kategori;
+                $th[] = $link_download;
+                if (isAdmin() || isGa() || sessPenggunaId()=='74' || sessPenggunaId()=='83' || sessPenggunaId()=='84' || sessPenggunaId()=='86') {
+                    $th[] = $li_btn;
+                }
+                $data[] = $th;
+            }
+            $dt['data']         = $data;
+            echo json_encode($dt);
+            die;
+            
+        }else if($kode == "umum"){
+            $dt             = $this->md_dokumen->getAll($kode);
+            $start          = $this->input->post('start');
+            $data           = array();
+            foreach ($dt['data'] as $row) {
+                $id         = encrypt($row->id_dokumen);
+                $li_btn     = '
+                    <center>
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="dokumen/delete/'.$kode.'/'.$id.'"><i class="bx bx-trash"></i></button>
+                    </div>
+                    </center>';
+                $link_download = '<a href="' . $row->file . '"><i class="fas fa-download"></i> Download</a>';
+                $th = array();
+                $th[] = ++$start . '.';
+                $th[] = $row->nama_dokumen;
+                $th[] = $row->kategori;
+                $th[] = $link_download;
+                if (isAdmin() || isGa() || sessPenggunaId()=='74' || sessPenggunaId()=='83' || sessPenggunaId()=='84' || sessPenggunaId()=='86') {
+                    $th[] = $li_btn;
+                }
+                $data[] = $th;
+            }
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;
+        }else if($kode == "kategori"){
+            $dt    = $this->md_dokumen->getAll($kode);
+            $start = $this->input->post('start');
+            $data  = array();
+            foreach ($dt['data'] as $row) {
+                $id       = encrypt($row->id_kategori);
+                $li_btn   = '
+                    <center>
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="dokumen/delete/'.$kode.'/'.$id.'"><i class="bx bx-trash"></i></button>
+                    </div>
+                    </center>';
+                $th = array();
+                $th[] = ++$start . '.';
+                $th[] = $row->nama;
+                $th[] = $row->deskripsi;
+                // $th[] = $link_download;
+                if (isAdmin() || isGa() || sessPenggunaId()=='74' || sessPenggunaId()=='83' || sessPenggunaId()=='84' || sessPenggunaId()=='86') {
+                    $th[] = $li_btn;
+                }
+                $data[] = $th;
+            }
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;
+        }
+    }
+
+    public function sendWa()
+    {
+        grantAccessFor('all');
+
+        $id = decrypt($this->input->post('id_dokumen'));
+        $hp = $this->input->post('wa_tujuan');
+        $nama = $this->session->userdata('nama');
+        $level = $this->session->userdata('login_type');
+        $data = $this->md_dokumen->getById($id);
+        $message = '&text=Nama%20Product%20%3A%20'.$data[0]->nama_dokumen.'%0A%0ALink%20dokumen%20%3A%20'.$data[0]->link_download.'%0A%0A%0Abest%20regard%2C%0A'.$nama.',%20('.$level.')%0APT%20VISI%20YOSINDO%20MEDIKAL';
+        $hp_tujuan = hp($hp);
+        $link = 'https://api.whatsapp.com/send?phone='. $hp_tujuan . $message;
+        redirect($link);
+        die;
+    }
+}

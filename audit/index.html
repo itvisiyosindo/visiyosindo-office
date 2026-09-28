@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Visi Yosindo Medikal - Audit PBOK & PPA Pembelian Aset</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS (XLSX) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css?v=4.0">
+</head>
+<body>
+    <!-- Top Corporate Office Portal Bar -->
+    <div class="portal-header-bar">
+        <div class="portal-brand">
+            <div class="portal-logo" style="display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 6px 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+                <img src="../assets/images/logo.png" onerror="this.style.display='none'; document.getElementById('headerFallbackIcon').style.display='inline-block';" alt="PT Visi Yosindo Medikal" style="height: 28px; width: auto; object-fit: contain;">
+                <i class="fa-solid fa-building-circle-check" id="headerFallbackIcon" style="display: none; font-size: 24px; color: #1d4ed8;"></i>
+            </div>
+            <div>
+                <h2 class="portal-title">VISI YOSINDO MEDIKAL OFFICE</h2>
+                <span class="portal-sub">office.visiyosindo.id — Audit Internal Belanja (PBOK) & Pembelian Aset (PPA)</span>
+            </div>
+        </div>
+        
+        <div class="portal-user-profile">
+            <div class="user-badge">
+                <i class="fa-solid fa-user-shield text-cyan" style="font-size: 16px;"></i>
+                <div>
+                    <strong id="displayUserName">User ID: 58 (GA & Asset Control)</strong>
+                    <span class="user-role" id="displayUserRole">GA & Asset Control — Visi Yosindo Medikal</span>
+                </div>
+            </div>
+
+            <div class="system-status">
+                <span class="pulse-dot"></span> office.visiyosindo.id Active
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand" style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>OfficeAudit</h2>
+                        <span>PBOK, PPA & SDM Audit</span>
+                    </div>
+                </div>
+                <button class="sidebar-toggle-btn" id="btnToggleSidebar" title="Sembunyikan / Tampilkan Sidebar">
+                    <i class="fa-solid fa-chevron-left" id="toggleSidebarIcon"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#overview" class="nav-item active" data-tab="overview">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Office Overview</span>
+                </a>
+                <a href="#audit-plan" class="nav-item" data-tab="audit-plan">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Rencana Audit (Plan)</span>
+                </a>
+                <a href="#audit-list" class="nav-item" data-tab="audit-list">
+                    <i class="fa-solid fa-users-viewfinder"></i>
+                    <span>Audit Kinerja Karyawan</span>
+                </a>
+                <a href="#pbok-ppa" class="nav-item" data-tab="pbok-ppa">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>Audit Belanja PBOK & PPA</span>
+                </a>
+                <a href="#findings" class="nav-item" data-tab="findings">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Temuan CAR & Risk</span>
+                </a>
+                <a href="#berita-acara" class="nav-item" data-tab="berita-acara">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <span>Berita Acara Audit</span>
+                </a>
+                <a href="#excel-reports" class="nav-item" data-tab="excel-reports">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span>Pusat Laporan Excel</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="audit-period-card">
+                    <div class="period-header">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Fokus Pengawasan</span>
+                    </div>
+                    <strong>Audit Masa Menjabat</strong>
+                    <div class="auditor-info">
+                        <i class="fa-solid fa-shield"></i> Verifikasi Fisik & PBOK/PPA
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Action Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="pageTitle">Office Overview & Analytics Dashboard</h1>
+                    <p class="subtitle" id="pageSubtitle">Monitoring kinerja SDM dan verifikasi realisasi pengajuan belanja PBOK & PPA kantor</p>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btnImportExcel">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>Import Excel</span>
+                    </button>
+                    <button class="btn btn-excel-primary" id="btnExportExcelMain">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Ekspor Excel (.xlsx)</span>
+                    </button>
+                    <button class="btn btn-danger-custom" onclick="purgeAuditStorage()" title="Reset & Sinkron Ulang Segar dari Master Database">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Reset Cache Audit</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: OVERVIEW -->
+            <section id="tab-overview" class="tab-page active">
+                <!-- Summary 4 Cards Overview -->
+                <div class="kpi-grid">
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-cyan">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Total Nilai PBOK & PPA</span>
+                            <h3 class="kpi-value" id="kpiTotalPbokAmount">Rp 0</h3>
+                            <span class="kpi-badge badge-info">
+                                Total Pengajuan Belanja Masa Menjabat
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-emerald">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Realisasi Fisik Terverifikasi</span>
+                            <h3 class="kpi-value" id="kpiVerifiedPhysical">0%</h3>
+                            <span class="kpi-badge badge-positive">
+                                <i class="fa-solid fa-circle-check"></i> Barang Ada & Sesuai Nota
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-rose">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Potensi Kerugian Perusahaan</span>
+                            <h3 class="kpi-value text-rose" id="kpiPotentialLoss">Rp 0</h3>
+                            <span class="kpi-badge badge-critical" id="kpiLossStatus">
+                                <i class="fa-solid fa-bell"></i> Selisih Fiktif / Markup
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-blue">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Rata-rata Skor Kinerja SDM</span>
+                            <h3 class="kpi-value" id="kpiAvgEmployeeScore">0.0 <small>/ 5.0</small></h3>
+                            <span class="kpi-badge badge-positive">
+                                Evaluasi Kinerja Karyawan
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    <div class="chart-card glass-card col-span-2">
+                        <div class="card-header">
+                            <div>
+                                <h3>Nilai Belanja PBOK & PPA per Departemen (Rp)</h3>
+                                <p class="card-subtitle">Perbandingan total pengajuan belanja operasional selama masa menjabat</p>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="pbokDeptChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card glass-card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Status Verifikasi Keberadaan Fisik Belanja</h3>
+                                <p class="card-subtitle">Hasil pemeriksaan barang & bukti nota kantor</p>
+                            </div>
+                        </div>
+                        <div class="chart-body flex-center">
+                            <canvas id="physicalStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: AUDIT KINERJA KARYAWAN -->
+            <section id="tab-audit-list" class="tab-page">
+                <div class="filter-bar glass-card">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="Cari nama karyawan, NIK, atau jabatan...">
+                    </div>
+
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <label>Divisi:</label>
+                            <select id="filterDept">
+                                <option value="ALL">Semua Departemen</option>
+                                <option value="IT & Technology">IT & Technology</option>
+                                <option value="Sales & Business">Sales & Business</option>
+                                <option value="Human Resources">Human Resources</option>
+                                <option value="Finance & Accounting">Finance & Accounting</option>
+                                <option value="Operations & Logistics">Operations & Logistics</option>
+                                <option value="Marketing & Brand">Marketing & Brand</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-item">
+                            <label>Risk Level:</label>
+                            <select id="filterRisk">
+                                <option value="ALL">Semua Risiko</option>
+                                <option value="Low">Low Risk</option>
+                                <option value="Medium">Medium Risk</option>
+                                <option value="High">High Risk</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-emerald btn-sm" id="btnAddAudit">
+                            <i class="fa-solid fa-user-plus"></i> Tambah Karyawan
+                        </button>
+                        <button class="btn btn-danger-custom btn-sm" onclick="clearAllEmployeesAndAuditData()" style="margin-left: 6px;" title="Hapus Seluruh Data Karyawan & Audit">
+                            <i class="fa-solid fa-trash-can"></i> Hapus Seluruh Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section-card glass-card">
+                    <div class="card-header">
+                        <div class="header-with-count">
+                            <h3>Daftar Evaluasi Kinerja Karyawan</h3>
+                            <span class="count-badge" id="tableRecordCount">0 Records</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table" id="mainAuditTable">
+                            <thead>
+                                <tr>
+                                    <th>NIK</th>
+                                    <th>Karyawan</th>
+                                    <th>Departemen & Jabatan</th>
+                                    <th>KPI Realisasi</th>
+                                    <th>Kualitas Kerja</th>
+                                    <th>SOP & Kehadiran</th>
+                                    <th>Risk Audit</th>
+                                    <th>Status Audit</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: AUDIT BELANJA PBOK & PPA (TENURE EMPLOYEE AUDIT WORKFLOW) -->
+            <section id="tab-pbok-ppa" class="tab-page">
+                <!-- Filter Bar -->
+                <div class="filter-bar glass-card">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchPbok" placeholder="Cari nama karyawan, NIK, divisi, atau jabatan...">
+                    </div>
+
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <label>Divisi / Dept:</label>
+                            <select id="filterPbokDept">
+                                <option value="ALL">Semua Departemen</option>
+                                <option value="IT & Technology">IT & Technology</option>
+                                <option value="Sales & Business">Sales & Business</option>
+                                <option value="Human Resources">Human Resources</option>
+                                <option value="Finance & Accounting">Finance & Accounting</option>
+                                <option value="Operations & Logistics">Operations & Logistics</option>
+                                <option value="Marketing & Brand">Marketing & Brand</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-item">
+                            <label>Status Kerugian:</label>
+                            <select id="filterLossStatus">
+                                <option value="ALL">Semua Status Kerugian</option>
+                                <option value="Aman / Wajar">Aman / Wajar</option>
+                                <option value="Potensi Kerugian">Indikasi Kerugian Perusahaan</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Employee Tenure List Table -->
+                <div class="section-card glass-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3><i class="fa-solid fa-users-gear text-blue"></i> Daftar Karyawan & Pengajuan Belanja PBOK / PPA (Masa Menjabat)</h3>
+                            <p class="card-subtitle">Klik pada nama karyawan untuk membuka rincian seluruh pengajuan Operasional (PBOK) & Pembelian Aset (PPA) selama masa menjabat</p>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn" onclick="unverifyAllTaxVerifications()" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-weight: 700; padding: 8px 14px; font-size: 13px; border-radius: 6px;" title="Batalkan seluruh verifikasi Head of Accounting (ID 107) dalam 1 klik">
+                                <i class="fa-solid fa-ban"></i> Batalkan Seluruh Verifikasi
+                            </button>
+                            <button class="btn btn-emerald" onclick="openAddAuditModal()" style="font-weight: 700;">
+                                <i class="fa-solid fa-user-plus"></i> Tambah Karyawan Baru
+                            </button>
+                            <button class="btn btn-primary" onclick="openAddPbokModal()" style="font-weight: 700;">
+                                <i class="fa-solid fa-file-circle-plus"></i> Tambah Audit PBOK / PPA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table" id="pbokEmployeeTable">
+                            <thead>
+                                <tr>
+                                    <th>NIK</th>
+                                    <th>Nama Karyawan</th>
+                                    <th>Divisi & Jabatan</th>
+                                    <th>Masa Menjabat</th>
+                                    <th>Total PBOK & PPA</th>
+                                    <th>Total Nominal Belanja (Rp)</th>
+                                    <th>Status Fisik Barang</th>
+                                    <th>Analisis Kerugian</th>
+                                    <th style="text-align: center;">Aksi Audit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pbokEmployeeTableBody">
+                                <!-- Dynamic JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: PROGRAM & RENCANA AUDIT INTERNAL (AUDIT PLAN) -->
+            <section id="tab-audit-plan" class="tab-page">
+                <div class="section-card glass-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3><i class="fa-solid fa-calendar-check text-blue"></i> Program & Rencana Audit Internal (Audit Plan Tahunan)</h3>
+                            <p class="card-subtitle">Perencanaan jadwal audit unit/divisi, standar acuan (ISO 9001:2015 & CDAKB), auditor, dan nomor Surat Tugas Audit</p>
+                        </div>
+                        <button class="btn btn-emerald" onclick="openOfficePlanModal()" style="font-weight: 700;">
+                            <i class="fa-solid fa-calendar-plus"></i> + Tambah Rencana Audit (Plan)
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table" id="auditPlanTable">
+                            <thead>
+                                <tr>
+                                    <th>Unit / Divisi</th>
+                                    <th>Tujuan & Sasaran Audit</th>
+                                    <th>Kriteria Acuan (ISO/CDAKB)</th>
+                                    <th>Tim Auditor</th>
+                                    <th>Jadwal & Jam</th>
+                                    <th>No. Surat Tugas Audit</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditPlanTableBody">
+                                <!-- Populated dynamically in app.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: FINDINGS & CAR (CORRECTIVE ACTION REQUEST) -->
+            <section id="tab-findings" class="tab-page">
+                <div class="section-card glass-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3><i class="fa-solid fa-file-circle-exclamation text-rose"></i> Lembar Temuan CAR (Corrective Action Request) & Monitoring Tindak Lanjut</h3>
+                            <p class="card-subtitle">Klasifikasi ketidaksesuaian Major, Minor, dan Rekomendasi perbaikan sesuai SOP VYM-007-HRGA-18-046</p>
+                        </div>
+                        <button class="btn btn-danger-custom" onclick="openOfficeCarModal()" style="font-weight: 700; background: #e11d48; color: white;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> + Terbitkan Form CAR Baru
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table" id="findingsTable">
+                            <thead>
+                                <tr>
+                                    <th>No CAR</th>
+                                    <th>Unit Auditee & Kriteria</th>
+                                    <th>Klasifikasi</th>
+                                    <th>Metode Verifikasi</th>
+                                    <th>Uraian Ketidaksesuaian</th>
+                                    <th>Rencana Tindak Lanjut</th>
+                                    <th>PIC & Target Waktu</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="findingsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: BERITA ACARA AUDIT INTERNAL -->
+            <section id="tab-berita-acara" class="tab-page">
+                <div class="section-card glass-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3><i class="fa-solid fa-file-contract text-emerald"></i> Berita Acara Laporan, Verifikasi & Persetujuan Audit Internal</h3>
+                            <p class="card-subtitle">Dokumen resmi Berita Acara Audit Internal PT Visi Yosindo Medikal lengkap dengan lembar persetujuan Direktur</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openOfficeBaModal()" style="font-weight: 700;">
+                            <i class="fa-solid fa-file-signature"></i> + Buat Berita Acara Baru
+                        </button>
+                    </div>
+
+                    <div id="beritaAcaraListContainer" style="display: flex; flex-direction: column; gap: 16px; margin-top: 14px;">
+                        <!-- Populated dynamically in app.js -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: EXCEL REPORT CENTER -->
+            <section id="tab-excel-reports" class="tab-page">
+                <div class="excel-center-container">
+                    <div class="excel-banner glass-card">
+                        <div class="banner-content">
+                            <div class="banner-badge">
+                                <i class="fa-solid fa-file-excel"></i> Official 5-Sheet Excel Engine
+                            </div>
+                            <h2>Pusat Ekspor Laporan Excel Multi-Sheet Audit Karyawan & Belanja PBOK/PPA</h2>
+                            <p>Unduh laporan audit resmi terintegrasi dalam format <strong>Microsoft Excel (.xlsx) 5-Sheet</strong> yang mencakup rekapitulasi executive, detail kinerja karyawan, detail pengajuan belanja PBOK/PPA, matriks risiko kerugian, dan template input.</p>
+                            
+                            <div class="banner-buttons">
+                                <button class="btn btn-excel-lg" id="btnExportFullWorkbook5">
+                                    <i class="fa-solid fa-download"></i> Unduh Laporan Audit Lengkap (5-Sheet .xlsx)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL WINDOW: DETAIL PENGAJUAN PBOK & PPA KARYAWAN (MASA MENJABAT) -->
+    <div class="modal-overlay" id="employeeTenureModal">
+        <div class="modal-card glass-card" style="max-width: 960px;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="tenureModalEmployeeName" style="color: #0f172a; font-size: 20px; font-weight: 800;">Detail Pengajuan Belanja Karyawan</h3>
+                    <p class="subtitle" id="tenureModalEmployeeSub">NIK: - | Divisi: - | Masa Menjabat: -</p>
+                </div>
+                <button class="btn-close" id="btnCloseTenureModal">&times;</button>
+            </div>
+
+            <!-- Mini Summary Cards Employee -->
+            <div class="kpi-grid" style="margin-bottom: 20px;">
+                <div class="kpi-card glass-card" style="padding: 14px;">
+                    <div class="kpi-icon icon-cyan" style="width: 42px; height: 42px; font-size: 18px;"><i class="fa-solid fa-receipt"></i></div>
+                    <div>
+                        <span class="kpi-title">Total Belanja Operasional (PBOK)</span>
+                        <h4 class="kpi-value" id="tenureModalPbokTotal" style="font-size: 16px;">Rp 0</h4>
+                    </div>
+                </div>
+                <div class="kpi-card glass-card" style="padding: 14px;">
+                    <div class="kpi-icon icon-blue" style="width: 42px; height: 42px; font-size: 18px;"><i class="fa-solid fa-boxes-packing"></i></div>
+                    <div>
+                        <span class="kpi-title">Total Pembelian Aset (PPA)</span>
+                        <h4 class="kpi-value" id="tenureModalPpaTotal" style="font-size: 16px;">Rp 0</h4>
+                    </div>
+                </div>
+                <div class="kpi-card glass-card" style="padding: 14px;">
+                    <div class="kpi-icon icon-rose" style="width: 42px; height: 42px; font-size: 18px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <span class="kpi-title">Potensi Kerugian Perusahaan</span>
+                        <h4 class="kpi-value text-rose" id="tenureModalLossTotal" style="font-size: 16px;">Rp 0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Header inside Modal -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h4 style="font-weight: 700; color: #0f172a;"><i class="fa-solid fa-list-check text-blue"></i> Rincian Seluruh Transaksi PBOK & PPA</h4>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-sm" onclick="unverifyEmployeeTaxVerifications()" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-weight: 700; padding: 6px 12px; font-size: 12px; border-radius: 6px;" title="Batalkan seluruh verifikasi transaksi milik karyawan ini">
+                        <i class="fa-solid fa-rotate-left"></i> Batalkan Verifikasi Karyawan Ini
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="triggerPrintFromActiveTenure()" style="font-weight: 700;">
+                        <i class="fa-solid fa-print"></i> Cetak Laporan Audit (LHA)
+                    </button>
+                    <button class="btn btn-sm btn-emerald" id="btnAddNewPbokForEmployee">
+                        <i class="fa-solid fa-plus-circle"></i> Tambah Pengajuan PBOK/PPA Baru
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Transactions -->
+            <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Jenis Pengajuan</th>
+                            <th>Item / Deskripsi Belanja & Vendor</th>
+                            <th>Nominal (Rp)</th>
+                            <th>Link Surat Office</th>
+                            <th>Status Fisik Barang</th>
+                            <th>Status Kerugian</th>
+                            <th>Verifikasi Tax & Acc (ID 107)</th>
+                            <th>Catatan Auditor</th>
+                            <th style="text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tenureModalTableBody">
+                        <!-- Dynamic JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <button type="button" class="btn btn-secondary" id="btnCancelTenureModal">Tutup Window</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-emerald" id="btnPrintTenureKinerjaPdf" style="background: #059669; color: #ffffff; font-weight: 700; border: none; padding: 8px 14px; border-radius: 6px;">
+                        <i class="fa-solid fa-award"></i> Pratinjau / Print LHA Kinerja
+                    </button>
+                    <button type="button" class="btn btn-sky" id="btnPrintTenurePdf" style="background: #0284c7; color: #ffffff; font-weight: 700; border: none; padding: 8px 14px; border-radius: 6px;">
+                        <i class="fa-solid fa-print"></i> Pratinjau / Print LHA Belanja
+                    </button>
+                    <button type="button" class="btn btn-excel-primary" id="btnExportEmployeeSingleExcel">
+                        <i class="fa-solid fa-file-excel"></i> Ekspor Excel (.xlsx)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH/EDIT AUDIT PBOK & PPA -->
+    <div class="modal-overlay" id="pbokModal">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3 id="pbokModalTitle">Tambah Data Audit Belanja PBOK / PPA</h3>
+                <button class="btn-close" id="btnClosePbokModal">&times;</button>
+            </div>
+            <form id="pbokForm">
+                <input type="hidden" id="editPbokId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="inputPbokCode">Kode Pengajuan (PBOK / PPA) <span class="text-rose">*</span></label>
+                        <input type="text" id="inputPbokCode" placeholder="Contoh: PBOK-2026-089" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokNik">NIK Pemohon <span class="text-rose">*</span></label>
+                        <input type="text" id="inputPbokNik" placeholder="Contoh: EMP-2026-045" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokName">Nama Pemohon <span class="text-rose">*</span></label>
+                        <input type="text" id="inputPbokName" placeholder="Nama Pemohon..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokDept">Divisi / Departemen <span class="text-rose">*</span></label>
+                        <select id="inputPbokDept" required>
+                            <option value="IT & Technology">IT & Technology</option>
+                            <option value="Sales & Business">Sales & Business</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Finance & Accounting">Finance & Accounting</option>
+                            <option value="Operations & Logistics">Operations & Logistics</option>
+                            <option value="Marketing & Brand">Marketing & Brand</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokTenure">Masa Menjabat / Periode <span class="text-rose">*</span></label>
+                        <input type="text" id="inputPbokTenure" placeholder="Contoh: 2024 - 2026 (Manager Ops)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokAmount">Nilai Pengajuan Belanja (Rp) <span class="text-rose">*</span></label>
+                        <input type="number" id="inputPbokAmount" min="0" value="15000000" required>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="inputPbokItem">Item / Deskripsi Belanja & Vendor <span class="text-rose">*</span></label>
+                        <input type="text" id="inputPbokItem" placeholder="Contoh: Pembelian Laptop Staging Server - Vendor PT Tech Supplier" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokPhysical">Status Keberadaan Fisik Barang <span class="text-rose">*</span></label>
+                        <select id="inputPbokPhysical" required>
+                            <option value="Terverifikasi Ada">Terverifikasi Ada & Sesuai Nota</option>
+                            <option value="Fisik Tidak Ada">Fisik Tidak Ada / Hilang</option>
+                            <option value="Indikasi Fiktif">Indikasi Fiktif / Selisih Kwitansi</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokLossStatus">Status Analisis Kerugian <span class="text-rose">*</span></label>
+                        <select id="inputPbokLossStatus" required>
+                            <option value="Aman / Wajar">Aman / Wajar (Sesuai SOP)</option>
+                            <option value="Potensi Kerugian">Indikasi Kerugian Perusahaan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPbokLossAmount">Nilai Potensi Kerugian (Rp)</label>
+                        <input type="number" id="inputPbokLossAmount" min="0" value="0">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="inputPbokOfficeUrl"><i class="fa-solid fa-link text-blue"></i> Link URL Surat / Dokumen Office (Visiyosindo)</label>
+                        <input type="url" id="inputPbokOfficeUrl" placeholder="Contoh: https://office.visiyosindo.id/surat/show/detail_surat/pbok/2371">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="inputPbokNotes">Catatan Auditor / Temuan Investigasi</label>
+                        <textarea id="inputPbokNotes" rows="3" placeholder="Tuliskan hasil pengecekan fisik barang, konfirmasi ke toko/vendor, atau rekomendasi pengembalian dana..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelPbokModal">Batal</button>
+                    <button type="submit" class="btn btn-emerald">Simpan Audit PBOK/PPA</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH AUDIT KARYAWAN -->
+    <div class="modal-overlay" id="auditModal">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Tambah Data Audit Karyawan Baru</h3>
+                <button class="btn-close" id="btnCloseModal">&times;</button>
+            </div>
+            <form id="auditForm">
+                <input type="hidden" id="editAuditId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="inputNik">NIK Karyawan *</label>
+                        <input type="text" id="inputNik" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputName">Nama Karyawan *</label>
+                        <input type="text" id="inputName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputDept">Departemen *</label>
+                        <select id="inputDept">
+                            <option value="IT & Technology">IT & Technology</option>
+                            <option value="Sales & Business">Sales & Business</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Finance & Accounting">Finance & Accounting</option>
+                            <option value="Operations & Logistics">Operations & Logistics</option>
+                            <option value="Marketing & Brand">Marketing & Brand</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputRole">Jabatan *</label>
+                        <input type="text" id="inputRole" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputKpi">Realisasi KPI (%) *</label>
+                        <input type="number" id="inputKpi" value="90" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputQuality">Quality Score (1-5) *</label>
+                        <input type="number" id="inputQuality" step="0.1" value="4.0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputSop">Kepatuhan SOP (%) *</label>
+                        <input type="number" id="inputSop" value="95" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputAttendance">Presensi (%) *</label>
+                        <input type="number" id="inputAttendance" value="98" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputRisk">Level Risk *</label>
+                        <select id="inputRisk">
+                            <option value="Low">Low Risk</option>
+                            <option value="Medium">Medium Risk</option>
+                            <option value="High">High Risk</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputStatus">Status Audit *</label>
+                        <select id="inputStatus">
+                            <option value="Terverifikasi">Terverifikasi</option>
+                            <option value="Dalam Review">Dalam Review</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="inputNotes">Catatan Auditor</label>
+                        <textarea id="inputNotes" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelModal">Batal</button>
+                    <button type="submit" class="btn btn-emerald">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT DATA KARYAWAN & DIVISI / JABATAN -->
+    <div class="modal-overlay" id="editEmployeeModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-pen text-sky"></i> Edit Data Karyawan (Divisi & Jabatan)</h3>
+                <button class="modal-close" onclick="closeModal('editEmployeeModal')">&times;</button>
+            </div>
+            <form id="editEmployeeForm" onsubmit="saveEditEmployee(event)">
+                <input type="hidden" id="editEmpId">
+                <div class="modal-body grid-2">
+                    <div class="form-group">
+                        <label for="editEmpNik">NIK / Nomor Pegawai *</label>
+                        <input type="text" id="editEmpNik" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpName">Nama Lengkap Karyawan *</label>
+                        <input type="text" id="editEmpName" required>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="editEmpDept">Divisi / Departemen *</label>
+                        <select id="editEmpDept" onchange="toggleCustomDeptInput(this)" required>
+                            <option value="Operations & Logistics">Operations & Logistics</option>
+                            <option value="Technical & Engineering">Technical & Engineering</option>
+                            <option value="Accounting & Finance">Accounting & Finance</option>
+                            <option value="General Affair & Admin">General Affair & Admin</option>
+                            <option value="Quality Assurance & Control">Quality Assurance & Control (Staff Mutu)</option>
+                            <option value="Corporate Planning">Corporate Planning & Management</option>
+                            <option value="Marketing & Brand">Marketing & Brand</option>
+                            <option value="Visilab Operations">Visilab Operations</option>
+                            <option value="NEW_CUSTOM_DEPT" style="font-weight: 700; color: #1d4ed8;">➕ + Tambah Nama Divisi Baru...</option>
+                        </select>
+                        <input type="text" id="editEmpDeptCustom" placeholder="Ketik Nama Divisi Baru..." style="display: none; margin-top: 8px; border: 2px solid #3b82f6; background: #eff6ff;">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpRole">Jabatan Pekerjaan *</label>
+                        <input type="text" id="editEmpRole" placeholder="Contoh: Staff Mutu, Head of Visilab" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpTenure">Masa Menjabat Karyawan *</label>
+                        <input type="text" id="editEmpTenure" placeholder="Contoh: 2024 - 2026 (Masa Menjabat)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpRisk">Level Risiko Audit *</label>
+                        <select id="editEmpRisk">
+                            <option value="Low">Low Risk</option>
+                            <option value="Medium">Medium Risk</option>
+                            <option value="High">High Risk</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpStatus">Status Verifikasi Audit *</label>
+                        <select id="editEmpStatus">
+                            <option value="Terverifikasi">Terverifikasi (Hijau)</option>
+                            <option value="Dalam Peninjauan">Dalam Peninjauan (Kuning)</option>
+                            <option value="Perlu Klarifikasi">Perlu Klarifikasi (Merah)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpPhysical">Status Keberadaan Fisik Barang *</label>
+                        <select id="editEmpPhysical">
+                            <option value="Terverifikasi Ada">Terverifikasi Ada (Hijau ✅)</option>
+                            <option value="Fisik Tidak Ada">Ada Selisih / Fisik Tidak Ada (Kuning ⚠️)</option>
+                            <option value="Indikasi Fiktif">Indikasi Fiktif (Merah 🚨)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpLossAmount">Nilai Potensi Kerugian Kantor (Rp) *</label>
+                        <input type="number" id="editEmpLossAmount" value="0" placeholder="0 jika Aman / Wajar">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editEmployeeModal')">Batal</button>
+                    <button type="submit" class="btn btn-emerald"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT STATUS FISIK BARANG & ANALISIS KERUGIAN PBOK/PPA -->
+    <div class="modal-overlay" id="editPbokModal">
+        <div class="modal-card" style="max-width: 920px; width: 95%; padding: 28px 32px;">
+            <div class="modal-header" style="margin-bottom: 24px; padding-bottom: 14px;">
+                <h3 style="font-size: 20px;"><i class="fa-solid fa-file-pen text-sky"></i> Edit Status Fisik & Risk Pengajuan (<span id="editPbokCodeTitle">PBOK</span>)</h3>
+                <button class="modal-close" onclick="closeModal('editPbokModal')">&times;</button>
+            </div>
+            <form id="editPbokForm" onsubmit="saveEditPbok(event)">
+                <input type="hidden" id="editPbokId">
+                <div class="modal-body grid-2" style="gap: 20px;">
+                    <div class="form-group col-span-2">
+                        <label for="editPbokItem" style="font-size: 13px; font-weight: 700;">Deskripsi / Perihal Belanja *</label>
+                        <input type="text" id="editPbokItem" required style="padding: 10px 14px; font-size: 14px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPbokAmount" style="font-size: 13px; font-weight: 700;">Nilai Pengajuan Belanja (Rp) *</label>
+                        <input type="number" id="editPbokAmount" required style="padding: 10px 14px; font-size: 14px; font-weight: 700;">
+                    </div>
+                    <div class="form-group" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 8px;">
+                        <label style="font-size: 13px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">
+                            <i class="fa-solid fa-cube text-sky"></i> Status Fisik Barang (Otomatis)
+                        </label>
+                        <div style="font-size: 12.5px; font-weight: 700; color: #0284c7; margin-top: 4px;">
+                            ℹ️ Otomatis Mengikuti Status Verifikasi Head of Accounting
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPbokLossAmount" style="font-size: 13px; font-weight: 700;">Nilai Potensi Kerugian Kantor (Rp) *</label>
+                        <input type="number" id="editPbokLossAmount" value="0" placeholder="0 jika Aman / Wajar" required style="padding: 10px 14px; font-size: 14px; font-weight: 700; color: #dc2626;">
+                    </div>
+                    <div class="form-group col-span-2" style="background: #f0fdf4; border: 1.5px solid #86efac; padding: 14px 18px; border-radius: 10px; margin-top: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                            <label for="editPbokTaxVerified" style="font-weight: 700; color: #166534; font-size: 13.5px; margin-bottom: 0;">
+                                <i class="fa-solid fa-square-check" style="font-size: 16px; color: #16a34a;"></i> Verifikasi Head of Tax & Accounting (ID 107 - Dirangga Madali)
+                            </label>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-sm" onclick="unverifyAllTaxVerifications()" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Batalkan SELURUH status verifikasi pengajuan di kantor dalam 1 klik">
+                                    <i class="fa-solid fa-ban"></i> Batalkan Seluruh Verifikasi
+                                </button>
+                                <button type="button" class="btn btn-sm" onclick="verifyAllTaxVerifications()" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Verifikasi SELURUH pengajuan aman sekaligus dalam 1 klik">
+                                    <i class="fa-solid fa-check-double"></i> Verifikasi Semua
+                                </button>
+                            </div>
+                        </div>
+                        <select id="editPbokTaxVerified" style="font-weight: 700; font-size: 13.5px; padding: 10px 14px; background: #ffffff; border: 1px solid #bbf7d0; width: 100%; border-radius: 6px;">
+                            <option value="FALSE">⏳ Belum Diverifikasi (Menunggu Pemeriksaan ID 107)</option>
+                            <option value="TRUE">✅ DIVERIFIKASI AMAN & SAH oleh Dirangga Madali (Head Tax & Acc - ID 107)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="editPbokOfficeUrl" style="font-size: 13px; font-weight: 700;"><i class="fa-solid fa-link text-sky"></i> Link URL Dokumen Office / Drive Pengajuan (PBOK & PPA)</label>
+                        <input type="text" id="editPbokOfficeUrl" placeholder="https://office.visiyosindo.id/surat/detail_pbok/... atau link Drive" value="" style="padding: 10px 14px; font-size: 13px;">
+                        <small style="color: #475569; font-size: 11px; margin-top: 4px; display: block; font-weight: 500;">
+                            🔗 Masukkan link URL dokumen pengajuan dari sistem office atau link Drive dokumen pendukung.
+                        </small>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="editPbokNotes" style="font-size: 13px; font-weight: 700;">Catatan Hasil Verifikasi Auditor</label>
+                        <textarea id="editPbokNotes" rows="3" placeholder="Tambahkan rincian temuan atau nomor dokumen office..." style="padding: 10px 14px; font-size: 13px; line-height: 1.5;"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 24px; padding-top: 16px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editPbokModal')" style="padding: 10px 20px; font-weight: 600;">Batal</button>
+                    <button type="submit" class="btn btn-emerald" style="padding: 10px 24px; font-weight: 700; font-size: 14px;"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Audit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DOKUMEN CETAK LAPORAN HASIL AUDIT (LHA) FOR PRINT/PDF -->
+    <div class="modal-overlay" id="printAuditModal">
+        <div class="modal-card" style="max-width: 1050px; padding: 0; background: #ffffff;">
+            <div class="modal-header print-hide" style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                <h3><i class="fa-solid fa-print text-sky"></i> Pratinjau Dokumen Cetak Laporan Audit Internal (LHA)</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-emerald" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak / Simpan PDF</button>
+                    <button class="modal-close" onclick="closeModal('printAuditModal')">&times;</button>
+                </div>
+            </div>
+            
+            <div class="modal-body" id="printableLhaDocument" style="padding: 30px; background: #ffffff; color: #000000; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;">
+                <!-- Header Dokumen Cetak PT. VISI YOSINDO MEDIKAL -->
+                <div style="border-bottom: 2px solid #0f172a; padding-bottom: 14px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="min-width: 80px; height: 65px; display: flex; align-items: center; justify-content: center;">
+                            <img src="img/logo_vym.png" onerror="this.style.display='none';" alt="Logo PT Visi Yosindo Medikal" style="max-height: 65px; max-width: 120px; width: auto; height: auto; object-fit: contain;" />
+                        </div>
+                        <div>
+                            <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.2;">PT. VISI YOSINDO MEDIKAL</h2>
+                            <p style="margin: 3px 0 0 0; font-size: 11.5px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Internal Audit & Performance Control</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Judul Dokumen & Nomor Audit -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 800; text-decoration: underline; letter-spacing: 0.5px;">LAPORAN HASIL AUDIT INTERNAL (LHA)</h3>
+                        <p style="margin: 3px 0 0 0; font-size: 11px; font-weight: 700; color: #1e293b;">VERIFIKASI PENGAJUAN PBOK DAN PPA SELAMA MENJABAT</p>
+                    </div>
+                    <div style="text-align: right; font-size: 11px; color: #334155;">
+                        <strong style="color: #dc2626;">DOKUMEN RAHASIA AUDIT</strong><br>
+                        No: <span id="lhaDocNumber">LHA/SPI-VYM/2026/09-001</span><br>
+                        Tgl: <span id="lhaDocDate">02 September 2026</span>
+                    </div>
+                </div>
+
+                <!-- Identitas Terperiksa (Yang Di-Audit) -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 11px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 18%; font-weight: 700;">Nama Karyawan</td>
+                            <td style="width: 32%;">: <strong id="lhaEmpName">Tengku Muhammad Zainul Aprilizar</strong></td>
+                            <td style="width: 18%; font-weight: 700;">Divisi / Dept</td>
+                            <td style="width: 32%;">: <span id="lhaEmpDept">Operations & Logistics / IT</span></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 700;">NIK Pegawai</td>
+                            <td>: <span id="lhaEmpNik">EMP-058</span></td>
+                            <td style="font-weight: 700;">Jabatan Pekerjaan</td>
+                            <td>: <span id="lhaEmpRole">General Affair & IT Control</span></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 700;">Masa Menjabat</td>
+                            <td>: <span id="lhaEmpTenure">Masa Menjabat (2024 - 2026)</span></td>
+                            <td style="font-weight: 700;">Status Audit Risk</td>
+                            <td>: <span id="lhaEmpStatus">Low Risk (Terverifikasi)</span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Tabel Rincian Belanja -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 0 0 8px 0; color: #0f172a;">I. RINCIAN VERIFIKASI DOKUMEN BELANJA (PBOK & PPA)</h4>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 8pt; text-align: left; border: 1px solid #cbd5e1; table-layout: fixed;" border="1" cellpadding="5">
+                    <thead style="background: #f1f5f9; font-weight: 700; color: #0f172a;">
+                        <tr>
+                            <th style="width: 4%; text-align: center;">No</th>
+                            <th style="width: 14%;">Nomor Pengajuan</th>
+                            <th style="width: 24%;">Jenis & Uraian Pengajuan</th>
+                            <th style="width: 11%; text-align: right;">Nilai (Rp)</th>
+                            <th style="width: 13%;">Link Google Drive</th>
+                            <th style="width: 15%;">Verifikasi Head Tax</th>
+                            <th style="width: 7%; text-align: center;">Fisik</th>
+                            <th style="width: 12%;">Catatan Audit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lhaTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                    <tfoot style="background: #f8fafc; font-weight: 700;">
+                        <tr>
+                            <td colspan="3" style="text-align: right; padding: 6px 10px;">TOTAL AUDIT BELANJA:</td>
+                            <td id="lhaTotalAmount" style="text-align: right; padding: 6px 10px; font-weight: 800;">Rp 0</td>
+                            <td colspan="2" style="color: #15803d; font-size: 8pt; padding: 6px;">✓ Diverifikasi Tax & Acc (ID 107)</td>
+                            <td colspan="2" id="lhaTotalLoss" style="color: #dc2626; padding: 6px; font-weight: 800;">Rp 0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Catatan & Rekomendasi SPI -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 0 0 8px 0; color: #0f172a;">II. CATATAN TEMUAN & REKOMENDASI AUDITOR INTERN</h4>
+                <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; margin-bottom: 24px; font-size: 11px; line-height: 1.6; background: #fafafa;" id="lhaNotesContent">
+                    Berdasarkan hasil verifikasi fisik dan kesesuaian dokumen nota/kwitansi, seluruh item pengajuan telah sesuai dengan kebijakan kantor dan terverifikasi sah.
+                </div>
+
+                <!-- LEMBAR PENGESAHAN TANDA TANGAN (4 KOLOM PEJABAT) -->
+                <div style="margin-top: 35px; page-break-inside: avoid;">
+                    <p style="font-size: 11px; text-align: right; margin-bottom: 14px; font-weight: bold;">Pekanbaru, <span id="lhaSignDate">02 September 2026</span></p>
+                    <table style="width: 100%; text-align: center; font-size: 10.5px; border-collapse: collapse; font-family: Arial, sans-serif;" border="1" cellpadding="8">
+                        <tr style="font-weight: bold; background: #f1f5f9;">
+                            <td style="width: 25%; padding: 8px;">DIBUAT / AUDIT OLEH:</td>
+                            <td style="width: 25%; padding: 8px;">DIVERIFIKASI OLEH:</td>
+                            <td style="width: 25%; padding: 8px;">MENGETAHUI:</td>
+                            <td style="width: 25%; padding: 8px;">MENYETUJUI:</td>
+                        </tr>
+                        <tr>
+                            <!-- KOLOM 1: AUDITOR -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="height: 95px;"></div>
+                                <strong style="text-decoration: underline; font-size: 11px; color: #0f172a;">Novemby Ardiansyah P.L</strong><br>
+                                <span style="font-size: 9.5px; color: #475569; font-weight: 600;">Auditor General Affair</span>
+                            </td>
+
+                            <!-- KOLOM 2: HEAD OF ACCOUNTING & TAX -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="height: 95px;"></div>
+                                <strong style="text-decoration: underline; font-size: 11px; color: #0f172a;">Dirangga Madali</strong><br>
+                                <span style="font-size: 9.5px; color: #475569; font-weight: 600;">Head of Accounting & Tax</span>
+                            </td>
+
+                            <!-- KOLOM 3: HR & GENERAL MANAGER -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="margin-bottom: 20px;">
+                                    <div style="height: 52px;"></div>
+                                    <strong style="text-decoration: underline; font-size: 10.5px; color: #0f172a;">Dian Melati Amelia</strong><br>
+                                    <span style="font-size: 9px; color: #475569; font-weight: 600;">HR & Legal Officer</span>
+                                </div>
+                                <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
+                                <div>
+                                    <div style="height: 52px;"></div>
+                                    <strong style="text-decoration: underline; font-size: 10.5px; color: #0f172a;">Yolanda Pratiwi</strong><br>
+                                    <span style="font-size: 9px; color: #475569; font-weight: 600;">General Manager</span>
+                                </div>
+                            </td>
+
+                            <!-- KOLOM 4: DIREKSI PT VISI YOSINDO MEDIKAL -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="margin-bottom: 20px;">
+                                    <div style="height: 52px;"></div>
+                                    <strong style="text-decoration: underline; font-size: 10.5px; color: #0f172a;">Meilina</strong><br>
+                                    <span style="font-size: 9px; color: #475569; font-weight: 600;">Director of Corp. Planning</span>
+                                </div>
+                                <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
+                                <div>
+                                    <div style="height: 52px;"></div>
+                                    <strong style="text-decoration: underline; font-size: 10.5px; color: #0f172a;">Bob Ariyos</strong><br>
+                                    <span style="font-size: 9px; color: #475569; font-weight: 600;">Direktur PT. Visi Yosindo Medikal</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DOKUMEN CETAK LAPORAN HASIL AUDIT KINERJA (LHA KINERJA) -->
+    <div class="modal-overlay" id="printAuditKinerjaModal">
+        <div class="modal-card" style="max-width: 1050px; padding: 0; background: #ffffff;">
+            <div class="modal-header print-hide" style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                <h3><i class="fa-solid fa-award text-emerald"></i> Pratinjau Dokumen Cetak Laporan Audit Kinerja Karyawan (LHA-Kinerja)</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-emerald" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak / Simpan PDF</button>
+                    <button class="modal-close" onclick="closeModal('printAuditKinerjaModal')">&times;</button>
+                </div>
+            </div>
+            
+            <div class="modal-body" id="printableLhaKinerjaDocument" style="padding: 30px; background: #ffffff; color: #000000; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;">
+                <!-- Header Dokumen Cetak PT. VISI YOSINDO MEDIKAL -->
+                <div style="border-bottom: 2px solid #0f172a; padding-bottom: 14px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="min-width: 80px; height: 65px; display: flex; align-items: center; justify-content: center;">
+                            <img src="img/logo_vym.png" onerror="this.style.display='none';" alt="Logo PT Visi Yosindo Medikal" style="max-height: 65px; max-width: 120px; width: auto; height: auto; object-fit: contain;" />
+                        </div>
+                        <div>
+                            <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.2;">PT. VISI YOSINDO MEDIKAL</h2>
+                            <p style="margin: 3px 0 0 0; font-size: 11.5px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Internal Audit & Performance Control</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Judul Dokumen & Nomor Audit Kinerja -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 800; text-decoration: underline; letter-spacing: 0.5px; color: #065f46;">LAPORAN HASIL AUDIT KINERJA KARYAWAN (LHA-KINERJA)</h3>
+                        <p style="margin: 3px 0 0 0; font-size: 11px; font-weight: 700; color: #1e293b;">EVALUASI AKUMULATIF KPI, PRESENSI & KEPATUHAN SOP MASA MENJABAT</p>
+                    </div>
+                    <div style="text-align: right; font-size: 11px; color: #334155;">
+                        <strong style="color: #047857;">DOKUMEN EVALUASI RESMI</strong><br>
+                        No: <span id="lhaKinerjaDocNumber">LHA-KINERJA/SPI-VYM/2026/09-001</span><br>
+                        Tgl: <span id="lhaKinerjaDocDate">04 September 2026</span>
+                    </div>
+                </div>
+
+                <!-- Identitas Terperiksa (Profil Karyawan) -->
+                <div style="background: #f0fdf4; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 11px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 18%; font-weight: 700;">Nama Karyawan</td>
+                            <td style="width: 32%;">: <strong id="lhaKinerjaEmpName">-</strong></td>
+                            <td style="width: 18%; font-weight: 700;">Divisi / Dept</td>
+                            <td style="width: 32%;">: <span id="lhaKinerjaEmpDept">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 700;">NIK Pegawai</td>
+                            <td>: <span id="lhaKinerjaEmpNik">-</span></td>
+                            <td style="font-weight: 700;">Jabatan Pekerjaan</td>
+                            <td>: <span id="lhaKinerjaEmpRole">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 700;">Masa Menjabat</td>
+                            <td>: <span id="lhaKinerjaEmpTenure">2024 - 2026 (Masa Menjabat)</span></td>
+                            <td style="font-weight: 700;">Rating Evaluasi Kinerja</td>
+                            <td>: <strong id="lhaKinerjaEmpGrade" style="color: #047857;">Sangat Baik (A)</strong></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- I. EXECUTIVE KPI & PRESENSI SUMMARY -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 0 0 10px 0; color: #0f172a;">I. RINGKASAN CAPAIAN INDIKATOR KINERJA & AKUNTABILITAS</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="font-size: 9pt; color: #64748b; font-weight: 600; display: block;">SKOR KPI RATA-RATA</span>
+                        <strong id="lhaKinerjaKpiScore" style="font-size: 15pt; color: #0284c7; font-weight: 800;">92.5%</strong>
+                        <span style="font-size: 7.5pt; color: #166534; font-weight: 700; display: block; margin-top: 2px;">Grade A (Optimal)</span>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="font-size: 9pt; color: #64748b; font-weight: 600; display: block;">PRESENSI & KEHADIRAN</span>
+                        <strong id="lhaKinerjaAttendance" style="font-size: 15pt; color: #15803d; font-weight: 800;">98.2%</strong>
+                        <span style="font-size: 7.5pt; color: #166534; font-weight: 700; display: block; margin-top: 2px;">Disiplin Tinggi</span>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="font-size: 9pt; color: #64748b; font-weight: 600; display: block;">KEPATUHAN SOP</span>
+                        <strong id="lhaKinerjaSopScore" style="font-size: 15pt; color: #0d9488; font-weight: 800;">95.0%</strong>
+                        <span style="font-size: 7.5pt; color: #0d9488; font-weight: 700; display: block; margin-top: 2px;">Patuh SOP Office</span>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="font-size: 9pt; color: #64748b; font-weight: 600; display: block;">KETERLAKSANAAN JOBDESK</span>
+                        <strong id="lhaKinerjaTaskStatus" style="font-size: 14pt; color: #15803d; font-weight: 800; margin-top: 2px; display: block;">14 / 19 Selesai</strong>
+                        <span id="lhaKinerjaTaskSub" style="font-size: 7.5pt; color: #166534; font-weight: 700; display: block; margin-top: 2px;">Tugas Utama Terlaksana</span>
+                    </div>
+                </div>
+
+                <!-- II. TABEL RINCIAN AUDIT PELAKSANAAN JOBDESK & TEMUAN AUDIT -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 0 0 8px 0; color: #0f172a;">II. MATRIKS AUDIT PELAKSANAAN JOBDESK & TEMUAN KINERJA MASA MENJABAT</h4>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 8pt; text-align: left; border: 1px solid #cbd5e1; table-layout: fixed;" border="1" cellpadding="6">
+                    <thead style="background: #f1f5f9; font-weight: 700; color: #0f172a;">
+                        <tr>
+                            <th style="width: 4%; text-align: center;">No</th>
+                            <th style="width: 24%;">Jobdesk & Uraian Tugas Utama</th>
+                            <th style="width: 14%; text-align: center;">Target / Standard</th>
+                            <th style="width: 14%; text-align: center;">Status Keterlaksanaan</th>
+                            <th style="width: 28%;">Temuan Audit & Catatan Verifikasi SPI</th>
+                            <th style="width: 16%; text-align: center;">Link GDrive Evidensi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lhaKinerjaTableBody">
+                        <!-- Populated dynamically in app.js -->
+                    </tbody>
+                </table>
+
+                <!-- III. RINCIAN TEMUAN AUDIT SPESIFIK & RISIKO OPERASIONAL -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 16px 0 8px 0; color: #0f172a;">III. RINCIAN TEMUAN AUDIT SPESIFIK & ANALISIS RISIKO</h4>
+                <div id="lhaKinerjaSpecificFindings" style="margin-bottom: 20px;">
+                    <!-- Populated dynamically in app.js -->
+                </div>
+
+                <!-- IV. TABEL REKOMENDASI AUDITOR INTERN & TARGET PENYELESAIAN (PIC) -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 0 0 8px 0; color: #0f172a;">IV. REKOMENDASI AUDITOR INTERN & TARGET PENYELESAIAN (PIC)</h4>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 8pt; text-align: left; border: 1px solid #cbd5e1; table-layout: fixed;" border="1" cellpadding="6">
+                    <thead style="background: #f1f5f9; font-weight: 700; color: #0f172a;">
+                        <tr>
+                            <th style="width: 5%; text-align: center;">No</th>
+                            <th style="width: 55%;">Uraian Rekomendasi Tindak Lanjut Auditor</th>
+                            <th style="width: 22%; text-align: center;">Penanggung Jawab (PIC)</th>
+                            <th style="width: 18%; text-align: center;">Target Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lhaKinerjaRecommendationsBody">
+                        <!-- Populated dynamically in app.js -->
+                    </tbody>
+                </table>
+
+                <!-- V. KESIMPULAN AUDIT & VERDIK SPI -->
+                <h4 style="font-size: 12px; font-weight: 800; margin: 0 0 8px 0; color: #0f172a;">V. KESIMPULAN AUDIT & CATATAN PENUTUP SPI</h4>
+                <div style="border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px; font-size: 11px; line-height: 1.6; background: #f0fdf4;" id="lhaKinerjaNotesContent">
+                    Berdasarkan audit terhadap pekerjaan yang dilaksanakan oleh karyawan, seluruh pekerjaan utama terverifikasi telah diselesaikan dengan baik, dan beberapa catatan temuan operasional memerlukan tindak lanjut sesuai target waktu yang ditetapkan.
+                </div>
+
+                <!-- LEMBAR PENGESAHAN TANDA TANGAN (4 KOLOM PEJABAT) -->
+                <div style="margin-top: 35px; page-break-inside: avoid;">
+                    <p style="font-size: 11px; text-align: right; margin-bottom: 14px; font-weight: bold;">Pekanbaru, <span id="lhaKinerjaSignDate">04 September 2026</span></p>
+                    <table style="width: 100%; text-align: center; font-size: 10.5px; border-collapse: collapse; font-family: Arial, sans-serif;" border="1" cellpadding="8">
+                        <tr style="font-weight: bold; background: #f1f5f9;">
+                            <td style="width: 25%; padding: 8px;">DIBUAT / AUDIT OLEH:</td>
+                            <td style="width: 25%; padding: 8px;">DIVERIFIKASI OLEH:</td>
+                            <td style="width: 25%; padding: 8px;">MENGETAHUI:</td>
+                            <td style="width: 25%; padding: 8px;">MENYETUJUI:</td>
+                        </tr>
+                        <tr>
+                            <!-- KOLOM 1: AUDITOR GA -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="height: 95px;"></div>
+                                <strong style="text-decoration: underline; font-size: 11px; color: #0f172a;">Novemby Ardiansyah P.L</strong><br>
+                                <span style="font-size: 9.5px; color: #475569; font-weight: 600;">Auditor General Affair</span>
+                            </td>
+
+                            <!-- KOLOM 2: HR & LEGAL OFFICER -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="height: 95px;"></div>
+                                <strong style="text-decoration: underline; font-size: 11px; color: #0f172a;">Dian Melati Amelia</strong><br>
+                                <span style="font-size: 9.5px; color: #475569; font-weight: 600;">HR & Legal Officer</span>
+                            </td>
+
+                            <!-- KOLOM 3: GENERAL MANAGER -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="height: 95px;"></div>
+                                <strong style="text-decoration: underline; font-size: 11px; color: #0f172a;">Yolanda Pratiwi</strong><br>
+                                <span style="font-size: 9.5px; color: #475569; font-weight: 600;">General Manager</span>
+                            </td>
+
+                            <!-- KOLOM 4: DIREKSI PT VISI YOSINDO MEDIKAL -->
+                            <td style="padding: 12px 10px; vertical-align: top; background: #ffffff;">
+                                <div style="margin-bottom: 20px;">
+                                    <div style="height: 52px;"></div>
+                                    <strong style="text-decoration: underline; font-size: 10.5px; color: #0f172a;">Meilina</strong><br>
+                                    <span style="font-size: 9px; color: #475569; font-weight: 600;">Director of Corp. Planning</span>
+                                </div>
+                                <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
+                                <div>
+                                    <div style="height: 52px;"></div>
+                                    <strong style="text-decoration: underline; font-size: 10.5px; color: #0f172a;">Bob Ariyos</strong><br>
+                                    <span style="font-size: 9px; color: #475569; font-weight: 600;">Direktur PT. Visi Yosindo Medikal</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH AUDIT PLAN (JADWAL AUDIT TAHUNAN) -->
+    <div class="modal-overlay" id="officePlanModal">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-plus text-blue"></i> Tambah Audit Plan / Program Audit Tahunan</h3>
+                <button class="btn-close" onclick="closeModal('officePlanModal')">&times;</button>
+            </div>
+            <form id="officePlanForm" onsubmit="saveOfficePlan(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Unit / Divisi yang Diaudit *</label>
+                        <input type="text" id="inputPlanUnit" required placeholder="Contoh: Gudang Alkes / FAT / Ops">
+                    </div>
+                    <div class="form-group">
+                        <label>Kriteria Acuan *</label>
+                        <input type="text" id="inputPlanKriteria" required value="ISO 9001:2015 & CDAKB">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Tujuan Audit</label>
+                        <textarea id="inputPlanTujuan" rows="2" placeholder="Tujuan evaluasi mutu dan kepatuhan SOP..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Tim Auditor *</label>
+                        <input type="text" id="inputPlanAuditor" required value="Risma Nurhandayani, Yolanda Pratiwi">
+                    </div>
+                    <div class="form-group">
+                        <label>No. Surat Tugas Audit</label>
+                        <input type="text" id="inputPlanSuratTugas" placeholder="003/STG/PTVYM/XII/2026">
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Audit *</label>
+                        <input type="date" id="inputPlanDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu / Jam</label>
+                        <input type="text" id="inputPlanTime" placeholder="09:00 - 15:00 WIB">
+                    </div>
+                    <div class="form-group">
+                        <label>Status Pelaksanaan *</label>
+                        <select id="inputPlanStatus">
+                            <option value="scheduled">Terjadwal</option>
+                            <option value="in_progress">Sedang Berjalan</option>
+                            <option value="completed">Selesai</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('officePlanModal')">Batal</button>
+                    <button type="submit" class="btn btn-emerald">Simpan Audit Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: FORM CAR (CORRECTIVE ACTION REQUEST) -->
+    <div class="modal-overlay" id="officeCarModal">
+        <div class="modal-card glass-card" style="max-width: 760px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-circle-exclamation text-rose"></i> Terbitkan Form CAR (Corrective Action Request)</h3>
+                <button class="btn-close" onclick="closeModal('officeCarModal')">&times;</button>
+            </div>
+            <form id="officeCarForm" onsubmit="saveOfficeCar(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>No. CAR (Format CAR-Nomor-Bulan-Tahun) *</label>
+                        <input type="text" id="inputCarNo" required placeholder="CAR-01-09-2026" style="font-family: monospace; font-weight: bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Auditee *</label>
+                        <input type="text" id="inputCarUnit" required placeholder="Gudang & Logistik Alkes">
+                    </div>
+                    <div class="form-group">
+                        <label>Kriteria Audit *</label>
+                        <input type="text" id="inputCarKriteria" required placeholder="CDAKB Permenkes 4/2014 / ISO 9001:2015">
+                    </div>
+                    <div class="form-group">
+                        <label>Klasifikasi Temuan *</label>
+                        <select id="inputCarKlasifikasi" required style="font-weight: bold;">
+                            <option value="major">MAJOR (Tidak Memenuhi Persyaratan Standar)</option>
+                            <option value="minor">MINOR (Ketidak-konsistenan Pemenuhan)</option>
+                            <option value="rekomendasi">REKOMENDASI (Saran Peningkatan Efektivitas)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Metode Verifikasi Temuan</label>
+                        <div style="display: flex; gap: 16px; font-size: 13px;">
+                            <label><input type="checkbox" id="checkCarDokumen" checked> Telaah Dokumen</label>
+                            <label><input type="checkbox" id="checkCarWawancara" checked> Wawancara</label>
+                            <label><input type="checkbox" id="checkCarObservasi" checked> Observasi Fisik</label>
+                        </div>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Uraian Ketidaksesuaian *</label>
+                        <textarea id="inputCarUraian" rows="2" required placeholder="Deskripsi ketidaksesuaian fakta lapangan vs standar..."></textarea>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Rencana Tindak Lanjut Perbaikan</label>
+                        <textarea id="inputCarRencana" rows="2" placeholder="Langkah perbaikan yang disepakati bersama Auditee..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Penanggung Jawab (PIC)</label>
+                        <input type="text" id="inputCarPic" placeholder="Nama / Jabatan Staff">
+                    </div>
+                    <div class="form-group">
+                        <label>Target Waktu Selesai</label>
+                        <input type="date" id="inputCarTarget">
+                    </div>
+                    <div class="form-group">
+                        <label>Status CAR *</label>
+                        <select id="inputCarStatus">
+                            <option value="OPEN">OPEN (Belum Selesai)</option>
+                            <option value="CLOSE">CLOSE (Telah Diterapkan & Efektif)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('officeCarModal')">Batal</button>
+                    <button type="submit" class="btn btn-rose" style="background: #e11d48; color: white;">Terbitkan Form CAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BERITA ACARA AUDIT -->
+    <div class="modal-overlay" id="officeBaModal">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-contract text-emerald"></i> Terbitkan Berita Acara Audit Internal</h3>
+                <button class="btn-close" onclick="closeModal('officeBaModal')">&times;</button>
+            </div>
+            <form id="officeBaForm" onsubmit="saveOfficeBa(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nomor Berita Acara *</label>
+                        <input type="text" id="inputBaNo" required placeholder="BA-AUDIT-VYM-2026-001" style="font-family: monospace;">
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal BA *</label>
+                        <input type="date" id="inputBaDate" required>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Lingkup Audit *</label>
+                        <input type="text" id="inputBaLingkup" required placeholder="Audit Mutu Internal Gudang, Logistik & Pengadaan Alkes">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Hasil Sementara Audit *</label>
+                        <textarea id="inputBaHasil" rows="2" required placeholder="Ringkasan kesimpulan dan temuan audit..."></textarea>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Saran & Arahan Penanganan</label>
+                        <textarea id="inputBaSaran" rows="2" placeholder="Arahan tindak lanjut bagi manajemen dan auditee..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Dibuat Oleh (Auditor) *</label>
+                        <input type="text" id="inputBaDibuat" required value="Risma Nurhandayani (GA / Auditor)">
+                    </div>
+                    <div class="form-group">
+                        <label>Diketahui Oleh (Auditee) *</label>
+                        <input type="text" id="inputBaDiketahui" required value="Yolanda Pratiwi (Head of Admin)">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label>Disetujui Oleh (Direktur Utama) *</label>
+                        <input type="text" id="inputBaDisetujui" required value="Bob Ariyos (Direktur Utama)">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('officeBaModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Terbitkan Berita Acara</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- HIDDEN EXCEL INPUT -->
+    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+
+    <script src="excel-generator.js?v=33.0"></script>
+    <script src="app.js?v=33.0"></script>
+</body>
+</html>

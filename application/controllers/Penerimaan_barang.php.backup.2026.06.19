@@ -1,0 +1,595 @@
+<?php
+
+use FontLib\Table\Type\post;
+
+use function Complex\rho;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Penerimaan_barang extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_gudang');
+        $this->load->model('md_pemasok_utama');
+        $this->load->model('md_penerimaan_barang');
+        $this->load->model('md_detail_barang');
+        $this->load->model('md_detail_barang_keluar');
+        $this->load->model('md_barang');
+        $this->load->model('md_detail_barang_pengiriman_stok');
+        $this->load->model('md_penerimaan_stok');
+        $this->load->model('md_detail_barang_penerimaan_stok');
+    }
+	
+	function id_navbar(){
+		$id_navbar = "inventory";
+		return $id_navbar;
+	}
+
+    public function index()
+    {
+        grantAccessFor('all');
+
+        $page_data['switch']		= $this->id_navbar();
+		$page_data['gudang']  		= $this->md_gudang->getByWhere(['g.status' => 1]);
+        $page_data['page_name']  	= 'v_penerimaan_barang';
+        $page_data['page_title'] 	= 'Penerimaan Barang';
+        $page_data['page_desc']  	= 'Management Data Penerimaan Barang';
+        $this->load->view('index', $page_data);
+    }
+
+    public function show()
+    {
+        grantAccessFor('all');
+
+        $page_data['switch']		= $this->id_navbar();
+		$page_data['pemasok_utama'] = $this->md_pemasok_utama->getByWhere();
+        $page_data['gudang']  		= $this->md_gudang->getByWhere(['g.status' => 1]);
+        $page_data['temp_data'] 	= $this->md_penerimaan_barang->getTempData();
+        if (isset($page_data['temp_data'])) {
+            foreach ($page_data['temp_data'] as $row) {
+                $row->id_penerimaan_barang_temp = encrypt($row->id_penerimaan_barang_temp);
+                $row->pengguna_id = encrypt($row->pengguna_id);
+                $row->id_pemasok = encrypt($row->id_pemasok);
+                $row->id_gudang = encrypt($row->id_gudang);
+                $row->tgl_masuk = date('d-m-Y', strtotime($row->tgl_masuk));
+            }
+        }
+        $page_data['detail_barang_temp'] = $this->md_penerimaan_barang->getDetailBarangTempBySess();
+        if (isset($page_data['detail_barang_temp'])) {
+            foreach ($page_data['detail_barang_temp'] as $row) {
+                $row->pengguna_id = encrypt($row->pengguna_id);
+                $row->id_detail_barang_temp = encrypt($row->id_detail_barang_temp);
+                $row->id_barang = encrypt($row->id_barang);
+            }
+        }
+        $page_data['page_name']  = 'v_penerimaan_barang_form';
+        $page_data['page_title'] = 'Form Penerimaan Barang';
+        $page_data['page_desc']  = 'Isi form Penerimaan Barang dengan  benar';
+        $this->load->view('index', $page_data);
+    }
+
+    public function get($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+
+        if ($param == "detail_barang_temp") {
+            $id_detail_barang_temp = decrypt($this->input->post('id_detail_barang_temp'));
+            $data = $this->md_penerimaan_barang->getDetailBarangTempById($id_detail_barang_temp);
+            foreach ($data as $row) {
+                $row->id_detail_barang_temp = encrypt($row->id_detail_barang_temp);
+                $row->pengguna_id = encrypt($row->pengguna_id);
+                $row->id_barang = encrypt($row->id_barang);
+                $row->exp_date = $row->exp_date == '0000-00-00' ? '00-00-0000'  : date('d-m-Y', strtotime($row->exp_date));
+            }
+            echo json_encode($data);
+            die;
+        } else if ($param == "lihat_file") {
+            $id = decrypt($this->input->post('id'));
+            $data = $this->md_penerimaan_barang->getById($id)[0]->file_pendukung;
+            echo json_encode($data);
+            die;
+        } else if ($param == "download_file") {
+            $id = decrypt($param2);
+            $data = $this->md_penerimaan_barang->getById($id);
+            if ($data[0]->file_pendukung) {
+                $this->load->helper('download');
+                force_download('uploads/penerimaan_barang/' . $data[0]->file_pendukung, NULL);
+            } else {
+                show_404();
+            }
+        } else if ($param == "print_dokumen") {
+            $data['penerimaan_barang'] = $this->md_penerimaan_barang->getByWhere(['pb.id_penerimaan_barang' => decrypt($param2)]);
+            $data['detail_barang'] = $this->md_detail_barang->getByIdPenerimaanBarang(decrypt($param2));
+            $this->load->library('pdfgenerator');
+            $file_pdf       = 'Penerimaan-barang_' . $data['penerimaan_barang'][0]->no_terima . '_' . date_view_format($data['penerimaan_barang'][0]->tgl_masuk);
+            $paper          = 'A4';
+            $orientation    = "portrait";
+            $html           = $this->load->view('pages/v_print/print_penerimaan_barang', $data, true);
+            $this->pdfgenerator->generate($html, $file_pdf, $paper, $orientation);
+        } else {
+            $id_detail_barang = decrypt($this->input->post('id_detail_barang'));
+            $data = $this->md_penerimaan_barang->getDetailBarangById($id_detail_barang);
+            foreach ($data as $row) {
+                $row->id_detail_barang = encrypt($row->id_detail_barang);
+                $row->id_penerimaan_barang = encrypt($row->id_penerimaan_barang);
+                $row->id_barang = encrypt($row->id_barang);
+                $row->exp_date = $row->exp_date == '0000-00-00' ? '0000-00-00'  : date('d-m-Y', strtotime($row->exp_date));
+            }
+            echo json_encode($data);
+            die;
+        }
+    }
+
+    public function add($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+
+        //all about temp data on form
+        if ($param == 'temp') {
+            //cek apakah temp data sudah ada
+            $temp = $this->md_penerimaan_barang->getTempData();
+            if ($temp && $param2 == NULL) {
+                //update jika sudah ada temp data sebelumnya
+                $data['id_pemasok'] = decrypt($this->input->post('id_pemasok'));
+                $data['tgl_masuk']  = $this->input->post('tgl_masuk') ? date('Y-m-d', strtotime($this->input->post('tgl_masuk'))) : NULL;
+                $data['no_terima']  = $this->input->post('no_terima');
+                $data['no_po']      = $this->input->post('no_po');
+                $data['nie'] =  $this->input->post('nie');
+                $data['id_gudang']  = decrypt($this->input->post('id_gudang'));
+                $data['keterangan'] = $this->input->post('keterangan');
+                $this->md_penerimaan_barang->updateTempData(['pengguna_id' => sessPenggunaId()], $data);
+            } else if ($param2 == 'detail_barang') {
+                //add detail barang temp (form tambah barang)
+                $dt['id_barang']    = $this->input->post('id_barang') ? decrypt($this->input->post('id_barang')) : NULL;
+                $dt['no_batch']     = $this->input->post('no_batch');
+                $dt['qty']          = $this->input->post('qty');
+                checkEmptyForm($dt);
+                $dt['nie']          = $this->input->post('nie');
+                $dt['fisik']        = $this->input->post('fisik');
+                $dt['exp_date']     = $this->input->post('exp_date') == NULL ? '00-00-0000' : date('Y-m-d', strtotime($this->input->post('exp_date')));
+                $dt['id_penerimaan_barang'] = $this->input->post('id_penerimaan_barang')  ? decrypt($this->input->post('id_penerimaan_barang')) : NULL;
+                if ($param2 == 'detail_barang') {
+                    if ($this->input->post('id_detail_barang_temp')) {
+                        //update detail barang temp
+                        $dt['pengguna_id'] = sessPenggunaId();
+                        $id = decrypt($this->input->post('id_detail_barang_temp'));
+                        $where = ['id_detail_barang_temp' => $id];
+                        $this->md_penerimaan_barang->updateDetailBarangTemp($where, $dt);
+                        ajaxReturnDie('success', 'Data Berhasil Diubah', TRUE);
+                    } else {
+                        $dt['pengguna_id'] = sessPenggunaId();
+                        //add detail barang temp
+                        $this->md_penerimaan_barang->addDetailBarangTemp($dt);
+                        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+                    }
+                }
+            } else {
+                //add temp data jika belum ada 
+                $data['pengguna_id'] = sessPenggunaId();
+                $data['id_pemasok'] = decrypt($this->input->post('id_pemasok'));
+                $data['tgl_masuk'] = date('Y-m-d', strtotime($this->input->post('tgl_masuk')));
+                $data['no_terima'] = $this->input->post('no_terima');
+                $data['no_po'] = $this->input->post('no_po');
+                $data['id_gudang'] = decrypt($this->input->post('id_gudang'));
+                $data['keterangan'] = $this->input->post('keterangan');
+                $this->md_penerimaan_barang->addTempData($data);
+            }
+            ajaxReturnDie('success', 'Temp Data Input', TRUE);
+        }
+        //add data penerimaan barang
+        $data['id_pemasok'] = decrypt($this->input->post('id_pemasok'));
+        $data['tgl_masuk'] = $this->input->post('tgl_masuk') ? date('Y-m-d', strtotime($this->input->post('tgl_masuk'))) : NULL;
+        $data['id_gudang'] = decrypt($this->input->post('id_gudang'));
+        $data['keterangan'] = $this->input->post('keterangan');
+        $data['no_terima'] = $this->input->post('no_terima');
+        checkEmptyForm($data);
+        $data['no_po'] = $this->input->post('no_po');
+
+        //cek apakah no terima unique
+        $cek = $this->md_penerimaan_barang->getByWHere(['pb.no_terima' => $data['no_terima']]);
+        if ($cek)
+            ajaxReturnDie('error', 'No Terima Sudah Ada');
+
+        $this->db->trans_begin();
+        $this->md_penerimaan_barang->add($data);
+
+        //add data detail barang
+        $dt['id_penerimaan_barang'] = $this->db->insert_id();
+        $id_barang = $this->input->post('id_barang');
+        if ($id_barang) {
+            foreach ($id_barang as $key => $row) {
+                $dt['id_barang']    = $this->input->post('id_barang')[$key] ? decrypt($this->input->post('id_barang')[$key]) : NULL;
+                $dt['qty']          = $this->input->post('qty')[$key];
+                $dt['current_stock']= $this->input->post('qty')[$key];
+                $dt['no_batch']     = $this->input->post('no_batch')[$key];
+                $dt['nie']          = $this->input->post('nie')[$key];
+                checkEmptyForm($dt);
+                $dt['nie']          = $this->input->post('nie')[$key];
+                $dt['fisik']        = $this->input->post('fisik')[$key];
+                $dt['exp_date']     = $this->input->post('exp_date')[$key] == NULL ? '0000-00-00' : $this->input->post('exp_date')[$key];
+
+                $this->md_detail_barang->add($dt);
+            }
+        } else {
+            ajaxReturnDie('error', 'Barang Tidak Boleh Kosong!');
+        }
+
+        //destroy temp data
+        $this->md_penerimaan_barang->destroyTempData();
+        if ($this->db->trans_status() === TRUE) {
+            $this->db->trans_commit();
+
+            //add log
+            $aksi = 'Tambah Penerimaan Barang';
+            $ket = 'Menambahkan data Penerimaan Barang - No Terima : ' . $data['no_terima'];
+            addlog($aksi, $ket);
+        } else {
+            $this->db->trans_rollback();
+            ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+        }
+        ajaxReturnDie('success', 'Data Berhasil di masukan', TRUE);
+    }
+
+    public function edit($param1)
+    {
+        grantAccessFor('all');
+
+        $id = decrypt($param1);
+		$page_data['switch']			= $this->id_navbar();
+        $page_data['penerimaan_barang'] = $this->md_penerimaan_barang->getById($id);
+        foreach ($page_data['penerimaan_barang'] as $row) {
+            $row->id_penerimaan_barang = encrypt($row->id_penerimaan_barang);
+            $row->id_pemasok = encrypt($row->id_pemasok);
+            $row->id_gudang = encrypt($row->id_gudang);
+            $row->tgl_masuk = date('d-m-Y', strtotime($row->tgl_masuk));
+        }
+        $page_data['detail_barang'] = $this->md_detail_barang->getByIdPenerimaanBarang($id);
+        foreach ($page_data['detail_barang'] as $row) {
+            $row->id_detail_barang = encrypt($row->id_detail_barang);
+            $row->id_barang = encrypt($row->id_barang);
+            $row->id_penerimaan_barang = encrypt($row->id_penerimaan_barang);
+            $row->exp_date = $row->exp_date == 0000 - 00 - 00 ? 00 - 00 - 0000 : date('d-m-Y', strtotime($row->exp_date));
+        }
+        $page_data['new_detail_barang_temp'] = $this->md_penerimaan_barang->getByIdPenerimaanBarang($id);
+        if ($page_data['new_detail_barang_temp']) {
+            foreach ($page_data['new_detail_barang_temp'] as $row) {
+                $row->id_detail_barang_temp = encrypt($row->id_detail_barang_temp);
+                $row->id_barang = encrypt($row->id_barang);
+                $row->id_penerimaan_barang = encrypt($row->id_penerimaan_barang);
+                $row->exp_date = $row->exp_date == 0000 - 00 - 00 ? 00 - 00 - 0000 : date('d-m-Y', strtotime($row->exp_date));
+            }
+        }
+        $page_data['pemasok_utama']  = $this->md_pemasok_utama->getByWhere();
+        $page_data['gudang']  = $this->md_gudang->getByWhere(['g.status' => 1]);
+        $page_data['page_name']  = 'v_penerimaan_barang_form';
+        $page_data['page_title'] = 'Penerimaan Barang';
+        $page_data['page_desc']  = 'Management Data Penerimaan Barang';
+        $this->load->view('index', $page_data);
+    }
+
+    public function delete($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+
+        if ($param == 'detail_barang_temp') {
+            $id_detail_barang_temp = decrypt($this->input->post('id_detail_barang_temp'));
+            $this->md_penerimaan_barang->deleteDetailBarangTemp($id_detail_barang_temp);
+            ajaxReturnDie('success', 'Data Berhasil Dihapus', TRUE);
+        } else if ($param == 'dest_temp') {
+            $this->md_penerimaan_barang->destroyTempData();
+            ajaxReturnDie('success', 'Data Berhasil Dihapus', TRUE);
+        } else if ($param == 'detail_barang') {
+            $id_detail_barang = decrypt($param2);
+            //cek apakah detail barang sudah di gunakan di pengeluaran barang
+            $cek = $this->md_detail_barang_keluar->cekByIdDetailBarang($id_detail_barang);
+            if ($cek) {
+                ajaxReturnDie('error', 'Data sudah pernah di gunakan di Pengeluaran Barang');
+            }
+
+            //cek apakah ini berasal dari pemindahan gudang
+            $pindahan = $this->md_detail_barang_penerimaan_stok->getByWhere(['dbps.id_detail_barang_baru' => $id_detail_barang]);
+            if ($pindahan) {
+                ajaxReturnDie('error', 'Data berasal dari pemindahan gudang!');
+            }
+
+            //cek apakah detail_barang sudah pernah di gunakan di pengiriman stok
+            $cek2 = $this->md_detail_barang_pengiriman_stok->getByDetailBarang($id_detail_barang);
+            if ($cek2) {
+                ajaxReturnDie('error', 'Data sudah pernah di gunakan di Pemindahan Stok');
+            }
+            $data['status'] = 0;
+
+
+            //add log
+            $temp = $this->md_detail_barang->getById($id_detail_barang);
+            $temp2 = $this->md_barang->getById($temp[0]->id_barang);
+            $temp3 = $this->md_penerimaan_barang->getById($temp[0]->id_penerimaan_barang);
+            $aksi = 'Hapus Detail Barang';
+            $ket = 'Menghapus barang ' . $temp2[0]->nama_barang . ' pada No Terima: ' . $temp3[0]->no_terima;
+            addlog($aksi, $ket);
+            $this->md_detail_barang->updateDetailBarang($id_detail_barang, $data);
+            ajaxReturnDie('success', 'Data Berhasil Dihapus', TRUE);
+        }
+        $id_penerimaan_barang = decrypt($param);
+
+        //cek apakah ini berasal dari pemindahan gudang
+        $pindahan = $this->md_penerimaan_stok->getByWhere(['ps.id_penerimaan_barang' => $id_penerimaan_barang]);
+        if ($pindahan) {
+            ajaxReturnDie('error', 'Data berasal dari pemindahan gudang!');
+        }
+
+        //cek apakah detail barang sudah pernah di gunakan pada pengeluaran barang
+        $tmp = $this->md_detail_barang->getByIdPenerimaanBarang($id_penerimaan_barang);
+        $cek = [];
+        foreach ($tmp as $row) {
+            $cek[] = $this->md_detail_barang_keluar->cekByIdDetailBarang($row->id_detail_barang);
+        }
+        foreach ($cek as $row) {
+            if (!empty($row)) {
+                ajaxReturnDie('error', 'Data Sudah di Gunakan di Pengeluaran Barang!');
+            }
+        }
+
+        //cek apakah detail_barang pada penerimaan barang ini pernah di pakai di pengiriman stok
+        $cek2 = [];
+        foreach ($tmp as $row) {
+            $cek2[] = $this->md_detail_barang_pengiriman_stok->getByDetailBarang($row->id_detail_barang);
+        }
+        foreach ($cek2 as $row) {
+            if (!empty($row)) {
+                ajaxReturnDie('error', 'Data Sudah di Gunakan di Pemindahan Stok!');
+            }
+        }
+        $data['status'] = 0;
+        $this->db->trans_begin();
+        $this->md_penerimaan_barang->update(['id_penerimaan_barang' => $id_penerimaan_barang], $data);
+        $this->md_detail_barang->deleteByIdPenerimaanBarang($data, $id_penerimaan_barang); //delete detail barang by id_penerimaan_barang
+
+        if ($this->db->trans_status() === TRUE) {
+            $this->db->trans_commit();
+
+            //add log
+            $temp = $this->md_penerimaan_barang->getById($id_penerimaan_barang);
+            $aksi = 'Hapus Penerimaan Barang';
+            $ket = 'Menghapus Penerimaan Barang - No Terima: ' . $temp[0]->no_terima;
+            addlog($aksi, $ket);
+        } else {
+            $this->db->trans_rollback();
+            ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+        }
+        ajaxReturnDie('success', 'Data berhasil dihapus', TRUE);
+    }
+
+    public function update($param = "")
+    {
+        grantAccessFor('all');
+
+        if ($param == 'detail_barang') {
+            $id_detail_barang = decrypt($this->input->post('id_detail_barang'));
+
+            //cek apakah ini berasal dari pemindahan gudang
+            $pindahan = $this->md_detail_barang_penerimaan_stok->getByWhere(['dbps.id_detail_barang_baru' => $id_detail_barang]);
+            if ($pindahan) {
+                ajaxReturnDie('error', 'Data berasal dari pemindahan gudang!');
+            }
+
+            $data['no_batch']   = $this->input->post('no_batch');
+            $data['qty']        = $this->input->post('qty');
+            $data['nie']        = $this->input->post('nie');
+            $data['fisik']      = $this->input->post('fisik');
+            checkEmptyForm($data);
+            $data['exp_date']   = date_db_format($this->input->post('exp_date'));
+
+            //akumulasi tota current_stock
+            $temp = $this->md_detail_barang->getStockDetailBarang($id_detail_barang)[0];
+            $current_stock = $temp->current_stock;
+            $current_qty = $temp->qty;
+            if ($data['qty'] < ($current_qty - $current_stock)) {
+                ajaxReturnDie('error', 'Stok Tidak Cukup!');
+            }
+            if ($data['qty'] > $current_qty) {
+                $data['current_stock'] = $current_stock + ($data['qty'] - $current_qty);
+            } else {
+                $data['current_stock'] = $current_stock - ($current_qty - $data['qty']);
+            }
+            $this->md_detail_barang->updateDetailBarang($id_detail_barang, $data);
+
+            //add log
+            $temp1 = $this->md_detail_barang->getById($id_detail_barang);
+            $temp2 = $this->md_barang->getById($temp1[0]->id_barang);
+            $temp3 = $this->md_penerimaan_barang->getById($temp1[0]->id_penerimaan_barang);
+            $aksi = 'Edit Detail Barang';
+            $ket = 'Mengedit barang ' . $temp2[0]->nama_barang . ' pada No Terima: ' . $temp3[0]->no_terima;
+            addlog($aksi, $ket);
+            ajaxReturnDie('success', 'Data Berhasil Diubah', TRUE);
+        } else if ($param == 'file_pendukung') {
+            $id = decrypt($this->input->post('id_penerimaan_barang'));
+
+            //cek file sebelumnya, jika ada hapus file itu
+            $tmp = $this->md_penerimaan_barang->getById($id);
+            if ($tmp[0]->file_pendukung) {
+                file_exists('uploads/penerimaan_barang/' . $tmp[0]->file_pendukung) ? unlink('uploads/penerimaan_barang/' . $tmp[0]->file_pendukung) : '';
+            }
+
+            $file = $_FILES['file_pendukung'];
+            if ($file['name']) {
+                $config['file_name']        = 'PenerimaanBarang_' . $tmp[0]->no_terima . '_' . date_view_format($tmp[0]->tgl_masuk) . '_' . time();
+                $config['upload_path']      = 'uploads/penerimaan_barang';
+                $config['allowed_types']    = 'pdf|xls|xlsx|doc|docx|jpg|png|jpeg';
+                $config['max_size']         = 4000;
+                $this->upload->initialize($config);
+                if (!$this->upload->do_upload('file_pendukung')) {
+                    ajaxReturnDie('error', $this->upload->display_errors());
+                } else {
+                    $dt = $this->upload->data();
+                    $data['file_pendukung'] = $dt['file_name'];
+                }
+            } else {
+                ajaxReturnDie('error', 'Silahkan upload File Pendukung');
+            }
+            $this->md_penerimaan_barang->update(['id_penerimaan_barang' => $id], $data);
+            ajaxReturnDie('success', 'File Berhasil di Upload', TRUE);
+        }
+        $id = decrypt($this->input->post('id_penerimaan_barang'));
+
+        //cek apakah ini berasal dari pemindahan gudang
+        $pindahan = $this->md_penerimaan_stok->getByWhere(['ps.id_penerimaan_barang' => $id]);
+        if ($pindahan) {
+            ajaxReturnDie('error', 'Data berasal dari pemindahan gudang!');
+        }
+
+        //update data penerimaan barang
+        $data['id_pemasok'] = decrypt($this->input->post('id_pemasok'));
+        $data['tgl_masuk'] = $this->input->post('tgl_masuk') == 00 - 00 - 0000 ? '00-00-0000' : date('Y-m-d', strtotime($this->input->post('tgl_masuk')));
+        $data['no_terima'] = $this->input->post('no_terima');
+        // $data['id_gudang'] = decrypt($this->input->post('id_gudang')); //gudang tidak bisa di edit
+        $data['keterangan'] = $this->input->post('keterangan');
+        checkEmptyForm($data);
+        $data['no_po'] = $this->input->post('no_po');
+
+        //cek apakah no terima unique
+        $cek = $this->md_penerimaan_barang->getByWHere(['pb.no_terima' => $data['no_terima']]);
+        if ($cek && $cek[0]->id_penerimaan_barang != $id) {
+            ajaxReturnDie('error', 'No Terima Sudah Ada');
+        }
+
+        $this->db->trans_begin();
+        $this->md_penerimaan_barang->update(['id_penerimaan_barang' => $id], $data);
+
+        //add detail barang baru(penambahan barang baru saat edit)
+        if ($this->input->post('id_barang')) {
+            $dt['id_penerimaan_barang'] = $id;
+            $id_barang = $this->input->post('id_barang');
+            foreach ($id_barang as $key => $row) {
+                $dt['id_barang']    = $this->input->post('id_barang')[$key] ? decrypt($this->input->post('id_barang')[$key]) : NULL;
+                $dt['qty']          = $this->input->post('qty')[$key];
+                $dt['current_stock']= $this->input->post('qty')[$key];
+                $dt['no_batch']     = $this->input->post('no_batch')[$key];
+                $dt['nie']          = $this->input->post('nie')[$key];
+                $dt['fisik']        = $this->input->post('fisik')[$key];
+                //$dt['nie']          = "-";
+                //$dt['fisik']        = 1;
+                checkEmptyForm($dt);
+                $dt['exp_date'] = $this->input->post('exp_date')[$key] == 00 - 00 - 0000 ? '0000-00-00' : date('Y-m-d', strtotime($this->input->post('exp_date')[$key]));
+                $this->md_detail_barang->add($dt);
+            }
+        }
+
+        //destroy new detail barang di tampilan edit
+        $this->md_penerimaan_barang->destroyNewTempDetailBarang($id);
+        if ($this->db->trans_status() === TRUE) {
+            $this->db->trans_commit();
+
+            //add log
+            $aksi = 'Edit Penerimaan Barang';
+            $ket = 'Mengedit data Penerimaan Barang - No Terima : ' . $data['no_terima'];
+            addlog($aksi, $ket);
+        } else {
+            $this->db->trans_rollback();
+            ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+        }
+
+        ajaxReturnDie('success', 'Data Berhasil di ubah', TRUE);
+    }
+
+    public function print($param)
+    {
+        $data['penerimaan_barang'] = $this->md_penerimaan_barang->getByWhere(['pb.id_penerimaan_barang' => decrypt($param)]);
+        $data['detail_barang'] = $this->md_detail_barang->getByIdPenerimaanBarang(decrypt($param));
+        // echo '<pre>'; print_r( $data );die; echo '</pre>';
+        $this->load->view('pages/v_print/print_penerimaan_barang', $data);
+
+    }
+
+    public function pagination()
+    {
+        $user_id = sessPenggunaId();
+        
+        //code untuk semua hak akses
+        //grantAccessFor('all');
+        // End untuk semua hak akses
+        
+        if ($user_id == 61 || $user_id == 33 || $user_id == 15 || $user_id == 7 || $user_id == 722 || $user_id == 1 || $user_id == 749) {
+        $dt    = $this->md_penerimaan_barang->getAll();
+        $start = $this->input->post('start');
+        $data  = array();
+        foreach ($dt['data'] as $row) {
+            $id = encrypt($row->id_penerimaan_barang);
+            $data_stok_pindahan = $this->md_penerimaan_stok->getByWhere(['ps.id_penerimaan_barang' => decrypt($id)]);
+
+            // Ambil daftar barang dari detail_barang
+            $barangDetail = $this->md_penerimaan_barang->getBarangDetailByPenerimaan($row->id_penerimaan_barang);
+            $namaBarangList = array_map(function($b) {
+                return $b->nama_barang;
+            }, $barangDetail);
+            $detail_barang = implode(', ', $namaBarangList);
+
+            $li_btn = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-sm btn-success btn-file" no-terima="' . $row->no_terima . '" data-id="' . $id . '"><i class="far fa-file-pdf"></i></button>
+                    <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '"  data-object="penerimaan_barang/delete"><i class="bx bx-trash"></i></button>
+                </div>';
+
+            $stok_pindahan = $data_stok_pindahan ? '<a href="javascript:;" class="text-center btn-gudang-asal" data-id="' . encrypt($data_stok_pindahan[0]->id_penerimaan_stok) . '"><span class="badge-warning badge-pill">' . $data_stok_pindahan[0]->no_penerimaan_stok . '</span></a>' : '-';
+
+            $th = array();
+            $th[] = ++$start . '.';
+            $th[] = $row->no_terima;
+            $th[] = date('d-m-Y', strtotime($row->tgl_masuk));
+            $th[] = $row->nama_pemasok;
+            $th[] = $row->nama_gudang;
+            $th[] = $row->keterangan;
+            $th[] = $detail_barang; // Kolom baru
+            $th[] = $stok_pindahan;
+            $th[] = $li_btn;
+
+            $data[] = $th;
+        }
+
+        // die; 
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+    }else{
+        $dt    = $this->md_penerimaan_barang->getAll();
+        $start = $this->input->post('start');
+        $data  = array();
+        foreach ($dt['data'] as $row) {
+            $id       = encrypt($row->id_penerimaan_barang);
+            $data_stok_pindahan = $this->md_penerimaan_stok->getByWhere(['ps.id_penerimaan_barang' => decrypt($id)]);
+
+            // Ambil daftar barang dari detail_barang
+            $barangDetail = $this->md_penerimaan_barang->getBarangDetailByPenerimaan($row->id_penerimaan_barang);
+            $namaBarangList = array_map(function($b) {
+                return $b->nama_barang;
+            }, $barangDetail);
+            $detail_barang = implode(', ', $namaBarangList);
+            $li_btn   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-sm btn-success btn-file" no-terima="' . $row->no_terima . '" data-id="' . $id . '"><i class="far fa-file-pdf"></i></button>
+                    
+                </div>';
+
+            $stok_pindahan = $data_stok_pindahan ? '<a href="javascript:;" class="text-center btn-gudang-asal" data-id="' . encrypt($data_stok_pindahan[0]->id_penerimaan_stok) . '"><span class="badge-warning badge-pill">' . $data_stok_pindahan[0]->no_penerimaan_stok . '</span></a>' : '-';
+            $th = array();
+            $th[] = ++$start . '.';
+            $th[] = $row->no_terima;
+            $th[] = date('d-m-Y', strtotime($row->tgl_masuk));
+            $th[] = $row->nama_pemasok;
+            $th[] = $row->nama_gudang;
+            $th[] = $row->keterangan;
+            $th[] = $detail_barang; // Kolom baru
+            $th[] = $stok_pindahan;
+            $th[] = $li_btn;
+            $data[] = $th;
+        }
+        // die; 
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+}}
+}

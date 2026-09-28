@@ -1,0 +1,1265 @@
+<?php
+
+use FontLib\Table\Type\post;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+use function Complex\rho;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Pengeluaran_barang extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_gudang');
+        $this->load->model('md_customer');
+        $this->load->model('md_pengeluaran_barang');
+        $this->load->model('md_detail_barang');
+        $this->load->model('md_barang');
+        $this->load->model('md_ekspedisi');
+        $this->load->model('md_detail_barang_keluar');
+        $this->load->model('md_invoice');
+        $this->load->model('md_detail_barang_invoice');
+        $this->load->model('md_detail_barang');
+        $this->load->model('md_tracking');
+        $this->load->helper('whatsapp_helper');
+    }
+
+    function id_navbar()
+    {
+        $id_navbar = "inventory";
+        return $id_navbar;
+    }
+
+    public function index()
+    {
+        grantAccessFor('all');
+
+        $page_data['switch']        = $this->id_navbar();
+        $page_data['gudang']          = $this->md_gudang->getByWhere(['g.status' => 1]);
+        $page_data['page_name']      = 'v_pengeluaran_barang';
+        $page_data['page_title']     = 'Pengeluaran Barang';
+        $page_data['page_desc']      = 'Management Data Pengeluaran Barang';
+        $this->load->view('index', $page_data);
+    }
+
+    public function show($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+
+        //form pengeluaran barang berdasarkan invoice
+        if ($param) {
+            $id_gudang = decrypt($param2);
+            $page_data['pengeluaran_barang'] = $this->md_invoice->getById(decrypt($param));
+            $detail_barang_invoice = $this->md_detail_barang_invoice->getByIdInvoice($page_data['pengeluaran_barang'][0]->id_invoice);
+            $page_data['ready_stok'] = [];
+            $page_data['stok_habis'] = [];
+            $batch = [];
+
+            // cek apakah stok ada di gudang yg di minta
+            foreach ($detail_barang_invoice as $key => $row) {
+                $cek = $this->md_detail_barang->getPenerimaanBarangByIdBarang($row->id_barang, $id_gudang);
+                if ($cek) {
+                    foreach ($cek as $row2) {
+                        array_push($batch, $row2);
+                    }
+                    array_push($page_data['ready_stok'], $row);
+                } else {
+                    array_push($page_data['stok_habis'], $row);
+                }
+            }
+            ///////////////////
+
+            //masukan batch ke detail_barang ready stok
+            foreach ($batch as $row) {
+                foreach ($page_data['ready_stok'] as $key => $row2) {
+                    if ($row->id_barang == $row2->id_barang) {
+                        $row2->batch[] = $row;
+                    }
+                }
+            }
+            ///////////////////
+            $page_data['switch']        = $this->id_navbar();
+            $page_data['ekspedisi']      = $this->md_ekspedisi->getByWhere(['e.status' => 1]);
+            $page_data['gudang']        = $this->md_gudang->getById(decrypt($param2));
+            $page_data['page_name']      = 'v_pengeluaran_barang_form_invoice';
+            $page_data['page_title']     = 'Pengeluaran Barang';
+            $page_data['page_desc']      = 'Management Data Pengeluaran Barang';
+            $this->load->view('index', $page_data);
+        } else {
+            // $page_data['customer']  = $this->md_customer->getByWhere();
+            $page_data['gudang']  = $this->md_gudang->getByWhere(['g.status' => 1]);
+            $page_data['ekspedisi']  = $this->md_ekspedisi->getByWhere(['e.status' => 1]);
+            $page_data['temp_data'] = $this->md_pengeluaran_barang->getTempData();
+            if (isset($page_data['temp_data'])) {
+                foreach ($page_data['temp_data'] as $row) {
+                    $row->id_pengeluaran_barang_temp = encrypt($row->id_pengeluaran_barang_temp);
+                    $row->pengguna_id = encrypt($row->pengguna_id);
+                    $row->id_customer = encrypt($row->id_customer);
+                    $row->id_gudang = encrypt($row->id_gudang);
+                    $row->id_ekspedisi = encrypt($row->id_ekspedisi);
+                    $row->tgl_keluar = date('d-m-Y', strtotime($row->tgl_keluar));
+                }
+            }
+            $page_data['detail_barang_temp'] = $this->md_pengeluaran_barang->getDetailBarangTempBySess();
+            if (isset($page_data['detail_barang_temp'])) {
+                foreach ($page_data['detail_barang_temp'] as $row) {
+                    $row->pengguna_id = encrypt($row->pengguna_id);
+                    $row->id_detail_barang_keluar_temp = encrypt($row->id_detail_barang_keluar_temp);
+                    $row->id_barang = encrypt($row->id_barang);
+                    $row->id_detail_barang = encrypt($row->id_detail_barang);
+                }
+            }
+
+            $page_data['switch']        = $this->id_navbar();
+            $page_data['page_name']      = 'v_pengeluaran_barang_form';
+            $page_data['page_title']     = 'Form Pengeluaran Barang';
+            $page_data['page_desc']      = 'Isi form Pengeluaran Barang dengan  benar';
+            $this->load->view('index', $page_data);
+        }
+    }
+
+    public function get($param = "", $param2 = "", $param3 = "")
+    {
+        grantAccessFor('all');
+
+        if ($param == "detail_barang_keluar_temp") {
+            $id_detail_barang_keluar_temp = decrypt($this->input->post('id_detail_barang_keluar_temp'));
+            $data = $this->md_pengeluaran_barang->getDetailBarangTempById($id_detail_barang_keluar_temp);
+            foreach ($data as $row) {
+                $row->id_detail_barang_keluar_temp = encrypt($row->id_detail_barang_keluar_temp);
+                $row->pengguna_id = encrypt($row->pengguna_id);
+                $row->id_barang = encrypt($row->id_barang);
+                $row->id_detail_barang = encrypt($row->id_detail_barang);
+                $row->id_pengeluaran_barang = encrypt($row->id_pengeluaran_barang);
+                $row->exp_date = $row->exp_date == 0000 - 00 - 00 ? 00 - 00 - 0000 : date('d-m-Y', strtotime($row->exp_date));
+            }
+            echo json_encode($data);
+            die;
+        } else if ($param == "lihat_file") {
+            $id = decrypt($this->input->post('id'));
+            $data = $this->md_pengeluaran_barang->getById($id)[0]->file_pendukung;
+            echo json_encode($data);
+            die;
+        } else if ($param == 'download_file') {
+            $id = decrypt($param2);
+            $data = $this->md_pengeluaran_barang->getById($id);
+            if ($data[0]->file_pendukung) {
+                $this->load->helper('download');
+                force_download('uploads/pengeluaran_barang/' . $data[0]->file_pendukung, NULL);
+            } else {
+                show_404();
+            }
+        } else if ($param == "print_dokumen") {
+            $data['pengeluaran_barang'] = $this->md_pengeluaran_barang->getByWhere(['pb.id_pengeluaran_barang' => decrypt($param3)]);
+            $data['detail_barang_keluar'] = $this->md_detail_barang_keluar->getByIdPengeluaranBarang(decrypt($param3));
+            $data['mode'] = $param2;
+            $this->load->library('pdfgenerator');
+            $file_pdf       = 'Surat-Jalan_' . $data['pengeluaran_barang'][0]->no_pengiriman . '_' . date_view_format($data['pengeluaran_barang'][0]->tgl_keluar);
+            $paper          = 'A4';
+            $orientation    = "portrait";
+            $html           = $this->load->view('pages/v_print/print_pengeluaran_barang', $data, true);
+            $this->pdfgenerator->generate($html, $file_pdf, $paper, $orientation);
+        } else if ($param == 'form_tarik_invoice') {
+            $id_customer = $this->input->post('id') ? decrypt($this->input->post('id')) : NULL;
+            $where = ['i.id_customer' => $id_customer, 'i.from_pengeluaran_barang' => 0];
+            $invoice = $this->md_invoice->getByWhere($where);
+
+            //hapus detail barang yg stok nya = 0 semua
+            $index_delete = [];
+            foreach ($invoice as $key => $row) {
+                $cek_current_stok = $this->md_detail_barang_invoice->getByIdInvoice($row->id_invoice);
+                $null_current_stock = [];
+
+                foreach ($cek_current_stok as $key2 => $row2) {
+                    if ($row2->current_qty == 0) {
+                        array_push($null_current_stock, $key2);
+                    }
+                }
+                if (count($null_current_stock) == count($cek_current_stok)) {
+                    array_push($index_delete, $key);
+                }
+            }
+            foreach ($index_delete as $row) {
+                unset($invoice[$row]);
+            }
+            //end hapus detail barang yg stok nya = 0 semua
+
+            foreach ($invoice as $row) {
+                $row->id_invoice = encrypt($row->id_invoice);
+                $row->id_customer = encrypt($row->id_customer);
+                $row->tgl_invoice = date_view_format($row->tgl_invoice);
+                unset($row->id_marketing, $row->id_syarat_pembayaran, $row->id_ekspedisi,  $row->id_tarif_pajak);
+            }
+
+            //array_value untuk reset index dari 0 lagi
+            echo json_encode(array_values($invoice));
+            die;
+        } else if ($param == 'ByIdDetailInvoice') {
+            $id_detail_barang_invoice = $this->input->post('id_detail_barang_invoice') ? decrypt($this->input->post('id_detail_barang_invoice')) : NULL;
+            $where = ['dbk.status' => 1, 'dbk.from_detail_barang_invoice' => $id_detail_barang_invoice];
+            $data = $this->md_detail_barang_keluar->getByWhere2($where);
+            foreach ($data as $row) {
+                $row->id_detail_barang_keluar = encrypt($row->id_detail_barang_keluar);
+                $row->id_pengeluaran_barang = encrypt($row->id_pengeluaran_barang);
+                unset($row->id_detail_barang_invoice, $row->from_detail_barang_invoice, $row->id_barang, $row->id_detail_barang);
+            }
+            echo json_encode($data);
+            die;
+        } else {
+            $id_detail_barang_keluar = decrypt($this->input->post('id_detail_barang_keluar'));
+            $data['detail_barang_keluar'] = $this->md_pengeluaran_barang->getDetailBarangKeluarById($id_detail_barang_keluar);
+            foreach ($data['detail_barang_keluar'] as $row) {
+                $row->id_detail_barang_keluar = encrypt($row->id_detail_barang_keluar);
+                $row->id_pengeluaran_barang = encrypt($row->id_pengeluaran_barang);
+                $row->id_barang = encrypt($row->id_barang);
+                $row->id_detail_barang = encrypt($row->id_detail_barang);
+                $row->exp_date = date('d-m-Y', strtotime($row->exp_date));
+            }
+            echo json_encode($data);
+            die;
+        }
+    }
+
+    public function add($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+        //all about temp data on form
+
+        if ($param == 'temp') {
+            //cek apakah temp data sudah ada
+            $temp = $this->md_pengeluaran_barang->getTempData();
+            if ($temp && $param2 == NULL) {
+
+                //update jika sudah ada temp data sebelumnya
+                $data['id_customer'] = decrypt($this->input->post('id_customer'));
+                $data['tgl_keluar'] = date('Y-m-d', strtotime($this->input->post('tgl_keluar')));
+                $data['no_pengiriman'] = $this->input->post('no_pengiriman');
+                $data['no_po'] = $this->input->post('no_pos');
+                $data['id_gudang'] = decrypt($this->input->post('id_gudang'));
+                $data['id_ekspedisi'] = decrypt($this->input->post('id_ekspedisi'));
+                $data['keterangan'] = $this->input->post('keterangan');
+                $data['alamat'] = $this->input->post('alamat');
+                $data['status_pengiriman'] = $this->input->post('status_pengiriman');
+                $data['resi'] = $this->input->post('resi');
+                $this->md_pengeluaran_barang->updateTempData(['pengguna_id' => sessPenggunaId()], $data);
+            } else if ($param2 == 'detail_barang_keluar') {
+
+                //add detail barang keluar temp (form tambah barang keluar)
+                $dt['id_barang'] = decrypt($this->input->post('id_barang'));
+                $dt['no_batch'] = $this->input->post('no_batch');
+                $dt['exp_date'] = $this->input->post('exp_date') == 00 - 00 - 0000 ? '0000-00-00' : date_db_format($this->input->post('exp_date'));
+                $dt['qty'] = $this->input->post('qty');
+                $dt['id_pengeluaran_barang'] = $this->input->post('id_pengeluaran_barang')  ? decrypt($this->input->post('id_pengeluaran_barang')) : NULL;
+                $dt['id_detail_barang'] = $this->input->post('id_detail_barang')  ? decrypt($this->input->post('id_detail_barang')) : NULL;
+                if ($param2 == 'detail_barang_keluar') {
+                    if ($this->input->post('id_detail_barang_keluar_temp')) {
+                        //update detail barang temp
+                        $dt['pengguna_id'] = sessPenggunaId();
+                        $id = decrypt($this->input->post('id_detail_barang_keluar_temp'));
+                        $where = ['id_detail_barang_keluar_temp' => $id];
+                        $this->md_pengeluaran_barang->updateDetailBarangKeluarTemp($where, $dt);
+                        ajaxReturnDie('success', 'Data Berhasil Diubah', TRUE);
+                    } else {
+                        $dt['pengguna_id'] = sessPenggunaId();
+                        //add detail barang temp
+                        $this->md_pengeluaran_barang->addDetailBarangTemp($dt);
+                        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+                    }
+                }
+            } else {
+
+                //add temp data jika belum ada 
+                $data['pengguna_id'] = sessPenggunaId();
+                $data['id_customer'] = decrypt($this->input->post('id_customer'));
+                $data['tgl_keluar'] = $this->input->post('tgl_keluar') == 00 - 00 - 0000 ? '0000-00-00' : date_db_format($this->input->post('tgl_keluar'));
+                $data['no_pengiriman'] = $this->input->post('no_pengiriman');
+                $data['no_po'] = $this->input->post('no_po');
+                $data['id_gudang'] = decrypt($this->input->post('id_gudang'));
+                $data['id_ekspedisi'] = decrypt($this->input->post('id_ekspedisi'));
+                $data['keterangan'] = $this->input->post('keterangan');
+                $data['alamat'] = $this->input->post('alamat');
+                $data['status_pengiriman'] = $this->input->post('status_pengiriman');
+                $data['resi'] = $this->input->post('resi');
+                $this->md_pengeluaran_barang->addTempData($data);
+            }
+
+            ajaxReturnDie('success', 'Temp Data Input', TRUE);
+        }
+        //pengecekan no_batch (no_batch tidak boleh sama dalam satu pengeluaran barang)
+        $cek_batch = array_count_values($this->input->post('no_batch'));
+
+        foreach ($cek_batch as $key => $row) {
+            if ($key != '-') {
+                if ($row > 1) {
+                    ajaxReturnDie('error', 'No Batch tidak boleh sama');
+                }
+            }
+        }
+
+        //add data pengeluaran barang
+        $this->db->trans_begin();
+
+        //jika form tarik dari invoice
+        if ($this->input->post('id_invoice'))
+            $data['from_invoice'] = decrypt($this->input->post('id_invoice'));
+
+        $data['id_customer'] = decrypt($this->input->post('id_customer'));
+        $data['tgl_keluar'] = date('Y-m-d', strtotime($this->input->post('tgl_keluar')));
+        $data['id_gudang'] = decrypt($this->input->post('id_gudang'));
+        $data['id_ekspedisi'] = decrypt($this->input->post('id_ekspedisi'));
+        $data['keterangan'] = $this->input->post('keterangan');
+        $data['alamat'] = $this->input->post('alamat');
+        $data['no_pengiriman'] = $this->input->post('no_pengiriman');
+        $data['resi'] = $this->input->post('resi');
+        $data['status_pengiriman'] = $this->input->post('status_pengiriman');
+        $data['no_po'] = $this->input->post('no_po');
+
+        //cek apakah no_pengiriman unique
+        $cek = $this->md_pengeluaran_barang->getByWHere(['pb.no_pengiriman' => $data['no_pengiriman']]);
+        if ($cek) {
+            ajaxReturnDie('error', 'No Pengiriman Sudah Ada');
+        }
+
+        $this->md_pengeluaran_barang->add($data);
+
+        //add data detail barang
+        $dt['id_pengeluaran_barang'] = $this->db->insert_id();
+        $id_barang = $this->input->post('id_barang');
+        $ulangSend = '2';
+        $namaBarangList = [];
+        foreach ($id_barang as $key => $row) {
+            $dt['id_barang'] = decrypt($this->input->post('id_barang')[$key]);
+            $dt['qty'] = $this->input->post('qty')[$key];
+            $dt['no_batch'] = $this->input->post('no_batch')[$key];
+            $dt['exp_date'] = $this->input->post('exp_date')[$key];
+            $dt['id_detail_barang'] = decrypt($this->input->post('id_detail_barang')[$key]);
+            $dt['from_detail_barang_invoice'] = $this->input->post('id_detail_barang_invoice') ? decrypt($this->input->post('id_detail_barang_invoice')[$key]) : NULL; //jika ditarik dari invoice, isi from_detail_barang_invoice
+            $this->md_detail_barang_keluar->add($dt);
+
+            //kurangi jumlah stock di detail_barang
+            $current_stock = $this->md_detail_barang->getStockDetailBarang($dt['id_detail_barang'])[0]->current_stock;
+            if ($dt['qty'] > $current_stock) {
+                ajaxReturnDie('error', 'Stock untuk No Batch ' . $dt['no_batch'] . ' tidak cukup!');
+            }
+            $stock['current_stock'] = $current_stock - $dt['qty'];
+            $this->md_detail_barang->updateDetailBarang($dt['id_detail_barang'], $stock);
+
+            //jika form dari pengeluaran barang by invoice kurangi jumlah current_qty di detail_barang_invoice
+            if ($this->input->post('id_invoice')) {
+                $current_qty_invoice = $this->md_detail_barang_invoice->getByWhere(decrypt($this->input->post('id_detail_barang_invoice')[$key]))[0]->current_qty;
+                if ($dt['qty'] > $current_qty_invoice) {
+                    ajaxReturnDie('error', 'No Batch ' . $dt['no_batch'] . ' melebihi current qty di invoice!');
+                }
+                $dt2['current_qty'] = $current_qty_invoice - $dt['qty'];
+                $this->md_detail_barang_invoice->updateDetailBaranginvoice(decrypt($this->input->post('id_detail_barang_invoice')[$key]), $dt2);
+            }
+
+
+            //Guna untuk Ambil List Nama Barang
+            $ambilDataBarang = $this->md_barang->getById($dt['id_barang']);
+
+            if (!empty($ambilDataBarang)) {
+                $namaBarangList[] =  "- " . $ambilDataBarang[0]->nama_barang;
+            }
+
+            //Guna untuk Cek ini ke Grup Visilab
+            $id_barang_decrypt = decrypt($this->input->post('id_barang')[$key]);
+            if ($id_barang_decrypt == 306 || $id_barang_decrypt == 714 || $id_barang_decrypt == 658 || $id_barang_decrypt == 671) {
+                $ulangSend = '3'; // Jika ada minimal satu id yang cocok, langsung set ke 3
+                break; // Tidak perlu lanjut looping karena sudah ketemu kondisi
+            }
+        }
+
+        //destroy temp data
+        $this->md_pengeluaran_barang->destroyTempData();
+        if ($this->db->trans_status() === TRUE) {
+            //jika tarik dari invoice
+            if ($this->input->post('id_invoice')) {
+                //////cek dan update status_barang_keluar///////
+                $id_invoice = decrypt($this->input->post('id_invoice'));
+                $cek_status = $this->md_detail_barang_invoice->getByIdInvoice($id_invoice);
+                $belum_keluar = [];
+                $sudah_keluar = [];
+                $keluar_sebagian = [];
+                foreach ($cek_status as $row) {
+                    if ($row->qty == $row->current_qty) {
+                        $belum_keluar[] = 1;
+                    } else if ($row->current_qty == 0) {
+                        $sudah_keluar[] = 1;
+                    } else {
+                        $keluar_sebagian[] = 1;
+                    }
+                }
+
+                if (count($cek_status) == count($sudah_keluar)) {
+                    $status['status_barang_keluar'] = 'sudah_keluar';
+                } else if (count($cek_status) == count($belum_keluar)) {
+                    $status['status_barang_keluar'] = 'belum_keluar';
+                } else {
+                    $status['status_barang_keluar'] = 'keluar_sebagian';
+                }
+                $this->md_invoice->update(['id_invoice' => $id_invoice], $status);
+                /////end cek///////
+            }
+            $this->db->trans_commit();
+
+            //add log
+            $aksi = 'Tambah Pengeluaran Barang';
+            $ket = 'Menambahkan data Pengeluaran Barang - No pengiriman : ' . $data['no_pengiriman'];
+            addlog($aksi, $ket);
+        } else {
+            $this->db->trans_rollback();
+            ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+        }
+
+        // Send Notif WA
+        $statusTracking = implode(", ", $namaBarangList);
+
+        $ambilDataCustomer     = $this->md_tracking->getCustomerById($data['id_customer']);
+        $namacs                = $ambilDataCustomer[0]->nama_customer;
+
+        $ambilDataGudang     = $this->md_gudang->getById($data['id_gudang']);
+        $namaGudang            = $ambilDataGudang[0]->nama_gudang;
+
+        $ambilDataEks         = $this->md_ekspedisi->getById($data['id_ekspedisi']);
+        $namaEks            = $ambilDataEks[0]->nama_ekspedisi;
+
+        $idTracking         = encrypt($dt['id_pengeluaran_barang']);
+
+        $dataWa = [
+            //'idPenerima1' 	=> 'Test Api Wa Group',
+            //'idPenerima2' 	=> 'Test2',
+            //'idPenerima3' 	=> 'Test Api Wa Group',
+            'idPenerima1'     => 'MARKETING PT. VYM',
+            'idPenerima2'     => 'Gudang PT. VYM',
+            'idPenerima3'     => 'VISILAB',
+            'namaSurat'          => 'Pengeluaran Barang',
+            'statusSurat'     => '',
+            'statusTracking'     => $statusTracking,
+            'status'             => 'Menambahkan Data',
+            'nosj'             => $data['no_pengiriman'],
+            'idTracking'         => $idTracking,
+            'csname'             => $namacs,
+            'namaGudang'         => $namaGudang,
+            'namaEks'         => $namaEks
+        ];
+        // Notifikasi WA Pengeluaran Barang
+        $this->notifWaAppGudangGroup($ulangSend, $dataWa);
+
+
+        ajaxReturnDie('success', 'Data Berhasil di masukan', base_url('pengeluaran_barang'));
+    }
+
+    public function edit($param1)
+    {
+        grantAccessFor('all');
+
+        $id = decrypt($param1);
+        $page_data['switch']                = $this->id_navbar();
+        $page_data['pengeluaran_barang']    = $this->md_pengeluaran_barang->getById($id);
+        foreach ($page_data['pengeluaran_barang'] as $row) {
+            $row->id_pengeluaran_barang = encrypt($row->id_pengeluaran_barang);
+            $row->id_customer = encrypt($row->id_customer);
+            $row->id_gudang = encrypt($row->id_gudang);
+            $row->id_ekspedisi = encrypt($row->id_ekspedisi);
+            $row->tgl_keluar = date('d-m-Y', strtotime($row->tgl_keluar));
+        }
+        $page_data['detail_barang_keluar'] = $this->md_detail_barang_keluar->getByIdPengeluaranBarang($id);
+        foreach ($page_data['detail_barang_keluar'] as $row) {
+            $row->id_detail_barang_keluar = encrypt($row->id_detail_barang_keluar);
+            $row->id_detail_barang = encrypt($row->id_detail_barang);
+            $row->id_barang = encrypt($row->id_barang);
+            $row->id_pengeluaran_barang = encrypt($row->id_pengeluaran_barang);
+            $row->exp_date = $row->exp_date == 0000 - 00 - 00 ? 00 - 00 - 0000 : date('d-m-Y', strtotime($row->exp_date));
+        }
+        $page_data['new_detail_barang_temp'] = $this->md_pengeluaran_barang->getByIdPengeluaranBarang($id);
+        if ($page_data['new_detail_barang_temp']) {
+            foreach ($page_data['new_detail_barang_temp'] as $row) {
+                $row->id_detail_barang_keluar_temp = encrypt($row->id_detail_barang_keluar_temp);
+                $row->id_detail_barang = encrypt($row->id_detail_barang);
+                $row->id_barang = encrypt($row->id_barang);
+                $row->pengguna_id = encrypt($row->pengguna_id);
+                $row->id_pengeluaran_barang = encrypt($row->id_pengeluaran_barang);
+                $row->exp_date = $row->exp_date == 0000 - 00 - 00 ? 00 - 00 - 0000 : date('d-m-Y', strtotime($row->exp_date));
+            }
+        }
+
+        //jika data sudah di gunakan di invoice, tampilkan no invoice berupa link ke halaman invoice tsb
+        if ($page_data['pengeluaran_barang'][0]->id_invoice) {
+            $page_data['data_invoice'] = $this->md_invoice->getById($page_data['pengeluaran_barang'][0]->id_invoice);
+        }
+        $page_data['customer']  = $this->md_customer->getByWhere();
+        $page_data['gudang']  = $this->md_gudang->getByWhere(['g.status' => 1]);
+        $page_data['ekspedisi']  = $this->md_ekspedisi->getByWhere(['g.status' => 1]);
+        $page_data['page_name']  = 'v_pengeluaran_barang_form';
+        $page_data['page_title'] = 'Pengeluaran Barang';
+        $page_data['page_desc']  = 'Management Data Pengeluaran Barang';
+        $this->load->view('index', $page_data);
+    }
+
+    public function delete($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+
+        if ($param == 'detail_barang_keluar_temp') {
+            $id_detail_barang_keluar_temp = decrypt($this->input->post('id_detail_barang_keluar_temp'));
+            $this->md_pengeluaran_barang->deleteDetailBarangTemp($id_detail_barang_keluar_temp);
+            ajaxReturnDie('success', 'Data Berhasil Dihapus', TRUE);
+        } else if ($param == 'dest_temp') {
+            $this->md_pengeluaran_barang->destroyTempData();
+            ajaxReturnDie('success', 'Data Berhasil Dihapus', TRUE);
+        } else if ($param == 'detail_barang_keluar') {
+            $id_detail_barang_keluar = decrypt($param2);
+            //saat delete detail data keluar, qty nya di kembalikan lagi ke stock di detail barang
+            $this->db->trans_begin();
+            $temp = $this->md_detail_barang_keluar->getByWhere($id_detail_barang_keluar);
+            $current_stock = $this->md_detail_barang->getStockDetailBarang($temp[0]->id_detail_barang)[0]->current_stock;
+            $dt['current_stock'] = $current_stock + $temp[0]->qty;
+            $this->md_detail_barang->updateDetailBarang($temp[0]->id_detail_barang, $dt);
+
+            //jika berasal dari penarikan invoice , kebalikan lagi current_qty dari detail_invoice
+            if ($temp[0]->from_detail_barang_invoice) {
+                $current_qty_invoice = $this->md_detail_barang_invoice->getByWhere($temp[0]->from_detail_barang_invoice)[0]->current_qty;
+                $dt2['current_qty'] = $current_qty_invoice + $temp[0]->qty;
+                $this->md_detail_barang_invoice->updateDetailBaranginvoice($temp[0]->from_detail_barang_invoice, $dt2);
+            }
+
+            //jika sudah ada invoice, tidak bisa di hapus
+            if ($temp[0]->id_detail_barang_invoice) {
+                ajaxReturnDie('error', 'Data sudah di gunkan di invoice!');
+            }
+
+            $data['status'] = 0;
+            $this->md_detail_barang_keluar->delete($id_detail_barang_keluar, $data);
+
+            if ($this->db->trans_status() === TRUE) {
+                //jika tarik dari invoice
+                if ($temp[0]->from_detail_barang_invoice) {
+                    //////cek dan update status_barang_keluar///////
+                    $get_detail = $this->md_detail_barang_invoice->getByWhere($temp[0]->from_detail_barang_invoice);
+                    $id_invoice = $get_detail[0]->id_invoice;
+                    $cek_status = $this->md_detail_barang_invoice->getByIdInvoice($id_invoice);
+                    $belum_keluar = [];
+                    $sudah_keluar = [];
+                    $keluar_sebagian = [];
+                    foreach ($cek_status as $row) {
+                        if ($row->qty == $row->current_qty) {
+                            $belum_keluar[] = 1;
+                        } else if ($row->current_qty == 0) {
+                            $sudah_keluar[] = 1;
+                        } else {
+                            $keluar_sebagian[] = 1;
+                        }
+                    }
+                    if (count($cek_status) == count($sudah_keluar)) {
+                        $status['status_barang_keluar'] = 'sudah_keluar';
+                    } else if (count($cek_status) == count($belum_keluar)) {
+                        $status['status_barang_keluar'] = 'belum_keluar';
+                    } else {
+                        $status['status_barang_keluar'] = 'keluar_sebagian';
+                    }
+                    $this->md_invoice->update(['id_invoice' => $id_invoice], $status);
+                    /////end cek///////
+                }
+                $this->db->trans_commit();
+
+                //add log
+                $temp1 = $this->md_detail_barang_keluar->getByWhere($id_detail_barang_keluar);
+                $temp2 = $this->md_barang->getById($temp1[0]->id_barang);
+                $temp3 = $this->md_pengeluaran_barang->getById($temp1[0]->id_pengeluaran_barang);
+                $aksi = 'Hapus Detail Barang';
+                $ket = 'Menghapus barang ' . $temp2[0]->nama_barang . ' pada No Pengiriman: ' . $temp3[0]->no_pengiriman;
+                addlog($aksi, $ket);
+            } else {
+                $this->db->trans_rollback();
+                ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+            }
+            ajaxReturnDie('success', 'Data Berhasil Dihapus', TRUE);
+        } else {
+            //delete pengeluaran barang sekaligus detail barang keluar di dalamnya
+            $id_pengeluaran_barang = decrypt($param);
+            $temp = $this->md_detail_barang_keluar->getByIdPengeluaranBarang($id_pengeluaran_barang);
+
+            //jika pegnlauran barang sudah di tarik dari invoice, data tidak bisa di hapus
+            $cek_pengeluaran_barang = $this->md_pengeluaran_barang->getById($id_pengeluaran_barang)[0]->id_invoice;
+            if ($cek_pengeluaran_barang) {
+                ajaxReturnDie('error', 'Data sudah digunakan di invoice');
+            }
+            $this->db->trans_begin();
+            foreach ($temp as $row) {
+                //jika sudah ada detail_invoice, detail_pengeluaran_barang tidak bisa di hapus
+                if ($row->id_detail_barang_invoice) {
+                    ajaxReturnDie('error', 'Data sudah digunakan di invoice');
+                }
+                $current_stock = $this->md_detail_barang->getStockDetailBarang($row->id_detail_barang)[0]->current_stock;
+                $dt['current_stock'] = $current_stock + $row->qty;
+                $this->md_detail_barang->updateDetailBarang($row->id_detail_barang, $dt);
+
+                ////jika berasal dari penarikan invoice , kebalikan lagi current_qty dari detail_invoice
+                if ($row->from_detail_barang_invoice) {
+                    $current_qty_invoice = $this->md_detail_barang_invoice->getByWhere($row->from_detail_barang_invoice)[0]->current_qty;
+                    $dt2['current_qty'] = $current_qty_invoice + $row->qty;
+                    $this->md_detail_barang_invoice->updateDetailBaranginvoice($row->from_detail_barang_invoice, $dt2);
+                }
+            }
+            $data['status'] = 0;
+            $this->md_pengeluaran_barang->update(['id_pengeluaran_barang' => $id_pengeluaran_barang], $data);
+            $this->md_detail_barang_keluar->deleteByIdPengeluaranBarang($id_pengeluaran_barang, $data);
+            if ($this->db->trans_status() === TRUE) {
+                //jika tarik dari invoice
+                $cek_invoice = $this->md_pengeluaran_barang->getById($id_pengeluaran_barang);
+                if ($cek_invoice[0]->from_invoice) {
+                    //////cek dan update status_barang_keluar///////
+                    $id_invoice = $cek_invoice[0]->from_invoice;
+                    $cek_status = $this->md_detail_barang_invoice->getByIdInvoice($id_invoice);
+                    $belum_keluar = [];
+                    $sudah_keluar = [];
+                    $keluar_sebagian = [];
+                    foreach ($cek_status as $row) {
+                        if ($row->qty == $row->current_qty) {
+                            $belum_keluar[] = 1;
+                        } else if ($row->current_qty == 0) {
+                            $sudah_keluar[] = 1;
+                        } else {
+                            $keluar_sebagian[] = 1;
+                        }
+                    }
+                    if (count($cek_status) == count($sudah_keluar)) {
+                        $status['status_barang_keluar'] = 'sudah_keluar';
+                    } else if (count($cek_status) == count($belum_keluar)) {
+                        $status['status_barang_keluar'] = 'belum_keluar';
+                    } else {
+                        $status['status_barang_keluar'] = 'keluar_sebagian';
+                    }
+
+                    $this->md_invoice->update(['id_invoice' => $id_invoice], $status);
+                    /////end cek///////
+                }
+                $this->db->trans_commit();
+
+                //add log
+                $temp1 = $this->md_pengeluaran_barang->getById($id_pengeluaran_barang);
+                $aksi = 'Hapus Pengeluaran Barang';
+                $ket = 'Menghapus Pengeluaran Barang - No Pengiriman: ' . $temp1[0]->no_pengiriman;
+                addlog($aksi, $ket);
+            } else {
+                $this->db->trans_rollback();
+                ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+            }
+            ajaxReturnDie('success', 'Data berhasil dihapus', 'reload_table');
+        }
+    }
+
+    public function update($param = "")
+    {
+        grantAccessFor('all');
+
+        if ($param == 'detail_barang_keluar') {
+            $id_detail_barang_keluar = decrypt($this->input->post('id_detail_barang_keluar'));
+            $id_detail_barang = decrypt($this->input->post('id_detail_barang_edit'));
+            $data['qty'] = $this->input->post('qty');
+            checkEmptyForm($data);
+
+            //cek apakah data sudah di gunakan di detail_barang_invoice
+            $cek_detail_invoice = $this->md_detail_barang_keluar->getByWhere($id_detail_barang_keluar)[0]->id_detail_barang_invoice;
+            if ($cek_detail_invoice) {
+                ajaxReturnDie('error', 'Data sudah di gunakan di Invoice!');
+            }
+
+            $this->db->trans_begin();
+            $current_qty = $this->md_detail_barang_keluar->getByWhere($id_detail_barang_keluar)[0]->qty;
+
+            //jika pengeluaran barang berdasarkan invoice, update data current_qty milik invoice terkait
+            $from_detail_barang_invoice = $this->md_detail_barang_keluar->getByWhere($id_detail_barang_keluar);
+            if ($from_detail_barang_invoice[0]->from_detail_barang_invoice) {
+                $data_invoice = $this->md_detail_barang_invoice->getByWhere($from_detail_barang_invoice[0]->from_detail_barang_invoice);
+                //kembalikan dahulu qty di pengeluaran barang ke current_qty di invoice, itulah angka maksimal yg bisa di gunakan untuk qty detail_barang_keluar ini
+                if ($data['qty'] > $data_invoice[0]->current_qty + $current_qty) {
+                    ajaxReturnDie('error', 'Qty di invoice tidak cukup');
+                } else {
+                    //kembalikan dahulu qty di detail_pengeluaran_barang ke current_qty invoice, lalu kurangkan current_qty invoice dengan qty dari form
+                    $dt3['current_qty'] = $current_qty + $data_invoice[0]->current_qty - $data['qty'];
+                    $this->md_detail_barang_invoice->updateDetailBaranginvoice($from_detail_barang_invoice[0]->from_detail_barang_invoice, $dt3);
+                }
+            }
+
+            //kalkulasi stok di detail_barang
+            $current_stock = $this->md_detail_barang->getStockDetailBarang($id_detail_barang)[0]->current_stock;
+            if ($data['qty'] - $current_qty > $current_stock)
+                ajaxReturnDie('error', 'Stock tidak cukup!');
+
+            if ($data['qty'] > $current_qty) {
+                $dt2['current_stock'] = $current_stock - ($data['qty'] - $current_qty);
+            } else {
+                $dt2['current_stock'] = $current_stock + ($current_qty - $data['qty']);
+            }
+            //update current_stock
+            $this->md_detail_barang->updateDetailBarang($id_detail_barang, $dt2);
+
+            //update detail barang keluar asli
+            $this->md_detail_barang_keluar->updateDetailBarangKeluar($id_detail_barang_keluar, $data);
+
+            if ($this->db->trans_status() === TRUE) {
+                //jika tarik dari invoice
+                if ($from_detail_barang_invoice[0]->from_detail_barang_invoice) {
+                    //////cek dan update status_barang_keluar///////
+                    $id_invoice = $data_invoice[0]->id_invoice;
+                    $cek_status = $this->md_detail_barang_invoice->getByIdInvoice($id_invoice);
+                    $belum_keluar = [];
+                    $sudah_keluar = [];
+                    $keluar_sebagian = [];
+                    foreach ($cek_status as $row) {
+                        if ($row->qty == $row->current_qty) {
+                            $belum_keluar[] = 1;
+                        } else if ($row->current_qty == 0) {
+                            $sudah_keluar[] = 1;
+                        } else {
+                            $keluar_sebagian[] = 1;
+                        }
+                    }
+
+                    if (count($cek_status) == count($sudah_keluar)) {
+                        $status['status_barang_keluar'] = 'sudah_keluar';
+                    } else if (count($cek_status) == count($belum_keluar)) {
+                        $status['status_barang_keluar'] = 'belum_keluar';
+                    } else {
+                        $status['status_barang_keluar'] = 'keluar_sebagian';
+                    }
+                    $this->md_invoice->update(['id_invoice' => $id_invoice], $status);
+                    /////end cek///////
+                }
+                $this->db->trans_commit();
+
+                //add log
+                $temp1 = $this->md_detail_barang_keluar->getByWhere($id_detail_barang_keluar);
+                $temp2 = $this->md_barang->getById($temp1[0]->id_barang);
+                $temp3 = $this->md_pengeluaran_barang->getById($temp1[0]->id_pengeluaran_barang);
+                $aksi = 'Edit Detail Barang';
+                $ket = 'Mengedit barang ' . $temp2[0]->nama_barang . ' pada No Pengiriman: ' . $temp3[0]->no_pengiriman;
+                addlog($aksi, $ket);
+            } else {
+                $this->db->trans_rollback();
+                ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+            }
+            ajaxReturnDie('success', 'Data Berhasil di Update!', TRUE);
+        } else if ($param == 'file_pendukung') {
+            $id = decrypt($this->input->post('id_pengeluaran_barang'));
+
+            //cek file sebelumnya, jika ada hapus file itu
+            $tmp = $this->md_pengeluaran_barang->getById($id);
+            if ($tmp[0]->file_pendukung) {
+                file_exists('uploads/pengeluaran_barang/' . $tmp[0]->file_pendukung) ? unlink('uploads/pengeluaran_barang/' . $tmp[0]->file_pendukung) : '';
+            }
+
+            $file = $_FILES['file_pendukung'];
+            if ($file['name']) {
+                $config['file_name']        = 'PengeluaranBarang_' . $tmp[0]->no_pengiriman . '_' . date_view_format($tmp[0]->tgl_keluar) . '_' . time();
+                $config['upload_path']      = 'uploads/pengeluaran_barang';
+                // $config['allowed_types']    = 'pdf|xls|xlsx|doc|docx|jpg|png|jpeg';
+                $config['allowed_types']    = '*';
+                $config['max_size']         = 4000;
+                $this->upload->initialize($config);
+                if (!$this->upload->do_upload('file_pendukung')) {
+                    ajaxReturnDie('error', $this->upload->display_errors());
+                } else {
+                    $dt = $this->upload->data();
+                    $data['file_pendukung'] = $dt['file_name'];
+                }
+            } else {
+                ajaxReturnDie('error', 'Silahkan upload File Pendukung');
+            }
+            $this->md_pengeluaran_barang->update(['id_pengeluaran_barang' => $id], $data);
+            ajaxReturnDie('success', 'File Berhasil di Upload', TRUE);
+        } else {
+            // if($this->input->post('no_batch')){
+            //     //pengecekan no_batch (no_batch tidak boleh sama dalam satu pengeluaran barang)
+            //     $cek_batch = array_count_values($this->input->post('no_batch'));
+            //     foreach ($cek_batch as $row) {
+            //         if ($row > 1) {
+            //             ajaxReturnDie('error', 'No Batch tidak boleh sama');
+            //         }
+            //     }
+            // }
+
+            //cek apakah data sudah di pakai di invoice
+            $cek_invoice = $this->md_pengeluaran_barang->getById(decrypt($this->input->post('id_pengeluaran_barang')));
+            if ($cek_invoice[0]->id_invoice) {
+                ajaxReturnDie('error', 'Data sudah di gunakan di invoice');
+            }
+
+            //update data pengeluaran barang
+            $id_pengeluaran_barang = decrypt($this->input->post('id_pengeluaran_barang'));
+            $data['tgl_keluar'] = date('Y-m-d', strtotime($this->input->post('tgl_keluar')));
+            $data['no_pengiriman'] = $this->input->post('no_pengiriman');
+            $data['id_ekspedisi'] = decrypt($this->input->post('id_ekspedisi'));
+            $data['keterangan'] = $this->input->post('keterangan');
+            $data['alamat'] = $this->input->post('alamat');
+            $data['resi'] = $this->input->post('resi');
+            $data['status_pengiriman'] = $this->input->post('status_pengiriman');
+            $data['no_po'] = $this->input->post('no_po');
+            //cek apakah no_pengiriman unique
+            $cek = $this->md_pengeluaran_barang->getByWHere(['pb.no_pengiriman' => $data['no_pengiriman']]);
+            if ($cek && $id_pengeluaran_barang != $cek[0]->id_pengeluaran_barang) {
+                ajaxReturnDie('error', 'No Pengiriman Sudah Ada');
+            }
+
+            $this->db->trans_begin();
+            $this->md_pengeluaran_barang->update(['id_pengeluaran_barang' => $id_pengeluaran_barang], $data);
+
+            if ($this->input->post('id_barang')) {
+                //add detail barang keluar
+                $dt['id_pengeluaran_barang'] = $id_pengeluaran_barang;
+                $id_barang = $this->input->post('id_barang');
+                foreach ($id_barang as $key => $row) {
+                    //jika tidak ada id_detail_barang_keluar berarti data temp, jadi harus di kurangi dulu curretn stock dengan qty nya dulu
+                    if (!isset($this->input->post('id_detail_barang_keluar')[$key])) {
+                        //kurangi jumlah stock di detail_barang
+                        $id_detail_barang = decrypt($this->input->post('id_detail_barang')[$key]);
+                        $current_stock = $this->md_detail_barang->getStockDetailBarang($id_detail_barang)[0]->current_stock;
+                        if ($this->input->post('qty')[$key] > $current_stock) {
+                            ajaxReturnDie('error', 'Stock untuk No Batch ' . $dt['no_batch'] . ' tidak cukup!');
+                        }
+                        $stock['current_stock'] = $current_stock - $this->input->post('qty')[$key];
+                        $this->md_detail_barang->updateDetailBarang($id_detail_barang, $stock);
+                    }
+                    $dt['id_barang'] = decrypt($this->input->post('id_barang')[$key]);
+                    $dt['id_detail_barang'] = decrypt($this->input->post('id_detail_barang')[$key]);
+                    $dt['qty'] = $this->input->post('qty')[$key];
+                    $dt['no_batch'] = $this->input->post('no_batch')[$key];
+                    $dt['exp_date'] = date('Y-m-d', strtotime($this->input->post('exp_date')[$key]));
+                    $this->md_detail_barang_keluar->add($dt);
+                }
+            }
+            //destroy new detail barang di tampilan edit
+            $this->md_pengeluaran_barang->destroyNewTempDetailBarang($id_pengeluaran_barang);
+
+            if ($this->db->trans_status() === TRUE) {
+                //jika tarik dari invoice
+                if ($cek_invoice[0]->from_invoice) {
+                    //////cek dan update status_barang_keluar///////
+                    $id_invoice = $cek_invoice[0]->from_invoice;
+                    $cek_status = $this->md_detail_barang_invoice->getByIdInvoice($id_invoice);
+                    $belum_keluar = [];
+                    $sudah_keluar = [];
+                    $keluar_sebagian = [];
+                    foreach ($cek_status as $row) {
+                        if ($row->qty == $row->current_qty) {
+                            $belum_keluar[] = 1;
+                        } else if ($row->current_qty == 0) {
+                            $sudah_keluar[] = 1;
+                        } else {
+                            $keluar_sebagian[] = 1;
+                        }
+                    }
+
+                    if (count($cek_status) == count($sudah_keluar)) {
+                        $status['status_barang_keluar'] = 'sudah_keluar';
+                    } else if (count($cek_status) == count($belum_keluar)) {
+                        $status['status_barang_keluar'] = 'belum_keluar';
+                    } else {
+                        $status['status_barang_keluar'] = 'keluar_sebagian';
+                    }
+
+                    $this->md_invoice->update(['id_invoice' => $id_invoice], $status);
+                    /////end cek///////
+                }
+                $this->db->trans_commit();
+
+                //add log
+                $aksi = 'Edit Pengeluaran Barang';
+                $ket = 'Mengedit data Pengeluaran Barang - No Pengiriman : ' . $data['no_pengiriman'];
+                addlog($aksi, $ket);
+            } else {
+                $this->db->trans_rollback();
+                ajaxReturnDie('error', 'Terdapat kesalahan dalam menginputkan data. Hubungi Developer!');
+            }
+
+            ajaxReturnDie('success', 'Data Berhasil di ubah', TRUE);
+        }
+    }
+
+    public function print($param = "", $param2 = "", $param3 = "", $param4 = "")
+    {
+        $data['pengeluaran_barang'] = $this->md_pengeluaran_barang->getByWhere(['pb.id_pengeluaran_barang' => decrypt($param4)]);
+        $data['detail_barang_keluar'] = $this->md_detail_barang_keluar->getByIdPengeluaranBarang(decrypt($param4));
+        $data['kop'] = $param;
+        $data['nama_pengirim'] = $param2;
+        $data['alamat_form'] = $param3;
+        $this->load->view('pages/v_print/print_pengeluaran_barang', $data);
+    }
+
+    public function pagination()
+    {
+        grantAccessFor('all');
+
+        $dt    = $this->md_pengeluaran_barang->getAll();
+        $start = $this->input->post('start');
+        $data  = array();
+        foreach ($dt['data'] as $row) {
+            $id       = encrypt($row->id_pengeluaran_barang);
+
+            $barangDetail = $this->md_pengeluaran_barang->getBarangDetailByPengeluaran($row->id_pengeluaran_barang);
+            $namaBarangList = array_map(function ($b) {
+                return $b->nama_barang;
+            }, $barangDetail);
+            $detail_barang = implode(', ', $namaBarangList);
+
+            // ✅ logika penambahan untuk checbox status email ke tiki
+            $checkbox_tiki = '';
+            // ID pengguna yang diizinkan untuk Konfirmasi TIKI (sessPenggunaId(7))
+            if (sessPenggunaId() == 7 || sessPenggunaId() == 1 || sessPenggunaId() == 749 || sessPenggunaId() == 73) {
+                // Cek jika nama ekspedisi mengandung kata "TIKI" (case insensitive)
+                if (stripos($row->nama_ekspedisi, 'tiki') !== false) {
+                    $checked = ($row->status_email_tiki == 1) ? 'checked disabled' : '';
+                    $label = ($row->status_email_tiki == 1) ? 'Sudah Email TIKI' : 'Konfirmasi Email TIKI';
+
+                    $checkbox_tiki = '
+        <div class="d-flex flex-column g-2">
+            <input type="checkbox" class="check-email-tiki" data-id="' . $id . '" id="tiki_' . $id . '" value="1" ' . $checked . '>
+            <label for="tiki_' . $id . '"><small>' . $label . '</small></label>
+        </div>';
+                } else {
+                    $checkbox_tiki = '
+                    <div class="d-flex justify-content-center my-3">
+                        <span class="badge badge-secondary">Ekspedisi Lain</span>
+                    </div>
+                    ';
+                }
+            } else {
+                // Jika bukan ID 7, tampilkan status saja tanpa checkbox aktif
+                $checkbox_tiki = ($row->status_email_tiki == 1) ? '<span class="badge badge-success">Sudah Di Email</span>' : '<span class="badge badge-danger">Ekspedisi Lain</span>';
+            }
+            // end logika penambahan checkbox status email ke tiki ✅
+
+            $li_btn   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-sm btn-success btn-file" no-pengiriman="' . $row->no_pengiriman . '" data-id="' . $id . '"><i class="far fa-file-pdf"></i></button>
+                    <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="pengeluaran_barang/delete"><i class="bx bx-trash"></i></button>
+                </div>';
+            $no_invoice = $row->id_invoice ? $this->md_invoice->getById($row->id_invoice)[0]->no_invoice : NULL;
+            $tarik_dari_ivoice = $row->from_invoice ? $this->md_invoice->getById($row->from_invoice)[0]->no_invoice : NULL;
+            $sudah_buat_invoice = $row->id_invoice ? '<a href="invoice/edit/' . encrypt($row->id_invoice) . '" class="btn btn-sm btn-primary">' . $no_invoice . '</a>' : NULL;
+            $link_invoice = $row->from_invoice ? '<a href="invoice/edit/' . encrypt($row->from_invoice) . '" class="btn btn-sm btn-warning">' . $tarik_dari_ivoice . '</a>' : NULL;
+            $th = array();
+            $th[] = ++$start . '.';
+            $th[] = $row->no_pengiriman;
+            $th[] = date('d-m-Y', strtotime($row->tgl_keluar));
+            $th[] = $row->nama_customer;
+            $th[] = $row->nama_gudang;
+            $th[] = $row->keterangan;
+            $th[] = $detail_barang;
+            $th[] = $sudah_buat_invoice;
+            $th[] = $link_invoice;
+            $th[] = $checkbox_tiki;
+            $th[] = $li_btn;
+            $data[] = $th;
+        }
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+    }
+
+    public function notifWaAppGudangGroup($ulang, $detail)
+    {
+        //ambil data pengaju
+        $ambilDataPengaju     = $this->md_pengguna->getById(sessPenggunaId());
+        $namaPengaju            = $ambilDataPengaju[0]->nama;
+
+
+
+        for ($i = 1; $i <= $ulang; $i++) {
+            if ($i == 1) {
+                $idpenerima = $detail['idPenerima1'];
+                $penerima   = '_Team Marketing_';
+            } else if ($i == 2) {
+                $idpenerima = $detail['idPenerima2'];
+                $penerima   = '_Team Warehouse_';
+            } else if ($i == 3) {
+                $idpenerima = $detail['idPenerima3'];
+                $penerima   = '_Team Visilab_';
+            }
+
+
+            //abaikan error
+            error_reporting(E_ALL & ~E_NOTICE);
+            ini_set('display_errors', 0);
+            //
+
+            $url = 'https://office.visiyosindo.id/pengeluaran_barang/edit/';
+
+            $dataWa = [
+                'namaSurat'     => urlencode($detail['namaSurat']),
+                'noPenerima'     => $idpenerima,
+                'namaPengaju'   => urlencode($namaPengaju),
+                'csname'         => urlencode($detail['csname']),
+                'namaGudang'     => urlencode($detail['namaGudang']),
+                'namaEks'         => urlencode($detail['namaEks']),
+                'nosj'             => urlencode($detail['nosj']),
+                'statusTracking' => urlencode($detail['statusTracking']),
+                'statusSurat'   => urlencode($detail['statusSurat']),
+                'status'         => urlencode($detail['status']),
+                'url'             => $url,
+                'idTracking'     => urlencode($detail['idTracking']),
+                'namaPenerima'    => $penerima
+            ];
+
+            waAppGroupSJ($dataWa);
+        }
+    }
+
+    public function get_customer()
+    {
+        $id_customer = decrypt($this->input->post('id_customer'));
+        $data = $this->md_pengeluaran_barang->get_customer_by_id($id_customer);
+        echo json_encode($data);
+    }
+
+    public function exportlaporan()
+    {
+
+        $data = $this->md_pengeluaran_barang->getAllKeluarByTGL($this->input->get('tglawal'), $this->input->get('tglakhir'));
+
+
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
+        $style_col = [
+            'font' => ['bold' => true], // Set font nya jadi bold
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+            ],
+            'borders' => [
+                'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
+                'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
+                'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+                'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+            ]
+        ];
+
+
+        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
+        $style_row = [
+            'alignment' => [
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+            ],
+            'borders' => [
+                'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
+                'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
+                'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+                'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+            ]
+        ];
+
+        $sheet->setCellValue('A1', "DATA PENGELUARAN BARANG "); // Set kolom A1 dengan tulisan "DATA SISWA"
+        $sheet->mergeCells('A1:L1'); // Set Merge Cell pada kolom A1 sampai E1
+        $sheet->getStyle('A1')->getFont()->setBold(true); // Set bold kolom A1
+
+        // Buat header tabel nya pada baris ke 3
+        $sheet->setCellValue('A4', 'No');
+        $sheet->setCellValue('B4', 'Nama Barang');
+        $sheet->setCellValue('C4', 'Kategori');
+        $sheet->setCellValue('D4', 'Kode Produk');
+        $sheet->setCellValue('E4', 'AKL');
+        $sheet->setCellValue('F4', 'Serial Number');
+        $sheet->setCellValue('G4', 'Jumlah Keluar');
+        $sheet->setCellValue('H4', 'Tanggal Keluar');
+        $sheet->setCellValue('I4', 'Tanggal Kadaluarsa');
+        $sheet->setCellValue('J4', 'No Pengeluaran Barang');
+        $sheet->setCellValue('K4', 'Nama Customer');
+
+        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
+        $sheet->getStyle('A4')->applyFromArray($style_col);
+        $sheet->getStyle('B4')->applyFromArray($style_col);
+        $sheet->getStyle('C4')->applyFromArray($style_col);
+        $sheet->getStyle('D4')->applyFromArray($style_col);
+        $sheet->getStyle('E4')->applyFromArray($style_col);
+        $sheet->getStyle('F4')->applyFromArray($style_col);
+        $sheet->getStyle('G4')->applyFromArray($style_col);
+        $sheet->getStyle('H4')->applyFromArray($style_col);
+        $sheet->getStyle('I4')->applyFromArray($style_col);
+        $sheet->getStyle('J4')->applyFromArray($style_col);
+        $sheet->getStyle('K4')->applyFromArray($style_col);
+
+
+        $kolom = 5;
+        $nomor = 1;
+
+        foreach ($data as $marketing) {
+
+            $exp = $marketing->exp_date;
+
+            if (
+                empty($exp) ||
+                $exp == '0000-00-00' ||
+                $exp == '0' ||
+                date('Y-m-d', strtotime($exp)) == '1970-01-01'
+            ) {
+                $hasil = '';
+            } else {
+                $hasil = date('Y-m-d', strtotime($exp));
+            }
+
+
+            $spreadsheet->setActiveSheetIndex(0)
+                ->setCellValue('A' . $kolom, $nomor)
+                ->setCellValue('B' . $kolom, $marketing->nama_barang)
+                ->setCellValue('C' . $kolom, $marketing->nama_kategori)
+                ->setCellValue('D' . $kolom, $marketing->kode_produk)
+                ->setCellValue('E' . $kolom, $marketing->akl)
+                ->setCellValue('F' . $kolom, $marketing->no_batch)
+                ->setCellValue('G' . $kolom, $marketing->qty)
+                ->setCellValue('H' . $kolom, date('Y-m-d', strtotime($marketing->tgl_keluar)))
+                ->setCellValue('I' . $kolom, $hasil)
+                ->setCellValue('J' . $kolom, $marketing->no_pengiriman)
+                ->setCellValue('K' . $kolom, $marketing->nama_customer);
+
+            $kolom++;
+            $nomor++;
+        }
+
+        // Set width kolom
+        $sheet->getColumnDimension('A')->setWidth(5); // Set width kolom A
+        $sheet->getColumnDimension('B')->setWidth(35); // Set width kolom B
+        $sheet->getColumnDimension('C')->setWidth(30); // Set width kolom C
+        $sheet->getColumnDimension('D')->setWidth(20); // Set width kolom D
+        $sheet->getColumnDimension('E')->setWidth(20); // Set width kolom E
+        $sheet->getColumnDimension('F')->setWidth(20); // Set width kolom F
+        $sheet->getColumnDimension('G')->setWidth(20); // Set width kolom G
+        $sheet->getColumnDimension('H')->setWidth(22); // Set width kolom H
+        $sheet->getColumnDimension('I')->setWidth(22); // Set width kolom I
+        $sheet->getColumnDimension('J')->setWidth(30); // Set width kolom J
+        $sheet->getColumnDimension('K')->setWidth(35); // Set width kolom J
+
+        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+        $sheet->getDefaultRowDimension()->setRowHeight(-1);
+        // Set orientasi kertas jadi LANDSCAPE
+        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+        // Set judul file excel nya
+        $sheet->setTitle("Data Pelanggan");
+        ob_end_clean();
+        // Proses file excel
+        $filename = "Data Pengeluaran Barang.xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename=' . $filename);
+        header('Cache-Control: max-age=0');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+    }
+
+    // controller untuk melakukan update data pada status email tiki
+    public function update_status_tiki()
+    {
+        grantAccessFor('all');
+
+        // 1. Agar Script tidak berhenti jika koneksi user putus
+        ignore_user_abort(true);
+        set_time_limit(0); // Ubah ke 0 (unlimited) agar tidak time limit
+
+        if (sessPenggunaId() != 7 && sessPenggunaId() != 1) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak! Fitur ini hanya untuk ID pengguna 7.']);
+            return;
+        }
+
+        $id_pengeluaran_barang = decrypt($this->input->post('id'));
+
+        // --- CEK DATA (Validasi) ---
+        $dataPB = $this->md_pengeluaran_barang->getById($id_pengeluaran_barang);
+        if (empty($dataPB)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Data tidak ditemukan!']);
+            return;
+        }
+
+        $ekspedisi = $this->md_ekspedisi->getById($dataPB[0]->id_ekspedisi);
+        $namaEkspedisi = !empty($ekspedisi) ? $ekspedisi[0]->nama_ekspedisi : '-';
+
+        // --- TRANSAKSI DATABASE ---
+        $this->db->trans_begin();
+
+        // 2. Update status di Database
+        $dataUpdate['status_email_tiki'] = 1;
+        $this->md_pengeluaran_barang->update(['id_pengeluaran_barang' => $id_pengeluaran_barang], $dataUpdate);
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            echo json_encode(['status' => 'error', 'msg' => 'Gagal update database!']);
+            return;
+        } else {
+            $this->db->trans_commit();
+
+            // 3. Catat Log
+            $aksi = 'Konfirmasi Email TIKI';
+            $ket  = 'User mengkonfirmasi sudah email TIKI untuk No Pengiriman: ' . $dataPB[0]->no_pengiriman;
+            addlog($aksi, $ket);
+        }
+
+        // ============================================================
+        // PERBAIKAN UTAMA: Tutup Session Write agar browser tidak hang
+        // ============================================================
+        session_write_close();
+
+        // 4. Persiapan Data Pesan WA
+        $barangDetail = $this->md_pengeluaran_barang->getBarangDetailByPengeluaran($id_pengeluaran_barang);
+        $namaBarangList = [];
+        if ($barangDetail) {
+            $namaBarangList = array_map(function ($b) {
+                return "- " . $b->nama_barang;
+            }, $barangDetail);
+        }
+        $statusTracking = implode("\n", $namaBarangList);
+
+        $ambilDataPengaju = $this->md_pengguna->getById(sessPenggunaId());
+        $namaPengaju      = $ambilDataPengaju[0]->nama;
+
+        $dataWa = [
+            'namaSurat'      => 'Pengeluaran Barang',
+            'namaPengaju'    => urlencode($namaPengaju),
+            'csname'         => urlencode($dataPB[0]->nama_customer),
+            'namaGudang'     => urlencode($dataPB[0]->nama_gudang),
+            'namaEks'        => urlencode($namaEkspedisi),
+            'nosj'           => urlencode($dataPB[0]->no_pengiriman),
+            'statusTracking' => urlencode($statusTracking),
+            'statusSurat'    => urlencode("Sudah Di-email ke Pihak TIKI"),
+            'status'         => urlencode("Update Status TIKI"),
+            'url'            => 'https://office.visiyosindo.id/pengeluaran_barang/edit/',
+            'idTracking'     => urlencode(encrypt($id_pengeluaran_barang)),
+        ];
+
+        // --- LIST PENERIMA ---
+        $penerimaList = [
+            [
+                'id'   => '082324987292', // Team Warehouse
+                'nama' => '_Team Warehouse_'
+            ],
+            [
+                'id'   => '081378969997', // Budi Pradikno
+                'nama' => '_Budi Pradikno_'
+            ]
+        ];
+
+        // --- LOOPING PENGIRIMAN ---
+        foreach ($penerimaList as $target) {
+            $dataWa['noPenerima']   = $target['id'];
+            $dataWa['namaPenerima'] = $target['nama'];
+
+            try {
+                // Panggil Helper WA
+                waAppPersonalSJ($dataWa);
+            } catch (Exception $e) {
+                addlog('Error WA TIKI', 'Gagal kirim ke: ' . $target['id']);
+            }
+
+            // Sleep dikurangi agar tidak terlalu lama (opsional)
+            sleep(1);
+        }
+
+        echo json_encode(['status' => 'success', 'msg' => 'Status berhasil diupdate dan Notifikasi dikirim!']);
+    }
+}

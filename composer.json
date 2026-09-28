@@ -1,0 +1,12 @@
+{
+	"require": {
+		"phpoffice/phpspreadsheet": "^1.13",
+		"hashids/hashids": "^4.1",
+		"dompdf/dompdf": "^1.2",
+		"mpdf/mpdf": "^8.1",
+		"chriskacerguis/codeigniter-restserver": "^3.1"
+	},
+	"config": {
+    	"vendor-dir": "application/vendor"
+	}
+}

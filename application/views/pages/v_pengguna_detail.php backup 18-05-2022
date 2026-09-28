@@ -1,0 +1,346 @@
+<header class="page-header">
+    <h2><i class="icons fas fa-user"></i>&nbsp;<?= $page_title ?></h2>
+    <div class="right-wrapper text-left">
+        <ol class="breadcrumbs">
+            <li><span><?= $page_desc ?></span></li>
+        </ol>
+    </div>
+</header>
+<div class="col-xl-8 mb-8 mb-xl-0;" style=" margin: auto;">
+    <div class="card-body" style="background-color:#FFF;padding:10%">
+        <div class="text-center mt-0">
+            <h2>Data Karyawan</h2>
+        </div>
+        <?= form_open('pengguna/update/edit_on_detail', array('id' => 'main-form', 'autocomplete' => 'off')); ?>
+        <!-- value preview -->
+        <div id="value_preview">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Nama Karyawan <span class="text-danger"></span></label>
+                        <input class="form-control" type="text" id="nama" name="nama" value="<?= $data_pengguna[0]->nama ?>">
+                        <div id="danger-alert"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">No Pegawai <span class="text-danger"></span></label>
+                        <input class="form-control" type="number" id="no_pegawai" name="no_pegawai" value="<?= $data_pengguna[0]->no_pegawai ?>">
+                        <div id="danger-alert"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">No Hp<span class="text-danger"></span></label>
+                        <input class="form-control" type="number" name="no_hp" id="no_hp" value="<?= $data_pengguna[0]->no_hp ?>">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Email <span class="text-danger"></span></label>
+                        <input class="form-control" type="text" id="email" name="email" value="<?= $data_pengguna[0]->email ?>">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Status Karyawan<span class="text-danger"></span></label>
+                        <select class="form-control " name="status_karyawan" id="status_karyawan">
+                            <option value="">Pilih</option>
+                            <option <?= $data_pengguna[0]->status_karyawan == 'training' ? 'selected' : '' ?> value="training">Training</option>
+                            <option <?= $data_pengguna[0]->status_karyawan == 'kontrak' ? 'selected' : '' ?> value="kontrak">Kontrak</option>
+                            <option <?= $data_pengguna[0]->status_karyawan == 'tetap' ? 'selected' : '' ?> value="tetap">Tetap</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Lama Training (bulan) <span class="text-danger"></span></label>
+                        <input class="form-control" type="text" id="lama_training" name="lama_training" value="<?= $data_pengguna[0]->lama_training ?>">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Jabatan<span class="text-danger"></span></label>
+                        <input class="form-control" type="text" name="jabatan" id="jabatan" value="<?= $data_pengguna[0]->jabatan ?>">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Pendidikan Terakhir <span class="text-danger"></span></label>
+                        <input class="form-control" type="text" id="pendidikan" name="pendidikan" value="<?= $data_pengguna[0]->pendidikan ?>">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Kontak Keluarga<span class="text-danger"></span></label>
+                        <input class="form-control" type="text" name="kontak_keluarga" id="kontak_keluarga" value="<?= $data_pengguna[0]->kontak_keluarga ?>">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">Hubungan Keluarga <span class="text-danger"></span></label>
+                        <input class="form-control" type="text" id="hubungan_keluarga" name="hubungan_keluarga" value="<?= $data_pengguna[0]->hubungan_keluarga ?>">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group  mb-2 pt-1">
+                        <label class="col-form-label">Tanggal Masuk</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                            <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "dd-mm-yyyy"}' class="form-control" name="tgl_masuk" id="tgl_masuk" value="<?= $data_pengguna[0]->tgl_masuk == NULL ? ''  : date('d-m-Y', strtotime($data_pengguna[0]->tgl_masuk)); ?>" required data-plugin-datepicker>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group  mb-2 pt-1">
+                        <label class="col-form-label">Tanggal Keluar</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                            <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "dd-mm-yyyy"}' class="form-control" name="tgl_keluar" id="tgl_keluar" value="<?= $data_pengguna[0]->tgl_keluar == NULL ? ''  : date('d-m-Y', strtotime($data_pengguna[0]->tgl_keluar)); ?>" required data-plugin-datepicker>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group  mb-2 pt-1">
+                        <label class="col-form-label">Tanggal Kontrak</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                            <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "dd-mm-yyyy"}' class="form-control" name="tgl_kontrak" id="tgl_kontrak" value="<?= $data_pengguna[0]->tgl_kontrak == NULL ? ''  : date('d-m-Y', strtotime($data_pengguna[0]->tgl_kontrak)); ?>" required data-plugin-datepicker>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                <div class="form-group mb-2 pt-1">
+                        <label class=" col-form-label">No Rekening <span class="text-danger"></span></label>
+                        <input class="form-control" type="number" id="no_rek" name="no_rek" value="<?= $data_pengguna[0]->no_rek ?>">
+                        <div id="danger-alert"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group mb-2 pt-1">
+                <label class=" col-form-label">Alasan Keluar <span class="text-danger">*</span></label>
+                <textarea class="form-control" name="alasan_keluar" id="alasan_keluar" required placeholder="..."><?= $data_pengguna[0]->alasan_keluar ?? NULL ?></textarea>
+            </div>
+            <div class="form-group mb-2 pt-1">
+                <label class=" col-form-label">Keterangan Lainnya</label>
+                <textarea class="form-control" name="keterangan_lain" id="keterangan_lain" required placeholder="..."><?= $data_pengguna[0]->keterangan_lain ?? NULL ?></textarea>
+            </div>
+            <div class="form-group mb-2 pt-1">
+                <input type="checkbox" <?= $data_pengguna[0]->terima_tunjangan_tt == 1 ? 'checked' : '' ?> name="terima_tunjangan_tt">
+                <label class=" col-form-label">Terima Tunjangan Tidak Tetap</label>
+            </div>
+            <div id="files">
+                <div class="row">
+
+                    <?php $checklist = '<span class="text-success">&nbsp<i class="fas fa-check-circle"></i></span>' ?>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">Pas Foto</label><?= $data_pengguna[0]->file_foto ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="foto" action-type='foto'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">Ijazah</label><?= $data_pengguna[0]->file_ijazah ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="ijazah" action-type='ijazah'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">Transkip Nilai</label><?= $data_pengguna[0]->file_transkip ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="trankip" action-type='transkip'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">KTP</label><?= $data_pengguna[0]->file_ktp ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="ktp" action-type='ktp'><i class="far fa-file"></i> File</button><br>
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label judul">KK</label><?= $data_pengguna[0]->file_kk ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="kk" action-type='kk'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">SIM</label><?= $data_pengguna[0]->file_sim ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="sim" action-type='sim'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">Kartu BPJS</label><?= $data_pengguna[0]->file_bpjs ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="bpjs" action-type='bpjs'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">SKCK</label><?= $data_pengguna[0]->file_skck ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="skck" action-type='skck'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">Buku Tabungan</label><?= $data_pengguna[0]->file_no_rek ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="no_rek" action-type='no_rek'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label for="InputExperience" class="col-form-label">Surat Domisili</label><?= $data_pengguna[0]->file_domisili ? $checklist : '' ?><br>
+                        <button type="button" class="btn btn-primary btn-file" id="domisili" action-type='domisili'><i class="far fa-file"></i> File</button><br>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end value preview -->
+        <br>
+        <div class="modal-footer">
+            <input type="hidden" name="pengguna_id" id="pengguna_id" value="<?= encrypt($data_pengguna[0]->pengguna_id) ?>">
+            <?php if (isAdmin() || sessPenggunaId() == $data_pengguna[0]->pengguna_id) { ?>
+                <button type="button" class="btn btn-warning btn-reset-password" data-dismiss="modal">Reset Password</button>
+            <?php } ?>
+            <button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Kembali</button>
+            <?php if (isAdmin() || isHrd()) { ?>
+                <button type="button" class="btn btn-success btn-save">Simpan</button>
+            <?php } ?>
+        </div>
+        <?= form_close(); ?>
+    </div>
+</div>
+
+<div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content ">
+            <div class="modal-header bg-dark text-light">
+                <h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Form Pengguna</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <?= form_open('#', array('id' => 'modal-form', 'autocomplete' => 'off')); ?>
+            <div class="modal-body">
+                <div class="form-group form-group-last password-form">
+                    <label for="level" class="form-control-label">Password <span class="text-danger">*</span> :</label>
+                    <div class="form-inline row">
+                        <div class="col-md-6 form-group-sub">
+                            <input class="form-control" type="password" placeholder="Password" name="password" id="password" required>
+                        </div>
+                        <div class="col-md-6 form-group-sub">
+                            <input class="form-control" type="password" placeholder="Confirm Password" name="rpassword" id="rpassword" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="is_aktif"></div>
+                <input type="hidden" id="pengguna_id" name="pengguna_id" value="<?= encrypt($data_pengguna[0]->pengguna_id) ?>">
+                <button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+                <?php if (isAdmin() || isHrd()) { ?>
+                    <button type="button" class="btn btn-success btn-save">Simpan</button>
+                <?php } ?>
+            </div>
+            <?= form_close(); ?>
+        </div>
+    </div>
+</div>
+
+<div id="file-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content ">
+            <div class="modal-header bg-dark text-light">
+                <h4 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <?= form_open('#', array('id' => 'file-form', 'autocomplete' => 'off')); ?>
+            <div class="modal-body">
+                <?php if (isAdmin() || isHrd()) { ?>
+                    <div class="form-group mb-2 pt-1">
+                        <label for="InputExperience" class="col-form-label">File Pendukung :</label>
+                        <input type="file" class="form-control" name="file" id="file_input">
+                        <small class="text-danger">upload file jpg, jpeg, png, pdf, doc dan xls, max 4mb</small>
+                    </div>
+                <?php } ?>
+                <div>
+                    <div class="text-center mb-2">
+                        <button type="button" id="btn-lihat" class="btn btn-primary">Lihat File</button>
+                    </div>
+                    <div class="text-center">
+                        <a href="javascript:" id="btn-download"><i class="fas fa-download"></i> Download File</a>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="pengguna_id" name="pengguna_id" value="<?= encrypt($data_pengguna[0]->pengguna_id) ?>">
+                    <input class="form-control" type="hidden" id="object" name="object">
+                    <button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+                    <?php if (isAdmin() || isHrd()) { ?>
+                        <button type="button" id="save-form" class="btn btn-success btn-save">Simpan</button>
+                    <?php } ?>
+                </div>
+            </div>
+            <?= form_close(); ?>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        $(document).on('click', '.btn-reset-password', function() {
+            var object = 'pengguna'
+            // var id = $(this).data("id")
+            // $('#main-modal #pengguna_id').val(id)
+            $('#main-modal #modal-label').html('<i class="fa fa-refresh"></i> Form Reset Password')
+            $('#main-modal #modal-form').attr('action', object + '/reset')
+            $('#main-modal').modal()
+            togglePasswordForm('show')
+        })
+
+        $(document).on('click', '.btn-file', function() {
+            $('#file-modal .form-control').val(null)
+            $('#file-modal').modal()
+
+            var id = $(this).attr("data-id")
+            var object = $(this).attr("action-type")
+
+            $('#file-modal #file-form').attr('action', 'pengguna/update/file/' + object)
+            $('#file-modal #file_input').attr('name', object);
+            $('#file-modal #object').val(object)
+
+        })
+
+        $(document).on('click', '#btn-lihat', function() {
+            var id = $('#file-modal #pengguna_id').val()
+            var object = $('#file-modal #object').val()
+
+            $.ajax({
+                method: 'POST',
+                url: 'pengguna/show/lihat_file',
+                dataType: 'JSON',
+                data: {
+                    id: id,
+                    object: object,
+                    csrf_token: token
+                },
+                success: function(name) {
+                    if (name) {
+                        var link = 'uploads/file_karyawan/' + object + '/' + name
+                        window.open('<?= base_url() ?>' + link)
+                    } else {
+                        alert('file tidak ada!')
+                    }
+                }
+            })
+        })
+
+        $(document).on('click', '#btn-download', function() {
+            var id = $('#file-modal #pengguna_id').val()
+            var object = $('#file-modal #object').val()
+
+            var link = 'pengguna/show/download_file/' + id + '/' + object
+            window.open('<?= base_url() ?>' + link)
+        })
+    })
+
+    function goBack() {
+        window.history.back();
+    }
+</script>

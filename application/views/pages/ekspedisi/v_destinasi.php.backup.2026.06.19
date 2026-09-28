@@ -1,0 +1,273 @@
+<!-- 
+	Create by KURNIAWAN  
+	23-06-2025
+-->
+
+<header class="page-header">
+	<h2><i class="icons fas fa-city"></i>&nbsp;<?= $page_title ?></h2>
+	<div class="right-wrapper text-left">
+		<ol class="breadcrumbs">
+			<li><span><?= $page_desc ?></span></li>
+		</ol>
+	</div>
+</header>
+<style>
+	#kt_table_1 thead th {
+		text-align: center !important;
+		vertical-align: middle !important;
+	}
+</style>
+
+
+<div class="row">
+	<div class="col">
+		<div class="">
+			<?php if(sessPenggunaId() == 1) { ?>
+				<a href="javascript:;" id="btn-laporan-form" class="btn btn-sm btn-success"><i class="fas fa-database"></i>&nbsp;&nbsp;&nbsp;Master Data</a>
+			<?php } ?>
+			<?php if(sessPenggunaId() == 1 || sessPenggunaId() == 15 || sessPenggunaId() == 33 || sessPenggunaId() == 7 || sessPenggunaId() == 749 || sessPenggunaId() == 73 || sessPenggunaId() == 23 ) { ?>
+				<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah</a>
+			<?php } ?>
+		</div>
+		<br>
+		<div class="card-body">
+			<div class="table-responsive">
+				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
+					<thead>
+						<tr>
+							<th> # </th>
+							<th> Provinsi</th>
+							<th> Kab/Kota </th>
+							<th> Aksi </th>
+						</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content ">
+			<div class="modal-header bg-dark text-light">
+				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Form Kabupaten Kota</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<?= form_open('#', array('id' => 'modal-form', 'autocomplete' => 'off')); ?>
+			<div class="modal-body">
+				<div>
+					
+					<div class="form-group">
+							<label for="provinsi" class="form-control-label">Provinsi <span class="text-danger">*</span> :</label>
+							<select class="form-control" id="provinsi" name="provinsi" required>
+									<option value="">- Pilih -</option>
+									<!-- Akan diisi dinamis dengan JS -->
+									<option value="__lainnya__">Input lainnya...</option>
+							</select>
+
+							<input type="text" id="provinsi_lainnya" name="provinsi_lainnya" class="form-control mt-2" placeholder="Tulis nama provinsi baru..." style="display: none;">
+					</div>
+
+					<div class="form-group">
+						<label for="kab_kota" class="form-control-label">Kabupaten / Kota <span class="text-danger">*</span> :</label>
+						<input type="text" class="form-control" id="kab_kota" name="kab_kota" required>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<div class="is_aktif"></div>
+				<input type="hidden" id="id_ekspedisi" name="id_ekspedisi">
+				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+				<button type="button" class="btn btn-success btn-save">Simpan</button>
+			</div>
+			<?= form_close(); ?>
+		</div>
+	</div>
+</div>
+
+
+
+<div id="file-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content ">
+            <div class="modal-header bg-dark text-light">
+                <h4 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Master Data Kabupaten / Kota</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- Form with enctype for file upload -->
+            <?= form_open('#', array('id' => 'file-form', 'enctype' => 'multipart/form-data', 'autocomplete' => 'off')); ?>
+                <div class="modal-body">
+										<div>
+											<form method="post" enctype="multipart/form-data" action="kalkulator/import">
+												<div class="box-body">
+													<div class="form-group">
+															<label for="exampleInputFile">Upload File :</label>
+															<input type="file" name="berkas_excel" class="form-control" id="exampleInputFile">
+															<small class="text-danger">upload file .xlsx ONLY</small>
+													</div>
+													<br>
+												</div>
+											</form>
+										</div>
+                    <div>
+                        <div class="text-left mb-2">
+                            <label for="InputExperience" class="col-form-label">Download Format :</label>&nbsp;&nbsp;&nbsp;
+                            <a href="javascript:" id="btn-download"><i class="fas fa-download"></i> Download File</a>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+												<button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i>&nbsp;&nbsp; Import</button>
+                    </div>
+                </div>
+            <?= form_close(); ?>
+        </div>
+    </div>
+</div>
+
+
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+		/*table = $('#kt_table_1').DataTable({
+				responsive: false,
+				processing: true,
+				serverSide: true,
+
+				ajax: {
+						url: 'ekspedisi/paginationDestinasi',
+						type: 'POST',
+						data: function(e) {
+								e.csrf_token = token
+						}
+				},
+				order: [[1, 'asc'], [2, 'asc']], // Kolom ke-1: provinsi, kolom ke-2: kab_kota
+				columnDefs: [
+						{
+								targets: [0,3], className: 'text-center' // No urut
+						},
+						{
+								targets: [1,2], className: 'text-left' // provinsi & kab_kota
+						}
+				]
+		});*/
+
+		table = $('#kt_table_1').DataTable({
+			responsive: false,
+			processing: true,
+			serverSide: true,
+			order: [[0, 'desc']],
+			ajax: {
+				url: 'ekspedisi/paginationDestinasi',
+				type: 'POST',
+				data: function(e) {
+					e.csrf_token = token;
+				}
+			},
+			order: [[1, 'asc'], [2, 'asc']],
+			columnDefs: [
+					{ targets: [0, 3], className: 'text-center', searchable: false },
+					{ targets: [1, 2], className: 'text-left', searchable: false },
+					{ targets: [1, 2], searchable: true },
+			]
+
+		});
+
+
+
+		$('#btn-laporan-form').click(function() {
+					$('#file-modal .form-control').val(null);
+					$('#file-modal').modal();
+					$('#file-modal #file-form').attr('action', 'ekspedisi/importDestinasi');
+
+					$('#file-modal #object').val(object); 
+			});
+
+			$("#btn-download").click(function(){
+          window.open("<?php echo base_url(); ?>ekspedisi/exportDestinasi","_blank");
+          $('#file-modal').modal('hide')
+			
+      });
+
+
+
+			$('#btn-show-add-form').click(function() {
+			$('.form-control').val(null)
+			$('#main-modal #modal-form').attr('action', 'ekspedisi/addDestinasi')
+			$('#main-modal').modal()
+		})
+
+		$(document).on('click', '.btn-edit', function() {
+			var object = 'ekspedisi'
+			$('#main-modal #modal-form').attr('action', 'ekspedisi/updateDestinasi')
+			$('#main-modal').modal()
+
+			var id = $(this).attr("data-id")
+			fetch(object + '/editDestinasi/' + id)
+				.then(function(resp) {
+					return resp.json()
+				})
+				.then(function(data) {
+					$('#main-modal #id_ekspedisi').val(data[0].id)
+					$('#main-modal #provinsi').val(data[0].provinsi)
+					$('#main-modal #kab_kota').val(data[0].kab_kota)
+				})
+		})
+
+
+		// 6. Load Provinsi Unik + Input Lainnya
+    $.getJSON("<?= site_url('ekspedisi/getProvinsiList') ?>", function (data) {
+        $.each(data, function (i, val) {
+            if (val.provinsi && val.provinsi.trim() !== '') {
+                $('#provinsi').append('<option value="' + val.provinsi + '">' + val.provinsi + '</option>');
+            }
+        });
+        $('#provinsi').append('<option value="__lainnya__">Input lainnya...</option>');
+    });
+
+    // 7. Tampilkan input provinsi jika pilih “lainnya”
+    $('#provinsi').on('change', function () {
+        if ($(this).val() === '__lainnya__') {
+            $('#provinsi_lainnya').show().prop('required', true);
+        } else {
+            $('#provinsi_lainnya').hide().prop('required', false);
+        }
+    });
+
+
+		
+		
+
+		
+	})
+
+
+
+
+	$(document).ready(function () {
+    $.getJSON("<?= site_url('ekspedisi/getProvinsiList') ?>", function (data) {
+        $.each(data, function (i, val) {
+            if (val.provinsi && val.provinsi.trim() !== '') {
+                $('#provinsi').prepend('<option value="' + val.provinsi + '">' + val.provinsi + '</option>');
+            }
+        });
+    });
+
+    $('#provinsi').on('change', function () {
+        if ($(this).val() === '__lainnya__') {
+            $('#provinsi_lainnya').show().prop('required', true);
+        } else {
+            $('#provinsi_lainnya').hide().prop('required', false);
+        }
+    });
+});
+
+
+function updateDatatable() {
+		table.ajax.reload(null, false)
+	}
+
+	</script>
+
+	

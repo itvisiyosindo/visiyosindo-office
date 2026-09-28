@@ -1,0 +1,9 @@
+[/home/visiyosi/public_html]
+htaccess_list = /home/visiyosi/public_html/application/.htaccess,/home/visiyosi/public_html/application/vendor/phenx/php-font-lib/.htaccess,/home/visiyosi/public_html/system/.htaccess
+
+[/home/visiyosi/public_html/inventory.visiyosindo.id]
+htaccess_list = /home/visiyosi/public_html/inventory.visiyosindo.id/application/.htaccess,/home/visiyosi/public_html/inventory.visiyosindo.id/application/vendor/phenx/php-font-lib/.htaccess,/home/visiyosi/public_html/inventory.visiyosindo.id/system/.htaccess
+
+[/home/visiyosi/public_html/kepegawaian.visiyosindo.id]
+htaccess_list = /home/visiyosi/public_html/kepegawaian.visiyosindo.id/application/.htaccess,/home/visiyosi/public_html/kepegawaian.visiyosindo.id/system/.htaccess
+

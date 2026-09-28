@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $title_pdf; ?></title>
+    <style>
+         #table {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #table td,
+        #table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        /* #table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #table tr:hover {
+            background-color: #ddd;
+        } */
+
+        #table th {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            text-align: center;
+            font-size: 10Px;
+        }
+
+        #table td {
+          
+            font-size: 9Px;
+        }
+
+      
+
+        .tandatangan {
+
+            text-align: center;
+            margin-left: 600px;
+        }
+
+        .tandatangan2 {
+            text-align: left;
+        }
+
+        .tandatangan3 {
+            text-align: left;
+            margin-left: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="assets/img/kop_surat_vym_underline.png" width="100%" height="15%" />
+    <div style="text-align:center">
+        <h2><?= $title_pdf ?></h2>
+        <h3>Periode : <?= $periode ?></h3>
+    </div>
+    <div>
+       <table id="table" style="width:100%">
+        <thead class="text-center">
+        <tr>
+                            <th> No </th>
+                            <th> Nama Karyawan</th>
+                            <th> Lama Kerja</th>
+                            <th> Gaji Pokok </th>
+                            <th> Pendapatan Lainnya</th>
+                            <th> Potongan BPJS Kesehatan</th>
+                            <th> Potongan BPJS TK</th>
+                            <th> Potongan Lainnya</th>
+                            <th> Penghasilan Sebelum Pajak</th>
+                            <th> Pajak PPH21</th>
+                            <th> Penghasilan Setelah Pajak</th>
+                            <th> Nomor Rekening</th>
+                        </tr>
+                        
+        </thead>
+        <tbody>
+             <?php
+                     $x = 1;
+                    $sumgapok=0;
+                    $sumKinerja = 0;
+                    $sumKonsumsi = 0;
+                    $sumbayar = 0;
+                    $sumKomunikasi = 0;
+                    $sumKomisi = 0;
+                    foreach ($dtgaji as $row) {
+                            $nama =   $row['nama']; 
+                            $lama = $row['tahun'].' Tahun '.$row['bulan'].' Bulan '.$row['hari'].' Hari'; 
+                            if($row['tahun']>0){
+                                $temptahun = 12;
+                            }else{
+                                $temptahun = $row['bulan'];
+                            }
+                            $gapok = isset($row['gajipokok']) ? $row['gajipokok'] : '';
+                            $pendapatan_lain= isset($row['pendapatan_lain']) ? $row['pendapatan_lain'] : '';
+                            $potonganBPJSkes= $row['bpjskkaryawan'];
+                            $potonganBPJStk = $row['bpjstk2persen'];
+                            $tunjanganJabatan =  $row['tunjanganjabatan'];
+                            $tunjanganKonsumsi =  $row['tunjangankonsumsi'];
+                            $tunjanganKinerja =  $row['tunjangankinerja'];
+                            $tunjanganKomunikasi =  $row['tunjangankomunikasi'];
+                            $tunjanganBbm=  $row['tunjanganbbm'];
+                            $tunjanganraya =  $row['tunjanganraya'];
+                            $tunjanganTransportasi=  $row['tunjangantransportasi'];
+                            $tunjanganKomisi =  $row['komisi'];
+                            $id_status_kawin =  $row['idkawin'];
+                            $bpjskPerusahaan =  $row['bpjskperusahaan'];
+                            $bpjstkPerusahaan =  $row['bpjstkperusahaan'];
+                            $Pendapatanlain =  $row['Pendapatanlain'];
+                            
+
+
+
+                            
+                            $potongan_lain = potongan_lain($row['pengguna_id']);
+                             // ====== KHUSUS MARET 2024 ===========
+                            $idPengguna =  $row['pengguna_id'];
+                            $bonusmaretdonal=500000;
+                            $bonusbastian=1098198;
+                            $bonusboddy=1806000;
+                            $bonusjovan=420000;
+                            $bonustamrin=323378;
+                            $bonussabtu=14774;
+                            if ($idPengguna == 15){
+                                $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi+$bonusmaretdonal);
+                            }else if ($idPengguna == 62){
+                                    $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi+$bonusbastian);
+                            
+                            }else if ($idPengguna == 94){
+                                    $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi+$bonusboddy);
+                            
+                            }else if ($idPengguna == 88){
+                                    $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi+$bonusjovan);
+                            
+                            }else if ($idPengguna == 105){
+                                    $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi+$bonustamrin);
+                            
+                            }else if ($idPengguna == 106){
+                                    $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi-40000);
+                            
+                            }else if ($idPengguna == 25){
+                                    $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi+$bonussabtu);
+                            
+                            }else{
+                                $salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganraya+$tunjanganKomisi);
+                            }
+
+
+
+
+                            //$salary_sebulan   =  ($gapok+$pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganKomisi);
+                                               // +$tunjanganBbm+$tunjanganTransportasi);
+                            //-($potonganBPJSkes+$potonganBPJStk+$potongan_lain);
+                            $Bruto = $row['Bruto'];
+                            $TotalPengurang = $row['TotalPengurangan'];
+                            $no_rek   =  $row['norek'] ?  $row['norek'] : '-';
+                            $pajakdibayar=$row['pajakdibayarkan'] ?  $row['pajakdibayarkan'] : 0;
+                          /*  $pph21=0;
+                            $d37=0;
+                            $e37=0;
+                            $d38=0;
+                            $e38=0;
+                            $d39=0;
+                            $e39=0;
+                            $pbersih=  ($row['Net']*$temptahun)+$row['totalbonus'];
+                            $ptkp = $row['jumlahptkp'];
+                            
+                            $e34=$pbersih-$ptkp;
+                            if($e34>0){
+                                //=IF(AND(E34>0;E34<60000000);E34;60000000)
+                                if(($e34>0)&&($e34<60000000)){
+                                    $d37=$e34;
+                                    $e37=$d37*0.05;                       
+                                }else{
+                                    $d37=60000000;
+                                    $e37=$d37*0.05; 
+                                }
+
+                                //=IF(AND(E34-D37>0;E34-D37<=250000000);(E34-D37);IF(AND(E34-D37>60000000;E34-D37>=250000000);250000000;0))
+                                if((($e34-$d37)>0)&&(($e34-$d37)<=250000000)){
+                                    $d38=($e34-$d37);
+                                    $e38=$d38*0.15;
+                                }else{
+                                    if((($e34-$d37)>60000000)&&(($e34-$d37)>=250000000)){
+                                        $d38=250000000;
+                                        $e38=$d38*0.15;
+                                    }else{
+                                        $d38=0;
+                                        $e38=0;
+                                    }
+                                }
+
+                                //=IF(AND(E34-D37-D38>0;E34-D37-D38<=500000000);(E34-D37-D38);IF(AND(E34-D37-D38>250000000;E34-D37-D38>=500000000);500000000;0))
+                                if((($e34-$d37-$d38)>0)&&(($e34-$d37-$d38)<=500000000)){
+                                    $d39=($e34-$d37-$d38);
+                                    $e39=$d39*0.25;
+                                }else{
+                                    if((($e34-$d37-$d38)>250000000)&&(($e34-$d37-$d38)>=500000000)){
+                                        $d39=500000000;
+                                        $e39=$d39*0.25;
+                                    }else{
+                                        $d39=0;
+                                        $e39=0;
+                                    }
+                                }
+                                 $pph21 = (($e37+$e38+$e39)/$temptahun);
+                            }else{
+                                $pph21=0;
+                            } 
+                                $pph21 -= $pajakdibayar;
+                                $setelahPajak = $sebelumPajak-$pph21;
+                                $sumbayar += $setelahPajak;
+
+                                */
+
+
+
+/*
+============================== Rumus pajak pph 21 ==========================================================
+*/
+
+if ($id_status_kawin == 1 || $id_status_kawin == 2 || $id_status_kawin == 5) //TER A untuk TK0 TK1 dan K0
+    {
+
+        if ($salary_sebulan > 0 && $salary_sebulan <= 5400000 )
+        {
+            $salary_pph21 = 0;
+        } 
+        elseif ($salary_sebulan > 5400000 && $salary_sebulan <= 5650000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.25 / 100);
+        }
+        elseif ($salary_sebulan > 5650000 && $salary_sebulan <= 5950000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.5 / 100);
+        }
+        elseif ($salary_sebulan > 5950000 && $salary_sebulan <= 6300000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.75 / 100);
+        }
+        elseif ($salary_sebulan > 6300000 && $salary_sebulan <= 6750000 )
+        {
+             $salary_pph21 = $salary_sebulan * (1 / 100);
+        }
+        elseif ($salary_sebulan > 6750000 && $salary_sebulan <= 7500000 )
+        {
+             $salary_pph21 = $salary_sebulan * (1.25 / 100);
+        }
+        elseif ($salary_sebulan > 7500000 && $salary_sebulan <= 8550000 )
+        {
+             $salary_pph21 = $salary_sebulan * (1.5 / 100);
+        }
+        elseif ($salary_sebulan > 8550000 && $salary_sebulan <= 9650000 )
+        {
+             $salary_pph21 = $salary_sebulan * (1.75 / 100);
+        }
+        elseif ($salary_sebulan > 9650000 && $salary_sebulan <= 10050000 )
+        {
+             $salary_pph21 = $salary_sebulan * (2 / 100);
+        }
+        elseif ($salary_sebulan > 10050000 && $salary_sebulan <= 10350000 )
+        {
+             $salary_pph21 = $salary_sebulan * (2.25 / 100);
+        }
+        elseif ($salary_sebulan > 10350000 && $salary_sebulan <= 10700000 )
+        {
+             $salary_pph21 = $salary_sebulan * (2.5 / 100);
+        }
+        elseif ($salary_sebulan > 10700000 && $salary_sebulan <= 11050000 )
+        {
+             $salary_pph21 = $salary_sebulan * (3 / 100);
+        }
+        elseif ($salary_sebulan > 11050000 && $salary_sebulan <= 11600000 )
+        {
+             $salary_pph21 = $salary_sebulan * (4 / 100);
+        }
+        elseif ($salary_sebulan > 11600000 && $salary_sebulan <= 12500000 )
+        {
+             $salary_pph21 = $salary_sebulan * (4 / 100);
+        }
+        elseif ($salary_sebulan > 12500000 && $salary_sebulan <= 13750000 )
+        {
+             $salary_pph21 = $salary_sebulan * (5 / 100);
+        }
+        elseif ($salary_sebulan > 13750000 && $salary_sebulan <= 15100000 )
+        {
+             $salary_pph21 = $salary_sebulan * (6 / 100);
+        }
+        elseif ($salary_sebulan > 15100000 && $salary_sebulan <= 16950000 )
+        {
+             $salary_pph21 = $salary_sebulan * (7 / 100);
+        }
+
+    }elseif ($id_status_kawin == 3 || $id_status_kawin == 4 || $id_status_kawin == 6 || $id_status_kawin == 7) //TER B untuk TK2 TK3 K1 dan K2
+    {
+
+        if ($salary_sebulan > 0 && $salary_sebulan <= 6200000)
+        {
+            $salary_pph21 = 0;
+        } 
+        elseif ($salary_sebulan > 6200000 && $salary_sebulan <= 6500000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.25 / 100);
+        }
+        elseif ($salary_sebulan > 6500000 && $salary_sebulan <= 6850000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.5 / 100);
+        }
+        elseif ($salary_sebulan > 6850000 && $salary_sebulan <= 7300000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.75 / 100);
+        }
+        elseif ($salary_sebulan > 7300000 && $salary_sebulan <= 9200000 )
+        {
+             $salary_pph21 = $salary_sebulan * (1 / 100);
+        }
+        elseif ($salary_sebulan > 9200000 && $salary_sebulan <= 10750000 )
+        {
+             $salary_pph21 = $salary_sebulan * (1.5 / 100);
+        }
+        elseif ($salary_sebulan > 10750000 && $salary_sebulan <= 11250000 )
+        {
+             $salary_pph21 = $salary_sebulan * (2 / 100);
+        }
+
+        elseif ($salary_sebulan > 11250000 && $salary_sebulan <= 11600000 )
+        {
+             $salary_pph21 = $salary_sebulan * (2.5 / 100);
+        }
+
+    }elseif ($id_status_kawin == 8 || $id_status_kawin == 12) //TER C untuk K3
+    {
+
+        if ($salary_sebulan > 0 && $salary_sebulan <= 6600000)
+        {
+            $salary_pph21 = 0;
+        } 
+        elseif ($salary_sebulan > 6600000 && $salary_sebulan <= 6950000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.25 / 100);
+        }
+        elseif ($salary_sebulan > 6950000 && $salary_sebulan <= 7350000 )
+        {
+             $salary_pph21 = $salary_sebulan * (0.5 / 100);
+        }
+        elseif ($salary_sebulan > 17050000 && $salary_sebulan <= 19500000 )
+        {
+             $salary_pph21 = $salary_sebulan * (7 / 100);
+        }
+        elseif ($salary_sebulan > 19500000 && $salary_sebulan <= 22700000 )
+        {
+             $salary_pph21 = $salary_sebulan * (8 / 100);
+        }
+
+        elseif ($salary_sebulan > 22700000 && $salary_sebulan <= 26600000 )
+        {
+             $salary_pph21 = $salary_sebulan * (9 / 100);
+        }
+
+        elseif ($salary_sebulan > 26600000 && $salary_sebulan <= 28100000 )
+        {
+             $salary_pph21 = $salary_sebulan * (10 / 100);
+        }
+
+        elseif ($salary_sebulan > 28100000 && $salary_sebulan <= 30100000 )
+        {
+             $salary_pph21 = $salary_sebulan * (11 / 100);
+        }
+
+        elseif ($salary_sebulan > 30100000 && $salary_sebulan <= 32600000 )
+        {
+             $salary_pph21 = $salary_sebulan * (12 / 100);
+        }
+
+        elseif ($salary_sebulan > 32600000 && $salary_sebulan <= 35400000 )
+        {
+             $salary_pph21 = $salary_sebulan * (13 / 100);
+        }
+
+        elseif ($salary_sebulan > 35400000 && $salary_sebulan <= 38900000 )
+        {
+             $salary_pph21 = $salary_sebulan * (14 / 100);
+        }
+
+        elseif ($salary_sebulan > 38900000 && $salary_sebulan <= 43000000 )
+        {
+             $salary_pph21 = $salary_sebulan * (15 / 100);
+        }
+
+
+    }
+
+                                //$salary_pph21 -= $pajakdibayar;
+                                $sebelumPajak = $gapok+$pendapatan_lain-$potonganBPJSkes-$potonganBPJStk-$potongan_lain;
+                                $setelahPajak = $gapok+$pendapatan_lain-$potonganBPJSkes-$potonganBPJStk-$potongan_lain-$salary_pph21;
+                                $potongan_all = $potonganBPJSkes+$potonganBPJStk+$potongan_lain+$salary_pph21;
+                               $sumbayar += $setelahPajak;
+
+                               $allTunjangan = $pendapatan_lain+$tunjanganJabatan+$tunjanganKinerja+$tunjanganKonsumsi+$tunjanganKomunikasi+$tunjanganKomisi;
+                               //$bonus = $tunjanganKomunikasi; // +$tunjanganKomisi;
+                               
+                               //Tambahkan pph21 ke tabel newpph21
+                                //$data['tahun'] = $tahun;
+                                //$data['bulan'] = $bulan;
+                                //$data['idpengguna'] = $idPengguna;
+                                //$data['pph21'] = $salary_pph21;
+                                //$this->md_salary->addNewpph21($data);
+
+                                //Tambahkan Salary ke tabel history_salary
+                                $data['tahun'] = $tahun;
+                                $data['bulan'] = $bulan;
+                                $data['nama'] = $nama;
+                                $data['lama'] = $lama;
+                                $data['no_rek'] = $no_rek;
+                                $data['idpengguna'] = $idPengguna;
+                                $data['gajipokok'] = $gapok;
+                                $data['tunjangankonsumsi'] = $tunjanganKonsumsi;
+                                $data['tunjangankomunikasi'] = $tunjanganKomunikasi;
+                                $data['tunjanganjabatan'] = $tunjanganJabatan;
+                                $data['tunjangantransport'] = $tunjanganBbm;
+                                $data['tunjangankinerja'] = $tunjanganKinerja;
+                                $data['tunjanganraya'] = $tunjanganraya;
+                                $data['bonus'] = $tunjanganKomisi;
+                                $data['pendapatanlain'] = $pendapatan_lain;
+                                $data['pendapatanlain_tidaktetap'] = $Pendapatanlain;
+                                $data['pph21'] = $salary_pph21;
+                                $data['bpjskesehatan'] = $potonganBPJSkes;
+                                $data['bpjstk'] = $potonganBPJStk;
+                                $data['potonganlainnya'] = $potongan_lain;
+                                $data['totalpendapatan'] = $salary_sebulan;
+                                $data['totalpotongan'] = $potongan_all;
+                                $data['totalterima'] = $salary_sebulan-$potongan_all;
+                                $data['sebelum_pajak'] = $sebelumPajak;
+                                $data['setelah_pajak'] = $setelahPajak;
+                                $this->md_salary->addHistorySalary($data);
+
+                                
+                               
+
+
+
+
+                            
+                       
+                       $td = '
+                           <tr>
+                                 <td style="text-align: center;">' .$x++. '</td>
+                                 <td>' .$nama. '</td>
+                                 <td>' .$lama. '</td>
+                                 <td style="text-align: right;">' .($gapok ? 'Rp. ' . rupiah($gapok) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($pendapatan_lain ? 'Rp. ' . rupiah($pendapatan_lain) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($potonganBPJSkes ? 'Rp. ' . rupiah($potonganBPJSkes) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($potonganBPJStk ? 'Rp. ' . rupiah($potonganBPJStk) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($potongan_lain ? 'Rp. ' . rupiah($potongan_lain) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($sebelumPajak ? 'Rp. ' . rupiah($sebelumPajak) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($salary_pph21 ? 'Rp. ' . rupiah($salary_pph21) : 'Rp. -'). '</td>
+                                 <td style="text-align: right;">' .($setelahPajak ? 'Rp. ' . rupiah($setelahPajak) : 'Rp. -'). '</td>                                 
+                                 <td style="text-align: center;">' .$no_rek. '</td>
+                            </tr>
+                        ';
+                        echo $td;
+                        
+                    }
+             ?> 
+             
+            <tr style="border-bottom: none;">
+                <td colspan="10"><strong>Total Keseluruhan :</strong></td>
+                <td style="text-align: right;"><strong> Rp. <?= rupiah($sumbayar) ?></strong></td>
+               <td><strong></strong></td>
+            </tr>
+        </tbody>
+        
+    
+    </table>
+    <br>
+    <table style="border-collapse: collapse; width: 100%; height: 128px;">
+        <tbody>
+            <tr style="height: 18px;">
+                <td style="width: 25%; height: 18px;">&nbsp;</td>
+                <td style="width: 21.8748%; height: 18px;">&nbsp;</td>
+                <td style="width: 9.87224%; height: 18px;">&nbsp;</td>
+                <td style="width: 13.4233%; height: 18px;">&nbsp;</td>
+                <td style="width: 13.4233%; height: 18px;">&nbsp;</td>
+                <td style="width: 29.8296%; height: 18px; text-align: center;">Pekanbaru,
+                    <?= indo_dates(date('Y-m-d')) ?>
+                </td>
+            </tr>
+            <tr style="height: 18px;">
+                <td style="width: 25%; height: 18px; text-align: center;">Diajukan Oleh</td>
+                <td style="height: 18px; width: 45.1703%; text-align: center;" colspan="4">Diverifikasi Oleh</td>
+                <td style="width: 29.8296%; height: 18px; text-align: center;">Disetujui Oleh</td>
+            </tr>
+            <tr style="height: 56px;">
+                <td style="width: 25%; height: 56px; text-align: center;">&nbsp;</td>
+                <td style="width: 45.1703%; height: 56px; text-align: center;" colspan="4">&nbsp;</td>
+                <td style="width: 29.8296%; height: 56px; text-align: center;">&nbsp;</td>
+            </tr>
+           <tr style="height: 18px;">
+                <td style="width: 25%; text-align: center; height: 18px;"><u>Amtisari Destiani Eka Putri</u></td>
+                <td style="width: 21.8748%; height: 18px; text-align: center;"><u>Azhari Pratama</u></td>
+                <td style="width: 25%; text-align: center; height: 18px;"><u>Dirangga Madali</u></td>
+                <td style="width: 23.2955%; height: 18px; text-align: center;"><u>Yolanda Pratiwi</u></td>
+                <td style="width: 23.2955%; height: 18px; text-align: center;"><u>Meilina Safitri</u></td>
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><u>Bob Ariyos</u></td>
+            </tr>
+            <tr style="height: 18px;">
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><i>General Affair</i></td>
+                <td style="width: 21.8748%; text-align: center; height: 18px;"><i>Senior Tax</i></td>
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><i>Senior Accounting</i></td>
+                <td style="width: 25%; text-align: center; height: 18px;"><i>General Manager</i></td>
+                <td style="width: 23.2955%; text-align: center; height: 18px;"><i>Director of Corp Planning & Management Bussinees</i></td>
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><i>Direktur</i></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+</body>
+
+</html>

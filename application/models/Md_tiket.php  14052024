@@ -1,0 +1,299 @@
+<?php
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Md_tiket extends CI_Model
+{
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ADD ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    function addTiket($data)
+    {
+        $this->db->insert('tiket', $data);
+    }
+    
+    function addPicSupport($data)
+    {
+        $this->db->insert('tiket_detail_pic_support', $data);
+    }
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// UPDATE ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    function updateByWhere($where, $data)
+    {
+        $this->db->where($where);
+        $this->db->update('tiket', $data);
+    }
+    
+    function updateTiket($id, $data)
+    {
+        $this->db->where('id_tiket', $id);
+        $this->db->update('tiket', $data);
+    }
+    
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// GET ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    function getBywhere($where)
+    {
+        $this->db->select('
+                            t.id_tiket,
+							t.kode_tiket,
+                            t.id_penerima,
+                            tt.id_topik,
+                            tt.nama as nama_topik,
+                            t.subject,
+                            t.prioritas,
+                            t.deskripsi,
+                            t.file_pendukung,
+                            t.file_invoice as invoice,
+                            t.pelanggan,
+                            t.waktu_mulai,
+                            t.waktu_selesai,
+							t.catatan_visit,
+							t.status_visit as stat_visit,
+							t.file_pengajuan_biaya,
+							t.file_pengajuan_gokop as file_gocorp,
+							t.file_laporan_teknisi,
+							t.file_laporan_biaya,
+							t.file_feedback_cust as feedcust,
+							t.deskripsi_feedback_cust as desk_feedcust,
+                            p1.nama as nama_pembuat,
+                            p2.nama as nama_penerima,
+                            t.status_tiket,
+							t.status_surat_dinas as stat_sudin,
+							t.file_surat_dinas as link_sudin,
+							t.waktu_selesai as deadline,
+                            p1.level as level1,    
+                            p2.level as level2, 
+							p.provinsi as provinsi,
+							p.kota as kota,
+							p.identitas_pelanggan as pelanggan
+                        ')
+            ->from('tiket t')
+            ->join('topik_tiket tt', 't.id_topik=tt.id_topik')
+            ->join('pengguna p1', 't.id_pembuat=p1.pengguna_id')
+            ->join('pengguna p2', 't.id_penerima=p2.pengguna_id')
+			->join('pelanggan p', 't.id_pelanggan=p.id_pelanggan')
+            ->where($where)
+            ->order_by('t.created_at', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    function getById($id)
+    {
+        return $this->db->get_where('tiket t', array('t.id_tiket' => $id))->result();
+    }
+
+    function getByIdTopik($id)
+    {
+        return $this->db->get_where('tiket t', array('t.id_topik' => $id,'t.status_data' => 1))->result();
+    }
+    
+	function getLastCode(){
+		return  $this->db->select("id_tiket")
+		        ->limit(1)
+		        ->order_by('id_tiket',"DESC")
+		        ->get('tiket')
+		        ->row();
+	}
+	
+	function getTiketKodeId(){
+		return $this->db->select("COUNT(*) as id_tiket")->limit(1)->order_by('id_tiket',"DESC")->get_where('tiket', array('YEAR(`created_at`)' => date('Y')))->row();
+	}
+	
+	
+    function getAllTiket()
+    {
+           if ($this->input->post('filter_pelanggan'))
+            $this->datatables->like('t.pelanggan', $this->input->post('filter_pelanggan'));
+
+        if ($this->input->post('filter_subject'))
+            $this->datatables->like('t.subject', $this->input->post('filter_subject'));
+
+        $this->db->order_by('t.id_tiket', 'DESC');
+        return $this->datatables
+            ->select('
+                t.id_tiket,
+				t.kode_tiket,
+				t.subject,
+                t.prioritas,
+                 t.deskripsi,
+				t.status_visit,
+				t.status_surat_dinas,
+				t.status_pembiayaan,
+				t.file_surat_dinas as file_sudin,
+				t.file_pengajuan_biaya as file_biaya1,
+				t.file_laporan_biaya as file_biaya2,
+				t.file_laporan_teknisi as laporan_teknisi,
+				t.status_tiket,
+                t.waktu_mulai,
+                t.waktu_selesai,
+				t.created_at as tgl_terbit,
+                tt.nama as nama_topik,                
+                p.nama,
+                p1.nama as nama_penerima,  
+                p.level,
+				pel.identitas_pelanggan,
+				pel.kota as kota
+            ')
+            ->from('tiket t')
+            ->join('topik_tiket tt', 't.id_topik=tt.id_topik')
+            ->join('pengguna p', 't.id_pembuat=p.pengguna_id')
+            ->join('pengguna p1', 't.id_penerima=p1.pengguna_id')
+			->join('pelanggan pel', 't.id_pelanggan=pel.id_pelanggan')
+            ->where('t.status_data = 1')
+            ->generate();
+    }
+
+    function getTiketPembuat($id)
+    {
+        $this->db->order_by('t.created_at', 'DESC');
+        return $this->datatables
+            ->select('
+                t.id_tiket,
+                tt.nama as nama_topik,
+                t.subject,
+                t.prioritas,
+                p.nama,
+                t.status_tiket,
+                p.level
+            ')
+            ->from('tiket t')
+            ->join('topik_tiket tt', 't.id_topik=tt.id_topik')
+            ->join('pengguna p', 't.id_penerima=p.pengguna_id')
+            ->where('t.status_data = 1')
+            ->where('t.id_pembuat', $id)
+            ->generate();
+    }
+	
+    function getTiketPenerima($id)
+    {
+        $this->db->order_by('t.created_at', 'DESC');
+        return $this->datatables
+            ->select('
+                t.id_tiket,
+				t.kode_tiket,
+                tt.nama as nama_topik,
+                t.subject,
+                t.prioritas,
+                p.nama,
+				t.status_visit,
+				t.status_surat_dinas,
+				t.file_surat_dinas as file_sudin,
+				t.file_pengajuan_biaya as file_biaya1,
+				t.file_laporan_biaya as file_biaya2,
+				t.status_pembiayaan,
+                t.status_tiket,
+                p.level,
+                pel.kota as kota
+            ')
+            ->from('tiket t')
+            ->join('topik_tiket tt', 't.id_topik=tt.id_topik')
+            ->join('pengguna p', 't.id_pembuat=p.pengguna_id')
+            ->join('pelanggan pel', 't.id_pelanggan=pel.id_pelanggan')
+            ->where('t.status_data = 1')
+            ->where('t.id_penerima', $id)
+            ->generate();
+    }
+	
+	function getTiketGA()
+    {
+        $this->db->order_by('t.created_at', 'DESC');
+        return $this->datatables
+            ->select('
+                t.id_tiket,
+				t.kode_tiket,
+                tt.nama as nama_topik,
+                t.subject,
+                t.prioritas,
+                p.nama,
+				t.status_visit,
+				t.status_surat_dinas,
+				t.status_pembiayaan,
+				t.file_pengajuan_biaya as file_biaya1,
+				t.file_laporan_biaya as file_biaya2,
+                t.status_tiket,
+                t.file_surat_dinas as file_sudin,
+                t.file_laporan_teknisi as laporan_teknisi,
+                t.catatan_close_tiket as catatan_ct,
+                p.level,
+                pel.identitas_pelanggan as identitas_pelanggan,
+                pel.kota as kota,
+                DATE_FORMAT(t.created_at, "%d-%m-%Y") as created_at_formated
+            ')
+            ->from('tiket t')
+            ->join('topik_tiket tt', 't.id_topik=tt.id_topik')
+            ->join('pengguna p', 't.id_penerima=p.pengguna_id')
+            ->join('pelanggan pel', 't.id_pelanggan=pel.id_pelanggan')
+            ->where('t.status_data = 1')
+            ->generate();
+    }
+	
+	function getTiketFinance()
+    {
+        $this->db->order_by('t.created_at', 'DESC');
+        return $this->datatables
+            ->select('
+                t.id_tiket,
+				t.kode_tiket,
+                tt.nama as nama_topik,
+                t.subject,
+                t.prioritas,
+                p.nama,
+				pl.identitas_pelanggan,
+				pl.kota,
+				t.status_visit,
+				t.status_surat_dinas,
+				t.status_pembiayaan,
+				t.file_pengajuan_biaya as file_biaya1,
+				t.file_laporan_biaya as file_biaya2,
+                t.status_tiket,
+                t.file_surat_dinas as file_sudin,
+                p.level,
+                pl.kota as kota
+            ')
+            ->from('tiket t')
+            ->join('topik_tiket tt', 't.id_topik=tt.id_topik')
+            ->join('pengguna p', 't.id_penerima=p.pengguna_id')
+			->join('pelanggan pl', 't.id_pelanggan=pl.id_pelanggan')
+			->where('t.status_visit = 2')
+			->where('t.status_surat_dinas = 2')
+			->where('t.status_data = 1')
+            ->generate();
+    }
+	
+	function getTiketPelanggan($id)
+    {
+        $this->db->order_by('t.created_at', 'DESC');
+        return $this->datatables
+            ->select('
+                t.id_tiket,
+                pl.identitas_pelanggan as identitas_pelanggan,
+                pl.provinsi,
+                pl.kota,
+                pl.alamat
+            ')
+            ->from('tiket t')
+            ->join('pelanggan p', 't.id_pelanggan=p.id_pelanggan')
+            ->where('t.status_data = 1')
+            ->where('t.id_pelanggan', $id)
+            ->generate();
+    }
+    
+    function getAllPicSupport($id_tiket)
+    {
+        $this->db->select('
+                tdps.id_tiket,
+                tdps.id_pic_support,
+				p.nama as nama_pic
+            ')
+            ->from('tiket_detail_pic_support tdps')
+            ->join('pengguna p', 'tdps.id_pic_support=p.pengguna_id')
+            ->where('tdps.id_tiket', $id_tiket)
+            ->order_by('tdps.id', 'DESC');
+        return $this->db->get()->result();
+    }
+}

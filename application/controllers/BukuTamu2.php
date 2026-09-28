@@ -1,0 +1,167 @@
+<?php
+
+use FontLib\Table\Type\post;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class BukuTamu extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_prov_kota');
+    }
+	
+
+    public function index()
+    {
+		$page_data['page_name']     = 'v_bukutamu';
+        $page_data['page_title']    = 'Buku Tamu';
+        $page_data['page_desc']     = 'Management Buku Tamu';
+        $page_data['provinsi']  = $this->md_prov_kota->getAllProvinsi();
+        $this->load->view('bukutamu', $page_data);
+    }
+    
+    function add_ajax_kota($id_prov){
+      $query = $this->db->get_where('kota',array('id_prov'=>$id_prov));
+      $data = "<option value=''>- Pilih Kabupaten/Kota -</option>";
+      foreach ($query->result() as $value) {
+          $data .= "<option value='".$value->id."'>".$value->tipe.' '.$value->nama."</option>";
+      }
+           echo $data;
+    }
+
+    public function register()
+    {
+        ajaxReturnDie('error','test');
+        /*('all
+        
+
+        $data['nama']     = $this->input->post('nama', TRUE);
+        $data['deskripsi']    = $this->input->post('deskripsi', TRUE);
+
+
+        $this->md_kategori_tiket->addKategori($data);*/
+
+        /** LOG */
+        //addLog('Menambah Kategori', 'Menambah kategori "' . $data['nama'] . '"');
+
+        ajaxReturnDie('success', 'Kategori berhasil ditambahkan', 'reload_table');
+    }
+
+    public function show($param = "", $param2 = "", $param3 = "")
+    {
+        grantAccessFor('all');
+        if ($param == 'detail_kategori') {
+            $page_data['data_pengguna'] = $this->md_kategori_tiket->getByWhere(['t.id_topik' => decrypt($param2)]);
+            $page_data['page_name']       = 'kategori_tiket/v_kategori_detail';
+            $page_data['page_title']      = 'Kategori';
+            $page_data['page_desc']       = 'Detail kategori';
+            $this->load->view('index', $page_data);
+        }
+        // show_404();
+
+
+    }
+
+    public function edit($param1)
+    {
+        grantAccessFor('all');
+        $id = decrypt($param1);
+        $dt = $this->md_kategori_tiket->getById($id);
+        foreach ($dt as $row) {
+            $row->id_topik = encrypt($row->id_topik);
+        }
+        echo json_encode($dt);
+        die;
+    }
+
+    public function update($param = "", $param2 = "")
+    {
+        if ($param == 'is_active') {
+            grantAccessFor('all');
+            $id_topik = decrypt($this->input->post('topik_id', TRUE));
+            $data['is_active'] = $this->input->post('value');
+            $this->md_kategori_tiket->updateKategori($id_topik, $data);
+
+            $datalog =  $data['is_active'] == 1 ? "Aktif" : "Tidak Aktif";
+            $datalog2 = $this->md_kategori_tiket->getById($id_topik);
+            addLog('Memperbaharui Kategori', 'Mengubah status aktif "' . $datalog2[0]->nama . '" menjadi "' . $datalog . '"');
+            ajaxReturnDie('success', 'Status Aktif Berhasil Diubah', TRUE);
+        } else {
+            grantAccessFor('all');
+            $id_topik      = decrypt($this->input->post('id_topik'));
+            $data['nama'] = $this->input->post('nama');
+            $data['deskripsi'] = $this->input->post('deskripsi');
+
+            $this->md_kategori_tiket->updatekategori($id_topik, $data);
+            $data2 = $this->md_kategori_tiket->getById($id_topik);
+            addLog('Memperbaharui Kategori', 'Memperbaharui data Kategori ' . $data2[0]->nama);
+            ajaxReturnDie('success', 'Kategori berhasil diperbaharui', TRUE);
+        }
+    }
+
+    public function delete($param1)
+    {
+        grantAccessFor('all');
+        
+        $topik_id    = decrypt($param1);
+
+        $getUsedTopik = $this->md_tiket->getByIdTopik($topik_id);
+        
+        // print_r($getUsedTopik);die;
+        if($getUsedTopik){
+            ajaxReturnDie('error', 'Kategori yang sudah digunakan tidak dapat di hapus', 'reload_table');
+
+        }else{
+            $temp           = $this->md_kategori_tiket->getById($topik_id);
+            $data['status'] = 2; //kategori di hapus
+            $this->md_kategori_tiket->updateKategori($topik_id, $data);
+            addLog('Menghapus Kategori', 'Menghapus kategori ' . $temp[0]->nama);
+            ajaxReturnDie('success', 'Kategori berhasil dihapus', 'reload_table');
+        }
+        
+        
+    }
+
+
+
+    public function pagination()
+    {
+        grantAccessFor('all');
+
+        $dt    = $this->md_kategori_tiket->getAllKategori();
+
+        $start = $this->input->post('start');
+        $data  = array();
+        foreach ($dt['data'] as $row) {
+            $is_active = $row->is_active == 1 ? '<span class="badge badge-ecommerce badge-success">Aktif</span>' : '<span class="badge badge-ecommerce badge-danger">Tidak Aktif</span>';
+            $id       = encrypt($row->id_topik);
+            $nama_kategori = $row->nama;
+            $li_btn   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                   <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                   <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="kategori_Tiket/delete"><i class="bx bx-trash"></i></button>
+                </div>';
+                              $li_btncro   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                   <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                </div>';
+            $th = array();
+            $th[] = ++$start . '.';
+            $th[] = $nama_kategori;
+            $th[] = $row->deskripsi ? $row->deskripsi : '-';
+            $th[] = $is_active;
+            if (sessPenggunaId() == 72) {
+                $th[] = $li_btncro;
+              } elseif (sessPenggunaId() == 1) {
+                $th[] = $li_btn;
+              }
+            $data[] = $th;
+        }
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+    }
+}

@@ -1,0 +1,781 @@
+<?php
+
+use FontLib\Table\Type\post;
+use Mpdf\Mpdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Funnel extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_pengguna');
+        $this->load->model('md_calonpelanggan');
+        $this->load->model('md_pelangganan');
+        $this->load->model('md_funnel');
+        $this->load->helper('encrypt_helper');
+        
+    }
+	
+	function id_navbar(){
+		$id_navbar = "marketing";
+		return $id_navbar;
+	}
+
+    public function index()
+    {
+        grantAccessFor('all');
+
+        $page_data['switch'] = $this->id_navbar();
+		$page_data['page_name']     = 'marketing/v_funnels';
+        $page_data['page_title']    = 'Funnel';
+        $page_data['page_desc']     = 'Management Data Funnel';
+        if (isAdmin() || isHrd() || isCRO()) {
+            $page_data['pelanggan']  = $this->md_calonpelanggan->getAllCalonPelangganFunnel();
+        }else{
+            $page_data['pelanggan']  = $this->md_calonpelanggan->getAllCalonPelangganFunnelByPenggunaID(sessPenggunaId()); 
+        }
+
+        
+        $page_data['statusfunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(1);
+        $page_data['merkproduk']  = $this->md_funnel->getMasterKategoriFunnelRadiologi();
+       // $page_data['histori']   = $this->md_funnel->getAllFunnelUpdateById(decrypt('12k72k'));
+        //$page_data['namaproduct'] = $this->md_funnel->getMasterNamaProductRadiologi();
+       
+        $page_data['progressfunnel']  = $this->md_funnel->getMasterProgressFunnel();
+        $page_data['merk']  = '';
+        $page_data['nama_marketing']  = $this->md_pengguna->getPenggunaMarketingFunnel();
+       
+        $page_data['tahun']  = $this->md_funnel->getTahunFunnelUpdate();
+        $this->load->view('index', $page_data);
+    }
+
+    public function updateanalisa(){
+         $data['id']  = decrypt($this->input->post('idanalisa'));
+         $data['hasilanalisa'] = $this->input->post('hasilanalisaupdate');
+
+        $this->md_funnel->updateanalisa($data);
+         /** LOG */
+         addLog('Penambahan Hasil AnalisaFunnel', 'Menambah Funnel Hasil Analisa');
+         ajaxReturnDie('success', 'Hasil Analisa di Funnel berhasil diupdate', 'reload_table');
+    }
+    public function addfunnelkompetitor(){
+        $data['idfunnel']  = decrypt($this->input->post('idfunnelkomp'));
+        $data['namakompetitor'] = $this->input->post('namakompetitor');
+        $data['produkkompetitor'] = $this->input->post('produkkompetitor');
+        $data['hargakompetitor'] = $this->input->post('hargakompetitor');
+
+        $this->md_funnel->addkomp($data);
+        /** LOG */
+         addLog('Penambahan Funnel', 'Menambah Funnel Kompetitor "' . $data['namakompetitor'] . '"');
+         ajaxReturnDie('success', 'Kompetitor di Funnel berhasil ditambahkan', 'reload_table');
+       
+    }
+
+     public function addfunnel(){
+       if(empty($this->input->post('tanggal'))){
+             ajaxReturnDie('error', 'Tanggal Funnel tidak boleh kosong..!!');
+        }elseif(empty($this->input->post('namacalonpelanggan'))){
+             ajaxReturnDie('error', 'Nama Calon / Pelanggan tidak boleh kosong..!!');
+        }elseif(empty($this->input->post('jenispekerjaan'))){
+             ajaxReturnDie('error', 'Jenis Pekerjaan tidak boleh kosong..!!');         
+        }elseif($this->input->post('statusfunnel')==0){
+             ajaxReturnDie('error', 'Rencana tidak boleh kosong..!!');
+        }elseif(empty($this->input->post('tujuankegiatan'))){
+             ajaxReturnDie('error', 'Tujuan Kegiatan tidak boleh kosong..!!');    
+        }elseif(empty($this->input->post('namaproduct'))){
+             ajaxReturnDie('error', 'Nama Produk tidak boleh kosong..!!');    
+        }
+        //elseif(empty( $this->input->post('keterangan'))){
+        //     ajaxReturnDie('error', 'Keterangan tidak boleh kosong..!!');        
+        //}elseif(empty( $this->input->post('kendala'))){
+        //     ajaxReturnDie('error', 'Kendala tidak boleh kosong..!!');        
+        //}
+       
+       
+             $data['tanggal']	= $this->input->post('tanggal');
+             $data['idpelanggan']	= $this->input->post('namapelanggan');
+             $namapelanggan	= $this->input->post('namacalonpelanggan');
+             $data['jenispekerjaan']  = $this->input->post('jenispekerjaan');
+             $data['statusfunnel']  = $this->input->post('statusfunnel');
+             $data['tujuankegiatan'] = $this->input->post('tujuankegiatan');
+             $data['idproduct'] = $this->input->post('namaproduct');
+             $data['keterangan'] = $this->input->post('keterangan');
+             $data['kendala']	= $this->input->post('kendala');
+             $data['idmarketing'] = sessPenggunaId();
+             $data['pengguna_id'] = sessPenggunaId();
+            
+      
+     
+           $this->md_funnel->add($data);
+           $insert = $this->db->insert_id();
+          
+            $result = array();
+            if (!isEmptyArray($_POST['namakompetitor'])) {
+                foreach ($_POST['namakompetitor'] as $key => $val) {
+                    $result[] = array(             
+                        'namakompetitor' => $_POST['namakompetitor'][$key],
+                        'produkkompetitor' => $_POST['produkkompetitor'][$key],
+                        'hargakompetitor' => $_POST['hargakompetitor'][$key],
+                        'idfunnel' => $insert       
+                    );      
+                }     
+                 $this->md_funnel->addkompetitor($result); 
+             }
+           
+        /** LOG */
+         addLog('Penambahan Funnel', 'Menambah Funnel "' . $namapelanggan . '"');
+         ajaxReturnDie('success', 'Funnel berhasil ditambahkan', 'reload_table');
+  
+    }
+
+    public function edit($param1)
+    {      
+            grantAccessFor('all');
+            $id = decrypt($param1);
+            $dt = $this->md_funnel->getAllFunnelById($id);
+
+            if(isset($dt[0]))
+                echo json_encode($dt[0]);
+            else
+                ajaxReturnDie('error', 'error');
+             die;
+  
+    }
+
+    public function update()
+    {        
+       
+         grantAccessFor('all');
+        
+             $id =  $this->input->post('id');
+             $namapelanggan = $this->input->post('namacaloncustomer');
+            $data['tanggal'] = $this->input->post('tanggal');
+            $data['jenispekerjaan']  = $this->input->post('jenispekerjaan');
+            $data['statusfunnel'] = $this->input->post('statusfunnel');
+            $data['idproduct']	= $this->input->post('namaproduct');
+            $data['tujuankegiatan']	= $this->input->post('tujuankegiatan');
+            $data['keterangan']	= $this->input->post('keterangan');
+            $data['kendala'] = $this->input->post('alamatcaloncustomer');          
+            $data['pengguna_id'] = sessPenggunaId();
+       
+        
+      
+        $this->md_funnel->update($id, $data);
+
+        /** LOG */
+        addLog('Update Pelanggan', 'Memperbarui data Pelanggan "' . $namapelanggan  . '"');
+        ajaxReturnDie('success', 'Data pelanggan '. $namapelanggan .' berhasil diperbarui', 'reload_table');
+	}
+
+     public function delete($id)
+    {
+        grantAccessFor('all');
+        $data = explode(",", decryptvym($id));
+        
+        $this->md_funnel->hapus($data[0],sessPenggunaId());
+        
+        addLog('Menghapus Funnel', 'Menghapus Funnel '. $data[1] );
+        ajaxReturnDie('success', 'Funnel '. $data[1] . ' Berhasil Dihapus'  , 'reload_table');
+			
+    }
+
+     public function hapusupdate($id)
+    {
+        grantAccessFor('all');
+        $data = explode(",", decryptvym($id));
+        
+        $this->md_funnel->hapusupdate($data[0],sessPenggunaId());
+        
+        addLog('Menghapus Funnel Update', 'Menghapus Funnel '. 'Update' );
+        ajaxReturnDie('success', 'Funnel '. 'Update' . ' Berhasil Dihapus'  , 'reload_table');
+			
+    }
+
+    
+    public function updatefunnel(){
+        if(empty($this->input->post('tanggal'))){
+             ajaxReturnDie('error', 'Tanggal Update tidak boleh kosong..!!');
+        }elseif(empty($this->input->post('idfunnel'))){
+             ajaxReturnDie('error', 'ID Funnel tidak boleh kosong..!!');
+        }elseif(empty($this->input->post('namapelanggan'))){
+             ajaxReturnDie('error', 'Nama Calon / Pelanggan tidak boleh kosong..!!');
+        }elseif($this->input->post('realisasi')==0){
+             ajaxReturnDie('error', 'Realisasi tidak boleh kosong..!!');         
+        }elseif($this->input->post('statusfunnel')==0){
+             ajaxReturnDie('error', 'Status Funnel tidak boleh kosong..!!');
+        }elseif($this->input->post('progressfunnel')==0){
+             ajaxReturnDie('error', 'Progress Kerja tidak boleh kosong..!!');    
+        }elseif(empty($this->input->post('peluang'))){
+             ajaxReturnDie('error', 'Peluang Keberhasilan tidak boleh kosong..!!');    
+        }elseif(empty( $this->input->post('keterangan'))){
+             ajaxReturnDie('error', 'Keterangan tidak boleh kosong..!!');        
+        }elseif(empty( $this->input->post('kendala'))){
+             ajaxReturnDie('error', 'Kendala tidak boleh kosong..!!');        
+        }
+        
+        
+        $data['tanggal']	= $this->input->post('tanggal');
+        $data['idfunnel']	= decrypt($this->input->post('idfunnel'));
+        $namapelanggan	= $this->input->post('namapelanggan');
+        $data['realisasi']  = $this->input->post('realisasi');
+        $data['statusfunnel']  = $this->input->post('statusfunnel');
+        $data['progressfunnel']	= $this->input->post('progressfunnel');
+        $data['peluangkeberhasilan'] = $this->input->post('peluang');
+        $data['keterangan'] = $this->input->post('keterangan');
+        $data['kendala']	= $this->input->post('kendala');
+        $data['pengguna_id'] = sessPenggunaId();
+
+        $this->md_funnel->updateprogressfunnel($data);
+        $this->md_funnel->updatefunnel($data);
+      
+           
+        /** LOG */
+         addLog('Update Funnel', 'Mengupdate Funnel "' . $namapelanggan . '"');
+         ajaxReturnDie('success', 'Funnel berhasil diupdate', 'reload_table');
+    }
+
+    function statusfunnel($rencana){
+     $query = $this->db->get_where('masterstatusfunnel',array('rencana'=>$rencana));
+      $data = "<option>— Pilih Status Funnel —</option>";
+      foreach ($query->result() as $value) {
+          $data .= "<option value='".$value->id."'>".$value->nama."</option>";
+      }
+           echo $data;
+    }
+
+    
+
+    function add_namaproduct($idkategori){
+        $query = $this->db
+         ->select('b.id_kategori,b.nama_kategori,a.*')
+         ->from('barang a')
+         ->join('kategori_barang b','a.id_kategori=b.id_kategori')
+         ->where('a.id_kategori',$idkategori)
+         ->where('a.status',1)
+         ->order_by('a.nama_barang', 'ASC')
+         ->get();
+        //$query = $this->db->get_where('pelanggananmodality',array('id_pelanggan'=>$id_cust));
+        $data = "<option value=''>- Pilih Nama Product -</option>";
+        foreach ($query->result() as $value) {
+            $data .= "<option value='".$value->id_barang."'>".$value->nama_barang."</option>";
+        }
+            echo $data;
+    }
+
+     function add_namaproduct2($idkategori,$idproduct){
+        $query = $this->db
+         ->select('b.id_kategori,b.nama_kategori,a.*')
+         ->from('barang a')
+         ->join('kategori_barang b','a.id_kategori=b.id_kategori')
+         ->where('a.id_kategori',$idkategori)
+         ->where('a.status',1)
+         ->order_by('a.nama_barang', 'ASC')
+         ->get();
+        //$query = $this->db->get_where('pelanggananmodality',array('id_pelanggan'=>$id_cust));
+        $data = "<option value=''>- Pilih Nama Product -</option>";
+        foreach ($query->result() as $value) {
+            if($value->id_barang==$idproduct){
+                $data .= "<option value='".$value->id_barang."' selected>".$value->nama_barang."</option>";            
+            }else{
+                $data .= "<option value='".$value->id_barang."'>".$value->nama_barang."</option>";
+            }
+        }
+            echo $data;
+    }
+
+   
+
+    function getprovinsikota($id){
+        $provinsikota = $this->md_calonpelanggan->getprovinsikota($id);
+        echo $provinsikota;
+    }
+
+    function getpic($id){
+        // $pic = $this->md_pelangganan->getAllPICPelangganById($id);
+        // echo json_encode($pic) ;
+          $where = array('calonpelangganpic.idpic' => $id);  
+          $result = $this->db
+            ->select('
+                 calonpelangganpic.id,    
+                (CONCAT(calonpelangganpic.namapic,\' - \' ,calonpelangganpic.jabatanpic,\' - \',calonpelangganpic.teleponpic)) as namapic
+            ') 
+            ->join('pelangganan','pelangganan.idcalonpelanggan=calonpelangganpic.idpic')
+            ->get_where('calonpelangganpic', $where)
+            ->result();
+
+          echo json_encode($result) ;
+    }
+    
+    function getmerkbyid($id){
+        $merk = $this->md_calonpelanggan->getmerkbyid($id);
+        echo $merk;
+    }
+
+    public function showdetail($id){  
+            
+            $page_data['switch'] = $this->id_navbar();
+            $page_data['id_pengguna'] = sessPenggunaId();
+            $dt    =  $this->md_funnel->getAllFunnelById(decrypt($id));
+            $page_data['datafunnel'] = $dt[0];
+            $page_data['kompetitor'] = $this->md_funnel->getAllKompetitorFunnelById(decrypt($id));
+            $page_data['page_name']       = 'marketing/v_funneldetail';
+            $page_data['page_title']      = 'Detail Funnel';
+            $page_data['page_desc']       = 'Data Funnel';
+            $page_data['progressfunnel']  = $this->md_funnel->getMasterProgressFunnel();
+            $page_data['statusfunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(0);
+            $page_data['realisasifunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(1);
+            $this->load->view('index', $page_data);
+    }
+
+    public function showupdate($id){  
+            
+            $page_data['switch'] = $this->id_navbar();
+            $page_data['id_pengguna'] = sessPenggunaId();
+            $dt    =  $this->md_funnel->getAllFunnelDetailUpdateById(decrypt($id));
+            $page_data['datafunnel'] = $dt[0];
+            $page_data['kompetitor'] = $this->md_funnel->getAllKompetitorFunnelById(decrypt($id));
+            $page_data['page_name']       = 'marketing/v_funneldetailupdate';
+            $page_data['page_title']      = 'Detail Update Funnel';
+            $page_data['page_desc']       = 'Data Update Funnel';
+            $page_data['progressfunnel']  = $this->md_funnel->getMasterProgressFunnel();
+            $page_data['statusfunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(0);
+            $page_data['realisasifunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(1);
+            $this->load->view('index', $page_data);
+    }
+    
+     public function exportlaporan()
+     {
+        
+         $data = $this->md_funnel->getAllLaporanFunnelByPenggunaID($this->input->get('idmarketing'),$this->input->get('tglawal'),$this->input->get('tglakhir'));
+
+
+
+          $spreadsheet = new Spreadsheet;
+          $sheet = $spreadsheet->getActiveSheet();
+
+        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
+            $style_col = [
+              'font' => ['bold' => true], // Set font nya jadi bold
+              'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+              ],
+              'borders' => [
+                'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
+                'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
+                'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+                'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+              ]
+            ];
+
+
+        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
+            $style_row = [
+              'alignment' => [
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+              ],
+              'borders' => [
+                'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
+                'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
+                'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+                'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+              ]
+            ];
+            
+          $sheet->setCellValue('A1', "LAPORAN DATA MARKETING ". strtoupper($this->input->get('namamarketing'))); // Set kolom A1 dengan tulisan "DATA SISWA"
+          $sheet->mergeCells('A1:U1'); // Set Merge Cell pada kolom A1 sampai E1
+          $sheet->getStyle('A1')->getFont()->setBold(true); // Set bold kolom A1
+            
+                    // Buat header tabel nya pada baris ke 3
+                    $sheet->setCellValue('A4', 'No');
+                    $sheet->setCellValue('B4', 'Tanggal');
+                    $sheet->setCellValue('C4', 'Hari');
+                    $sheet->setCellValue('D4', 'Nama Pelanggan');
+                    $sheet->setCellValue('E4', 'Provinsi');
+                    $sheet->setCellValue('F4', 'Perjalanan Kerja');
+                    $sheet->setCellValue('G4', 'Rencana Kerja');
+                    $sheet->setCellValue('H4', 'Tujuan Kerja');
+                    $sheet->setCellValue('I4', 'Tipe Customer');
+                    $sheet->setCellValue('J4', 'PIC');
+                    $sheet->setCellValue('K4', 'Tanggal Realisasi');
+                    $sheet->setCellValue('L4', 'Realisasi');
+                    $sheet->setCellValue('M4', 'Funnel Status');
+                    $sheet->setCellValue('N4', 'Progress');
+                    $sheet->setCellValue('O4', 'Product');
+                    $sheet->setCellValue('P4', 'Merk');
+                    $sheet->setCellValue('Q4', 'Kompetitor');
+                    $sheet->setCellValue('R4', 'Peluang');
+                    $sheet->setCellValue('S4', 'Keterangan');
+                    $sheet->setCellValue('T4', 'Kendala');
+                    $sheet->setCellValue('U4', 'Hasil Analisa');
+                    $sheet->setCellValue('V4', 'Modality');
+                    
+                     // Apply style header yang telah kita buat tadi ke masing-masing kolom header
+                    $sheet->getStyle('A4')->applyFromArray($style_col);
+                    $sheet->getStyle('B4')->applyFromArray($style_col);
+                    $sheet->getStyle('C4')->applyFromArray($style_col);
+                    $sheet->getStyle('D4')->applyFromArray($style_col);
+                    $sheet->getStyle('E4')->applyFromArray($style_col);
+                    $sheet->getStyle('F4')->applyFromArray($style_col);
+                    $sheet->getStyle('G4')->applyFromArray($style_col);
+                    $sheet->getStyle('H4')->applyFromArray($style_col);
+                    $sheet->getStyle('I4')->applyFromArray($style_col);
+                    $sheet->getStyle('J4')->applyFromArray($style_col);
+                    $sheet->getStyle('K4')->applyFromArray($style_col);
+                    $sheet->getStyle('L4')->applyFromArray($style_col);
+                    $sheet->getStyle('M4')->applyFromArray($style_col);
+                    $sheet->getStyle('N4')->applyFromArray($style_col);
+                    $sheet->getStyle('O4')->applyFromArray($style_col);
+                    $sheet->getStyle('P4')->applyFromArray($style_col);
+                    $sheet->getStyle('Q4')->applyFromArray($style_col);
+                    $sheet->getStyle('R4')->applyFromArray($style_col);
+                    $sheet->getStyle('S4')->applyFromArray($style_col);
+                    $sheet->getStyle('T4')->applyFromArray($style_col);
+                    $sheet->getStyle('U4')->applyFromArray($style_col);
+                    $sheet->getStyle('V4')->applyFromArray($style_col);
+
+
+           $kolom = 5;
+           $nomor = 1;
+           
+           foreach($data as $marketing) {
+
+               $spreadsheet->setActiveSheetIndex(0)
+                           ->setCellValue('A' . $kolom, $nomor)
+                           ->setCellValue('B' . $kolom, date('j F Y', strtotime($marketing->tanggal)))
+                           ->setCellValue('C' . $kolom, getHari($marketing->tanggal))
+                           ->setCellValue('D' . $kolom, $marketing->namacaloncustomer)
+                           ->setCellValue('E' . $kolom, $marketing->provinsikota)
+                           ->setCellValue('F' . $kolom, $marketing->jenispekerjaan)
+                           ->setCellValue('G' . $kolom, $marketing->namastatus)
+                           ->setCellValue('H' . $kolom, $marketing->tujuankegiatan)
+                           ->setCellValue('I' . $kolom, $marketing->tipecustomer)
+                           ->setCellValue('J' . $kolom, str_replace("()","", $marketing->pic))
+                           ->setCellValue('K' . $kolom, ($marketing->tglrealisasi>'1900-12-31') ? (date('j F Y', strtotime($marketing->tglrealisasi))) : '')
+                           ->setCellValue('L' . $kolom, $marketing->realisasi)
+                           ->setCellValue('M' . $kolom, $marketing->statusfunnel)
+                           ->setCellValue('N' . $kolom, $marketing->namaprogress)
+                           ->setCellValue('O' . $kolom, $marketing->nama_barang)
+                           ->setCellValue('P' . $kolom, $marketing->nama_kategori)
+                           ->setCellValue('Q' . $kolom, $marketing->kompetitor)
+                           ->setCellValue('R' . $kolom, $marketing->peluangkeberhasilan)
+                           ->setCellValue('S' . $kolom, $marketing->keterangan)
+                           ->setCellValue('T' . $kolom, $marketing->kendala)
+                           ->setCellValue('U' . $kolom, $marketing->hasilanalisa)
+                           ->setCellValue('V' . $kolom, $marketing->modality);
+
+               $kolom++;
+               $nomor++;
+
+          }
+
+          // Set width kolom
+    $sheet->getColumnDimension('A')->setWidth(5); // Set width kolom A
+    $sheet->getColumnDimension('B')->setWidth(18); // Set width kolom B
+    $sheet->getColumnDimension('C')->setWidth(6); // Set width kolom C
+    $sheet->getColumnDimension('D')->setWidth(35); // Set width kolom D
+    $sheet->getColumnDimension('E')->setWidth(55); // Set width kolom E
+    $sheet->getColumnDimension('F')->setWidth(15); // Set width kolom F
+    $sheet->getColumnDimension('G')->setWidth(18); // Set width kolom G
+    $sheet->getColumnDimension('H')->setWidth(56); // Set width kolom H
+    $sheet->getColumnDimension('I')->setWidth(14); // Set width kolom I
+    $sheet->getColumnDimension('J')->setWidth(30); // Set width kolom J
+    $sheet->getColumnDimension('K')->setWidth(18); // Set width kolom K
+    $sheet->getColumnDimension('L')->setWidth(18); // Set width kolom L
+    $sheet->getColumnDimension('M')->setWidth(13); // Set width kolom M
+    $sheet->getColumnDimension('N')->setWidth(12); // Set width kolom N
+    $sheet->getColumnDimension('O')->setWidth(60); // Set width kolom O
+    $sheet->getColumnDimension('P')->setWidth(10); // Set width kolom P
+    $sheet->getColumnDimension('Q')->setWidth(45); // Set width kolom Q
+    $sheet->getColumnDimension('R')->setWidth(8); // Set width kolom R
+    $sheet->getColumnDimension('S')->setWidth(100); // Set width kolom S
+    $sheet->getColumnDimension('T')->setWidth(100); // Set width kolom T
+    $sheet->getColumnDimension('U')->setWidth(100); // Set width kolom U
+    $sheet->getColumnDimension('V')->setWidth(100); // Set width kolom V
+    
+    // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+    $sheet->getDefaultRowDimension()->setRowHeight(-1);
+    // Set orientasi kertas jadi LANDSCAPE
+    $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+    // Set judul file excel nya
+    $sheet->setTitle("Data Marketing");
+     ob_end_clean();
+    // Proses file excel
+    $filename = "Data Marketing - ".strtoupper($this->input->get('namamarketing')).".xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename='.$filename);
+    header('Cache-Control: max-age=0');
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    
+    
+      
+     }
+    
+    public function printlaporan()
+    {
+        grantAccessFor('all');
+        
+        $page_data['page_name']     = 'v_print/print_marketing';
+    	$page_data['page_title']    = 'Laporan Marketing ';
+    	$page_data['page_desc']     = 'Laporan Marketing';
+    	$this->load->view('index', $page_data);
+	
+    	$dt = [
+    		'title_pdf'	=> 'Laporan Marketing' . ' ' . $this->input->get('namamarketing'),
+    		'periode'	=>  $this->input->get('tglawal') . ' s.d ' .$this->input->get('tglakhir'),
+    		'data'	=> $this->md_funnel->getAllLaporanFunnelByPenggunaID($this->input->get('idmarketing'),$this->input->get('tglawal'),$this->input->get('tglakhir')),
+    		'provinsi' =>  $this->input->get('provinsi'),
+    		'perjalanankerja' =>  $this->input->get('perjalanankerja'),
+    		'rencana' =>  $this->input->get('rencana'),
+    		'tujuankegiatan' =>  $this->input->get('tujuankegiatan'),
+    		'tipecustomer' =>  $this->input->get('tipecustomer'),
+    		'pic' =>  $this->input->get('pic'),
+    		'tglrealisasi' =>  $this->input->get('tglrealisasi'),
+    		'realisasi' =>  $this->input->get('realisasi'),
+    		'funnelstatus' =>  $this->input->get('funnelstatus'),
+    		'progress' =>  $this->input->get('progress'),
+    		'product' =>  $this->input->get('product'),
+    		'merk' =>  $this->input->get('merk'),
+    		'kompetitor' =>  $this->input->get('kompetitor'),
+    		'peluang' =>  $this->input->get('peluang'),
+    		'modality' =>  $this->input->get('modality'),
+    		'keterangan' =>  $this->input->get('keterangan'),
+    		'kendala' =>  $this->input->get('kendala'),
+    		'analisa' =>  $this->input->get('analisa'),
+    	];
+	
+	//load mpdf dan membuat page size 
+	$mpdf = new Mpdf(['format' => 'Tabloid']);
+
+	//  orientasi ketas 'L' untuk Landscape 'P' untuk Portait
+	$mpdf->AddPage('L', '', '', '', '', '', '', '5', '5');
+	
+	
+	
+	// filename dari pdf ketika didownload
+	$file_pdf = 'Laporan Merketing ';
+
+	// page htmk yang akan di jadikan ke pdf
+	$html = $this->load->view('pages/v_print/print_marketing', $dt, true);
+	$mpdf->WriteHTML($html);
+	$mpdf->Output($file_pdf . '.pdf', 'I');
+
+    }
+    
+    public function search()
+    {
+        $tglawal = $this->input->get('tglawal');
+        $tglakhir = $this->input->get('tglakhir');
+        $idmarketing = $this->input->get('idmarketing');
+        $namamarketing = $this->input->get('namamarketing');
+        $provinsi = $this->input->get('provinsi');
+        $perjalanankerja = $this->input->get('perjalanankerja');
+        $rencana = $this->input->get('rencana');
+        $tujuankegiatan = $this->input->get('tujuankegiatan');
+        $tipecustomer = $this->input->get('tipecustomer');
+        $pic = $this->input->get('pic');
+        $tglrealisasi =  $this->input->get('tglrealisasi');
+        $realisasi = $this->input->get('realisasi');
+        $funnelstatus = $this->input->get('funnelstatus');
+        $progress = $this->input->get('progress');
+        $product = $this->input->get('product');
+        $merk = $this->input->get('merk');
+        $kompetitor = $this->input->get('kompetitor');
+        $peluang = $this->input->get('peluang');
+        $modality = $this->input->get('modality');
+        $keterangan = $this->input->get('keterangan');
+        $kendala = $this->input->get('kendala');
+        $analisa = $this->input->get('analisa');
+    }
+    
+    public function paginationkompetitor($idfunnel)
+    {
+        grantAccessFor('all');
+       //$id = decrypt($id_pelanggan);
+        if($idfunnel!=null){
+            $dt    = $this->md_funnel->getAllDataKompetitorFunnelById(decrypt($idfunnel));
+            $data  = array();
+            $index = 1;
+              
+            foreach ($dt['data'] as $row) {
+                $th = array();
+                $li_btn   	= '
+                <div class="btn-group" role="group" aria-label="First group">
+                   <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="'.$row->id.'" data-object="funnel/hapuskompetitor/'.$row->id.'"><i class="bx bx-trash"></i></button>
+                </div>';
+                $th[] = $index;
+               // $th[] = encrypt($row->id);
+                $th[] = $row->namakompetitor;
+                $th[] = $row->produkkompetitor;
+                $th[] = $row->hargakompetitor;
+                $th[] = $li_btn;
+                $data[] = $th;
+                $index++;
+            }
+            
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;
+        }else{
+            $dt['data'] = '';
+            echo json_encode($dt);
+            die;
+        }
+    }
+
+    public function pagination()
+    {
+        grantAccessFor('all');
+        $pengguna_id = sessPenggunaId();
+        if (isAdmin() || isHrd() || isCRO()) {
+            $dt    = $this->md_funnel->getAllFunnel($pengguna_id);
+        }else{
+            $dt    = $this->md_funnel->getAllFunnelByPenggunaID($pengguna_id);
+        }
+        
+        $start = $this->input->post('start');
+        $data  = array();
+        $index = 1;
+        foreach ($dt['data'] as $row) {
+            $id       	= encrypt($row->id);
+            $myObj = $row->id.",".$row->namacaloncustomer;
+           
+            $parJSON = encryptvym($myObj);
+
+            $li_btn   	= '
+                <div class="btn-group" role="group" aria-label="First group">
+                   <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="'. $id .'" data-object="funnel/update"><i class="bx bx-pencil"></i></button>
+                   <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="'.$parJSON.'" data-object="funnel/delete/'.$parJSON.'"><i class="bx bx-trash"></i></button>
+                </div>';
+
+            if($row->histori>0){
+                $li_btnhistory   	= '
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <a href="javascript:;" id="btn-show-histori-form" class="btn btn-sm btn-success"  data-id="'. encrypt($row->id) .'"><i class="bx bx-history"></i>&nbsp'.$row->histori.'</a>
+                    </div>';    
+            }else{
+                $li_btnhistory  ='';
+            }    
+            $namacaloncustomer	= '<a href="funnel/showdetail/'.encrypt($row->id).'">'.$row->namacaloncustomer.'</a>';       
+            $th = array();
+            $th[] = $index;
+            $th[] = encrypt($row->id);
+            $th[] = $namacaloncustomer;
+            $th[] = $row->provinsikota;
+            $th[] = $row->namamarketing;
+            $th[] = $row->jenispekerjaan;
+            $th[] = $row->namastatus;
+            $th[] = $row->nama_kategori;
+            $th[] = $row->nama_barang;
+            $th[] = $row->Realisasi;
+            $th[] = $row->namaprogress;
+            $th[] = $row->diajukanoleh;
+			// $th[] = $row->keterangan;
+            // $th[] = $row->kendala;
+            $th[] = '<i class="fa fa-clock-o"></i> '.date('Y-m-d',strtotime($row->tanggal));
+            if($row->tglrealisasi<'01-01-2000'){
+                 $th[] = '';
+            }else{
+                 $th[] = '<i class="fa fa-clock-o"></i> '.date('Y-m-d',strtotime($row->tglrealisasi));
+            }
+           
+            // if ($row->statuscaloncustomer == 1) {
+            //     $th[] = $statuscalon;
+            // }
+            if (isAdmin() || isHrd() || isTeamMarketing() || isCRO() ) {
+                 $th[] = $li_btnhistory;
+                 $th[] = $li_btn;
+            }
+            $data[] = $th;
+            $index++;
+        }
+        
+        $dt['data'] = $data;
+        echo json_encode($dt);
+    }
+
+    public function paginationhistori($idfunnel)
+    {
+        grantAccessFor('all');
+       //$id = decrypt($id_pelanggan);
+        if($idfunnel!=null){
+            $dt    = $this->md_funnel->getAllFunnelUpdateByIdFunnel(decrypt($idfunnel));
+            $data  = array();
+            $index = 1;
+              
+            foreach ($dt['data'] as $row) {
+                $th = array();
+                                 $myObj = $row->id.",".$row->namacaloncustomer;          
+                 $parJSON = encryptvym($myObj);
+                 $li_btn   	= '
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" id="btn-delete-update" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="'.$parJSON.'" data-object="funnel/hapusupdate/'.$parJSON.'"><i class="bx bx-trash"></i></button>
+                    </div>';
+
+                $namastatus	= '<a href="funnel/showupdate/'.encrypt($row->id).'">'.$row->namastatus.'</a>';   
+                $th[] = $index;
+                $th[] = encrypt($row->id);
+                $th[] = $namastatus;
+                $th[] = $row->realisasi;
+                $th[] = $row->namaprogress;
+                $th[] = $row->peluangkeberhasilan;
+                $th[] = $row->keterangan;
+                $th[] = $row->kendala;
+                $th[] = $row->hasilanalisa;
+                $th[] = '<i class="fa fa-clock-o"></i> '.date('Y-m-d',strtotime($row->data_created));
+                $th[] =  $li_btn; 
+                $data[] = $th;
+                $index++;
+            }
+            
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;
+        }else{
+            $dt['data'] = '';
+            echo json_encode($dt);
+            die;
+        }
+    }
+
+    public function paginationupdatehistori($idfunnel)
+    {
+        grantAccessFor('all');
+       //$id = decrypt($id_pelanggan);
+        if($idfunnel!=null){
+            $dt    = $this->md_funnel->getAllFunnelUpdateById(decrypt($idfunnel));
+            $data  = array();
+            $index = 1;
+              
+            foreach ($dt['data'] as $row) {
+                $th = array();
+                $namastatus	= '<a href="funnel/showupdate/'.encrypt($row->id).'">'.$row->namastatus.'</a>';   
+                $th[] = $index;
+                $th[] = $namastatus;
+                $th[] = $row->namaprogress;
+                $th[] = $row->peluangkeberhasilan;
+                $th[] = $row->keterangan;
+                $th[] = $row->kendala;
+                $th[] = $row->hasilanalisa;
+                $th[] = '<i class="fa fa-clock-o"></i> '.date('Y-m-d',strtotime($row->data_created));
+                
+                $data[] = $th;
+                $index++;
+            }
+            
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;
+        }else{
+            $dt['data'] = '';
+            echo json_encode($dt);
+            die;
+        }
+    }
+}

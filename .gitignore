@@ -1,0 +1,55 @@
+# Environment / configuration
+.env
+.env.*
+.user.ini
+php.ini
+
+# Logs
+*.log
+error_log
+
+# Database / backup
+DB/
+*.sql
+*.zip
+
+# Temporary files
+*.tmp
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+application/vendor/
+uploads/
+application/config/google_drive_key.json
+application/config/google_drive_oauth.json
+
+# Data/foto absensi
+assets/img/absen/
+
+# Dependency
+application/vendor/
+
+# Upload pengguna
+uploads/
+
+# Log
+*.log
+error_log
+
+# Config sensitif
+.env
+.user.ini
+php.ini
+
+assets/img/absen/
+assets/vendor/
+application/vendor/
+uploads/
+*.log
+error_log
+.env
+.user.ini
+php.ini

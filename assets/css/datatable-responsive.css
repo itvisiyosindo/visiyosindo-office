@@ -1,0 +1,44 @@
+/* DataTables and table responsiveness for small screens */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive > table,
+.table-responsive > .table,
+.table-responsive > .dataTable {
+    min-width: 720px;
+}
+
+.table-responsive th,
+.table-responsive td {
+    white-space: nowrap;
+}
+
+.dataTables_wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.dataTables_wrapper table.dataTable {
+    min-width: 720px;
+}
+
+@media (max-width: 576px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        float: none;
+        text-align: left;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 8px;
+    }
+}

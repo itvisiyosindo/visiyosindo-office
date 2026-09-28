@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $title_pdf; ?></title>
+    <style>
+        #table {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #table td,
+        #table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        /* #table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #table tr:hover {
+            background-color: #ddd;
+        } */
+
+        #table th {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            text-align: center;
+            font-size: 11Px;
+        }
+
+        #table td {
+            font-size: 10px;
+        }
+
+
+
+        .tandatangan {
+
+            text-align: center;
+            margin-left: 600px;
+        }
+
+        .tandatangan2 {
+            text-align: left;
+        }
+
+        .tandatangan3 {
+            text-align: left;
+            margin-left: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="assets/img/kop_baru.jpg" width="100%" height="30%" />
+    <div style="text-align:center">
+        <h2><?= $title_pdf ?></h2>
+        <h3>Periode : <?= $periode ?></h3>
+    </div>
+    <table id="table" style="width:100%">
+        <thead class="text-center">
+            <tr>
+                <th style="width:5%"> No </th>
+                <th style="width:10%"> Nama Karyawan</th>
+                <th style="width:5%"> No Pegawai</th>
+                <th style="width:7%"> Status Karyawan</th>
+                <th style="width:13%"> Masa Kerja</th>
+                <th style="width:7%"> Jumlah Hari Kerja</th>
+                <th> Tunjangan Jabatan </th>
+                <th> Tunjangan Kinerja </th>
+                <th> Tunjangan Konsumsi </th>
+                <th> Tunjangan Komunikasi </th>
+                <th> Tunjangan Transportasi </th>
+                <th> Tunjangan BBM </th>
+                <th> Tunjangan Lainnya </th>
+                <th> Potongan </th>
+                <th style="width:12%"> Total Tunjangan </th>
+                <th> No Rekening </th>
+            </tr>
+        </thead>
+        <?php if (true) { ?>
+            <tbody>
+                <?php
+                $x = 1;
+                $sumJabatan = 0;
+                $sumKinerja = 0;
+                $sumKonsumsi = 0;
+                $sumKomunikasi = 0;
+                $sumTunjangan = 0;
+                $sumbbm = 0;
+                $sumtransportasi = 0;
+                $sumPotongan = 0;
+                $sumtunjanganlain = 0;
+
+                foreach ($dt as $row) {
+                    // 1. AMBIL DATA DASAR DARI HELPER
+                    $dataSistem      = tunjangan($row->pengguna_id, $month);
+                    $absen_approved  = $dataSistem['dinas_approved'];
+                    $potongan1       = $dataSistem['total_potongan'];
+
+                    // Variabel Tunjangan Asli
+                    $jabatan        = ($row->terima_tunjangan_jabatan == 1) ? tunjanganJabatan($row->pengguna_id) : 0;
+                    $kinerja        = ($row->terima_tunjangan_kinerja == 1) ? $dataSistem['total_kinerjadinas'] : 0;
+                    $konsumsi       = ($row->terima_tunjangan_konsumsi == 1) ? $dataSistem['total_konsumsidinas'] : 0;
+                    $komunikasi     = ($row->terima_tunjangan_komunikasi == 1) ? $dataSistem['total_komunikasi'] : 0;
+                    $transportasi   = ($row->terima_tunjangan_transportasi == 1) ? $dataSistem['total_transportasi'] : 0;
+                    $bbm            = ($row->terima_tunjangan_bbm == 1) ? $dataSistem['total_bbm'] : 0;
+                    $pendapatanlain = ($row->id_pendapatan_lain > 0) ? $dataSistem['total_tunjanganlain'] : 0;
+
+                    // 2. LOGIKA KHUSUS SECURITY (ID 94) - Tetap Dipertahankan
+                    if ($row->pengguna_id == 94) {
+                        $konsumsiBiasa = $dataSistem['total_konsumsi_Biasa'];
+                        $konsumsiLibur = $dataSistem['total_konsumsi_Libur'];
+                        $konsumsi      = $konsumsiBiasa + ($konsumsiLibur * 3);
+                        $kinerjaLibur  = $dataSistem['total_kinerja_Libur'];
+                        $kinerja       = $kinerjaLibur * 3;
+                    }
+
+                    // 3. LOGIKA KHUSUS BOB (ID 54) - Konsumsi tetap 5 juta
+                    if ($row->pengguna_id == 54 && $row->terima_tunjangan_konsumsi == 1) {
+                        $konsumsi = 5000000;
+                    }
+
+                    // 4. LOGIKA TRAINING - Tidak dihitung untuk tunjangan tidak tetap
+                    if (strtolower($row->status_karyawan) == 'training') {
+                        $kinerja = 0;
+                        $konsumsi = 0;
+                        $komunikasi = 0;
+                        $transportasi = 0;
+                        $bbm = 0;
+                        $pendapatanlain = 0;
+                    }
+
+                    // 3. HITUNG TOTAL AKHIR
+                    $tunjangan = $jabatan + $kinerja + $konsumsi + $komunikasi + $transportasi + $bbm + $pendapatanlain - $potongan1;
+
+                    // Penentuan Status
+                    $status_karyawan = ($row->pengguna_id == 758) ? "Magang" : ucwords(strtolower($row->status_karyawan));
+                ?>
+                    <tr>
+                        <td style="text-align: center;"><?= $x++ ?></td>
+                        <td><?= ucwords(strtolower($row->nama)) ?></td>
+                        <td style="text-align: center;"><?= $row->no_pegawai ?></td>
+                        <td style="text-align: center;"><?= $status_karyawan ?></td>
+                        <td><?= masaKerja($row->tgl_masuk) ?></td>
+                        <td style="text-align: center;"><?= $absen_approved ?> hari</td>
+                        <td><?= $jabatan ? 'Rp. ' . rupiah($jabatan) : 'Rp. -' ?></td>
+                        <td><?= $kinerja ? 'Rp. ' . rupiah($kinerja) : 'Rp. -' ?></td>
+                        <td><?= $konsumsi ? 'Rp. ' . rupiah($konsumsi) : 'Rp. -' ?></td>
+                        <td><?= $komunikasi ? 'Rp. ' . rupiah($komunikasi) : 'Rp. -' ?></td>
+                        <td><?= $transportasi ? 'Rp. ' . rupiah($transportasi) : 'Rp. -' ?></td>
+                        <td><?= $bbm ? 'Rp. ' . rupiah($bbm) : 'Rp. -' ?></td>
+                        <td><?= $pendapatanlain ? 'Rp. ' . rupiah($pendapatanlain) : 'Rp. -' ?></td>
+                        <td><?= $potongan1 ? 'Rp. ' . rupiah($potongan1) : 'Rp. -' ?></td>
+                        <td style="font-weight: bold;"><?= $tunjangan ? 'Rp. ' . rupiah($tunjangan) : 'Rp. -' ?></td>
+                        <td><?= $row->no_rek ? $row->no_rek : '-' ?></td>
+                    </tr>
+
+                <?php
+                    // 4. PENJUMLAHAN FOOTER
+                    $sumJabatan += $jabatan;
+                    $sumKinerja += $kinerja;
+                    $sumKonsumsi += $konsumsi;
+                    $sumKomunikasi += $komunikasi;
+                    $sumTunjangan += $tunjangan;
+                    $sumbbm += $bbm;
+                    $sumtransportasi += $transportasi;
+                    $sumPotongan += $potongan1;
+                    $sumtunjanganlain += $pendapatanlain;
+                } ?>
+
+                <tr style="background-color: #f2f2f2; font-weight: bold;">
+                    <td colspan="5" style="text-align:right;">Total Keseluruhan :</td>
+                    <td style="text-align: center;">-</td>
+                    <td>Rp. <?= rupiah($sumJabatan) ?></td>
+                    <td>Rp. <?= rupiah($sumKinerja) ?></td>
+                    <td>Rp. <?= rupiah($sumKonsumsi) ?></td>
+                    <td>Rp. <?= rupiah($sumKomunikasi) ?></td>
+                    <td>Rp. <?= rupiah($sumtransportasi) ?></td>
+                    <td>Rp. <?= rupiah($sumbbm) ?></td>
+                    <td>Rp. <?= rupiah($sumtunjanganlain) ?></td>
+                    <td>Rp. <?= rupiah($sumPotongan) ?></td>
+                    <td>Rp. <?= rupiah($sumTunjangan) ?></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        <?php } // PENUTUP IF(FALSE) 
+        ?>
+        <!-- Khusus Bulan november 2025 -->
+        <?php if (false) { ?>
+            <tbody>
+                <?php
+                $x = 1;
+                // Inisialisasi variabel total
+                $sumJabatan = 0;
+                $sumKinerja = 0;
+                $sumKonsumsi = 0;
+                $sumKomunikasi = 0;
+                $sumTunjangan = 0;
+                $sumbbm = 0;
+                $sumtransportasi = 0;
+                $sumPotongan = 0;
+                $sumtunjanganlain = 0;
+
+                foreach ($dt as $row) {
+                    // 1. AMBIL SEMUA DATA TUNJANGAN SEKALI SAJA
+                    $dataTunjangan = tunjangan($row->pengguna_id, $month);
+
+                    // Ambil nilai dasar dari data tersebut
+                    $absen_approved = $dataTunjangan['dinas_approved'];
+                    $val_kinerja    = $dataTunjangan['total_kinerjadinas'];
+                    $val_konsumsi   = $dataTunjangan['total_konsumsidinas'];
+                    $val_komunikasi = $dataTunjangan['total_komunikasi'];
+                    $val_transport  = $dataTunjangan['total_transportasi'];
+                    $val_bbm        = $dataTunjangan['total_bbm'];
+                    $val_lain       = $dataTunjangan['total_tunjanganlain'];
+                    $val_potongan   = $dataTunjangan['total_potongan'];
+
+                    // // ---------------------------------------------------------------------
+                    // // LOGIKA KHUSUS 1: ARIFA ZAKYYA (ID 755) - NOVEMBER 2025
+                    // // Hanya hitung tgl 21, 24, 25, 26, 27, 28 (Total 6 Hari)
+                    // // ---------------------------------------------------------------------
+                    // if ($row->pengguna_id == 755 && $month == '2025-11') {
+                    //     $hari_baru = 6; // Jumlah hari yang diminta
+
+                    //     // Hitung Rate Harian
+                    //     $rate_kinerja    = ($absen_approved > 0) ? ($val_kinerja / $absen_approved) : 0;
+                    //     $rate_konsumsi   = ($absen_approved > 0) ? ($val_konsumsi / $absen_approved) : 0;
+                    //     $rate_komunikasi = ($absen_approved > 0) ? ($val_komunikasi / $absen_approved) : 0;
+                    //     $rate_transport  = ($absen_approved > 0) ? ($val_transport / $absen_approved) : 0;
+                    //     $rate_bbm        = ($absen_approved > 0) ? ($val_bbm / $absen_approved) : 0;
+
+                    //     // Masukkan nilai baru (Rate x 6 hari)
+                    //     $absen_approved = $hari_baru;
+                    //     $val_kinerja    = $rate_kinerja * $hari_baru;
+                    //     $val_konsumsi   = $rate_konsumsi * $hari_baru;
+                    //     $val_komunikasi = $rate_komunikasi * $hari_baru;
+                    //     $val_transport  = $rate_transport * $hari_baru;
+                    //     $val_bbm        = $rate_bbm * $hari_baru;
+                    // }
+
+                    // // ---------------------------------------------------------------------
+                    // // LOGIKA KHUSUS 2: ANGGI SAPUTRA (ID 736) - NOVEMBER 2025
+                    // // Ditambah 1 Hari
+                    // // ---------------------------------------------------------------------
+                    // if ($row->pengguna_id == 7 && $month == '2025-12') {
+                    //     $hari_lama = $absen_approved;
+                    //     $hari_baru = $hari_lama - 1; // Tambah 1 hari dari data sistem
+
+                    //     // Hitung Rate Harian (Cegah error pembagian 0)
+                    //     $rate_kinerja    = ($hari_lama > 0) ? ($val_kinerja / $hari_lama) : 0;
+                    //     $rate_konsumsi   = ($hari_lama > 0) ? ($val_konsumsi / $hari_lama) : 0;
+                    //     $rate_komunikasi = ($hari_lama > 0) ? ($val_komunikasi / $hari_lama) : 0;
+                    //     $rate_transport  = ($hari_lama > 0) ? ($val_transport / $hari_lama) : 0;
+                    //     $rate_bbm        = ($hari_lama > 0) ? ($val_bbm / $hari_lama) : 0;
+
+                    //     // Masukkan nilai baru (Rate x Hari Baru)
+                    //     $absen_approved = $hari_baru;
+                    //     $val_kinerja    = $rate_kinerja * $hari_baru;
+                    //     $val_konsumsi   = $rate_konsumsi * $hari_baru;
+                    //     $val_komunikasi = $rate_komunikasi * $hari_baru;
+                    //     $val_transport  = $rate_transport * $hari_baru;
+                    //     $val_bbm        = $rate_bbm * $hari_baru;
+                    // }
+                    // ---------------------------------------------------------------------
+
+                    // Variabel Setting (Terima Tunjangan atau Tidak)
+                    $s_jabatan      = $row->terima_tunjangan_jabatan;
+                    $s_kinerja      = $row->terima_tunjangan_kinerja;
+                    $s_konsumsi     = $row->terima_tunjangan_konsumsi;
+                    $s_komunikasi   = $row->terima_tunjangan_komunikasi;
+                    $s_transportasi = $row->terima_tunjangan_transportasi;
+                    $s_bbm          = $row->terima_tunjangan_bbm;
+                    $s_tunjanganlain = $row->id_pendapatan_lain;
+
+                    // Assign Nilai ke Variabel Tampil berdasarkan Setting
+                    $jabatan        = ($s_jabatan == 1) ? tunjanganJabatan($row->pengguna_id) : 0;
+                    $kinerja        = ($s_kinerja == 1) ? $val_kinerja : 0;
+                    $konsumsi       = ($s_konsumsi == 1) ? $val_konsumsi : 0;
+                    $komunikasi     = ($s_komunikasi == 1) ? $val_komunikasi : 0;
+                    $transportasi   = ($s_transportasi == 1) ? $val_transport : 0;
+                    $bbm            = ($s_bbm == 1) ? $val_bbm : 0;
+                    $pendapatanlain = ($s_tunjanganlain > 0) ? $val_lain : 0;
+
+                    // Logika Khusus User Lain (Pak Bob)
+                    if ($row->pengguna_id == 94) {
+                        $konsumsiBiasa = tunjangan($row->pengguna_id, $month)['total_konsumsi_Biasa'];
+                        $konsumsiLibur = tunjangan($row->pengguna_id, $month)['total_konsumsi_Libur'];
+                        $konsumsi = $konsumsiBiasa + ($konsumsiLibur * 3);
+
+                        $kinerjaBiasa = tunjangan($row->pengguna_id, $month)['total_kinerja_Biasa'];
+                        $kinerjaLibur = tunjangan($row->pengguna_id, $month)['total_kinerja_Libur'];
+                        $kinerja = $kinerjaLibur * 3;
+                    }
+
+                    // Hitung Total Akhir Per Baris
+                    $potongan1 = $val_potongan;
+                    $tunjangan = $jabatan + $kinerja + $konsumsi + $komunikasi + $transportasi + $bbm + $pendapatanlain - $potongan1;
+
+                    // Formatting Nama Status
+                    if ($row->pengguna_id == 758) {
+                        $status_karyawan = "Magang";
+                    } else {
+                        $status_karyawan = ucwords(strtolower($row->status_karyawan));
+                    }
+                ?>
+                    <tr>
+                        <td style="text-align: center;"><?= $x++ ?></td>
+                        <td><?= ucwords(strtolower($row->nama)) ?></td>
+                        <td style="text-align: center;"><?= $row->no_pegawai ?></td>
+                        <td style="text-align: center;"><?= $status_karyawan ?></td>
+                        <td><?= masaKerja($row->tgl_masuk) ?></td>
+                        <td><?= $absen_approved ?> hari</td>
+                        <td><?= $jabatan ? 'Rp. ' . rupiah($jabatan) : 'Rp. -' ?></td>
+                        <td><?= $kinerja ? 'Rp. ' . rupiah($kinerja) : 'Rp. -' ?></td>
+                        <td><?= $konsumsi ? 'Rp. ' . rupiah($konsumsi) : 'Rp. -' ?></td>
+                        <td><?= $komunikasi ? 'Rp. ' . rupiah($komunikasi) : 'Rp. -' ?></td>
+                        <td><?= $transportasi ? 'Rp. ' . rupiah($transportasi) : 'Rp. -' ?></td>
+                        <td><?= $bbm ? 'Rp. ' . rupiah($bbm) : 'Rp. -' ?></td>
+                        <td><?= $pendapatanlain ? 'Rp. ' . rupiah($pendapatanlain) : 'Rp. -' ?></td>
+                        <td><?= $potongan1 ? 'Rp. ' . rupiah($potongan1) : 'Rp. -' ?></td>
+                        <td><?= $tunjangan ? 'Rp. ' . rupiah($tunjangan) : 'Rp. -' ?></td>
+                        <td><?= $row->no_rek ? $row->no_rek : '-' ?></td>
+                    </tr>
+
+                <?php
+                    // Penjumlahan Total Untuk Baris Paling Bawah
+                    $sumJabatan += $jabatan;
+                    $sumKinerja += $kinerja;
+                    $sumKonsumsi += $konsumsi;
+                    $sumKomunikasi += $komunikasi;
+                    $sumtransportasi += $transportasi;
+                    $sumbbm += $bbm;
+                    $sumtunjanganlain += $pendapatanlain;
+                    $sumPotongan += $potongan1;
+                    $sumTunjangan += $tunjangan;
+                } // AKHIR DARI FOREACH
+                ?>
+
+                <tr style="border-bottom: none;">
+                    <td colspan="6" style="text-align:right; padding-right:10px;"><strong>Total Keseluruhan :</strong></td>
+                    <td><strong> Rp. <?= rupiah($sumJabatan) ?> </strong></td>
+                    <td><strong> Rp. <?= rupiah($sumKinerja) ?></strong></td>
+                    <td><strong> Rp. <?= rupiah($sumKonsumsi) ?></strong></td>
+                    <td><strong> Rp. <?= rupiah($sumKomunikasi) ?></strong></td>
+                    <td><strong>Rp. <?= rupiah($sumtransportasi) ?></strong></td>
+                    <td><strong>Rp. <?= rupiah($sumbbm) ?></strong></td>
+                    <td><strong>Rp. <?= rupiah($sumtunjanganlain) ?></strong></td>
+                    <td><strong> Rp. <?= rupiah($sumPotongan) ?></strong></td>
+                    <td><strong> Rp. <?= rupiah($sumTunjangan) ?></strong></td>
+                    <td><strong> </strong></td>
+                </tr>
+
+            </tbody>
+        <?php } // PENUTUP IF(FALSE) 
+        ?>
+    </table>
+    <br>
+    <table border="0" style="border-collapse: collapse; width: 100%; height: 128px;">
+        <tbody>
+            <tr style="height: 18px;">
+                <td style="width: 25%; height: 18px;">&nbsp;</td>
+                <td style="width: 25%; height: 18px;">&nbsp;</td>
+                <td style="width: 21.8748%; height: 18px;">&nbsp;</td>
+                <td style="width: 9.87224%; height: 18px;">&nbsp;</td>
+                <td style="width: 13.4233%; height: 18px;">&nbsp;</td>
+                <td style="width: 29.8296%; height: 18px; text-align: center;">Pekanbaru,<?= indo_dates(date('Y-m-d')) ?>
+                </td>
+            </tr>
+            <tr style="height: 18px;">
+                <td style="width: 25%; height: 18px; text-align: center;" colspan="1">Diajukan Oleh</td>
+                <td style="height: 18px; width: 45.1703%; text-align: center;" colspan="4">Diverifikasi Oleh</td>
+                <td style="width: 29.8296%; height: 18px; text-align: center;">Disetujui Oleh</td>
+            </tr>
+            <tr style="height: 56px;">
+                <td style="width: 25%; height: 56px; text-align: center;" colspan="1">&nbsp;</td>
+                <td style="width: 45.1703%; height: 56px; text-align: center;" colspan="4">&nbsp;</td>
+                <td style="width: 29.8296%; height: 56px; text-align: center;">&nbsp;</td>
+            </tr>
+            <tr style="height: 18px;">
+                <td style="width: 25%; text-align: center; height: 18px;"><u>Amtisari DE Putri</u></td>
+                <td style="width: 25%; text-align: center; height: 18px;"><u>Azhari Pratama</u></td>
+                <td style="width: 25%; text-align: center; height: 18px;"><u>Dirangga Madali</u></td>
+                <td style="width: 21.8748%; height: 18px; text-align: center;"><u>Yolanda Pratiwi</u></td>
+                <td style="width: 23.2955%; height: 18px; text-align: center;"><u>Meilina Safitri</u></td>
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><u>Bob Ariyos</u></td>
+            </tr>
+            <tr style="height: 18px;">
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><i>General Affair</i></td>
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><i>Senior Tax</i></td>
+                <td style="width: 25%; text-align: center; height: 18px;"><i>Head of Accounting and Tax</i></td>
+                <td style="width: 21.8748%; text-align: center; height: 18px;"><i>General Manager</i></td>
+                <td style="width: 23.2955%; text-align: center; height: 18px;"><i>Director of Corp Planning & Management Bussinees</i></td>
+                <td style="width: 29.8296%; text-align: center; height: 18px;"><i>Direktur</i></td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+
+</html>

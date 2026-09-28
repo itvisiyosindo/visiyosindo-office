@@ -1,0 +1,287 @@
+<header class="page-header">
+    <h2><i class="icons fas fa-user"></i>&nbsp;<?= $page_title ?></h2>
+    <div class="right-wrapper text-left">
+        <ol class="breadcrumbs">
+            <li><span><?= $page_desc ?></span></li>
+        </ol>
+    </div>
+</header>
+<div class="col-xl-8 mb-8 mb-xl-0;" style=" margin: auto;">
+    <div class="card-body" style="background-color:#FFF;padding:10%">
+		
+        <div class="text-center mt-0">
+            <h2>Klik untuk Absen Kantor!</h2>
+        </div>
+        <?= form_open('absensi/add', array('id' => 'absen-form', 'autocomplete' => 'off')); ?>
+        <div class="text-center">
+            <input type="hidden" name="pengguna_id" id="pengguna_id" value="<?= encrypt(sessPenggunaId()) ?>">
+
+            <!-- 12:00:00 dan 17:00:00 master data -->
+            <?php
+            $pulang = date('l') == 'Saturday' ? date($config[0]->jam_keluar_sabtu) : date($config[0]->jam_keluar); ?>
+            <!-- Menampilkan pemberitahuan bahwa sudah absen Izin -->
+            <?php
+            if (isset($data_absen_izin[0]->waktu_absen)) { ?>
+                <span class="text-success"><i class="fas fa-check-circle"></i><strong> Anda Absen <?= $data_absen_izin[0]->type_absen ?></strong></span><br>
+            <?php }
+            if (isset($data_absen[0]->waktu_absen)) { ?>
+                <button type="button" class="btn btn-primary btn-lihat-posisi">Lihat Posisi</button>
+            <?php } else { ?>
+                <!-- 12:00:00 dan 17:00:00 master data -->
+                <?php $pulang = date('l') == 'Saturday' ? date($config[0]->jam_keluar_sabtu) : date($config[0]->jam_keluar); ?>
+                    <!-- kondisi dimana jam hari ini dibawah jam pulang -->
+                <?php if (date("H:i:s") < $pulang) {
+                    // Kondisi juga absen ini terset untuk hari ini
+                    if (!isset($data_absen_izin[0]->waktu_absen)) {
+                ?>
+                        <button type="button" class="btn btn-success btn-absen1">Absen <strong>Masuk</strong></button>
+                        <a href="javascript:;" id="btn-show-add-form" class="btn btn-warning">Absen <strong>Izin</strong></a>
+                    <?php }
+                } else { ?>
+                    <button type="button" class="btn btn-warning btn-absen1">Absen <strong>Keluar</strong></button>
+                <?php } ?>
+            <?php }
+            ?>
+            <!-- <button type="button" class="btn btn-success btn-absen">Absen</button> -->
+        </div>
+
+        <div class="text-center" style="height: 50px">
+            <?php if (isset($data_absen[0]->waktu_absen)) { ?>
+                <?php if ($data_absen[0]->status_absen == 'terlambat') { ?>
+                    <span class="text-danger"><i class="fas fa-times-circle"></i><strong> Anda Terlambat Absen <?= $data_absen[0]->jenis_absen ?></strong></span><br>
+                    <span class="text-danger"><strong> <?= $data_absen[0]->waktu_absen ?></strong></span><br>
+                <?php } else if ($data_absen[0]->status_absen == 'tepat_waktu') { ?>
+                    <span class="text-success"><i class="fas fa-check-circle"></i><strong> Anda Tepat Waktu Absen <?= $data_absen[0]->jenis_absen ?></strong></span><br>
+                    <span class="text-success"><strong> <?= $data_absen[0]->waktu_absen ?></strong></span><br>
+                <?php } else { ?>
+                    <span class="text-success"><i class="fas fa-check-circle"></i><strong> Anda Absen <?= $data_absen[0]->type_absen ?></strong></span><br>
+                    <span class="text-success"><strong> <?= $data_absen[0]->waktu_absen ?></strong></span><br>
+                <?php } ?>
+            <?php } ?>
+        </div>
+
+        <div class="text-center">
+            <h1 id="clock" style="font-size: 60px;"></h1>
+            <?= form_close(); ?>
+            <button type="button" class="btn btn-primary btn-cek mb-1"><i class="fas fa-map-marker-alt"></i> cek lokasi sekarang</button><br>
+            <button type="button" class="btn btn-warning btn-segarkan"><i class="fas fa-map-marked-alt"></i> Segarkan Lokasi</button>
+
+        </div>
+    </div>
+
+    <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content ">
+                <div class="modal-header bg-dark text-light">
+                    <h4 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i>Lokasi Absen</h4>
+                    <button type="button" class="close" style="color:white;margin: -1px" data-dismiss="modal" aria-label="Close"><i class="far fa-times-circle"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div id="dvMap" style="height: 700px"></div><br>
+                    <div class="text-right">
+                        <?php if (isset($data_absen[0]->latitude)) { ?>
+                            <input type="hidden" id='longitude' value="<?= $data_absen[0]->longitude ?>">
+                            <input type="hidden" id='latitude' value="<?= $data_absen[0]->latitude ?>">
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Absen Izin -->
+    <div id="absen-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content ">
+                <div class="modal-header bg-dark text-light">
+                    <h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Form Absen Izin</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <?= form_open('#', array('id' => 'modal-form', 'autocomplete' => 'off')); ?>
+                <div class="modal-body">
+                    <div>
+                        <div class="form-group">
+                            <label for="nama" class="form-control-label">Jenis Izin <span class="text-danger">*</span> :</label>
+                            <select name="jenis_absen" id="" class="form-control" required>
+                                <option value=""> --- Pilih Jenis Izin ---</option>
+                                <option value="sakit">Sakit</option>
+                                <option value="izin">Izin Urusan Pribadi</option>
+                                <option value="cuti">Cuti</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="username" class="form-control-label">Keterangan Izin <span class="text-danger">*</span> :</label>
+                            <textarea name="keterangan" class="form-control" id="keterangan" cols="30" rows="2" placeholder="Keterangan Izin" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="waktu" class="form-control-label">Lama Absen <span class="text-danger">*</span> :</label>
+                            <div class="input-daterange input-group" data-plugin-datepicker data-plugin-options='{ "format": "dd-mm-yyyy"}'>
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </span>
+                                <input type="text" class="form-control" id="start" name="start" required>
+                                <span class="input-group-text border-start-0 border-end-0 rounded-0">
+                                    to
+                                </span>
+                                <input type="text" class="form-control" id="end" name="end" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="link_surat" class="form-control-label">Link File Surat <span class="text-danger">*</span> :</label>
+                            <input type="text" class="form-control" id="link_surat" name="link_surat" placeholder="Link file surat izin" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="is_aktif"></div>
+                    <button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-success btn-save">Simpan</button>
+                </div>
+                <?= form_close(); ?>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            startTime()
+            $(document).on('click', '.btn-absen1', function() {
+                navigator.geolocation.getCurrentPosition(function(p) {
+                    var latitude = p.coords.latitude
+                    var longitude = p.coords.longitude
+
+                    const form = $(this).closest('form')
+                    const formId = form.attr('id')
+                    Swal.fire({
+                        title: 'Apakah anda sudah di posisi yg tepat?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sudah',
+                        cancelButtonText: 'Belum'
+                    }).then(function(result) {
+                        if (result.value) {
+                            $.ajax({
+                                method: 'POST',
+                                url: 'absensi/add',
+                                dataType: 'JSON',
+                                data: {
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    csrf_token: token
+                                },
+                                success: function(resp) {
+                                    handleResponse(resp)
+                                }
+                            })
+                        }
+                    })
+                });
+
+            })
+
+            $(document).on('click', '.btn-lihat-posisi', function() {
+                /*
+                $('#main-modal').modal()
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(p) {
+                        var latitude = $('#latitude').val();
+                        var longitude = $('#longitude').val();
+                        var LatLng = new google.maps.LatLng(latitude, longitude);
+                        console.log(LatLng);
+                        var mapOptions = {
+                            center: LatLng,
+                            zoom: 19,
+                            mapTypeId: google.maps.MapTypeId.ROADMAP
+                        };
+                        console.log(mapOptions);
+                        var map = new google.maps.Map(document.getElementById("dvMap"), mapOptions);
+                        var marker = new google.maps.Marker({
+                            position: LatLng,
+                            map: map,
+                            title: "Latitude: " + p.coords.latitude + "     Longitude: " + p.coords.longitude
+                        });
+                        google.maps.event.addListener(marker, "click", function(e) {
+                            var infoWindow = new google.maps.InfoWindow();
+                            infoWindow.setContent(marker.title);
+                            infoWindow.open(map, marker);
+                        });
+                    });
+                } else {
+                    alert('Geo Location feature is not supported in this browser.');
+                }*/
+                    var latitude = $('#latitude').val();
+                    var longitude = $('#longitude').val();
+                 if((latitude!=null) && (longitude!=null)){
+				        $('#main-modal').modal()
+    				    document.getElementById("dvMap").innerHTML = "<iframe style='overflow:hidden;height:100%;width:100%' loading='lazy' allowfullscreen referrerpolicy='no-referrer-when-downgrade' src='https://www.google.com/maps/embed/v1/place?key=AIzaSyAFycbDEoOn8GPKQ1_fij6S1e1UpRZgKJo &q="+ latitude + "," + longitude + " &center="+ latitude + "," + longitude + " &zoom=21 &maptype=roadmap'></iframe>"
+				    }else{
+				        document.getElementById("dvMap").innerHTML = "";
+				    }
+            })
+
+            //cek current position
+            $(document).on('click', '.btn-cek', function() {
+                $('#main-modal').modal()
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(p) {
+                        var LatLng = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+                        console.log(LatLng);
+
+                        var mapOptions = {
+                            center: LatLng,
+                            zoom: 19,
+                            mapTypeId: google.maps.MapTypeId.ROADMAP
+                        };
+                        console.log(mapOptions);
+                        var map = new google.maps.Map(document.getElementById("dvMap"), mapOptions);
+                        var marker = new google.maps.Marker({
+                            position: LatLng,
+                            map: map,
+                            title: "Latitude: " + p.coords.latitude + "Longitude: " + p.coords.longitude
+                        });
+                        google.maps.event.addListener(marker, "click", function(e) {
+                            var infoWindow = new google.maps.InfoWindow();
+                            infoWindow.setContent(marker.title);
+                            infoWindow.open(map, marker);
+                        });
+                    });
+                } else {
+                    alert('Geo Location feature is not supported in this browser.');
+                }
+            })
+
+            $('#btn-show-add-form').click(function() {
+                $('.form-control').val(null)
+                $('#absen-modal #modal-form').attr('action', 'absensi/addAbsenIzin')
+                $('#absen-modal').modal()
+            })
+
+            function startTime() {
+                const today = new Date();
+                let h = today.getHours();
+                let m = today.getMinutes();
+                let s = today.getSeconds();
+                m = checkTime(m);
+                s = checkTime(s);
+                document.getElementById('clock').innerHTML = h + ":" + m + ":" + s;
+                setTimeout(startTime, 1000);
+            }
+
+            function checkTime(i) {
+                if (i < 10) {
+                    i = "0" + i
+                };
+                return i;
+            }
+
+            $(document).on('click', '.btn-segarkan', function() {
+                window.open('https://maps.google.com/')
+            })
+        })
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>

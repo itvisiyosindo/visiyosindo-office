@@ -1,0 +1,929 @@
+<?php
+//abaikan error
+			error_reporting(E_ALL & ~E_NOTICE);
+			ini_set('display_errors', 0);
+			//
+use FontLib\Table\Type\post;
+use Mpdf\Mpdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Fpp extends CI_Controller
+{
+
+    function id_navbar(){
+      $id_navbar = "marketing";
+      return $id_navbar;
+    }
+
+    public function index()
+    {
+       grantAccessFor('all');
+
+        $page_data['switch']      	= $this->id_navbar();
+		    $page_data['page_name']     = 'surat/v_surat_list';
+        $page_data['page_title']    = 'Data Permintaan Penawaran';
+        $page_data['page_desc']     = 'Management Permintaan Penawaran';
+        $this->load->view('index', $page_data);
+
+
+    }
+
+
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_kategori_tiket');
+        $this->load->model('md_tiket');
+        $this->load->model('md_fpp');
+        $this->load->model('md_surat_list');
+        $this->load->model('md_prov_kota');
+        $this->load->helper('email_helper');
+        $this->load->helper('terbilang_helper');
+        $this->load->helper('tanggal_helper');
+        $this->load->helper('whatsapp_helper');
+        $this->load->helper('encrypt_helper');
+        
+    }
+
+    public function show($param = "", $param2 = "", $param3 = "")
+    {
+        grantAccessFor('all');
+        if($param == 'detail_fpp'){  
+          if ($param2 == 'penawaran'){
+            $page_data['switch']      	= $this->id_navbar();
+            $page_data['list_kota']     = $this->md_prov_kota->getAllKota();
+            $page_data['data_gc']		= $this->md_surat_list->getGcById($param3);
+            $page_data['detail_gc']		= $this->md_surat_list->getDetailGc($param3);
+            $page_data['data_fpp']		= $this->md_fpp->getFppById($param3);
+            $page_data['detail_fpp']		= $this->md_fpp->getFppDetailById($param3);
+            $page_data['masternotifikasi'] = $this->md_surat_list->getmasternotifikasi(3);
+            $page_data['page_name']     = 'marketing/v_detail_fpp';
+            $page_data['page_title']    = 'FPP';
+            $page_data['page_desc']     = 'Detail Permintaan Penawaran';
+            $this->load->view('index', $page_data);
+          }
+        }else if($param == 'permintaan'){
+          if($param2 == 'penawaran'){
+            $page_data['switch']      	= $this->id_navbar();
+            $page_data['data_gc']		= $this->md_surat_list->getGcById($param3);
+            $page_data['detail_gc']		= $this->md_surat_list->getDetailGc($param3);
+            $page_data['nama_marketing']  = $this->md_pengguna->getPenggunaMarketing();
+            $page_data['page_name']     = 'marketing/v_pengajuan_fpp';
+            $page_data['page_title']    = 'FPP';
+            $page_data['page_desc']     = 'Daftar Permintaan Penawaran Diajukan';
+            $this->load->view('index', $page_data);
+          }
+			  }else if($param == 'marketing'){
+          if($param2 == 'penawaran'){
+            $page_data['switch']      	= $this->id_navbar();
+            $page_data['data_gc']		= $this->md_surat_list->getGcById($param3);
+            $page_data['detail_gc']		= $this->md_surat_list->getDetailGc($param3);
+            $page_data['page_name']     = 'marketing/v_pengajuan_fpp_marketing';
+            $page_data['page_title']    = 'FPP';
+            $page_data['page_desc']     = 'Daftar Permintaan Penawaran yang Anda Ajukan';
+            $this->load->view('index', $page_data);
+          }
+			  }else if($param == 'list'){
+          if($param2 == 'gc'){
+            $page_data['switch']      	= $this->id_navbar();
+            $page_data['page_name']     = 'marketing/v_surat_list_fpp';
+            $page_data['page_title']    = 'Data Permintaan Penawaran';
+            $page_data['page_desc']     = 'Daftar Permintaan Penawaran Yang diajukan';
+            $this->load->view('index', $page_data);
+          }
+			  }else if($param == 'pengajuan'){
+          if ($param2 == 'penawaran'){
+            $page_data['switch']      	= $this->id_navbar();
+            $page_data['pengguna']      = $this->md_pengguna->getById(sessPenggunaId());
+            $page_data['list_kota']     = $this->md_prov_kota->getAllKota();
+            $page_data['list_barang']   = $this->md_fpp->getBarang();
+            $page_data['page_name']     = 'marketing/v_aju_fpp';
+            $page_data['page_title']    = 'FPP';
+            $page_data['page_desc']     = 'Form Permintaan Penawaran';
+            $this->load->view('index', $page_data);
+          }
+			  }else if($param == 'edit'){
+          if ($param2 == 'penawaran'){
+            $page_data['switch']      	= $this->id_navbar();
+            $page_data['list_kota']     = $this->md_prov_kota->getAllKota();
+            $page_data['data_gc']		= $this->md_surat_list->getGcById($param3);
+            $page_data['detail_gc']		= $this->md_surat_list->getDetailGc($param3);
+            $page_data['data_fpp']		= $this->md_fpp->getFppById($param3);
+            $page_data['detail_fpp']		= $this->md_fpp->getFppDetailById($param3);
+            $page_data['masternotifikasi'] = $this->md_surat_list->getmasternotifikasi(3);
+            $page_data['page_name']     = 'marketing/v_edit_fpp';
+            $page_data['page_title']    = 'FPP';
+            $page_data['page_desc']     = 'Edit Permintaan Penawaran';
+            $this->load->view('index', $page_data);
+          }
+        }
+          
+
+
+    }
+
+
+    //ADD
+    public function add()
+    {
+        grantAccessFor('all');
+
+      //if($param1=="permintaan"){
+          //menambah pengajuan fpp
+          $this->md_fpp->reset_increment("fpp");
+          $idFpp = $this->md_fpp->getFppKodeId();
+          $ambilId = $idFpp->id;
+          $ambilId = ($ambilId+1);
+          $panjangId = strlen($ambilId);
+          
+          if ($panjangId == 1){
+            $kodeFpp = "00".$ambilId;
+          } else if ($panjangId == 2){
+            $kodeFpp = "0".$ambilId;
+          } else{
+            $kodeFpp = $ambilId;
+          }
+          
+          $bulan = ambil_bulan();
+          $tahun = ambil_tahun();
+          
+          $kodeFpp = $kodeFpp."/FPP/MKT/VYM/".$bulan."/".$tahun;
+          $data['kode_fpp']			= $kodeFpp;
+          
+          $data['id_pengaju']     = sessPenggunaId();
+          $data['csname']        	= $this->input->post('csname', TRUE);
+          $data['alamat']        	= $this->input->post('alamat', TRUE);
+          $data['tgl']	          = date_db_format($this->input->post('tanggal', TRUE));
+          $data['cpname']        	= $this->input->post('cpname', TRUE);
+          $data['nocp']          	= $this->input->post('cpno', TRUE);
+          $lainnya = $this->input->post('payment', TRUE);
+          if ($lainnya == "1") {
+              // Jika opsi "Lainnya" dipilih, ambil nilai dari input teks "lainnyaInput"
+              $data['payment'] = $this->input->post('lainnyaInput', TRUE);
+          } else {
+              // Jika opsi selain "Lainnya" dipilih, ambil nilai dari dropdown "payment"
+              $data['payment'] = $lainnya;
+          }
+          $data['cicilan']          	= $this->input->post('cicilan', TRUE);
+          $lainnya = $this->input->post('ongkir', TRUE);
+          if ($lainnya == "1") {
+              // Jika opsi "Lainnya" dipilih, ambil nilai dari input teks "lainnyaInput"
+              $data['ongkir'] = $this->input->post('lainnyaOngkir', TRUE);
+          } else {
+              // Jika opsi selain "Lainnya" dipilih, ambil nilai dari dropdown "payment"
+              $data['ongkir'] = $lainnya;
+          }
+          $data['pajak']          = $this->input->post('pajak', TRUE);
+          $data['notes']          = $this->input->post('notes', TRUE);
+          $data['kota_pengajuan']	= $this->input->post('kota_aju', TRUE);
+          $data['tgl_pengajuan']	= date_db_format($this->input->post('pengajuan', TRUE));
+          $data['status']	= 0;
+          $this->md_fpp->addFpp($data);
+          
+          //menambah pengajuan fpp
+          $lastGcId = $this->md_fpp->getFppLastId();
+          $lastGcId = $lastGcId->id;
+          
+          //menambah detail fpp
+          $this->md_fpp->reset_increment("fpp_detail");
+          $itung = $this->input->post('itung', TRUE);
+          $dataDetailGc['id_fpp']			= $lastGcId;
+          if($itung > 0){
+            for($x=1;$x<$itung;$x++){
+              $dataDetailGc['deskripsi']	= $this->input->post('deskripsi['.$x.']', TRUE);
+              $dataDetailGc['qty']	      = $this->input->post('quali['.$x.']', TRUE);
+              $dataDetailGc['price']    	= $this->input->post('price['.$x.']', TRUE);
+              $dataDetailGc['diskon']	    = $this->input->post('diskon['.$x.']', TRUE);
+              $dataDetailGc['komisi']   	= $this->input->post('komisi['.$x.']', TRUE);
+              $dataDetailGc['namauser']   	= $this->input->post('namauser['.$x.']', TRUE);
+              $dataDetailGc['komisiketiga']   	= $this->input->post('komisiketiga['.$x.']', TRUE);
+              $dataDetailGc['namaketiga']   	= $this->input->post('namaketiga['.$x.']', TRUE);
+              $this->md_fpp->addDetailFpp($dataDetailGc);
+            }
+          }
+      
+      
+      $ambilDataPengaju 	= $this->md_pengguna->getById(sessPenggunaId());
+      //$namaPengaju		    = $ambilDataPengaju[0]->nama;
+
+
+      if(sessPenggunaId()==6){
+        $penerima = 'aridho Rezki';
+      }else{
+		    $penerima = $ambilDataPengaju[0]->nama;
+      }
+
+
+        //send notif Group wa
+        $dataWa = [
+            'idPenerima1' 	=> 'MARKETING PT. VYM',
+            //'idPenerima1' 	=> 'Test Api Wa Group',
+            'idPenerima2' 	=> '',
+            'idPenerima3' 	=> '',
+            'namaSurat'  	  => 'Permintaan Penawaran',
+            'penerima' 	    => '_Team Marketing_',
+            'pengaju' 	    => $penerima,
+            'csname' 	      => $data['csname'],
+            'kode' 	        => $kodeFpp
+        ];
+        $this->notifWaAddFppGroup(1, $dataWa);
+          
+          
+
+                /** LOG */
+                addLog('Pengajuan Permintaan Penawaran', 'Permintaan Penawaran Diajukan dengan Kode '.$kodeFpp);
+                ajaxReturnDie('success', 'Permintaan Penawaran Berhasil Diajukan', TRUE);
+                
+		 // }
+
+
+
+    }
+
+
+    //UPDATE
+
+    public function updateCro1($id){
+    	grantAccessFor('all');
+
+    	$no_sph = $this->input->post('no_sph', TRUE);
+      $link_sph = $this->input->post('link_sph', TRUE);
+
+    	$data = [
+    		'no_sph' =>nl2br($no_sph),
+    		'link_sph' =>nl2br($link_sph),
+    		'status' => "1", 
+    	];
+
+    	// var_dump($data);
+    	// die;
+
+    	$this->md_fpp->updateFpp($id, $data);
+
+      $ambilDataPengaju 	= $this->md_fpp->getFppById($id);
+		  $namacs		          = $ambilDataPengaju[0]->csName;
+		  $kodeFPP            = $ambilDataPengaju[0]->kode_fpp;
+		  $idPengaju           = $ambilDataPengaju[0]->idPengaju;
+
+      if($idPengaju==6){
+        $penerima = 'aridho Rezki';
+      }else{
+		    $penerima           = $ambilDataPengaju[0]->pengaju;
+      }
+
+      
+      $dataWa = [
+        'id' 	          => $id,
+        'idPenerima1' 	=> 'MARKETING PT. VYM',
+        //'idPenerima1' 	=> 'Test Api Wa Group',
+        'idPenerima2' 	=> '',
+        'namaSurat'  	  => 'Permintaan Penawaran',
+        'noSph'  	      => $no_sph,
+        'linkSph'  	    => $link_sph,
+        'kode' 	        => $kodeFPP,
+        'jenis' 	      => 'SPH',
+        'penerima' 	    => $penerima,
+        'csname' 	      => $namacs
+    ];
+    $this->notifWaAppGroup(1, $dataWa);
+
+
+        /** LOG */
+        addLog('Pengajuan Permintaan Penawaran Telah disetujui', 'Permintaan Penawaran Disetujui dan SPH dengan Kode '.$kodeFPP);
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+    }
+
+    public function updateCro2($id){
+    	grantAccessFor('all');
+
+    	$no_approval = $this->input->post('no_approval', TRUE);
+      $link_approval = $this->input->post('link_approval', TRUE);
+
+    	$data = [
+    		'no_approval' =>nl2br($no_approval),
+    		'link_approval' =>nl2br($link_approval),
+    	];
+
+    	// var_dump($data);
+    	// die;
+
+    	$this->md_fpp->updateFpp($id, $data);
+
+      $ambilDataPengaju 	= $this->md_fpp->getFppById($id);
+		  $namacs		          = $ambilDataPengaju[0]->csName;
+		  $kodeFPP             = $ambilDataPengaju[0]->kode_fpp;
+		  $idPengaju           = $ambilDataPengaju[0]->idPengaju;
+
+      if($idPengaju==6){
+        $penerima = 'aridho Rezki';
+      }else{
+		    $penerima           = $ambilDataPengaju[0]->pengaju;
+      }
+
+    	
+      //send notif Group wa
+      
+        $dataWa = [
+          'id' 	          => $id,
+          'idPenerima1' 	=> 'MARKETING PT. VYM',
+          //'idPenerima1' 	=> 'Test Api Wa Group',
+          'idPenerima2' 	=> '',
+          'namaSurat'  	  => 'Permintaan Penawaran',
+          'noSph'  	      => $no_approval,
+          'linkSph'  	    => $link_approval,
+          'kode' 	        => $kodeFPP,
+          'jenis' 	      => 'Approval',
+          'penerima' 	    => $penerima,
+          'csname' 	      => $namacs
+      ];
+      $this->notifWaAppGroup(1, $dataWa);
+
+        /** LOG */
+        addLog('Pengajuan Permintaan Penawaran Telah disetujui', 'Permintaan Penawaran Disetujui dan Approval dengan Kode '.$kodeFPP);
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+    }
+
+
+    public function updateCro3($id){
+    	grantAccessFor('all');
+
+    	$status = $this->input->post('status', TRUE);
+
+    	$data = [
+    		'status' =>nl2br($status),
+    		'status' => "3", 
+    	];
+    	$this->md_fpp->updateFpp($id, $data);
+
+      $ambilDataPengaju 	= $this->md_fpp->getFppById($id);
+		  $namacs		          = $ambilDataPengaju[0]->csName;
+		  $kodeFPP             = $ambilDataPengaju[0]->kode_fpp;
+		  $idPengaju           = $ambilDataPengaju[0]->idPengaju;
+
+      if($idPengaju==6){
+        $penerima = 'aridho Rezki';
+      }else{
+		    $penerima           = $ambilDataPengaju[0]->pengaju;
+      }
+
+      //Notif Group WA
+      $dataWa = [
+        'id' 	          => $id,
+        'idPenerima1' 	=> 'MARKETING PT. VYM',
+        //'idPenerima1' 	=> 'Test Api Wa Group',
+        'idPenerima2' 	=> '',
+        'namaSurat'  	  => 'Permintaan Penawaran',
+        'penerima'  	  => $penerima,
+        'kode' 	        => $kodeFPP,
+        'csname' 	      => $namacs
+    ];
+    $this->notifWaTolakGroup(1, $dataWa);
+
+        /** LOG */
+        addLog('Pengajuan Permintaan Penawaran Ditolak', 'Permintaan Penawaran Ditolak dengan Kode '.$kodeFPP);
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+    }
+
+
+    
+
+    
+    //DELETE
+    public function delete($id)
+    {
+      grantAccessFor('all');
+
+    	//$status = $this->input->post('status', TRUE);
+
+    	$data = [
+    		'status' =>"5",
+    	];
+
+
+    	$this->md_fpp->updateFpp($id, $data);
+
+        addLog('Menghapus FPP', 'Menghapus FPP ' . $temp[0]->nama);
+        ajaxReturnDie('success', 'FPP berhasil dihapus', 'reload_table');
+    }
+
+
+    
+
+    
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// pagination -------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+    public function pagination($param = "", $param2 = "")
+    {
+        grantAccessFor('all');
+        if ($param == 'permintaan_penawaran') {
+          if(isAdmin() || isHrd() || isCRO() || isGa()){
+            $dt     = $this->md_fpp->getAllFPP();
+          } else if(isTeamMarketing()){
+            $dt     = $this->md_fpp->getAllFPPbyID(sessPenggunaId());
+          }
+            $start = $this->input->post('start');
+            $data  = array();
+            foreach ($dt['data'] as $row) {
+              
+              
+              $csName	= '<a href="fpp/show/detail_fpp/penawaran/'.$row->idGc.'">'.$row->csName.'</a>';
+              $kode_fpp	= '<a href="fpp/show/detail_fpp/penawaran/'.$row->idGc.'">'.$row->kode_fpp.'</a>';
+              //$cetak		= '<a href="surat/print_page/gc/'.$row->idGc.'">print</a>';
+
+              if($row->sph != "") { 
+                  $buttonSph = '<a href="'.$row->sph.'" target="blank" class="btn btn-primary float-center" style="margin-left:0px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran SPH</a>';
+              } else{
+                  $buttonSph = "";
+              } 
+
+
+              if($row->aproval != "") { 
+                  $buttonAproval = '<a href="'.$row->aproval.'" target="blank" class="btn btn-primary float-center" style="margin-left:0px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran Aproval</a>';
+              } else{
+                  $buttonAproval = "";
+              } 
+
+              
+              if($row->status== "0"){
+                $stat_surat = '<span class="badge badge-ecommerce badge-success">Baru Diajukan</span>';
+              }else if($row->status == "1"){
+                  $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui Customer Relation Officer</span>';
+              }else{
+                  $stat_surat = '<span class="badge badge-ecommerce badge-danger">Ditolak</span>';
+              }
+
+              $li_btn   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    ' . ($row->status== '7' ? '<a href="fpp/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
+                    ' . ($row->status== '0' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="fpp/delete"><i class="bx bx-trash"></i></button>' : '') . '
+                </div>';
+              
+              $th = array();
+              $th[] = ++$start;
+              $th[] = $kode_fpp;
+              $th[] = $row->csName;
+              $th[] = '<i class="fa fa-clock-o"></i> '.date('d-M-Y',strtotime($row->tanggal));
+              $th[] = $row->pengaju;
+              $th[] = $buttonSph;
+              $th[] = $buttonAproval;
+              $th[] = $stat_surat;
+              $th[] = $li_btn;
+              $data[] = $th;
+            }
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;					
+        
+      }else if ($param == 'permintaan_marketing') {
+            //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
+            $dt     = $this->md_fpp->getAllFPPbyID(sessPenggunaId());
+            $start = $this->input->post('start');
+            $data  = array();
+            foreach ($dt['data'] as $row) {
+              
+              
+              $csName	= '<a href="fpp/show/detail_fpp/penawaran/'.$row->idGc.'">'.$row->csName.'</a>';
+              $kode_fpp	= '<a href="fpp/show/detail_fpp/penawaran/'.$row->idGc.'">'.$row->kode_fpp.'</a>';
+              //$cetak		= '<a href="surat/print_page/gc/'.$row->idGc.'">print</a>';
+
+              if($row->sph != "") { 
+                  $buttonSph = '<a href="'.$row->sph.'" target="blank" class="btn btn-primary float-center" style="margin-left:0px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran SPH</a>';
+              } else{
+                  $buttonSph = "";
+              } 
+
+
+              if($row->aproval != "") { 
+                  $buttonAproval = '<a href="'.$row->aproval.'" target="blank" class="btn btn-primary float-center" style="margin-left:0px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran Aproval</a>';
+              } else{
+                  $buttonAproval = "";
+              } 
+
+              
+              if($row->status== "0"){
+                $stat_surat = '<span class="badge badge-ecommerce badge-success">Baru Diajukan</span>';
+              }else if($row->status == "1"){
+                  $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui Customer Relation Officer</span>';
+              }else{
+                  $stat_surat = '<span class="badge badge-ecommerce badge-danger">Ditolak</span>';
+              }
+
+              $li_btn   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    ' . ($row->status== '7' ? '<a href="fpp/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
+                    ' . ($row->status== '0' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="fpp/delete"><i class="bx bx-trash"></i></button>' : '') . '
+                </div>';
+
+              
+              
+              $th = array();
+              $th[] = ++$start;
+              $th[] = $kode_fpp;
+              $th[] = $row->csName;
+              $th[] = '<i class="fa fa-clock-o"></i> '.date('d-M-Y',strtotime($row->tanggal));
+              $th[] = $row->pengaju;
+              $th[] = $buttonSph;
+              $th[] = $buttonAproval;
+              $th[] = $stat_surat;
+              $th[] = $li_btn;
+              $data[] = $th;
+            }
+            $dt['data'] = $data;
+            echo json_encode($dt);
+            die;			
+          
+        }else if($param == 'list_gc'){
+        $dt    = $this->md_surat_list->getAllGc();
+        $start = $this->input->post('start');
+        $data  = array();
+        foreach ($dt['data'] as $row) {
+          if($row->stat_persetujuan == 0){
+              $stat_surat = '<span class="badge badge-ecommerce badge-primary">Baru Diajukan</span>';
+          }else if($row->stat_persetujuan == 1){
+              $stat_surat = '<span class="badge badge-ecommerce badge-success">Pengajuan Disetujui</span>';
+          }else{
+              $stat_surat = '<span class="badge badge-ecommerce badge-danger">Pengajuan Ditolak</span>';
+          }
+          
+          $kode_surat	= '<a href="surat/show/detail_surat/gc/'.$row->idGc.'/1">'.$row->kode.'</a>';
+          
+          $th = array();
+          $th[] = ++$start;
+          $th[] = $kode_surat;
+          $th[] = $row->kategori;
+          $th[] = $row->perihal;
+          $th[] = $row->pengaju;
+          $th[] = $stat_surat;
+          $data[] = $th;
+        }
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+      }
+
+
+
+
+		}
+
+
+
+
+    //==================================================
+    //================== Notif WA Group ================
+    //==================================================
+    public function notifWaAddFppGroup($ulang, $detail){
+      //ambil data pengaju
+      $ambilDataPengaju 	= $this->md_pengguna->getById(sessPenggunaId());
+      $namaPengaju		    = $ambilDataPengaju[0]->nama;
+      
+        for($i=1; $i<=$ulang; $i++){
+            if($i == 1){
+                $idpenerima = $detail['idPenerima1'];
+            }else if($i == 2){
+                $idpenerima = $detail['idPenerima2'];
+            }else if($i == 3){
+                $idpenerima = $detail['idPenerima3'];
+            }
+            
+            
+            //abaikan error
+          error_reporting(E_ALL & ~E_NOTICE);
+          ini_set('display_errors', 0);
+          //
+            $dataWa = [
+              'namaSurat'   	=> $detail['namaSurat'],
+              'noPenerima'  	=> $idpenerima,
+              'namaPengaju' 	=> $detail['pengaju'],
+              'csname' 	    	=> urlencode($detail['csname']),
+              'kodeFPP' 	    => $detail['kode'],
+              'namaPenerima' 	=> $detail['penerima']
+                ];
+            
+            if(sessPenggunaId()==6){
+              waPermintaanPenawaranGroupHaridho($dataWa);
+            }else{
+              waPermintaanPenawaranGroup($dataWa);
+            }
+        }
+      }
+    
+      public function notifWaAppGroup($ulang, $detail){
+        //ambil data pengaju
+          $ambilDataPengaju 	= $this->md_pengguna->getById(sessPenggunaId());
+          $namaPengaju		    = $ambilDataPengaju[0]->nama;
+
+          $ambilData	        = $this->md_fpp->getFppById($detail['id']);
+          $idPengaju           = $ambilData[0]->idPengaju;
+    
+          
+          for($i=1; $i<=$ulang; $i++){
+              if($i == 1){
+                  $idpenerima = $detail['idPenerima1'];
+              }else if($i == 2){
+                  $idpenerima = $detail['idPenerima2'];
+              }
+              
+           
+              //abaikan error
+            error_reporting(E_ALL & ~E_NOTICE);
+            ini_set('display_errors', 0);
+            //
+             
+             
+
+              $dataWa = [
+                'namaSurat' 	=> $detail['namaSurat'],
+                'noPenerima' 	=> $idpenerima,
+                'namaPengaju' => $namaPengaju,
+                'csname' 		  => urlencode($detail['csname']),
+                'kodeFPP' 	  => $detail['kode'],
+                'jenis' 	  	=> $detail['jenis'],
+                'noSph' 	  	=> $detail['noSph'],
+                'linkSph' 	  => $detail['linkSph'],
+                'namaPenerima'	=> $detail['penerima']
+                //'noHp' 		    => $nope
+                  ];
+             if($idPengaju==6){
+                waAppPermintaanPenawaranGroupHaridho($dataWa);
+             }else{
+                waAppPermintaanPenawaranGroup($dataWa);
+              }
+          }
+      }
+
+      public function notifWaTolakGroup($ulang, $detail){
+        //ambil data pengaju
+          $ambilDataPengaju 	= $this->md_pengguna->getById(sessPenggunaId());
+          $namaPengaju		    = $ambilDataPengaju[0]->nama;
+
+          $ambilData	        = $this->md_fpp->getFppById($detail['id']);
+          $idPengaju		      = $ambilData[0]->idPengaju;
+          
+          for($i=1; $i<=$ulang; $i++){
+              if($i == 1){
+                  $idpenerima = $detail['idPenerima1'];
+              }else if($i == 2){
+                  $idpenerima = $detail['idPenerima2'];
+              }
+              
+            $dataPenerima 	= $this->md_pengguna->getById($idPengaju);
+              //abaikan error
+            error_reporting(E_ALL & ~E_NOTICE);
+            ini_set('display_errors', 0);
+            //
+              
+              $jabatan        = $dataPenerima[0]->nama;
+              //$nope           = $dataPenerima[0]->no_hp;
+
+              $dataWa = [
+                'namaSurat' 	=> $detail['namaSurat'],
+                'noPenerima' 	=> $idpenerima,
+                'namaPengaju' => $namaPengaju,
+                'csname' 		  => urlencode($detail['csname']),
+                'kodeFPP' 	  => $detail['kode'],
+                //'noHp' 		    => $nope,
+                'namaPenerima'	=> $detail['penerima']
+                  ];
+                  if($idPengaju==6){
+                    waTolakPermintaanPenawaranGroupHaridho($dataWa);
+                  }else{
+                    waTolakPermintaanPenawaranGroup($dataWa);
+                  }
+          }
+      }
+    //==================================================
+    //================== Notif WA Group ================
+    //==================================================
+
+   
+    
+    
+    
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// print ------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	public function print_page($param1="", $param2="")
+  {
+        grantAccessFor('all');
+
+        if($param1 == 'fpp'){
+            $gc							= $this->md_fpp->getFppById($param2);
+            
+            $dt = [
+              'title_pdf'	=> 'fpp',
+              'object'	=> $param1,
+              'data_fpp'	=> $this->md_fpp->getFppById($param2),
+              'detail_fpp'	=> $this->md_fpp->getFppDetailById($param2)
+            ];
+            
+            //load mpdf dan membuat page size 
+            $mpdf = new Mpdf(['format' => 'A4']);
+
+           // $mpdf->SetMargins(0, 0, 0, true);
+
+            //  orientasi ketas 'L' untuk Landscape 'P' untuk Portait
+	          $mpdf->AddPage('P', '', '', '', '', '1', '1', '1', '1');
+              
+            // filename dari pdf ketika didownload
+            $file_pdf = 'Form Permintaan Penawaran  '.$gc[0]->pengaju;
+
+            // page htmk yang akan di jadikan ke pdf
+            $html = $this->load->view('pages/v_print/print_fpp', $dt, true);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output($file_pdf . '.pdf', 'I');
+        }
+              
+ }
+
+
+ public function exportLaporan()
+     {
+        
+       $data = $this->md_fpp->getAllLaporanFPPByPenggunaID($this->input->get('idmarketing'),$this->input->get('tglawal'),$this->input->get('tglakhir'));
+
+
+
+       $spreadsheet = new Spreadsheet;
+       $sheet = $spreadsheet->getActiveSheet();
+
+     // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
+         $style_col = [
+           'font' => ['bold' => true], // Set font nya jadi bold
+           'alignment' => [
+             'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
+             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+           ],
+           'borders' => [
+             'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
+             'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
+             'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+             'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+           ]
+         ];
+
+
+     // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
+         $style_row = [
+           'alignment' => [
+             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+           ],
+           'borders' => [
+             'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
+             'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
+             'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+             'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+           ]
+         ];
+         
+       $sheet->setCellValue('A1', "LAPORAN DATA MARKETING ". strtoupper($this->input->get('namamarketing'))); // Set kolom A1 dengan tulisan "DATA SISWA"
+       $sheet->mergeCells('A1:L1'); // Set Merge Cell pada kolom A1 sampai E1
+       $sheet->getStyle('A1')->getFont()->setBold(true); // Set bold kolom A1
+         
+                 // Buat header tabel nya pada baris ke 3
+                 $sheet->setCellValue('A4', 'No');
+                 $sheet->setCellValue('B4', 'No FPP');
+                 $sheet->setCellValue('C4', 'Nama Customer');
+                 $sheet->setCellValue('D4', 'Alamat');
+                 $sheet->setCellValue('E4', 'Tanggal');
+                 $sheet->setCellValue('F4', 'Contact Person');
+                 $sheet->setCellValue('G4', 'No CP');
+                 $sheet->setCellValue('H4', 'Payment');
+                 $sheet->setCellValue('I4', 'Notes');
+                 $sheet->setCellValue('J4', 'No SPH');
+                 $sheet->setCellValue('K4', 'Link SPH');
+                 $sheet->setCellValue('L4', 'Link Approval');
+                 
+                  // Apply style header yang telah kita buat tadi ke masing-masing kolom header
+                 $sheet->getStyle('A4')->applyFromArray($style_col);
+                 $sheet->getStyle('B4')->applyFromArray($style_col);
+                 $sheet->getStyle('C4')->applyFromArray($style_col);
+                 $sheet->getStyle('D4')->applyFromArray($style_col);
+                 $sheet->getStyle('E4')->applyFromArray($style_col);
+                 $sheet->getStyle('F4')->applyFromArray($style_col);
+                 $sheet->getStyle('G4')->applyFromArray($style_col);
+                 $sheet->getStyle('H4')->applyFromArray($style_col);
+                 $sheet->getStyle('I4')->applyFromArray($style_col);
+                 $sheet->getStyle('J4')->applyFromArray($style_col);
+                 $sheet->getStyle('K4')->applyFromArray($style_col);
+                 $sheet->getStyle('L4')->applyFromArray($style_col);
+
+        $kolom = 5;
+        $nomor = 1;
+        
+        foreach($data as $marketing) {
+
+            $spreadsheet->setActiveSheetIndex(0)
+                        ->setCellValue('A' . $kolom, $nomor)
+                        ->setCellValue('B' . $kolom, $marketing->kode_fpp)
+                        ->setCellValue('C' . $kolom, $marketing->csname)
+                        ->setCellValue('D' . $kolom, $marketing->alamat)
+                        ->setCellValue('E' . $kolom, date('j F Y', strtotime($marketing->tgl)))
+                        ->setCellValue('F' . $kolom, $marketing->cpname)
+                        ->setCellValue('G' . $kolom, $marketing->nocp)
+                        ->setCellValue('H' . $kolom, $marketing->payment)
+                        ->setCellValue('I' . $kolom, $marketing->notes)
+                        ->setCellValue('J' . $kolom, $marketing->no_sph)
+                        ->setCellValue('K' . $kolom, $marketing->link_sph)
+                        ->setCellValue('L' . $kolom, $marketing->link_approval);
+
+            $kolom++;
+            $nomor++;
+
+       }
+
+        // Set width kolom
+        $sheet->getColumnDimension('A')->setWidth(5); // Set width kolom A
+        $sheet->getColumnDimension('B')->setWidth(35); // Set width kolom B
+        $sheet->getColumnDimension('C')->setWidth(65); // Set width kolom B
+        $sheet->getColumnDimension('D')->setWidth(75); // Set width kolom C
+        $sheet->getColumnDimension('E')->setWidth(25); // Set width kolom D
+        $sheet->getColumnDimension('F')->setWidth(45); // Set width kolom E
+        $sheet->getColumnDimension('G')->setWidth(25); // Set width kolom F
+        $sheet->getColumnDimension('H')->setWidth(25); // Set width kolom G
+        $sheet->getColumnDimension('I')->setWidth(55); // Set width kolom H
+        $sheet->getColumnDimension('J')->setWidth(35); // Set width kolom B
+        $sheet->getColumnDimension('K')->setWidth(90); // Set width kolom I
+        $sheet->getColumnDimension('L')->setWidth(90); // Set width kolom J
+        
+        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+        $sheet->getDefaultRowDimension()->setRowHeight(-1);
+        // Set orientasi kertas jadi LANDSCAPE
+        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+        // Set judul file excel nya
+        $sheet->setTitle("Data Permintaan Penawaran");
+          ob_end_clean();
+        // Proses file excel
+        $filename = "Data Permintaan Penawaran - ".strtoupper($this->input->get('namamarketing')).".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename='.$filename);
+        header('Cache-Control: max-age=0');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        
+            
+            
+              
+    }
+            
+      public function printlaporan()
+        {
+              grantAccessFor('all');
+                
+              $page_data['page_name']     = 'v_print/print_permintaan_penawaran';
+              $page_data['page_title']    = 'Laporan Permintaan Penawaran';
+              $page_data['page_desc']     = 'Laporan Permintaan Penawaran';
+              $this->load->view('index', $page_data);
+          
+              $dt = [
+                'title_pdf'	=> 'Laporan Permintaan Penawaran' . ' ' . $this->input->get('namamarketing'),
+                'periode'	=>  $this->input->get('tglawal') . ' s.d ' .$this->input->get('tglakhir'),
+                'data'	=> $this->md_fpp->getAllLaporanFPPByPenggunaID($this->input->get('idmarketing'),$this->input->get('tglawal'),$this->input->get('tglakhir')),
+                'csname' =>  $this->input->get('csname'),
+                'kode_fpp' =>  $this->input->get('kode_fpp'),
+                'alamat' =>  $this->input->get('alamat'),
+                'tgl' =>  $this->input->get('tgl'),
+                'cpname' =>  $this->input->get('cpname'),
+                'nocp' =>  $this->input->get('nocp'),
+                'payment' =>  $this->input->get('payment'),
+                'notes' =>  $this->input->get('notes'),
+                'no_sph' =>  $this->input->get('no_sph'),
+                'link_sph' =>  $this->input->get('link_sph'),
+                'link_approval' =>  $this->input->get('link_approval'),
+              ];
+          
+          //load mpdf dan membuat page size 
+          $mpdf = new Mpdf(['format' => 'Tabloid']);
+
+          //  orientasi ketas 'L' untuk Landscape 'P' untuk Portait
+          $mpdf->AddPage('L', '', '', '', '', '5', '5', '3', '3');
+          
+          
+          
+          // filename dari pdf ketika didownload
+          $file_pdf = 'Laporan Merketing ';
+
+          // page htmk yang akan di jadikan ke pdf
+          $html = $this->load->view('pages/v_print/print_permintaan_penawaran', $dt, true);
+          $mpdf->WriteHTML($html);
+          $mpdf->Output($file_pdf . '.pdf', 'I');
+
+     }
+
+
+
+
+
+
+
+
+
+}

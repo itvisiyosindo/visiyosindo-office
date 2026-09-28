@@ -1,0 +1,266 @@
+<?php
+
+use FontLib\Table\Type\post;
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Pengguna extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_pengguna');
+    }
+	
+	function id_navbar(){
+		$id_navbar = "kepegawaian";
+		return $id_navbar;
+	}
+
+    public function index()
+    {
+        grantAccessFor(['Administrator', 'Hrd']);
+
+        $page_data['page_name']       = 'v_pengguna';
+        $page_data['page_title']      = 'Data Karyawan';
+        $page_data['page_desc']       = 'Management Data Karyawan';
+        $this->load->view('index', $page_data);
+    }
+
+    public function add()
+    {
+        grantAccessFor(['Administrator']);
+
+        $data['nama']     = $this->input->post('nama', TRUE);
+        $data['email']    = $this->input->post('email', TRUE);
+        $data['username'] = $this->input->post('username', TRUE);
+        $data['password'] = hash('sha512', $this->input->post('password', TRUE));
+        $data['level']    = $this->input->post('level', TRUE);
+        $data['hirarki']    = $this->input->post('hirarki', TRUE);
+
+        if ($this->input->post('password', TRUE) != $this->input->post('rpassword', TRUE))
+            ajaxReturnDie('error', 'Cek Kembali Confirm Password');
+        else {
+            $this->md_pengguna->addPengguna($data);
+
+            /** LOG */
+            addLog('Menambah Pengguna', 'Menambah pengguna "' . $data['nama'] . '" sebagai ' . $data['level']);
+
+            ajaxReturnDie('success', 'Pengguna berhasil ditambahkan', 'reload_table');
+        }
+    }
+
+    public function show($param = "", $param2 = "", $param3 = "")
+    {
+        grantAccessFor(['Administrator', 'Hrd', 'Karyawan']);
+        if ($param == 'detail_pengguna') {
+            $page_data['data_pengguna'] = $this->md_pengguna->getByWhere(['p.pengguna_id' => decrypt($param2)]);
+            $page_data['page_name']       = 'v_pengguna_detail';
+            $page_data['page_title']      = 'Pengguna';
+            $page_data['page_desc']       = 'Profil Pengguna';
+            $this->load->view('index', $page_data);
+        } else if ($param == 'lihat_file') {
+            $id = decrypt($this->input->post('id'));
+            $object = 'file_' . $this->input->post('object');
+            $data = $this->md_pengguna->getById($id)[0]->$object;
+            echo json_encode($data);
+            die;
+        } else if ($param == 'download_file') {
+            $id = decrypt($param2);
+            $object = 'file_' . $param3;
+            $data = $this->md_pengguna->getById($id);
+            if ($data[0]->$object) {
+                $this->load->helper('download');
+                force_download('uploads/file_karyawan/' . $param3 . '/' . $data[0]->$object, NULL);
+            } else {
+                show_404();
+            }
+        }
+    }
+
+    public function edit($param1)
+    {
+        grantAccessFor(['Administrator', 'Hrd']);
+        $id = decrypt($param1);
+        $dt = $this->md_pengguna->getById($id);
+        foreach ($dt as $row) {
+            $row->pengguna_id = encrypt($row->pengguna_id);
+        }
+        echo json_encode($dt);
+        die;
+    }
+
+    public function verifikasi($param)
+    {
+        $pengguna_id = decrypt($param);
+        $cek     = $this->md_pengguna->getByWhere(['p.pengguna_id' => $pengguna_id, 'p.status' => 1, 'p.is_active' => 1]);
+        if ($cek) {
+            $this->session->set_flashdata('success', 'Akun sudah terverifikasi sebelumnya');
+            redirect('auth');
+        } else {
+            $data['status_approval'] = 'Menunggu';
+            $this->md_pengguna->updateByWhere(['pengguna_id' => $pengguna_id,], $data);
+
+            /** LOG */
+            $data2['nama'] = $this->md_pengguna->getByWhere(['p.pengguna_id' => $pengguna_id])[0]->nama;
+            $judul      = 'Pengguna Verifikasi Email';
+            $keterangan = $data2['nama'] . ' baru saja memverifikasi email pendaftaran. ';
+            addLog($judul, $keterangan);
+            $this->session->set_flashdata('success', 'Silahkan login setelah admin meng- approve');
+            redirect('auth');
+        }
+    }
+
+    public function update($param = "", $param2 = "")
+    {
+        if ($param == 'is_active') {
+            grantAccessFor(['Administrator']);
+            $pengguna_id = decrypt($this->input->post('pengguna_id', TRUE));
+            $data['is_active'] = $this->input->post('value');
+            $data['status_approval'] = NULL;
+            $this->md_pengguna->updatePengguna($pengguna_id, $data);
+
+            $datalog =  $data['is_active'] == 1 ? "Aktif" : "Tidak Aktif";
+            $datalog2 = $this->md_pengguna->getById($pengguna_id);
+            addLog('Memperbaharui Pengguna', 'Mengubah status aktif "' . $datalog2[0]->nama . '" menjadi "' . $datalog . '"');
+            ajaxReturnDie('success', 'Status Aktif Berhasil Diubah', TRUE);
+        } else if ($param == 'edit_on_detail') {
+            grantAccessFor(['Administrator', 'Hrd']);
+            $pengguna_id      = decrypt($this->input->post('pengguna_id'));
+            $data['nama'] = $this->input->post('nama');
+            $data['no_pegawai'] = $this->input->post('no_pegawai');
+            $data['status_karyawan'] = $this->input->post('status_karyawan');
+            $data['no_hp'] = $this->input->post('no_hp');
+            $data['email'] = $this->input->post('email');
+            $data['lama_training'] = $this->input->post('lama_training');
+            $data['jabatan'] = $this->input->post('jabatan');
+            $data['pendidikan'] = $this->input->post('pendidikan');
+            $data['kontak_keluarga'] = $this->input->post('kontak_keluarga');
+            $data['hubungan_keluarga'] = $this->input->post('hubungan_keluarga');
+            $data['tgl_masuk'] =  $this->input->post('tgl_masuk') ? date_db_format($this->input->post('tgl_masuk')) : NULL;
+            $data['tgl_keluar'] = $this->input->post('tgl_keluar') ? date_db_format($this->input->post('tgl_keluar')) : NULL;
+            $data['tgl_kontrak'] = $this->input->post('tgl_kontrak') ? date_db_format($this->input->post('tgl_kontrak')) : NULL;
+            $data['alasan_keluar'] = $this->input->post('alasan_keluar');
+            $data['keterangan_lain'] = $this->input->post('keterangan_lain');
+            $data['terima_tunjangan_tt'] = $this->input->post('terima_tunjangan_tt') == 'on' ? 1 : 0;
+            $data['no_rek'] = $this->input->post('no_rek');
+
+
+            $this->md_pengguna->updatePengguna($pengguna_id, $data);
+            $data2 = $this->md_pengguna->getById($pengguna_id);
+            addLog('Memperbaharui Karyawan', 'Memperbaharui data Karyawan ' . $data2[0]->nama);
+            ajaxReturnDie('success', 'Pengguna berhasil diperbaharui', TRUE);
+        } else if ($param == 'file') {
+            $pengguna_id = decrypt($this->input->post('pengguna_id'));
+            $karyawan = $this->md_pengguna->getById($pengguna_id);
+
+            //cek file sebelumnya, jika ada hapus file itu
+            $tmp = 'file_' . $param2;
+            if ($karyawan[0]->$tmp) {
+                file_exists('uploads/file_karyawan/' . $param2 . '/' .  $karyawan[0]->$tmp) ? unlink('uploads/file_karyawan/' . $param2 . '/' .  $karyawan[0]->$tmp) : '';
+            }
+
+            $nama_karyawan = str_replace(" ", "_", $karyawan[0]->nama);
+            $file = $_FILES[$param2];
+            if ($file['name']) {
+                $config['file_name']        = $nama_karyawan . '-' .  time();
+                $config['upload_path']      = 'uploads/file_karyawan/' . $param2;
+                $config['allowed_types']    = 'pdf|xls|xlsx|doc|docx|jpg|png|jpeg';
+                $config['max_size']         = 4000;
+                $this->upload->initialize($config);
+                if (!$this->upload->do_upload($param2)) {
+                    ajaxReturnDie('error', $this->upload->display_errors());
+                } else {
+                    $dt = $this->upload->data();
+                    $data['file_' . $param2] = $dt['file_name'];
+                    $this->md_pengguna->updatePengguna($pengguna_id, $data);
+                    addLog('Memperbaharui Karyawan', 'Memperbaharui File Karyawan ' . $karyawan[0]->nama);
+                    ajaxReturnDie('success', 'Pengguna berhasil diperbaharui', TRUE);
+                }
+            } else {
+                ajaxReturnDie('error', 'Silahkan upload File Pendukung');
+            }
+        } else {
+            grantAccessFor(['Administrator']);
+            $pengguna_id      = decrypt($this->input->post('pengguna_id'));
+            $data['nama']     = $this->input->post('nama');
+            $data['email']    = $this->input->post('email');
+            $data['username'] = $this->input->post('username');
+            $data['level']    = $this->input->post('level');
+            $data['hirarki']    = $this->input->post('hirarki');
+            $this->md_pengguna->updatePengguna($pengguna_id, $data);
+            addLog('Memperbaharui Pengguna', 'Memperbaharui data pengguna ' . $data['nama']);
+            ajaxReturnDie('success', 'Pengguna berhasil diperbaharui', 'reload_table');
+        }
+    }
+
+
+    public function delete($param1)
+    {
+        grantAccessFor(['Administrator']);
+
+        $pengguna_id    = decrypt($param1);
+        $temp           = $this->md_pengguna->getById($pengguna_id);
+        $data['status'] = 2;
+        $this->md_pengguna->updatePengguna($pengguna_id, $data);
+        addLog('Menghapus Pengguna', 'Menghapus pengguna ' . $temp[0]->nama);
+        ajaxReturnDie('success', 'Pengguna berhasil dihapus', 'reload_table');
+    }
+
+    public function reset()
+    {
+        grantAccessFor(['Administrator']);
+
+        if ($this->input->post('password') != $this->input->post('rpassword')) {
+            ajaxReturnDie('error', 'Konfirmasi Password Salah!');
+        }
+
+        if (!preg_match('/^(?=.*[0-d9]).{8,}/', $this->input->post('password', TRUE))) {
+            ajaxReturnDie('error', 'Password minimal 8 karakter, terdiri dari kombinasi huruf dan angka');
+        }
+
+        $pengguna_id      = decrypt($this->input->post('pengguna_id'));
+        $temp             = $this->md_pengguna->getById($pengguna_id);
+        $data['password'] = hash('sha512', $this->input->post('password'));
+        $this->md_pengguna->updatePengguna($pengguna_id, $data);
+
+        /** LOG */
+        addLog('Reset Password', 'Reset password pengguna ' . $temp[0]->nama);
+
+        ajaxReturnDie('success', 'Reset Password Berhasil! Silahkan logout dan login kembali');
+    }
+
+    public function pagination()
+    {
+        grantAccessFor(['Administrator', 'Hrd']);
+
+        $dt    = $this->md_pengguna->getAllPengguna();
+        $start = $this->input->post('start');
+        $data  = array();
+        foreach ($dt['data'] as $row) {
+            $is_active = $row->is_active == 1 ? '<span class="badge badge-ecommerce badge-success">Aktif</span>' : '<span class="badge badge-ecommerce badge-danger">Tidak Aktif</span>';
+            $id       = encrypt($row->pengguna_id);
+            $nama_pengguna = '<a href="pengguna/show/detail_pengguna/' . $id . '")>' . $row->nama . '</a>';
+            $li_btn   = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                    ' . ($row->level != 'Administrator' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="pengguna/delete"><i class="bx bx-trash"></i></button>' : '') . '
+                </div>';
+            $th = array();
+            $th[] = ++$start . '.';
+            $th[] = $nama_pengguna;
+            $th[] = $row->email ? $row->email : '-';
+            $th[] = $row->level;
+            $th[] = $row->status_approval;
+            $th[] = $is_active;
+            if (isAdmin()){
+                $th[] = $li_btn;
+            }
+            $data[] = $th;
+        }
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+    }
+}
