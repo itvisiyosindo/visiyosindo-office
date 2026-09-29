@@ -2337,6 +2337,104 @@ class Surat_part_two extends CI_Controller
     ajaxReturnDie('success', 'Cuti berhasil dihapus', 'reload_table');
   }
 
+  public function batalCuti($id = null)
+  {
+    grantAccessFor('all');
+
+    if (empty($id)) {
+      $id = $this->input->post('id', TRUE);
+    }
+
+    if (empty($id)) {
+      ajaxReturnDie('error', 'ID Pengajuan Cuti tidak valid');
+    }
+
+    if (strlen($id) > 10 && !is_numeric($id)) {
+      $decId = decrypt($id);
+      if ($decId) {
+        $id = $decId;
+      }
+    }
+
+    $cuti = $this->md_surat_part_two->getCutiById($id);
+    if (empty($cuti)) {
+      ajaxReturnDie('error', 'Data pengajuan cuti tidak ditemukan');
+    }
+
+    $idPengaju = $cuti[0]->id_pengaju;
+    $currentStatus = $cuti[0]->status;
+
+    if (sessPenggunaId() != $idPengaju && !isAdmin()) {
+      ajaxReturnDie('error', 'Anda tidak memiliki hak akses untuk membatalkan pengajuan cuti ini');
+    }
+
+    if ($currentStatus == '3' && !isAdmin()) {
+      ajaxReturnDie('error', 'Pengajuan cuti yang sudah disetujui final oleh General Manager tidak dapat dibatalkan');
+    }
+
+    if ($currentStatus == '5') {
+      ajaxReturnDie('error', 'Pengajuan cuti ini sudah dibatalkan sebelumnya');
+    }
+
+    $data = [
+      'status' => '5',
+    ];
+
+    $this->md_surat_part_two->updateCuti($id, $data);
+
+    addLog('Batal Pengajuan Cuti', 'Membatalkan pengajuan cuti tahunan: ' . $cuti[0]->kode_cuti);
+    ajaxReturnDie('success', 'Pengajuan cuti tahunan berhasil dibatalkan', 'reload_table');
+  }
+
+  public function batalCutiSgm($id = null)
+  {
+    grantAccessFor('all');
+
+    if (empty($id)) {
+      $id = $this->input->post('id', TRUE);
+    }
+
+    if (empty($id)) {
+      ajaxReturnDie('error', 'ID Pengajuan Cuti SGM tidak valid');
+    }
+
+    if (strlen($id) > 10 && !is_numeric($id)) {
+      $decId = decrypt($id);
+      if ($decId) {
+        $id = $decId;
+      }
+    }
+
+    $cuti = $this->md_surat_part_two->getSgmById($id);
+    if (empty($cuti)) {
+      ajaxReturnDie('error', 'Data pengajuan cuti SGM tidak ditemukan');
+    }
+
+    $idPengaju = $cuti[0]->idPengaju;
+    $currentStatus = $cuti[0]->status;
+
+    if (sessPenggunaId() != $idPengaju && !isAdmin()) {
+      ajaxReturnDie('error', 'Anda tidak memiliki hak akses untuk membatalkan pengajuan cuti ini');
+    }
+
+    if ($currentStatus == '3' && !isAdmin()) {
+      ajaxReturnDie('error', 'Pengajuan cuti yang sudah disetujui final tidak dapat dibatalkan');
+    }
+
+    if ($currentStatus == '5') {
+      ajaxReturnDie('error', 'Pengajuan cuti ini sudah dibatalkan sebelumnya');
+    }
+
+    $data = [
+      'status' => '5',
+    ];
+
+    $this->md_surat_part_two->updateSgm($id, $data);
+
+    addLog('Batal Pengajuan Cuti SGM', 'Membatalkan pengajuan cuti SGM: ' . $cuti[0]->kode);
+    ajaxReturnDie('success', 'Pengajuan cuti SGM berhasil dibatalkan', 'reload_table');
+  }
+
   public function deleteBa($id)
   {
     grantAccessFor(['Administrator']);
@@ -2684,11 +2782,73 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
+        $btnBatal = '';
+        if ($row->status != '3' && $row->status != '5') {
+          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti" title="Batalkan Pengajuan Cuti" data-id="' . $row->idGc . '" data-kode="' . $row->kode_cuti . '"><i class="fas fa-ban"></i> Batal</button>';
+        }
+
         $li_btn   = '
-            <div class="btn-group" role="group" aria-label="First group">
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="bx bx-trash"></i></button>' : '') . '
-                ' . (isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>' : '') . '
+            <div class="btn-group" role="group" aria-label="Aksi">
+                <a href="surat_part_two/show/detail/cuti/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
+                ' . $btnBatal . '
+            </div>';
+
+        $th = array();
+        $th[] = ++$start;
+        $th[] = $kode_fpp;
+        $th[] = $row->pengaju;
+        $th[] = $row->jabatan;
+        $th[] = $row->alasan;
+        $th[] = $pukul;
+        $th[] = $row->total;
+        $th[] = $stat_surat;
+        $th[] = $li_btn;
+        $data[] = $th;
+      }
+      $dt['data'] = $data;
+      echo json_encode($dt);
+      die;
+    } else if ($param == 'list_cuti') {
+      //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
+      $dt     = $this->md_surat_part_two->getAllCUTI();
+      $start = $this->input->post('start');
+      $data  = array();
+      foreach ($dt['data'] as $row) {
+
+
+        $kode_fpp  = '<a href="surat_part_two/show/detail/cuti/' . $row->idGc . '">' . $row->kode_cuti . '</a>';
+        //$cetak		= '<a href="surat/print_page/gc/'.$row->idGc.'">print</a>';
+
+
+
+
+        if ($row->status == "0") {
+          $stat_surat = '<span class="badge badge-ecommerce badge-success">Baru Diajukan</span>';
+        } else if ($row->status == "1") {
+          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh General Affair</span>';
+        } else if ($row->status == "2") {
+          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh HR & Legal</span>';
+        } else if ($row->status == "3") {
+          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh General Manager</span>';
+        } else {
+          $stat_surat = '<span class="badge badge-ecommerce badge-danger">Ditolak</span>';
+        }
+
+        $mulai = date('d-M-Y', strtotime($row->tgl_awal));
+        $akhir = date('d-M-Y', strtotime($row->tgl_akhir));
+
+        $pukul = $mulai . ' s/d ' . $akhir;
+
+        $btnBatal = '';
+        if ($row->status != '3' && $row->status != '5' && (isAdmin() || (isset($row->idPengaju) && $row->idPengaju == sessPenggunaId()))) {
+          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti" title="Batalkan Pengajuan Cuti" data-id="' . $row->idGc . '" data-kode="' . $row->kode_cuti . '"><i class="fas fa-ban"></i> Batal</button>';
+        }
+
+        $li_btn   = '
+            <div class="btn-group" role="group" aria-label="Aksi">
+                <a href="surat_part_two/show/detail/cuti/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
+                ' . (isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a> &nbsp;' : '') . '
+                ' . $btnBatal . '
             </div>';
 
         $th = array();
@@ -3149,10 +3309,15 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
+        $btnBatal = '';
+        if ($row->status != '3' && $row->status != '5') {
+          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti-sgm" title="Batalkan Pengajuan Cuti SGM" data-id="' . $row->idGc . '" data-kode="' . $row->kode . '"><i class="fas fa-ban"></i> Batal</button>';
+        }
+
         $li_btn   = '
-            <div class="btn-group" role="group" aria-label="First group">
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="bx bx-trash"></i></button>' : '') . '
+            <div class="btn-group" role="group" aria-label="Aksi">
+                <a href="surat_part_two/show/detail/cuti_sgm/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
+                ' . $btnBatal . '
             </div>';
 
         $th = array();
@@ -3199,11 +3364,16 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
+        $btnBatal = '';
+        if ($row->status != '3' && $row->status != '5' && (isAdmin() || (isset($row->idPengaju) && $row->idPengaju == sessPenggunaId()))) {
+          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti-sgm" title="Batalkan Pengajuan Cuti SGM" data-id="' . $row->idGc . '" data-kode="' . $row->kode . '"><i class="fas fa-ban"></i> Batal</button>';
+        }
+
         $li_btn   = '
-            <div class="btn-group" role="group" aria-label="First group">
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="bx bx-trash"></i></button>' : '') . '
-                ' . (isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti_sgm\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>' : '') . '
+            <div class="btn-group" role="group" aria-label="Aksi">
+                <a href="surat_part_two/show/detail/cuti_sgm/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
+                ' . (isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti_sgm\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a> &nbsp;' : '') . '
+                ' . $btnBatal . '
             </div>';
 
         $th = array();

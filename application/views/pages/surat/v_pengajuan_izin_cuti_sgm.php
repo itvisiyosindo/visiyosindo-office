@@ -58,8 +58,42 @@
 				targets: [0, 1, 2, 3, 4, 5, 6, 7],
 				className: 'text-center'
 			}]
-		})
-	})
+		});
+
+		$(document).on('click', '.btn-batal-cuti-sgm', function() {
+			var id = $(this).data('id');
+			var kode = $(this).data('kode');
+			
+			Swal.fire({
+				title: 'Batalkan Pengajuan Cuti SGM?',
+				text: 'Apakah Anda yakin ingin membatalkan pengajuan cuti ' + (kode ? '(' + kode + ')' : '') + '?',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Ya, Batalkan!',
+				cancelButtonText: 'Kembali'
+			}).then(function(result) {
+				if (result.value) {
+					$.ajax({
+						url: 'surat_part_two/batalCutiSgm',
+						method: 'POST',
+						dataType: 'JSON',
+						data: {
+							id: id,
+							csrf_token: token
+						},
+						success: function(resp) {
+							handleResponse(resp);
+							if (resp.status == 'success') {
+								updateDatatable();
+							}
+						}
+					});
+				}
+			});
+		});
+	});
 
 	function updateDatatable() {
 		table.ajax.reload(null, false)

@@ -210,11 +210,21 @@
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-Sijk="<?=encrypt($data_sijk[0]->id_Sijk)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-Sijk="<?=encrypt($data_sijk[0]->id_Sijk)?>"> <i class="fas fa-times"></i> Tolak </button>				
             <?php } ?>
+			<?php if ((sessPenggunaId() == $data_sijk[0]->idPengaju || sessPenggunaId() == $data_sijk[0]->id_pengaju || isAdmin()) && $data_sijk[0]->status != '3' && $data_sijk[0]->status != '5'): ?>
+				<button type="button" class="btn btn-danger float-right btn-batal-cuti-detail" style="margin-left:12px; margin-top:12px;" data-id="<?= $data_sijk[0]->id_Sijk ?>" data-kode="<?= $data_sijk[0]->kode_cuti ?>">
+					<i class="fas fa-ban"></i> Batalkan Pengajuan
+				</button>
+			<?php endif; ?>
 			<a href="surat_part_two/print_page/cuti/<?=$data_sijk[0]->id_Sijk?>" class="btn btn-warning float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-print"></i> Cetak </a>
             <?php if($data_sijk[0]->lampiran != "") { ?>
 			    <a href="<?=$data_sijk[0]->lampiran?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran </a>
 			<?php } ?>
 			<button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form float-left" >Kembali</button>
+			<?php if (isAdmin()): ?>
+				<button type="button" onclick="openAdminEditModal('cuti', '<?= encrypt($data_sijk[0]->id_Sijk) ?>')" class="btn btn-warning float-left font-weight-bold text-dark" style="margin-left:12px;">
+					<i class="fas fa-user-shield mr-1"></i> Edit Data (Admin)
+				</button>
+			<?php endif; ?>
             <br>
         </div>
 		<br><br>
@@ -227,6 +237,42 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         
+		$(document).on('click', '.btn-batal-cuti-detail', function() {
+			var id = $(this).data('id');
+			var kode = $(this).data('kode');
+
+			Swal.fire({
+				title: 'Batalkan Pengajuan Cuti?',
+				text: 'Apakah Anda yakin ingin membatalkan pengajuan cuti tahunan ' + (kode ? '(' + kode + ')' : '') + '?',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Ya, Batalkan!',
+				cancelButtonText: 'Kembali'
+			}).then(function(result) {
+				if (result.value) {
+					$.ajax({
+						method: 'POST',
+						url: 'surat_part_two/batalCuti',
+						dataType: 'JSON',
+						data: {
+							id: id,
+							csrf_token: token
+						},
+						success: function(resp) {
+							handleResponse(resp);
+							if (resp.status == 'success') {
+								setTimeout(function() {
+									window.location.href = 'surat_part_two/show/pengajuan/cuti';
+								}, 1200);
+							}
+						}
+					});
+				}
+			});
+		});
+
 		var level_ttd = $('#level_ttd').val();		
         
 		$(document).on('click', '.btn-approval', function() {

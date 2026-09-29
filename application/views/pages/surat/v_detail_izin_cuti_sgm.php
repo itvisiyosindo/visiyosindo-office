@@ -218,6 +218,11 @@
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-Sijk="<?= encrypt($data_sijk[0]->id_Sijk) ?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-Sijk="<?= encrypt($data_sijk[0]->id_Sijk) ?>"> <i class="fas fa-times"></i> Tolak </button>
 			<?php } ?>
+			<?php if ((sessPenggunaId() == $data_sijk[0]->idPengaju || sessPenggunaId() == $data_sijk[0]->id_pengaju || isAdmin()) && $data_sijk[0]->status != '3' && $data_sijk[0]->status != '5'): ?>
+				<button type="button" class="btn btn-danger float-right btn-batal-cuti-sgm-detail" style="margin-left:12px; margin-top:12px;" data-id="<?= $data_sijk[0]->id_Sijk ?>" data-kode="<?= $data_sijk[0]->kode ?>">
+					<i class="fas fa-ban"></i> Batalkan Pengajuan
+				</button>
+			<?php endif; ?>
 			<a href="surat_part_two/print_page/cuti_sgm/<?= $data_sijk[0]->id_Sijk ?>" class="btn btn-warning float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-print"></i> Cetak </a>
 			<?php if ($data_sijk[0]->lampiran != "") { ?>
 				<a href="<?= $data_sijk[0]->lampiran ?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran </a>
@@ -238,6 +243,42 @@
 
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
+
+		$(document).on('click', '.btn-batal-cuti-sgm-detail', function() {
+			var id = $(this).data('id');
+			var kode = $(this).data('kode');
+
+			Swal.fire({
+				title: 'Batalkan Pengajuan Cuti SGM?',
+				text: 'Apakah Anda yakin ingin membatalkan pengajuan cuti SGM ini ' + (kode ? '(' + kode + ')' : '') + '?',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Ya, Batalkan!',
+				cancelButtonText: 'Kembali'
+			}).then(function(result) {
+				if (result.value) {
+					$.ajax({
+						method: 'POST',
+						url: 'surat_part_two/batalCutiSgm',
+						dataType: 'JSON',
+						data: {
+							id: id,
+							csrf_token: token
+						},
+						success: function(resp) {
+							handleResponse(resp);
+							if (resp.status == 'success') {
+								setTimeout(function() {
+									window.location.href = 'surat_part_two/show/pengajuan/cuti_sgm';
+								}, 1200);
+							}
+						}
+					});
+				}
+			});
+		});
 
 		var level_ttd = $('#level_ttd').val();
 

@@ -385,6 +385,41 @@
 		});
 
 		calendar.render();
+
+		$(document).on('click', '.btn-batal-cuti', function() {
+			var id = $(this).data('id');
+			var kode = $(this).data('kode');
+			
+			Swal.fire({
+				title: 'Batalkan Pengajuan Cuti?',
+				text: 'Apakah Anda yakin ingin membatalkan pengajuan cuti ' + (kode ? '(' + kode + ')' : '') + '?',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Ya, Batalkan!',
+				cancelButtonText: 'Kembali'
+			}).then(function(result) {
+				if (result.value) {
+					$.ajax({
+						url: 'surat_part_two/batalCuti',
+						method: 'POST',
+						dataType: 'JSON',
+						data: {
+							id: id,
+							csrf_token: token
+						},
+						success: function(resp) {
+							handleResponse(resp);
+							if (resp.status == 'success') {
+								updateDatatable();
+								calendar.refetchEvents();
+							}
+						}
+					});
+				}
+			});
+		});
 	});
 
 	function updateDatatable() {
