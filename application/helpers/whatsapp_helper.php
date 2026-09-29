@@ -1582,7 +1582,9 @@ function waSuratAprovOnProg($data)
 
 	$linkUrl = "https://office.visiyosindo.id";
 	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl .= '/' . $data['link'];
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
+		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1612,6 +1614,13 @@ function waSuratAprovOnProgDir($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = "https://office.visiyosindo.id";
+	if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
+		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Pengajuan ' . $data['namaSurat'] . '*' .
@@ -1624,7 +1633,7 @@ function waSuratAprovOnProgDir($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'] .
+		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -1642,7 +1651,9 @@ function waSuratAprovAll($data)
 
 	$linkUrl = "https://office.visiyosindo.id";
 	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl .= '/' . $data['link'];
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
+		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1672,6 +1683,13 @@ function waSuratAprovGABA($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = "https://office.visiyosindo.id";
+	if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
+		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
@@ -1684,7 +1702,7 @@ function waSuratAprovGABA($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada https://office.visiyosindo.id lalu General Affair mengarsipkannya' .
+		'%0A%0ASegera periksa detail surat pada ' . $linkUrl . ' lalu General Affair mengarsipkannya' .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return TRUE;

@@ -1324,6 +1324,7 @@ class Surat_part_two extends CI_Controller
         $kdBa               = $ambilDataPengaju[0]->kode_ba;
         $pengaju            = $ambilDataPengaju[0]->pengaju;
         $jabatan            = $ambilDataPengaju[0]->jabatan_diketahui;
+        $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
 
         //send notif wa
         $dataWa = [
@@ -1334,6 +1335,8 @@ class Surat_part_two extends CI_Controller
           'penerima'       => $nama_disetujui,
           'pengaju'       => $pengaju,
           'kode'           => $kdBa,
+          'perihal'        => $analisis,
+          'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
           'ttd_sebelum1'   => $jabatan,
           'ttd_sebelum2'   => '',
           'ttd_sebelum3'   => ''
@@ -1360,6 +1363,7 @@ class Surat_part_two extends CI_Controller
         $jabatanSetu        = $ambilDataPengaju[0]->jabatan_disetujui;
         $id_dir             = $ambilDataPengaju[0]->id_dir;
         $jabatanDir         = $ambilDataPengaju[0]->jabatan_dir;
+        $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
 
         //Cek status direktor
         if ($ambilDataPengaju[0]->status_dir == 1) {
@@ -1372,6 +1376,8 @@ class Surat_part_two extends CI_Controller
             'penerima'       => $jabatanDir,
             'pengaju'       => $pengaju,
             'kode'           => $kdBa,
+            'perihal'        => $analisis,
+            'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
             'ttd_sebelum1'   => $jabatan,
             'ttd_sebelum2'   => $jabatanSetu,
             'ttd_sebelum3'   => ''
@@ -1388,6 +1394,8 @@ class Surat_part_two extends CI_Controller
             'penerima'       => $pengaju,
             'pengaju'       => $pengaju,
             'kode'           => $kdBa,
+            'perihal'        => $analisis,
+            'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
             'ttd_sebelum1'   => $jabatan,
             'ttd_sebelum2'   => $jabatanSetu,
             'ttd_sebelum3'   => ''
@@ -1404,6 +1412,8 @@ class Surat_part_two extends CI_Controller
             'penerima'       => $pengaju,
             'pengaju'       => $pengaju,
             'kode'           => $kdBa,
+            'perihal'        => $analisis,
+            'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
             'ttd_sebelum1'   => $jabatan,
             'ttd_sebelum2'   => $jabatanSetu,
             'ttd_sebelum3'   => ''
@@ -1431,6 +1441,7 @@ class Surat_part_two extends CI_Controller
         $pengaju            = $ambilDataPengaju[0]->pengaju;
         $jabatan            = $ambilDataPengaju[0]->jabatan_diketahui;
         $jabatanSetu        = $ambilDataPengaju[0]->jabatan_disetujui;
+        $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
 
         //send notif wa
         $dataWa = [
@@ -1441,6 +1452,8 @@ class Surat_part_two extends CI_Controller
           'penerima'       => $pengaju,
           'pengaju'       => $pengaju,
           'kode'           => $kdBa,
+          'perihal'        => $analisis,
+          'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
           'ttd_sebelum1'   => $jabatan,
           'ttd_sebelum2'   => $jabatanSetu,
           'ttd_sebelum3'   => 'Direktor'
@@ -1458,6 +1471,8 @@ class Surat_part_two extends CI_Controller
           'penerima'       => $pengaju,
           'pengaju'       => $pengaju,
           'kode'           => $kdBa,
+          'perihal'        => $analisis,
+          'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
           'ttd_sebelum1'   => $jabatan,
           'ttd_sebelum2'   => $jabatanSetu,
           'ttd_sebelum3'   => ''
@@ -3276,25 +3291,29 @@ class Surat_part_two extends CI_Controller
       }
 
       $dataPenerima   = $this->md_pengguna->getById($idpenerima);
-      $nope           = $dataPenerima[0]->no_hp;
-      $nmPengaju      = $dataPenerima[0]->nama;
+      $nope           = !empty($dataPenerima[0]->no_hp) ? $dataPenerima[0]->no_hp : '';
+      $linkDetail     = 'surat_part_two/show/detail/izin_jam_kerja/' . $detail['id'];
+      if (strpos(strtolower($detail['namaSurat']), 'meninggalkan') !== false) {
+        $linkDetail   = 'surat_part_two/show/detail/izin_meninggalkan/' . $detail['id'];
+      }
       $dataWa = [
         'namaSurat'     => $detail['namaSurat'],
         'noPenerima'    => $nope,
         'kodeSurat'     => $kode,
         'namaPengaju'   => $namaPengaju,
-        'namaPenerima'   => urlencode($detail['penerima']),
+        'namaPenerima'  => urlencode($detail['penerima']),
         'perihal'       => urlencode($perihal),
+        'link'          => $linkDetail,
         'tanggal'       => $tgl,
         'mulai'         => $mulai,
         'akhir'         => $akhir,
         'total'         => $total,
-        'tglmulai'       => $tglmulai,
-        'tglakhir'       => $tglakhir,
-        'ttd_sebelum1'   => urlencode($detail['ttd_sebelum1']),
-        'ttd_sebelum2'   => urlencode($detail['ttd_sebelum2']),
-        'ttd_sebelum3'   => urlencode($detail['ttd_sebelum3']),
-        'ttd_sebelum4'   => ''
+        'tglmulai'      => $tglmulai,
+        'tglakhir'      => $tglakhir,
+        'ttd_sebelum1'  => urlencode($detail['ttd_sebelum1']),
+        'ttd_sebelum2'  => urlencode($detail['ttd_sebelum2']),
+        'ttd_sebelum3'  => urlencode($detail['ttd_sebelum3']),
+        'ttd_sebelum4'  => ''
       ];
 
       if ($param == '1') {
@@ -3323,15 +3342,11 @@ class Surat_part_two extends CI_Controller
     $perihal            = $ambilDataPengaju[0]->alasan;
     $idpengaju          = $ambilDataPengaju[0]->idPengaju;
 
-    //if($idpengaju == 1){
-    //   $idpengaju == 63;
-    //}
-
     //ambil nomor
     $dataPenerima   = $this->md_pengguna->getById($idpengaju);
-    $nope           = $dataPenerima[0]->no_hp;
+    $nope           = !empty($dataPenerima[0]->no_hp) ? $dataPenerima[0]->no_hp : '';
     $dataPenolak     = $this->md_pengguna->getById($detail['idPenolak']);
-    $nopePenolak    = $dataPenolak[0]->no_hp;
+    $nopePenolak    = !empty($dataPenolak[0]->no_hp) ? $dataPenolak[0]->no_hp : '';
 
     //send notif wa
     $dataWa = [
@@ -3359,10 +3374,6 @@ class Surat_part_two extends CI_Controller
     $tglmulai           = date('d-m-Y', strtotime($ambilDataPengaju[0]->tgl_awal));
     $tglakhir           = date('d-m-Y', strtotime($ambilDataPengaju[0]->tgl_akhir));
 
-    //if($idpengaju == 1){
-    //    $idpengaju == 63;
-    //}
-
     //send notif wa
     for ($i = 1; $i <= $ulang; $i++) {
       if ($i == 1) {
@@ -3378,22 +3389,22 @@ class Surat_part_two extends CI_Controller
       }
 
       $dataPenerima   = $this->md_pengguna->getById($idpenerima);
-      $nope           = $dataPenerima[0]->no_hp;
-      $nmPengaju      = $dataPenerima[0]->nama;
+      $nope           = !empty($dataPenerima[0]->no_hp) ? $dataPenerima[0]->no_hp : '';
       $dataWa = [
         'namaSurat'     => $detail['namaSurat'],
         'noPenerima'    => $nope,
         'kodeSurat'     => $kode,
         'namaPengaju'   => $namaPengaju,
-        'namaPenerima'   => urlencode($detail['penerima']),
+        'namaPenerima'  => urlencode($detail['penerima']),
         'perihal'       => urlencode($perihal),
+        'link'          => 'surat_part_two/show/detail/cuti/' . $detail['id'],
         'total'         => $total,
-        'tglmulai'       => $tglmulai,
-        'tglakhir'       => $tglakhir,
-        'ttd_sebelum1'   => urlencode($detail['ttd_sebelum1']),
-        'ttd_sebelum2'   => urlencode($detail['ttd_sebelum2']),
-        'ttd_sebelum3'   => urlencode($detail['ttd_sebelum3']),
-        'ttd_sebelum4'   => ''
+        'tglmulai'      => $tglmulai,
+        'tglakhir'      => $tglakhir,
+        'ttd_sebelum1'  => urlencode($detail['ttd_sebelum1']),
+        'ttd_sebelum2'  => urlencode($detail['ttd_sebelum2']),
+        'ttd_sebelum3'  => urlencode($detail['ttd_sebelum3']),
+        'ttd_sebelum4'  => ''
       ];
 
       if ($param == '1') {
@@ -3418,15 +3429,11 @@ class Surat_part_two extends CI_Controller
     $perihal            = $ambilDataPengaju[0]->alasan;
     $idpengaju          = $ambilDataPengaju[0]->idPengaju;
 
-    //if($idpengaju == 1){
-    //   $idpengaju == 63;
-    //}
-
     //ambil nomor
     $dataPenerima   = $this->md_pengguna->getById($idpengaju);
-    $nope           = $dataPenerima[0]->no_hp;
+    $nope           = !empty($dataPenerima[0]->no_hp) ? $dataPenerima[0]->no_hp : '';
     $dataPenolak     = $this->md_pengguna->getById($detail['idPenolak']);
-    $nopePenolak    = $dataPenolak[0]->no_hp;
+    $nopePenolak    = !empty($dataPenolak[0]->no_hp) ? $dataPenolak[0]->no_hp : '';
 
     //send notif wa
     $dataWa = [
@@ -3457,19 +3464,21 @@ class Surat_part_two extends CI_Controller
       }
 
       $dataPenerima   = $this->md_pengguna->getById($idpenerima);
-      $nope           = $dataPenerima[0]->no_hp;
+      $nope           = !empty($dataPenerima[0]->no_hp) ? $dataPenerima[0]->no_hp : '';
+      $perihalBa      = !empty($detail['perihal']) ? $detail['perihal'] : (!empty($detail['kode']) ? $detail['kode'] : '');
       $dataWa = [
         'namaSurat'     => $detail['namaSurat'],
         'noPenerima'    => $nope,
-        'idBA'           => $detail['id'],
+        'idBA'          => $detail['id'],
         'kodeSurat'     => $detail['kode'],
         'namaPengaju'   => $detail['pengaju'],
-        'namaPenerima'   => urlencode($detail['penerima']),
-        'perihal'       => urlencode($detail['perihal']),
-        'ttd_sebelum1'   => urlencode($detail['ttd_sebelum1']),
-        'ttd_sebelum2'   => urlencode($detail['ttd_sebelum2']),
-        'ttd_sebelum3'   => urlencode($detail['ttd_sebelum3']),
-        'ttd_sebelum4'   => ''
+        'namaPenerima'  => urlencode($detail['penerima']),
+        'perihal'       => urlencode($perihalBa),
+        'link'          => isset($detail['link']) ? $detail['link'] : 'surat_part_two/show/detail/ba/' . $detail['id'],
+        'ttd_sebelum1'  => urlencode($detail['ttd_sebelum1']),
+        'ttd_sebelum2'  => urlencode($detail['ttd_sebelum2']),
+        'ttd_sebelum3'  => urlencode($detail['ttd_sebelum3']),
+        'ttd_sebelum4'  => ''
       ];
 
       if ($param == '1') {
