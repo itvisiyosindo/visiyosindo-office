@@ -1876,35 +1876,115 @@ function setupExcelImport() {
                     const sheetName = workbook.SheetNames[0];
                     const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-                    if (json.length === 0) return alert('File Excel kosong.');
+                    if (!json || json.length === 0) {
+                        alert('File Excel kosong atau tidak memiliki baris data.');
+                        return;
+                    }
 
+                    let importedCount = 0;
                     json.forEach((row, i) => {
-                        if (row['Kode Pengajuan'] || row['Kode PBOK']) {
-                            auditState.pbokList.unshift({
-                                id: Date.now() + i,
-                                code: row['Kode Pengajuan'] || `PBOK-IMP-${i}`,
-                                nik: row['NIK Pemohon'] || 'EMP-IMP',
-                                name: row['Nama Pemohon'] || 'Pemohon Import',
-                                dept: row['Divisi'] || 'Operations & Logistics',
-                                tenure: row['Masa Menjabat'] || '2024 - 2026',
-                                item: row['Item Belanja & Vendor'] || row['Deskripsi'] || 'Pengadaan Belanja Office',
-                                amount: parseFloat(row['Nilai Pengajuan (Rp)'] || 10000000),
-                                physicalStatus: row['Keberadaan Fisik'] || 'Terverifikasi Ada',
-                                lossStatus: row['Status Kerugian'] || 'Aman / Wajar',
-                                lossAmount: parseFloat(row['Nilai Potensi Kerugian (Rp)'] || 0),
-                                notes: row['Catatan Auditor'] || 'Imported via Excel'
-                            });
+                        // Helper fleksibel untuk mengambil nilai kolom tanpa sensitif kapitalisasi
+                        const getVal = (...keys) => {
+                            for (const k of keys) {
+                                for (const rowKey of Object.keys(row)) {
+                                    if (rowKey.trim().toLowerCase() === k.trim().toLowerCase()) {
+                                        return row[rowKey];
+                                    }
+                                }
+                            }
+                            return undefined;
+                        };
+
+                        const parseNumber = (val, def = 0) => {
+                            if (typeof val === 'number') return val;
+                            if (!val) return def;
+                            const cleaned = String(val).replace(/[^0-9.-]+/g, '');
+                            const num = parseFloat(cleaned);
+                            return isNaN(num) ? def : num;
+                        };
+
+                        const code = getVal('Kode Pengajuan', 'Kode PBOK', 'Kode PPA', 'Kode', 'No Pengajuan', 'No Surat', 'Nomor');
+                        const name = getVal('Nama Pemohon', 'Nama Karyawan', 'Nama', 'Pemohon') || 'Pemohon Import';
+                        const nik = getVal('NIK Pemohon', 'NIK', 'NPP', 'ID Pemohon') || ('EMP-' + (100 + i));
+                        const dept = getVal('Divisi', 'Departemen', 'Bagian') || 'Operations & Logistics';
+                        const tenure = getVal('Masa Menjabat', 'Periode', 'Tenure') || '2024 - 2026 (Masa Menjabat)';
+                        const item = getVal('Item Belanja & Vendor', 'Item Belanja', 'Deskripsi', 'Perihal', 'Keperluan', 'Keterangan') || 'Pengadaan Belanja Office';
+                        const amount = parseNumber(getVal('Nilai Pengajuan (Rp)', 'Nilai Pengajuan', 'Nominal', 'Total', 'Amount'), 0);
+                        const physicalStatus = getVal('Keberadaan Fisik', 'Status Fisik', 'Fisik') || 'Terverifikasi Ada';
+                        const lossStatus = getVal('Status Kerugian', 'Risk', 'Kerugian') || (parseNumber(getVal('Nilai Potensi Kerugian (Rp)', 'Potensi Kerugian', 'Nilai Kerugian'), 0) > 0 ? 'Potensi Kerugian' : 'Aman / Wajar');
+                        const lossAmount = parseNumber(getVal('Nilai Potensi Kerugian (Rp)', 'Potensi Kerugian', 'Nilai Kerugian'), 0);
+                        const notes = getVal('Catatan Auditor', 'Catatan', 'Notes') || 'Imported via Excel';
+                        const officeUrl = getVal('Link Office', 'Link Dokumen', 'Office Url', 'Url', 'Link') || '';
+
+                        if (code || name) {
+                            const pbokItem = {
+                                id: code ? (code + '-' + Date.now() + '-' + i) : (Date.now() + i),
+                                code: code || `PBOK-IMP-${Date.now()}-${i}`,
+                                pengguna_id: nik,
+                                nik: nik,
+                                name: name,
+                                dept: dept,
+                                tenure: tenure,
+                                item: item,
+                                amount: amount,
+                                physicalStatus: physicalStatus,
+                                lossStatus: lossStatus,
+                                lossAmount: lossAmount,
+                                notes: notes,
+                                officeUrl: officeUrl
+                            };
+
+                            auditState.pbokList.unshift(applyPbokEdits(pbokItem));
+
+                            // Auto daftarkan Karyawan jika belum ada
+                            const empExists = auditState.employees.some(e => 
+                                (e.nik && e.nik.toLowerCase() === String(nik).toLowerCase()) ||
+                                (e.name && e.name.toLowerCase() === String(name).toLowerCase())
+                            );
+
+                            if (!empExists) {
+                                auditState.employees.unshift(applyEmployeeEdits({
+                                    id: nik,
+                                    pengguna_id: nik,
+                                    nik: nik,
+                                    name: name,
+                                    dept: dept,
+                                    role: 'Staff / Pemohon',
+                                    kpi: 90,
+                                    quality: 4.0,
+                                    sop: 92,
+                                    attendance: 95,
+                                    risk: lossAmount > 0 ? 'Medium' : 'Low',
+                                    status: 'Terverifikasi',
+                                    tenure: tenure
+                                }));
+                            }
+
+                            importedCount++;
                         }
                     });
 
+                    if (importedCount === 0) {
+                        alert('Tidak ada baris data yang valid untuk diimpor. Pastikan file memiliki kolom Nama/Kode Pengajuan.');
+                        return;
+                    }
+
+                    deduplicateEmployees();
+                    auditState.filteredEmployees = [...auditState.employees];
                     auditState.filteredPbok = [...auditState.pbokList];
+
+                    saveStateToStorage();
+                    updateDepartmentFilters();
                     renderOverview();
                     renderCharts();
                     renderTables();
-                    alert('Impor data Excel berhasil!');
+
+                    alert(`✅ Berhasil mengimpor ${importedCount} data transaksi & memperbarui database audit!`);
                 } catch(err) {
-                    console.error(err);
-                    alert('Gagal membaca file Excel.');
+                    console.error('Error import Excel:', err);
+                    alert('Gagal membaca file Excel. Pastikan format file adalah .xlsx atau .xls yang valid.');
+                } finally {
+                    fileInput.value = '';
                 }
             };
             reader.readAsArrayBuffer(file);
