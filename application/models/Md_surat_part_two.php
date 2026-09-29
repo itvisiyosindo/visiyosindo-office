@@ -10,11 +10,13 @@ class Md_surat_part_two extends CI_Model
 	function addIzinJam($data)
 	{
 		$this->db->insert('surat_izin_jam_kerja', $data);
+		return $this->db->insert_id();
 	}
 
 	function addCuti($data)
 	{
 		$this->db->insert('surat_cuti_tahunan', $data);
+		return $this->db->insert_id();
 	}
 
 	// ==========================================

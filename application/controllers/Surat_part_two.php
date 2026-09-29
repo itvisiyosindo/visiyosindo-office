@@ -356,7 +356,7 @@ class Surat_part_two extends CI_Controller
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
       $data['jenis']          = 1;
-      $this->md_surat_part_two->addIzinJam($data);
+      $insertId = $this->md_surat_part_two->addIzinJam($data);
 
 
 
@@ -373,7 +373,7 @@ class Surat_part_two extends CI_Controller
           'jamMulai'     => $data['jam_mulai'],
           'jamSelesai'   => $data['jam_akhir'],
           'keperluan'    => $data['alasan'],
-          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/list/sijk'
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_jam_kerja/' . $insertId
         ]);
       }
 
@@ -414,7 +414,7 @@ class Surat_part_two extends CI_Controller
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
       $data['jenis']          = 2;
-      $this->md_surat_part_two->addIzinJam($data);
+      $insertId = $this->md_surat_part_two->addIzinJam($data);
 
 
 
@@ -431,7 +431,7 @@ class Surat_part_two extends CI_Controller
           'tglAkhir'     => $data['tgl_akhir'],
           'totalHari'    => $data['total'],
           'alasan'       => $data['alasan'],
-          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/list/simp'
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_meninggalkan/' . $insertId
         ]);
       }
 
@@ -472,7 +472,7 @@ class Surat_part_two extends CI_Controller
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
       $data['jenis']          = 3;
-      $this->md_surat_part_two->addCuti($data);
+      $insertId = $this->md_surat_part_two->addCuti($data);
 
 
 
@@ -489,7 +489,7 @@ class Surat_part_two extends CI_Controller
           'tglAkhir'     => $data['tgl_akhir'],
           'totalHari'    => $data['total'],
           'alasan'       => $data['alasan'],
-          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/list/cuti'
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/detail/cuti/' . $insertId
         ]);
       }
 
