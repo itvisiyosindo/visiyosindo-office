@@ -137,13 +137,32 @@ if ($action === 'save_state') {
 }
 
 if ($action === 'purge_state') {
-    if (file_exists($dataFile)) {
-        @unlink($dataFile);
-    }
+    $emptyState = [
+        'edited_employees' => (object)[],
+        'edited_pboks'     => (object)[],
+        'deleted_emp_ids'  => [],
+        'deleted_pbok_ids' => [],
+        'employees'        => [],
+        'pbokList'         => [],
+        'findings'         => [],
+        'plans'            => [],
+        'cars'             => [],
+        'beritaAcara'      => [],
+        'last_updated'     => date('Y-m-d H:i:s'),
+        'updated_by'       => 'System Purge'
+    ];
+    $jsonStr = json_encode($emptyState, JSON_PRETTY_PRINT);
+    @file_put_contents($dataFile, $jsonStr, LOCK_EX);
+
     if ($dbConnected) {
-        @$mysqli->query("DELETE FROM audit_state_json WHERE state_key = 'main_state'");
+        $stmt = $mysqli->prepare("INSERT INTO audit_state_json (state_key, state_data) VALUES ('main_state', ?) ON DUPLICATE KEY UPDATE state_data = ?");
+        if ($stmt) {
+            $stmt->bind_param('ss', $jsonStr, $jsonStr);
+            $stmt->execute();
+            $stmt->close();
+        }
     }
-    echo json_encode(['status' => 'success', 'message' => 'Cache terpusat berhasil dibersihkan']);
+    echo json_encode(['status' => 'success', 'message' => 'Seluruh data audit berhasil dikosongkan total', 'data' => $emptyState]);
     exit;
 }
 

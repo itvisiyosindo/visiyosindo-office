@@ -2,58 +2,8 @@
  * App State & Data Management - Corporate Office Portal & PBOK / PPA Audit Engine
  */
 
-const defaultEmployees = [
-    {
-        id: '105',
-        pengguna_id: '105',
-        nik: '105',
-        name: 'Muhammad Reza Fadila',
-        dept: 'Finance, Accounting & Tax (FAT)',
-        role: 'Staff Accounting',
-        kpi: 88.5,
-        quality: 4.2,
-        sop: 89.0,
-        attendance: 96.0,
-        risk: 'Low',
-        status: 'Terverifikasi (Out)',
-        tenure: '25-03-2026 s/d Sekarang (Out 08-07-2026)'
-    }
-];
-const defaultPbokList = [
-    { id: 'AUD-REZ-01', code: '280/PBOK/FAT/VYM/VII/2026', date: '05-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pengajuan Pembelian ATK Juli 2026', amount: 611500, physicalStatus: 'Diajukan', officeUrl: 'https://drive.google.com/file/d/1E0HgyMsoadANwujrJybhKXTQpf6D0GWz/view?usp=sharing', taxVerified: true, taxVerifiedDate: '05-07-2026', notes: 'Pengajuan ATK bulanan operasional FAT' },
-    { id: 'AUD-REZ-02', code: '276/PBOK/FAT/VYM/VII/2026', date: '02-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Listrik Gudang Jakarta (ID : 547301119764 - Sonny Badaruddin)', amount: 828064, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1WIqJl1vWndwbEq8ef4cw-rmfxvKSLM4u/view?usp=sharing', taxVerified: true, taxVerifiedDate: '02-07-2026', notes: 'Tagihan PLN Gudang Jakarta' },
-    { id: 'AUD-REZ-03', code: '277/PBOK/FAT/VYM/VII/2026', date: '02-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Konsumsi Pantry Periode Juli 2026', amount: 800000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1KCHG7cpxWziwDkYtyI8-lDZVhnz_9kfw/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '02-07-2026', notes: 'Kebutuhan konsumsi pantry kantor' },
-    { id: 'AUD-REZ-04', code: '278/PBOK/FAT/VYM/VII/2026', date: '02-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Cicilan Bank Mandiri', amount: 14152000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1AYSCxyjJUJmr9Rb6FEIw0IEBEO_9gQnM/view?usp=sharing', taxVerified: true, taxVerifiedDate: '02-07-2026', notes: 'Cicilan rutin Bank Mandiri' },
-    { id: 'AUD-REZ-05', code: '279/PBOK/FAT/VYM/VII/2026', date: '02-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran IPL Gudang Jakarta Periode Juli 2026', amount: 240000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/142DLSzPKxVOJvJGF1YtuIO9z_SxwZ0dD/view?usp=sharing', taxVerified: true, taxVerifiedDate: '02-07-2026', notes: 'Iuran Pengelolaan Lingkungan Gudang Jakarta' },
-    { id: 'AUD-REZ-06', code: '270/PBOK/FAT/VYM/VII/2026', date: '01-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran esign & ematerai PO ekatalog RSUP Jayapura', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1nyv3E8SwSf-pa4NRuLFAtv8VcLJ9-ZDv/view?usp=sharing', taxVerified: true, taxVerifiedDate: '01-07-2026', notes: 'E-Sign PO E-Catalog Jayapura' },
-    { id: 'AUD-REZ-07', code: '273/PBOK/FAT/VYM/VII/2026', date: '01-07-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Pembelian Esign & Emeterai untuk Addendum RSUP Jayapura', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/12XcxlavwEIbkKxzXMON8i6OlH6BEcVSJ/view?usp=sharing', taxVerified: true, taxVerifiedDate: '01-07-2026', notes: 'E-Sign Addendum RSUP Jayapura' },
-    { id: 'AUD-REZ-08', code: '269/PBOK/FAT/VYM/VI/2026', date: '30-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Deposit Accurate Juni 2026', amount: 366300, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/11t_VhF-imMaYy8DPfqefTRi0Q9AEn3JG/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '30-06-2026', notes: 'Subscription Deposit Accurate Online' },
-    { id: 'AUD-REZ-09', code: '266/PBOK/FAT/VYM/VI/2026', date: '26-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Pembelian Esign & Emeterai untuk Addendum RSUD Eka Candrarini', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1SHRNcQZHeraiLMcecr36wpXrwjHZXUQ4/view?usp=sharing', taxVerified: true, taxVerifiedDate: '26-06-2026', notes: 'E-Sign Addendum Eka Candrarini' },
-    { id: 'AUD-REZ-10', code: '258/PBOK/FAT/VYM/VI/2026', date: '25-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Pembelian Esign untuk BAST RSUD Sultan Sulaiman & RSUD Penyabungan', amount: 10216, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1P0tWh0MbnOuUGvGcmQn8m5zDR_NkyMST/view?usp=sharing', taxVerified: true, taxVerifiedDate: '25-06-2026', notes: 'E-Sign BAST RSUD' },
-    { id: 'AUD-REZ-11', code: '256/PBOK/FAT/VYM/VI/2026', date: '25-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Pengadaan Seragam Batik Kantor VYM', amount: 14280000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/14EGxOElI0bvRCYwVRTKF-5I6_Ge7nr9C/view?usp=sharing', taxVerified: true, taxVerifiedDate: '25-06-2026', notes: 'Pengadaan Batik VYM' },
-    { id: 'AUD-REZ-12', code: '257/PBOK/FAT/VYM/VI/2026', date: '25-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Sewa Gudang Jakarta Periode 25 Juni 2026 s/d 25 Juni 2027', amount: 23000000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/14EGxOElI0bvRCYwVRTKF-5I6_Ge7nr9C/view?usp=sharing', taxVerified: true, taxVerifiedDate: '25-06-2026', notes: 'Sewa Tahunan Gudang Jakarta' },
-    { id: 'AUD-REZ-13', code: '246/PBOK/FAT/VYM/VI/2026', date: '23-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Gaji Karyawan Periode Juni 2026 (Draft 1)', amount: 0, physicalStatus: 'Diajukan', officeUrl: 'https://drive.google.com/file/d/1RBVFRR8d5oHOBWVv6745fECLPUSSH8YD/view?usp=drive_link', taxVerified: false, notes: 'Draft Pengajuan Gaji Juni 2026' },
-    { id: 'AUD-REZ-14', code: '247/PBOK/FAT/VYM/VI/2026', date: '23-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Gaji Karyawan Periode Juni 2026 (Efektif 25 Juni 2026)', amount: 135262727, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1RBVFRR8d5oHOBWVv6745fECLPUSSH8YD/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '23-06-2026', notes: 'Payroll Gaji Juni 2026' },
-    { id: 'AUD-REZ-15', code: '248/PBOK/FAT/VYM/VI/2026', date: '23-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Perjanjian Kerjasama Konsultan Manajemen & PPh Pasal 21', amount: 8330000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1qeYZrVFAEeCd2FqBNCz5kTD1BDcgaIke/view?usp=sharing', taxVerified: true, taxVerifiedDate: '23-06-2026', notes: 'Jasa Konsultan Manajemen' },
-    { id: 'AUD-REZ-16', code: '243/PBOK/FAT/VYM/VI/2026', date: '22-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Cicilan Bank Mandiri', amount: 14152000, physicalStatus: 'Diajukan', officeUrl: 'https://drive.google.com/file/d/1ELdFjpS08teRVpvfunfyjF1BX_pyWid6/view?usp=sharing', taxVerified: false, notes: 'Pengajuan Cicilan Mandiri' },
-    { id: 'AUD-REZ-17', code: '236/PBOK/FAT/VYM/VI/2026', date: '10-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Tunjangan Jabatan, Kinerja, Konsumsi, Komunikasi, Transportasi, BBM & Freelance', amount: 48611500, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1GdMPpLEs--bDq3KqF8fVYWIaeBccIZ8q/view?usp=sharing', taxVerified: true, taxVerifiedDate: '10-06-2026', notes: 'Tunjangan Operasional Karyawan' },
-    { id: 'AUD-REZ-18', code: '221/PBOK/FAT/VYM/VI/2026', date: '04-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Sewa Axa Tower Periode 13 Juni 2026 s/d 12 Juli 2026 (AXA-INV/2026/1620)', amount: 8080000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1IOyegR29gFcFHpd24w-TTFj2F6nYQCWX/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '04-06-2026', notes: 'Sewa AXA Tower Juni-Juli' },
-    { id: 'AUD-REZ-19', code: '222/PBOK/FAT/VYM/VI/2026', date: '04-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Hutang Pembelian Inv No SGM.2026.006 PT Sumpah Gajah Mada', amount: 9435000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1SmXAprGJs-bgHxQ9DnE_5nv9qlJyTJR_/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '04-06-2026', notes: 'Hutang Pembelian PT SGM' },
-    { id: 'AUD-REZ-20', code: '217/PBOK/FAT/VYM/VI/2026', date: '03-06-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran E-sign & E-materai PO E-Catalog RSUD Eka Candrarini', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1lszhG938aT77aoJImi8sGHnE5d4Sf8AY/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '03-06-2026', notes: 'E-Sign PO E-Catalog Eka Candrarini' },
-    { id: 'AUD-REZ-21', code: '210/PBOK/FAT/VYM/V/2026', date: '30-05-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran E-sign & E-materai PO E-Catalog RSUD Dumai', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1XuYwZ_BSPNtkYbJ1qufAigdesdFsicyz/view?usp=sharing', taxVerified: true, taxVerifiedDate: '30-05-2026', notes: 'E-Sign PO Dumai' },
-    { id: 'AUD-REZ-22', code: '188/PBOK/FAT/VYM/V/2026', date: '11-05-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran esign & ematerai PO ekatalog RSUD Sultan Sulaiman', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1raazphWpp-MtPCo-RsF7j1tL3TZAT_TG/view?usp=sharing', taxVerified: true, taxVerifiedDate: '11-05-2026', notes: 'E-Sign PO Sultan Sulaiman' },
-    { id: 'AUD-REZ-23', code: '185/PBOK/FAT/VYM/V/2026', date: '07-05-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Hutang Pembelian Inv No 2600845 + PPN', amount: 550782, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1IjP82aHKNqq78Keili5UaCcShWeeS7U9/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '07-05-2026', notes: 'Hutang Pembelian Supplier' },
-    { id: 'AUD-REZ-24', code: '168/PBOK/FAT/VYM/V/2026', date: '04-05-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Termin International Hospital Expo 2026', amount: 11673900, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1qI4A778qg3bjyPjvST2yOCKt_hIFfeQl/view?usp=sharing', taxVerified: true, taxVerifiedDate: '04-05-2026', notes: 'Akomodasi Hospital Expo' },
-    { id: 'AUD-REZ-25', code: '169/PBOK/FAT/VYM/V/2026', date: '04-05-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Sewa Axa Tower Periode 13 May 2026 s/d 12 Juni 2026 (AXA-INV/2026/1200)', amount: 8080000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1Fg3KHJ6KyOx-hIootQGnrAAg68OGc1P3/view?usp=sharing', taxVerified: true, taxVerifiedDate: '04-05-2026', notes: 'Sewa AXA Tower Mei-Juni' },
-    { id: 'AUD-REZ-26', code: '166/PBOK/FAT/VYM/IV/2026', date: '30-04-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran esign & ematerai PO ekatalog RSUD Penyabungan', amount: 17330, physicalStatus: 'Diajukan', officeUrl: '', taxVerified: false, notes: 'Pengajuan E-Sign Penyabungan' },
-    { id: 'AUD-REZ-27', code: '167/PBOK/FAT/VYM/IV/2026', date: '30-04-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran esign & ematerai PO ekatalog RSUD Penyabungan', amount: 17330, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1e_1fibYcSdquj7lF-LEGtnSS8_oTJ0UM/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '30-04-2026', notes: 'E-Sign PO Penyabungan' },
-    { id: 'AUD-REZ-28', code: '153/PBOK/FAT/VYM/IV/2026', date: '20-04-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Termin III Inv no SINV-10965', amount: 8309070, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1J4nLdJFEnRMviHRg3CSFojQnJ6h0iPjL/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '20-04-2026', notes: 'Termin III Pembayaran' },
-    { id: 'AUD-REZ-29', code: '123/PBOK/FAT/VYM/IV/2026', date: '02-04-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Sewa Axa Tower Periode 13 April 2026 s/d 12 Mei 2026 (AXA-INV/2026/0938)', amount: 8000000, physicalStatus: 'Diajukan', officeUrl: 'https://drive.google.com/file/d/1wGfaon95avV8lwMJZhvkkwB5PPbZ64ek/view?usp=sharing', taxVerified: false, notes: 'Pengajuan Sewa AXA Tower' },
-    { id: 'AUD-REZ-30', code: '125/PBOK/FAT/VYM/IV/2026', date: '02-04-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Sewa Axa Tower Periode 13 April 2026 s/d 12 Mei 2026 (AXA-INV/2026/0938)', amount: 8000000, physicalStatus: 'Diajukan', officeUrl: 'https://drive.google.com/file/d/1wGfaon95avV8lwMJZhvkkwB5PPbZ64ek/view?usp=sharing', taxVerified: false, notes: 'Pengajuan Sewa AXA Tower' },
-    { id: 'AUD-REZ-31', code: '126/PBOK/FAT/VYM/IV/2026', date: '02-04-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Sewa Axa Tower Periode 13 April 2026 s/d 12 Mei 2026 (AXA-INV/2026/0938)', amount: 8080000, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/1wGfaon95avV8lwMJZhvkkwB5PPbZ64ek/view', taxVerified: true, taxVerifiedDate: '02-04-2026', notes: 'Sewa AXA Tower April-Mei' },
-    { id: 'AUD-REZ-32', code: '119/PBOK/FAT/VYM/III/2026', date: '26-03-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Termin II Inv no SINV-10765', amount: 8309070, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/file/d/14HGqFupQVZqiz8Sb9MVkQJRDY_M9ORP7/view?usp=drive_link', taxVerified: true, taxVerifiedDate: '26-03-2026', notes: 'Termin II Pembayaran' },
-    { id: 'AUD-REZ-33', code: '118/PBOK/FAT/VYM/III/2026', date: '25-03-2026', pengguna_id: '105', nik: '105', name: 'Muhammad Reza Fadila', dept: 'Finance, Accounting & Tax (FAT)', item: 'Pembayaran Hutang Pembelian Inv No 2600195', amount: 9100890, physicalStatus: 'Terverifikasi Ada', officeUrl: 'https://drive.google.com/drive/folders/1lG5mYiLJba1FkN9i6EkVQTTrrZXq8hIL', taxVerified: true, taxVerifiedDate: '25-03-2026', notes: 'Hutang Pembelian Supplier' }
-];
+const defaultEmployees = [];
+const defaultPbokList = [];
 
 let deletedEmpIds = JSON.parse(localStorage.getItem('deleted_emp_ids') || '[]');
 let deletedPbokIds = JSON.parse(localStorage.getItem('deleted_pbok_ids') || '[]');
@@ -141,110 +91,23 @@ function isPbokDeleted(p) {
            (pCode !== '' && deletedPbokIds.includes(pCode));
 }
 
-let storedEmps = JSON.parse(localStorage.getItem('audit_employees') || 'null');
-let storedPboks = JSON.parse(localStorage.getItem('audit_pbokList') || 'null');
+let storedEmps = JSON.parse(localStorage.getItem('audit_employees') || '[]');
+let storedPboks = JSON.parse(localStorage.getItem('audit_pbokList') || '[]');
 
-// Filter data awal dari blacklist penghapusan & terapkan editan kustom
-let initialEmps = (storedEmps && storedEmps.length > 0 ? storedEmps : defaultEmployees)
-    .map(applyEmployeeEdits)
-    .filter(e => !isEmployeeDeleted(e));
-let initialPboks = (storedPboks && storedPboks.length > 0 ? storedPboks : defaultPbokList)
-    .map(p => {
-        const empEdit = applyEmployeeEdits({ id: p.pengguna_id, nik: p.nik, name: p.name });
-        return applyPbokEdits({
-            ...p,
-            dept: empEdit.dept || p.dept
-        });
-    })
-    .filter(p => !isPbokDeleted(p) && !isEmployeeDeleted(p));
+let initialEmps = Array.isArray(storedEmps) ? storedEmps.map(applyEmployeeEdits).filter(e => !isEmployeeDeleted(e)) : [];
+let initialPboks = Array.isArray(storedPboks) ? storedPboks.map(applyPbokEdits).filter(p => !isPbokDeleted(p) && !isEmployeeDeleted(p)) : [];
 
-// Pastikan seluruh 35 transaksi pengajuan dari PDF lampiran terdaftar sempurna
-defaultPbokList.forEach(defItem => {
-    const exists = initialPboks.some(p => String(p.code || '').toLowerCase() === String(defItem.code || '').toLowerCase());
-    if (!exists && !isPbokDeleted(defItem) && !isEmployeeDeleted(defItem)) {
-        initialPboks.push(defItem);
-    }
-});
-
-const defaultPlans = [
-    {
-        id: 'PLAN-01',
-        unit: 'Gudang & Logistik Alkes',
-        tujuan: 'Memastikan pemenuhan pemantauan suhu & kalibrasi alat ukur alkes sesuai CDAKB Permenkes 4/2014.',
-        kriteria: 'CDAKB Permenkes 4/2014 & ISO 9001:2015',
-        auditor: 'Risma Nurhandayani, Yolanda Pratiwi',
-        date: '2026-09-10',
-        time: '09:00 - 14:00 WIB',
-        suratTugas: '001/STG/PTVYM/XII/2025',
-        status: 'completed'
-    },
-    {
-        id: 'PLAN-02',
-        unit: 'Keuangan & Pengadaan (PBOK/PPA)',
-        tujuan: 'Verifikasi keabsahan bukti pengeluaran PBOK/PPA dan kesesuaian SOP pengadaan barang alkes.',
-        kriteria: 'SOP VYM-007-HRGA-18-046 & ISO 9001:2015',
-        auditor: 'Risma Nurhandayani, Kardonal',
-        date: '2026-09-14',
-        time: '10:00 - 15:30 WIB',
-        suratTugas: '002/STG/PTVYM/XII/2025',
-        status: 'in_progress'
-    }
-];
-
-const defaultCars = [
-    {
-        id: 'CAR-01',
-        noCar: 'CAR-01-09-2026',
-        unit: 'Gudang & Logistik Alkes',
-        kriteria: 'CDAKB Permenkes 4/2014 Poin 5.3',
-        klasifikasi: 'major',
-        dokumen: true,
-        wawancara: true,
-        observasi: true,
-        uraian: 'Alat ukur suhu gudang alkes (thermo-hygrometer) belum dilakukan kalibrasi ulang oleh lembaga terakreditasi.',
-        rencana: 'Melakukan pengajuan kalibrasi instrumen ke BPFK / Lembaga Kalibrasi Terakreditasi.',
-        pic: 'Rahmat Hidayat (Head of Warehouse)',
-        target: '2026-09-25',
-        status: 'OPEN'
-    },
-    {
-        id: 'CAR-02',
-        noCar: 'CAR-02-09-2026',
-        unit: 'Gudang & Logistik Alkes',
-        kriteria: 'SOP Pengisian Form Pemantauan Suhu',
-        klasifikasi: 'minor',
-        dokumen: true,
-        wawancara: false,
-        observasi: true,
-        uraian: 'Tidak ditemukan bukti pencatatan pemantauan suhu harian pada tanggal 3 & 4 September 2026.',
-        rencana: 'Menunjuk backup officer pengisi logbook suhu saat petugas utama dinas luar.',
-        pic: 'Staf Logistik',
-        target: '2026-09-12',
-        status: 'CLOSE'
-    }
-];
-
-const defaultBeritaAcara = [
-    {
-        id: 'BA-01',
-        noBa: 'BA-AUDIT-VYM-2026-001',
-        date: '2026-09-15',
-        lingkup: 'Audit Mutu Internal Gudang, Logistik & Pengadaan Alkes',
-        hasil: 'Sistem manajemen mutu berjalan baik. Ditemukan 1 CAR Major (Kalibrasi alat ukur) dan 1 CAR Minor (Pencatatan suhu).',
-        saran: 'Segera selesaikan pengajuan kalibrasi alat ukur alkes dan lakukan pembinaan konsistensi pengisian logbook harian.',
-        dibuat: 'Risma Nurhandayani (GA / Auditor)',
-        diketahui: 'Yolanda Pratiwi (Head of Admin)',
-        disetujui: 'Bob Ariyos (Direktur Utama)'
-    }
-];
+const defaultPlans = [];
+const defaultCars = [];
+const defaultBeritaAcara = [];
 
 let auditState = {
     employees: initialEmps,
     pbokList: initialPboks,
     findings: JSON.parse(localStorage.getItem('audit_findings') || '[]'),
-    plans: JSON.parse(localStorage.getItem('audit_plans') || JSON.stringify(defaultPlans)),
-    cars: JSON.parse(localStorage.getItem('audit_cars') || JSON.stringify(defaultCars)),
-    beritaAcara: JSON.parse(localStorage.getItem('audit_berita_acara') || JSON.stringify(defaultBeritaAcara)),
+    plans: JSON.parse(localStorage.getItem('audit_plans') || '[]'),
+    cars: JSON.parse(localStorage.getItem('audit_cars') || '[]'),
+    beritaAcara: JSON.parse(localStorage.getItem('audit_berita_acara') || '[]'),
     filteredEmployees: [],
     filteredPbok: [],
     pbokChart: null,
@@ -296,171 +159,115 @@ function fetchCentralAuditState() {
         .then(res => {
             if (res && res.status === 'success' && res.data) {
                 const data = res.data;
-                let hasNewUpdates = false;
 
-                if (data.edited_employees && typeof data.edited_employees === 'object') {
-                    editedEmployees = { ...editedEmployees, ...data.edited_employees };
-                    localStorage.setItem('edited_employees', JSON.stringify(editedEmployees));
-                    hasNewUpdates = true;
+                editedEmployees = (data.edited_employees && typeof data.edited_employees === 'object') ? data.edited_employees : {};
+                editedPboks = (data.edited_pboks && typeof data.edited_pboks === 'object') ? data.edited_pboks : {};
+                deletedEmpIds = Array.isArray(data.deleted_emp_ids) ? data.deleted_emp_ids : [];
+                deletedPbokIds = Array.isArray(data.deleted_pbok_ids) ? data.deleted_pbok_ids : [];
+
+                localStorage.setItem('edited_employees', JSON.stringify(editedEmployees));
+                localStorage.setItem('edited_pboks', JSON.stringify(editedPboks));
+                localStorage.setItem('deleted_emp_ids', JSON.stringify(deletedEmpIds));
+                localStorage.setItem('deleted_pbok_ids', JSON.stringify(deletedPbokIds));
+
+                auditState.findings = Array.isArray(data.findings) ? data.findings : [];
+                auditState.plans = Array.isArray(data.plans) ? data.plans : [];
+                auditState.cars = Array.isArray(data.cars) ? data.cars : [];
+                auditState.beritaAcara = Array.isArray(data.beritaAcara) ? data.beritaAcara : [];
+
+                localStorage.setItem('audit_findings', JSON.stringify(auditState.findings));
+                localStorage.setItem('audit_plans', JSON.stringify(auditState.plans));
+                localStorage.setItem('audit_cars', JSON.stringify(auditState.cars));
+                localStorage.setItem('audit_berita_acara', JSON.stringify(auditState.beritaAcara));
+
+                const serverEmps = Array.isArray(data.employees) ? data.employees : [];
+                const serverPboks = Array.isArray(data.pbokList) ? data.pbokList : [];
+
+                auditState.employees = serverEmps.map(applyEmployeeEdits).filter(e => !isEmployeeDeleted(e));
+                deduplicateEmployees();
+                auditState.pbokList = serverPboks.map(applyPbokEdits).filter(p => !isPbokDeleted(p) && !isEmployeeDeleted(p));
+
+                auditState.filteredEmployees = [...auditState.employees];
+                auditState.filteredPbok = [...auditState.pbokList];
+
+                localStorage.setItem('audit_employees', JSON.stringify(auditState.employees));
+                localStorage.setItem('audit_pbokList', JSON.stringify(auditState.pbokList));
+
+                renderOverview();
+                renderCharts();
+                renderTables();
+                updateDepartmentFilters();
+
+                const tenureModalEl = document.getElementById('employeeTenureModal');
+                if (activeTenureEmployee && tenureModalEl && tenureModalEl.classList.contains('active')) {
+                    openEmployeeTenureModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
                 }
 
-                if (data.edited_pboks && typeof data.edited_pboks === 'object') {
-                    editedPboks = { ...editedPboks, ...data.edited_pboks };
-                    localStorage.setItem('edited_pboks', JSON.stringify(editedPboks));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.deleted_emp_ids) && data.deleted_emp_ids.length > 0) {
-                    deletedEmpIds = [...new Set([...deletedEmpIds, ...data.deleted_emp_ids])];
-                    localStorage.setItem('deleted_emp_ids', JSON.stringify(deletedEmpIds));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.deleted_pbok_ids) && data.deleted_pbok_ids.length > 0) {
-                    deletedPbokIds = [...new Set([...deletedPbokIds, ...data.deleted_pbok_ids])];
-                    localStorage.setItem('deleted_pbok_ids', JSON.stringify(deletedPbokIds));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.findings) && data.findings.length > 0) {
-                    auditState.findings = data.findings;
-                    localStorage.setItem('audit_findings', JSON.stringify(auditState.findings));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.plans) && data.plans.length > 0) {
-                    auditState.plans = data.plans;
-                    localStorage.setItem('audit_plans', JSON.stringify(auditState.plans));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.cars) && data.cars.length > 0) {
-                    auditState.cars = data.cars;
-                    localStorage.setItem('audit_cars', JSON.stringify(auditState.cars));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.beritaAcara) && data.beritaAcara.length > 0) {
-                    auditState.beritaAcara = data.beritaAcara;
-                    localStorage.setItem('audit_berita_acara', JSON.stringify(auditState.beritaAcara));
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.employees) && data.employees.length > 0) {
-                    data.employees.forEach(emp => {
-                        const empId = String(emp.id || emp.pengguna_id || '').toLowerCase().trim();
-                        const empNik = String(emp.nik || '').toLowerCase().trim();
-                        const empName = String(emp.name || emp.nama || '').toLowerCase().trim();
-
-                        const idx = auditState.employees.findIndex(item => {
-                            const iId = String(item.id || item.pengguna_id || '').toLowerCase().trim();
-                            const iNik = String(item.nik || '').toLowerCase().trim();
-                            const iName = String(item.name || item.nama || '').toLowerCase().trim();
-                            return (empId && iId === empId) || (empNik && iNik === empNik) || (empName && iName === empName);
-                        });
-
-                        if (idx !== -1) {
-                            auditState.employees[idx] = applyEmployeeEdits({ ...auditState.employees[idx], ...emp });
-                        } else if (!isEmployeeDeleted(emp)) {
-                            auditState.employees.unshift(applyEmployeeEdits(emp));
-                        }
-                    });
-                    hasNewUpdates = true;
-                }
-
-                if (Array.isArray(data.pbokList) && data.pbokList.length > 0) {
-                    data.pbokList.forEach(p => {
-                        const pId = String(p.id || '').toLowerCase().trim();
-                        const pCode = String(p.code || p.kode || '').toLowerCase().trim();
-
-                        const idx = auditState.pbokList.findIndex(item => {
-                            const iId = String(item.id || '').toLowerCase().trim();
-                            const iCode = String(item.code || '').toLowerCase().trim();
-                            return (pId && iId === pId) || (pCode && iCode === pCode);
-                        });
-
-                        if (idx !== -1) {
-                            auditState.pbokList[idx] = applyPbokEdits({ ...auditState.pbokList[idx], ...p });
-                        } else if (!isPbokDeleted(p)) {
-                            auditState.pbokList.unshift(applyPbokEdits(p));
-                        }
-
-                        if (p.name || p.nik) {
-                            const empId = String(p.pengguna_id || '').toLowerCase().trim();
-                            const empNik = String(p.nik || '').toLowerCase().trim();
-                            const empName = String(p.name || '').toLowerCase().trim();
-
-                            const empExists = auditState.employees.some(item => {
-                                const iId = String(item.id || item.pengguna_id || '').toLowerCase().trim();
-                                const iNik = String(item.nik || '').toLowerCase().trim();
-                                const iName = String(item.name || item.nama || '').toLowerCase().trim();
-                                return (empId && iId === empId) || (empNik && iNik === empNik) || (empName && iName === empName);
-                            });
-
-                            if (!empExists && !isEmployeeDeleted({ id: empId, nik: empNik, name: empName })) {
-                                const empObj = applyEmployeeEdits({
-                                    id: p.pengguna_id || `EMP-${Date.now()}`,
-                                    pengguna_id: p.pengguna_id || '0',
-                                    nik: p.nik || 'EMP-NEW',
-                                    name: p.name || 'Karyawan',
-                                    dept: p.dept || 'Operations & Logistics',
-                                    role: 'Staff / Pemohon',
-                                    kpi: 90,
-                                    quality: 4.0,
-                                    sop: 92,
-                                    attendance: 95,
-                                    risk: 'Low',
-                                    status: 'Terverifikasi',
-                                    tenure: p.tenure || '2024 - 2026 (Masa Menjabat)'
-                                });
-                                auditState.employees.unshift(empObj);
-                            }
-                        }
-                    });
-                    hasNewUpdates = true;
-                }
-
-                if (hasNewUpdates) {
-                    auditState.employees = auditState.employees.map(applyEmployeeEdits).filter(e => !isEmployeeDeleted(e));
-                    deduplicateEmployees();
-                    auditState.pbokList = auditState.pbokList.filter(p => !isPbokDeleted(p) && !isEmployeeDeleted(p));
-                    auditState.filteredEmployees = [...auditState.employees];
-                    auditState.filteredPbok = [...auditState.pbokList];
-
-                    localStorage.setItem('audit_employees', JSON.stringify(auditState.employees));
-                    localStorage.setItem('audit_pbokList', JSON.stringify(auditState.pbokList));
-
-                    renderOverview();
-                    renderCharts();
-                    renderTables();
-                    updateDepartmentFilters();
-
-                    const tenureModalEl = document.getElementById('employeeTenureModal');
-                    if (activeTenureEmployee && tenureModalEl && tenureModalEl.classList.contains('active')) {
-                        openEmployeeTenureModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
+                const printModalEl = document.getElementById('printAuditModal');
+                if (printModalEl && printModalEl.classList.contains('active')) {
+                    if (activePrintEmployee) {
+                        openPrintAuditModal(activePrintEmployee.nik, activePrintEmployee.name, activePrintEmployee.id);
+                    } else if (activeTenureEmployee) {
+                        openPrintAuditModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
                     }
+                }
 
-                    const printModalEl = document.getElementById('printAuditModal');
-                    if (printModalEl && printModalEl.classList.contains('active')) {
-                        if (activePrintEmployee) {
-                            openPrintAuditModal(activePrintEmployee.nik, activePrintEmployee.name, activePrintEmployee.id);
-                        } else if (activeTenureEmployee) {
-                            openPrintAuditModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
-                        }
-                    }
-
-                    const printKinerjaModalEl = document.getElementById('printAuditKinerjaModal');
-                    if (printKinerjaModalEl && printKinerjaModalEl.classList.contains('active')) {
-                        if (activePrintKinerjaEmployee) {
-                            openPrintKinerjaModal(activePrintKinerjaEmployee.nik, activePrintKinerjaEmployee.name, activePrintKinerjaEmployee.id);
-                        } else if (activeTenureEmployee) {
-                            openPrintKinerjaModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
-                        }
+                const printKinerjaModalEl = document.getElementById('printAuditKinerjaModal');
+                if (printKinerjaModalEl && printKinerjaModalEl.classList.contains('active')) {
+                    if (activePrintKinerjaEmployee) {
+                        openPrintKinerjaModal(activePrintKinerjaEmployee.nik, activePrintKinerjaEmployee.name, activePrintKinerjaEmployee.id);
+                    } else if (activeTenureEmployee) {
+                        openPrintKinerjaModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
                     }
                 }
             }
         })
         .catch(() => {});
+}
+
+function purgeAuditStorage() {
+    if (!confirm('Apakah Anda yakin ingin MENGOSONGKAN SELURUH DATA AUDIT (Reset Total)?\nSemua data di server dan browser lokal akan dihapus/dikosongkan agar bisa diinput ulang dari awal.')) {
+        return;
+    }
+
+    fetch('api.php?action=purge_state')
+        .then(res => res.json())
+        .then(res => {
+            localStorage.removeItem('audit_employees');
+            localStorage.removeItem('audit_pbokList');
+            localStorage.removeItem('audit_findings');
+            localStorage.removeItem('audit_plans');
+            localStorage.removeItem('audit_cars');
+            localStorage.removeItem('audit_berita_acara');
+            localStorage.removeItem('edited_employees');
+            localStorage.removeItem('edited_pboks');
+            localStorage.removeItem('deleted_emp_ids');
+            localStorage.removeItem('deleted_pbok_ids');
+
+            editedEmployees = {};
+            editedPboks = {};
+            deletedEmpIds = [];
+            deletedPbokIds = [];
+
+            auditState.employees = [];
+            auditState.pbokList = [];
+            auditState.findings = [];
+            auditState.plans = [];
+            auditState.cars = [];
+            auditState.beritaAcara = [];
+            auditState.filteredEmployees = [];
+            auditState.filteredPbok = [];
+
+            renderOverview();
+            renderCharts();
+            renderTables();
+            updateDepartmentFilters();
+
+            alert('Seluruh data audit berhasil dikosongkan total di server & browser lokal. Anda kini dapat mulai menginput data baru secara bersih.');
+        })
+        .catch(err => {
+            alert('Gagal menghubungi server untuk mengosongkan data. Silakan coba lagi.');
+        });
 }
 
 /**
