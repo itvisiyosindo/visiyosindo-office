@@ -2361,7 +2361,7 @@ class Surat_part_two extends CI_Controller
       ajaxReturnDie('error', 'Data pengajuan cuti tidak ditemukan');
     }
 
-    $idPengaju = $cuti[0]->id_pengaju;
+    $idPengaju = !empty($cuti[0]->idPengaju) ? $cuti[0]->idPengaju : (!empty($cuti[0]->id_pengaju) ? $cuti[0]->id_pengaju : null);
     $currentStatus = $cuti[0]->status;
 
     if (sessPenggunaId() != $idPengaju && !isAdmin()) {
@@ -2405,12 +2405,12 @@ class Surat_part_two extends CI_Controller
       }
     }
 
-    $cuti = $this->md_surat_part_two->getSgmById($id);
+    $cuti = $this->md_surat_part_two->getAllById($id);
     if (empty($cuti)) {
       ajaxReturnDie('error', 'Data pengajuan cuti SGM tidak ditemukan');
     }
 
-    $idPengaju = $cuti[0]->idPengaju;
+    $idPengaju = !empty($cuti[0]->idPengaju) ? $cuti[0]->idPengaju : (!empty($cuti[0]->id_pengaju) ? $cuti[0]->id_pengaju : null);
     $currentStatus = $cuti[0]->status;
 
     if (sessPenggunaId() != $idPengaju && !isAdmin()) {
