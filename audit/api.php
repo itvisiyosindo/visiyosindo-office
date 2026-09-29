@@ -49,6 +49,7 @@ $dbConnected = false;
 $mysqli = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 if ($mysqli && !$mysqli->connect_error) {
     $dbConnected = true;
+    @$mysqli->set_charset('utf8mb4');
     @$mysqli->query("CREATE TABLE IF NOT EXISTS audit_state_json (
         id INT AUTO_INCREMENT PRIMARY KEY,
         state_key VARCHAR(50) UNIQUE,
@@ -83,11 +84,12 @@ if ($action === 'save_state') {
 
         $existingEdited = isset($existing['edited_employees']) && is_array($existing['edited_employees']) ? $existing['edited_employees'] : [];
         $inputEdited    = isset($inputData['edited_employees']) && is_array($inputData['edited_employees']) ? $inputData['edited_employees'] : [];
-        $mergedEdited   = array_merge($existingEdited, $inputEdited);
+        // Note: Use array_replace or manual key merge to PRESERVE numeric string keys (like '105')
+        $mergedEdited   = array_replace($existingEdited, $inputEdited);
 
         $existingEditedPboks = isset($existing['edited_pboks']) && is_array($existing['edited_pboks']) ? $existing['edited_pboks'] : [];
         $inputEditedPboks    = isset($inputData['edited_pboks']) && is_array($inputData['edited_pboks']) ? $inputData['edited_pboks'] : [];
-        $mergedEditedPboks   = array_merge($existingEditedPboks, $inputEditedPboks);
+        $mergedEditedPboks   = array_replace($existingEditedPboks, $inputEditedPboks);
 
         $existingDelEmp = isset($existing['deleted_emp_ids']) && is_array($existing['deleted_emp_ids']) ? $existing['deleted_emp_ids'] : [];
         $inputDelEmp    = isset($inputData['deleted_emp_ids']) && is_array($inputData['deleted_emp_ids']) ? $inputData['deleted_emp_ids'] : [];
@@ -104,6 +106,10 @@ if ($action === 'save_state') {
             'deleted_pbok_ids' => $mergedDelPbok,
             'pbokList'         => !empty($inputData['pbokList']) ? $inputData['pbokList'] : (isset($existing['pbokList']) ? $existing['pbokList'] : []),
             'employees'        => !empty($inputData['employees']) ? $inputData['employees'] : (isset($existing['employees']) ? $existing['employees'] : []),
+            'findings'         => isset($inputData['findings']) ? $inputData['findings'] : (isset($existing['findings']) ? $existing['findings'] : []),
+            'plans'            => isset($inputData['plans']) ? $inputData['plans'] : (isset($existing['plans']) ? $existing['plans'] : []),
+            'cars'             => isset($inputData['cars']) ? $inputData['cars'] : (isset($existing['cars']) ? $existing['cars'] : []),
+            'beritaAcara'      => isset($inputData['beritaAcara']) ? $inputData['beritaAcara'] : (isset($existing['beritaAcara']) ? $existing['beritaAcara'] : []),
             'last_updated'     => date('Y-m-d H:i:s'),
             'updated_by'       => isset($inputData['user']) ? $inputData['user'] : 'Office User'
         ];

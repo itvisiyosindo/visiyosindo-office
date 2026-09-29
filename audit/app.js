@@ -275,6 +275,10 @@ function syncCentralAuditState() {
             deleted_pbok_ids: deletedPbokIds,
             pbokList: auditState.pbokList,
             employees: auditState.employees,
+            findings: auditState.findings,
+            plans: auditState.plans,
+            cars: auditState.cars,
+            beritaAcara: auditState.beritaAcara,
             user: sessionUser?.name || 'Office User'
         };
 
@@ -294,13 +298,13 @@ function fetchCentralAuditState() {
                 const data = res.data;
                 let hasNewUpdates = false;
 
-                if (data.edited_employees && Object.keys(data.edited_employees).length > 0) {
+                if (data.edited_employees && typeof data.edited_employees === 'object') {
                     editedEmployees = { ...editedEmployees, ...data.edited_employees };
                     localStorage.setItem('edited_employees', JSON.stringify(editedEmployees));
                     hasNewUpdates = true;
                 }
 
-                if (data.edited_pboks && Object.keys(data.edited_pboks).length > 0) {
+                if (data.edited_pboks && typeof data.edited_pboks === 'object') {
                     editedPboks = { ...editedPboks, ...data.edited_pboks };
                     localStorage.setItem('edited_pboks', JSON.stringify(editedPboks));
                     hasNewUpdates = true;
@@ -315,6 +319,30 @@ function fetchCentralAuditState() {
                 if (Array.isArray(data.deleted_pbok_ids) && data.deleted_pbok_ids.length > 0) {
                     deletedPbokIds = [...new Set([...deletedPbokIds, ...data.deleted_pbok_ids])];
                     localStorage.setItem('deleted_pbok_ids', JSON.stringify(deletedPbokIds));
+                    hasNewUpdates = true;
+                }
+
+                if (Array.isArray(data.findings) && data.findings.length > 0) {
+                    auditState.findings = data.findings;
+                    localStorage.setItem('audit_findings', JSON.stringify(auditState.findings));
+                    hasNewUpdates = true;
+                }
+
+                if (Array.isArray(data.plans) && data.plans.length > 0) {
+                    auditState.plans = data.plans;
+                    localStorage.setItem('audit_plans', JSON.stringify(auditState.plans));
+                    hasNewUpdates = true;
+                }
+
+                if (Array.isArray(data.cars) && data.cars.length > 0) {
+                    auditState.cars = data.cars;
+                    localStorage.setItem('audit_cars', JSON.stringify(auditState.cars));
+                    hasNewUpdates = true;
+                }
+
+                if (Array.isArray(data.beritaAcara) && data.beritaAcara.length > 0) {
+                    auditState.beritaAcara = data.beritaAcara;
+                    localStorage.setItem('audit_berita_acara', JSON.stringify(auditState.beritaAcara));
                     hasNewUpdates = true;
                 }
 
