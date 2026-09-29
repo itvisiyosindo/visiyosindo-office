@@ -2232,6 +2232,9 @@ function sendWaConvia($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
+	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesan)) {
+		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo_";
+	}
 	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : (getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send');
 
 	// Format Payload resmi Convia
@@ -2366,6 +2369,9 @@ function sendWaConviaGroup($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
+	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesan)) {
+		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo_";
+	}
 	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : (getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send');
 
 	$payload = [
@@ -2445,6 +2451,9 @@ function sendWaFonnte($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
+	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesan)) {
+		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo_";
+	}
 	$apiUrl = defined('FONNTE_API_URL') ? FONNTE_API_URL : 'https://api.fonnte.com/send';
 
 	$payload = [
@@ -2505,6 +2514,16 @@ function sendWa($dataSend)
 			'https://office.visiyosindo.id/',
 			$dataSend['pesan']
 		);
+
+		// Pastikan footer resmi selalu ada di setiap pesan
+		$pesanDecoded = urldecode($dataSend['pesan']);
+		if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesanDecoded)) {
+			if (strpos($dataSend['pesan'], '%0A') !== false || strpos($dataSend['pesan'], '%0a') !== false) {
+				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo_';
+			} else {
+				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo_";
+			}
+		}
 	}
 
 	// 1. Coba kirim via Convia API lebih dulu
@@ -2534,7 +2553,11 @@ function sendWaWhacenter($dataSend)
 		return false;
 	}
 
-	$pesan = urlencode(urldecode($dataSend['pesan']));
+	$pesanText = urldecode($dataSend['pesan']);
+	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesanText)) {
+		$pesanText = rtrim($pesanText) . "\n_Sistem Office PT Visi Yosindo_";
+	}
+	$pesan = urlencode($pesanText);
 	$url = "https://app.whacenter.com/api/send?device_id=" . urlencode($dataSend['devId']) . "&number=" . urlencode($penerima) . "&message=" . $pesan;
 
 	if (function_exists('curl_init')) {
@@ -2583,6 +2606,16 @@ function sendWaGroup($dataSend)
 			'https://office.visiyosindo.id/',
 			$dataSend['pesan']
 		);
+
+		// Pastikan footer resmi selalu ada di setiap pesan group
+		$pesanDecoded = urldecode($dataSend['pesan']);
+		if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesanDecoded)) {
+			if (strpos($dataSend['pesan'], '%0A') !== false || strpos($dataSend['pesan'], '%0a') !== false) {
+				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo_';
+			} else {
+				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo_";
+			}
+		}
 	}
 
 	if (sendWaFonnteGroup($dataSend)) {
