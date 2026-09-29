@@ -100,6 +100,7 @@ if ($action === 'save_state') {
         $mergedDelPbok   = array_values(array_unique(array_merge($existingDelPbok, $inputDelPbok)));
 
         $mergedState = [
+            'timestamp'        => isset($inputData['timestamp']) ? $inputData['timestamp'] : (time() * 1000),
             'edited_employees' => isset($inputData['edited_employees']) ? $inputData['edited_employees'] : $existingEdited,
             'edited_pboks'     => isset($inputData['edited_pboks']) ? $inputData['edited_pboks'] : $existingEditedPboks,
             'deleted_emp_ids'  => isset($inputData['deleted_emp_ids']) ? $inputData['deleted_emp_ids'] : $existingDelEmp,
@@ -121,9 +122,10 @@ if ($action === 'save_state') {
 
         // Save to MySQL DB
         if ($dbConnected) {
-            $stmt = $mysqli->prepare("INSERT INTO audit_state_json (state_key, state_data) VALUES ('main_state', ?) ON DUPLICATE KEY UPDATE state_data = ?");
+            $mysqli->query("DELETE FROM audit_state_json WHERE state_key = 'main_state'");
+            $stmt = $mysqli->prepare("INSERT INTO audit_state_json (state_key, state_data) VALUES ('main_state', ?)");
             if ($stmt) {
-                $stmt->bind_param('ss', $jsonStr, $jsonStr);
+                $stmt->bind_param('s', $jsonStr);
                 $stmt->execute();
                 $stmt->close();
             }
@@ -138,6 +140,7 @@ if ($action === 'save_state') {
 
 if ($action === 'purge_state') {
     $emptyState = [
+        'timestamp'        => time() * 1000,
         'edited_employees' => (object)[],
         'edited_pboks'     => (object)[],
         'deleted_emp_ids'  => [],
@@ -155,9 +158,10 @@ if ($action === 'purge_state') {
     @file_put_contents($dataFile, $jsonStr, LOCK_EX);
 
     if ($dbConnected) {
-        $stmt = $mysqli->prepare("INSERT INTO audit_state_json (state_key, state_data) VALUES ('main_state', ?) ON DUPLICATE KEY UPDATE state_data = ?");
+        $mysqli->query("DELETE FROM audit_state_json WHERE state_key = 'main_state'");
+        $stmt = $mysqli->prepare("INSERT INTO audit_state_json (state_key, state_data) VALUES ('main_state', ?)");
         if ($stmt) {
-            $stmt->bind_param('ss', $jsonStr, $jsonStr);
+            $stmt->bind_param('s', $jsonStr);
             $stmt->execute();
             $stmt->close();
         }
@@ -169,7 +173,7 @@ if ($action === 'purge_state') {
 // Default: get_state
 $data = null;
 if ($dbConnected) {
-    $res = $mysqli->query("SELECT state_data FROM audit_state_json WHERE state_key = 'main_state'");
+    $res = $mysqli->query("SELECT state_data FROM audit_state_json WHERE state_key = 'main_state' ORDER BY id DESC LIMIT 1");
     if ($res && $row = $res->fetch_assoc()) {
         $data = json_decode($row['state_data'], true);
     }

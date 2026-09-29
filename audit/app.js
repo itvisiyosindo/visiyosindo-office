@@ -114,7 +114,11 @@ let auditState = {
     physicalChart: null
 };
 
+let lastLocalEditTime = 0;
+let sessionUser = { id: '58', name: 'GA & Asset Control', role: 'GA & Asset Control' };
+
 function saveStateToStorage() {
+    lastLocalEditTime = Date.now();
     localStorage.setItem('audit_employees', JSON.stringify(auditState.employees));
     localStorage.setItem('audit_pbokList', JSON.stringify(auditState.pbokList));
     localStorage.setItem('audit_findings', JSON.stringify(auditState.findings));
@@ -130,8 +134,10 @@ function saveStateToStorage() {
 }
 
 function syncCentralAuditState() {
+    lastLocalEditTime = Date.now();
     try {
         const payload = {
+            timestamp: lastLocalEditTime,
             edited_employees: editedEmployees,
             edited_pboks: editedPboks,
             deleted_emp_ids: deletedEmpIds,
@@ -149,16 +155,33 @@ function syncCentralAuditState() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        }).catch(err => {});
+        })
+        .then(res => res.json())
+        .then(res => {
+            console.log('✅ Central sync save response:', res);
+        })
+        .catch(err => {
+            console.error('❌ Central sync error:', err);
+        });
     } catch(e) {}
 }
 
 function fetchCentralAuditState() {
+    // Jangan timpa jika user baru saja menambah/mengedit data dalam 4 detik terakhir
+    if (Date.now() - lastLocalEditTime < 4000) {
+        return;
+    }
+
     fetch('api.php?action=get_state')
         .then(res => res.json())
         .then(res => {
             if (res && res.status === 'success' && res.data) {
                 const data = res.data;
+
+                // Jika data server lebih lama dari editan lokal terakhir kita, abaikan
+                if (data.timestamp && data.timestamp < lastLocalEditTime) {
+                    return;
+                }
 
                 editedEmployees = (data.edited_employees && typeof data.edited_employees === 'object') ? data.edited_employees : {};
                 editedPboks = (data.edited_pboks && typeof data.edited_pboks === 'object') ? data.edited_pboks : {};
@@ -440,7 +463,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
     fetchSessionUser();
     fetchCentralAuditState();
-    fetchFullAuditDataLive();
 
     // Auto-sync realtime terpusat antar akun office setiap 5 detik
     setInterval(fetchCentralAuditState, 5000);
