@@ -1236,6 +1236,12 @@ function waAllGroupVisilab($data)
 
 function waPoVisilabOpen($data)
 {
+	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	}
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1244,7 +1250,7 @@ function waPoVisilabOpen($data)
 		',%0A%0A' . $data['namaPengaju'] . ' *mengajukan* ' . $data['namaSurat'] .
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -1253,6 +1259,12 @@ function waPoVisilabOpen($data)
 
 function waPermintaanPoVisilabGroup($data)
 {
+	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	}
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1261,7 +1273,7 @@ function waPermintaanPoVisilabGroup($data)
 		',%0A%0A' . $data['namaPengaju'] . ' *mengajukan* ' . $data['namaSurat'] .
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
 	return true;
@@ -1270,9 +1282,15 @@ function waPermintaanPoVisilabGroup($data)
 
 function waPoVisilabAprovOnProg($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1288,7 +1306,7 @@ function waPoVisilabAprovOnProg($data)
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
 		$data['ttd_sebelum5'] .
-		'%0A%0ASegera ' . $data['proses'] . ' Permintaan PO Supplier Visilab di https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order' .
+		'%0A%0ASegera ' . $data['proses'] . ' Permintaan PO Supplier Visilab di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -1296,9 +1314,15 @@ function waPoVisilabAprovOnProg($data)
 
 function waPoVisilabAprovAll($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1314,7 +1338,7 @@ function waPoVisilabAprovAll($data)
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
 		$data['ttd_sebelum5'] .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return TRUE;
@@ -1322,9 +1346,15 @@ function waPoVisilabAprovAll($data)
 
 function waPoVisilabAprovAllGroup($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1335,7 +1365,7 @@ function waPoVisilabAprovAllGroup($data)
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
 		'%0A_PO Supplier Nomor    : ' . $data['noPo'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
 	return TRUE;
@@ -1343,9 +1373,15 @@ function waPoVisilabAprovAllGroup($data)
 
 function waPoVisilabAprovAllGroupAdm($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1356,7 +1392,7 @@ function waPoVisilabAprovAllGroupAdm($data)
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
 		'%0A_Status Penerimaan    : ' . $data['noPo'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
 	return TRUE;
@@ -1371,6 +1407,12 @@ function waPoVisilabAprovAllGroupAdm($data)
 
 function waPoOpen($data)
 {
+	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	}
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1379,7 +1421,7 @@ function waPoOpen($data)
 		',%0A%0A' . $data['namaPengaju'] . ' *mengajukan* ' . $data['namaSurat'] .
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier di https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -1387,6 +1429,12 @@ function waPoOpen($data)
 
 function waPermintaanPoGroup($data)
 {
+	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	}
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1395,7 +1443,7 @@ function waPermintaanPoGroup($data)
 		',%0A%0A' . $data['namaPengaju'] . ' *mengajukan* ' . $data['namaSurat'] .
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier di https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
 	return true;
@@ -1404,9 +1452,15 @@ function waPermintaanPoGroup($data)
 
 function waPoAprovOnProg($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1421,7 +1475,7 @@ function waPoAprovOnProg($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera ' . $data['proses'] . ' Permintaan PO Supplier di https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order' .
+		'%0A%0ASegera ' . $data['proses'] . ' Permintaan PO Supplier di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -1429,9 +1483,15 @@ function waPoAprovOnProg($data)
 
 function waPoAprovAll($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1446,7 +1506,7 @@ function waPoAprovAll($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier di https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return TRUE;
@@ -1455,9 +1515,15 @@ function waPoAprovAll($data)
 
 function waPoAprovAllGroup($data)
 {
-
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
+	}
+
+	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
@@ -1468,7 +1534,7 @@ function waPoAprovAllGroup($data)
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
 		'%0A_PO Supplier Nomor    : ' . $data['noPo'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier di https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
 	return TRUE;
@@ -1510,6 +1576,13 @@ function waPoAprovAllGroupAdm($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
+	if (isset($data['id']) && !empty($data['id'])) {
+		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
+	} else if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Penerimaan ' . $data['namaSurat'] . '*' .
@@ -1518,7 +1591,7 @@ function waPoAprovAllGroupAdm($data)
 		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
 		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
 		'%0A_Status Penerimaan    : ' . $data['noPo'] . '_' .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier di https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order' .
+		'%0A%0ASegera periksa detail Permintaan PO Supplier di ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
 	return TRUE;
@@ -1788,6 +1861,13 @@ function waSuratAprovAllToFinance($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = "https://office.visiyosindo.id";
+	if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
+		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
@@ -1800,7 +1880,7 @@ function waSuratAprovAllToFinance($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada https://office.visiyosindo.id dan lakukan transfer(jika diperlukan)' .
+		'%0A%0ASegera periksa detail surat pada ' . $linkUrl . ' dan lakukan transfer(jika diperlukan)' .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -1840,6 +1920,14 @@ function waSuratAprovAllToDirector($data)
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
+
+	$linkUrl = "https://office.visiyosindo.id";
+	if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
+		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
@@ -1852,7 +1940,7 @@ function waSuratAprovAllToDirector($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada %0A%0A https://office.visiyosindo.id' .
+		'%0A%0ASegera periksa detail surat pada ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;

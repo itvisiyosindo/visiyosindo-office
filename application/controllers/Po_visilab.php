@@ -157,6 +157,7 @@ class Po_visilab extends CI_Controller
 
               //send notif wa po
               $dataWa = [
+                'id'            => $lastGcId,
                 'idPenerima1' 	=> 751,
                 //'idPenerima1' 	=> 737,
                 'idPenerima2' 	=> '',
@@ -171,6 +172,7 @@ class Po_visilab extends CI_Controller
 
               //send notif Group wa Gudang
               $dataWa = [
+                'id'            => $lastGcId,
                 'idPenerima1' 	=> 'VISILAB',
                 //'idPenerima1' 	=> 'Test Api Wa Group',
                 'idPenerima2' 	=> '',
@@ -716,6 +718,7 @@ public function notifWaAddSurat($ulang, $detail){
       //
         $nope           = $dataPenerima[0]->no_hp;
         $dataWa = [
+            'id'            => isset($detail['id']) ? $detail['id'] : '',
             'namaSurat' 	=> $detail['namaSurat'],
             'noPenerima' 	=> $nope,
             'kodePO' 	    => $detail['kode'],
@@ -748,6 +751,7 @@ public function notifWaPoGroup($ulang, $detail){
       ini_set('display_errors', 0);
       //
         $dataWa = [
+          'id'            => isset($detail['id']) ? $detail['id'] : '',
           'namaSurat'   	=> $detail['namaSurat'],
           'noPenerima'  	=> $idpenerima,
           'namaPengaju' 	=> $namaPengaju,
@@ -788,6 +792,7 @@ public function notifWaPoGroup($ulang, $detail){
           $nope           = $dataPenerima[0]->no_hp;
           $nmPengaju      = $dataPenerima[0]->nama;
           $dataWa = [
+              'id'            => $detail['id'],
               'namaSurat' 	  => $detail['namaSurat'],
               'noPenerima'  	=> $nope,
               'kodePO' 	      => $kode,
@@ -839,6 +844,7 @@ public function notifWaPoGroup($ulang, $detail){
           $nope           = $dataPenerima[0]->no_hp;
           $nmPengaju      = $dataPenerima[0]->nama;
           $dataWa = [
+              'id'            => $detail['id'],
               'namaSurat' 	  => $detail['namaSurat'],
               'noPenerima'  	=> $idpenerima,
               'kodePO' 	      => $kode,
@@ -882,13 +888,15 @@ public function notifWaPoGroup($ulang, $detail){
                   
       //send notif wa
       $dataWa = [
+          'id'          => $detail['id'],
           'namaSurat' 	=> $detail['namaSurat'],
           'noPenerima' 	=> $nope,
           'kodeSurat' 	=> $kode,
           'namaPengaju' 	=> $namaPengaju,
-          'perihal' 		=> $perihal,
+          'perihal' 		=> 'Supplier: ' . $suplier,
           'namaPenolak' 	=> $detail['namaPenolak'],
-          'noPenolak' 	=> $nopePenolak
+          'noPenolak' 	=> $nopePenolak,
+          'link'        => 'po_visilab/show/detail/purchase_order/' . $detail['id']
       ];
       waSuratReject($dataWa);
     }
