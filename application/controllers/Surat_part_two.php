@@ -373,7 +373,7 @@ class Surat_part_two extends CI_Controller
           'jamMulai'     => $data['jam_mulai'],
           'jamSelesai'   => $data['jam_akhir'],
           'keperluan'    => $data['alasan'],
-          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/list/sijk'
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/list/sijk'
         ]);
       }
 
@@ -431,7 +431,7 @@ class Surat_part_two extends CI_Controller
           'tglAkhir'     => $data['tgl_akhir'],
           'totalHari'    => $data['total'],
           'alasan'       => $data['alasan'],
-          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/list/simp'
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/list/simp'
         ]);
       }
 
@@ -489,7 +489,7 @@ class Surat_part_two extends CI_Controller
           'tglAkhir'     => $data['tgl_akhir'],
           'totalHari'    => $data['total'],
           'alasan'       => $data['alasan'],
-          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/list/cuti'
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/show/list/cuti'
         ]);
       }
 
