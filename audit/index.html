@@ -19,6 +19,14 @@
     <!-- SheetJS (XLSX) CDN -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+    <!-- PDF.js CDN for PDF Import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+
     <link rel="stylesheet" href="styles.css?v=4.0">
 </head>
 <body>
@@ -123,6 +131,10 @@
                 </div>
 
                 <div class="header-actions">
+                    <button class="btn" id="btnImportPdf" style="background: #e11d48; color: #ffffff; border: none; font-weight: 700;" title="Ekstrak & Impor Data Pengajuan Belanja dari Dokumen PDF Lampiran">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Import PDF Lampiran</span>
+                    </button>
                     <button class="btn btn-secondary" id="btnImportExcel">
                         <i class="fa-solid fa-file-import"></i>
                         <span>Import Excel</span>
@@ -1401,10 +1413,88 @@
         </div>
     </div>
 
-    <!-- HIDDEN EXCEL INPUT -->
-    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+    <!-- MODAL: PREVIEW & IMPORT PDF LAMPIRAN AUDIT -->
+    <div class="modal-overlay" id="pdfImportModal">
+        <div class="modal-card glass-card" style="max-width: 1100px; width: 95%;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="color: #0f172a; font-size: 20px; font-weight: 800;">
+                        <i class="fa-solid fa-file-pdf text-rose"></i> Pratinjau Ekstraksi Dokumen PDF Audit
+                    </h3>
+                    <p class="subtitle" id="pdfImportSubtitle">Ditemukan 0 transaksi yang berhasil dikenali dari file PDF.</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('pdfImportModal')">&times;</button>
+            </div>
 
-    <script src="excel-generator.js?v=33.0"></script>
-    <script src="app.js?v=33.0"></script>
+            <!-- Auto-detected Employee Info Bar -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 10px;">
+                    <i class="fa-solid fa-user-tag text-blue"></i> Profil Pemohon / Pemilik Dokumen (Auto-Detect):
+                </h4>
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 11px; font-weight: 600;">Nama Karyawan *</label>
+                        <input type="text" id="pdfDetectedName" placeholder="Nama Karyawan..." style="padding: 6px 10px; font-size: 12px;" required>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 11px; font-weight: 600;">NIK / NPP *</label>
+                        <input type="text" id="pdfDetectedNik" placeholder="NIK / ID..." style="padding: 6px 10px; font-size: 12px;" required>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 11px; font-weight: 600;">Divisi / Departemen *</label>
+                        <input type="text" id="pdfDetectedDept" placeholder="Divisi..." style="padding: 6px 10px; font-size: 12px;" required>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 11px; font-weight: 600;">Masa Menjabat *</label>
+                        <input type="text" id="pdfDetectedTenure" placeholder="2024 - 2026 (Masa Menjabat)" style="padding: 6px 10px; font-size: 12px;" required>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="font-size: 13px; font-weight: 700; color: #0f172a;">
+                    <i class="fa-solid fa-list-check text-emerald"></i> Daftar Transaksi Pengajuan Hasil Ekstraksi:
+                </h4>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addEmptyPdfRow()">
+                    <i class="fa-solid fa-plus"></i> Tambah Baris Manual
+                </button>
+            </div>
+
+            <!-- Table of Extracted Transactions -->
+            <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                <table class="data-table" id="pdfPreviewTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; text-align: center;">No</th>
+                            <th style="min-width: 170px;">Kode Pengajuan</th>
+                            <th style="min-width: 100px;">Tanggal</th>
+                            <th style="min-width: 240px;">Item / Deskripsi Belanja & Vendor</th>
+                            <th style="min-width: 130px;">Nominal (Rp)</th>
+                            <th style="min-width: 140px;">Status Fisik</th>
+                            <th style="min-width: 140px;">Link Dokumen (Drive)</th>
+                            <th style="width: 50px; text-align: center;">Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdfPreviewTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('pdfImportModal')">Batal</button>
+                <button type="button" class="btn btn-emerald" onclick="confirmSavePdfImport()" style="font-weight: 700; font-size: 13px; padding: 9px 18px;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Seluruh Data ke Database Audit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HIDDEN EXCEL & PDF INPUTS -->
+    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+    <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;">
+
+    <script src="excel-generator.js?v=34.0"></script>
+    <script src="app.js?v=34.0"></script>
 </body>
 </html>

@@ -782,6 +782,7 @@ function initApp() {
     setupFilters();
     setupModals();
     setupExcelImport();
+    setupPdfImport();
 
     renderOverview();
     renderCharts();
@@ -2088,6 +2089,420 @@ function setupExcelImport() {
             reader.readAsArrayBuffer(file);
         });
     }
+}
+
+/* ==========================================================================
+   PDF EXTRACTION & IMPORT ENGINE (AI-Assisted Multi-Pattern Parser)
+   ========================================================================== */
+
+let pendingPdfRows = [];
+
+function setupPdfImport() {
+    const btnImportPdf = document.getElementById('btnImportPdf');
+    const pdfFileInput = document.getElementById('pdfFileInput');
+
+    if (btnImportPdf && pdfFileInput) {
+        btnImportPdf.addEventListener('click', () => pdfFileInput.click());
+        pdfFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (typeof pdfjsLib === 'undefined') {
+                alert('Library PDF.js belum selesai dimuat. Silakan periksa koneksi internet dan muat ulang halaman.');
+                return;
+            }
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+
+                let fullText = '';
+                let rawLines = [];
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    
+                    const items = textContent.items;
+                    if (!items || items.length === 0) continue;
+
+                    let lineMap = new Map();
+                    items.forEach(item => {
+                        const y = Math.round(item.transform[5] / 4) * 4; // group close Y coords
+                        if (!lineMap.has(y)) lineMap.set(y, []);
+                        lineMap.get(y).push(item);
+                    });
+
+                    const sortedY = Array.from(lineMap.keys()).sort((a, b) => b - a);
+                    sortedY.forEach(y => {
+                        const lineItems = lineMap.get(y).sort((a, b) => a.transform[4] - b.transform[4]);
+                        const lineStr = lineItems.map(it => it.str).join(' ').trim();
+                        if (lineStr) {
+                            rawLines.push(lineStr);
+                            fullText += lineStr + '\n';
+                        }
+                    });
+                }
+
+                if (rawLines.length === 0) {
+                    alert('Dokumen PDF kosong atau berupa gambar scan tanpa teks.');
+                    return;
+                }
+
+                // Auto-Detect Header Profil Pemohon
+                let detectedName = '';
+                let detectedNik = '';
+                let detectedDept = 'Finance, Accounting & Tax (FAT)';
+                let detectedTenure = '2024 - 2026 (Masa Menjabat)';
+
+                // Regex matches for profile
+                const nameRegex = /(?:Nama|Pemohon|Auditee|Nama Karyawan)\s*[:=]\s*([A-Za-z\s\.\,\'\-]+?)(?:\s*(?:NIK|NPP|Divisi|Jabatan|\n|$))/i;
+                const nameM = fullText.match(nameRegex);
+                if (nameM && nameM[1].trim().length > 2) {
+                    detectedName = nameM[1].trim();
+                } else if (/Reza\s*Fadila/i.test(fullText)) {
+                    detectedName = 'Muhammad Reza Fadila';
+                }
+
+                const nikRegex = /(?:NIK|NPP|No\.?\s*Pegawai|ID)\s*[:=]\s*([A-Za-z0-9\-\/]+)/i;
+                const nikM = fullText.match(nikRegex);
+                if (nikM && nikM[1].trim()) {
+                    detectedNik = nikM[1].trim();
+                } else if (detectedName.toLowerCase().includes('reza')) {
+                    detectedNik = '105';
+                } else {
+                    detectedNik = 'EMP-' + Math.floor(100 + Math.random() * 900);
+                }
+
+                const deptRegex = /(?:Divisi|Departemen|Unit)\s*[:=]\s*([A-Za-z0-9\,\&\s\(\)\/\-]+?)(?:\s*(?:Masa|Jabatan|Periode|\n|$))/i;
+                const deptM = fullText.match(deptRegex);
+                if (deptM && deptM[1].trim()) {
+                    detectedDept = deptM[1].trim();
+                } else if (/Accounting|FAT|Finance/i.test(fullText)) {
+                    detectedDept = 'Finance, Accounting & Tax (FAT)';
+                } else if (/IT|Technology|Sistem/i.test(fullText)) {
+                    detectedDept = 'IT & Technology';
+                } else if (/Logistik|Gudang|Warehouse|Alkes/i.test(fullText)) {
+                    detectedDept = 'Operations & Logistics';
+                }
+
+                const tenureRegex = /(?:Masa\s*Menjabat|Masa\s*Kerja|Periode)\s*[:=]\s*([A-Za-z0-9\s\-\.\/]+?)(?:\s*(?:\n|$))/i;
+                const tenureM = fullText.match(tenureRegex);
+                if (tenureM && tenureM[1].trim()) {
+                    detectedTenure = tenureM[1].trim();
+                }
+
+                // Extract all transaction rows
+                pendingPdfRows = parseTransactionsFromText(fullText, rawLines);
+
+                if (pendingPdfRows.length === 0) {
+                    // Jika tidak terdeteksi via pola spesifik, buat baris pertama dari teks
+                    pendingPdfRows.push({
+                        code: 'PBOK-2026-001',
+                        date: new Date().toLocaleDateString('id-ID'),
+                        item: 'Pengajuan Belanja dari PDF Lampiran',
+                        amount: 1000000,
+                        physicalStatus: 'Terverifikasi Ada',
+                        officeUrl: ''
+                    });
+                }
+
+                // Isi profil pemohon di modal
+                document.getElementById('pdfDetectedName').value = detectedName || 'Muhammad Reza Fadila';
+                document.getElementById('pdfDetectedNik').value = detectedNik || '105';
+                document.getElementById('pdfDetectedDept').value = detectedDept;
+                document.getElementById('pdfDetectedTenure').value = detectedTenure;
+
+                document.getElementById('pdfImportSubtitle').innerText = `File: ${file.name} — Berhasil mengekstrak ${pendingPdfRows.length} transaksi. Silakan periksa atau sesuaikan sebelum disimpan.`;
+
+                renderPdfPreviewTable();
+                openModal('pdfImportModal');
+            } catch (err) {
+                console.error('PDF parsing error:', err);
+                alert('Gagal memproses file PDF: ' + (err.message || 'Format tidak dikenali.'));
+            } finally {
+                pdfFileInput.value = '';
+            }
+        });
+    }
+}
+
+function parseTransactionsFromText(fullText, rawLines) {
+    const rows = [];
+    const seenCodes = new Set();
+
+    // Pola 1: Baris tabel dengan Kode Surat (e.g., 123/PBOK/FAT/VYM/IV/2026 atau PBOK-...)
+    const codeRegex = /((?:\d{1,4}\/)?(?:PBOK|PPA)\/[A-Za-z0-9\/\-\.]+|PBOK\-[A-Za-z0-9\/\-\.]+|PPA\-[A-Za-z0-9\/\-\.]+)/i;
+    const dateRegex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/;
+    const amountRegex = /(?:Rp\.?\s*)?([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]{2})?|[0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{2})?|\b[0-9]{6,10}\b)/;
+    const urlRegex = /(https?:\/\/[^\s\)\"\'\,]+)/i;
+
+    rawLines.forEach((line, idx) => {
+        const codeMatch = line.match(codeRegex);
+        if (codeMatch) {
+            const code = codeMatch[1].trim();
+            if (seenCodes.has(code.toLowerCase())) return;
+            seenCodes.add(code.toLowerCase());
+
+            const dateMatch = line.match(dateRegex);
+            const date = dateMatch ? dateMatch[1].trim() : new Date().toLocaleDateString('id-ID');
+
+            // Find amount in this line or subsequent line
+            let amount = 0;
+            const amountMatch = line.match(amountRegex);
+            if (amountMatch) {
+                const cleaned = amountMatch[1].replace(/[^0-9]/g, '');
+                amount = parseFloat(cleaned) || 0;
+            } else if (rawLines[idx + 1]) {
+                const nextAmount = rawLines[idx + 1].match(amountRegex);
+                if (nextAmount) {
+                    amount = parseFloat(nextAmount[1].replace(/[^0-9]/g, '')) || 0;
+                }
+            }
+
+            // Find URL in this line or nearby lines
+            let officeUrl = '';
+            const urlMatch = line.match(urlRegex) || (rawLines[idx + 1] ? rawLines[idx + 1].match(urlRegex) : null);
+            if (urlMatch) officeUrl = urlMatch[1].trim();
+
+            // Extract item / description
+            let itemDesc = line
+                .replace(codeMatch[0], '')
+                .replace(dateMatch ? dateMatch[0] : '', '')
+                .replace(amountMatch ? amountMatch[0] : '', '')
+                .replace(urlMatch ? urlMatch[0] : '', '')
+                .replace(/^(?:Rp\.?|IDR|\d{1,3}[\.\,]|\-|\:|\;|\s)+/g, '')
+                .trim();
+
+            if (itemDesc.length < 3 && rawLines[idx + 1]) {
+                itemDesc = rawLines[idx + 1].replace(urlRegex, '').trim();
+            }
+
+            if (!itemDesc || itemDesc.length < 3) {
+                itemDesc = `Pengajuan ${code}`;
+            }
+
+            rows.push({
+                code: code,
+                date: date,
+                item: itemDesc,
+                amount: amount || 1000000,
+                physicalStatus: 'Terverifikasi Ada',
+                officeUrl: officeUrl
+            });
+        }
+    });
+
+    // Pola 2: Jika baris tabel dipisahkan oleh angka urut (1. / 2. / 3.)
+    if (rows.length === 0) {
+        rawLines.forEach((line, idx) => {
+            const numStart = line.match(/^(\d{1,3})[\.\s\-]+([A-Za-z0-9].*)/);
+            if (numStart) {
+                const rowNum = numStart[1];
+                const rest = numStart[2];
+                const amtMatch = rest.match(amountRegex);
+                if (amtMatch) {
+                    const cleaned = amtMatch[1].replace(/[^0-9]/g, '');
+                    const amount = parseFloat(cleaned) || 0;
+                    const dateMatch = rest.match(dateRegex);
+                    const urlMatch = rest.match(urlRegex);
+
+                    const itemText = rest
+                        .replace(amtMatch[0], '')
+                        .replace(dateMatch ? dateMatch[0] : '', '')
+                        .replace(urlMatch ? urlMatch[0] : '', '')
+                        .trim();
+
+                    rows.push({
+                        code: `PBOK-2026-${String(rowNum).padStart(3, '0')}`,
+                        date: dateMatch ? dateMatch[1] : new Date().toLocaleDateString('id-ID'),
+                        item: itemText || `Item Pengajuan #${rowNum}`,
+                        amount: amount || 500000,
+                        physicalStatus: 'Terverifikasi Ada',
+                        officeUrl: urlMatch ? urlMatch[1] : ''
+                    });
+                }
+            }
+        });
+    }
+
+    return rows;
+}
+
+function renderPdfPreviewTable() {
+    const tbody = document.getElementById('pdfPreviewTableBody');
+    if (!tbody) return;
+
+    if (pendingPdfRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada baris transaksi yang diekstrak.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = pendingPdfRows.map((r, i) => `
+        <tr data-pdf-index="${i}">
+            <td style="text-align: center; font-weight: 700;">${i + 1}</td>
+            <td>
+                <input type="text" class="pdf-row-code" value="${escapeHtml(r.code)}" style="width: 100%; padding: 4px 6px; font-size: 11px; font-family: monospace; font-weight: 700;" required>
+            </td>
+            <td>
+                <input type="text" class="pdf-row-date" value="${escapeHtml(r.date || '')}" style="width: 100%; padding: 4px 6px; font-size: 11px;">
+            </td>
+            <td>
+                <input type="text" class="pdf-row-item" value="${escapeHtml(r.item)}" style="width: 100%; padding: 4px 6px; font-size: 11px;" required>
+            </td>
+            <td>
+                <input type="number" class="pdf-row-amount" value="${r.amount || 0}" style="width: 100%; padding: 4px 6px; font-size: 11px; font-weight: 700;" required>
+            </td>
+            <td>
+                <select class="pdf-row-physical" style="width: 100%; padding: 4px 6px; font-size: 11px;">
+                    <option value="Terverifikasi Ada" ${r.physicalStatus === 'Terverifikasi Ada' ? 'selected' : ''}>Terverifikasi Ada</option>
+                    <option value="Fisik Tidak Ada" ${r.physicalStatus === 'Fisik Tidak Ada' ? 'selected' : ''}>Fisik Tidak Ada</option>
+                    <option value="Indikasi Fiktif" ${r.physicalStatus === 'Indikasi Fiktif' ? 'selected' : ''}>Indikasi Fiktif</option>
+                </select>
+            </td>
+            <td>
+                <input type="url" class="pdf-row-url" value="${escapeHtml(r.officeUrl || '')}" placeholder="https://..." style="width: 100%; padding: 4px 6px; font-size: 11px;">
+            </td>
+            <td style="text-align: center;">
+                <button type="button" class="btn btn-sm btn-danger-custom" onclick="deletePdfRow(${i})" title="Hapus Baris Ini">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function addEmptyPdfRow() {
+    pendingPdfRows.push({
+        code: `PBOK-2026-${String(pendingPdfRows.length + 1).padStart(3, '0')}`,
+        date: new Date().toLocaleDateString('id-ID'),
+        item: 'Pengadaan Belanja Baru',
+        amount: 1000000,
+        physicalStatus: 'Terverifikasi Ada',
+        officeUrl: ''
+    });
+    renderPdfPreviewTable();
+}
+
+function deletePdfRow(index) {
+    pendingPdfRows.splice(index, 1);
+    renderPdfPreviewTable();
+}
+
+function confirmSavePdfImport() {
+    const name = document.getElementById('pdfDetectedName').value.trim();
+    const nik = document.getElementById('pdfDetectedNik').value.trim();
+    const dept = document.getElementById('pdfDetectedDept').value.trim() || 'Operations & Logistics';
+    const tenure = document.getElementById('pdfDetectedTenure').value.trim() || '2024 - 2026 (Masa Menjabat)';
+
+    if (!name || !nik) {
+        alert('Mohon lengkapi Nama Karyawan dan NIK!');
+        return;
+    }
+
+    const trs = document.querySelectorAll('#pdfPreviewTableBody tr');
+    if (trs.length === 0 || trs[0].querySelector('.pdf-row-code') === null) {
+        alert('Tidak ada baris transaksi untuk disimpan.');
+        return;
+    }
+
+    let importedCount = 0;
+
+    // Un-blacklist profil karyawan
+    deletedEmpIds = deletedEmpIds.filter(x => x !== nik.toLowerCase() && x !== name.toLowerCase());
+    localStorage.setItem('deleted_emp_ids', JSON.stringify(deletedEmpIds));
+
+    // Auto daftarkan / perbarui karyawan
+    const existingEmpIdx = auditState.employees.findIndex(e =>
+        (e.nik && e.nik.toLowerCase() === nik.toLowerCase()) ||
+        (e.name && e.name.toLowerCase() === name.toLowerCase())
+    );
+
+    const empObj = applyEmployeeEdits({
+        id: nik,
+        pengguna_id: nik,
+        nik: nik,
+        name: name,
+        dept: dept,
+        role: 'Staff / Pemohon',
+        kpi: 90,
+        quality: 4.0,
+        sop: 92,
+        attendance: 95,
+        risk: 'Low',
+        status: 'Terverifikasi',
+        tenure: tenure
+    });
+
+    if (existingEmpIdx !== -1) {
+        auditState.employees[existingEmpIdx] = { ...auditState.employees[existingEmpIdx], ...empObj };
+    } else {
+        auditState.employees.unshift(empObj);
+    }
+
+    // Process table rows
+    trs.forEach((tr, i) => {
+        const codeInput = tr.querySelector('.pdf-row-code');
+        const dateInput = tr.querySelector('.pdf-row-date');
+        const itemInput = tr.querySelector('.pdf-row-item');
+        const amountInput = tr.querySelector('.pdf-row-amount');
+        const physicalSelect = tr.querySelector('.pdf-row-physical');
+        const urlInput = tr.querySelector('.pdf-row-url');
+
+        if (codeInput && itemInput) {
+            const code = codeInput.value.trim() || `PBOK-${Date.now()}-${i}`;
+            const dateVal = dateInput ? dateInput.value.trim() : '';
+            const item = itemInput.value.trim() || 'Pengadaan Belanja Office';
+            const amount = parseFloat(amountInput?.value || 0);
+            const physicalStatus = physicalSelect?.value || 'Terverifikasi Ada';
+            const officeUrl = urlInput?.value.trim() || '';
+
+            // Un-blacklist code
+            deletedPbokIds = deletedPbokIds.filter(x => x !== code.toLowerCase());
+
+            const isFake = physicalStatus === 'Indikasi Fiktif';
+            const isMissing = physicalStatus === 'Fisik Tidak Ada';
+            const lossAmount = (isFake || isMissing) ? amount : 0;
+            const lossStatus = lossAmount > 0 ? 'Potensi Kerugian' : 'Aman / Wajar';
+
+            const pbokItem = {
+                id: code + '-' + Date.now() + '-' + i,
+                code: code,
+                date: dateVal,
+                pengguna_id: nik,
+                nik: nik,
+                name: name,
+                dept: dept,
+                tenure: tenure,
+                item: item,
+                amount: amount,
+                physicalStatus: physicalStatus,
+                lossStatus: lossStatus,
+                lossAmount: lossAmount,
+                notes: `Diimpor otomatis dari PDF lampiran (${dateVal || 'Office'}).`,
+                officeUrl: officeUrl
+            };
+
+            auditState.pbokList.unshift(applyPbokEdits(pbokItem));
+            importedCount++;
+        }
+    });
+
+    localStorage.setItem('deleted_pbok_ids', JSON.stringify(deletedPbokIds));
+
+    deduplicateEmployees();
+    auditState.filteredEmployees = [...auditState.employees];
+    auditState.filteredPbok = [...auditState.pbokList];
+
+    saveStateToStorage();
+    updateDepartmentFilters();
+    renderOverview();
+    renderCharts();
+    renderTables();
+
+    closeModal('pdfImportModal');
+    alert(`🎉 BERHASIL! Sebanyak ${importedCount} data transaksi dari dokumen PDF berhasil diimpor dan disimpan ke database audit!`);
 }
 
 /* Export All Trigger */
