@@ -90,7 +90,7 @@ class Surat_part_two extends CI_Controller
         $page_data['page_title']    = 'Surat Cuti';
         $page_data['page_desc']     = 'Detail Surat Cuti Tahunan';
         $this->load->view('index', $page_data);
-      } else if ($param2 == 'ba') {
+      } else if ($param2 == 'ba' || $param2 == 'berita_acara') {
         $page_data['switch']        = $this->id_navbar();
         $page_data['data_ba']      = $this->md_surat_part_two->getBeritaAcaraById($param3);
         $page_data['page_name']     = 'surat/v_detail_berita_acara';
@@ -360,17 +360,22 @@ class Surat_part_two extends CI_Controller
 
 
 
-      //send notif wa TEST
-      $dataWa = [
-        'idPenerima1'   => 58,
-        'idPenerima2'   => '',
-        'namaSurat'     => 'Surat Izin Pada Jam Kerja',
-        'penerima'       => '_General Affair_',
-        'perihal'       => $data['alasan'],
-        'kode'           => $kodeFpp
-      ];
-
-      $this->notifWaAddSurat(2, $dataWa);
+      // Notifikasi WA ke GA (id=58) saat SIJK diajukan
+      $approverSijk = $this->md_pengguna->getById(58);
+      $noPengajuSijk = $this->md_pengguna->getById(sessPenggunaId());
+      if (!empty($approverSijk[0]->no_hp)) {
+        waIzinJamKerjaPengajuan([
+          'noPenerima'   => $approverSijk[0]->no_hp,
+          'namaApprover' => $approverSijk[0]->nama,
+          'namaPengaju'  => $noPengajuSijk[0]->nama,
+          'kodeSurat'    => $kodeFpp,
+          'tglIzin'      => $data['tanggal'],
+          'jamMulai'     => $data['jam_mulai'],
+          'jamSelesai'   => $data['jam_akhir'],
+          'keperluan'    => $data['alasan'],
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/list/sijk'
+        ]);
+      }
 
 
       /** LOG */
@@ -413,17 +418,22 @@ class Surat_part_two extends CI_Controller
 
 
 
-      //send notif wa TEST
-      $dataWa = [
-        'idPenerima1'   => 58,
-        'idPenerima2'   => '',
-        'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
-        'penerima'       => '_General Affair_',
-        'perihal'       => $data['alasan'],
-        'kode'           => $kodeFpp
-      ];
-
-      $this->notifWaAddSurat(2, $dataWa);
+      // Notifikasi WA ke GA (id=58) saat SIMP diajukan
+      $approverSimp = $this->md_pengguna->getById(58);
+      $noPengajuSimp = $this->md_pengguna->getById(sessPenggunaId());
+      if (!empty($approverSimp[0]->no_hp)) {
+        waIzinMeninggalkanPengajuan([
+          'noPenerima'   => $approverSimp[0]->no_hp,
+          'namaApprover' => $approverSimp[0]->nama,
+          'namaPengaju'  => $noPengajuSimp[0]->nama,
+          'kodeSurat'    => $kodeFpp,
+          'tglMulai'     => $data['tgl_awal'],
+          'tglAkhir'     => $data['tgl_akhir'],
+          'totalHari'    => $data['total'],
+          'alasan'       => $data['alasan'],
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/list/simp'
+        ]);
+      }
 
 
       /** LOG */
@@ -466,17 +476,22 @@ class Surat_part_two extends CI_Controller
 
 
 
-      //send notif wa TEST
-      $dataWa = [
-        'idPenerima1'   => 58,
-        'idPenerima2'   => '',
-        'namaSurat'     => 'Cuti Tahunan',
-        'penerima'       => '_General Affair_',
-        'perihal'       => $data['alasan'],
-        'kode'           => $kodeFpp
-      ];
-
-      $this->notifWaAddSurat(2, $dataWa);
+      // Notifikasi WA ke GA (id=58) saat Cuti diajukan
+      $approverCuti = $this->md_pengguna->getById(58);
+      $noPengajuCuti = $this->md_pengguna->getById(sessPenggunaId());
+      if (!empty($approverCuti[0]->no_hp)) {
+        waCutiPengajuan([
+          'noPenerima'   => $approverCuti[0]->no_hp,
+          'namaApprover' => $approverCuti[0]->nama,
+          'namaPengaju'  => $noPengajuCuti[0]->nama,
+          'kodeSurat'    => $kodeFpp,
+          'tglMulai'     => $data['tgl_awal'],
+          'tglAkhir'     => $data['tgl_akhir'],
+          'totalHari'    => $data['total'],
+          'alasan'       => $data['alasan'],
+          'linkApproval' => 'https://office.visiyosindo.id/surat_part_two/list/cuti'
+        ]);
+      }
 
 
       /** LOG */
@@ -688,8 +703,11 @@ class Surat_part_two extends CI_Controller
       // 💬 KODE NOTIFIKASI WA BERITA ACARA + DEBUG OTOMATIS
       // =========================================================================
       $this->load->helper('whatsapp_helper');
-      $lastBaId    = $this->db->insert_id();
-      $idEncrypted = encrypt($lastBaId);
+      $lastBaId = $this->db->insert_id();
+      if (empty($lastBaId)) {
+          $lastRow = $this->db->select('id')->from('surat_berita_acara')->where('kode_ba', $kodeFpp)->get()->row();
+          $lastBaId = $lastRow ? $lastRow->id : '';
+      }
       $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : $data['id_dir']);
       if (empty($idPenerima)) {
           ajaxReturnDie('error', 'DEBUG FAIL: Anda belum memilih Atasan (Diketahui/Disetujui/Direktur)!', FALSE);
@@ -712,7 +730,7 @@ class Surat_part_two extends CI_Controller
         'namaPemohon'      => $namaPemohon,
         'tanggalPengajuan' => date('d-m-Y'),
         'keterangan'       => 'Membutuhkan Tanda Tangan / Persetujuan Berita Acara',
-        'linkDetail'       => base_url('surat_part_two/show/detail/berita_acara/' . $idEncrypted)
+        'linkDetail'       => 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $lastBaId
       ]);
       if (!$res) {
           ajaxReturnDie('error', 'DEBUG FAIL: Panggilan API Convia GAGAL dikirim ke nomor ' . $noHpAtasan . ' (' . $atasan->nama . '). Cek koneksi Convia / API Key!', FALSE);
@@ -972,6 +990,20 @@ class Surat_part_two extends CI_Controller
         $this->notifWaGroupCuti($id_sp, 'Visi Yosindo Medical');
             // =========================================================================
 
+        // Notif WA DISETUJUI ke pengaju SIJK
+        $sijkPengajuData = $this->md_pengguna->getById($idPengaju);
+        if (!empty($sijkPengajuData[0]->no_hp)) {
+          waIzinJamKerjaHasil([
+            'noPenerima'   => $sijkPengajuData[0]->no_hp,
+            'namaKaryawan' => $sijkPengajuData[0]->nama,
+            'kodeSurat'    => $ambilDataPengaju[0]->kode_ijk,
+            'status'       => 'DISETUJUI',
+            'namaApprover' => 'General Manager',
+            'alasan'       => '',
+            'linkDetail'   => 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_jam_kerja/' . $id_sp
+          ]);
+        }
+
         /** LOG */
         addLog('Pengajuan Surat Izin Pada Jam Kerja Disetujui oleh HR ', 'Permintaan Surat Izin Pada Jam Kerja Disetujui');
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
@@ -1115,6 +1147,21 @@ class Surat_part_two extends CI_Controller
 
           $this->notifWaAprovPb(1, 2, $dataWa);
         }
+
+        // Notif WA DISETUJUI ke pengaju SIMP
+        $simpPengajuData = $this->md_pengguna->getById($idPengaju);
+        if (!empty($simpPengajuData[0]->no_hp)) {
+          waIzinMeninggalkanHasil([
+            'noPenerima'   => $simpPengajuData[0]->no_hp,
+            'namaKaryawan' => $simpPengajuData[0]->nama,
+            'kodeSurat'    => $ambilDataPengaju[0]->kode_ijk,
+            'status'       => 'DISETUJUI',
+            'namaApprover' => 'General Manager',
+            'alasan'       => '',
+            'linkDetail'   => 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_meninggalkan/' . $id_sp
+          ]);
+        }
+
         /** LOG */
         addLog('Pengajuan Surat Izin Meninggalkan Pekerjaan Disetujui oleh HR ', 'Permintaan Surat Izin Meninggalkan Pekerjaan Disetujui');
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);

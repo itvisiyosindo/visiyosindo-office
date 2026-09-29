@@ -23,11 +23,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'office-visiyosindo.test') . '/';
-// Jika diakses lewat localhost di subdirectory, sesuaikan path
-if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'localhost') !== false) {
-    $config['base_url'] = 'http://localhost/office-visiyosindo/';
-}
+$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+$config['base_url'] = $protocol . '://' . $host . '/';
 
 
 /*
@@ -541,7 +539,8 @@ $config['apps_mode'] = 'PKS';
 | Convia WhatsApp API Configuration (app.convia.id)
 |--------------------------------------------------------------------------
 */
-$config['CONVIA_API_KEY'] = getenv('CONVIA_SECRET_KEY');
-$config['convia_api_url'] = 'https://app.convia.id/api/v1/send-message';
+$config['convia_api_key'] = getenv('CONVIA_API_KEY') ?: (getenv('CONVIA_SECRET_KEY') ?: '');
+$config['CONVIA_API_KEY'] = &$config['convia_api_key'];
+$config['convia_api_url'] = getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send';
 
 

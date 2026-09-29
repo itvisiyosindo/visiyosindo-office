@@ -73,9 +73,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+$is_on_hosting = (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'visiyosindo.id') !== false);
+$db_hostname = $is_on_hosting ? 'localhost' : 'office.visiyosindo.id';
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
+	'hostname' => $db_hostname,
 	'username' => 'visiyosi_root',
 	'password' => 'q%MDa{uYlcyv',
 	'database' => 'visiyosi_office',

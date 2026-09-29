@@ -21,8 +21,8 @@ DB/
 .DS_Store
 Thumbs.db
 
-application/vendor/
-uploads/
+uploads/*
+!uploads/template/
 application/config/google_drive_key.json
 application/config/google_drive_oauth.json
 
@@ -33,7 +33,8 @@ assets/img/absen/
 application/vendor/
 
 # Upload pengguna
-uploads/
+uploads/*
+!uploads/template/
 
 # Log
 *.log
@@ -47,9 +48,4 @@ php.ini
 assets/img/absen/
 assets/vendor/
 application/vendor/
-uploads/
-*.log
-error_log
-.env
-.user.ini
-php.ini
+

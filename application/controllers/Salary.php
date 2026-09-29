@@ -983,6 +983,13 @@ class Salary extends CI_Controller
   {
       grantAccessFor(['Administrator', 'Hrd', 'Ga']);
 
+      $master_file = FCPATH . 'uploads/template/Template_Import_PPh21.xlsx';
+      if (file_exists($master_file)) {
+          $this->load->helper('download');
+          force_download('Template_Import_PPh21.xlsx', file_get_contents($master_file));
+          return;
+      }
+
       $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
       $sheet = $spreadsheet->getActiveSheet();
       $sheet->setTitle('Template PPh 21');
@@ -1094,6 +1101,13 @@ class Salary extends CI_Controller
   public function download_template_komisi()
   {
       grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+
+      $master_file = FCPATH . 'uploads/template/Template_Import_Komisi.xlsx';
+      if (file_exists($master_file)) {
+          $this->load->helper('download');
+          force_download('Template_Import_Komisi.xlsx', file_get_contents($master_file));
+          return;
+      }
 
       $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
       $sheet = $spreadsheet->getActiveSheet();

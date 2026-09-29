@@ -2178,11 +2178,11 @@ function sendWaConvia($dataSend)
 		return false;
 	}
 
-	$apiKey = defined('CONVIA_API_KEY') ? CONVIA_API_KEY : (getenv('CONVIA_API_KEY') ?: '');
+	$apiKey = defined('CONVIA_API_KEY') ? CONVIA_API_KEY : (getenv('CONVIA_API_KEY') ?: (getenv('CONVIA_SECRET_KEY') ?: ''));
 	if (empty($apiKey) && function_exists('get_instance')) {
 		$CI = &get_instance();
 		if ($CI && isset($CI->config)) {
-			$apiKey = $CI->config->item('convia_api_key');
+			$apiKey = $CI->config->item('convia_api_key') ?: $CI->config->item('CONVIA_API_KEY');
 		}
 	}
 
@@ -2190,28 +2190,49 @@ function sendWaConvia($dataSend)
 		return false;
 	}
 
-	// Format nomor HP ke standar 62xxx
+	// Format nomor HP ke standar E.164 (62xxx)
 	$penerima = preg_replace('/[^0-9]/', '', $dataSend['penerima']);
-	if (substr($penerima, 0, 2) == '08') {
+	if (substr($penerima, 0, 1) === '0') {
 		$penerima = '62' . substr($penerima, 1);
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
-	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : 'https://app.convia.id/api/v1/send-message';
+	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : (getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send');
 
-	// Payload serbaguna (mendukung header & body api_key Convia)
+	// Format Payload resmi Convia
 	$payload = [
-		'api_key' => $apiKey,
-		'token'   => $apiKey,
-		'target'  => $penerima,
-		'number'  => $penerima,
-		'phone'   => $penerima,
-		'to'      => $penerima,
-		'message' => $pesan
+		'phone_number' => $penerima,
+		'channel'      => 'whatsapp',
+		'message_type' => 'text',
+		'content'      => $pesan
 	];
 
-	if (isset($dataSend['file']) && !empty($dataSend['file'])) {
-		$payload['url'] = $dataSend['file'];
+	// Dukungan Meta Message Template via Convia (hanya jika USE_CONVIA_TEMPLATE=true di .env)
+	$useTemplate = (getenv('USE_CONVIA_TEMPLATE') === 'true' || getenv('USE_CONVIA_TEMPLATE') === '1');
+	if ($useTemplate && isset($dataSend['template_name']) && !empty($dataSend['template_name'])) {
+		$payload['message_type']  = 'template';
+		$payload['template_name'] = $dataSend['template_name'];
+		$payload['language']      = isset($dataSend['language']) ? $dataSend['language'] : 'id';
+		if (isset($dataSend['parameters']) && is_array($dataSend['parameters'])) {
+			$payload['parameters'] = $dataSend['parameters'];
+		}
+		unset($payload['content']); // Template tidak memerlukan field content plain
+	}
+	// Media attachment (image / document)
+	else if (isset($dataSend['file']) && !empty($dataSend['file'])) {
+		$ext = strtolower(pathinfo($dataSend['file'], PATHINFO_EXTENSION));
+		if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+			$payload['message_type'] = 'image';
+		} else {
+			$payload['message_type'] = 'document';
+		}
+		$payload['media_url'] = $dataSend['file'];
+	}
+
+	// Opsi sender business number jika dispesifikasikan
+	$phoneId = getenv('CONVIA_PHONE_NUMBER_ID') ?: (function_exists('get_instance') && isset(get_instance()->config) ? get_instance()->config->item('convia_phone_number_id') : '');
+	if (!empty($phoneId)) {
+		$payload['whatsapp_phone_number_id'] = $phoneId;
 	}
 
 	if (function_exists('curl_init')) {
@@ -2223,9 +2244,7 @@ function sendWaConvia($dataSend)
 			CURLOPT_POSTFIELDS     => json_encode($payload),
 			CURLOPT_HTTPHEADER     => [
 				'Content-Type: application/json',
-				'Authorization: Bearer ' . $apiKey,
-				'x-api-key: ' . $apiKey,
-				'api-key: ' . $apiKey
+				'Authorization: Bearer ' . $apiKey
 			],
 			CURLOPT_TIMEOUT        => 10,
 			CURLOPT_CONNECTTIMEOUT => 5,
@@ -2233,16 +2252,62 @@ function sendWaConvia($dataSend)
 			CURLOPT_SSL_VERIFYHOST => false
 		]);
 
-				$response = curl_exec($curl);
+		$response = curl_exec($curl);
 		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
-		// TEMPORARY DEBUG: Tampilkan respon asli dari server Convia di layar
-		ajaxReturnDie('error', 'Respon Server Convia (HTTP ' . $httpCode . '): ' . $response, FALSE);
+		// Jika penerima belum terdaftar di Convia (HTTP 404), otomatis daftarkan customer lalu kirim ulang
+		if ($httpCode == 404) {
+			$custCh = curl_init('https://api.convia.id/api/v1/public/customers');
+			curl_setopt_array($custCh, [
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_POST           => true,
+				CURLOPT_POSTFIELDS     => json_encode(['phone_number' => $penerima]),
+				CURLOPT_HTTPHEADER     => [
+					'Content-Type: application/json',
+					'Authorization: Bearer ' . $apiKey
+				],
+				CURLOPT_TIMEOUT        => 5
+			]);
+			curl_exec($custCh);
+			curl_close($custCh);
+
+			// Kirim ulang pesan
+			$curl2 = curl_init();
+			curl_setopt_array($curl2, [
+				CURLOPT_URL            => $apiUrl,
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_POST           => true,
+				CURLOPT_POSTFIELDS     => json_encode($payload),
+				CURLOPT_HTTPHEADER     => [
+					'Content-Type: application/json',
+					'Authorization: Bearer ' . $apiKey
+				],
+				CURLOPT_TIMEOUT        => 10
+			]);
+			$response = curl_exec($curl2);
+			$httpCode = curl_getinfo($curl2, CURLINFO_HTTP_CODE);
+			curl_close($curl2);
+		}
+
+		if ($response && ($httpCode >= 200 && $httpCode < 300)) {
+			$json = json_decode($response, true);
+			if (isset($json['success']) && $json['success'] === true) {
+				return true;
+			}
+			if (isset($json['status']) && ($json['status'] == true || $json['status'] == 'success' || $json['status'] == 'sent')) {
+				return true;
+			}
+		}
+
+		if (function_exists('log_message')) {
+			log_message('error', 'Convia Send WA Error (HTTP ' . $httpCode . '): ' . $response);
+		}
 	}
 
 	return false;
 }
+
 /**
  * Kirim pesan WhatsApp group via Convia API (https://app.convia.id)
  */
@@ -2252,11 +2317,11 @@ function sendWaConviaGroup($dataSend)
 		return false;
 	}
 
-	$apiKey = defined('CONVIA_API_KEY') ? CONVIA_API_KEY : (getenv('CONVIA_API_KEY') ?: '');
+	$apiKey = defined('CONVIA_API_KEY') ? CONVIA_API_KEY : (getenv('CONVIA_API_KEY') ?: (getenv('CONVIA_SECRET_KEY') ?: ''));
 	if (empty($apiKey) && function_exists('get_instance')) {
 		$CI = &get_instance();
 		if ($CI && isset($CI->config)) {
-			$apiKey = $CI->config->item('convia_api_key');
+			$apiKey = $CI->config->item('convia_api_key') ?: $CI->config->item('CONVIA_API_KEY');
 		}
 	}
 
@@ -2265,7 +2330,7 @@ function sendWaConviaGroup($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
-	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : 'https://app.convia.id/api/v1/send-message';
+	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : (getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send');
 
 	$payload = [
 		'target'  => $dataSend['penerima'],
@@ -2397,6 +2462,15 @@ function sendWaFonnteGroup($dataSend)
  */
 function sendWa($dataSend)
 {
+	// Pastikan link dalam pesan selalu mengarah ke domain publik yang bisa dibuka dari HP
+	if (isset($dataSend['pesan'])) {
+		$dataSend['pesan'] = preg_replace(
+			'#https?://(?:127\.0\.0\.1|localhost)(?::\d+)?/#i',
+			'https://office.visiyosindo.id/',
+			$dataSend['pesan']
+		);
+	}
+
 	// 1. Coba kirim via Convia API lebih dulu
 	if (sendWaConvia($dataSend)) {
 		return true;
@@ -2467,6 +2541,14 @@ function sendWaWhacenter($dataSend)
  */
 function sendWaGroup($dataSend)
 {
+	if (isset($dataSend['pesan'])) {
+		$dataSend['pesan'] = preg_replace(
+			'#https?://(?:127\.0\.0\.1|localhost)(?::\d+)?/#i',
+			'https://office.visiyosindo.id/',
+			$dataSend['pesan']
+		);
+	}
+
 	if (sendWaFonnteGroup($dataSend)) {
 		return true;
 	}
@@ -2602,17 +2684,23 @@ function waTrainingTeknisiUpdateGroup($data)
 if (!function_exists('waPengajuanBaru')) {
 	function waPengajuanBaru($data)
 	{
-		$dataWa['penerima'] = $data['noPenerima'];
-		$dataWa['pesan']    = "*NOTIFIKASI PENGAJUAN BARU* 📑" .
-			"%0A%0AHalo *" . $data['namaApprover'] . "*, ada pengajuan baru yang membutuhkan persetujuan Anda:" .
-			"%0A%0A• *Jenis Pengajuan* : " . $data['jenisPengajuan'] .
-			"%0A• *Nama Pemohon* : " . $data['namaPemohon'] .
-			"%0A• *Tanggal Pengajuan* : " . $data['tanggalPengajuan'] .
-			"%0A• *Keterangan* : " . $data['keterangan'] .
-			"%0A%0ASilakan periksa dan berikan persetujuan melalui link berikut:" .
+		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : (!empty($data['kode']) ? $data['kode'] : '-');
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_pengajuan';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaApprover'],
+			$data['jenisPengajuan'],
+			$data['namaPemohon'],
+			$kodeSurat,
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaApprover'] . "*! ✨ Ada pengajuan *" . $data['jenisPengajuan'] . "* baru dari *" . $data['namaPemohon'] . "* (Kode: " . $kodeSurat . ") nih." .
+			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkDetail'] .
-			"%0A%0ATerima Kasih." .
-			"%0A_Sistem Office Visiyosindo_";
+			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
+			"%0A_Sistem Office PT Visi Yosindo_";
 
 		return sendWa($dataWa);
 	}
@@ -2621,18 +2709,24 @@ if (!function_exists('waPengajuanBaru')) {
 if (!function_exists('waPengajuanApproved')) {
 	function waPengajuanApproved($data)
 	{
-		$catatan = !empty($data['catatan']) ? $data['catatan'] : '-';
-
-		$dataWa['penerima'] = $data['noPenerima'];
-		$dataWa['pesan']    = "*STATUS PENGAJUAN: DISETUJUI* ✅" .
-			"%0A%0AHalo *" . $data['namaPemohon'] . "*, pengajuan Anda telah *DISETUJUI*." .
-			"%0A%0A• *Jenis Pengajuan* : " . $data['jenisPengajuan'] .
-			"%0A• *Disetujui Oleh* : " . $data['namaApprover'] .
-			"%0A• *Catatan* : " . $catatan .
-			"%0A%0ADetail pengajuan dapat dilihat di:" .
+		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : (!empty($data['kode']) ? $data['kode'] : '-');
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaPemohon'],
+			$data['jenisPengajuan'],
+			$kodeSurat,
+			'DISETUJUI',
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaPemohon'] . "*! 🎉 Kabar terbaru nih, pengajuan *" . $data['jenisPengajuan'] . "* kamu (Kode: " . $kodeSurat . ") telah *DISETUJUI* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
-			"%0A%0ATerima Kasih." .
-			"%0A_Sistem Office Visiyosindo_";
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
 
 		return sendWa($dataWa);
 	}
@@ -2641,20 +2735,551 @@ if (!function_exists('waPengajuanApproved')) {
 if (!function_exists('waPengajuanRejected')) {
 	function waPengajuanRejected($data)
 	{
-		$alasan = !empty($data['alasan']) ? $data['alasan'] : '-';
-
-		$dataWa['penerima'] = $data['noPenerima'];
-		$dataWa['pesan']    = "*STATUS PENGAJUAN: DITOLAK* ❌" .
-			"%0A%0AHalo *" . $data['namaPemohon'] . "*, mohon maaf pengajuan Anda *DITOLAK*." .
-			"%0A%0A• *Jenis Pengajuan* : " . $data['jenisPengajuan'] .
-			"%0A• *Ditolak Oleh* : " . $data['namaApprover'] .
-			"%0A• *Alasan Penolakan* : " . $alasan .
-			"%0A%0ADetail pengajuan dapat dilihat di:" .
+		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : (!empty($data['kode']) ? $data['kode'] : '-');
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaPemohon'],
+			$data['jenisPengajuan'],
+			$kodeSurat,
+			'DITOLAK',
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaPemohon'] . "*! Kabar terbaru nih, pengajuan *" . $data['jenisPengajuan'] . "* kamu (Kode: " . $kodeSurat . ") telah *DITOLAK* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
-			"%0A%0ATerima Kasih." .
-			"%0A_Sistem Office Visiyosindo_";
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
 
 		return sendWa($dataWa);
 	}
 }
 
+// ==============================================================================
+// TEMPLATE NOTIFIKASI WA - MODUL KEPEGAWAIAN & HRD (via Convia)
+// Semua fungsi menggunakan sendWa() → otomatis kirim via Convia API
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 1. SLIP GAJI
+// Trigger  : Tutup buku bulanan / kirim satuan oleh HRD
+// Penerima : Karyawan (personal)
+// ------------------------------------------------------------------------------
+if (!function_exists('waSlipGajiBaru')) {
+	function waSlipGajiBaru($data)
+	{
+		// $data: noPenerima, namaKaryawan, periodeBulan, linkSlip
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_slip_gaji';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaKaryawan'],
+			$data['periodeBulan'],
+			$data['linkSlip']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaKaryawan'] . "*! 🥳 Payday is here! Slip gaji kamu untuk periode *" . $data['periodeBulan'] . "* sudah siap diunduh nih." .
+			"%0A%0AYuk cek dan unduh slip gaji kamu melalui tautan berikut:" .
+			"%0A🔗 " . $data['linkSlip'] .
+			"%0A%0ATerima kasih banyak atas kerja keras dan dedikasimu yang luar biasa! Tetap semangat! 💪✨" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 2. CUTI TAHUNAN
+// ------------------------------------------------------------------------------
+if (!function_exists('waCutiPengajuan')) {
+	function waCutiPengajuan($data)
+	{
+		// $data: noPenerima, namaApprover, namaPengaju, kodeSurat, tglMulai, tglAkhir, totalHari, alasan, linkApproval
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_pengajuan';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaApprover'],
+			'Cuti Tahunan',
+			$data['namaPengaju'],
+			$data['kodeSurat'],
+			$data['linkApproval']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaApprover'] . "*! ✨ Ada pengajuan *Cuti Tahunan* baru dari *" . $data['namaPengaju'] . "* (Kode: " . $data['kodeSurat'] . ") nih." .
+			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
+			"%0A🔗 " . $data['linkApproval'] .
+			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waCutiDisetujui')) {
+	function waCutiDisetujui($data)
+	{
+		// $data: noPenerima, namaKaryawan, kodeSurat, tglMulai, tglAkhir, totalHari, namaApprover, linkDetail
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaKaryawan'],
+			'Cuti Tahunan',
+			$data['kodeSurat'],
+			'DISETUJUI',
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaKaryawan'] . "*! 🎉 Kabar terbaru nih, pengajuan *Cuti Tahunan* kamu (Kode: " . $data['kodeSurat'] . ") telah *DISETUJUI* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waCutiDitolak')) {
+	function waCutiDitolak($data)
+	{
+		// $data: noPenerima, namaKaryawan, kodeSurat, tglMulai, tglAkhir, namaApprover, alasan, linkDetail
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaKaryawan'],
+			'Cuti Tahunan',
+			$data['kodeSurat'],
+			'DITOLAK',
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaKaryawan'] . "*! Kabar terbaru nih, pengajuan *Cuti Tahunan* kamu (Kode: " . $data['kodeSurat'] . ") telah *DITOLAK* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 3. IZIN PADA JAM KERJA (SIJK)
+// ------------------------------------------------------------------------------
+if (!function_exists('waIzinJamKerjaPengajuan')) {
+	function waIzinJamKerjaPengajuan($data)
+	{
+		// $data: noPenerima, namaApprover, namaPengaju, kodeSurat, tglIzin, jamMulai, jamSelesai, keperluan, linkApproval
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_pengajuan';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaApprover'],
+			'Izin Pada Jam Kerja',
+			$data['namaPengaju'],
+			$data['kodeSurat'],
+			$data['linkApproval']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaApprover'] . "*! ✨ Ada pengajuan *Izin Pada Jam Kerja* baru dari *" . $data['namaPengaju'] . "* (Kode: " . $data['kodeSurat'] . ") nih." .
+			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
+			"%0A🔗 " . $data['linkApproval'] .
+			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waIzinJamKerjaHasil')) {
+	function waIzinJamKerjaHasil($data)
+	{
+		// $data: noPenerima, namaKaryawan, kodeSurat, status (DISETUJUI/DITOLAK), namaApprover, alasan, linkDetail
+		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaKaryawan'],
+			'Izin Pada Jam Kerja',
+			$data['kodeSurat'],
+			$statusText,
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaKaryawan'] . "*! 🎉 Kabar terbaru nih, pengajuan *Izin Pada Jam Kerja* kamu (Kode: " . $data['kodeSurat'] . ") telah *" . $statusText . "* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 4. IZIN MENINGGALKAN PEKERJAAN (SIMP)
+// ------------------------------------------------------------------------------
+if (!function_exists('waIzinMeninggalkanPengajuan')) {
+	function waIzinMeninggalkanPengajuan($data)
+	{
+		// $data: noPenerima, namaApprover, namaPengaju, kodeSurat, tglMulai, tglAkhir, totalHari, alasan, linkApproval
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_pengajuan';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaApprover'],
+			'Izin Meninggalkan Pekerjaan',
+			$data['namaPengaju'],
+			$data['kodeSurat'],
+			$data['linkApproval']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaApprover'] . "*! ✨ Ada pengajuan *Izin Meninggalkan Pekerjaan* baru dari *" . $data['namaPengaju'] . "* (Kode: " . $data['kodeSurat'] . ") nih." .
+			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
+			"%0A🔗 " . $data['linkApproval'] .
+			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waIzinMeninggalkanHasil')) {
+	function waIzinMeninggalkanHasil($data)
+	{
+		// $data: noPenerima, namaKaryawan, kodeSurat, status, namaApprover, alasan, linkDetail
+		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaKaryawan'],
+			'Izin Meninggalkan Pekerjaan',
+			$data['kodeSurat'],
+			$statusText,
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaKaryawan'] . "*! 🎉 Kabar terbaru nih, pengajuan *Izin Meninggalkan Pekerjaan* kamu (Kode: " . $data['kodeSurat'] . ") telah *" . $statusText . "* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 5. WFA (WORK FROM ANYWHERE)
+// ------------------------------------------------------------------------------
+if (!function_exists('waWfaPengajuan')) {
+	function waWfaPengajuan($data)
+	{
+		// $data: noPenerima, namaApprover, namaPengaju, tglWfa, lokasiWfa, alasan, linkApproval
+		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : 'WFA';
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_pengajuan';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaApprover'],
+			'Work From Anywhere (WFA)',
+			$data['namaPengaju'],
+			$kodeSurat,
+			$data['linkApproval']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaApprover'] . "*! ✨ Ada pengajuan *Work From Anywhere (WFA)* baru dari *" . $data['namaPengaju'] . "* (Kode: " . $kodeSurat . ") nih." .
+			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
+			"%0A🔗 " . $data['linkApproval'] .
+			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waWfaHasil')) {
+	function waWfaHasil($data)
+	{
+		// $data: noPenerima, namaKaryawan, tglWfa, status, namaApprover, alasan, linkDetail
+		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
+		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : 'WFA';
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaKaryawan'],
+			'Work From Anywhere (WFA)',
+			$kodeSurat,
+			$statusText,
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaKaryawan'] . "*! 🎉 Kabar terbaru nih, pengajuan *Work From Anywhere (WFA)* kamu (Kode: " . $kodeSurat . ") telah *" . $statusText . "* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 6. SURAT PERINGATAN (SP)
+// Trigger  : SP diterbitkan & ditandatangani
+// Penerima : Karyawan bersangkutan (personal)
+// ------------------------------------------------------------------------------
+if (!function_exists('waSuratPeringatan')) {
+	function waSuratPeringatan($data)
+	{
+		// $data: noPenerima, namaKaryawan, jenisSP, kodeSurat, perihal, linkDetail
+		// jenisSP: 'SP 1' / 'SP 2' / 'SP 3' / 'Skorsing'
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*⚠️ Notifikasi " . $data['jenisSP'] . "*" .
+			"%0A%0AYth. *" . $data['namaKaryawan'] . "*," .
+			"%0A%0AKami menginformasikan bahwa Anda menerima *" . $data['jenisSP'] . "* dari perusahaan." .
+			"%0A%0A• *Kode Surat* : " . $data['kodeSurat'] .
+			"%0A• *Perihal*       : " . $data['perihal'] .
+			"%0A%0AMohon segera periksa dan tindak lanjuti:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0AJika ada pertanyaan, hubungi HRD/GA." .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 7. SURAT TUGAS
+// Trigger  : Surat tugas diterbitkan/disetujui
+// Penerima : Karyawan yang ditugaskan
+// ------------------------------------------------------------------------------
+if (!function_exists('waSuratTugas')) {
+	function waSuratTugas($data)
+	{
+		// $data: noPenerima, namaKaryawan, kodeSurat, perihal, tglTugas, lokasi, linkDetail
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*📌 Notifikasi Surat Tugas*" .
+			"%0A%0AYth. *" . $data['namaKaryawan'] . "*," .
+			"%0A%0AAnda mendapatkan Surat Tugas dari perusahaan." .
+			"%0A%0A• *Kode Surat* : " . $data['kodeSurat'] .
+			"%0A• *Perihal*       : " . $data['perihal'] .
+			"%0A• *Tanggal*       : " . $data['tglTugas'] .
+			"%0A• *Lokasi*         : " . $data['lokasi'] .
+			"%0A%0ADetail surat tugas:%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 8. PAKLARING (Surat Keterangan Pengalaman Kerja)
+// Trigger  : Paklaring selesai diterbitkan
+// Penerima : Karyawan bersangkutan
+// ------------------------------------------------------------------------------
+if (!function_exists('waPaklaring')) {
+	function waPaklaring($data)
+	{
+		// $data: noPenerima, namaKaryawan, kodeSurat, linkDownload
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*📄 Surat Keterangan Kerja (Paklaring) Siap*" .
+			"%0A%0AYth. *" . $data['namaKaryawan'] . "*," .
+			"%0A%0ASurat Keterangan Pengalaman Kerja Anda telah selesai diterbitkan." .
+			"%0A%0A• *Kode Surat* : " . $data['kodeSurat'] .
+			"%0A%0ASilakan unduh melalui:%0A🔗 " . $data['linkDownload'] .
+			"%0A%0AJika ada pertanyaan, hubungi HRD." .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 9. EVALUASI KINERJA
+// 9a. Reminder ke Atasan/Penilai untuk mengisi evaluasi
+// 9b. Notifikasi hasil ke Karyawan
+// ------------------------------------------------------------------------------
+if (!function_exists('waEvaluasiReminder')) {
+	function waEvaluasiReminder($data)
+	{
+		// $data: noPenerima, namaApprover, namaPegawai, periode, linkEvaluasi
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*📊 Reminder: Evaluasi Kinerja Karyawan*" .
+			"%0A%0AYth. *" . $data['namaApprover'] . "*," .
+			"%0A%0AMohon segera lakukan penilaian kinerja untuk:" .
+			"%0A%0A• *Karyawan* : " . $data['namaPegawai'] .
+			"%0A• *Periode*    : " . $data['periode'] .
+			"%0A%0ASilakan isi penilaian:%0A🔗 " . $data['linkEvaluasi'] .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waEvaluasiSelesai')) {
+	function waEvaluasiSelesai($data)
+	{
+		// $data: noPenerima, namaKaryawan, periode, linkHasil
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*📊 Hasil Evaluasi Kinerja Telah Tersedia*" .
+			"%0A%0AYth. *" . $data['namaKaryawan'] . "*," .
+			"%0A%0AHasil evaluasi kinerja Anda periode *" . $data['periode'] . "* telah selesai dinilai." .
+			"%0A%0ASilakan lihat hasilnya:%0A🔗 " . $data['linkHasil'] .
+			"%0A%0AJika ada pertanyaan, hubungi HRD." .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 10. TRAINING & PELATIHAN KARYAWAN
+// 10a. Undangan/penugasan training ke peserta
+// 10b. Reminder upload sertifikat
+// ------------------------------------------------------------------------------
+if (!function_exists('waTrainingUndangan')) {
+	function waTrainingUndangan($data)
+	{
+		// $data: noPenerima, namaKaryawan, namaTraining, tanggal, lokasi, penyelenggara, linkDetail
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*🎓 Undangan Training / Pelatihan*" .
+			"%0A%0AYth. *" . $data['namaKaryawan'] . "*," .
+			"%0A%0AAnda ditugaskan mengikuti training:" .
+			"%0A%0A• *Nama Training*    : " . $data['namaTraining'] .
+			"%0A• *Tanggal*               : " . $data['tanggal'] .
+			"%0A• *Lokasi*                 : " . $data['lokasi'] .
+			"%0A• *Penyelenggara*    : " . $data['penyelenggara'] .
+			"%0A%0ADetail training:%0A🔗 " . $data['linkDetail'] .
+			"%0A%0AMohon hadir tepat waktu." .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waTrainingReminderSertifikat')) {
+	function waTrainingReminderSertifikat($data)
+	{
+		// $data: noPenerima, namaKaryawan, namaTraining, deadline, linkUpload
+		$dataWa['penerima'] = $data['noPenerima'];
+		$dataWa['pesan']    =
+			"*📎 Reminder: Upload Sertifikat Training*" .
+			"%0A%0AYth. *" . $data['namaKaryawan'] . "*," .
+			"%0A%0AMohon segera upload sertifikat untuk training:" .
+			"%0A%0A• *Nama Training* : " . $data['namaTraining'] .
+			"%0A• *Deadline*           : " . $data['deadline'] .
+			"%0A%0ASilakan upload:%0A🔗 " . $data['linkUpload'] .
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 11. BERITA ACARA
+// 11a. Notifikasi pengajuan ke approver
+// 11b. Notifikasi hasil ke pengaju
+// ------------------------------------------------------------------------------
+if (!function_exists('waBeritaAcaraPengajuan')) {
+	function waBeritaAcaraPengajuan($data)
+	{
+		// $data: noPenerima, namaApprover, namaPengaju, kodeSurat, perihal, tanggal, linkApproval
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_pengajuan';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaApprover'],
+			'Berita Acara',
+			$data['namaPengaju'],
+			$data['kodeSurat'],
+			$data['linkApproval']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaApprover'] . "*! ✨ Ada pengajuan *Berita Acara* baru dari *" . $data['namaPengaju'] . "* (Kode: " . $data['kodeSurat'] . ") nih." .
+			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
+			"%0A🔗 " . $data['linkApproval'] .
+			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waBeritaAcaraHasil')) {
+	function waBeritaAcaraHasil($data)
+	{
+		// $data: noPenerima, namaPengaju, kodeSurat, perihal, status, namaApprover, alasan, linkDetail
+		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
+		$dataWa['penerima']      = $data['noPenerima'];
+		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
+		$dataWa['language']      = 'id';
+		$dataWa['parameters']    = [
+			$data['namaPengaju'],
+			'Berita Acara',
+			$data['kodeSurat'],
+			$statusText,
+			$data['namaApprover'],
+			$data['linkDetail']
+		];
+		$dataWa['pesan']         =
+			"Halo *" . $data['namaPengaju'] . "*! 🎉 Kabar terbaru nih, pengajuan *Berita Acara* kamu (Kode: " . $data['kodeSurat'] . ") telah *" . $statusText . "* oleh *" . $data['namaApprover'] . "*." .
+			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
+			"%0A🔗 " . $data['linkDetail'] .
+			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
+			"%0A_Sistem Office PT Visi Yosindo_";
+		return sendWa($dataWa);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// 12. UCAPAN OTOMATIS (JUMAT SORE & SENIN PAGI)
+// ------------------------------------------------------------------------------
+if (!function_exists('waSalamWeekend')) {
+	function waSalamWeekend($data)
+	{
+		// $data: noPenerima, namaKaryawan
+		$dataWa['penerima'] = $data['noPenerima'];
+		
+		// Jika template_name dikirimkan (dari Convia Template)
+		if (!empty($data['template_name'])) {
+			$dataWa['template_name'] = $data['template_name'];
+			$dataWa['language']      = 'id';
+			$dataWa['parameters']    = [$data['namaKaryawan']];
+		} else {
+			$dataWa['pesan'] =
+				"Halo *" . $data['namaKaryawan'] . "*! 🎉 Selamat berakhir pekan! " .
+				"%0A%0ATerima kasih banyak atas kerja keras dan semangatmu sepanjang minggu ini. Waktunya istirahat, recharge energi, dan nikmati waktu bersama keluarga tercinta ya." .
+				"%0A%0AHappy Weekend! Sampai jumpa di hari Senin! 🏖️✨" .
+				"%0A_Sistem Office PT Visi Yosindo_";
+		}
+		return sendWa($dataWa);
+	}
+}
+
+if (!function_exists('waSalamSenin')) {
+	function waSalamSenin($data)
+	{
+		// $data: noPenerima, namaKaryawan
+		$dataWa['penerima'] = $data['noPenerima'];
+		
+		if (!empty($data['template_name'])) {
+			$dataWa['template_name'] = $data['template_name'];
+			$dataWa['language']      = 'id';
+			$dataWa['parameters']    = [$data['namaKaryawan']];
+		} else {
+			$dataWa['pesan'] =
+				"Selamat pagi *" . $data['namaKaryawan'] . "*! ☀️ Semangat hari Senin!" .
+				"%0A%0ASemoga akhir pekan kemarin menyenangkan dan energimu sudah terisi penuh kembali. Yuk kita mulai minggu ini dengan senyuman dan optimisme baru!" .
+				"%0A%0AHave a productive and wonderful week ahead! 🚀💪" .
+				"%0A_Sistem Office PT Visi Yosindo_";
+		}
+		return sendWa($dataWa);
+	}
+}
+
+// ==============================================================================
+// END OF KEPEGAWAIAN & HRD TEMPLATES
+// ==============================================================================
