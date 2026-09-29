@@ -530,7 +530,7 @@ class Surat_part_two extends CI_Controller
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
       $data['jenis']          = 1;
-      $this->md_surat_part_two->addSgm($data);
+      $insertId = $this->md_surat_part_two->addSgm($data);
 
 
 
@@ -541,6 +541,7 @@ class Surat_part_two extends CI_Controller
         'namaSurat'     => 'Surat Izin Pada Jam Kerja PT Sumpah Gajah Mada',
         'penerima'       => '_General Affair_',
         'perihal'       => $data['alasan'],
+        'link'          => 'surat_part_two/show/detail/izin_jam_kerja_sgm/' . $insertId,
         'kode'           => $kodeFpp
       ];
 
@@ -583,7 +584,7 @@ class Surat_part_two extends CI_Controller
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
       $data['jenis']          = 2;
-      $this->md_surat_part_two->addSgm($data);
+      $insertId = $this->md_surat_part_two->addSgm($data);
 
 
 
@@ -594,6 +595,7 @@ class Surat_part_two extends CI_Controller
         'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
         'penerima'       => '_General Affair_',
         'perihal'       => $data['alasan'],
+        'link'          => 'surat_part_two/show/detail/izin_meninggalkan_sgm/' . $insertId,
         'kode'           => $kodeFpp
       ];
 
@@ -636,7 +638,7 @@ class Surat_part_two extends CI_Controller
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
       $data['jenis']          = 3;
-      $this->md_surat_part_two->addSgm($data);
+      $insertId = $this->md_surat_part_two->addSgm($data);
 
 
 
@@ -647,6 +649,7 @@ class Surat_part_two extends CI_Controller
         'namaSurat'     => 'Cuti Tahunan',
         'penerima'       => '_General Affair_',
         'perihal'       => $data['alasan'],
+        'link'          => 'surat_part_two/show/detail/cuti_sgm/' . $insertId,
         'kode'           => $kodeFpp
       ];
 
@@ -767,7 +770,7 @@ class Surat_part_two extends CI_Controller
       $data['kota_pengajuan']  = $this->input->post('kota_aju', TRUE);
       $data['tgl_pengajuan']  = date_db_format($this->input->post('pengajuan', TRUE));
       $data['status']         = 0;
-      $this->md_surat_part_two->addPaklaring($data);
+      $insertId = $this->md_surat_part_two->addPaklaring($data);
 
 
       //send notif wa 
@@ -777,6 +780,7 @@ class Surat_part_two extends CI_Controller
         'namaSurat'     => 'Pengalaman Kerja',
         'penerima'       => '_HR and Legal_',
         'perihal'       => 'Keterangan Pengalaman Kerja',
+        'link'          => 'surat_part_two/show/detail/paklaring/' . $insertId,
         'kode'           => $kodeFpp
       ];
 
@@ -815,7 +819,7 @@ class Surat_part_two extends CI_Controller
       $data['jam_akhir']      = $this->input->post('jam_akhir', TRUE);
       $data['lampiran']        = $this->input->post('lampiran', TRUE);
       $data['status']         = 0;
-      $this->md_surat_part_two->addMeeting($data);
+      $insertId = $this->md_surat_part_two->addMeeting($data);
 
 
       //send notif wa 
@@ -825,6 +829,7 @@ class Surat_part_two extends CI_Controller
         'namaSurat'     => 'Penggunaan Ruang Meeting',
         'penerima'       => 'General Affair',
         'perihal'       => $data['perihal'],
+        'link'          => 'surat_part_two/show/detail/meetingroom/' . $insertId,
         'kode'           => $kodeFpp
       ];
 
@@ -3250,6 +3255,7 @@ class Surat_part_two extends CI_Controller
         'kodeSurat'   => $detail['kode'],
         'namaPengaju' => $namaPengaju,
         'perihal'     => urlencode($detail['perihal']),
+        'link'        => !empty($detail['link']) ? $detail['link'] : '',
         'namaPenerima'   => urlencode($detail['penerima'])
       ];
       waSuratOpen($dataWa);
@@ -3348,6 +3354,11 @@ class Surat_part_two extends CI_Controller
     $dataPenolak     = $this->md_pengguna->getById($detail['idPenolak']);
     $nopePenolak    = !empty($dataPenolak[0]->no_hp) ? $dataPenolak[0]->no_hp : '';
 
+    $linkDetail = 'surat_part_two/show/detail/izin_jam_kerja/' . $detail['id'];
+    if (strpos(strtolower($detail['namaSurat']), 'meninggalkan') !== false) {
+      $linkDetail = 'surat_part_two/show/detail/izin_meninggalkan/' . $detail['id'];
+    }
+
     //send notif wa
     $dataWa = [
       'namaSurat'   => $detail['namaSurat'],
@@ -3355,6 +3366,7 @@ class Surat_part_two extends CI_Controller
       'kodeSurat'   => $kode,
       'namaPengaju'   => $namaPengaju,
       'perihal'     => urlencode($perihal),
+      'link'        => $linkDetail,
       'namaPenolak'   => urlencode($detail['namaPenolak']),
       'noPenolak'   => $nopePenolak
     ];
@@ -3442,6 +3454,7 @@ class Surat_part_two extends CI_Controller
       'kodeSurat'   => $kode,
       'namaPengaju'   => $namaPengaju,
       'perihal'     => urlencode($perihal),
+      'link'        => 'surat_part_two/show/detail/cuti/' . $detail['id'],
       'namaPenolak'   => urlencode($detail['namaPenolak']),
       'noPenolak'   => $nopePenolak
     ];
@@ -3513,6 +3526,7 @@ class Surat_part_two extends CI_Controller
       'noPenerima'   => $nope,
       'kodeSurat'   => $kode,
       'namaPengaju' => $namaPengaju,
+      'link'        => 'surat_part_two/show/detail/ba/' . $detail['id'],
       'namaPenolak' => $detail['namaPenolak'],
       'noPenolak'   => $nopePenolak
     ];
@@ -3540,6 +3554,7 @@ class Surat_part_two extends CI_Controller
       'noPenerima'   => $nope,
       'kodeSurat'   => $kode,
       'namaPengaju' => $namaPengaju,
+      'link'        => 'surat_part_two/show/detail/meetingroom/' . $detail['id'],
       'namaPenolak' => $detail['namaPenolak'],
       'noPenolak'   => $nopePenolak
     ];
@@ -3563,9 +3578,12 @@ class Surat_part_two extends CI_Controller
     $tglmulai           = date('d-m-Y', strtotime($ambilDataPengaju[0]->tgl_awal));
     $tglakhir           = date('d-m-Y', strtotime($ambilDataPengaju[0]->tgl_akhir));
 
-    //if($idpengaju == 1){
-    //    $idpengaju == 63;
-    //}
+    $linkDetail = 'surat_part_two/show/detail/izin_jam_kerja_sgm/' . $detail['id'];
+    if (strpos(strtolower($detail['namaSurat']), 'meninggalkan') !== false) {
+      $linkDetail = 'surat_part_two/show/detail/izin_meninggalkan_sgm/' . $detail['id'];
+    } else if (strpos(strtolower($detail['namaSurat']), 'cuti') !== false) {
+      $linkDetail = 'surat_part_two/show/detail/cuti_sgm/' . $detail['id'];
+    }
 
     //send notif wa
     for ($i = 1; $i <= $ulang; $i++) {
@@ -3591,6 +3609,7 @@ class Surat_part_two extends CI_Controller
         'namaPengaju'   => $namaPengaju,
         'namaPenerima'   => urlencode($detail['penerima']),
         'perihal'       => urlencode($perihal),
+        'link'          => $linkDetail,
         'tanggal'       => $tgl,
         'mulai'         => $mulai,
         'akhir'         => $akhir,
@@ -3625,15 +3644,18 @@ class Surat_part_two extends CI_Controller
     $perihal            = $ambilDataPengaju[0]->alasan;
     $idpengaju          = $ambilDataPengaju[0]->idPengaju;
 
-    //if($idpengaju == 1){
-    //   $idpengaju == 63;
-    //}
-
     //ambil nomor
     $dataPenerima   = $this->md_pengguna->getById($idpengaju);
     $nope           = $dataPenerima[0]->no_hp;
     $dataPenolak     = $this->md_pengguna->getById($detail['idPenolak']);
     $nopePenolak    = $dataPenolak[0]->no_hp;
+
+    $linkDetail = 'surat_part_two/show/detail/izin_jam_kerja_sgm/' . $detail['id'];
+    if (strpos(strtolower($detail['namaSurat']), 'meninggalkan') !== false) {
+      $linkDetail = 'surat_part_two/show/detail/izin_meninggalkan_sgm/' . $detail['id'];
+    } else if (strpos(strtolower($detail['namaSurat']), 'cuti') !== false) {
+      $linkDetail = 'surat_part_two/show/detail/cuti_sgm/' . $detail['id'];
+    }
 
     //send notif wa
     $dataWa = [
@@ -3642,6 +3664,7 @@ class Surat_part_two extends CI_Controller
       'kodeSurat'   => $kode,
       'namaPengaju'   => $namaPengaju,
       'perihal'     => urlencode($perihal),
+      'link'        => $linkDetail,
       'namaPenolak'   => urlencode($detail['namaPenolak']),
       'noPenolak'   => $nopePenolak
     ];

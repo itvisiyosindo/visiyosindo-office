@@ -358,6 +358,7 @@ class Md_surat_part_two extends CI_Model
 	function addBeritaAcara($data)
 	{
 		$this->db->insert('surat_berita_acara', $data);
+		return $this->db->insert_id();
 	}
 
 	function getBaKodeId()
@@ -806,6 +807,7 @@ class Md_surat_part_two extends CI_Model
 	function addPaklaring($data)
 	{
 		$this->db->insert('surat_paklaring', $data);
+		return $this->db->insert_id();
 	}
 
 	function getPaklaringKodeId()
@@ -828,6 +830,7 @@ class Md_surat_part_two extends CI_Model
 	function addMeeting($data)
 	{
 		$this->db->insert('surat_meetingroom', $data);
+		return $this->db->insert_id();
 	}
 
 	function getMeetingKodeId()
@@ -930,6 +933,7 @@ class Md_surat_part_two extends CI_Model
 	function addSgm($data)
 	{
 		$this->db->insert('surat_sgm', $data);
+		return $this->db->insert_id();
 	}
 
 	function updateSgm($id, $data)

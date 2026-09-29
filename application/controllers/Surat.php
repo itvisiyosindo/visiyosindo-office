@@ -932,6 +932,7 @@ class Surat extends CI_Controller
 					'namaSurat' 	=> 'Surat Approval',
 					'penerima' 	    => '_General Manager_',
 					'perihal' 	    => "",
+					'link' 	        => 'surat/show/detail_surat/approval/' . $lastApprovalId . '/1',
 					'kode' 	        => $data['kode']
 				];
 
@@ -945,6 +946,7 @@ class Surat extends CI_Controller
 					'namaSurat' 	=> 'Surat Approval',
 					'penerima' 	    => '_General Manager_',
 					'perihal' 	    => "",
+					'link' 	        => 'surat/show/detail_surat/approval/' . $lastApprovalId . '/1',
 					'kode' 	        => $data['kode']
 				];
 
@@ -1068,6 +1070,7 @@ class Surat extends CI_Controller
 				'namaSurat' 	=> 'Surat Permintaan Dinas',
 				'penerima' 	    => '_General  Affair_',
 				'perihal' 	    => "",
+				'link' 	        => 'surat/show/detail_surat/pd/' . $lastPdId . '/1',
 				'kode' 	        => $data['kode']
 			];
 
@@ -1350,6 +1353,7 @@ class Surat extends CI_Controller
 				'namaSurat' 	=> 'Surat Dinas',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
+				'link' 	        => 'surat/show/detail_surat/sd/' . $lastSdId . '/1',
 				'kode' 	        => $data['kode']
 			];
 			$this->notifWaAddSurat(2, $dataWa);
@@ -1448,6 +1452,7 @@ class Surat extends CI_Controller
 				'namaSurat' 	=> 'Surat Dinas',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
+				'link' 	        => 'surat/show/detail_surat/sd/' . $lastSdId . '/1',
 				'kode' 	        => $data['kode']
 			];
 			$this->notifWaAddSurat(2, $dataWa);
@@ -1577,6 +1582,7 @@ class Surat extends CI_Controller
 				'namaSurat' 	=> 'Surat Permintaan Dinas',
 				'penerima' 	    => '_General  Affair_',
 				'perihal' 	    => "",
+				'link' 	        => 'surat/show/detail_surat/pd_teknisi/' . $lastPdId . '/1',
 				'kode' 	        => $data['kode']
 			];
 
@@ -1779,6 +1785,7 @@ class Surat extends CI_Controller
 				'namaSurat' 	=> 'Surat Permintaan Dinas Karyawan',
 				'penerima' 	    => '_General  Affair_',
 				'perihal' 	    => "",
+				'link' 	        => 'surat/show/detail_surat/pd_karyawan/' . $lastPdId . '/1',
 				'kode' 	        => $data['kode']
 			];
 
@@ -1862,6 +1869,7 @@ class Surat extends CI_Controller
 				'namaSurat' => 'Surat Peringatan Karyawan',
 				'penerima' => '_HR and Legal_',
 				'perihal' => "",
+				'link' => 'surat/show/detail_surat/surat_peringatan/' . $lastSpId . '/1',
 				'kode' => $data['kode']
 			];
 
@@ -1956,7 +1964,8 @@ class Surat extends CI_Controller
 				'idPenerima2' 	=> 58,
 				'namaSurat' 	=> 'Surat Tugas',
 				'penerima' 	    => '_HR and Legal_',
-				'perihal' 	    => $data['keperluan'],
+				'perihal' 	    => $data['perihal'],
+				'link' 	        => 'surat/show/detail_surat/st/' . $lastStId . '/1',
 				'kode' 	        => $kode
 			];
 
@@ -2139,7 +2148,8 @@ class Surat extends CI_Controller
 				'idPenerima2' 	=> 58,
 				'namaSurat' 	=> 'Surat Rekomendasi',
 				'penerima' 	    => '_General Manager_',
-				'perihal' 	    => $data['keperluan'],
+				'perihal' 	    => $data['perihal'],
+				'link' 	        => 'surat/show/detail_surat/rekom/' . $lastStId . '/1',
 				'kode' 	        => $kode
 			];
 
@@ -2234,6 +2244,7 @@ class Surat extends CI_Controller
 				'namaSurat' 	=> 'Surat Keterangan Aktif Bekerja',
 				'penerima' 	    => '_HR And Legal_',
 				'perihal' 	    => "",
+				'link' 	        => 'surat/show/detail_surat/keterangan/' . $lastStId . '/1',
 				'kode' 	        => $kode
 			];
 			$this->notifWaAddSurat(2, $dataWa);
@@ -8517,6 +8528,7 @@ class Surat extends CI_Controller
 				'kodeSurat' 	=> $detail['kode'],
 				'namaPengaju' 	=> $namaPengaju,
 				'perihal' 		=> $detail['perihal'],
+				'link' 		    => !empty($detail['link']) ? $detail['link'] : '',
 				'namaPenerima' 	=> urlencode($detail['penerima'])
 			];
 			waSuratOpen($dataWa);
