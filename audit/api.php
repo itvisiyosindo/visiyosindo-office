@@ -100,12 +100,12 @@ if ($action === 'save_state') {
         $mergedDelPbok   = array_values(array_unique(array_merge($existingDelPbok, $inputDelPbok)));
 
         $mergedState = [
-            'edited_employees' => $mergedEdited,
-            'edited_pboks'     => $mergedEditedPboks,
-            'deleted_emp_ids'  => $mergedDelEmp,
-            'deleted_pbok_ids' => $mergedDelPbok,
-            'pbokList'         => !empty($inputData['pbokList']) ? $inputData['pbokList'] : (isset($existing['pbokList']) ? $existing['pbokList'] : []),
-            'employees'        => !empty($inputData['employees']) ? $inputData['employees'] : (isset($existing['employees']) ? $existing['employees'] : []),
+            'edited_employees' => isset($inputData['edited_employees']) ? $inputData['edited_employees'] : $existingEdited,
+            'edited_pboks'     => isset($inputData['edited_pboks']) ? $inputData['edited_pboks'] : $existingEditedPboks,
+            'deleted_emp_ids'  => isset($inputData['deleted_emp_ids']) ? $inputData['deleted_emp_ids'] : $existingDelEmp,
+            'deleted_pbok_ids' => isset($inputData['deleted_pbok_ids']) ? $inputData['deleted_pbok_ids'] : $existingDelPbok,
+            'pbokList'         => isset($inputData['pbokList']) ? $inputData['pbokList'] : (isset($existing['pbokList']) ? $existing['pbokList'] : []),
+            'employees'        => isset($inputData['employees']) ? $inputData['employees'] : (isset($existing['employees']) ? $existing['employees'] : []),
             'findings'         => isset($inputData['findings']) ? $inputData['findings'] : (isset($existing['findings']) ? $existing['findings'] : []),
             'plans'            => isset($inputData['plans']) ? $inputData['plans'] : (isset($existing['plans']) ? $existing['plans'] : []),
             'cars'             => isset($inputData['cars']) ? $inputData['cars'] : (isset($existing['cars']) ? $existing['cars'] : []),

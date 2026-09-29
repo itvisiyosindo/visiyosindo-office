@@ -1407,11 +1407,17 @@ function handleSaveManualPbok(event) {
         return;
     }
 
+    // Un-blacklist jika pernah dihapus
+    deletedPbokIds = deletedPbokIds.filter(x => x !== code.toLowerCase());
+    deletedEmpIds = deletedEmpIds.filter(x => x !== empName.toLowerCase() && x !== String(empId).toLowerCase());
+    localStorage.setItem('deleted_pbok_ids', JSON.stringify(deletedPbokIds));
+    localStorage.setItem('deleted_emp_ids', JSON.stringify(deletedEmpIds));
+
     const newPbok = {
         id: code + '-' + Date.now(),
         code: code,
-        pengguna_id: empId || '771',
-        nik: empId ? ('EMP-' + empId) : '1471111011990025',
+        pengguna_id: empId || 'EMP-' + Date.now(),
+        nik: empId ? ('EMP-' + empId) : ('EMP-' + Date.now()),
         name: empName,
         dept: 'Operations & Logistics',
         tenure: '2024 - 2026 (Masa Menjabat)',
@@ -1433,33 +1439,39 @@ function handleSaveManualPbok(event) {
         emp = {
             id: empId || String(Date.now()),
             pengguna_id: empId || String(Date.now()),
-            nik: empId ? ('EMP-' + empId) : '1471111011990025',
+            nik: empId ? ('EMP-' + empId) : ('EMP-' + Date.now()),
             name: empName,
             dept: 'Operations & Logistics',
             role: 'Staff Operasional',
-            kpi: 92,
-            quality: 4.5,
-            sop: 95,
-            attendance: 98,
+            kpi: 90,
+            quality: 4.0,
+            sop: 92,
+            attendance: 95,
             risk: 'Low',
             status: 'Terverifikasi',
             tenure: '2024 - 2026 (Masa Menjabat)'
         };
-        auditState.employees.push(emp);
+        auditState.employees.unshift(emp);
     }
 
-    auditState.pbokList.unshift(newPbok);
+    auditState.pbokList.unshift(applyPbokEdits(newPbok));
+    deduplicateEmployees();
+    auditState.filteredEmployees = [...auditState.employees];
+    auditState.filteredPbok = [...auditState.pbokList];
+
     saveStateToStorage();
+    updateDepartmentFilters();
 
     closeModal('addPbokManualModal');
     renderTables();
     renderOverview();
     renderCharts();
 
-    alert(`✅ Berhasil menambahkan pengajuan ${type} (${code}) senilai ${ExcelAuditEngine.formatRupiah(amount)} untuk ${empName}!`);
+    if (activeTenureEmployee && (activeTenureEmployee.name.toLowerCase() === empName.toLowerCase() || String(activeTenureEmployee.id) === String(empId))) {
+        openEmployeeTenureModal(activeTenureEmployee.nik, activeTenureEmployee.name, activeTenureEmployee.id);
+    }
 
-    // Jika window modal tenure karyawan ini terbuka, refresh isinya
-    openEmployeeTenureModal(emp.nik, emp.name, emp.id);
+    alert(`✅ Berhasil menambahkan pengajuan ${type} (${code}) senilai ${ExcelAuditEngine.formatRupiah(amount)} untuk ${empName}!`);
 }
 
 function renderFindingsTable() {
@@ -1723,25 +1735,80 @@ function setupModals() {
             const name = document.getElementById('inputPbokName').value.trim();
             const dept = document.getElementById('inputPbokDept').value;
             const tenure = document.getElementById('inputPbokTenure').value.trim();
-            const amount = parseFloat(document.getElementById('inputPbokAmount').value);
+            const amount = parseFloat(document.getElementById('inputPbokAmount').value) || 0;
             const item = document.getElementById('inputPbokItem').value.trim();
             const physicalStatus = document.getElementById('inputPbokPhysical').value;
             const lossStatus = document.getElementById('inputPbokLossStatus').value;
             const lossAmount = parseFloat(document.getElementById('inputPbokLossAmount').value || 0);
-            const officeUrl = document.getElementById('inputPbokOfficeUrl')?.value.trim();
+            const officeUrl = document.getElementById('inputPbokOfficeUrl')?.value.trim() || '';
             const notes = document.getElementById('inputPbokNotes').value.trim();
 
-            auditState.pbokList.unshift({
-                id: Date.now(),
-                code, nik, name, dept, tenure, item, amount, physicalStatus, lossStatus, lossAmount, notes, officeUrl
-            });
+            if (!code || !name) {
+                alert('Mohon lengkapi Kode Pengajuan dan Nama Pemohon!');
+                return;
+            }
 
+            // Pastikan tidak terblokir di blacklist
+            deletedPbokIds = deletedPbokIds.filter(x => x !== code.toLowerCase());
+            deletedEmpIds = deletedEmpIds.filter(x => x !== nik.toLowerCase() && x !== name.toLowerCase());
+            localStorage.setItem('deleted_pbok_ids', JSON.stringify(deletedPbokIds));
+            localStorage.setItem('deleted_emp_ids', JSON.stringify(deletedEmpIds));
+
+            const newPbok = {
+                id: code + '-' + Date.now(),
+                code,
+                pengguna_id: nik,
+                nik,
+                name,
+                dept,
+                tenure: tenure || '2024 - 2026 (Masa Menjabat)',
+                item,
+                amount,
+                physicalStatus,
+                lossStatus,
+                lossAmount,
+                notes,
+                officeUrl
+            };
+
+            auditState.pbokList.unshift(applyPbokEdits(newPbok));
+
+            // Auto daftarkan Karyawan jika belum terdaftar
+            const empExists = auditState.employees.some(emp => 
+                (emp.nik && emp.nik.toLowerCase() === nik.toLowerCase()) || 
+                (emp.name && emp.name.toLowerCase() === name.toLowerCase())
+            );
+
+            if (!empExists) {
+                auditState.employees.unshift(applyEmployeeEdits({
+                    id: nik || `EMP-${Date.now()}`,
+                    pengguna_id: nik || `USR-${Date.now()}`,
+                    nik: nik || `EMP-${Date.now()}`,
+                    name: name,
+                    dept: dept,
+                    role: 'Staff / Pemohon',
+                    kpi: 90,
+                    quality: 4.0,
+                    sop: 92,
+                    attendance: 95,
+                    risk: lossAmount > 0 ? 'Medium' : 'Low',
+                    status: 'Terverifikasi',
+                    tenure: tenure || '2024 - 2026 (Masa Menjabat)'
+                }));
+            }
+
+            deduplicateEmployees();
+            auditState.filteredEmployees = [...auditState.employees];
             auditState.filteredPbok = [...auditState.pbokList];
+
             saveStateToStorage();
+            updateDepartmentFilters();
             renderOverview();
             renderCharts();
             renderTables();
             closePbokModal();
+
+            alert(`✅ Berhasil menambahkan pengajuan belanja "${code}" untuk ${name}!`);
         });
     }
 
@@ -1771,13 +1838,22 @@ function setupModals() {
             const status = document.getElementById('inputStatus').value;
             const notes = document.getElementById('inputNotes').value.trim();
 
+            if (!name) {
+                alert('Mohon isi nama karyawan!');
+                return;
+            }
+
+            // Un-blacklist jika pernah dihapus
+            deletedEmpIds = deletedEmpIds.filter(x => x !== nik.toLowerCase() && x !== name.toLowerCase());
+            localStorage.setItem('deleted_emp_ids', JSON.stringify(deletedEmpIds));
+
             const newEmp = applyEmployeeEdits({
-                id: `EMP-${Date.now()}`,
-                pengguna_id: `USR-${Date.now()}`,
+                id: nik || `EMP-${Date.now()}`,
+                pengguna_id: nik || `USR-${Date.now()}`,
                 nik: nik || `EMP-${Date.now()}`,
                 name: name,
                 dept: dept,
-                role: role,
+                role: role || 'Staff',
                 kpi: kpi,
                 quality: quality,
                 sop: sop,
