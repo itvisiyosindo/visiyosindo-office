@@ -711,6 +711,15 @@ function waSuratOpen($data)
 {
 	$data['perihal']    = cekPerihal($data['perihal']);
 
+	$linkUrl = "https://office.visiyosindo.id";
+	if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
+		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
+	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
+		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Pengajuan ' . $data['namaSurat'] . '*' .
@@ -718,8 +727,8 @@ function waSuratOpen($data)
 		',%0A%0A' . $data['namaPengaju'] . ' mengajukan ' . $data['namaSurat'] .
 		':%0A_Kode    : ' . $data['kodeSurat'] . '_' .
 		$data['perihal'] .
-		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada https://office.visiyosindo.id' .
-		'%0A%0ATerima Kasih';
+		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada ' . $linkUrl .
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
 	sendWa($dataWa);
 	return true;
 }
@@ -729,6 +738,13 @@ function waSuratOpenLink($data)
 {
 	$data['perihal']    = cekPerihal($data['perihal']);
 
+	$linkUrl = "https://office.visiyosindo.id";
+	if (isset($data['link']) && !empty($data['link'])) {
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
+		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Pengajuan ' . $data['namaSurat'] . '*' .
@@ -736,8 +752,8 @@ function waSuratOpenLink($data)
 		',%0A%0A' . $data['namaPengaju'] . ' mengajukan ' . $data['namaSurat'] .
 		':%0A_Kode    : ' . $data['kodeSurat'] . '_' .
 		$data['perihal'] .
-		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada ' . $data['urlNotif'] .
-		'%0A%0ATerima Kasih';
+		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada ' . $linkUrl .
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
 	sendWa($dataWa);
 	return true;
 }
@@ -1848,20 +1864,20 @@ function waSuratReject($data)
 
 	$linkUrl = "https://office.visiyosindo.id";
 	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl .= '/' . $data['link'];
+		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
 	}
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Penolakan ' . $data['namaSurat'] . '*' .
 		'%0A%0ADear ' . $data['namaPengaju'] .
-		',%0A%0A ' . $data['namaSurat'] . ' yang anda ajukan:' .
+		',%0A%0A' . $data['namaSurat'] . ' yang anda ajukan:' .
 		'%0A_Kode    : ' . $data['kodeSurat'] . '_' .
 		$data['perihal'] .
 		'%0A%0ATidak disetujui oleh: ' . $data['namaPenolak'] .
 		'%0A%0ASegera hubungi ' . $data['namaPenolak'] . ' pada nomor *' . $data['noPenolak'] . '*' .
 		'%0A%0ASegera periksa detail surat pada ' . $linkUrl .
-		'%0A%0ATerima Kasih';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
 	sendWa($dataWa);
 	return true;
 }
@@ -1876,7 +1892,7 @@ function waSlipGaji($data, $link)
 		'%0A%0AYth ' . $data['penerima'] .
 		'%0A%0AKami menginformasikan ' . $data['namaSurat'] .
 		'%0A%0AMohon Segera periksa Slip Gaji Anda dengan tautan link berikut ini: ' . $link .
-		'%0A%0ATerima Kasih';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
 	sendWa($dataWa);
 	return true;
 }
@@ -1891,7 +1907,7 @@ function waSendBrosurdanSurat($data)
 		'%0A%0ADear ' . $data['namaPenerima'] .
 		'%0A%0AKami mengirimkan *' . $data['perihal'] . '*' .
 		'%0A%0ABerikut Link tautannya : ' . $data['link_brosur'] .
-		'%0A%0ATerima Kasih';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
 	sendWa($dataWa);
 	return true;
 }
