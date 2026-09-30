@@ -191,7 +191,7 @@
 					<tr>
 						<td style="text-align:center; "><?= $pengguna[0]->short_name ?><hr></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Muhammad Reza Fadila<hr></hr></td>
+						<td style="text-align:center; ">Mulia<hr></hr></td>
 					</tr>
 					<tr>
 						<td style="text-align:center; vertical-align:top;"><i><?= $pengguna[0]->jabatan ?></i></td>

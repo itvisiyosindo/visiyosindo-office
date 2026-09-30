@@ -206,7 +206,7 @@
 				<tr>	
 					<td rowspan="5"></td>
 					
-						<?php if(sessPenggunaId() == '737' || sessPenggunaId() == '107' || sessPenggunaId() == '764'){ ?>
+						<?php if(sessPenggunaId() == '737' || sessPenggunaId() == '107' || sessPenggunaId() == '764' || sessPenggunaId() == '777'){ ?>
 							<?php if($data_po[0]->ttd_4 == '1') {?>
 							<tr>
 							<td width="10%">No PO</td>
@@ -345,7 +345,7 @@
 			</div>
 			<br><br>
 		<div role="document">
-		<?php if (sessPenggunaId() == '107' || sessPenggunaId() == '764') { ?>
+		<?php if (sessPenggunaId() == '107' || sessPenggunaId() == '764' || sessPenggunaId() == '777') { ?>
 			<?php if($data_po[0]->ttd_4 == '1') {?>
 				<button type="button" class="btn btn-success float-right btn-submit" style="margin-left:12px; margin-top:12px;" id-po="<?=encrypt($data_po[0]->id_po)?>"> <i class="fas fa-check"></i> Submit (PO) </button>				
             <?php } 
@@ -356,7 +356,7 @@
 				<button type="button" class="btn btn-success float-right btn-submit2" style="margin-left:12px; margin-top:12px;" id-po="<?=encrypt($data_po[0]->id_po)?>"> <i class="fas fa-check"></i> Submit (Warehouse) </button>				
             <?php } 
 		}?>
-		<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '769' || sessPenggunaId() == '23' || sessPenggunaId() == '107' || sessPenggunaId() == '54' || sessPenggunaId() == '33' || sessPenggunaId() == '764') { ?>
+		<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '769' || sessPenggunaId() == '23' || sessPenggunaId() == '107' || sessPenggunaId() == '54' || sessPenggunaId() == '33' || sessPenggunaId() == '764' || sessPenggunaId() == '777') { ?>
 			
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-po="<?=encrypt($data_po[0]->id_po)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-po="<?=encrypt($data_po[0]->id_po)?>"> <i class="fas fa-times"></i> Tolak </button>				

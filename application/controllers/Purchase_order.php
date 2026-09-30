@@ -452,7 +452,7 @@ class Purchase_order extends CI_Controller
         //send notif wa
         $dataWa = [
           'id'             => $id_sp,
-          'idPenerima1'   => '764',
+          'idPenerima1'   => '777',
           'idPenerima2'   => '',
           'namaSurat'     => 'Permintaan PO Supplier',
           'penerima'       => 'Staff Accounting',

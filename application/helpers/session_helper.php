@@ -105,7 +105,7 @@ function isAccountingUser()
 	if ($CI->session->userdata('login_type') == 'Administrator') {
 		return TRUE;
 	}
-	$allowed_ids = [54, 110, 79, 106, 107, 714, 764, 87, 23, 64];
+	$allowed_ids = [54, 110, 79, 106, 107, 714, 764, 777, 87, 23, 64];
 	return in_array(sessPenggunaId(), $allowed_ids) ? TRUE : FALSE;
 }
 
