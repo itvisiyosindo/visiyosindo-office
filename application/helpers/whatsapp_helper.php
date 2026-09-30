@@ -2706,10 +2706,17 @@ function sendWaGroup($dataSend)
 		}
 	}
 
+	// 1. Coba Convia API Group
+	if (sendWaConviaGroup($dataSend)) {
+		return true;
+	}
+
+	// 2. Coba Fonnte API Group
 	if (sendWaFonnteGroup($dataSend)) {
 		return true;
 	}
 
+	// 3. Fallback Whacenter Group
 	return sendWaWhacenterGroup($dataSend);
 }
 
