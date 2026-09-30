@@ -386,6 +386,8 @@ function waSuratAprovAllToKaryawan($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = getSuratDetailUrl($data);
+
 	$dataWa['devId'] = hostWa('2');
 	$dataWa['penerima'] = $data['noPenerima'];
 	$dataWa['pesan'] = '*Anda mendapatkan Surat Peringatan*' .
@@ -398,7 +400,7 @@ function waSuratAprovAllToKaryawan($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0AMohon segera periksa detail surat pada https://office.visiyosindo.id dan hubungi GA jika diperlukan.' .
+		'%0A%0AMohon segera periksa detail surat pada ' . $linkUrl . ' dan hubungi GA jika diperlukan.' .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -626,6 +628,8 @@ function waSuratAprovAllToKaryawanTugas($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = getSuratDetailUrl($data);
+
 	$dataWa['devId'] = hostWa('2');
 	$dataWa['penerima'] = $data['noPenerima'];
 	$dataWa['pesan'] = '*Anda mendapatkan Surat Tugas*' .
@@ -640,7 +644,7 @@ function waSuratAprovAllToKaryawanTugas($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0AMohon segera periksa detail surat pada https://office.visiyosindo.id dan hubungi Legal/HR jika diperlukan.' .
+		'%0A%0AMohon segera periksa detail surat pada ' . $linkUrl . ' dan hubungi Legal/HR jika diperlukan.' .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return true;
@@ -707,18 +711,115 @@ function cekTtd($param)
 	return $param;
 }
 
+function getSuratDetailUrl($data)
+{
+	if (isset($data['link']) && !empty($data['link'])) {
+		if (strpos($data['link'], 'http://') === 0 || strpos($data['link'], 'https://') === 0) {
+			return $data['link'];
+		}
+		if (strpos($data['link'], '/') !== false) {
+			return 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
+		}
+	}
+
+	if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
+		if (strpos($data['urlNotif'], 'http://') === 0 || strpos($data['urlNotif'], 'https://') === 0) {
+			return $data['urlNotif'];
+		}
+		if (strpos($data['urlNotif'], '/') !== false) {
+			return 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
+		}
+	}
+
+	if (isset($data['idBA']) && !empty($data['idBA'])) {
+		return 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
+	}
+
+	$id = null;
+	if (isset($data['id']) && !empty($data['id'])) {
+		$id = $data['id'];
+	} else if (isset($data['idSurat']) && !empty($data['idSurat'])) {
+		$id = $data['idSurat'];
+	} else if (isset($data['link']) && is_numeric($data['link'])) {
+		$id = $data['link'];
+	}
+
+	if (!empty($id)) {
+		$kode = isset($data['kodeSurat']) ? strtoupper($data['kodeSurat']) : '';
+		$nama = isset($data['namaSurat']) ? strtolower($data['namaSurat']) : '';
+
+		if (strpos($kode, '/SPP/') !== false || strpos($nama, 'permintaan pembayaran') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/spp/' . $id . '/1';
+		}
+		if (strpos($kode, '/PBOK/') !== false || strpos($nama, 'operasional kantor') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pbok/' . $id . '/1';
+		}
+		if (strpos($kode, '/PB/') !== false || strpos($nama, 'perjalanan dinas') !== false || strpos($nama, 'biaya dinas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/PB/' . $id . '/1';
+		}
+		if (strpos($kode, '/PKK/') !== false || strpos($nama, 'klaim kas') !== false) {
+			if (strpos($kode, 'ETOLL') !== false || strpos($nama, 'e-toll') !== false) {
+				return 'https://office.visiyosindo.id/surat/show/detail_surat/pkketoll/' . $id . '/1';
+			}
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pkk/' . $id . '/1';
+		}
+		if (strpos($kode, '/PPA/') !== false || strpos($nama, 'pemeliharaan aset') !== false || strpos($nama, 'pembelian dan pemeliharaan') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/ppa/' . $id . '/1';
+		}
+		if (strpos($kode, '/GC/') !== false || strpos($nama, 'grab') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/gc/' . $id . '/1';
+		}
+		if (strpos($kode, '/KG/') !== false || strpos($kode, '/LKG/') !== false || strpos($nama, 'kunjungan gudang') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/kg/' . $id . '/1';
+		}
+		if (strpos($nama, 'approval') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/approval/' . $id . '/1';
+		}
+		if (strpos($kode, '/PD/') !== false || strpos($nama, 'dinas marketing') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd/' . $id . '/1';
+		}
+		if (strpos($kode, '/SD/') !== false || strpos($nama, 'surat dinas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/sd/' . $id . '/1';
+		}
+		if (strpos($kode, '/PDK/') !== false || strpos($nama, 'dinas karyawan') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd_karyawan/' . $id . '/1';
+		}
+		if (strpos($kode, '/PDT/') !== false || strpos($nama, 'dinas teknisi') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd_teknisi/' . $id . '/1';
+		}
+		if (strpos($kode, '/SP/') !== false || strpos($nama, 'peringatan') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/surat_peringatan/' . $id . '/1';
+		}
+		if (strpos($kode, '/ST/') !== false || strpos($nama, 'surat tugas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/st/' . $id . '/1';
+		}
+		if (strpos($kode, '/REKOM/') !== false || strpos($nama, 'rekomendasi') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/rekom/' . $id . '/1';
+		}
+		if (strpos($kode, '/KET/') !== false || strpos($nama, 'keterangan') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/keterangan/' . $id . '/1';
+		}
+		if (strpos($kode, '/BA/') !== false || strpos($nama, 'berita acara') !== false) {
+			return 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $id;
+		}
+		if (strpos($kode, '/CUTI/') !== false || strpos($nama, 'cuti') !== false) {
+			return 'https://office.visiyosindo.id/surat_part_two/show/detail/cuti/' . $id;
+		}
+		if (strpos($kode, '/IJK/') !== false || strpos($nama, 'jam kerja') !== false) {
+			return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_jam_kerja/' . $id;
+		}
+		if (strpos($nama, 'meninggalkan') !== false) {
+			return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_meninggalkan/' . $id;
+		}
+	}
+
+	return "https://office.visiyosindo.id";
+}
+
 function waSuratOpen($data)
 {
 	$data['perihal']    = cekPerihal($data['perihal']);
-
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
-		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
-	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
-		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
-	}
+	$linkUrl            = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -737,13 +838,7 @@ function waSuratOpen($data)
 function waSuratOpenLink($data)
 {
 	$data['perihal']    = cekPerihal($data['perihal']);
-
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
-		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
-	}
+	$linkUrl            = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1669,12 +1764,7 @@ function waSuratAprovOnProg($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
-		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1703,12 +1793,7 @@ function waSuratAprovOnProgDir($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
-		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1738,12 +1823,7 @@ function waSuratAprovAll($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
-		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1772,12 +1852,7 @@ function waSuratAprovGABA($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['idBA']) && !empty($data['idBA'])) {
-		$linkUrl = 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1806,6 +1881,8 @@ function waSijkEngineer($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
+	$linkUrl = getSuratDetailUrl($data);
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
@@ -1819,7 +1896,7 @@ function waSijkEngineer($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada https://office.visiyosindo.id' .
+		'%0A%0ASegera periksa detail surat pada ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return TRUE;
@@ -1832,6 +1909,8 @@ function waIzinCutiEngineer($data)
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
+
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1846,7 +1925,7 @@ function waIzinCutiEngineer($data)
 		$data['ttd_sebelum2'] .
 		$data['ttd_sebelum3'] .
 		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada https://office.visiyosindo.id' .
+		'%0A%0ASegera periksa detail surat pada ' . $linkUrl .
 		'%0A%0ATerima Kasih';
 	sendWa($dataWa);
 	return TRUE;
@@ -1861,12 +1940,7 @@ function waSuratAprovAllToFinance($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
-		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1921,12 +1995,7 @@ function waSuratAprovAllToDirector($data)
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	} else if (isset($data['urlNotif']) && !empty($data['urlNotif'])) {
-		$linkUrl = (strpos($data['urlNotif'], 'http') === 0) ? $data['urlNotif'] : 'https://office.visiyosindo.id/' . ltrim($data['urlNotif'], '/');
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
@@ -1949,11 +2018,7 @@ function waSuratAprovAllToDirector($data)
 function waSuratReject($data)
 {
 	$data['perihal'] = cekPerihal($data['perihal']);
-
-	$linkUrl = "https://office.visiyosindo.id";
-	if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	}
+	$linkUrl = getSuratDetailUrl($data);
 
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];

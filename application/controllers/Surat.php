@@ -8927,6 +8927,8 @@ class Surat extends CI_Controller
 			}
 			$nope           = $dataPenerima[0]->no_hp;
 			$dataWa = [
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/spp/' . $detail['id'] . '/1',
 				'namaSurat' 	=> $detail['namaSurat'],
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $kode,
@@ -8985,13 +8987,14 @@ class Surat extends CI_Controller
 			$namaSP           = $dataPenerimaSP[0]->nama;
 
 			$dataWa = [
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/surat_peringatan/' . $detail['id'] . '/1',
 				'namaSurat' 	=> $namaSurat,
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $kode,
 				'namaPengaju' 	=> $namaPengaju,
 				'perihal' 		=> $perihal,
-				'namaSP' 			=> $namaSP,
-				'link' 		=> $detail['id'],
+				'namaSP' 		=> $namaSP,
 				'namaPenerima' 	=> $detail['penerima'],
 				'ttd_sebelum1' 	=> $detail['ttd_sebelum1'],
 				'ttd_sebelum2' 	=> $detail['ttd_sebelum2'],
@@ -9044,12 +9047,13 @@ class Surat extends CI_Controller
 			$nope           = $dataPenerima[0]->no_hp;
 
 			$dataWa = [
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/keterangan/' . $detail['id'] . '/1',
 				'namaSurat' 	=> $namaSurat,
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $kode,
 				'namaPengaju' 	=> $namaPengaju,
 				'perihal' 		=> $perihal,
-				'link' 		=> $detail['id'],
 				'namaPenerima' 	=> $detail['penerima'],
 				'ttd_sebelum1' 	=> $detail['ttd_sebelum1'],
 				'ttd_sebelum2' 	=> $detail['ttd_sebelum2'],
@@ -9099,16 +9103,18 @@ class Surat extends CI_Controller
 			$dataPenerima = $this->md_pengguna->getById($idpenerima);
 			$nope = $dataPenerima[0]->no_hp;
 			$dataWa = [
-				'namaSurat' => $detail['namaSurat'],
-				'noPenerima' => $nope,
-				'kodeSurat' => $kode,
-				'namaPengaju' => $namaPengaju,
-				'perihal' => $perihal,
-				'namaPenerima' => $detail['penerima'],
-				'ttd_sebelum1' => $detail['ttd_sebelum1'],
-				'ttd_sebelum2' => $detail['ttd_sebelum2'],
-				'ttd_sebelum3' => $detail['ttd_sebelum3'],
-				'ttd_sebelum4' => ''
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/pd_teknisi/' . $detail['id'] . '/1',
+				'namaSurat'     => $detail['namaSurat'],
+				'noPenerima'    => $nope,
+				'kodeSurat'     => $kode,
+				'namaPengaju'   => $namaPengaju,
+				'perihal'       => $perihal,
+				'namaPenerima'  => $detail['penerima'],
+				'ttd_sebelum1'  => $detail['ttd_sebelum1'],
+				'ttd_sebelum2'  => $detail['ttd_sebelum2'],
+				'ttd_sebelum3'  => $detail['ttd_sebelum3'],
+				'ttd_sebelum4'  => ''
 			];
 
 			if ($param == '1') {
@@ -9154,16 +9160,18 @@ class Surat extends CI_Controller
 			$dataPenerima = $this->md_pengguna->getById($idpenerima);
 			$nope = $dataPenerima[0]->no_hp;
 			$dataWa = [
-				'namaSurat' => $detail['namaSurat'],
-				'noPenerima' => $nope,
-				'kodeSurat' => $kode,
-				'namaPengaju' => $namaPengaju,
-				'perihal' => $perihal,
-				'namaPenerima' => $detail['penerima'],
-				'ttd_sebelum1' => $detail['ttd_sebelum1'],
-				'ttd_sebelum2' => $detail['ttd_sebelum2'],
-				'ttd_sebelum3' => $detail['ttd_sebelum3'],
-				'ttd_sebelum4' => ''
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/surat_peringatan/' . $detail['id'] . '/1',
+				'namaSurat'     => $detail['namaSurat'],
+				'noPenerima'    => $nope,
+				'kodeSurat'     => $kode,
+				'namaPengaju'   => $namaPengaju,
+				'perihal'       => $perihal,
+				'namaPenerima'  => $detail['penerima'],
+				'ttd_sebelum1'  => $detail['ttd_sebelum1'],
+				'ttd_sebelum2'  => $detail['ttd_sebelum2'],
+				'ttd_sebelum3'  => $detail['ttd_sebelum3'],
+				'ttd_sebelum4'  => ''
 			];
 
 			if ($param == '1') {
@@ -9205,6 +9213,8 @@ class Surat extends CI_Controller
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
 			$nope           = $dataPenerima[0]->no_hp;
 			$dataWa = [
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/PB/' . $detail['id'] . '/1',
 				'namaSurat' 	=> $detail['namaSurat'],
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $kode,
@@ -9255,6 +9265,8 @@ class Surat extends CI_Controller
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
 			$nope           = $dataPenerima[0]->no_hp;
 			$dataWa = [
+				'id'            => $detail['id'],
+				'link'          => 'surat/show/detail_surat/gc/' . $detail['id'] . '/1',
 				'namaSurat' 	=> $detail['namaSurat'],
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $kode,
@@ -9296,6 +9308,8 @@ class Surat extends CI_Controller
 
 		//send notif wa
 		$dataWa = [
+			'id'            => $detail['idSurat'],
+			'link'          => 'surat/show/detail_surat/PB/' . $detail['idSurat'] . '/1',
 			'namaSurat' 	=> $detail['namaSurat'],
 			'noPenerima' 	=> $nope,
 			'kodeSurat' 	=> $kode,
