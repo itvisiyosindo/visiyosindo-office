@@ -382,6 +382,8 @@ class Surat extends CI_Controller
 			}
 			//send notif wa
 			$dataWa = [
+				'id'            => $lastPbokId,
+				'link'          => 'surat/show/detail_surat/pbok/' . $lastPbokId . '/1',
 				'idPenerima1' 	=> 107,
 				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Pengajuan Biaya Operasional Kantor',
@@ -8495,7 +8497,7 @@ class Surat extends CI_Controller
 	{
 		//ambil data pengaju
 		$ambilDataPengaju 	= $this->md_pengguna->getById(sessPenggunaId());
-		$namaPengaju		= $ambilDataPengaju[0]->nama;
+		$namaPengaju		= !empty($ambilDataPengaju) ? $ambilDataPengaju[0]->nama : 'User';
 
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
@@ -8517,13 +8519,79 @@ class Surat extends CI_Controller
 			ini_set('display_errors', 0);
 			//
 			$nope           = $dataPenerima[0]->no_hp;
+			$link_detail    = !empty($detail['link']) ? $detail['link'] : '';
+
+			// Auto detect / fallback URL jika belum diisi
+			if (empty($link_detail)) {
+				$kode = !empty($detail['kode']) ? $detail['kode'] : '';
+				$idSurat = !empty($detail['id']) ? $detail['id'] : '';
+
+				if (empty($idSurat) && !empty($kode)) {
+					if (strpos($kode, 'PBOK') !== false) {
+						$row = $this->db->select('id_pbok')->where('kode_pbok', $kode)->get('surat_pbok')->row();
+						if ($row) $idSurat = $row->id_pbok;
+					} else if (strpos($kode, 'SPP') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_permintaan_pembayaran')->row();
+						if ($row) $idSurat = $row->id;
+					} else if (strpos($kode, 'PB') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_permintaan_biaya')->row();
+						if ($row) $idSurat = $row->id;
+					} else if (strpos($kode, 'GC') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_gojek_corp')->row();
+						if ($row) $idSurat = $row->id;
+					} else if (strpos($kode, 'PKK') !== false) {
+						$row = $this->db->select('id_pkk')->where('kode_pkk', $kode)->get('surat_pkk')->row();
+						if ($row) $idSurat = $row->id_pkk;
+					} else if (strpos($kode, 'PPA') !== false) {
+						$row = $this->db->select('id_ppa')->where('kode_ppa', $kode)->get('surat_ppa')->row();
+						if ($row) $idSurat = $row->id_ppa;
+					} else if (strpos($kode, 'KG') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_kunjungan_gudang')->row();
+						if ($row) $idSurat = $row->id;
+					} else if (strpos($kode, 'SD') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_dinas')->row();
+						if ($row) $idSurat = $row->id;
+					} else if (strpos($kode, 'PD') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_permintaan_dinas')->row();
+						if ($row) $idSurat = $row->id;
+					} else if (strpos($kode, 'ST') !== false) {
+						$row = $this->db->select('id')->where('kode', $kode)->get('surat_tugas')->row();
+						if ($row) $idSurat = $row->id;
+					}
+				}
+
+				if (!empty($idSurat)) {
+					if (strpos($kode, 'PBOK') !== false) {
+						$link_detail = 'surat/show/detail_surat/pbok/' . $idSurat . '/1';
+					} else if (strpos($kode, 'PB') !== false) {
+						$link_detail = 'surat/show/detail_surat/PB/' . $idSurat . '/1';
+					} else if (strpos($kode, 'SPP') !== false) {
+						$link_detail = 'surat/show/detail_surat/spp/' . $idSurat . '/1';
+					} else if (strpos($kode, 'GC') !== false) {
+						$link_detail = 'surat/show/detail_surat/gc/' . $idSurat . '/1';
+					} else if (strpos($kode, 'PKK') !== false) {
+						$link_detail = 'surat/show/detail_surat/pkk/' . $idSurat . '/1';
+					} else if (strpos($kode, 'PPA') !== false) {
+						$link_detail = 'surat/show/detail_surat/ppa/' . $idSurat . '/1';
+					} else if (strpos($kode, 'KG') !== false) {
+						$link_detail = 'surat/show/detail_surat/kg/' . $idSurat . '/1';
+					} else if (strpos($kode, 'SD') !== false) {
+						$link_detail = 'surat/show/detail_surat/sd/' . $idSurat . '/1';
+					} else if (strpos($kode, 'PD') !== false) {
+						$link_detail = 'surat/show/detail_surat/pd/' . $idSurat . '/1';
+					} else if (strpos($kode, 'ST') !== false) {
+						$link_detail = 'surat/show/detail_surat/st/' . $idSurat . '/1';
+					}
+				}
+			}
+
 			$dataWa = [
 				'namaSurat' 	=> $detail['namaSurat'],
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $detail['kode'],
 				'namaPengaju' 	=> $namaPengaju,
 				'perihal' 		=> $detail['perihal'],
-				'link' 		    => !empty($detail['link']) ? $detail['link'] : '',
+				'link' 		    => $link_detail,
 				'namaPenerima' 	=> urlencode($detail['penerima'])
 			];
 			waSuratOpen($dataWa);
