@@ -2382,22 +2382,16 @@ class Surat extends CI_Controller
 				$page_data['modal1'] 			= $this->md_surat_list->countApprovalModal($param3, 1)->num_rows();
 				// var_dump($page_data['detail_approval']);
 				// die; 
-				//Hanya Managemen dan marketing itu sendiri
-				$nama_marketing = $this->md_surat_list->getApprovalById($param3);
-				$namaMar = $nama_marketing[0]->nama;
-				if (sessPenggunaId() == '1' || sessPenggunaId() == '33' || sessPenggunaId() == '23' || sessPenggunaId() == '72' || sessPenggunaId() == '54' || sessPenggunaId() == '64' || sessPenggunaId() == '107' || sessPenggunaId() == '107' || sessNama() == $namaMar) {
-
-					//Untuk merangkum pergantian format
-					$approval					= $this->md_surat_list->getApprovalById($param3);
-					if ($approval[0]->id_approval > 1325) {
-						$page_data['page_name']     = 'surat/v_detail_approval';
-					} else if ($approval[0]->id_approval > 1162 && $approval[0]->id_approval <= 1325) {
-						$page_data['page_name']     = 'surat/v_detail_approval_3';
-					} else if ($approval[0]->id_approval > 1026 && $approval[0]->id_approval <= 1162) {
-						$page_data['page_name']     = 'surat/v_detail_approval_2';
-					} else {
-						$page_data['page_name']     = 'surat/v_detail_approval_1';
-					}
+				//Untuk merangkum pergantian format
+				$approval					= $this->md_surat_list->getApprovalById($param3);
+				if (!empty($approval) && $approval[0]->id_approval > 1325) {
+					$page_data['page_name']     = 'surat/v_detail_approval';
+				} else if (!empty($approval) && $approval[0]->id_approval > 1162 && $approval[0]->id_approval <= 1325) {
+					$page_data['page_name']     = 'surat/v_detail_approval_3';
+				} else if (!empty($approval) && $approval[0]->id_approval > 1026 && $approval[0]->id_approval <= 1162) {
+					$page_data['page_name']     = 'surat/v_detail_approval_2';
+				} else {
+					$page_data['page_name']     = 'surat/v_detail_approval_1';
 				}
 				$page_data['page_title']    = 'Surat';
 				$page_data['page_desc']     = 'Detail Pengajuan Approval Harga';
