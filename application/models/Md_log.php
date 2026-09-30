@@ -117,14 +117,14 @@ class Md_log extends CI_Model {
         $today = date('Y-m-d');
         
         // Total Hari Ini
-        $this->db->where("DATE(tgl)", $today);
+        $this->db->where("tgl LIKE", $today . '%');
         if (isAdmin() == FALSE) {
             $this->db->where("pengguna_id !=", 15);
         }
         $total_today = $this->db->count_all_results('log');
 
         // Total Bulan Ini
-        $this->db->where("DATE_FORMAT(tgl, '%Y-%m')", $month);
+        $this->db->where("tgl LIKE", $month . '%');
         if (isAdmin() == FALSE) {
             $this->db->where("pengguna_id !=", 15);
         }
@@ -132,7 +132,7 @@ class Md_log extends CI_Model {
 
         // Total Pengguna Aktif Bulan Ini
         $this->db->select('COUNT(DISTINCT pengguna_id) as total_user');
-        $this->db->where("DATE_FORMAT(tgl, '%Y-%m')", $month);
+        $this->db->where("tgl LIKE", $month . '%');
         $this->db->where("pengguna_id IS NOT NULL");
         if (isAdmin() == FALSE) {
             $this->db->where("pengguna_id !=", 15);
@@ -158,7 +158,7 @@ class Md_log extends CI_Model {
             $this->datatables->where("lg.tgl >=", $tgl_mulai . ' 00:00:00');
             $this->datatables->where("lg.tgl <=", $tgl_selesai . ' 23:59:59');
         } else if (!empty($filter_month)){
-            $this->datatables->where("DATE_FORMAT(lg.tgl,'%Y-%m')", $filter_month);
+            $this->datatables->where("lg.tgl LIKE", $filter_month . '%');
         }
 
         if (!empty($pengguna_id)) {

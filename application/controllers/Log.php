@@ -109,7 +109,7 @@ class Log extends CI_Controller {
             $this->db->where("lg.tgl >=", $tgl_mulai . ' 00:00:00');
             $this->db->where("lg.tgl <=", $tgl_selesai . ' 23:59:59');
         } else if (!empty($filter_month)) {
-            $this->db->where("DATE_FORMAT(lg.tgl,'%Y-%m')", $filter_month);
+            $this->db->where("lg.tgl LIKE", $filter_month . '%');
         }
 
         if (!empty($pengguna_id)) {
