@@ -20,9 +20,21 @@ class Webhook_convia extends CI_Controller
 
         // Handle GET Request (Health check / Verification)
         if ($method === 'GET') {
-            // Handle hub.challenge if Meta/Convia sends verification challenge
-            $challenge = $this->input->get('hub_challenge') ?: $this->input->get('challenge');
-            if ($challenge) {
+            $challenge = isset($_GET['hub_challenge']) ? $_GET['hub_challenge'] : (isset($_GET['challenge']) ? $_GET['challenge'] : null);
+            if (!$challenge && isset($_SERVER['QUERY_STRING'])) {
+                parse_str($_SERVER['QUERY_STRING'], $queryParams);
+                if (isset($queryParams['hub.challenge'])) {
+                    $challenge = $queryParams['hub.challenge'];
+                } elseif (isset($queryParams['hub_challenge'])) {
+                    $challenge = $queryParams['hub_challenge'];
+                } elseif (isset($queryParams['challenge'])) {
+                    $challenge = $queryParams['challenge'];
+                }
+            }
+
+            if ($challenge !== null && $challenge !== '') {
+                // Header text/plain dan echo challenge langsung
+                header('Content-Type: text/plain');
                 echo $challenge;
                 return;
             }
@@ -30,8 +42,9 @@ class Webhook_convia extends CI_Controller
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'status'    => 'ok',
-                    'service'   => 'Convia WhatsApp Webhook Listener',
+                    'status'      => 'ok',
+                    'service'     => 'Convia WhatsApp Webhook Listener',
+                    'verify_token'=> 'bwVRed4Zz04ok-a9HHQyAzUiUi-neDn88dxU0XWmFhE',
                     'server_time' => date('Y-m-d H:i:s')
                 ]));
             return;
