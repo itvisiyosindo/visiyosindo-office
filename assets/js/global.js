@@ -72,6 +72,51 @@ var globalJS = function () {
         })
     })
 
+    $(document).on('click', '.btn-delete-detail', function () {
+        const id = $(this).data('id')
+        const objek = $(this).data('object')
+        Swal.fire({
+            title: 'Hapus Surat?',
+            icon: 'error',
+            text: 'Data yang sudah dihapus tidak dapat dikembalikan lagi!',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        }).then(function (result) {
+            if (result.value) {
+                $.ajax({
+                    url: objek + '/' + id,
+                    method: 'POST',
+                    dataType: "JSON",
+                    data: {
+                        csrf_token: token
+                    },
+                    success: function (resp) {
+                        if (resp.status == 'error') {
+                            Swal.fire({
+                                html: `<h4>${resp.msg}</h4>`,
+                                icon: 'error'
+                            })
+                        } else {
+                            Swal.fire({
+                                html: `<h4>${resp.msg || 'Data berhasil dihapus'}</h4>`,
+                                icon: 'success',
+                                timer: 1200,
+                                timerProgressBar: true,
+                                showConfirmButton: false,
+                            }).then(function () {
+                                window.location = 'surat/show/list/approval';
+                            })
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Gagal menghapus data', 'error')
+                    }
+                });
+            }
+        })
+    })
+
 
     return {
         notificationCheck: function () {

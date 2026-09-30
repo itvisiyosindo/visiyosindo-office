@@ -6520,13 +6520,11 @@ class Surat extends CI_Controller
 				$kode_surat	= '<a href="surat/show/detail_surat/approval/' . $row->id_approval . '">' . $row->kode . '</a>';
 				$cetak		= '<a href="surat/print_page/approval/' . $row->id_approval . '">print</a>';
 				$myObjedit = encrypt($row->id_approval);
-				$parJSONedit = encryptvym($myObjedit);
 				$li_btn   = '
 											<div class="btn-group" role="group" aria-label="First group">
 											<button type="button" class="btn btn-sm btn-primary btn-edit" title="Edit Data" data-id="' . $parJSONedit . '" data-object="surat/editapproval/' . $parJSONedit . '"><i class="bx bx-pencil"></i></button>
-							
-										</div>';
-				//	<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="'.$row->id_approval.'" data-object="surat/delete/surat/approval/'.$row->id_approval.'"><i class="bx bx-trash"></i></button> 
+											<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->id_approval . '" data-object="surat/delete/surat/approval"><i class="bx bx-trash"></i></button>
+										</div>'; 
 
 
 				$th = array();
@@ -7366,7 +7364,10 @@ class Surat extends CI_Controller
 				$kode_surat	= '<a href="surat/show/detail_surat/approval/' . $row->id_approval . '/1">' . $row->kode . '</a>';
 				$aksi = '';
 				if (isAdmin()) {
-					$aksi = '<a href="javascript:void(0)" onclick="openAdminEditModal(\'approval_harga\', \'' . encrypt($row->id_approval) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>';
+					$aksi .= '<a href="javascript:void(0)" onclick="openAdminEditModal(\'approval_harga\', \'' . encrypt($row->id_approval) . '\')" class="btn btn-sm btn-warning mr-1" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a> ';
+				}
+				if (isAdmin() || sessPenggunaId() == $row->idPengaju || isGa()) {
+					$aksi .= '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->id_approval . '" data-object="surat/delete/surat/approval"><i class="fas fa-trash"></i></button>';
 				}
 
 				$th = array();

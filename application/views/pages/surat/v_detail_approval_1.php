@@ -446,6 +446,11 @@
 			<?php } ?>
             <?php } ?>
 			<a href="surat/print_page/approval/<?=$data_approval[0]->id_approval?>" class="btn btn-warning float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-print"></i> Cetak </a>
+			<?php if (isAdmin() || sessPenggunaId() == $data_approval[0]->idPengaju || isGa()): ?>
+				<button type="button" class="btn btn-danger float-right btn-delete-detail" style="margin-left:12px; margin-top:12px;" data-id="<?= $data_approval[0]->id_approval ?>" data-object="surat/delete/surat/approval">
+					<i class="fas fa-trash mr-1"></i> Hapus
+				</button>
+			<?php endif; ?>
             <button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form float-right" style="margin-top:12px;" data-dismiss="modal">Kembali</button>
             <br>
         </div>
