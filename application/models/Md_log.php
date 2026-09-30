@@ -100,11 +100,75 @@ class Md_log extends CI_Model {
 }
 
 
-    function getAllLog(){
-        // $year = $this->input->post('tahun');
-        if ($this->input->post('filter_month')){
-            $this->datatables->where("DATE_FORMAT(lg.tgl,'%Y-%m')", $this->input->post('filter_month'));
+    function getDistinctAksi(){
+        $this->db->distinct();
+        $this->db->select('jenis_aksi');
+        $this->db->from('log');
+        $this->db->where('jenis_aksi IS NOT NULL');
+        $this->db->where('jenis_aksi !=', '');
+        $this->db->order_by('jenis_aksi', 'ASC');
+        return $this->db->get()->result();
+    }
+
+    function getSummaryStats($month = null){
+        if (!$month) {
+            $month = date('Y-m');
         }
+        $today = date('Y-m-d');
+        
+        // Total Hari Ini
+        $this->db->where("DATE(tgl)", $today);
+        if (isAdmin() == FALSE) {
+            $this->db->where("pengguna_id !=", 15);
+        }
+        $total_today = $this->db->count_all_results('log');
+
+        // Total Bulan Ini
+        $this->db->where("DATE_FORMAT(tgl, '%Y-%m')", $month);
+        if (isAdmin() == FALSE) {
+            $this->db->where("pengguna_id !=", 15);
+        }
+        $total_month = $this->db->count_all_results('log');
+
+        // Total Pengguna Aktif Bulan Ini
+        $this->db->select('COUNT(DISTINCT pengguna_id) as total_user');
+        $this->db->where("DATE_FORMAT(tgl, '%Y-%m')", $month);
+        $this->db->where("pengguna_id IS NOT NULL");
+        if (isAdmin() == FALSE) {
+            $this->db->where("pengguna_id !=", 15);
+        }
+        $res_user = $this->db->get('log')->row();
+        $total_user = $res_user ? $res_user->total_user : 0;
+
+        return [
+            'today' => $total_today,
+            'month' => $total_month,
+            'user' => $total_user
+        ];
+    }
+
+    function getAllLog(){
+        $tgl_mulai = $this->input->post('tgl_mulai');
+        $tgl_selesai = $this->input->post('tgl_selesai');
+        $filter_month = $this->input->post('filter_month');
+        $pengguna_id = $this->input->post('pengguna_id');
+        $jenis_aksi = $this->input->post('jenis_aksi');
+
+        if (!empty($tgl_mulai) && !empty($tgl_selesai)) {
+            $this->datatables->where("lg.tgl >=", $tgl_mulai . ' 00:00:00');
+            $this->datatables->where("lg.tgl <=", $tgl_selesai . ' 23:59:59');
+        } else if (!empty($filter_month)){
+            $this->datatables->where("DATE_FORMAT(lg.tgl,'%Y-%m')", $filter_month);
+        }
+
+        if (!empty($pengguna_id)) {
+            $this->datatables->where("lg.pengguna_id", $pengguna_id);
+        }
+
+        if (!empty($jenis_aksi)) {
+            $this->datatables->where("lg.jenis_aksi", $jenis_aksi);
+        }
+
         if ($this->uri->segment(1) == 'dashboard'){
             $this->datatables->where("lg.pengguna_id", sessPenggunaId());
         }
@@ -120,11 +184,11 @@ class Md_log extends CI_Model {
             pg.nama as nama_pengguna,
             lg.jenis_aksi,
             lg.keterangan,
-            lg.tgl
+            lg.tgl,
+            lg.ip_addr
         ')
         ->from('log lg')
         ->join('pengguna pg','pg.pengguna_id = lg.pengguna_id','left')
-        //->where('YEAR(lg.tgl)',$year)
         ->generate();        
     }
 
