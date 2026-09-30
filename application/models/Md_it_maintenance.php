@@ -523,7 +523,30 @@ class Md_it_maintenance extends CI_Model
 
     public function getITTechnicians()
     {
-        return $this->db->get_where('pengguna pg', "(pg.jabatan='Technology Support and Development' OR pg.jabatan='Technology Support & Development') AND pg.is_active=1")->result();
+        $this->db->select('pg.pengguna_id, pg.nama, pg.jabatan');
+        $this->db->from('pengguna pg');
+        $this->db->where('pg.is_active', 1);
+        $this->db->group_start();
+        $this->db->where("pg.jabatan LIKE", '%IT%');
+        $this->db->or_where("pg.jabatan LIKE", '%Techn%');
+        $this->db->or_where("pg.jabatan LIKE", '%Teknisi%');
+        $this->db->or_where("pg.jabatan LIKE", '%Support%');
+        $this->db->or_where("pg.jabatan LIKE", '%Develop%');
+        $this->db->or_where("pg.id_divisi", 7);
+        $this->db->or_where_in("pg.pengguna_id", [755, 769, 107, 751, 754, 72, 1]);
+        $this->db->group_end();
+        $this->db->order_by('pg.nama', 'ASC');
+        $res = $this->db->get()->result();
+
+        if (empty($res)) {
+            $this->db->select('pg.pengguna_id, pg.nama, pg.jabatan');
+            $this->db->from('pengguna pg');
+            $this->db->where('pg.is_active', 1);
+            $this->db->order_by('pg.nama', 'ASC');
+            $res = $this->db->get()->result();
+        }
+
+        return $res;
     }
 
     public function getMaintenanceStats()

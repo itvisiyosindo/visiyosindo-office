@@ -141,7 +141,7 @@
                             <select class="form-control" name="id_penerima" required>
                                 <option value="">-- Pilih Teknisi --</option>
                                 <?php foreach ($technicians as $tech) { ?>
-                                    <option value="<?= $tech->pengguna_id ?>"><?= $tech->nama ?></option>
+                                    <option value="<?= $tech->pengguna_id ?>"><?= htmlspecialchars($tech->nama) ?><?= !empty($tech->jabatan) ? ' (' . htmlspecialchars($tech->jabatan) . ')' : '' ?></option>
                                 <?php } ?>
                             </select>
                         </div>
