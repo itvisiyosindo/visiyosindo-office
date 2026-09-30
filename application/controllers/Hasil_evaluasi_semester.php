@@ -573,7 +573,7 @@ class Hasil_evaluasi_semester extends CI_Controller
             '%0A%0A- Nilai: *' . number_format($nilai, 1) . '*' .
             '%0A- Predikat: *' . $predikat['predikat'] . '*' .
             ($keterangan ? '%0A- Catatan: ' . $keterangan : '') .
-            '%0A%0A_Pesan ini dikirim otomatis oleh sistem._';
+            '%0A%0A_Sistem Office PT Visi Yosindo Medikal_';
 
           // Gunakan function private sendWaEvaluasi
           $waResult = $this->sendWaEvaluasi($pegawai->no_hp, $pesan);
@@ -809,8 +809,7 @@ class Hasil_evaluasi_semester extends CI_Controller
       '%0A%0A*TOTAL NILAI EVALUASI SEMESTER: ' . number_format($total_nilai_final, 2) . ' (' . $predikat_final['predikat'] . ' - ' . $predikat_final['label'] . ')*' .
       '%0A%0A*Catatan:*' .
       '%0ATerus tingkatkan kinerja dan kedisiplinan Anda.' .
-      '%0A%0A_Pesan ini dikirim otomatis oleh sistem Office Visiyosindo._' .
-      '%0A%0ATerima kasih.';
+      '%0A%0A_Sistem Office PT Visi Yosindo Medikal_';
 
     // Send WhatsApp dengan function private yang lebih reliable
     $waResult = $this->sendWaEvaluasi($pegawai->no_hp, $pesan);
@@ -886,7 +885,7 @@ class Hasil_evaluasi_semester extends CI_Controller
       '%0A━━━━━━━━━━━━━━━━━━━━' .
       '%0A%0AIni adalah pesan test dari sistem.' .
       '%0A%0AWaktu: ' . date('d/m/Y H:i:s') .
-      '%0A%0A_Office Visiyosindo_';
+      '%0A%0A_Sistem Office PT Visi Yosindo Medikal_';
 
     $dataWa = [
       'devId'    => hostWa('1'),
@@ -1171,7 +1170,7 @@ class Hasil_evaluasi_semester extends CI_Controller
             '%0A%0A- Nilai: *' . number_format($nilai, 1) . '*' .
             '%0A- Predikat: *' . $predikat['predikat'] . '*' .
             ($keterangan ? '%0A- Catatan: ' . $keterangan : '') .
-            '%0A%0A_Pesan ini dikirim otomatis oleh sistem._';
+            '%0A%0A_Sistem Office PT Visi Yosindo Medikal_';
 
           $waResult = $this->sendWaEvaluasi($pegawai->no_hp, $pesan);
           if ($waResult['success']) {

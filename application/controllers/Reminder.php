@@ -159,7 +159,7 @@ class Reminder extends CI_Controller {
                 "%0A%0AMohon segera mengisi laporan mingguan Anda melalui link berikut:" .
                 "%0A🔗 " . $linkLaporan .
                 "%0A%0ATerima Kasih." .
-                "%0A_Sistem Office Visiyosindo_";
+                "%0A_Sistem Office PT Visi Yosindo Medikal_";
 
             $dataSend = [
                 'devId'    => hostWa('1'),

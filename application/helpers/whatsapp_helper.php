@@ -728,7 +728,7 @@ function waSuratOpen($data)
 		':%0A_Kode    : ' . $data['kodeSurat'] . '_' .
 		$data['perihal'] .
 		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada ' . $linkUrl .
-		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo Medikal_';
 	sendWa($dataWa);
 	return true;
 }
@@ -753,7 +753,7 @@ function waSuratOpenLink($data)
 		':%0A_Kode    : ' . $data['kodeSurat'] . '_' .
 		$data['perihal'] .
 		'%0A%0ASegera periksa detail surat dan lakukan persetujuan pada ' . $linkUrl .
-		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo Medikal_';
 	sendWa($dataWa);
 	return true;
 }
@@ -1965,7 +1965,7 @@ function waSuratReject($data)
 		'%0A%0ATidak disetujui oleh: ' . $data['namaPenolak'] .
 		'%0A%0ASegera hubungi ' . $data['namaPenolak'] . ' pada nomor *' . $data['noPenolak'] . '*' .
 		'%0A%0ASegera periksa detail surat pada ' . $linkUrl .
-		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo Medikal_';
 	sendWa($dataWa);
 	return true;
 }
@@ -1980,7 +1980,7 @@ function waSlipGaji($data, $link)
 		'%0A%0AYth ' . $data['penerima'] .
 		'%0A%0AKami menginformasikan ' . $data['namaSurat'] .
 		'%0A%0AMohon Segera periksa Slip Gaji Anda dengan tautan link berikut ini: ' . $link .
-		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo Medikal_';
 	sendWa($dataWa);
 	return true;
 }
@@ -1995,7 +1995,7 @@ function waSendBrosurdanSurat($data)
 		'%0A%0ADear ' . $data['namaPenerima'] .
 		'%0A%0AKami mengirimkan *' . $data['perihal'] . '*' .
 		'%0A%0ABerikut Link tautannya : ' . $data['link_brosur'] .
-		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo_';
+		'%0A%0ATerima Kasih%0A_Sistem Office PT Visi Yosindo Medikal_';
 	sendWa($dataWa);
 	return true;
 }
@@ -2320,8 +2320,8 @@ function sendWaConvia($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
-	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesan)) {
-		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo_";
+	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
+		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo Medikal_";
 	}
 	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : (getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send');
 
@@ -2457,8 +2457,8 @@ function sendWaConviaGroup($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
-	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesan)) {
-		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo_";
+	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
+		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo Medikal_";
 	}
 	$apiUrl = defined('CONVIA_API_URL') ? CONVIA_API_URL : (getenv('CONVIA_API_URL') ?: 'https://api.convia.id/api/v1/public/messages/send');
 
@@ -2539,8 +2539,8 @@ function sendWaFonnte($dataSend)
 	}
 
 	$pesan = urldecode($dataSend['pesan']);
-	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesan)) {
-		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo_";
+	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
+		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo Medikal_";
 	}
 	$apiUrl = defined('FONNTE_API_URL') ? FONNTE_API_URL : 'https://api.fonnte.com/send';
 
@@ -2605,11 +2605,11 @@ function sendWa($dataSend)
 
 		// Pastikan footer resmi selalu ada di setiap pesan
 		$pesanDecoded = urldecode($dataSend['pesan']);
-		if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesanDecoded)) {
+		if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanDecoded)) {
 			if (strpos($dataSend['pesan'], '%0A') !== false || strpos($dataSend['pesan'], '%0a') !== false) {
-				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo_';
+				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo Medikal_';
 			} else {
-				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo_";
+				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo Medikal_";
 			}
 		}
 	}
@@ -2642,8 +2642,8 @@ function sendWaWhacenter($dataSend)
 	}
 
 	$pesanText = urldecode($dataSend['pesan']);
-	if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesanText)) {
-		$pesanText = rtrim($pesanText) . "\n_Sistem Office PT Visi Yosindo_";
+	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanText)) {
+		$pesanText = rtrim($pesanText) . "\n_Sistem Office PT Visi Yosindo Medikal_";
 	}
 	$pesan = urlencode($pesanText);
 	$url = "https://app.whacenter.com/api/send?device_id=" . urlencode($dataSend['devId']) . "&number=" . urlencode($penerima) . "&message=" . $pesan;
@@ -2697,11 +2697,11 @@ function sendWaGroup($dataSend)
 
 		// Pastikan footer resmi selalu ada di setiap pesan group
 		$pesanDecoded = urldecode($dataSend['pesan']);
-		if (!preg_match('/_Sistem Office PT Visi Yosindo_/i', $pesanDecoded)) {
+		if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanDecoded)) {
 			if (strpos($dataSend['pesan'], '%0A') !== false || strpos($dataSend['pesan'], '%0a') !== false) {
-				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo_';
+				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo Medikal_';
 			} else {
-				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo_";
+				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo Medikal_";
 			}
 		}
 	}
@@ -2857,7 +2857,7 @@ if (!function_exists('waPengajuanBaru')) {
 			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 
 		return sendWa($dataWa);
 	}
@@ -2883,7 +2883,7 @@ if (!function_exists('waPengajuanApproved')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 
 		return sendWa($dataWa);
 	}
@@ -2909,7 +2909,7 @@ if (!function_exists('waPengajuanRejected')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 
 		return sendWa($dataWa);
 	}
@@ -2942,7 +2942,7 @@ if (!function_exists('waSlipGajiBaru')) {
 			"%0A%0AYuk cek dan unduh slip gaji kamu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkSlip'] .
 			"%0A%0ATerima kasih banyak atas kerja keras dan dedikasimu yang luar biasa! Tetap semangat! 💪✨" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -2969,7 +2969,7 @@ if (!function_exists('waCutiPengajuan')) {
 			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkApproval'] .
 			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -2994,7 +2994,7 @@ if (!function_exists('waCutiDisetujui')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3019,7 +3019,7 @@ if (!function_exists('waCutiDitolak')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3046,7 +3046,7 @@ if (!function_exists('waIzinJamKerjaPengajuan')) {
 			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkApproval'] .
 			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3072,7 +3072,7 @@ if (!function_exists('waIzinJamKerjaHasil')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3099,7 +3099,7 @@ if (!function_exists('waIzinMeninggalkanPengajuan')) {
 			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkApproval'] .
 			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3125,7 +3125,7 @@ if (!function_exists('waIzinMeninggalkanHasil')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3153,7 +3153,7 @@ if (!function_exists('waWfaPengajuan')) {
 			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkApproval'] .
 			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3180,7 +3180,7 @@ if (!function_exists('waWfaHasil')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3205,7 +3205,7 @@ if (!function_exists('waSuratPeringatan')) {
 			"%0A%0AMohon segera periksa dan tindak lanjuti:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0AJika ada pertanyaan, hubungi HRD/GA." .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3229,7 +3229,7 @@ if (!function_exists('waSuratTugas')) {
 			"%0A• *Tanggal*       : " . $data['tglTugas'] .
 			"%0A• *Lokasi*         : " . $data['lokasi'] .
 			"%0A%0ADetail surat tugas:%0A🔗 " . $data['linkDetail'] .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3251,7 +3251,7 @@ if (!function_exists('waPaklaring')) {
 			"%0A%0A• *Kode Surat* : " . $data['kodeSurat'] .
 			"%0A%0ASilakan unduh melalui:%0A🔗 " . $data['linkDownload'] .
 			"%0A%0AJika ada pertanyaan, hubungi HRD." .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3273,7 +3273,7 @@ if (!function_exists('waEvaluasiReminder')) {
 			"%0A%0A• *Karyawan* : " . $data['namaPegawai'] .
 			"%0A• *Periode*    : " . $data['periode'] .
 			"%0A%0ASilakan isi penilaian:%0A🔗 " . $data['linkEvaluasi'] .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3289,7 +3289,7 @@ if (!function_exists('waEvaluasiSelesai')) {
 			"%0A%0AHasil evaluasi kinerja Anda periode *" . $data['periode'] . "* telah selesai dinilai." .
 			"%0A%0ASilakan lihat hasilnya:%0A🔗 " . $data['linkHasil'] .
 			"%0A%0AJika ada pertanyaan, hubungi HRD." .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3314,7 +3314,7 @@ if (!function_exists('waTrainingUndangan')) {
 			"%0A• *Penyelenggara*    : " . $data['penyelenggara'] .
 			"%0A%0ADetail training:%0A🔗 " . $data['linkDetail'] .
 			"%0A%0AMohon hadir tepat waktu." .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3331,7 +3331,7 @@ if (!function_exists('waTrainingReminderSertifikat')) {
 			"%0A%0A• *Nama Training* : " . $data['namaTraining'] .
 			"%0A• *Deadline*           : " . $data['deadline'] .
 			"%0A%0ASilakan upload:%0A🔗 " . $data['linkUpload'] .
-			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo_";
+			"%0A%0ATerima Kasih.%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3360,7 +3360,7 @@ if (!function_exists('waBeritaAcaraPengajuan')) {
 			"%0A%0AYuk bantu periksa dan berikan persetujuanmu melalui tautan berikut:" .
 			"%0A🔗 " . $data['linkApproval'] .
 			"%0A%0ASemangat beraktivitas dan semoga harimu menyenangkan! 🚀" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3386,7 +3386,7 @@ if (!function_exists('waBeritaAcaraHasil')) {
 			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
 			"%0A🔗 " . $data['linkDetail'] .
 			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo_";
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
@@ -3410,7 +3410,7 @@ if (!function_exists('waSalamWeekend')) {
 				"Halo *" . $data['namaKaryawan'] . "*! 🎉 Selamat berakhir pekan! " .
 				"%0A%0ATerima kasih banyak atas kerja keras dan semangatmu sepanjang minggu ini. Waktunya istirahat, recharge energi, dan nikmati waktu bersama keluarga tercinta ya." .
 				"%0A%0AHappy Weekend! Sampai jumpa di hari Senin! 🏖️✨" .
-				"%0A_Sistem Office PT Visi Yosindo_";
+				"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		}
 		return sendWa($dataWa);
 	}
@@ -3431,7 +3431,7 @@ if (!function_exists('waSalamSenin')) {
 				"Selamat pagi *" . $data['namaKaryawan'] . "*! ☀️ Semangat hari Senin!" .
 				"%0A%0ASemoga akhir pekan kemarin menyenangkan dan energimu sudah terisi penuh kembali. Yuk kita mulai minggu ini dengan senyuman dan optimisme baru!" .
 				"%0A%0AHave a productive and wonderful week ahead! 🚀💪" .
-				"%0A_Sistem Office PT Visi Yosindo_";
+				"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		}
 		return sendWa($dataWa);
 	}
