@@ -718,9 +718,16 @@
                         </div>
                         <div class="quick-info-item">
                             <i class="fas fa-phone"></i>
-                            <div class="quick-info-label">No. HP</div>
+                            <div class="quick-info-label">No. HP Pribadi</div>
                             <div class="quick-info-value"><?= $data_pengguna[0]->no_hp ?: '-' ?></div>
                         </div>
+                        <?php if (!empty($data_pengguna[0]->no_hp_kantor)) { ?>
+                        <div class="quick-info-item">
+                            <i class="fas fa-building"></i>
+                            <div class="quick-info-label">No. HP Kantor</div>
+                            <div class="quick-info-value"><?= $data_pengguna[0]->no_hp_kantor ?></div>
+                        </div>
+                        <?php } ?>
                     </div>
                 </div>
             </div>
@@ -860,16 +867,22 @@
                     </div>
                     <div class="card-body-custom">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group-modern">
                                     <label><i class="fas fa-envelope"></i> Email</label>
                                     <input class="form-control" type="email" name="email" value="<?= $data_pengguna[0]->email ?>">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group-modern">
-                                    <label><i class="fas fa-mobile-alt"></i> No. HP</label>
+                                    <label><i class="fas fa-mobile-alt"></i> No. HP Pribadi</label>
                                     <input class="form-control" type="text" name="no_hp" value="<?= $data_pengguna[0]->no_hp ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group-modern">
+                                    <label><i class="fas fa-building"></i> No. HP Kantor (Notifikasi)</label>
+                                    <input class="form-control" type="text" name="no_hp_kantor" value="<?= $data_pengguna[0]->no_hp_kantor ?>" placeholder="Opsional jika menggunakan nomor kantor">
                                 </div>
                             </div>
                         </div>
@@ -1044,6 +1057,7 @@
                         <input type="hidden" name="nik" value="<?= $data_pengguna[0]->nik ?>">
                         <input type="hidden" name="email" value="<?= $data_pengguna[0]->email ?>">
                         <input type="hidden" name="no_hp" value="<?= $data_pengguna[0]->no_hp ?>">
+                        <input type="hidden" name="no_hp_kantor" value="<?= $data_pengguna[0]->no_hp_kantor ?>">
                         <input type="hidden" name="tgl_lahir" value="<?= $data_pengguna[0]->tgl_lahir ? date('d-m-Y', strtotime($data_pengguna[0]->tgl_lahir)) : '' ?>">
                         <input type="hidden" name="pendidikan" value="<?= $data_pengguna[0]->pendidikan ?>">
                         <input type="hidden" name="status_perkawinan" value="<?= $data_pengguna[0]->id_status_perkawinan ?>">
@@ -1132,6 +1146,7 @@
                         <input type="hidden" name="nik" value="<?= $data_pengguna[0]->nik ?>">
                         <input type="hidden" name="email" value="<?= $data_pengguna[0]->email ?>">
                         <input type="hidden" name="no_hp" value="<?= $data_pengguna[0]->no_hp ?>">
+                        <input type="hidden" name="no_hp_kantor" value="<?= $data_pengguna[0]->no_hp_kantor ?>">
                         <input type="hidden" name="tgl_lahir" value="<?= $data_pengguna[0]->tgl_lahir ? date('d-m-Y', strtotime($data_pengguna[0]->tgl_lahir)) : '' ?>">
                         <input type="hidden" name="pendidikan" value="<?= $data_pengguna[0]->pendidikan ?>">
                         <input type="hidden" name="status_perkawinan" value="<?= $data_pengguna[0]->id_status_perkawinan ?>">

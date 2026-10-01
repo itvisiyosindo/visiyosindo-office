@@ -211,6 +211,7 @@ class Pengguna extends CI_Controller
             $data['no_pegawai']         = $this->input->post('no_pegawai');
             $data['status_karyawan']    = $this->input->post('status_karyawan');
             $data['no_hp']              = $this->input->post('no_hp');
+            $data['no_hp_kantor']       = $this->input->post('no_hp_kantor');
             $data['email']              = $this->input->post('email');
             $data['lama_training']      = $this->input->post('lama_training');
             $data['jabatan']            = $this->input->post('jabatan');

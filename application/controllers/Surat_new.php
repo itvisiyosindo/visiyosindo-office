@@ -355,7 +355,8 @@ class Surat_new extends CI_Controller
         'namaSurat'     => 'Permintaan Penggunaan Kendaraan Kantor',
         'penerima'       => 'Kardonal',
         'perihal'       => $data['keperluan'],
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $ambilId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -408,7 +409,8 @@ class Surat_new extends CI_Controller
         'namaSurat'     => 'Approval PO',
         'penerima'       => '_General Manager_',
         'perihal'       => $data['no_po'],
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $ambilId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -485,7 +487,8 @@ class Surat_new extends CI_Controller
         'namaSurat'     => 'Approval Expedisi',
         'penerima'       => 'Senior Accounting and Finance',
         'perihal'       => $data['nama_customer'],
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $lastGcId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -552,7 +555,8 @@ class Surat_new extends CI_Controller
         'idPenerima2'   => '',
         'namaSurat'     => 'Serah Terima Aset',
         'penerima'       => $namaTerima,
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $lastGcId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -618,7 +622,8 @@ class Surat_new extends CI_Controller
         'idPenerima2'   => '',
         'namaSurat'     => 'Serah Terima Fisik Perlengkapan',
         'penerima'       => $namaTerima,
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $lastGcId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -685,7 +690,8 @@ class Surat_new extends CI_Controller
         'idPenerima2'   => '',
         'namaSurat'     => 'Serah Terima Pekerjaan',
         'penerima'       => $namaTerima,
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $lastGcId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -730,7 +736,8 @@ class Surat_new extends CI_Controller
         'idPenerima2'   => '',
         'namaSurat'     => 'Surat Skorsing',
         'penerima'       => '_HR and Legal_',
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $ambilId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -777,7 +784,8 @@ class Surat_new extends CI_Controller
         'idPenerima2'   => '',
         'namaSurat'     => 'Approval Director',
         'penerima'       => '_HR and Legal_',
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $ambilId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -829,7 +837,8 @@ class Surat_new extends CI_Controller
         'idPenerima2'   => '',
         'namaSurat'     => 'Approval Faktur Pajak',
         'penerima'       => '_General Manager_',
-        'kode'           => $kodeFpp
+        'kode'           => $kodeFpp,
+        'id'             => $ambilId
       ];
 
       $this->notifWaAddSurat(1, $dataWa);
@@ -2885,7 +2894,9 @@ class Surat_new extends CI_Controller
         'kodeSurat'   => $detail['kode'],
         'namaPengaju' => urlencode($namaPengaju),
         'perihal'     => urlencode($detail['perihal']),
-        'namaPenerima'   => urlencode($detail['penerima'])
+        'namaPenerima'   => urlencode($detail['penerima']),
+        'id'          => isset($detail['id']) ? $detail['id'] : '',
+        'link'        => isset($detail['link']) ? $detail['link'] : (isset($detail['id']) ? $detail['id'] : '')
       ];
       waSuratOpen($dataWa);
     }
@@ -2926,7 +2937,8 @@ class Surat_new extends CI_Controller
         'namaPengaju'   => urlencode($detail['namaPengaju']),
         'namaPenerima'   => urlencode($detail['penerima']),
         'perihal'       => $detail['perihal'],
-        'link'     => $detail['id'],
+        'id'            => $detail['id'],
+        'link'          => isset($detail['link']) ? $detail['link'] : $detail['id'],
         'ttd_sebelum1'   => urlencode($detail['ttd_sebelum1']),
         'ttd_sebelum2'   => $detail['ttd_sebelum2'],
         'ttd_sebelum3'   => $detail['ttd_sebelum3'],
@@ -2974,6 +2986,8 @@ class Surat_new extends CI_Controller
       'kodeSurat'   => $detail['kode'],
       'namaPengaju' => $detail['namaPengaju'],
       'perihal'     => $detail['perihal'],
+      'id'          => isset($detail['id']) ? $detail['id'] : '',
+      'link'        => isset($detail['link']) ? $detail['link'] : (isset($detail['id']) ? $detail['id'] : ''),
       'namaPenolak' => urlencode($detail['namaPenolak']),
       'noPenolak'   => $nopePenolak
     ];

@@ -891,9 +891,9 @@ class Md_surat_new extends CI_Model
 						f.link,
 						f.ket,
 						f.jenis,
-						p.short_name as pengaju,
+						IFNULL(NULLIF(p.short_name, ""), p.nama) as pengaju,
 						p.jabatan as jabatan,
-						p2.short_name as penerima,
+						IFNULL(NULLIF(p2.short_name, ""), p2.nama) as penerima,
 						p2.jabatan as jabatan2
 						')
 						->from('approval_director f')
@@ -918,10 +918,10 @@ class Md_surat_new extends CI_Model
 						f.ket,
 						f.jenis,
 						f.ttd,
-						p.short_name as pengaju,
+						IFNULL(NULLIF(p.short_name, ""), p.nama) as pengaju,
 						p.no_pegawai as npp,
 						p.jabatan as jabatan,
-						p2.short_name as penerima,
+						IFNULL(NULLIF(p2.short_name, ""), p2.nama) as penerima,
 						p2.jabatan as jabatan2
 						')
 						->from('approval_director f')
@@ -947,9 +947,9 @@ class Md_surat_new extends CI_Model
 						f.link,
 						f.ket,
 						f.jenis,
-						p.short_name as pengaju,
+						IFNULL(NULLIF(p.short_name, ""), p.nama) as pengaju,
 						p.jabatan as jabatan,
-						p2.short_name as penerima,
+						IFNULL(NULLIF(p2.short_name, ""), p2.nama) as penerima,
 						p2.jabatan as jabatan2
 						')
 						->from('approval_director f')

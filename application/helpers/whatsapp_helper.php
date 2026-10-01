@@ -731,6 +731,15 @@ function getSuratDetailUrl($data)
 		}
 	}
 
+	if (isset($data['url']) && !empty($data['url'])) {
+		if (strpos($data['url'], 'http://') === 0 || strpos($data['url'], 'https://') === 0) {
+			return $data['url'];
+		}
+		if (strpos($data['url'], '/') !== false) {
+			return 'https://office.visiyosindo.id/' . ltrim($data['url'], '/');
+		}
+	}
+
 	if (isset($data['idBA']) && !empty($data['idBA'])) {
 		return 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $data['idBA'];
 	}
@@ -740,76 +749,206 @@ function getSuratDetailUrl($data)
 		$id = $data['id'];
 	} else if (isset($data['idSurat']) && !empty($data['idSurat'])) {
 		$id = $data['idSurat'];
+	} else if (isset($data['id_srt']) && !empty($data['id_srt'])) {
+		$id = $data['id_srt'];
 	} else if (isset($data['link']) && is_numeric($data['link'])) {
 		$id = $data['link'];
 	}
 
-	if (!empty($id)) {
-		$kode = isset($data['kodeSurat']) ? strtoupper($data['kodeSurat']) : '';
-		$nama = isset($data['namaSurat']) ? strtolower($data['namaSurat']) : '';
+	$kode = isset($data['kodeSurat']) ? trim(urldecode($data['kodeSurat'])) : (isset($data['kode']) ? trim(urldecode($data['kode'])) : '');
+	$nama = isset($data['namaSurat']) ? strtolower(trim(urldecode($data['namaSurat']))) : '';
+	$kodeUpper = strtoupper($kode);
 
-		if (strpos($kode, '/SPP/') !== false || strpos($nama, 'permintaan pembayaran') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/spp/' . $id . '/1';
-		}
-		if (strpos($kode, '/PBOK/') !== false || strpos($nama, 'operasional kantor') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/pbok/' . $id . '/1';
-		}
-		if (strpos($kode, '/PB/') !== false || strpos($nama, 'perjalanan dinas') !== false || strpos($nama, 'biaya dinas') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/PB/' . $id . '/1';
-		}
-		if (strpos($kode, '/PKK/') !== false || strpos($nama, 'klaim kas') !== false) {
-			if (strpos($kode, 'ETOLL') !== false || strpos($nama, 'e-toll') !== false) {
-				return 'https://office.visiyosindo.id/surat/show/detail_surat/pkketoll/' . $id . '/1';
+	// Jika $id belum ada tapi ada kode, query database untuk mendapatkan ID surat
+	if (empty($id) && !empty($kode) && function_exists('get_instance')) {
+		$ci = &get_instance();
+		if (isset($ci->db)) {
+			if (strpos($kodeUpper, '/S.APP/WHS/') !== false || strpos($nama, 'expedisi') !== false || strpos($nama, 'ekspedisi') !== false) {
+				$row = $ci->db->select('id')->from('surat_aprv')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/S.APP/DIR/') !== false || strpos($kodeUpper, '/APPDIR/') !== false || strpos($nama, 'approval director') !== false) {
+				$row = $ci->db->select('id')->from('approval_director')->where('kode', $kode)->limit(1)->get()->row();
+				if (empty($row)) {
+					$row = $ci->db->select('id')->from('surat_direksi')->where('kode', $kode)->limit(1)->get()->row();
+				}
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/STA/') !== false || strpos($kodeUpper, '/STFP/') !== false || strpos($kodeUpper, '/STP/') !== false) {
+				$row = $ci->db->select('id_serah')->from('surat_serah')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_serah; }
+			} else if (strpos($kodeUpper, '/AHK/') !== false) {
+				$row = $ci->db->select('id_approval')->from('surat_approval')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_approval; }
+			} else if (strpos($kodeUpper, '/SPP/') !== false || strpos($kodeUpper, '/FPP/') !== false) {
+				$row = $ci->db->select('id')->from('surat_permintaan_pembayaran')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/PBOK/') !== false) {
+				$row = $ci->db->select('id_pbok')->from('surat_pbok')->where('kode_pbok', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_pbok; }
+			} else if (strpos($kodeUpper, '/PB/') !== false || strpos($kodeUpper, '/BD/') !== false) {
+				$row = $ci->db->select('id_pb')->from('surat_biaya_dinas')->where('kode_pb', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_pb; }
+			} else if (strpos($kodeUpper, '/PKK/') !== false || strpos($kodeUpper, '/PKE/') !== false) {
+				$row = $ci->db->select('id_pkk')->from('surat_pkk')->where('kode_pkk', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_pkk; }
+			} else if (strpos($kodeUpper, '/PPPA/') !== false || strpos($kodeUpper, '/PPA/') !== false) {
+				$row = $ci->db->select('id_ppa')->from('surat_ppa')->where('kode_ppa', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_ppa; }
+			} else if (strpos($kodeUpper, '/GC/') !== false || strpos($kodeUpper, '/GJ/') !== false) {
+				$row = $ci->db->select('id')->from('surat_gojek_corp')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/SPD/MKT/') !== false || strpos($kodeUpper, '/SPD/TKN/') !== false || strpos($kodeUpper, '/SPD/KRY/') !== false || strpos($kodeUpper, '/PD/KYW/') !== false || strpos($kodeUpper, '/PD/') !== false) {
+				$row = $ci->db->select('id_pd')->from('surat_pd')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id_pd; }
+			} else if (strpos($kodeUpper, '/SPD/HRGA/') !== false || strpos($kodeUpper, '/SD/') !== false || strpos($kodeUpper, '/PDD/') !== false) {
+				$row = $ci->db->select('id')->from('surat_pd_dinas')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/APRVL/CRO/') !== false || strpos($kodeUpper, '/PO/') !== false) {
+				$row = $ci->db->select('id')->from('surat_po')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/PPKK/') !== false || strpos($kodeUpper, '/PK/') !== false) {
+				$row = $ci->db->select('id')->from('surat_kendaraan')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/FP/') !== false) {
+				$row = $ci->db->select('id')->from('approval_faktur_pajak')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/SKORSING/') !== false || strpos($kodeUpper, '/SKORS/') !== false) {
+				$row = $ci->db->select('id')->from('surat_skorsing')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/BA/') !== false) {
+				$row = $ci->db->select('id')->from('surat_berita_acara')->where('kode_ba', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/CUTI/') !== false) {
+				$row = $ci->db->select('id')->from('surat_cuti_tahunan')->where('kode_cuti', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/IZIN/') !== false || strpos($kodeUpper, '/IJK/') !== false) {
+				$row = $ci->db->select('id')->from('surat_izin_jam_kerja')->where('kode_ijk', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/MR/') !== false) {
+				$row = $ci->db->select('id')->from('meeting_room')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
+			} else if (strpos($kodeUpper, '/KG/') !== false || strpos($kodeUpper, '/LKG/') !== false) {
+				$row = $ci->db->select('id')->from('surat_kunjungan_gudang')->where('kode', $kode)->limit(1)->get()->row();
+				if (!empty($row)) { $id = $row->id; }
 			}
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/pkk/' . $id . '/1';
 		}
-		if (strpos($kode, '/PPA/') !== false || strpos($nama, 'pemeliharaan aset') !== false || strpos($nama, 'pembelian dan pemeliharaan') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/ppa/' . $id . '/1';
+	}
+
+	if (!empty($id)) {
+		// 1. Surat Modul Baru (Surat_new.php)
+		if (strpos($kodeUpper, '/S.APP/WHS/') !== false || strpos($nama, 'expedisi') !== false || strpos($nama, 'ekspedisi') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/appeks/' . $id;
 		}
-		if (strpos($kode, '/GC/') !== false || strpos($nama, 'grab') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/gc/' . $id . '/1';
+		if (strpos($kodeUpper, '/S.APP/DIR/') !== false || strpos($kodeUpper, '/APPDIR/') !== false || strpos($nama, 'approval director') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/appdir/' . $id;
 		}
-		if (strpos($kode, '/KG/') !== false || strpos($kode, '/LKG/') !== false || strpos($nama, 'kunjungan gudang') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/kg/' . $id . '/1';
+		if (strpos($kodeUpper, '/STA/') !== false || strpos($nama, 'serah terima aset') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/sta/' . $id;
 		}
-		if (strpos($nama, 'approval') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/approval/' . $id . '/1';
+		if (strpos($kodeUpper, '/STFP/') !== false || strpos($nama, 'fasilitas perusahaan') !== false || strpos($nama, 'fisik perlengkapan') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/stfp/' . $id;
 		}
-		if (strpos($kode, '/PD/') !== false || strpos($nama, 'dinas marketing') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd/' . $id . '/1';
+		if (strpos($kodeUpper, '/STP/') !== false || strpos($nama, 'serah terima pekerjaan') !== false || strpos($nama, 'serah terima peralatan') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/stp/' . $id;
 		}
-		if (strpos($kode, '/SD/') !== false || strpos($nama, 'surat dinas') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/sd/' . $id . '/1';
+		if (strpos($kodeUpper, '/SPI/') !== false || strpos($nama, 'perintah instalasi') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/spi/' . $id;
 		}
-		if (strpos($kode, '/PDK/') !== false || strpos($nama, 'dinas karyawan') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd_karyawan/' . $id . '/1';
+		if (strpos($kodeUpper, '/APRVL/CRO/') !== false || strpos($kodeUpper, '/PO/') !== false || strpos($nama, 'approval po') !== false || strpos($nama, 'purchase order') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/po/' . $id;
 		}
-		if (strpos($kode, '/PDT/') !== false || strpos($nama, 'dinas teknisi') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd_teknisi/' . $id . '/1';
+		if (strpos($kodeUpper, '/PPKK/') !== false || strpos($kodeUpper, '/PK/') !== false || strpos($nama, 'peminjaman kendaraan') !== false || strpos($nama, 'penggunaan kendaraan') !== false || strpos($nama, 'kendaraan') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/kendaraan/' . $id;
 		}
-		if (strpos($kode, '/SP/') !== false || strpos($nama, 'peringatan') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/surat_peringatan/' . $id . '/1';
+		if (strpos($kodeUpper, '/FP/') !== false || strpos($nama, 'faktur pajak') !== false || strpos($nama, 'approval pajak') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/app_pajak/' . $id;
 		}
-		if (strpos($kode, '/ST/') !== false || strpos($nama, 'surat tugas') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/st/' . $id . '/1';
+		if (strpos($kodeUpper, '/SKORSING/') !== false || strpos($kodeUpper, '/SKORS/') !== false || strpos($nama, 'skorsing') !== false) {
+			return 'https://office.visiyosindo.id/surat_new/show/detail/skorsing/' . $id;
 		}
-		if (strpos($kode, '/REKOM/') !== false || strpos($nama, 'rekomendasi') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/rekom/' . $id . '/1';
-		}
-		if (strpos($kode, '/KET/') !== false || strpos($nama, 'keterangan') !== false) {
-			return 'https://office.visiyosindo.id/surat/show/detail_surat/keterangan/' . $id . '/1';
-		}
-		if (strpos($kode, '/BA/') !== false || strpos($nama, 'berita acara') !== false) {
+
+		// 2. Surat Modul Part Two (Surat_part_two.php)
+		if (strpos($kodeUpper, '/BA/') !== false || strpos($nama, 'berita acara') !== false) {
 			return 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $id;
 		}
-		if (strpos($kode, '/CUTI/') !== false || strpos($nama, 'cuti') !== false) {
+		if (strpos($kodeUpper, '/MR/') !== false || strpos($nama, 'meeting') !== false) {
+			return 'https://office.visiyosindo.id/surat_part_two/show/detail/meetingroom/' . $id;
+		}
+		if (strpos($kodeUpper, '/CUTI/') !== false || strpos($nama, 'cuti') !== false) {
+			if (strpos($kodeUpper, 'SGM') !== false || strpos($nama, 'sgm') !== false) {
+				return 'https://office.visiyosindo.id/surat_part_two/show/detail/cuti_sgm/' . $id;
+			}
 			return 'https://office.visiyosindo.id/surat_part_two/show/detail/cuti/' . $id;
 		}
-		if (strpos($kode, '/IJK/') !== false || strpos($nama, 'jam kerja') !== false) {
+		if (strpos($kodeUpper, '/IZIN/') !== false || strpos($kodeUpper, '/IJK/') !== false || strpos($nama, 'jam kerja') !== false || strpos($nama, 'meninggalkan') !== false || strpos($nama, 'izin') !== false) {
+			if (strpos($kodeUpper, 'SGM') !== false || strpos($nama, 'sgm') !== false) {
+				if (strpos($nama, 'meninggalkan') !== false) {
+					return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_meninggalkan_sgm/' . $id;
+				}
+				return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_jam_kerja_sgm/' . $id;
+			}
+			if (strpos($nama, 'meninggalkan') !== false) {
+				return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_meninggalkan/' . $id;
+			}
 			return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_jam_kerja/' . $id;
 		}
-		if (strpos($nama, 'meninggalkan') !== false) {
-			return 'https://office.visiyosindo.id/surat_part_two/show/detail/izin_meninggalkan/' . $id;
+
+		// 3. Surat Modul Utama (Surat.php)
+		if (strpos($kodeUpper, '/SPP/') !== false || strpos($kodeUpper, '/FPP/') !== false || strpos($nama, 'permintaan pembayaran') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/spp/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/PBOK/') !== false || strpos($nama, 'operasional kantor') !== false || strpos($nama, 'operasional kas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pbok/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/PKE/') !== false || strpos($kodeUpper, 'ETOLL') !== false || (strpos($nama, 'klaim kas') !== false && strpos($nama, 'toll') !== false)) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pkketoll/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/PKK/') !== false || strpos($nama, 'klaim kas') !== false || strpos($nama, 'kasbon kurir') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pkk/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/PPPA/') !== false || strpos($kodeUpper, '/PPA/') !== false || strpos($nama, 'pemeliharaan aset') !== false || strpos($nama, 'pembelian dan pemeliharaan') !== false || strpos($nama, 'pembayaran awal') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/ppa/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/GC/') !== false || strpos($kodeUpper, '/GJ/') !== false || strpos($nama, 'gojek') !== false || strpos($nama, 'grab') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/gc/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/KG/') !== false || strpos($kodeUpper, '/LKG/') !== false || strpos($nama, 'kunjungan gudang') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/kg/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/AHK/') !== false || strpos($nama, 'approval harga') !== false || strpos($nama, 'surat approval') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/approval/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/SPD/MKT/') !== false || (strpos($kodeUpper, '/PD/') !== false && strpos($nama, 'marketing') !== false) || strpos($nama, 'dinas marketing') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/SPD/TKN/') !== false || strpos($kodeUpper, '/PDT/') !== false || strpos($nama, 'dinas teknisi') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd_teknisi/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/SPD/KRY/') !== false || strpos($kodeUpper, '/PD/KYW/') !== false || strpos($kodeUpper, '/PDK/') !== false || strpos($nama, 'dinas karyawan') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/pd_karyawan/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/SPD/HRGA/') !== false || strpos($kodeUpper, '/SD/') !== false || strpos($kodeUpper, '/PDD/') !== false || strpos($nama, 'pertanggungjawaban dinas') !== false || strpos($nama, 'surat dinas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/sd/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/PB/') !== false || strpos($kodeUpper, '/BD/') !== false || strpos($nama, 'perjalanan dinas') !== false || strpos($nama, 'biaya dinas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/PB/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/SP/') !== false || strpos($nama, 'peringatan') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/surat_peringatan/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/STG/') !== false || strpos($kodeUpper, '/ST/') !== false || strpos($nama, 'surat tugas') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/st/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/SK.DIR/') !== false || strpos($kodeUpper, '/SKD/') !== false || strpos($nama, 'keputusan direksi') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/skd/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/S.RKM/') !== false || strpos($kodeUpper, '/REKOM/') !== false || strpos($nama, 'rekomendasi') !== false) {
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/rekom/' . $id . '/1';
+		}
+		if (strpos($kodeUpper, '/S.KET/') !== false || strpos($kodeUpper, '/KET/') !== false || strpos($nama, 'keterangan') !== false) {
+			if (strpos($kodeUpper, 'PKU') !== false || strpos($nama, 'paklaring') !== false) {
+				return 'https://office.visiyosindo.id/surat_part_two/show/detail/paklaring/' . $id;
+			}
+			return 'https://office.visiyosindo.id/surat/show/detail_surat/keterangan/' . $id . '/1';
 		}
 	}
 
@@ -2660,6 +2799,38 @@ function sendWaFonnteGroup($dataSend)
  */
 function sendWa($dataSend)
 {
+	// 0. Jika penerima adalah nomor pribadi karyawan yang memiliki nomor kantor (no_hp_kantor), alihkan pengiriman ke nomor kantor
+	if (!empty($dataSend['penerima'])) {
+		$cleanPenerima = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
+		if (substr($cleanPenerima, 0, 2) === '62') {
+			$localPenerima = '0' . substr($cleanPenerima, 2);
+		} else {
+			$localPenerima = $cleanPenerima;
+		}
+
+		if (function_exists('get_instance')) {
+			$ci = &get_instance();
+			if (isset($ci->db)) {
+				$checkKantor = $ci->db->select('no_hp_kantor')
+					->from('pengguna')
+					->group_start()
+						->where('no_hp', $localPenerima)
+						->or_where('no_hp', $cleanPenerima)
+					->group_end()
+					->where('no_hp_kantor IS NOT NULL')
+					->where('no_hp_kantor !=', '')
+					->where('status', 1)
+					->limit(1)
+					->get()
+					->row();
+
+				if (!empty($checkKantor) && !empty($checkKantor->no_hp_kantor)) {
+					$dataSend['penerima'] = $checkKantor->no_hp_kantor;
+				}
+			}
+		}
+	}
+
 	// Pastikan link dalam pesan selalu mengarah ke domain publik yang bisa dibuka dari HP
 	if (isset($dataSend['pesan'])) {
 		$dataSend['pesan'] = preg_replace(
