@@ -2437,7 +2437,7 @@ class Surat_part_two extends CI_Controller
 
   public function deleteBa($id)
   {
-    grantAccessFor(['Administrator']);
+    grantAccessFor('all');
 
     $data = [
       'status' => "5",
@@ -2445,7 +2445,7 @@ class Surat_part_two extends CI_Controller
 
     $this->md_surat_part_two->updateBeritaAcara($id, $data);
 
-    addLog('Menghapus Berita Acara', 'Menghapus Berita Acara');
+    addLog('Menghapus Berita Acara', 'Menghapus Berita Acara ID: ' . $id);
     ajaxReturnDie('success', 'Berita Acara berhasil dihapus', 'reload_table');
   }
 
@@ -2972,8 +2972,7 @@ class Surat_part_two extends CI_Controller
 
         $li_btn   = '
             <div class="btn-group" role="group" aria-label="First group">
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="bx bx-trash"></i></button>' : '') . '
+                <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="bx bx-trash"></i></button>
             </div>';
 
         $th = array();
