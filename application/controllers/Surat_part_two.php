@@ -2325,12 +2325,28 @@ class Surat_part_two extends CI_Controller
   {
     grantAccessFor('all');
 
-    //$status = $this->input->post('status', TRUE);
+    if (strlen($id) > 10 && !is_numeric($id)) {
+      $decId = decrypt($id);
+      if ($decId) {
+        $id = $decId;
+      }
+    }
+
+    $cuti = $this->md_surat_part_two->getCutiById($id);
+    if (!empty($cuti)) {
+      $idPengaju = !empty($cuti[0]->idPengaju) ? $cuti[0]->idPengaju : (!empty($cuti[0]->id_pengaju) ? $cuti[0]->id_pengaju : null);
+      if (!empty($idPengaju) && !empty($cuti[0]->tgl_awal) && !empty($cuti[0]->tgl_akhir)) {
+        $this->db->where('pengguna_id', $idPengaju)
+          ->where('type_absen', 'izin')
+          ->where('data_created >=', date('Y-m-d 00:00:00', strtotime($cuti[0]->tgl_awal)))
+          ->where('data_created <=', date('Y-m-d 23:59:59', strtotime($cuti[0]->tgl_akhir)))
+          ->delete('absensi');
+      }
+    }
 
     $data = [
       'status' => "5",
     ];
-
 
     $this->md_surat_part_two->updateCuti($id, $data);
 
@@ -2375,6 +2391,15 @@ class Surat_part_two extends CI_Controller
 
     if ($currentStatus == '5') {
       ajaxReturnDie('error', 'Pengajuan cuti ini sudah dibatalkan sebelumnya');
+    }
+
+    // Hapus data absensi yang sudah terlanjur di-insert jika cuti ini sebelumnya sudah disetujui
+    if (!empty($idPengaju) && !empty($cuti[0]->tgl_awal) && !empty($cuti[0]->tgl_akhir)) {
+      $this->db->where('pengguna_id', $idPengaju)
+        ->where('type_absen', 'izin')
+        ->where('data_created >=', date('Y-m-d 00:00:00', strtotime($cuti[0]->tgl_awal)))
+        ->where('data_created <=', date('Y-m-d 23:59:59', strtotime($cuti[0]->tgl_akhir)))
+        ->delete('absensi');
     }
 
     $data = [
@@ -2424,6 +2449,15 @@ class Surat_part_two extends CI_Controller
 
     if ($currentStatus == '5') {
       ajaxReturnDie('error', 'Pengajuan cuti ini sudah dibatalkan sebelumnya');
+    }
+
+    // Hapus data absensi yang sudah terlanjur di-insert jika cuti ini sebelumnya sudah disetujui
+    if (!empty($idPengaju) && !empty($cuti[0]->tgl_awal) && !empty($cuti[0]->tgl_akhir)) {
+      $this->db->where('pengguna_id', $idPengaju)
+        ->where('type_absen', 'izin')
+        ->where('data_created >=', date('Y-m-d 00:00:00', strtotime($cuti[0]->tgl_awal)))
+        ->where('data_created <=', date('Y-m-d 23:59:59', strtotime($cuti[0]->tgl_akhir)))
+        ->delete('absensi');
     }
 
     $data = [
