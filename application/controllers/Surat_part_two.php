@@ -1986,9 +1986,6 @@ class Surat_part_two extends CI_Controller
 
 
         $id_sp = $this->input->post('id');
-        $data['status'] = 6;
-        $data['ttd_1'] = 2;
-        $this->md_surat_part_two->updateCuti($id_sp, $data);
 
         //send notif wa
         $dataWa = [
@@ -1998,15 +1995,16 @@ class Surat_part_two extends CI_Controller
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectCuti($dataWa);
+
+        // Hapus pengajuan cuti secara otomatis dari database saat ditolak
+        $this->db->where('id', $id_sp)->delete('surat_cuti_tahunan');
+
         /** LOG */
-        addLog('Pengajuan Cuti Tahunan Ditolak oleh GA', 'Permintaan Cuti Tahunan Ditolak');
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        addLog('Pengajuan Cuti Tahunan Ditolak oleh GA', 'Permintaan Cuti Tahunan Ditolak dan Otomatis Dihapus');
+        ajaxReturnDie('success', 'Pengajuan Cuti Ditolak dan Berhasil Dihapus', TRUE);
       } elseif ($param2 == "ttd_2") {
 
         $id_sp = $this->input->post('id');
-        $data['status'] = 7;
-        $data['ttd_2'] = 2;
-        $this->md_surat_part_two->updateCuti($id_sp, $data);
 
         //send notif wa
         $dataWa = [
@@ -2017,15 +2015,15 @@ class Surat_part_two extends CI_Controller
         ];
         $this->notifWaRejectCuti($dataWa);
 
+        // Hapus pengajuan cuti secara otomatis dari database saat ditolak
+        $this->db->where('id', $id_sp)->delete('surat_cuti_tahunan');
+
         /** LOG */
-        addLog('Pengajuan Cuti Tahunan oleh HR', 'Permintaan Cuti Tahunan Ditolak');
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        addLog('Pengajuan Cuti Tahunan oleh HR', 'Permintaan Cuti Tahunan Ditolak dan Otomatis Dihapus');
+        ajaxReturnDie('success', 'Pengajuan Cuti Ditolak dan Berhasil Dihapus', TRUE);
       } elseif ($param2 == "ttd_3") {
 
         $id_sp = $this->input->post('id');
-        $data['status'] = 8;
-        $data['ttd_3'] = 2;
-        $this->md_surat_part_two->updateCuti($id_sp, $data);
 
         //send notif wa
         $dataWa = [
@@ -2036,9 +2034,12 @@ class Surat_part_two extends CI_Controller
         ];
         $this->notifWaRejectCuti($dataWa);
 
+        // Hapus pengajuan cuti secara otomatis dari database saat ditolak
+        $this->db->where('id', $id_sp)->delete('surat_cuti_tahunan');
+
         /** LOG */
-        addLog('Pengajuan Cuti Tahunan Ditolak oleh HR', 'Permintaan Cuti Tahunan Ditolak');
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        addLog('Pengajuan Cuti Tahunan Ditolak oleh HR', 'Permintaan Cuti Tahunan Ditolak dan Otomatis Dihapus');
+        ajaxReturnDie('success', 'Pengajuan Cuti Ditolak dan Berhasil Dihapus', TRUE);
       }
     } else if ($param1 == "ba") {
       if ($param2 == "ttd_diketahui") {
