@@ -96,7 +96,7 @@
 						$tahun = date('Y');
 				?>
 				<div class="form-group" style="display: flex; align-items: center; gap: 5px;">
-						Tanggal : <?php echo $hari . ', ' . $tanggal . ' ' . $bulan . ' ' . $tahun; ?> - 
+						Tanggal : <span id="modal-display-date"><?php echo $hari . ', ' . $tanggal . ' ' . $bulan . ' ' . $tahun; ?></span> - 
 						<span id="live-clock"></span>
 				</div>
 
@@ -136,6 +136,7 @@
 			<div class="modal-footer">
 				<div class="is_aktif"></div>
 				<input type="hidden" id="id_brosur" name="id_brosur">
+				<input type="hidden" id="tanggal_suhu" name="tanggal">
 				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
 				<button type="button" class="btn btn-success btn-save">Simpan</button>
 			</div>
@@ -145,6 +146,9 @@
 </div>
 
 <script>
+	var defaultTodayDisplay = '<?php echo $hari . ', ' . $tanggal . ' ' . $bulan . ' ' . $tahun; ?>';
+	var defaultTodayYmd = '<?php echo date('Y-m-d'); ?>';
+
 	document.addEventListener('DOMContentLoaded', function() {
 		$('#print_month').change(function() {
 			window.location.href = '<?= base_url() ?>' + 'visilab/print_page/printSuhuByMonth/' + $('#print_month').val();
@@ -178,25 +182,45 @@
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)
 			$('#main-modal #modal-form').attr('action', 'visilab/addSuhu')
+			$('#main-modal #id_brosur').val('')
+			$('#main-modal #tanggal_suhu').val(defaultTodayYmd)
+			$('#main-modal #modal-display-date').text(defaultTodayDisplay)
+			$('#main-modal #keterangan').val('Baik').trigger('change')
 			$('#main-modal').modal()
 		})
 
 		$(document).on('click', '.btn-edit', function() {
 			var object = 'visilab'
 			$('#main-modal #modal-form').attr('action', 'visilab/updateSuhu')
-			$('#main-modal').modal()
 
 			var id = $(this).attr("data-id")
-			fetch(object + '/editSuhu/' + id)
-				.then(function(resp) {
-					return resp.json()
-				})
-				.then(function(data) {
-					$('#main-modal #id_brosur').val(data[0].id)
-					$('#main-modal #suhu').val(data[0].suhu)
-					$('#main-modal #kelembapan').val(data[0].kelembapan)
-					$('#main-modal #keterangan').val(data[0].keterangan)
-				})
+			var tanggal = $(this).attr("data-tanggal") || defaultTodayYmd
+			var tanggalDisplay = $(this).attr("data-tanggal-display") || defaultTodayDisplay
+
+			$('#main-modal #tanggal_suhu').val(tanggal)
+			$('#main-modal #modal-display-date').text(tanggalDisplay)
+			$('#main-modal #id_brosur').val(id || '')
+
+			if (id) {
+				fetch(object + '/editSuhu/' + id)
+					.then(function(resp) {
+						return resp.json()
+					})
+					.then(function(data) {
+						if (data && data.length > 0) {
+							$('#main-modal #id_brosur').val(data[0].id)
+							$('#main-modal #suhu').val(data[0].suhu)
+							$('#main-modal #kelembapan').val(data[0].kelembapan)
+							$('#main-modal #keterangan').val(data[0].keterangan).trigger('change')
+						}
+					})
+			} else {
+				$('#main-modal #suhu').val('')
+				$('#main-modal #kelembapan').val('')
+				$('#main-modal #keterangan').val('Baik').trigger('change')
+			}
+
+			$('#main-modal').modal()
 		})
 
 	})

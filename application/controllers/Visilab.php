@@ -2421,6 +2421,13 @@ class Visilab extends CI_Controller
     $data['kelembapan']   = $this->input->post('kelembapan');
     $data['keterangan']   = $this->input->post('keterangan', TRUE) ?: 'Baik';
     $data['id_pengguna']  = sessPenggunaId();
+    $data['status']       = 1;
+
+    $tanggal = $this->input->post('tanggal');
+    if (!empty($tanggal)) {
+      $data['created_at'] = date('Y-m-d H:i:s', strtotime($tanggal . ' ' . date('H:i:s')));
+    }
+
     checkEmptyForm($data);
 
     $this->md_visilab->addSuhu($data);
@@ -2428,7 +2435,7 @@ class Visilab extends CI_Controller
 
     //add log
     $aksi = 'Master Data Visilab';
-    $ket = 'Menambahkan Data Suhu Tanggal : ' . date('d-m-Y | H:i:s');
+    $ket = 'Menambahkan Data Suhu Tanggal : ' . (!empty($tanggal) ? $tanggal : date('d-m-Y | H:i:s'));
     addlog($aksi, $ket);
 
     ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
@@ -2467,18 +2474,40 @@ class Visilab extends CI_Controller
   {
     grantAccessFor('all');
 
-    $id = decrypt($this->input->post('id_brosur'));
+    $id_raw = $this->input->post('id_brosur');
+    $tanggal = $this->input->post('tanggal');
+
+    if (empty($id_raw)) {
+      // Jika id kosong, lakukan penambahan data baru untuk tanggal yang dipilih
+      $data['suhu']         = $this->input->post('suhu');
+      $data['kelembapan']   = $this->input->post('kelembapan');
+      $data['keterangan']   = $this->input->post('keterangan', TRUE) ?: 'Baik';
+      $data['id_pengguna']  = sessPenggunaId();
+      $data['status']       = 1;
+      if (!empty($tanggal)) {
+        $data['created_at'] = date('Y-m-d H:i:s', strtotime($tanggal . ' ' . date('H:i:s')));
+      }
+
+      checkEmptyForm($data);
+      $this->md_visilab->addSuhu($data);
+
+      $aksi = 'Master Data Visilab';
+      $ket = 'Menambahkan Data Suhu Tanggal : ' . (!empty($tanggal) ? $tanggal : date('d-m-Y | H:i:s'));
+      addlog($aksi, $ket);
+      ajaxReturnDie('success', 'Data berhasil ditambahkan', 'reload_table');
+    }
+
+    $id = decrypt($id_raw);
     $data['suhu']         = $this->input->post('suhu');
     $data['kelembapan']   = $this->input->post('kelembapan');
     $data['keterangan']   = $this->input->post('keterangan', TRUE) ?: 'Baik';
     $data['id_pengguna']  = sessPenggunaId();
-    //$data['created_at']   = date('d-m-Y | H:i:s');
     $this->md_visilab->updateSuhu(['id' => $id], $data);
 
 
     //add log
     $aksi = 'Master Data Visilab';
-    $ket = 'Mengedit Data Suhu Tanggal : ' . date('d-m-Y | H:i:s');
+    $ket = 'Mengedit Data Suhu Tanggal : ' . (!empty($tanggal) ? $tanggal : date('d-m-Y | H:i:s'));
     addlog($aksi, $ket);
     ajaxReturnDie('success', 'Data berhasil diupdate', 'reload_table');
   }
@@ -2584,7 +2613,8 @@ class Visilab extends CI_Controller
 
       if (isset($suhu_data_by_date[$tanggal])) {
         $row = $suhu_data_by_date[$tanggal];
-        $th[] = $this->hariIndo($row->created_at);
+        $hariIndoText = $this->hariIndo($row->created_at);
+        $th[] = $hariIndoText;
         $th[] = date('H:i:s', strtotime($row->created_at)) . ' WIB';
         $th[] = $row->suhu . ' &deg;C';
         $th[] = $row->kelembapan . ' %';
@@ -2594,19 +2624,25 @@ class Visilab extends CI_Controller
         $id = encrypt($row->id);
         $li_btn = '
                     <div class="btn-group" role="group" aria-label="First group">
-                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '" data-tanggal="' . $tanggal . '" data-tanggal-display="' . htmlspecialchars($hariIndoText, ENT_QUOTES) . '" title="Edit Data"><i class="bx bx-pencil"></i></button>
                         <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="visilab/deleteSuhu"><i class="bx bx-trash"></i></button>
                     </div>';
         $th[] = $li_btn;
       } else {
-        // Data tidak ada di tanggal ini = Libur
-        $th[] = $this->hariIndo($tanggal);
+        // Data tidak ada di tanggal ini = Libur / Belum diisi
+        $hariIndoText = $this->hariIndo($tanggal);
+        $th[] = $hariIndoText;
         $th[] = '-';
         $th[] = '-';
         $th[] = '-';
         $th[] = 'Libur';
         $th[] = '-';
-        $th[] = '-';
+
+        $li_btn = '
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="" data-tanggal="' . $tanggal . '" data-tanggal-display="' . htmlspecialchars($hariIndoText, ENT_QUOTES) . '" title="Isi / Edit Data"><i class="bx bx-pencil"></i></button>
+                    </div>';
+        $th[] = $li_btn;
       }
 
       $data[] = $th;
