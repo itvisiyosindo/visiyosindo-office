@@ -4873,25 +4873,36 @@ class Surat extends CI_Controller
 								//update status surat
 								$this->md_surat_list->update_surat_list('8', $id_approval, '1');
 
-								//send notif wa
-								$dataWa = [
-									'id' 	        => $id_approval,
-									'idPenerima1' 	=> '23',
-									'idPenerima2' 	=> '72',
-									'penerima' 	    => '*Director of Corp Planning and Bussinees Management*',
-									'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
-									'ttd_sebelum2' 	=> '',
-									'ttd_sebelum3' 	=> ''
-								];
-								$this->notifWaAprov($param1, 1, 1, $dataWa);
+								// Cek apakah pengajuan memiliki barang Modal 2 atau Modal 3
+								$modal2 = $this->md_surat_list->countApprovalModal($id_approval, 2)->num_rows();
+								$modal3 = $this->md_surat_list->countApprovalModal($id_approval, 3)->num_rows();
 
-								// $dataMail = [
-								// 		'pengaju' 	=> '',
-								//         'email' 	=> 'silviamiftaviana30@gmail.com'
-								// ];
-								// emailSuratAprovAll($dataMail);
-								// var_dump( $dataMail);
-								// die;
+								if ($modal2 > 0 || $modal3 > 0) {
+									// Jika ada modal 2 atau modal 3, kirim notif ke Bu Mei (Director of Corp Planning)
+									$dataWa = [
+										'id' 	        => $id_approval,
+										'idPenerima1' 	=> '23',
+										'idPenerima2' 	=> '72',
+										'penerima' 	    => '*Director of Corp Planning and Bussinees Management*',
+										'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
+										'ttd_sebelum2' 	=> '',
+										'ttd_sebelum3' 	=> ''
+									];
+									$this->notifWaAprov($param1, 1, 1, $dataWa);
+								} else {
+									// Jika HANYA Modal 1 (atau Modal 0/1), persetujuan selesai -> kirim notif ke Pengaju/CRO
+									$dataWa = [
+										'id' 	        => $id_approval,
+										'idPenerima1' 	=> '72',
+										'idPenerima2' 	=> '',
+										'namaSurat' 	=> 'Surat Approval Harga',
+										'penerima' 	    => '*Customer Relation Officer*',
+										'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
+										'ttd_sebelum2' 	=> '',
+										'ttd_sebelum3' 	=> ''
+									];
+									$this->notifWaAprov($param1, 1, 2, $dataWa);
+								}
 
 								addLog('Update Pengajuan Surat Approval', 'Persetujuan Pengajuan Surat Approval');
 								ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
