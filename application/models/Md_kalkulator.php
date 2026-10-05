@@ -263,7 +263,49 @@ class Md_kalkulator extends CI_Model
         ];
     }
 
-   
+    public function getDataSwasta($filter_merk = '', $filter_nama = '', $keyword = '')
+    {
+        $this->db->select('b.id, b.nama, b.merk, b.harga, b.created_at, b.jenis');
+        $this->db->from('kalkulator_pricelist b');
+        if (!empty($keyword)) {
+            $this->db->group_start();
+            $this->db->like('b.merk', $keyword);
+            $this->db->or_like('b.nama', $keyword);
+            $this->db->group_end();
+        }
+        if (!empty($filter_merk)) {
+            $this->db->where('b.merk', $filter_merk);
+        }
+        if (!empty($filter_nama)) {
+            $this->db->where('b.nama', $filter_nama);
+        }
+        $this->db->where('b.jenis', 1);
+        $this->db->order_by('b.merk', 'ASC');
+        $this->db->order_by('b.nama', 'ASC');
+        return $this->db->get()->result();
+    }
 
+    public function getDataGov($filter_merk = '', $filter_nama = '', $keyword = '')
+    {
+        $this->db->select('b.id, b.nama, b.merk, b.harga, b.created_at, b.jenis');
+        $this->db->from('kalkulator_pricelist b');
+        if (!empty($keyword)) {
+            $this->db->group_start();
+            $this->db->like('b.merk', $keyword);
+            $this->db->or_like('b.nama', $keyword);
+            $this->db->group_end();
+        }
+        if (!empty($filter_merk)) {
+            $this->db->where('b.merk', $filter_merk);
+        }
+        if (!empty($filter_nama)) {
+            $this->db->where('b.nama', $filter_nama);
+        }
+        $this->db->where('b.jenis', 2);
+        $this->db->order_by('b.merk', 'ASC');
+        $this->db->order_by('b.nama', 'ASC');
+        return $this->db->get()->result();
+    }
 
 }
+

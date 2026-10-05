@@ -250,6 +250,159 @@ class Kalkulator extends CI_Controller
             
     }
 
+    public function print_excel_swasta()
+    {
+        grantAccessFor('all');
+
+        $filter_merk = $this->input->get_post('filter_merk', TRUE) ?: '';
+        $filter_nama = $this->input->get_post('filter_nama', TRUE) ?: '';
+        $keyword = $this->input->get_post('search', TRUE) ?: '';
+
+        $diskon_input = $this->input->get_post('diskon', TRUE);
+        $diskon_persen = is_numeric($diskon_input) ? floatval($diskon_input) : 0;
+
+        $komisi_badan = $this->input->get_post('komisi_badan', TRUE);
+        $komisi_badan_persen = is_numeric($komisi_badan) ? floatval($komisi_badan) : 0;
+
+        $komisi_pribadi = $this->input->get_post('komisi_pribadi', TRUE);
+        $komisi_pribadi_persen = is_numeric($komisi_pribadi) ? floatval($komisi_pribadi) : 0;
+
+        $komisi_npwp = $this->input->get_post('komisi_npwp', TRUE);
+        $komisi_npwp_persen = is_numeric($komisi_npwp) ? floatval($komisi_npwp) : 0;
+
+        $list = $this->md_kalkulator->getDataSwasta($filter_merk, $filter_nama, $keyword);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Judul Utama
+        $sheet->setCellValue('A1', 'DAFTAR PRICE LIST & PERHITUNGAN HARGA (SWASTA)');
+        $sheet->mergeCells('A1:I1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'PT VISI YOSINDO MEDIKAL');
+        $sheet->mergeCells('A2:I2');
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Keterangan Parameter & Waktu Cetak
+        $params_info = "Dicetak: " . date('d-m-Y H:i') . " | Diskon: {$diskon_persen}% | Komisi NPWP Badan: {$komisi_badan_persen}% | Komisi NPWP Pribadi: {$komisi_pribadi_persen}% | Komisi Tanpa NPWP: {$komisi_npwp_persen}%";
+        if (!empty($filter_merk)) {
+            $params_info .= " | Merk: " . $filter_merk;
+        }
+        if (!empty($filter_nama)) {
+            $params_info .= " | Produk: " . $filter_nama;
+        }
+        $sheet->setCellValue('A3', $params_info);
+        $sheet->mergeCells('A3:I3');
+        $sheet->getStyle('A3')->getFont()->setItalic(true)->setSize(9);
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Header Tabel
+        $header_row = 5;
+        $headers = [
+            'A' => 'NO',
+            'B' => 'MERK',
+            'C' => 'NAMA PRODUCT',
+            'D' => 'PRICELIST',
+            'E' => 'HARGA ACUAN TERENDAH (-40%)',
+            'F' => ($diskon_persen > 0 ? "HASIL DISKON ({$diskon_persen}%)" : 'HASIL DISKON'),
+            'G' => ($komisi_badan_persen > 0 ? "KOMISI NPWP BADAN ({$komisi_badan_persen}%)" : 'KOMISI NPWP BADAN'),
+            'H' => ($komisi_pribadi_persen > 0 ? "KOMISI NPWP PRIBADI ({$komisi_pribadi_persen}%)" : 'KOMISI NPWP PRIBADI'),
+            'I' => ($komisi_npwp_persen > 0 ? "KOMISI TANPA NPWP ({$komisi_npwp_persen}%)" : 'KOMISI TANPA NPWP')
+        ];
+
+        $style_header = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF1F497D']
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]
+            ]
+        ];
+
+        foreach ($headers as $col => $text) {
+            $sheet->setCellValue($col . $header_row, $text);
+            $sheet->getStyle($col . $header_row)->applyFromArray($style_header);
+        }
+        $sheet->getRowDimension($header_row)->setRowHeight(28);
+
+        $style_data_border = [
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['argb' => 'FFD9D9D9']]
+            ]
+        ];
+
+        $curr_row = 6;
+        $no = 1;
+
+        foreach ($list as $row) {
+            $harga = is_numeric($row->harga) ? floatval($row->harga) : 0;
+            $acuan = $harga - ($harga * 0.40);
+            $diskon_nominal = ($diskon_persen > 0) ? ($harga - ($harga * $diskon_persen / 100)) : $harga;
+            $komisi_badan_nominal = (($diskon_nominal / 1.11) * ($komisi_badan_persen / 100)) * 0.98;
+            $komisi_pribadi_nominal = (($diskon_nominal / 1.11) * ($komisi_pribadi_persen / 100)) * 0.975;
+            $komisi_npwp_nominal = (($diskon_nominal / 1.11) * ($komisi_npwp_persen / 100)) * 0.94;
+
+            $sheet->setCellValue('A' . $curr_row, $no++);
+            $sheet->setCellValue('B' . $curr_row, $row->merk);
+            $sheet->setCellValue('C' . $curr_row, $row->nama);
+            $sheet->setCellValue('D' . $curr_row, $harga);
+            $sheet->setCellValue('E' . $curr_row, $acuan);
+            $sheet->setCellValue('F' . $curr_row, $diskon_nominal);
+            $sheet->setCellValue('G' . $curr_row, $komisi_badan_nominal);
+            $sheet->setCellValue('H' . $curr_row, $komisi_pribadi_nominal);
+            $sheet->setCellValue('I' . $curr_row, $komisi_npwp_nominal);
+
+            $sheet->getStyle('A' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('B' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle('C' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+            // Number formats
+            $sheet->getStyle('D' . $curr_row . ':I' . $curr_row)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('D' . $curr_row . ':I' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+
+            $sheet->getStyle('A' . $curr_row . ':I' . $curr_row)->applyFromArray($style_data_border);
+
+            // Zebra striping
+            if ($no % 2 == 0) {
+                $sheet->getStyle('A' . $curr_row . ':I' . $curr_row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F5F9');
+            }
+
+            $curr_row++;
+        }
+
+        // Set width auto
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+        $sheet->setTitle('Price List SWASTA');
+
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        $filename = 'Pricelist_Swasta_' . date('Ymd_His') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+
+        addlog('Export Data', 'Melakukan Print / Export Excel Price List SWASTA');
+        exit;
+    }
+
 
 //======================================
 //======================================
@@ -459,9 +612,147 @@ class Kalkulator extends CI_Controller
             
     }
 
+    public function print_excel_gov()
+    {
+        grantAccessFor('all');
 
-    
-    
+        $filter_merk = $this->input->get_post('filter_merk', TRUE) ?: '';
+        $filter_nama = $this->input->get_post('filter_nama', TRUE) ?: '';
+        $keyword = $this->input->get_post('search', TRUE) ?: '';
 
+        $komisi_badan = $this->input->get_post('komisi_badan', TRUE);
+        $komisi_badan_persen = is_numeric($komisi_badan) ? floatval($komisi_badan) : 0;
 
+        $komisi_pribadi = $this->input->get_post('komisi_pribadi', TRUE);
+        $komisi_pribadi_persen = is_numeric($komisi_pribadi) ? floatval($komisi_pribadi) : 0;
+
+        $komisi_npwp = $this->input->get_post('komisi_npwp', TRUE);
+        $komisi_npwp_persen = is_numeric($komisi_npwp) ? floatval($komisi_npwp) : 0;
+
+        $list = $this->md_kalkulator->getDataGov($filter_merk, $filter_nama, $keyword);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Judul Utama
+        $sheet->setCellValue('A1', 'DAFTAR PRICE LIST & PERHITUNGAN HARGA (GOVERNMENT / E-KATALOG)');
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'PT VISI YOSINDO MEDIKAL');
+        $sheet->mergeCells('A2:G2');
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Keterangan Parameter & Waktu Cetak
+        $params_info = "Dicetak: " . date('d-m-Y H:i') . " | Komisi NPWP Badan: {$komisi_badan_persen}% | Komisi NPWP Pribadi: {$komisi_pribadi_persen}% | Komisi Tanpa NPWP: {$komisi_npwp_persen}%";
+        if (!empty($filter_merk)) {
+            $params_info .= " | Merk: " . $filter_merk;
+        }
+        if (!empty($filter_nama)) {
+            $params_info .= " | Produk: " . $filter_nama;
+        }
+        $sheet->setCellValue('A3', $params_info);
+        $sheet->mergeCells('A3:G3');
+        $sheet->getStyle('A3')->getFont()->setItalic(true)->setSize(9);
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Header Tabel
+        $header_row = 5;
+        $headers = [
+            'A' => 'NO',
+            'B' => 'MERK',
+            'C' => 'NAMA PRODUCT',
+            'D' => 'HARGA E-KATALOG',
+            'E' => ($komisi_badan_persen > 0 ? "KOMISI NPWP BADAN ({$komisi_badan_persen}%)" : 'KOMISI NPWP BADAN'),
+            'F' => ($komisi_pribadi_persen > 0 ? "KOMISI NPWP PRIBADI ({$komisi_pribadi_persen}%)" : 'KOMISI NPWP PRIBADI'),
+            'G' => ($komisi_npwp_persen > 0 ? "KOMISI TANPA NPWP ({$komisi_npwp_persen}%)" : 'KOMISI TANPA NPWP')
+        ];
+
+        $style_header = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF1F497D']
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]
+            ]
+        ];
+
+        foreach ($headers as $col => $text) {
+            $sheet->setCellValue($col . $header_row, $text);
+            $sheet->getStyle($col . $header_row)->applyFromArray($style_header);
+        }
+        $sheet->getRowDimension($header_row)->setRowHeight(28);
+
+        $style_data_border = [
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['argb' => 'FFD9D9D9']]
+            ]
+        ];
+
+        $curr_row = 6;
+        $no = 1;
+
+        foreach ($list as $row) {
+            $harga = is_numeric($row->harga) ? floatval($row->harga) : 0;
+            $komisi_badan_nominal = ((($harga / 1.11)-(($harga / 1.11) * 1.5 / 100)) * $komisi_badan_persen / 100) * 0.98;
+            $komisi_pribadi_nominal = ((($harga / 1.11)-(($harga / 1.11) * 1.5 / 100)) * $komisi_pribadi_persen / 100) * 0.975;
+            $komisi_npwp_nominal = ((($harga / 1.11)-(($harga / 1.11) * 1.5 / 100)) * $komisi_npwp_persen / 100) * 0.94;
+
+            $sheet->setCellValue('A' . $curr_row, $no++);
+            $sheet->setCellValue('B' . $curr_row, $row->merk);
+            $sheet->setCellValue('C' . $curr_row, $row->nama);
+            $sheet->setCellValue('D' . $curr_row, $harga);
+            $sheet->setCellValue('E' . $curr_row, $komisi_badan_nominal);
+            $sheet->setCellValue('F' . $curr_row, $komisi_pribadi_nominal);
+            $sheet->setCellValue('G' . $curr_row, $komisi_npwp_nominal);
+
+            $sheet->getStyle('A' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('B' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle('C' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+            // Number formats
+            $sheet->getStyle('D' . $curr_row . ':G' . $curr_row)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('D' . $curr_row . ':G' . $curr_row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+
+            $sheet->getStyle('A' . $curr_row . ':G' . $curr_row)->applyFromArray($style_data_border);
+
+            // Zebra striping
+            if ($no % 2 == 0) {
+                $sheet->getStyle('A' . $curr_row . ':G' . $curr_row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F5F9');
+            }
+
+            $curr_row++;
+        }
+
+        // Set width auto
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+        $sheet->setTitle('Price List GOVERNMENT');
+
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        $filename = 'Pricelist_Government_' . date('Ymd_His') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+
+        addlog('Export Data', 'Melakukan Print / Export Excel Price List GOVERNMENT');
+        exit;
+    }
 }

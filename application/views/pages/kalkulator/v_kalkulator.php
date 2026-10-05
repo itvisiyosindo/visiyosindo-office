@@ -16,15 +16,12 @@
 
 <div class="row">
 	<div class="col">
-		<div class="">
+		<div class="d-flex align-items-center mb-2">
 			<?php if (sessPenggunaId() == 107 || sessPenggunaId() == 1) { ?>
-				
-				<a href="javascript:;" id="btn-laporan-form" class="btn btn-sm btn-success"><i class="fas fa-database"></i>&nbsp;&nbsp;&nbsp;Master Data</a>
-
-
+				<a href="javascript:;" id="btn-laporan-form" class="btn btn-sm btn-info mr-2"><i class="fas fa-database"></i>&nbsp;&nbsp;&nbsp;Master Data</a>
 			<?php } ?>
+			<a href="javascript:;" id="btn-export-excel" class="btn btn-sm btn-success"><i class="fas fa-file-excel"></i>&nbsp;&nbsp;&nbsp;Print / Export Excel</a>
 		</div>
-		<br>
 		<div class="card-body">
 			<div class="row">
 				<div class="col-md-2">
@@ -248,23 +245,31 @@
 			});
 
 			$("#btn-download").click(function(){
-          window.open("<?php echo base_url(); ?>kalkulator/export_swasta","_blank");
-          $('#file-modal').modal('hide')
-			
-      });
+				window.open("<?php echo base_url(); ?>kalkulator/export_swasta","_blank");
+				$('#file-modal').modal('hide');
+			});
 
-
-			
-
-		})
-
-		$(document).ready(function() {
-    $('#kt_table_1').DataTable({
-        "order": [[0, 'asc']] // Set urutan default berdasarkan kolom pertama (b.id)
-    });
-});
+			$("#btn-export-excel").click(function(){
+				var searchVal = '';
+				if (typeof table !== 'undefined' && table.search) {
+					searchVal = table.search();
+				}
+				var params = {
+					filter_merk: $('#filter_merk').val() || '',
+					filter_nama: $('#filter_nama').val() || '',
+					diskon: $('#diskon').val() || '',
+					komisi_badan: $('#komisi_badan').val() || '',
+					komisi_pribadi: $('#komisi_pribadi').val() || '',
+					komisi_npwp: $('#komisi_npwp').val() || '',
+					search: searchVal
+				};
+				window.open("<?php echo base_url(); ?>kalkulator/print_excel_swasta?" + $.param(params), "_blank");
+			});
+		});
 
 		function updateDatatable() {
-			table.ajax.reload(null, false)
+			if (typeof table !== 'undefined') {
+				table.ajax.reload(null, false);
+			}
 		}
 	</script>
