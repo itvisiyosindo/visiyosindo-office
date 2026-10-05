@@ -3613,7 +3613,7 @@ class Surat extends CI_Controller
 					$dataWa = [
 						'id' 	        => $id_pb,
 						'idPenerima1' 	=> 1,
-						'idPenerima2' 	=> 1,
+						'idPenerima2' 	=> '',
 						'namaSurat' 	=> 'Laporan Surat Biaya Perjalanan Dinas',
 						'penerima' 	    => '',
 						'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
@@ -3626,8 +3626,8 @@ class Surat extends CI_Controller
 					//send notif wa
 					$dataWaFi = [
 						'id' 	        => $id_pb,
-						'idPenerima1' 	=> '106',
-						'idPenerima2' 	=> '107',
+						'idPenerima1' 	=> '107',
+						'idPenerima2' 	=> '',
 						'namaSurat' 	=> 'Surat Laporan Biaya Perjalanan Dinas',
 						'penerima' 	    => '_Finance Staff_',
 						'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
@@ -3635,7 +3635,7 @@ class Surat extends CI_Controller
 						'ttd_sebelum3' 	=> 'Director of Corp Planning and Bussinees Management'
 					];
 
-					$this->notifWaAprov($param1, 2, 3, $dataWaFi);
+					$this->notifWaAprov($param1, 1, 3, $dataWaFi);
 
 					addLog('Update Pengajuan Biaya Dinas', 'Persetujuan Biaya Dinas');
 					ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
@@ -4142,7 +4142,7 @@ class Surat extends CI_Controller
 						'ttd_sebelum2' 	=> 'General Manager',
 						'ttd_sebelum3' 	=> 'Director of Corp Planning and Bussinees Management'
 					];
-					$this->notifWaAprov($param1, 2, 3, $dataWaFi);
+					$this->notifWaAprov($param1, 1, 3, $dataWaFi);
 
 					$datapenggunanotifikasi = $this->md_pengguna->getById(107);
 					$nope           = $datapenggunanotifikasi[0]->no_hp;
