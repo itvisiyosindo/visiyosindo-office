@@ -1396,6 +1396,25 @@
                                     <?php } ?>
                                 </div>
                             </div>
+
+                            <!-- Kartu NPWP -->
+                            <div class="document-card <?= $data_pengguna[0]->file_npwp ? 'has-file' : '' ?>">
+                                <i class="doc-icon fas fa-file-invoice"></i>
+                                <div class="doc-title">Kartu NPWP</div>
+                                <span class="doc-status"><?= $data_pengguna[0]->file_npwp ? 'Tersedia' : 'Belum Upload' ?></span>
+                                <div class="doc-actions">
+                                    <?php if($data_pengguna[0]->file_npwp): ?>
+                                        <button type="button" class="btn btn-info btn-doc btn-preview-file" data-type="npwp" data-file="<?= $data_pengguna[0]->file_npwp ?>">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if (isAdmin() || isHrd() || isGa()) { ?>
+                                        <button type="button" class="btn btn-primary btn-doc btn-upload-file" data-type="npwp">
+                                            <i class="fas fa-upload"></i>
+                                        </button>
+                                    <?php } ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1748,7 +1767,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'skck': 'SKCK',
         'no_rek': 'Buku Tabungan',
         'domisili': 'Surat Domisili',
-        'sertifikat_vaksin': 'Sertifikat Vaksin'
+        'sertifikat_vaksin': 'Sertifikat Vaksin',
+        'npwp': 'Kartu NPWP'
     };
 
     // Reset Password Modal

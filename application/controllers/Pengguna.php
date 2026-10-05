@@ -259,8 +259,12 @@ class Pengguna extends CI_Controller
             $nama_karyawan = str_replace(".", "_", $nama_karyawan1);
             $file = $_FILES[$param2];
             if ($file['name']) {
+                $upload_path = 'uploads/file_karyawan/' . $param2;
+                if (!is_dir($upload_path)) {
+                    mkdir($upload_path, 0755, true);
+                }
                 $config['file_name']        = $nama_karyawan . '-' .  time();
-                $config['upload_path']      = 'uploads/file_karyawan/' . $param2;
+                $config['upload_path']      = $upload_path;
                 $config['allowed_types']    = 'pdf|xls|xlsx|doc|docx|jpg|jpeg|png';
                 $config['max_size']         = 4000;
                 $this->upload->initialize($config);

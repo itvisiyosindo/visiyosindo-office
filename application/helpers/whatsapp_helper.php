@@ -2799,7 +2799,8 @@ function sendWaFonnteGroup($dataSend)
  */
 function sendWa($dataSend)
 {
-	// 0. Jika penerima adalah nomor pribadi karyawan yang memiliki nomor kantor (no_hp_kantor), alihkan pengiriman ke nomor kantor
+	// 0. Hanya alihkan pengiriman ke nomor kantor (no_hp_kantor) jika penerima adalah Mulia
+	// Untuk karyawan lainnya, notifikasi selalu dikirim ke nomor HP pribadi mereka
 	if (!empty($dataSend['penerima'])) {
 		$cleanPenerima = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
 		if (substr($cleanPenerima, 0, 2) === '62') {
@@ -2816,6 +2817,10 @@ function sendWa($dataSend)
 					->group_start()
 						->where('no_hp', $localPenerima)
 						->or_where('no_hp', $cleanPenerima)
+					->group_end()
+					->group_start()
+						->where('pengguna_id', 777)
+						->or_like('nama', 'Mulia', 'both')
 					->group_end()
 					->where('no_hp_kantor IS NOT NULL')
 					->where('no_hp_kantor !=', '')
