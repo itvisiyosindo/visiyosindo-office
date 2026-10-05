@@ -7914,7 +7914,8 @@ class Surat extends CI_Controller
 				'title_pdf'	=> 'gc',
 				'object'	=> $param1,
 				'data_gc'	=> $this->md_surat_list->getGcById($param2),
-				'detail'	=> $this->md_surat_list->getDetailGc($param2)
+				'detail'	=> $this->md_surat_list->getDetailGc($param2),
+				'masternotifikasi' => $this->md_surat_list->getmasternotifikasi(3)
 			];
 
 			//load mpdf dan membuat page size 

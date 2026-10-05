@@ -198,7 +198,7 @@
 							$ttdaju		= $img_path . "ttd_" . $data_gc[0]->idPengaju . ".png";
 							$ttd1 		= $img_path . "ttd_notyet2.png";
 							$nama_verifikator = isset($masternotifikasi[0]->namav1) ? $masternotifikasi[0]->namav1 : 'Mulia';
-							$jabatan_verifikator = isset($masternotifikasi[0]->jabatanv1) ? $masternotifikasi[0]->jabatanv1 : 'Finance Staff';
+							$jabatan_verifikator = isset($masternotifikasi[0]->jabatanv1) ? $masternotifikasi[0]->jabatanv1 : 'Staff Accounting';
 
 							if ($data_gc[0]->aju_ttd1 == '1') {
 								// Verifikator resmi ID 777 (Mulia)

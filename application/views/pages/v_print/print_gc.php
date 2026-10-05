@@ -307,9 +307,11 @@
 								$img_path 	= "uploads/file_karyawan/ttd/";
 								$ttdaju		= $img_path."ttd_".$data_gc[0]->idPengaju.".png";
 								$ttd1 		= $img_path."ttd_notyet2.png";
+								$nama_verifikator = isset($masternotifikasi[0]->namav1) ? $masternotifikasi[0]->namav1 : 'Mulia';
+								$jabatan_verifikator = isset($masternotifikasi[0]->jabatanv1) ? $masternotifikasi[0]->jabatanv1 : 'Staff Accounting';
 								
 								if($data_gc[0]->aju_ttd1 == '1'){
-									$ttd1 = $img_path."ttd_107.png";
+									$ttd1 = $img_path."ttd_777.png";
 								}else if($data_gc[0]->aju_ttd1 == '2'){
 									$ttd1 = $img_path."ttd_not.png";
 								}
@@ -321,12 +323,12 @@
 						<tr>
 							<td style="text-align:center; "><font color='#000000'><?= $data_gc[0]->nama_ttd ?><hr></hr></td>
 							<td style="text-align:center; "></td>
-							<td style="text-align:center; "><font color='#000000'>Dirangga Madali<hr></hr></td>
+							<td style="text-align:center; "><font color='#000000'><?= $nama_verifikator ?><hr></hr></td>
 						</tr>
 						<tr>
 							<td style="text-align:center; vertical-align:top;"><font color='#000000'><i><?= $data_gc[0]->jabatan ?></i></td>
 							<td style="text-align:center; "></td>
-							<td style="text-align:center; vertical-align:top;"><font color='#000000'><i>Senior Accounting and Finance</i></td>
+							<td style="text-align:center; vertical-align:top;"><font color='#000000'><i><?= $jabatan_verifikator ?></i></td>
 						</tr>
 					</tbody>
 				</table>
