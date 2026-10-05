@@ -60,7 +60,7 @@ if (!function_exists('safe_divide')) {
 		</div>
   <?php } ?>
 
-  <?php if (sessPenggunaId()=='1' || sessPenggunaId()=='54' || sessPenggunaId()=='69' || sessPenggunaId()=='58') { ?>
+  <?php if (sessPenggunaId()=='1' || sessPenggunaId()=='54' || sessPenggunaId()=='69' || sessPenggunaId()=='744' || sessPenggunaId()=='58') { ?>
 
 		<div class="col-md-12">
 			<div class="card-body">

@@ -82,7 +82,7 @@
 		$ttd = "ttd_1";
 		if ((sessPenggunaId() == '23')) {
 			$ttd = 'ttd_1';
-		} else if ((sessPenggunaId() == '69')) {
+		} else if ((sessPenggunaId() == '69' || sessPenggunaId() == '744')) {
 			$ttd = 'ttd_2';
 		} else if ((sessPenggunaId() == '33')) {
 			$ttd = 'ttd_3';
@@ -261,7 +261,7 @@
 						<tr>
 							<td width="25%"><br>Catatan HR </td>
 							<td><br>:</td>
-							<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69') { ?>
+							<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69' || sessPenggunaId() == '744') { ?>
 								<td><br><input id='catatan_hr' type="text" placeholder='Klik Untuk Memasukkan catatan oleh HR & Legal' value="<?= $data_po[0]->catatan_hr ?>" required></td>
 							<?php } else { ?>
 								<td><br><?= $data_po[0]->catatan_hr ?></td>
@@ -410,7 +410,7 @@
 			<?php } ?>
 
 			<?php if ($data_po[0]->jenis != 1) { ?>
-				<?php if (sessPenggunaId() == '69') { ?>
+				<?php if (sessPenggunaId() == '69' || sessPenggunaId() == '744') { ?>
 
 					<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-Sijk="<?= encrypt($data_po[0]->idGc) ?>"> <i class="fas fa-check"></i> Setujui </button>
 					<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-Sijk="<?= encrypt($data_po[0]->idGc) ?>"> <i class="fas fa-times"></i> Tolak </button>

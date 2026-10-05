@@ -83,7 +83,7 @@
         </div>
 			<?php
 		    	$ttd = "ttd_1";
-				if((sessPenggunaId() == '69')){
+				if((sessPenggunaId() == '69' || sessPenggunaId() == '744')){
 					$ttd = 'ttd_1';
 				}
 		?>
@@ -194,7 +194,7 @@
 			
 <br><br>
 <div width="100%">
-	<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69')  { ?>
+	<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69' || sessPenggunaId() == '744')  { ?>
 		
 		<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-sp="<?=encrypt($data_pk[0]->idGc)?>"> <i class="fas fa-check"></i> Setujui </button>
 		<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-sp="<?=encrypt($data_pk[0]->idGc)?>"> <i class="fas fa-times"></i> Tolak </button>				

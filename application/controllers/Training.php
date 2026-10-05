@@ -327,7 +327,7 @@ class Training extends CI_Controller
 
             $id_pengguna = sessPenggunaId();
             //Akses Data yang ditampilkan
-            if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 33 || sessPenggunaId() == 23 || sessPenggunaId() == 54 || sessPenggunaId() == 58) {
+            if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 33 || sessPenggunaId() == 23 || sessPenggunaId() == 54 || sessPenggunaId() == 58) {
                 $dt     = $this->md_training->getTrainingAll();
             } else {
                 $dt     = $this->md_training->getTrainingPersetujuan($id_pengguna);
@@ -440,7 +440,7 @@ class Training extends CI_Controller
             $filter_status = $this->input->post('filter_status');
 
             // 1. Ambil Data
-            if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 33 || sessPenggunaId() == 23 || sessPenggunaId() == 54 || sessPenggunaId() == 58 || isAdmin() || isHrd()) {
+            if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 33 || sessPenggunaId() == 23 || sessPenggunaId() == 54 || sessPenggunaId() == 58 || isAdmin() || isHrd()) {
                 $dt = $this->md_training->getTrainingAll();
             } else {
                 $dt = $this->md_training->getTrainingPengaju($id_pengguna);

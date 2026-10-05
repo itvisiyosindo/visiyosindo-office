@@ -78,7 +78,7 @@
 		$ttd = "ttd_1";
 		if ((sessPenggunaId() == '58')) {
 			$ttd = 'ttd_1';
-		} else if ((sessPenggunaId() == '69')) {
+		} else if ((sessPenggunaId() == '69' || sessPenggunaId() == '744')) {
 			$ttd = 'ttd_2';
 		}
 		?>
@@ -214,7 +214,7 @@
 		<?= form_close(); ?>
 		<br><br>
 		<div width="100%">
-			<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58' || sessPenggunaId() == '69' || sessPenggunaId() == '33') { ?>
+			<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == '33') { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-Sijk="<?= encrypt($data_sijk[0]->id_Sijk) ?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-Sijk="<?= encrypt($data_sijk[0]->id_Sijk) ?>"> <i class="fas fa-times"></i> Tolak </button>
 			<?php } ?>

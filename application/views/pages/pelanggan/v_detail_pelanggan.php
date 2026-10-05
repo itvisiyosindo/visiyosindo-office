@@ -346,7 +346,7 @@ $statusClass = ($statusCustomer == 'New Customer') ? 'status-new' : 'status-exis
 	<a href="<?= base_url('pelanggan') ?>" class="btn btn-secondary">
 		<i class="fas fa-arrow-left"></i> Kembali ke Daftar
 	</a>
-	<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 1 || sessPenggunaId() == 7) { ?>
+	<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1 || sessPenggunaId() == 7) { ?>
 	<a href="javascript:;" class="btn btn-primary btn-edit-detail" data-id="<?= encrypt($data_pelanggan[0]->id_pelanggan) ?>">
 		<i class="fas fa-edit"></i> Edit Data
 	</a>
@@ -681,7 +681,7 @@ $statusClass = ($statusCustomer == 'New Customer') ? 'status-new' : 'status-exis
 		<div class="tab-content" id="detailTabsContent">
 			<!-- Commissioning Tab -->
 			<div class="tab-pane fade show active" id="commissioning" role="tabpanel">
-				<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 1) { ?>
+				<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1) { ?>
 				<div class="mb-3">
 					<a href="javascript:;" id="btn-show-add-form" class="btn btn-success">
 						<i class="fas fa-plus"></i> Tambah Commissioning

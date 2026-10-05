@@ -48,7 +48,7 @@
         <?php
             $id_kepaladivisi = $data_training[0]->id_kepaladivisi;
             $ttd = "ttd_1";
-            if((sessPenggunaId() == '69')){
+            if((sessPenggunaId() == '69' || sessPenggunaId() == '744')){
                 $ttd = 'ttd_1';
             }else if((sessPenggunaId() == '33')){
                 $ttd = 'ttd_2';
@@ -248,7 +248,7 @@
             <br><br>
 
             <div width="100%">
-					<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '33' || sessPenggunaId() == '69' || sessPenggunaId() == $data_training[0]->id_kepaladivisi) { ?>
+					<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '33' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == $data_training[0]->id_kepaladivisi) { ?>
 						<?php if (sessPenggunaId() == '81') { ?>
 							<button type="button" class="btn btn-primary float-right btn-submit" style="margin-left:12px; margin-top:12px;" id-sp="<?= encrypt($data_training[0]->id) ?>"> <i class="fas fa-check"></i> Submit </button>
 						<?php } ?>

@@ -46,7 +46,7 @@
 
 <div class="row">
 
-	<?php if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 58 || sessPenggunaId() == 54) { ?>
+	<?php if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 58 || sessPenggunaId() == 54) { ?>
 
 		<?php if ($ulangtahun[0]->total != 0) { ?>
 			<div class="col-xl-4 col-sm-6 col-12 mb-2">

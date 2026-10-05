@@ -69,6 +69,7 @@
 						sessPenggunaId() == "23" ||
 						sessPenggunaId() == "84" ||
 						sessPenggunaId() == "69" ||
+						sessPenggunaId() == "744" ||
 						sessPenggunaId() == "766"
 					) { ?>
 						<li class="<?= in_array($page_name, ["dokumen/v_dok_rahasia"])
@@ -148,6 +149,7 @@
 						sessPenggunaId() == "54" ||
 						sessPenggunaId() == "33" ||
 						sessPenggunaId() == "69" ||
+						sessPenggunaId() == "744" ||
 						sessPenggunaId() == "751" ||
 						sessPenggunaId() == "75" ||
 						sessPenggunaId() == "757" ||

@@ -3065,7 +3065,7 @@ class Surat_part_two extends CI_Controller
       die;
     } else if ($param == 'meetingroom') {
 
-      if (sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '58' || sessPenggunaId() == '69') {
+      if (sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '58' || sessPenggunaId() == '69' || sessPenggunaId() == '744') {
         $dt     = $this->md_surat_part_two->getAllMeeting();
       } else {
         $dt     = $this->md_surat_part_two->getAllMeetingBy(sessPenggunaId());

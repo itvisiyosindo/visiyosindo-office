@@ -38,7 +38,7 @@
 					$ttd = 'ttd_1';
 				}else if((sessPenggunaId() == '23')){
 					$ttd = 'ttd_2';
-				}else if((sessPenggunaId() == '69')){
+				}else if((sessPenggunaId() == '69' || sessPenggunaId() == '744')){
 					$ttd = 'ttd_3';
 				}
 		?>

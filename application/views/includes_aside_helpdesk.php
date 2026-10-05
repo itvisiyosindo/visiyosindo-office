@@ -37,7 +37,7 @@
 
 
 					<?php
-					$allowed_master = ['72', '69', '81', '714', '75', '756', '15', '23', '84', '755', '33', '754', '766', '777'];
+					$allowed_master = ['72', '69', '744', '81', '714', '75', '756', '15', '23', '84', '755', '33', '754', '766', '777'];
 					?>
 
 					<?php if (isAdmin() || in_array(sessPenggunaId(), $allowed_master)) { ?>
@@ -187,7 +187,7 @@
 							<span>Surat - Menyurat</span>
 						</a>
 						<ul class="nav nav-children">
-							<?php if (isGa() || sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '54' || sessPenggunaId() == '72' || sessPenggunaId() == '54' || sessPenggunaId() == '10' || sessPenggunaId() == '62' || sessPenggunaId() == '6' || sessPenggunaId() == '65' || sessPenggunaId() == '39' || sessPenggunaId() == '88'  || sessPenggunaId() == '107' || sessPenggunaId() == '81' || sessPenggunaId() == '70' || sessPenggunaId() == '714' || sessPenggunaId() == '69' || sessPenggunaId() == '64' || sessPenggunaId() == '777' || sessPenggunaId() == '15' || sessPenggunaId() == '106' || sessPenggunaId() == '107' || sessPenggunaId() == '749' || sessPenggunaId() == '763' || sessPenggunaId() == '764' || sessPenggunaId() == '769' || sessPenggunaId() == '771') { ?>
+							<?php if (isGa() || sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '54' || sessPenggunaId() == '72' || sessPenggunaId() == '54' || sessPenggunaId() == '10' || sessPenggunaId() == '62' || sessPenggunaId() == '6' || sessPenggunaId() == '65' || sessPenggunaId() == '39' || sessPenggunaId() == '88'  || sessPenggunaId() == '107' || sessPenggunaId() == '81' || sessPenggunaId() == '70' || sessPenggunaId() == '714' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == '64' || sessPenggunaId() == '777' || sessPenggunaId() == '15' || sessPenggunaId() == '106' || sessPenggunaId() == '107' || sessPenggunaId() == '749' || sessPenggunaId() == '763' || sessPenggunaId() == '764' || sessPenggunaId() == '769' || sessPenggunaId() == '771') { ?>
 								<li class="nav-parent <?= in_array($page_name, [
 															'surat/v_surat_list',
 															'surat/v_surat_list_spp',
@@ -342,7 +342,7 @@
 												</a>
 											</li>
 										<?php } ?>
-										<?php if (isGa() || sessPenggunaId() == '33' || sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == '69') { ?>
+										<?php if (isGa() || sessPenggunaId() == '33' || sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == '69' || sessPenggunaId() == '744') { ?>
 											<li class="<?= in_array($page_name, ['surat/v_surat_list_izin_jam_kerja'])  ? 'nav-active' : '' ?>">
 												<a class="nav-link" href=" <?= base_url('surat_part_two/show/list/sijk') ?> ">
 													Izin Pada Jam Kerja
@@ -366,7 +366,7 @@
 										<?php } ?>
 
 
-										<?php if (isGa() || sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == '69' || sessPenggunaId() == 767) { ?>
+										<?php if (isGa() || sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == 767) { ?>
 											<li class="<?= in_array($page_name, ['surat/v_surat_list_izin_jam_kerja_sgm'])  ? 'nav-active' : '' ?>">
 												<a class="nav-link" href=" <?= base_url('surat_part_two/show/list/sijk_sgm') ?> ">
 													Izin Pada Jam Kerja SGM
@@ -392,7 +392,7 @@
 											</li>
 										<?php } ?>
 
-										<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '54') { ?>
+										<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '54') { ?>
 											<li class="<?= $page_name == 'surat_new/v_list_po'  ? 'nav-active' : '' ?>">
 												<a class="nav-link" href=" <?= base_url('surat_new/show/list/po') ?> ">
 													Approval PO
@@ -407,7 +407,7 @@
 												</a>
 											</li>
 										<?php } ?>
-										<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69' || sessPenggunaId() == '54') { ?>
+										<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == '54') { ?>
 											<li class="<?= $page_name == 'surat_new/v_list_appdir'  ? 'nav-active' : '' ?>">
 												<a class="nav-link" href=" <?= base_url('surat_new/show/list/appdir') ?> ">
 													Approval Director
@@ -562,7 +562,7 @@
 											</a>
 										</li>
 									<?php } ?>
-									<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '7' || sessPenggunaId() == '8' || sessPenggunaId() == '11' || sessPenggunaId() == '14' || sessPenggunaId() == '15' || sessPenggunaId() == '19' || sessPenggunaId() == '69' || sessPenggunaId() == '23' || sessPenggunaId() == '29' || sessPenggunaId() == '33' || sessPenggunaId() == '37' || sessPenggunaId() == '46' || sessPenggunaId() == '47' || sessPenggunaId() == '53' || sessPenggunaId() == '54' || sessPenggunaId() == '61' || sessPenggunaId() == '64' || sessPenggunaId() == '66' || sessPenggunaId() == '71' || sessPenggunaId() == '73' || sessPenggunaId() == '75' || sessPenggunaId() == '82' || sessPenggunaId() == '85' || sessPenggunaId() == '87' || sessPenggunaId() == '91' || sessPenggunaId() == '92' || sessPenggunaId() == '94' || sessPenggunaId() == '96' || sessPenggunaId() == '98' || sessPenggunaId() == '101' || sessPenggunaId() == '104' || sessPenggunaId() == '106' || sessPenggunaId() == '754' || sessPenggunaId() == '102' || sessPenggunaId() == '721' || sessPenggunaId() == '736' || sessPenggunaId() == '737' || sessPenggunaId() == '749' || sessPenggunaId() == '751' || sessPenggunaId() == '763' || sessPenggunaId() == '769' || sessPenggunaId() == '766' || sessPenggunaId() == '770' || sessPenggunaId() == '771' || sessPenggunaId() == '777') { ?>
+									<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '7' || sessPenggunaId() == '8' || sessPenggunaId() == '11' || sessPenggunaId() == '14' || sessPenggunaId() == '15' || sessPenggunaId() == '19' || sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == '23' || sessPenggunaId() == '29' || sessPenggunaId() == '33' || sessPenggunaId() == '37' || sessPenggunaId() == '46' || sessPenggunaId() == '47' || sessPenggunaId() == '53' || sessPenggunaId() == '54' || sessPenggunaId() == '61' || sessPenggunaId() == '64' || sessPenggunaId() == '66' || sessPenggunaId() == '71' || sessPenggunaId() == '73' || sessPenggunaId() == '75' || sessPenggunaId() == '82' || sessPenggunaId() == '85' || sessPenggunaId() == '87' || sessPenggunaId() == '91' || sessPenggunaId() == '92' || sessPenggunaId() == '94' || sessPenggunaId() == '96' || sessPenggunaId() == '98' || sessPenggunaId() == '101' || sessPenggunaId() == '104' || sessPenggunaId() == '106' || sessPenggunaId() == '754' || sessPenggunaId() == '102' || sessPenggunaId() == '721' || sessPenggunaId() == '736' || sessPenggunaId() == '737' || sessPenggunaId() == '749' || sessPenggunaId() == '751' || sessPenggunaId() == '763' || sessPenggunaId() == '769' || sessPenggunaId() == '766' || sessPenggunaId() == '770' || sessPenggunaId() == '771' || sessPenggunaId() == '777') { ?>
 										<li class="<?= $page_name == 'surat/v_pengajuan_pd_karyawan'  ? 'nav-active' : '' ?>">
 											<a class="nav-link" href=" <?= base_url('surat/show/my_surat/pd_karyawan') ?> ">
 												Permintaan Dinas Karyawan
@@ -718,7 +718,7 @@
 								</a>
 							</li>
 
-							<?php if (sessPenggunaId() == '69' || sessPenggunaId() == '1' || isGa()) { ?>
+							<?php if (sessPenggunaId() == '69' || sessPenggunaId() == '744' || sessPenggunaId() == '1' || isGa()) { ?>
 								<li class="<?= $page_name == 'tiket/v_konfirmasi_ga'  ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('tiket/show/konfirmasi_ga') ?>">
 										Konfirmasi GA

@@ -10,7 +10,7 @@
 <div class="row">
 	<div class="col">
 		<!-- <div class="card-body">
-			<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 1 || sessPenggunaId() == 755) { ?>
+			<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1 || sessPenggunaId() == 755) { ?>
 				<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah Pelanggan</a>
 			<?php } ?>
 		</div> -->

@@ -211,7 +211,7 @@
 			<div class="row">
 				<div class="col-md-12">
 					<div class="btn-action-group">
-						<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 1 || sessPenggunaId() == 7 || sessPenggunaId() == 754 || sessPenggunaId() == 64) { ?>
+						<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1 || sessPenggunaId() == 7 || sessPenggunaId() == 754 || sessPenggunaId() == 64) { ?>
 							<a href="javascript:;" id="btn-show-add-form" class="btn btn-success">
 								<i class="icons icon-plus"></i>&nbsp;Tambah Pelanggan
 							</a>
@@ -219,7 +219,7 @@
 						<a href="javascript:;" id="btn-export-form" class="btn btn-primary">
 							<i class="fas fa-file-excel"></i>&nbsp;Export Excel
 						</a>
-						<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 1 || sessPenggunaId() == 7 || sessPenggunaId() == 754) { ?>
+						<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1 || sessPenggunaId() == 7 || sessPenggunaId() == 754) { ?>
 							<a href="javascript:;" id="btn-import-form" class="btn btn-info">
 								<i class="fas fa-upload"></i>&nbsp;Import Excel
 							</a>
@@ -288,7 +288,7 @@
 							<th>Tgl Registrasi</th>
 							<th>Status Customer</th>
 							<th>Status</th>
-							<?php if (isAdmin() || sessPenggunaId() == 72 || sessPenggunaId() == 85 || sessPenggunaId() == 69 || sessPenggunaId() == 1) { ?>
+							<?php if (isAdmin() || sessPenggunaId() == 72 || sessPenggunaId() == 85 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1) { ?>
 								<th>Aksi</th>
 							<?php } ?>
 						</tr>
@@ -697,7 +697,7 @@
 					targets: [1, 2, 3, 4, 5, 6, 7, 8],
 					className: 'text-center'
 				},
-				<?php if (isAdmin() || sessPenggunaId() == 72 || sessPenggunaId() == 85 || sessPenggunaId() == 69 || sessPenggunaId() == 1) { ?> {
+				<?php if (isAdmin() || sessPenggunaId() == 72 || sessPenggunaId() == 85 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1) { ?> {
 						targets: [9],
 						className: 'text-center',
 						orderable: false

@@ -169,7 +169,7 @@
 						</a>
 					</li>
 
-					<?php if (in_array((string)sessPenggunaId(), ['33', '23', '69', '58', '54', '107'])) { ?>
+					<?php if (in_array((string)sessPenggunaId(), ['33', '23', '69', '744', '58', '54', '107'])) { ?>
 						<li>
 							<a class="nav-link" href="<?= base_url('audit/index.html') ?>">
 								<i class="fas fa-file-invoice-dollar text-primary" aria-hidden="true"></i>

@@ -34,7 +34,7 @@
         </div>
 		<?php
 		   // $ttd = "ttd_1";
-				if((sessPenggunaId() == '69')){
+				if((sessPenggunaId() == '69' || sessPenggunaId() == '744')){
 					$ttd = 'ttd_1';
 				}
 		?>

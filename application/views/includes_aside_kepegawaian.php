@@ -178,7 +178,7 @@
 									Persetujuan WFA
 								</a>
 							</li>
-							<?php if (isAdmin() || isHrd() || sessPenggunaId() == 58 || sessPenggunaId() == 69) { ?>
+							<?php if (isAdmin() || isHrd() || sessPenggunaId() == 58 || sessPenggunaId() == 69 || sessPenggunaId() == 744) { ?>
 								<li class="<?= in_array($page_name, ['wfa/v_admin_jumat_wfa']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('wfa_pengajuan/show/admin_jumat') ?>">
 										Monitoring Jumat
@@ -229,7 +229,7 @@
 						</a>
 						<ul class="nav nav-children">
 
-							<?php if (in_array((string)sessPenggunaId(), ['1', '58', '69', '54', '33', '23', '107'])) { ?>
+							<?php if (in_array((string)sessPenggunaId(), ['1', '58', '69', '744', '54', '33', '23', '107'])) { ?>
 								<li class="<?= in_array($page_name, ['jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('jobdesc') ?>">
 										Jobdesk

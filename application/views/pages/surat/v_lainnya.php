@@ -144,7 +144,7 @@
                                                         <!--</div>-->
                                                     </div>
                                                     <div class="summary-footer">
-                                                        <?php if (isAdmin() || sessPenggunaId() == '69') { ?>
+                                                        <?php if (isAdmin() || sessPenggunaId() == '69' || sessPenggunaId() == '744') { ?>
 													
 															
 															<a class="text-uppercase" href="<?= base_url('surat/show/list/keterangan') ?>">
@@ -403,7 +403,7 @@
                                     </section>
                                 </div>
 
-                            <?php }elseif(sessPenggunaId() == '69'){ ?>
+                            <?php }elseif(sessPenggunaId() == '69' || sessPenggunaId() == '744'){ ?>
                                 
                                 <div class="col-xl-4">
                                     <section class="card card-featured-left card-featured-tertiary mb-3">
@@ -483,7 +483,7 @@
                                                         <!--</div>-->
                                                     </div>
                                                     <div class="summary-footer">
-                                                        <?php if (isAdmin() || sessPenggunaId() == '69') { ?>
+                                                        <?php if (isAdmin() || sessPenggunaId() == '69' || sessPenggunaId() == '744') { ?>
 													
 															
 															<a class="text-uppercase" href="<?= base_url('surat/show/list/st') ?>">
@@ -666,7 +666,7 @@
                                                         <!--</div>-->
                                                     </div>
                                                     <div class="summary-footer">
-                                                        <?php if (isAdmin() || sessPenggunaId() == '69') { ?>
+                                                        <?php if (isAdmin() || sessPenggunaId() == '69' || sessPenggunaId() == '744') { ?>
 													
 															
 															<a class="text-uppercase" href="<?= base_url('surat/show/list/keterangan') ?>">

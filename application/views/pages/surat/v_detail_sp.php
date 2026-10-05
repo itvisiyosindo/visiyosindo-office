@@ -86,7 +86,7 @@
 					$ttd = 'ttd_1';
 				}else if((sessPenggunaId() == '23')){
 					$ttd = 'ttd_2';
-				}else if((sessPenggunaId() == '69')){
+				}else if((sessPenggunaId() == '69' || sessPenggunaId() == '744')){
 					$ttd = 'ttd_3';
 				}
 		?>
@@ -262,7 +262,7 @@ Terimakasih.</td>
 			
 <br><br>
 <div width="100%">
-	<?php if (sessPenggunaId() == '1' || sessPenggunaId() != $data_sp[0]->id || sessPenggunaId() == '69')  { ?>
+	<?php if (sessPenggunaId() == '1' || sessPenggunaId() != $data_sp[0]->id || sessPenggunaId() == '69' || sessPenggunaId() == '744')  { ?>
 		<?php if(sessPenggunaId() == '81') { ?>
 			<button type="button" class="btn btn-primary float-right btn-submit" style="margin-left:12px; margin-top:12px;" id-sp="<?=encrypt($data_sp[0]->id)?>"> <i class="fas fa-check"></i> Submit </button>
 		<?php } ?>

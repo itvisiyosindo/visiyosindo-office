@@ -45,7 +45,7 @@
 					<button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white" style="font-weight: 700;" title="Buka Print Preview Absensi Foto Selfie & Lokasi GPS 1 Bulan">
 						<i class="fas fa-camera"></i> Cetak Foto & GPS
 					</button>
-					<?php if (sessPenggunaId()=='1' || sessPenggunaId()=='58' || sessPenggunaId()=='69') { ?>
+					<?php if (sessPenggunaId()=='1' || sessPenggunaId()=='58' || sessPenggunaId()=='69' || sessPenggunaId()=='744') { ?>
 						<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-outline-secondary ml-1" title="Tambah Absen Manual"><i class="icons icon-plus"></i></a>
 					<?php } ?>
 				</div>

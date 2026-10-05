@@ -16,7 +16,7 @@
           <i class="fa fa-info-circle"></i> Silahkan upload Sertifikat atau Bukti Kehadiran setelah training selesai.
         </div>
 
-        <?php if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 33 || sessPenggunaId() == 23 || sessPenggunaId() == 54 || sessPenggunaId() == 58 || isAdmin() || isHrd()) { ?>
+        <?php if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 33 || sessPenggunaId() == 23 || sessPenggunaId() == 54 || sessPenggunaId() == 58 || isAdmin() || isHrd()) { ?>
           <div class="row mb-3">
             <div class="col-md-3">
               <label class="font-weight-bold">Filter Status Upload:</label>
