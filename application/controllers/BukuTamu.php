@@ -417,26 +417,14 @@ class BukuTamu extends CI_Controller
     $data['nama']        = $nama;
     $data['pengguna_id'] = sessPenggunaId();
 
-    $newId = $this->md_bukutamu->add($data);
+    $this->md_bukutamu->add($data);
 
     //add log
     $aksi = 'Manajemen Buku Tamu';
     $ket = 'Menambahkan Kegiatan Buku Tamu - ' . $data['nama'];
     addlog($aksi, $ket);
 
-    $targetUrl = base_url('bukutamu?kegiatan_id=' . $newId);
-    $response = [
-      'status' => 'success',
-      'message' => 'Kegiatan Berhasil Ditambahkan',
-      'kegiatan_id' => $newId,
-      'kegiatan_nama' => $nama,
-      'target_url' => $targetUrl,
-      'qr_image_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=' . urlencode($targetUrl),
-      'print_url' => base_url('BukuTamu/print_qr/' . encrypt($newId))
-    ];
-
-    echo json_encode($response);
-    die;
+    ajaxReturnDie('success', 'Data Kegiatan Berhasil Ditambahkan', 'reload');
   }
 
   public function print_qr($id_encrypt = '')
