@@ -135,6 +135,7 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 		</div>
 		<div class="btm-actions">
 			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah Kegiatan</a>
+			<a href="javascript:;" id="btn-show-qr-modal" class="btn btn-sm btn-warning text-dark font-weight-bold"><i class="fas fa-qrcode"></i>&nbsp;QR Code Agenda</a>
 			<a href="javascript:;" id="btn-show-tamu-form" class="btn btn-sm btn-info"><i class="icons icon-user-follow"></i>&nbsp;Tambah Tamu Manual</a>
 			<a href="javascript:;" id="btn-cetaklaporan-form" class="btn btn-sm btn-primary"><i class="fas fa-print"></i>&nbsp;Cetak Rekapan</a>
 		</div>
@@ -470,8 +471,55 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 	</div>
 </div>
 
+<div id="modal-qr-code" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="qrModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+			<div class="modal-header bg-dark text-light" style="padding: 16px 20px;">
+				<h5 class="modal-title font-weight-bold" id="qrModalLabel"><i class="fas fa-qrcode text-warning"></i>&nbsp; QR Code Buku Tamu</h5>
+				<button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<div class="modal-body text-center" style="padding: 24px;">
+				<div class="form-group text-left mb-3">
+					<label for="qr_select_kegiatan" class="font-weight-bold" style="font-size: 0.85rem; color: #334155;">Pilih Agenda / Event:</label>
+					<select class="form-control" id="qr_select_kegiatan">
+						<?php if (!empty($nama_kegiatan)): ?>
+							<?php foreach ($nama_kegiatan as $value): ?>
+								<option value="<?= (int) $value->id ?>" <?= ((int) $value->id === $selected_kegiatan_id ? 'selected' : '') ?>><?= html_escape($value->nama) ?></option>
+							<?php endforeach; ?>
+						<?php endif; ?>
+					</select>
+				</div>
 
+				<div class="p-3 mb-3" style="background: #f8fafc; border-radius: 14px; border: 2px dashed #0056b3; display: inline-block;">
+					<div id="qr-loading-spinner" style="display: none; padding: 60px 0;">
+						<i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+						<p class="text-muted small mt-2">Memuat QR Code...</p>
+					</div>
+					<img id="qr-modal-image" src="" alt="QR Code" style="width: 220px; height: 220px; display: block; border-radius: 8px; background: #fff; padding: 6px;" />
+				</div>
 
+				<h5 id="qr-modal-event-title" class="font-weight-bold text-dark mb-1" style="font-size: 1.15rem;"></h5>
+				<p class="text-muted small mb-3">Scan QR code di atas untuk membuka formulir Buku Tamu di smartphone pengunjung.</p>
+
+				<div class="input-group mb-3">
+					<input type="text" id="qr-modal-link-input" class="form-control text-muted" readonly style="font-size: 0.85rem; background: #f1f5f9;">
+					<div class="input-group-append">
+						<button class="btn btn-outline-primary" type="button" id="btn-copy-qr-link"><i class="fas fa-copy"></i> Salin Link</button>
+					</div>
+				</div>
+
+				<div class="d-flex justify-content-center flex-wrap" style="gap: 8px;">
+					<a href="#" id="btn-print-standee" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-print"></i>&nbsp; Cetak Standee Meja</a>
+					<a href="#" id="btn-download-qr-img" target="_blank" download class="btn btn-success btn-sm"><i class="fas fa-download"></i>&nbsp; Download QR</a>
+					<a href="#" id="btn-test-form-link" target="_blank" class="btn btn-info btn-sm"><i class="fas fa-external-link-alt"></i>&nbsp; Buka Form</a>
+				</div>
+			</div>
+			<div class="modal-footer" style="padding: 12px 20px; background: #f8fafc;">
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
@@ -612,6 +660,74 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 
 		refreshSelectedEventFromFilter();
 		loadStatistik();
+
+		// QR Code Modal Loader
+		function loadQrModalData(kegiatanId) {
+			$('#qr-modal-image').hide();
+			$('#qr-loading-spinner').show();
+			$('#qr-modal-event-title').text('Memuat...');
+			$('#qr-modal-link-input').val('');
+
+			$.ajax({
+				url: '<?= base_url('BukuTamu/getQrModalJson') ?>',
+				type: 'GET',
+				data: { kegiatan_id: kegiatanId },
+				dataType: 'JSON',
+				success: function(res) {
+					$('#qr-loading-spinner').hide();
+					if (res.status === 'success') {
+						$('#qr-modal-image').attr('src', res.qr_image_url).fadeIn();
+						$('#qr-modal-event-title').text(res.kegiatan_nama);
+						$('#qr-modal-link-input').val(res.target_url);
+						$('#btn-print-standee').attr('href', res.print_url);
+						$('#btn-download-qr-img').attr('href', res.qr_image_url);
+						$('#btn-test-form-link').attr('href', res.target_url);
+					} else {
+						Swal.fire('Gagal!', res.message, 'error');
+					}
+				},
+				error: function() {
+					$('#qr-loading-spinner').hide();
+					Swal.fire('Gagal!', 'Gagal memuat data QR Code.', 'error');
+				}
+			});
+		}
+
+		$('#btn-show-qr-modal').click(function() {
+			var filterVal = $filterKegiatan.val();
+			if (filterVal) {
+				$('#qr_select_kegiatan').val(filterVal);
+			} else {
+				var firstVal = $('#qr_select_kegiatan option:first').val();
+				if (firstVal) {
+					$('#qr_select_kegiatan').val(firstVal);
+				}
+			}
+			loadQrModalData($('#qr_select_kegiatan').val());
+			$('#modal-qr-code').modal('show');
+		});
+
+		$('#qr_select_kegiatan').on('change', function() {
+			loadQrModalData(this.value);
+		});
+
+		$('#btn-copy-qr-link').click(function() {
+			var copyText = document.getElementById("qr-modal-link-input");
+			copyText.select();
+			copyText.setSelectionRange(0, 99999);
+			if (navigator.clipboard) {
+				navigator.clipboard.writeText(copyText.value);
+			} else {
+				document.execCommand("copy");
+			}
+
+			var $btn = $(this);
+			var originalHtml = $btn.html();
+			$btn.html('<i class="fas fa-check"></i> Tersalin!').removeClass('btn-outline-primary').addClass('btn-success');
+			setTimeout(function() {
+				$btn.html(originalHtml).removeClass('btn-success').addClass('btn-outline-primary');
+			}, 2000);
+		});
 
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)

@@ -42,9 +42,26 @@ class BukuTamu extends CI_Controller
 
 
 
-  public function index()
+  public function index($event_id = '')
   {
-    $kegiatan = $this->md_bukutamu->getLastId();
+    $kegiatanId = 0;
+    if (!empty($event_id)) {
+      $kegiatanId = is_numeric($event_id) ? (int) $event_id : (int) decrypt($event_id);
+    }
+    if ($kegiatanId <= 0) {
+      $kegiatanId = (int) $this->input->get('kegiatan_id') ?: ((int) $this->input->get('event') ?: 0);
+    }
+
+    if ($kegiatanId > 0) {
+      $kegiatan = $this->md_bukutamu->getKegiatanById($kegiatanId);
+    } else {
+      $kegiatan = $this->md_bukutamu->getLastId();
+    }
+
+    if (empty($kegiatan)) {
+      $kegiatan = $this->md_bukutamu->getLastId();
+    }
+
     $kegiatanId = (is_object($kegiatan) && !empty($kegiatan->id)) ? (int) $kegiatan->id : 0;
 
     $page_data['page_name']     = 'bukutamu';
@@ -391,22 +408,103 @@ class BukuTamu extends CI_Controller
   {
     grantAccessFor('all');
 
-    $data['nama']    = $this->input->post('nama');
-    $data['pengguna_id']     = sessPenggunaId();
-    //checkEmptyForm($data);
+    $nama = trim((string) $this->input->post('nama', true));
+    if (empty($nama)) {
+      ajaxReturnDie('error', 'Nama kegiatan tidak boleh kosong.');
+      return;
+    }
 
-    $this->md_bukutamu->add($data);
+    $data['nama']        = $nama;
+    $data['pengguna_id'] = sessPenggunaId();
 
-
-
-
+    $newId = $this->md_bukutamu->add($data);
 
     //add log
-    $aksi = 'Master Data Visilab';
-    $ket = 'Menambahkan Data Alat - ' . $data['nama'];
+    $aksi = 'Manajemen Buku Tamu';
+    $ket = 'Menambahkan Kegiatan Buku Tamu - ' . $data['nama'];
     addlog($aksi, $ket);
 
-    ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
+    $targetUrl = base_url('bukutamu?kegiatan_id=' . $newId);
+    $response = [
+      'status' => 'success',
+      'message' => 'Kegiatan Berhasil Ditambahkan',
+      'kegiatan_id' => $newId,
+      'kegiatan_nama' => $nama,
+      'target_url' => $targetUrl,
+      'qr_image_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=' . urlencode($targetUrl),
+      'print_url' => base_url('BukuTamu/print_qr/' . encrypt($newId))
+    ];
+
+    echo json_encode($response);
+    die;
+  }
+
+  public function print_qr($id_encrypt = '')
+  {
+    grantAccessFor('all');
+
+    $id = 0;
+    if (!empty($id_encrypt)) {
+      $id = is_numeric($id_encrypt) ? (int) $id_encrypt : (int) decrypt($id_encrypt);
+    }
+    if ($id <= 0) {
+      $id = (int) $this->input->get('kegiatan_id') ?: 0;
+    }
+
+    if ($id > 0) {
+      $kegiatan = $this->md_bukutamu->getKegiatanById($id);
+    } else {
+      $kegiatan = $this->md_bukutamu->getLastId();
+    }
+
+    if (empty($kegiatan)) {
+      show_404();
+      return;
+    }
+
+    $targetUrl = base_url('bukutamu?kegiatan_id=' . $kegiatan->id);
+    $data = [
+      'kegiatan' => $kegiatan,
+      'target_url' => $targetUrl,
+      'qr_image_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=' . urlencode($targetUrl)
+    ];
+
+    $this->load->view('pages/v_print/print_bukutamu_qr', $data);
+  }
+
+  public function getQrModalJson()
+  {
+    grantAccessFor('all');
+    $this->output->set_content_type('application/json');
+
+    $id = (int) $this->input->get_post('kegiatan_id');
+    if ($id <= 0) {
+      $id_enc = $this->input->get_post('id_encrypt', true);
+      if (!empty($id_enc)) {
+        $id = (int) decrypt($id_enc);
+      }
+    }
+
+    if ($id > 0) {
+      $kegiatan = $this->md_bukutamu->getKegiatanById($id);
+    } else {
+      $kegiatan = $this->md_bukutamu->getLastId();
+    }
+
+    if (empty($kegiatan)) {
+      echo json_encode(['status' => 'error', 'message' => 'Kegiatan tidak ditemukan.']);
+      return;
+    }
+
+    $targetUrl = base_url('bukutamu?kegiatan_id=' . $kegiatan->id);
+    echo json_encode([
+      'status' => 'success',
+      'kegiatan_id' => (int) $kegiatan->id,
+      'kegiatan_nama' => $kegiatan->nama,
+      'target_url' => $targetUrl,
+      'qr_image_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=' . urlencode($targetUrl),
+      'print_url' => base_url('BukuTamu/print_qr/' . encrypt($kegiatan->id))
+    ]);
   }
 
 

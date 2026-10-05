@@ -102,6 +102,9 @@ $route['absensi_config/updatePenggunaWFA'] = 'absensi_config/update_pengguna_wfa
 $route['absensi_config/updateWFAConfig'] = 'absensi_config/update_wfa_config';
 
 // Buku Tamu aliases (including typo-compatible endpoint)
+$route['bukutamu'] = 'BukuTamu/index';
+$route['bukutamu/event/(:any)'] = 'BukuTamu/index/$1';
+$route['BukuTamu/event/(:any)'] = 'BukuTamu/index/$1';
 $route['dataBukuTamu'] = 'BukuTamu/dataBukutamu';
 $route['dataBukutamu'] = 'BukuTamu/dataBukutamu';
 $route['BukuTamu/dataBukuTamu'] = 'BukuTamu/dataBukutamu';

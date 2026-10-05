@@ -427,6 +427,7 @@ class Md_bukutamu extends CI_Model
     function add($data)
     {
         $this->db->insert('bukutamu_config', $data);
+        return $this->db->insert_id();
     }
 
     function getLastId()
