@@ -2850,6 +2850,15 @@ function sendWa($dataSend)
 		}
 	}
 
+	// Deduplikasi pengiriman pesan yang identik dalam satu request ke nomor yang sama
+	static $sent_messages = [];
+	$penerimaClean = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
+	$msgHash = md5($penerimaClean . '_' . trim(strip_tags(urldecode($dataSend['pesan'] ?? ''))));
+	if (isset($sent_messages[$msgHash])) {
+		return true; // Lewati karena pesan yang sama persis sudah dikirim ke nomor ini dalam satu proses
+	}
+	$sent_messages[$msgHash] = true;
+
 	// 1. Coba kirim via Convia API lebih dulu
 	if (sendWaConvia($dataSend)) {
 		return true;

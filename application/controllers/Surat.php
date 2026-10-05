@@ -3381,8 +3381,8 @@ class Surat extends CI_Controller
 					//send notif wa
 					$dataWaFi = [
 						'id' 	        => $id_pb,
-						'idPenerima1' 	=> '106',
-						'idPenerima2' 	=> '107',
+						'idPenerima1' 	=> '107',
+						'idPenerima2' 	=> '',
 						'namaSurat' 	=> 'Surat Biaya Perjalanan Dinas',
 						'penerima' 	    => '_Head of Accounting and Tax_',
 						'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
@@ -3390,7 +3390,7 @@ class Surat extends CI_Controller
 						'ttd_sebelum3' 	=> 'Director of Corp Planning and Bussinees Management'
 					];
 
-					$this->notifWaAprov($param1, 2, 3, $dataWaFi);
+					$this->notifWaAprov($param1, 1, 3, $dataWaFi);
 
 					$datapenggunanotifikasi 	= $this->md_pengguna->getById(107);
 					$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -3802,8 +3802,8 @@ class Surat extends CI_Controller
 					//send notif wa
 					$dataWa = [
 						'id' => $id_spp,
-						'idPenerima1' => 106,
-						'idPenerima2' => 107,
+						'idPenerima1' => 107,
+						'idPenerima2' => '',
 						'namaSurat' => 'Surat Permintaan Pembayaran',
 						'penerima' => '_Staff Finance_',
 						'ttd_sebelum1' => 'General Manager',
@@ -3811,8 +3811,10 @@ class Surat extends CI_Controller
 						'ttd_sebelum3' => 'Director'
 					];
 
-					$this->notifWaAprovSpp(2, 2, $dataWa);
+					// Notifikasi ke pengaju bahwa surat disetujui penuh
+					$this->notifWaAprovSpp(1, 2, $dataWa);
 
+					// Notifikasi ke Finance untuk proses pembayaran
 					$this->notifWaAprovSpp(1, 1, $dataWa);
 
 					$datapenggunanotifikasi 	= $this->md_pengguna->getById(107);
@@ -4292,15 +4294,15 @@ class Surat extends CI_Controller
 					//send notif wa
 					$dataWaFi = [
 						'id' 	        => $id_pkk,
-						'idPenerima1' 	=> '106',
-						'idPenerima2' 	=> '107',
+						'idPenerima1' 	=> '107',
+						'idPenerima2' 	=> '',
 						'namaSurat' 	=> 'Surat Pengajuan Klaim Kas',
 						'penerima' 	    => '*Head of Accounting and Tax*',
 						'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
 						'ttd_sebelum2' 	=> 'General Manager',
 						'ttd_sebelum3' 	=> 'Director of Corp Planning and Bussinees Management'
 					];
-					$this->notifWaAprov($param1, 2, 3, $dataWaFi);
+					$this->notifWaAprov($param1, 1, 3, $dataWaFi);
 
 					addLog('Update Pengajuan Limit GoCorp', 'Persetujuan Pengajuan Limit GoCorp');
 					ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
@@ -4435,15 +4437,15 @@ class Surat extends CI_Controller
 					//send notif wa
 					$dataWaFi = [
 						'id' 	        => $id_pkk,
-						'idPenerima1' 	=> '106',
-						'idPenerima2' 	=> '107',
+						'idPenerima1' 	=> '107',
+						'idPenerima2' 	=> '',
 						'namaSurat' 	=> 'Surat Pengajuan Klaim Kas E-Toll',
 						'penerima' 	    => '*Head of Accounting and Tax*',
 						'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
 						'ttd_sebelum2' 	=> 'General Manager',
 						'ttd_sebelum3' 	=> 'Director of Corp Planning and Bussinees Management'
 					];
-					$this->notifWaAprov($param1, 2, 3, $dataWaFi);
+					$this->notifWaAprov($param1, 1, 3, $dataWaFi);
 
 					addLog('Update Pengajuan Klaim Kas E-Toll', 'Persetujuan Pengajuan Klaim Kas E-Toll');
 					ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
@@ -10999,8 +11001,8 @@ class Surat extends CI_Controller
 
 				$dataWaFi = [
 					'id' => $id,
-					'idPenerima1' => 106,
-					'idPenerima2' => 107,
+					'idPenerima1' => 107,
+					'idPenerima2' => '',
 					'namaSurat' => 'Surat Permintaan Pembayaran',
 					'penerima' => '_Staff Finance_',
 					'ttd_sebelum1' => 'General Manager',
@@ -11008,7 +11010,7 @@ class Surat extends CI_Controller
 					'ttd_sebelum3' => 'Director',
 					'ttd_sebelum4' => ''
 				];
-				$this->notifWaAprovSpp(2, 1, $dataWaFi);
+				$this->notifWaAprovSpp(1, 1, $dataWaFi);
 			}
 
 			$this->session->set_flashdata('success', 'Berhasil mengirim ulang notifikasi WA untuk Permintaan Pembayaran ' . $kode);
@@ -11069,15 +11071,15 @@ class Surat extends CI_Controller
 
 				$dataWaFi = [
 					'id' => $id,
-					'idPenerima1' => '106',
-					'idPenerima2' => '107',
+					'idPenerima1' => '107',
+					'idPenerima2' => '',
 					'namaSurat' => 'Surat Pengajuan Klaim Kas',
 					'penerima' => '*Head of Accounting and Tax*',
 					'ttd_sebelum1' => 'Head of Accounting and Tax',
 					'ttd_sebelum2' => 'General Manager',
 					'ttd_sebelum3' => 'Director of Corp Planning and Bussinees Management'
 				];
-				$this->notifWaAprov('pkk', 2, 3, $dataWaFi);
+				$this->notifWaAprov('pkk', 1, 3, $dataWaFi);
 			}
 
 			$this->session->set_flashdata('success', 'Berhasil mengirim ulang notifikasi WA untuk PKK ' . $kode);
