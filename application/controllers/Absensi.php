@@ -1494,8 +1494,99 @@ class Absensi extends CI_Controller
 
     public function print($param = '', $param2 = '', $param3 = '')
     {
-        if ($param == 'foto_gps' || $param == 'print_foto_gps' || $param == 'detailKaryawanFotoGps' || $param == 'detailKaryawanMonth') {
+        if ($param == 'foto_gps' || $param == 'print_foto_gps' || $param == 'detailKaryawanFotoGps') {
             $this->print_foto_gps($param2, $param3);
+            return;
+        }
+
+        if ($param == 'detailKaryawanMonth') {
+            $this->load->library('pdfgenerator');
+            $month = $param2 ? $param2 : date("Y-m");
+            $idPengguna = is_numeric($param3) ? $param3 : decrypt($param3);
+            if (!$idPengguna) {
+                $idPengguna = sessPenggunaId();
+            }
+
+            $karyawan = $this->md_pengguna->getById($idPengguna);
+            if (!$karyawan) {
+                show_404();
+            }
+
+            $year = date('Y', strtotime($month));
+            $month_num = date('m', strtotime($month));
+            $num_days = cal_days_in_month(CAL_GREGORIAN, $month_num, $year);
+
+            $records = $this->db->where('pengguna_id', $idPengguna)
+                ->like('data_created', $month, 'after')
+                ->order_by('data_created', 'ASC')
+                ->get('absensi')
+                ->result();
+
+            $records_by_date = [];
+            foreach ($records as $r) {
+                $tgl = date('Y-m-d', strtotime($r->data_created));
+                $type = $r->type_absen ?: 'masuk';
+                $records_by_date[$tgl][$type] = $r;
+            }
+
+            $data = [];
+            for ($d = 1; $d <= $num_days; $d++) {
+                $date_str = sprintf('%04d-%02d-%02d', $year, $month_num, $d);
+                $dt = [
+                    'pengguna_id' => $idPengguna,
+                    'date' => $date_str,
+                    'jenis_absen' => '',
+                    'lokasi' => '-',
+                    'masuk' => '',
+                    'istirahat' => '',
+                    'keluar' => '',
+                    'ket' => ''
+                ];
+
+                if (isset($records_by_date[$date_str])) {
+                    $day_records = $records_by_date[$date_str];
+                    $masuk = $day_records['masuk'] ?? null;
+                    $istirahat = $day_records['istirahat'] ?? null;
+                    $keluar = $day_records['keluar'] ?? null;
+                    $izin = $day_records['izin'] ?? null;
+
+                    if ($masuk) {
+                        $dt['jenis_absen'] = 'Absensi';
+                        $dt['lokasi'] = $masuk->jenis_absen ?: 'Kantor';
+                        $dt['masuk'] = $masuk->waktu_absen;
+                        $dt['istirahat'] = $istirahat ? $istirahat->waktu_absen : '';
+                        $dt['keluar'] = $keluar ? $keluar->waktu_absen : '';
+                        $dt['ket'] = $masuk->status_absen ?: ($masuk->keterangan ?: '');
+                    } elseif ($izin) {
+                        $dt['jenis_absen'] = !empty($izin->status_absen) ? ucfirst($izin->status_absen) : 'Izin';
+                        $dt['lokasi'] = '-';
+                        $dt['ket'] = $izin->keterangan ?: ($izin->status_absen ?: '-');
+                    } elseif ($keluar || $istirahat) {
+                        $rec = $keluar ?: $istirahat;
+                        $dt['jenis_absen'] = 'Absensi';
+                        $dt['lokasi'] = $rec->jenis_absen ?: 'Kantor';
+                        $dt['istirahat'] = $istirahat ? $istirahat->waktu_absen : '';
+                        $dt['keluar'] = $keluar ? $keluar->waktu_absen : '';
+                        $dt['ket'] = $rec->status_absen ?: ($rec->keterangan ?: '');
+                    }
+                }
+
+                $data[] = $dt;
+            }
+
+            $dta = [
+                'pengguna' => $karyawan,
+                'month' => $month,
+                'absen' => $data,
+                'title_pdf' => 'Rekap Absensi ' . ucwords($karyawan[0]->nama) . ' ' . $month
+            ];
+
+            $file_pdf = 'Rekap Absensi ' . ucwords($karyawan[0]->nama) . ' ' . $month;
+            $paper = 'legal';
+            $orientation = 'portrait';
+            $html = $this->load->view('pages/v_print/print_absensi_detail_month', $dta, true);
+
+            $this->pdfgenerator->generate($html, $file_pdf, $paper, $orientation);
             return;
         }
 

@@ -107,14 +107,11 @@
                             <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
                         </div>
                         <div class="btn-group w-100 mt-1" role="group">
-                            <button type="button" id="btn_print_detail_absen" class="btn btn-sm btn-primary text-white" style="font-weight: 600;" title="Cetak Rekap Absensi Karyawan">
-                                <i class="fas fa-print"></i> Absen
-                            </button>
-                            <button type="button" id="btn_print_rekap_tunjangan" class="btn btn-sm btn-danger text-white" style="font-weight: 600;" title="Cetak Rekapitulasi Tunjangan Tidak Tetap (PDF)">
+                            <button type="button" id="btn_print_rekap_pdf" class="btn btn-sm btn-danger text-white" style="font-weight: 600;" title="Cetak Rekap Absensi Karyawan (PDF)">
                                 <i class="fas fa-file-pdf"></i> Rekap PDF
                             </button>
                             <button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white" style="font-weight: 600;" title="Print Absensi 1 Bulan Lengkap Foto Selfie & GPS">
-                                <i class="fas fa-camera"></i> Foto
+                                <i class="fas fa-camera"></i> Foto & GPS
                             </button>
                         </div>
                     </div>
@@ -333,16 +330,11 @@
                 })
             })
 
-            $('#btn_print_detail_absen').click(function() {
+            $('#btn_print_rekap_pdf').click(function() {
                 var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
                 var id = $('#pengguna_id').val();
                 var link = 'absensi/print/detailKaryawanMonth/' + month + '/' + id;
                 window.open('<?= base_url() ?>' + link, '_blank');
-            });
-
-            $('#btn_print_rekap_tunjangan').click(function() {
-                var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
-                window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
             });
 
             $('#btn_print_foto_gps').click(function() {

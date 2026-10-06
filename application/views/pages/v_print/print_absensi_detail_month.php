@@ -6,53 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title_pdf; ?></title>
     <style>
+        body {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
         #table {
             font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
             border-collapse: collapse;
             width: 100%;
+            margin-top: 10px;
         }
 
         #table td,
         #table th {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px 8px;
         }
-
-        /* #table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        #table tr:hover {
-            background-color: #ddd;
-        } */
 
         #table th {
-            padding-top: 10px;
-            padding-bottom: 10px;
+            background-color: #ffffff;
+            font-weight: bold;
             text-align: center;
-            font-size: 12Px;
+            font-size: 11px;
+            padding-top: 8px;
+            padding-bottom: 8px;
         }
 
         #table td {
-
-            font-size: 10Px;
-        }
-
-
-
-        .tandatangan {
-
+            font-size: 10px;
             text-align: center;
-            margin-left: 600px;
         }
 
-        .tandatangan2 {
-            text-align: left;
+        .info-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            font-size: 13px;
         }
 
-        .tandatangan3 {
-            text-align: left;
-            margin-left: 300px;
+        .info-table td {
+            padding: 3px 0;
         }
     </style>
 </head>
@@ -60,63 +57,54 @@
 <body>
     <img src="assets/img/kop_baru.jpg" width="100%" />
     <br />
-    <table style="border-collapse: collapse; width: 100%; height: 36px;">
+    <table class="info-table">
         <tbody>
-            <tr style="height: 18px;">
-                <td style="width: 17.5852%; height: 18px;">Nama</td>
-                <td style="width: 3.52272%; height: 18px;">:</td>
-                <td style="width: 22.6988%; height: 18px;"><?= ucwords($pengguna[0]->nama) ?></td>
-                <td style="width: 1.90342%; height: 18px;">&nbsp;</td>
-                <td style="width: 17.1449%; height: 18px;">Jabatan</td>
-                <td style="width: 1.94604%; height: 18px;">:</td>
-                <td style="width: 35.1989%; height: 18px;"><?= ucwords($pengguna[0]->jabatan) ?></td>
+            <tr>
+                <td style="width: 14%;">Nama</td>
+                <td style="width: 2%;">:</td>
+                <td style="width: 34%;"><?= ucwords($pengguna[0]->nama) ?></td>
+                <td style="width: 14%;">Jabatan</td>
+                <td style="width: 2%;">:</td>
+                <td style="width: 34%;"><?= ucwords($pengguna[0]->jabatan) ?></td>
             </tr>
-            <tr style="height: 18px;">
-                <td style="width: 17.5852%; height: 18px;">No Pegawai</td>
-                <td style="width: 3.52272%; height: 18px;">:</td>
-                <td style="width: 22.6988%; height: 18px;"><?= $pengguna[0]->no_pegawai ?></td>
-                <td style="width: 1.90342%; height: 18px;">&nbsp;</td>
-                <td style="width: 17.1449%; height: 18px;">&nbsp;</td>
-                <td style="width: 1.94604%; height: 18px;">&nbsp;</td>
-                <td style="width: 35.1989%; height: 18px;">&nbsp;</td>
+            <tr>
+                <td>No Pegawai</td>
+                <td>:</td>
+                <td><?= $pengguna[0]->no_pegawai ?: '-' ?></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
         </tbody>
     </table>
-    <br>
-    <table id="table" style="width:100%">
-        <thead class="text-center">
+
+    <table id="table">
+        <thead>
             <tr>
-                <th style="width:5%"> No </th>
-                <th style="width:15%"> Tanggal</th>
-                <th> Jenis Absen</th>
-                <th> Lokasi</th>
-                <th> Masuk </th>
-                <th> Istirahat </th>
-                <th> Keluar </th>
-                <th> Ket </th>
+                <th style="width: 5%;">No</th>
+                <th style="width: 15%;">Tanggal</th>
+                <th style="width: 20%;">Jenis Absen</th>
+                <th style="width: 12%;">Lokasi</th>
+                <th style="width: 12%;">Masuk</th>
+                <th style="width: 12%;">Istirahat</th>
+                <th style="width: 12%;">Keluar</th>
+                <th style="width: 12%;">Ket</th>
             </tr>
         </thead>
         <tbody>
-
             <?php $x = 1;
-            // echo_array($absen);die;
-            foreach ($absen as $row) {
-            ?>
+            foreach ($absen as $row) { ?>
                 <tr>
-
-                    <td style="text-align: center;"><?= $x++ ?></td>
+                    <td><?= $x++ ?></td>
                     <td><?= $row['date'] ?></td>
                     <td><?= $row['jenis_absen'] ?></td>
-                    <td><?= isset($row['jenis_lokasi']) ? $row['jenis_lokasi'] : '-' ?></td>
+                    <td><?= !empty($row['lokasi']) ? $row['lokasi'] : '-' ?></td>
                     <td><?= $row['masuk'] ?></td>
                     <td><?= $row['istirahat'] ?></td>
                     <td><?= $row['keluar'] ?></td>
                     <td><?= $row['ket'] ?></td>
                 </tr>
-
-            <?php
-            } ?>
-
+            <?php } ?>
         </tbody>
     </table>
 
