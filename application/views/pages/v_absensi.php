@@ -7,72 +7,79 @@
 	</div>
 </header>
 <div class="row">
-	<div class="col">
-		<div class="card-body">
-			<div class="row">
-				<div class="col-md-2">
-					<small>Filter By Month:</small>
-					<div class="input-group">
-						<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+	<div class="col-12">
+		<div class="table-card-container">
+			<div class="table-top-bar">
+				<div class="d-flex align-items-center">
+					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-users mr-1"></i> Rekap Absensi Karyawan</span>
+				</div>
+				<div class="table-actions d-flex align-items-center">
+					<button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white shadow-sm mr-2" style="font-weight: 600;" title="Buka Print Preview Absensi Foto Selfie & Lokasi GPS 1 Bulan">
+						<i class="fas fa-camera mr-1"></i> Cetak Foto & GPS
+					</button>
+					<?php if (sessPenggunaId()=='1' || sessPenggunaId()=='58' || sessPenggunaId()=='69' || sessPenggunaId()=='744') { ?>
+						<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success shadow-sm" title="Tambah Absen Manual">
+							<i class="fas fa-plus mr-1"></i> Tambah Absen
+						</a>
+					<?php } ?>
+				</div>
+			</div>
+
+			<div class="card-body p-3">
+				<div class="row align-items-end mb-3" style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+					<div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+						<label class="small font-weight-bold text-dark mb-1"><i class="fa fa-calendar text-primary mr-1"></i> Filter By Month:</label>
+						<div class="input-group input-group-sm">
+							<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+							<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control form-control-sm" id="filter_month" placeholder="Pilih Bulan" required>
+						</div>
 					</div>
-				</div>
-				<div class="col-md-2">
-					<small>Filter By date:</small>
-					<div class="input-group">
-						<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm-dd", "minViewMode": "days"}' class="form-control" id="filter_date" placeholder="Pilih Tanggal" required data-plugin-datepicker>
+					<div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+						<label class="small font-weight-bold text-dark mb-1"><i class="fa fa-calendar-day text-primary mr-1"></i> Filter By Date:</label>
+						<div class="input-group input-group-sm">
+							<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+							<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm-dd", "minViewMode": "days"}' class="form-control form-control-sm" id="filter_date" placeholder="Pilih Tanggal" required>
+						</div>
 					</div>
-				</div>
-				<div class="col-md-2">
-					<small>Filter By Status Absen:</small>
-					<select class="form-control " name="filter_status" id="filter_status">
-						<option value="">Semua</option>
-						<option value="terlambat">Terlambat</option>
-						<option value="tepat_waktu">Tepat Waktu</option>
-						<option value="dinas">Dinas</option>
-					</select>
-				</div>
-				<div class="col-md-2">
-					<small> <i class="fas fa-print"></i> Print By Month:</small>
-					<div class="input-group">
-						<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
-						<div class="input-group-append">
-							<button type="button" id="btn_print_rekap" class="btn btn-danger text-white" title="Cetak Rekapitulasi Tunjangan Tidak Tetap (PDF)"><i class="fas fa-file-pdf"></i></button>
+					<div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+						<label class="small font-weight-bold text-dark mb-1"><i class="fa fa-filter text-primary mr-1"></i> Filter By Status Absen:</label>
+						<select class="form-control form-control-sm" name="filter_status" id="filter_status">
+							<option value="">Semua Status</option>
+							<option value="terlambat">Terlambat</option>
+							<option value="tepat_waktu">Tepat Waktu</option>
+							<option value="dinas">Dinas</option>
+						</select>
+					</div>
+					<div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+						<label class="small font-weight-bold text-dark mb-1"><i class="fas fa-print text-danger mr-1"></i> Print By Month (PDF):</label>
+						<div class="input-group input-group-sm">
+							<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+							<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control form-control-sm" id="print_month" placeholder="Pilih Bulan">
+							<div class="input-group-append">
+								<button type="button" id="btn_print_rekap" class="btn btn-sm btn-danger text-white" title="Cetak Rekapitulasi Tunjangan Tidak Tetap (PDF)"><i class="fas fa-file-pdf"></i></button>
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<div class="col-md-2">
-					<small> <i class="fas fa-camera"></i> Print Foto & GPS:</small><br>
-					<button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white" style="font-weight: 700;" title="Buka Print Preview Absensi Foto Selfie & Lokasi GPS 1 Bulan">
-						<i class="fas fa-camera"></i> Cetak Foto & GPS
-					</button>
-					<?php if (sessPenggunaId()=='1' || sessPenggunaId()=='58' || sessPenggunaId()=='69' || sessPenggunaId()=='744') { ?>
-						<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-outline-secondary ml-1" title="Tambah Absen Manual"><i class="icons icon-plus"></i></a>
-					<?php } ?>
+				<div class="table-responsive">
+					<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
+						<thead>
+							<tr>
+								<th> # </th>
+								<th> Nama Pengguna</th>
+								<th> Waktu Absen Pagi </th>
+								<th> Status Absen </th>
+								<th> Status Penerimaan </th>
+								<th> IP Address </th>
+								<th> Lokasi </th>
+								<th> Jumlah Kehadiran </th>
+								<th> Kantor </th>
+								<th> Dinas</th>
+							</tr>
+						</thead>
+					</table>
 				</div>
-
-			</div>
-			<br>
-			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-					<thead>
-						<tr>
-							<th> # </th>
-							<th> Nama Pengguna</th>
-							<th> Waktu Absen Pagi </th>
-							<th> Status Absen </th>
-							<th> Status Penerimaan </th>
-							<th> IP Address </th>
-							<th> Lokasi </th>
-						    <th> Jumlah Kehadiran </th>
-						    <th> Kantor </th>
-						    <th> Dinas</th>
-						</tr>
-					</thead>
-				</table>
 			</div>
 		</div>
 	</div>
@@ -212,7 +219,7 @@
 				}
 			},
 			columnDefs: [{
-				targets: [0, 2, 3, 4, 5],
+				targets: [0, 2, 3, 4, 5, 6, 7, 8, 9],
 				className: 'text-center'
 			}]
 		})

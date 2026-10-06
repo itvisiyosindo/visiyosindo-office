@@ -132,7 +132,10 @@ class Md_absensi extends CI_Model
         $this->db->select('count(*) as total');
         $this->db->like('data_created', $month);
         $this->db->where('type_absen', 'masuk');
-        $this->db->where('jenis_absen', 'Dinas');
+        $this->db->group_start();
+        $this->db->where("UPPER(jenis_absen)", 'DINAS');
+        $this->db->or_where("status_absen", 'dinas');
+        $this->db->group_end();
         $this->db->where('absensi.perusahaan', grantAccessForPerusahaan());
         return $this->db->get_where('absensi', ['pengguna_id' => $pengguna_id])->result();
     }
@@ -600,7 +603,15 @@ class Md_absensi extends CI_Model
         }
 
         if ($this->input->post('filter_status')) {
-            $this->datatables->where("status_absen", $this->input->post('filter_status'));
+            $f_stat = $this->input->post('filter_status');
+            if ($f_stat == 'dinas') {
+                $this->db->group_start();
+                $this->db->where("status_absen", 'dinas');
+                $this->db->or_where("UPPER(jenis_absen)", 'DINAS');
+                $this->db->group_end();
+            } else {
+                $this->db->where("status_absen", $f_stat);
+            }
         }
         $this->db->where('type_absen ', 'masuk');
         return $this->db->get_where('absensi', ['pengguna_id' => $pengguna_id, 'perusahaan' => grantAccessForPerusahaan()])->result();
@@ -620,7 +631,15 @@ class Md_absensi extends CI_Model
         }
 
         if ($this->input->post('filter_status')) {
-            $this->datatables->where("status_absen", $this->input->post('filter_status'));
+            $f_stat = $this->input->post('filter_status');
+            if ($f_stat == 'dinas') {
+                $this->db->group_start();
+                $this->db->where("status_absen", 'dinas');
+                $this->db->or_where("UPPER(jenis_absen)", 'DINAS');
+                $this->db->group_end();
+            } else {
+                $this->db->where("status_absen", $f_stat);
+            }
         }
         $this->db->where('type_absen ', 'izin');
         return $this->db->get_where('absensi', ['pengguna_id' => $pengguna_id, 'perusahaan' => grantAccessForPerusahaan()])->result();
@@ -820,7 +839,7 @@ class Md_absensi extends CI_Model
             SUM(CASE WHEN a.type_absen = 'izin' THEN 1 ELSE 0 END) AS total_izin,
             SUM(CASE WHEN a.type_absen = 'cuti' THEN 1 ELSE 0 END) AS total_cuti,
             SUM(CASE WHEN a.type_absen = 'masuk' AND UPPER(a.jenis_lokasi) = 'WFA' THEN 1 ELSE 0 END) AS total_wfa,
-            SUM(CASE WHEN a.type_absen = 'masuk' AND UPPER(a.jenis_absen) = 'DINAS' THEN 1 ELSE 0 END) AS total_dinas
+            SUM(CASE WHEN a.type_absen = 'masuk' AND (UPPER(a.jenis_absen) = 'DINAS' OR a.status_absen = 'dinas') THEN 1 ELSE 0 END) AS total_dinas
         ", false);
         $this->db->from('absensi a');
         $this->db->where('a.pengguna_id', $pengguna_id);

@@ -1924,59 +1924,106 @@ class Absensi extends CI_Controller
 
     public function pagination()
     {
-        //grantAccessFor(['Administrator', 'Hrd','Ga']);
         grantAccessFor('all');
 
         $dt    = $this->md_pengguna->getAllPenggunaAktif();
-        $start = $this->input->post('start');
+        $start = $this->input->post('start') ?: 0;
+        $filter_month = $this->input->post('filter_month');
+        $filter_status = $this->input->post('filter_status');
+        $month_for_calc = $filter_month ? date('Y-m', strtotime($filter_month)) : date('Y-m');
+
         $data  = array();
-        // echo '<pre>'; print_r( $data );die; echo '</pre>';
         foreach ($dt['data'] as $row) {
             $id             = encrypt($row->pengguna_id);
             $data_absen     = $this->md_absensi->getAbsenMasukByPenggunaId($row->pengguna_id);
-
             $data_absen_izin = $this->md_absensi->getAbsenIzinByPenggunaId($row->pengguna_id);
-            $nama_pengguna  = '<a href="absensi/show/rekap_absensi/' . $id . '")>' . $row->nama . '</a>';
-            $status_absen = '';
-            if ($id == null) {
-                $btn_lokasi     = '
-                <div class="btn-group" role="group" aria-label="First group">
-                    <button type="button" class="btn btn-sm btn-primary btn-lihat-posisi" data-id="' . 00 . '"><i class="fas fa-map-marked-alt"></i></button>
-                </div>';
-            } else {
-                $btn_lokasi     = '
-                <div class="btn-group" role="group" aria-label="First group">
-                    <button type="button" class="btn btn-sm btn-primary btn-lihat-posisi" data-id="' . $id . '"><i class="fas fa-map-marked-alt"></i></button>
-                </div>';
+
+            $current_status = isset($data_absen[0]->status_absen) ? strtolower($data_absen[0]->status_absen) : (isset($data_absen_izin[0]->status_absen) ? strtolower($data_absen_izin[0]->status_absen) : '');
+            $current_jenis  = isset($data_absen[0]->jenis_absen) ? strtolower($data_absen[0]->jenis_absen) : '';
+
+            if (!empty($filter_status)) {
+                if ($filter_status == 'dinas') {
+                    if ($current_status != 'dinas' && $current_jenis != 'dinas') {
+                        continue;
+                    }
+                } else if ($filter_status == 'terlambat') {
+                    if ($current_status != 'terlambat') {
+                        continue;
+                    }
+                } else if ($filter_status == 'tepat_waktu') {
+                    if ($current_status != 'tepat_waktu' && $current_status != 'tepat') {
+                        continue;
+                    }
+                } else {
+                    if ($current_status != $filter_status) {
+                        continue;
+                    }
+                }
             }
+
+            $nama_pengguna  = '<a href="absensi/show/rekap_absensi/' . $id . '" class="font-weight-bold text-dark">' . htmlspecialchars($row->nama) . '</a>';
+            $status_absen = '';
+            $btn_lokasi     = '
+                <div class="btn-group" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-sm btn-primary btn-lihat-posisi" data-id="' . $id . '" title="Lihat Lokasi GPS"><i class="fas fa-map-marked-alt"></i></button>
+                </div>';
+
             $apr = '-';
-            if (isset($data_absen[0]->status_absen)) {
-                if ($data_absen[0]->status_absen == "terlambat") {
-                    $status_absen = '<span class="badge-warning badge-pill">Terlambat</span>';
-                } else if ($data_absen[0]->status_absen == "tepat_waktu") {
-                    $status_absen = '<span class="badge-success badge-pill">Tepat Waktu</span>';
+            if (isset($data_absen[0])) {
+                $stat = strtolower($data_absen[0]->status_absen ?? '');
+                $jen = strtolower($data_absen[0]->jenis_absen ?? '');
+
+                if ($stat == "terlambat") {
+                    $status_absen = '<span class="badge badge-warning badge-pill text-dark font-weight-bold">Terlambat</span>';
+                } else if ($stat == "tepat_waktu" || $stat == "tepat") {
+                    $status_absen = '<span class="badge badge-success badge-pill font-weight-bold">Tepat Waktu</span>';
+                } else if ($stat == "dinas" || $jen == "dinas") {
+                    $status_absen = '<span class="badge badge-info badge-pill font-weight-bold"><i class="fas fa-briefcase mr-1"></i> Dinas</span>';
+                } else if (!empty($stat)) {
+                    $status_absen = '<span class="badge badge-secondary badge-pill font-weight-bold">' . ucwords(str_replace('_', ' ', $stat)) . '</span>';
+                } else if ($jen == "dinas") {
+                    $status_absen = '<span class="badge badge-info badge-pill font-weight-bold"><i class="fas fa-briefcase mr-1"></i> Dinas</span>';
+                } else {
+                    $status_absen = '-';
                 }
 
                 if ($data_absen[0]->approval == 'terima') {
-                    $apr = '<span class="badge-success badge-pill">Diterima</span>';
+                    $apr = '<span class="badge badge-success badge-pill font-weight-bold">Diterima</span>';
                 } else if ($data_absen[0]->approval == 'tolak') {
-                    $apr = '<span class="badge-danger badge-pill">Ditolak</span>';
+                    $apr = '<span class="badge badge-danger badge-pill font-weight-bold">Ditolak</span>';
                 } else {
-                    $apr = '<span class="badge-warning badge-pill">Belum Dicek</span>';
+                    $apr = '<span class="badge badge-warning badge-pill text-dark font-weight-bold">Belum Dicek</span>';
                 }
-            } else if (isset($data_absen_izin[0]->status_absen)) {
-                if ($data_absen_izin[0]->status_absen == "cuti") {
-                    $status_absen = '<span class="badge-warning badge-pill">Cuti</span>';
-                } else if ($data_absen_izin[0]->status_absen == "sakit") {
-                    $status_absen = '<span class="badge-warning badge-pill">Sakit</span>';
-                } else if ($data_absen_izin[0]->status_absen == "izin") {
-                    $status_absen = '<span class="badge-warning badge-pill">Izin</span>';
+            } else if (isset($data_absen_izin[0])) {
+                $stat_izin = strtolower($data_absen_izin[0]->status_absen ?? '');
+                if ($stat_izin == "cuti") {
+                    $status_absen = '<span class="badge badge-warning badge-pill font-weight-bold">Cuti</span>';
+                } else if ($stat_izin == "sakit") {
+                    $status_absen = '<span class="badge badge-danger badge-pill font-weight-bold">Sakit</span>';
+                } else if ($stat_izin == "izin") {
+                    $status_absen = '<span class="badge badge-warning badge-pill font-weight-bold">Izin</span>';
+                } else if ($stat_izin == "dinas") {
+                    $status_absen = '<span class="badge badge-info badge-pill font-weight-bold"><i class="fas fa-briefcase mr-1"></i> Dinas</span>';
+                } else {
+                    $status_absen = '<span class="badge badge-secondary badge-pill font-weight-bold">' . ucwords(str_replace('_', ' ', $stat_izin)) . '</span>';
                 }
 
-                $apr = '<span class="badge-danger badge-pill">Ditolak</span>';
+                $apr = '<span class="badge badge-danger badge-pill font-weight-bold">Ditolak</span>';
             } else {
-                $status_absen = '-';
+                $status_absen = '<span class="text-muted">-</span>';
             }
+
+            // Hitung Kehadiran, Kantor, dan Dinas per bulan
+            $jml_kehadiran = count($this->md_absensi->getKehadiran($row->pengguna_id, $month_for_calc));
+            $jml_kantor = count($this->md_absensi->getAbsenKantorByMonth($row->pengguna_id, $month_for_calc));
+            $count_dinas_res = $this->md_absensi->countDinas($row->pengguna_id, $month_for_calc);
+            $jml_dinas = isset($count_dinas_res[0]->total) ? (int)$count_dinas_res[0]->total : 0;
+
+            $badge_hadir = '<span class="badge badge-primary font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kehadiran . ' Hari</span>';
+            $badge_kantor = '<span class="badge badge-success font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kantor . ' Hari</span>';
+            $badge_dinas = $jml_dinas > 0 
+                ? '<span class="badge badge-info text-white font-weight-bold" style="font-size:12px; padding: 4px 8px;"><i class="fas fa-briefcase mr-1"></i>' . $jml_dinas . ' Hari</span>' 
+                : '<span class="badge badge-light text-muted font-weight-bold" style="font-size:12px; padding: 4px 8px;">0 Hari</span>';
 
             $th = array();
             $th[] = ++$start . '.';
@@ -1986,12 +2033,13 @@ class Absensi extends CI_Controller
             $th[] = $apr;
             $th[] = isset($data_absen[0]->ip_addr) ? $data_absen[0]->ip_addr : '-';
             $th[] = $btn_lokasi;
-            $th[] =  'proses';
-            $th[] = 'proses';
-            $th[] = 'proses';
+            $th[] = $badge_hadir;
+            $th[] = $badge_kantor;
+            $th[] = $badge_dinas;
             $data[] = $th;
         }
         $dt['data'] = $data;
+        $dt['recordsFiltered'] = count($data);
         echo json_encode($dt);
         die;
     }
