@@ -2914,22 +2914,21 @@ class Surat_part_two extends CI_Controller
       foreach ($dt['data'] as $row) {
 
 
-        $kode_ba  = '<a href="surat_part_two/show/detail/ba/' . $row->idGc . '">' . $row->kode_ba . '</a>';
-
+        $kode_ba  = '<a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-outline-primary font-weight-bold" style="border-radius: 6px; font-size: 12px; letter-spacing: 0.3px;"><i class="fas fa-file-signature mr-1"></i>' . $row->kode_ba . '</a>';
 
         if ($row->status == "0") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-success">Baru Diajukan</span>';
+          $stat_surat = '<span class="badge badge-pill badge-warning text-dark px-3 py-1 font-weight-bold" style="font-size: 11.5px;"><i class="fas fa-clock mr-1"></i> Baru Diajukan</span>';
         } else if ($row->status == "1") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh ' . $row->nama_diketahui . '</span>';
+          $stat_surat = '<span class="badge badge-pill badge-info px-3 py-1 font-weight-bold" style="font-size: 11.5px;"><i class="fas fa-user-check mr-1"></i> Diketahui: ' . $row->nama_diketahui . '</span>';
         } else if ($row->status == "2") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh ' . $row->nama_disetujui . '</span>';
+          $stat_surat = '<span class="badge badge-pill badge-primary px-3 py-1 font-weight-bold" style="font-size: 11.5px;"><i class="fas fa-check-circle mr-1"></i> Disetujui: ' . $row->nama_disetujui . '</span>';
         } else if ($row->status == "3") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Director</span>';
+          $stat_surat = '<span class="badge badge-pill badge-success px-3 py-1 font-weight-bold" style="font-size: 11.5px;"><i class="fas fa-check-double mr-1"></i> Disetujui Director</span>';
         } else {
-          $stat_surat = '<span class="badge badge-ecommerce badge-danger">Ditolak</span>';
+          $stat_surat = '<span class="badge badge-pill badge-danger px-3 py-1 font-weight-bold" style="font-size: 11.5px;"><i class="fas fa-times-circle mr-1"></i> Ditolak</span>';
         }
 
-        $tgl_aju = date('d-M-Y', strtotime($row->tanggal));
+        $tgl_aju = date('d M Y', strtotime($row->tanggal));
 
         if ($row->id_diketahui == "58") {
           $diketahui = "Amtisari Destiani Eka Putri";
@@ -2944,20 +2943,21 @@ class Surat_part_two extends CI_Controller
         }
 
         $li_btn   = '
-            <div class="btn-group" role="group" aria-label="First group">
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="bx bx-trash"></i></button>' : '') . '
-                ' . (isAdmin() ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data (Admin)" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="bx bx-trash"></i></button>' : '') . '
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-info text-white" title="Lihat Detail Surat"><i class="fas fa-eye"></i></a>
+                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit" title="Edit"><i class="fas fa-pencil-alt"></i></a>' : '') . '
+                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="fas fa-trash"></i></button>' : '') . '
+                ' . (isAdmin() ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data (Admin)" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="fas fa-trash"></i></button>' : '') . '
             </div>';
 
         $th = array();
-        $th[] = ++$start;
+        $th[] = '<span class="font-weight-bold text-muted">' . (++$start) . '</span>';
         $th[] = $kode_ba;
-        $th[] = $row->pengaju;
-        $th[] = $row->jabatan;
-        $th[] = $tgl_aju;
-        $th[] = $diketahui;
-        $th[] = $disetujui;
+        $th[] = '<span class="font-weight-bold text-dark">' . $row->pengaju . '</span>';
+        $th[] = '<span class="badge badge-light border text-secondary px-2 py-1">' . $row->jabatan . '</span>';
+        $th[] = '<span class="text-nowrap text-secondary"><i class="far fa-calendar-alt text-primary mr-1"></i>' . $tgl_aju . '</span>';
+        $th[] = '<span class="text-dark"><i class="far fa-user text-muted mr-1"></i>' . ($diketahui ? $diketahui : '-') . '</span>';
+        $th[] = '<span class="text-dark"><i class="far fa-user text-muted mr-1"></i>' . ($disetujui ? $disetujui : '-') . '</span>';
         $th[] = $stat_surat;
         $th[] = $li_btn;
         $data[] = $th;
