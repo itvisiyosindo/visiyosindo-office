@@ -1005,48 +1005,46 @@
         margin-bottom: 25px !important;
     }
 
-    /* Surat Top Status Badges (Clean Soft Pill/Badge) */
+    /* Surat Top Status Badges (Clean Crisp Badges) */
     .card-body .text-right > .btn,
     .card-body .text-right > span.btn,
     .card-body .text-right > button.btn {
-        border-radius: 6px !important;
+        border-radius: 4px !important;
         font-size: 12px !important;
         font-weight: 600 !important;
-        padding: 5px 12px !important;
+        padding: 5px 14px !important;
         letter-spacing: 0.3px !important;
-        box-shadow: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         cursor: default !important;
+        border: none !important;
+        color: #ffffff !important;
     }
 
     .card-body .text-right > .btn-warning,
     .card-body .text-right > span.btn-warning {
-        background-color: #fef3c7 !important;
-        color: #92400e !important;
-        border: 1px solid #fde68a !important;
+        background-color: #f59e0b !important;
+        color: #ffffff !important;
     }
 
     .card-body .text-right > .btn-success,
     .card-body .text-right > span.btn-success {
-        background-color: #dcfce7 !important;
-        color: #166534 !important;
-        border: 1px solid #bbf7d0 !important;
+        background-color: #22c55e !important;
+        color: #ffffff !important;
     }
 
     .card-body .text-right > .btn-danger,
     .card-body .text-right > span.btn-danger {
-        background-color: #fee2e2 !important;
-        color: #991b1b !important;
-        border: 1px solid #fecaca !important;
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
     }
 
     .card-body .text-right > .btn-secondary,
     .card-body .text-right > span.btn-secondary {
-        background-color: #f1f5f9 !important;
-        color: #475569 !important;
-        border: 1px solid #e2e8f0 !important;
+        background-color: #64748b !important;
+        color: #ffffff !important;
     }
 
     /* Surat Bottom Action Toolbar Container */
@@ -1067,7 +1065,7 @@
         clear: both !important;
     }
 
-    /* Modern Subtle Surat Buttons */
+    /* Modern Clean Surat Buttons */
     div[width="100%"] .btn,
     div[width="100%"] a.btn,
     div[role="document"] .btn,
@@ -1122,34 +1120,34 @@
         font-size: 12px !important;
     }
 
-    /* 1. Setujui / Ajukan Button (Calm Forest Green) */
+    /* 1. Setujui / Ajukan Button (Fresh Green) */
     .btn-approval,
     .btn-ajukan,
     div[width="100%"] .btn-success,
     div[role="document"] .btn-success {
-        background-color: #15803d !important;
+        background-color: #22c55e !important;
         color: #ffffff !important;
-        border: 1px solid #166534 !important;
+        border: 1px solid #16a34a !important;
     }
 
     .btn-approval:hover,
     .btn-ajukan:hover,
     div[width="100%"] .btn-success:hover,
     div[role="document"] .btn-success:hover {
-        background-color: #166534 !important;
-        border-color: #14532d !important;
+        background-color: #16a34a !important;
+        border-color: #15803d !important;
         color: #ffffff !important;
     }
 
-    /* 2. Tolak Button (Calm Brick Red) */
+    /* 2. Tolak Button (Fresh Red) */
     .btn-denial,
     div[width="100%"] .btn-denial,
     div[width="100%"] .btn-danger,
     div[role="document"] .btn-denial,
     div[role="document"] .btn-danger {
-        background-color: #dc2626 !important;
+        background-color: #ef4444 !important;
         color: #ffffff !important;
-        border: 1px solid #b91c1c !important;
+        border: 1px solid #dc2626 !important;
     }
 
     .btn-denial:hover,
@@ -1157,21 +1155,21 @@
     div[width="100%"] .btn-danger:hover,
     div[role="document"] .btn-denial:hover,
     div[role="document"] .btn-danger:hover {
-        background-color: #b91c1c !important;
-        border-color: #991b1b !important;
+        background-color: #dc2626 !important;
+        border-color: #b91c1c !important;
         color: #ffffff !important;
     }
 
-    /* 3. Cetak Button (Calm Amber) */
+    /* 3. Cetak Button (Fresh Amber Gold) */
     a[href*="print_page"],
     a[href*="print_custom"],
     div[width="100%"] a[href*="print"],
     div[width="100%"] .btn-warning:not([onclick*="openAdminEditModal"]),
     div[role="document"] a[href*="print"],
     div[role="document"] .btn-warning {
-        background-color: #d97706 !important;
+        background-color: #f59e0b !important;
         color: #ffffff !important;
-        border: 1px solid #b45309 !important;
+        border: 1px solid #d97706 !important;
     }
 
     a[href*="print_page"]:hover,
@@ -1180,46 +1178,46 @@
     div[width="100%"] .btn-warning:not([onclick*="openAdminEditModal"]):hover,
     div[role="document"] a[href*="print"]:hover,
     div[role="document"] .btn-warning:hover {
-        background-color: #b45309 !important;
-        border-color: #92400e !important;
+        background-color: #d97706 !important;
+        border-color: #b45309 !important;
         color: #ffffff !important;
     }
 
-    /* 4. Edit Data (Admin) Button (Calm Slate Indigo) */
+    /* 4. Edit Data (Admin) Button (Warm Orange) */
     button[onclick*="openAdminEditModal"],
     .btn-admin-edit {
-        background-color: #4f46e5 !important;
+        background-color: #f97316 !important;
         color: #ffffff !important;
-        border: 1px solid #4338ca !important;
+        border: 1px solid #ea580c !important;
     }
 
     button[onclick*="openAdminEditModal"]:hover,
     .btn-admin-edit:hover {
-        background-color: #4338ca !important;
-        border-color: #3730a3 !important;
+        background-color: #ea580c !important;
+        border-color: #c2410c !important;
         color: #ffffff !important;
     }
 
-    /* 5. Kembali Button (Clean Neutral Slate Outline) */
+    /* 5. Kembali Button (Clean Slate) */
     .btn-clear-form,
     button[onclick*="goBack"],
     div[width="100%"] .btn-secondary.btn-clear-form,
     div[role="document"] .btn-secondary.btn-clear-form {
-        background-color: #ffffff !important;
-        color: #475569 !important;
-        border: 1px solid #cbd5e1 !important;
+        background-color: #64748b !important;
+        color: #ffffff !important;
+        border: 1px solid #475569 !important;
     }
 
     .btn-clear-form:hover,
     button[onclick*="goBack"]:hover,
     div[width="100%"] .btn-secondary.btn-clear-form:hover,
     div[role="document"] .btn-secondary.btn-clear-form:hover {
-        background-color: #f1f5f9 !important;
-        border-color: #94a3b8 !important;
-        color: #1e293b !important;
+        background-color: #475569 !important;
+        border-color: #334155 !important;
+        color: #ffffff !important;
     }
 
-    /* 6. Lampiran Button (Calm Classic Blue) */
+    /* 6. Lampiran Button (Sky Blue) */
     div[width="100%"] a[href*="uploads"],
     div[width="100%"] a[href*="lampiran"],
     div[width="100%"] .btn-primary {
