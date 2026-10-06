@@ -1548,33 +1548,7 @@ function waPoVisilabAprovOnProg($data)
 
 function waPoVisilabAprovAll($data)
 {
-	for ($i = 1; $i < 5; $i++) {
-		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
-	}
-
-	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
-	if (isset($data['id']) && !empty($data['id'])) {
-		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
-	} else if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	}
-
-	$dataWa['devId']	= hostWa('2');
-	$dataWa['penerima']	= $data['noPenerima'];
-	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
-		'%0A%0ADear ' . $data['namaPengaju'] .
-		',%0A%0A' . $data['namaSurat'] . ' yang anda ajukan' .
-		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
-		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
-		'%0A%0ATelah disetujui oleh:' .
-		$data['ttd_sebelum1'] .
-		$data['ttd_sebelum2'] .
-		$data['ttd_sebelum3'] .
-		$data['ttd_sebelum4'] .
-		$data['ttd_sebelum5'] .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier Visilab di ' . $linkUrl .
-		'%0A%0ATerima Kasih';
-	sendWa($dataWa);
+	// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
 	return TRUE;
 }
 
@@ -1717,32 +1691,7 @@ function waPoAprovOnProg($data)
 
 function waPoAprovAll($data)
 {
-	for ($i = 1; $i < 5; $i++) {
-		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
-	}
-
-	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
-	if (isset($data['id']) && !empty($data['id'])) {
-		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
-	} else if (isset($data['link']) && !empty($data['link'])) {
-		$linkUrl = (strpos($data['link'], 'http') === 0) ? $data['link'] : 'https://office.visiyosindo.id/' . ltrim($data['link'], '/');
-	}
-
-	$dataWa['devId']	= hostWa('2');
-	$dataWa['penerima']	= $data['noPenerima'];
-	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
-		'%0A%0ADear ' . $data['namaPengaju'] .
-		',%0A%0A' . $data['namaSurat'] . ' yang anda ajukan' .
-		':%0A_Supplier Name    : ' . $data['suplier'] . '_' .
-		'%0A_PPS Nomor    : ' . $data['kodePO'] . '_' .
-		'%0A%0ATelah disetujui oleh:' .
-		$data['ttd_sebelum1'] .
-		$data['ttd_sebelum2'] .
-		$data['ttd_sebelum3'] .
-		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail Permintaan PO Supplier di ' . $linkUrl .
-		'%0A%0ATerima Kasih';
-	sendWa($dataWa);
+	// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
 	return TRUE;
 }
 
@@ -1868,27 +1817,7 @@ function waSuratAprovOnProgVisilab($data)
 
 function waSuratAprovAllVisilab($data)
 {
-	$data['perihal'] = cekPerihal($data['perihal']);
-
-	for ($i = 1; $i < 5; $i++) {
-		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
-	}
-
-	$dataWa['devId']	= hostWa('2');
-	$dataWa['penerima']	= $data['noPenerima'];
-	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
-		'%0A%0ADear ' . $data['namaPengaju'] .
-		',%0A%0A' . $data['namaSurat'] . ' yang anda ajukan:' .
-		'%0A_Kode    : ' . $data['kodeSurat'] . '_' .
-		$data['perihal'] .
-		'%0A%0ATelah disetujui oleh:' .
-		$data['ttd_sebelum1'] .
-		$data['ttd_sebelum2'] .
-		$data['ttd_sebelum3'] .
-		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada ' . $data['urlNotif'] .
-		'%0A%0ATerima Kasih';
-	sendWa($dataWa);
+	// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
 	return TRUE;
 }
 
@@ -1956,29 +1885,7 @@ function waSuratAprovOnProgDir($data)
 
 function waSuratAprovAll($data)
 {
-	$data['perihal'] = cekPerihal($data['perihal']);
-
-	for ($i = 1; $i < 5; $i++) {
-		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
-	}
-
-	$linkUrl = getSuratDetailUrl($data);
-
-	$dataWa['devId']	= hostWa('2');
-	$dataWa['penerima']	= $data['noPenerima'];
-	$dataWa['pesan']	=   '*Notifikasi Persetujuan ' . $data['namaSurat'] . '*' .
-		'%0A%0ADear ' . $data['namaPengaju'] .
-		',%0A%0A' . $data['namaSurat'] . ' yang anda ajukan:' .
-		'%0A_Kode    : ' . $data['kodeSurat'] . '_' .
-		$data['perihal'] .
-		'%0A%0ATelah disetujui oleh:' .
-		$data['ttd_sebelum1'] .
-		$data['ttd_sebelum2'] .
-		$data['ttd_sebelum3'] .
-		$data['ttd_sebelum4'] .
-		'%0A%0ASegera periksa detail surat pada ' . $linkUrl .
-		'%0A%0ATerima Kasih';
-	sendWa($dataWa);
+	// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
 	return TRUE;
 }
 
@@ -3123,26 +3030,8 @@ if (!function_exists('waPengajuanBaru')) {
 if (!function_exists('waPengajuanApproved')) {
 	function waPengajuanApproved($data)
 	{
-		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : (!empty($data['kode']) ? $data['kode'] : '-');
-		$dataWa['penerima']      = $data['noPenerima'];
-		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
-		$dataWa['language']      = 'id';
-		$dataWa['parameters']    = [
-			$data['namaPemohon'],
-			$data['jenisPengajuan'],
-			$kodeSurat,
-			'DISETUJUI',
-			$data['namaApprover'],
-			$data['linkDetail']
-		];
-		$dataWa['pesan']         =
-			"Halo *" . $data['namaPemohon'] . "*! 🎉 Kabar terbaru nih, pengajuan *" . $data['jenisPengajuan'] . "* kamu (Kode: " . $kodeSurat . ") telah *DISETUJUI* oleh *" . $data['namaApprover'] . "*." .
-			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
-			"%0A🔗 " . $data['linkDetail'] .
-			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo Medikal_";
-
-		return sendWa($dataWa);
+		// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
+		return TRUE;
 	}
 }
 
@@ -3234,25 +3123,8 @@ if (!function_exists('waCutiPengajuan')) {
 if (!function_exists('waCutiDisetujui')) {
 	function waCutiDisetujui($data)
 	{
-		// $data: noPenerima, namaKaryawan, kodeSurat, tglMulai, tglAkhir, totalHari, namaApprover, linkDetail
-		$dataWa['penerima']      = $data['noPenerima'];
-		$dataWa['template_name'] = 'notifikasi_hasil_approval_v1';
-		$dataWa['language']      = 'id';
-		$dataWa['parameters']    = [
-			$data['namaKaryawan'],
-			'Cuti Tahunan',
-			$data['kodeSurat'],
-			'DISETUJUI',
-			$data['namaApprover'],
-			$data['linkDetail']
-		];
-		$dataWa['pesan']         =
-			"Halo *" . $data['namaKaryawan'] . "*! 🎉 Kabar terbaru nih, pengajuan *Cuti Tahunan* kamu (Kode: " . $data['kodeSurat'] . ") telah *DISETUJUI* oleh *" . $data['namaApprover'] . "*." .
-			"%0A%0AKamu bisa cek detail lengkapnya melalui tautan berikut ya:" .
-			"%0A🔗 " . $data['linkDetail'] .
-			"%0A%0ATerima kasih dan tetap semangat selalu! 😊" .
-			"%0A_Sistem Office PT Visi Yosindo Medikal_";
-		return sendWa($dataWa);
+		// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
+		return TRUE;
 	}
 }
 
@@ -3311,6 +3183,11 @@ if (!function_exists('waIzinJamKerjaPengajuan')) {
 if (!function_exists('waIzinJamKerjaHasil')) {
 	function waIzinJamKerjaHasil($data)
 	{
+		// Dinonaktifkan jika disetujui demi menghemat kuota chat
+		if (isset($data['status']) && $data['status'] === 'DISETUJUI') {
+			return TRUE;
+		}
+
 		// $data: noPenerima, namaKaryawan, kodeSurat, status (DISETUJUI/DITOLAK), namaApprover, alasan, linkDetail
 		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
 		$dataWa['penerima']      = $data['noPenerima'];
@@ -3364,6 +3241,11 @@ if (!function_exists('waIzinMeninggalkanPengajuan')) {
 if (!function_exists('waIzinMeninggalkanHasil')) {
 	function waIzinMeninggalkanHasil($data)
 	{
+		// Dinonaktifkan jika disetujui demi menghemat kuota chat
+		if (isset($data['status']) && $data['status'] === 'DISETUJUI') {
+			return TRUE;
+		}
+
 		// $data: noPenerima, namaKaryawan, kodeSurat, status, namaApprover, alasan, linkDetail
 		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
 		$dataWa['penerima']      = $data['noPenerima'];
@@ -3418,6 +3300,11 @@ if (!function_exists('waWfaPengajuan')) {
 if (!function_exists('waWfaHasil')) {
 	function waWfaHasil($data)
 	{
+		// Dinonaktifkan jika disetujui demi menghemat kuota chat
+		if (isset($data['status']) && $data['status'] === 'DISETUJUI') {
+			return TRUE;
+		}
+
 		// $data: noPenerima, namaKaryawan, tglWfa, status, namaApprover, alasan, linkDetail
 		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
 		$kodeSurat = !empty($data['kodeSurat']) ? $data['kodeSurat'] : 'WFA';
@@ -3625,6 +3512,11 @@ if (!function_exists('waBeritaAcaraPengajuan')) {
 if (!function_exists('waBeritaAcaraHasil')) {
 	function waBeritaAcaraHasil($data)
 	{
+		// Dinonaktifkan jika disetujui demi menghemat kuota chat
+		if (isset($data['status']) && $data['status'] === 'DISETUJUI') {
+			return TRUE;
+		}
+
 		// $data: noPenerima, namaPengaju, kodeSurat, perihal, status, namaApprover, alasan, linkDetail
 		$statusText = ($data['status'] === 'DISETUJUI') ? 'DISETUJUI' : 'DITOLAK';
 		$dataWa['penerima']      = $data['noPenerima'];

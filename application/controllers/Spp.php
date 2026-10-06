@@ -939,11 +939,11 @@ class Spp extends CI_Controller
             $nextStatus = 5;
             $action_msg = 'MENYETUJUI (Status SELESAI)';
 
-            // Target 1: Si Pengaju
-            $target_role = $spp->nama_pengaju; // Sapaan khusus Nama Pengaju
-            if (!empty($spp->hp_pengaju)) {
-               $target_phone = $spp->hp_pengaju;
-            }
+            // Target 1: Si Pengaju (Dinonaktifkan demi hemat kuota chat saat ACC semua)
+            // $target_role = $spp->nama_pengaju;
+            // if (!empty($spp->hp_pengaju)) {
+            //    $target_phone = $spp->hp_pengaju;
+            // }
 
             // Target 2: Approval Tahap 1
             $firstConfig = $this->md_spp->getFirstActiveLevel();
@@ -1269,7 +1269,8 @@ class Spp extends CI_Controller
             $recipients[] = $target_role . " (" . $target_phone . ")";
          }
       } elseif ($status == 5) {
-         // Kirim ke Pengaju
+         // Kirim ke Pengaju (Dinonaktifkan demi hemat kuota chat saat ACC semua)
+         /*
          if (!empty($spp->hp_pengaju)) {
             $target_phone = $spp->hp_pengaju;
             $target_role = $spp->nama_pengaju;
@@ -1299,6 +1300,7 @@ class Spp extends CI_Controller
             $sent_count++;
             $recipients[] = $target_role . " (" . $target_phone . ")";
          }
+         */
 
          // Kirim ke Approval Tahap 1 (Accounting/Tax)
          $firstConfig = $this->md_spp->getFirstActiveLevel();
