@@ -326,21 +326,8 @@ class Stock_opname extends CI_Controller
             $namaPenolak        = $ambilDataPenolak[0]->nama;
 
 
-            $dataWa = [
-                //'idPenerima1' 	=> 'Test Api Wa Group',
-                //'idPenerima2' 	=> 'Test2',
-                'idPenerima1'     => '1',
-                'idPenerima2'     => '7',
-                'namaSurat'          => 'Stock Opname',
-                'statusSurat'     => 'Persetujuan Perintah',
-                'pelaksana'         => $namaPelaksana,
-                'namaPengaju'     => $namaPenolak,
-                'status'             => 'menyetujui',
-                'kode'             => $kodeFpp,
-                'idSo'             => $idSo,
-                'gudang'             => $namaGudang
-            ];
-            $this->notifWaAppStockOpname(2, $dataWa);
+            // Notif personal ke Fitri/Febrimon dinonaktifkan demi hemat kuota chat
+            // $this->notifWaAppStockOpname(2, $dataWa);
 
             /** LOG */
             addLog('Persetujuan Stock Opname', 'Persetujuan Stock Opname dengan Kode : ' . $kodeFpp);
@@ -579,39 +566,7 @@ class Stock_opname extends CI_Controller
 
     public function notifWaAppStockOpname($ulang, $detail)
     {
-
-        for ($i = 1; $i <= $ulang; $i++) {
-            if ($i == 1) {
-                $idpenerima = $detail['idPenerima1'];
-                $penerima   = '_Fitri Andriani_';
-            } else if ($i == 2) {
-                $idpenerima = $detail['idPenerima2'];
-                $penerima   = '_Mr. Febrimon_';
-            }
-
-
-            //abaikan error
-            error_reporting(E_ALL & ~E_NOTICE);
-            ini_set('display_errors', 0);
-            //
-
-            $dataPenerima     = $this->md_pengguna->getById($idpenerima);
-            $nope           = $dataPenerima[0]->no_hp;
-
-            $dataWa = [
-                'namaSurat'     => urlencode($detail['namaSurat']),
-                'noPenerima'     => $nope,
-                'namaPengaju'   => urlencode($detail['namaPengaju']),
-                'gudang'         => urlencode($detail['gudang']),
-                'kode'             => $detail['kode'],
-                'pelaksana'     => urlencode($detail['pelaksana']),
-                'statusSurat'   => $detail['statusSurat'],
-                'status'         => $detail['status'],
-                'idSo'             => $detail['idSo'],
-                'namaPenerima'    => urlencode($penerima)
-            ];
-
-            waNotifStockOpname($dataWa);
-        }
+        // Dinonaktifkan untuk menghemat kuota chat
+        return true;
     }
 }

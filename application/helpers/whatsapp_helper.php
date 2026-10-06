@@ -1152,18 +1152,7 @@ function waGroupStockOpname($data)
 
 function waNotifStockOpname($data)
 {
-
-	$dataWa['devId']	= hostWa('2');
-	$dataWa['penerima']	= $data['noPenerima'];
-	$dataWa['pesan']	=   '*Notifikasi ' . $data['statusSurat'] . ' ' . $data['namaSurat'] . '*' .
-		'%0A%0ADear ' . $data['namaPenerima'] .
-		',%0A%0A' . $data['namaPengaju'] . ' *' . $data['status'] . '* ' . $data['namaSurat'] .
-		':%0A_Gudang    : ' . $data['gudang'] . '_' .
-		'%0A_Nomor      : ' . $data['kode'] . '_' .
-		'%0A_Pelaksana  : ' . $data['pelaksana'] . '_' .
-		'%0A%0ASegera periksa detail  *' . $data['namaSurat'] . '* di https://office.visiyosindo.id/stock_opname/show/detail_so/' . $data['idSo'] .
-		'%0A%0ATerima Kasih';
-	sendWa($dataWa);
+	// Dinonaktifkan untuk menghemat kuota chat
 	return true;
 }
 
