@@ -992,71 +992,69 @@
     }
 
     /* ========== Global Surat Action Buttons & UI Enhancement ========== */
-    /* Surat Document Card Container (Clean Elevated Paper) */
+    /* Surat Document Card Container (Clean Subtle Paper) */
     .col-xl-10 > .card-body[style*="background-color:#FFFFFF"],
     .col-xl-10 > .card-body[style*="background-color: #FFFFFF"],
     .col-xl-10 > .card-body[style*="background:#FFFFFF"],
     .card-body[style*="padding:5%"],
     .card-body[style*="padding: 5%"] {
         background: #ffffff !important;
-        border-radius: 16px !important;
+        border-radius: 8px !important;
         border: 1px solid #e2e8f0 !important;
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
-        margin-bottom: 30px !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+        margin-bottom: 25px !important;
     }
 
-    /* Surat Top Status Badges (Pill Format) */
+    /* Surat Top Status Badges (Clean Soft Pill/Badge) */
     .card-body .text-right > .btn,
     .card-body .text-right > span.btn,
     .card-body .text-right > button.btn {
-        border-radius: 50px !important;
-        font-size: 12.5px !important;
-        font-weight: 700 !important;
-        padding: 6px 18px !important;
-        letter-spacing: 0.5px !important;
-        text-transform: uppercase !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+        border-radius: 6px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        padding: 5px 12px !important;
+        letter-spacing: 0.3px !important;
+        box-shadow: none !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         cursor: default !important;
-        border: 1.5px solid transparent !important;
     }
 
     .card-body .text-right > .btn-warning,
     .card-body .text-right > span.btn-warning {
-        background: #fffbeb !important;
-        color: #d97706 !important;
-        border-color: #fde68a !important;
+        background-color: #fef3c7 !important;
+        color: #92400e !important;
+        border: 1px solid #fde68a !important;
     }
 
     .card-body .text-right > .btn-success,
     .card-body .text-right > span.btn-success {
-        background: #ecfdf5 !important;
-        color: #059669 !important;
-        border-color: #a7f3d0 !important;
+        background-color: #dcfce7 !important;
+        color: #166534 !important;
+        border: 1px solid #bbf7d0 !important;
     }
 
     .card-body .text-right > .btn-danger,
     .card-body .text-right > span.btn-danger {
-        background: #fef2f2 !important;
-        color: #dc2626 !important;
-        border-color: #fecaca !important;
+        background-color: #fee2e2 !important;
+        color: #991b1b !important;
+        border: 1px solid #fecaca !important;
     }
 
     .card-body .text-right > .btn-secondary,
     .card-body .text-right > span.btn-secondary {
-        background: #f1f5f9 !important;
+        background-color: #f1f5f9 !important;
         color: #475569 !important;
-        border-color: #cbd5e1 !important;
+        border: 1px solid #e2e8f0 !important;
     }
 
     /* Surat Bottom Action Toolbar Container */
     div[width="100%"],
     div[role="document"] {
         width: 100% !important;
-        padding-top: 20px !important;
-        margin-top: 25px !important;
+        padding-top: 16px !important;
+        margin-top: 20px !important;
         border-top: 1px solid #e2e8f0 !important;
         display: block !important;
         clear: both !important;
@@ -1069,7 +1067,7 @@
         clear: both !important;
     }
 
-    /* Modern Elevated Surat Buttons */
+    /* Modern Subtle Surat Buttons */
     div[width="100%"] .btn,
     div[width="100%"] a.btn,
     div[role="document"] .btn,
@@ -1081,54 +1079,38 @@
     .card-body div > a[href*="print_page"],
     .card-body div > a[href*="print"],
     .card-body div > button[onclick*="openAdminEditModal"] {
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 13.5px !important;
-        padding: 9px 20px !important;
-        letter-spacing: 0.3px !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+        padding: 7px 16px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        line-height: 1.5 !important;
-        border: none !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        line-height: 1.4 !important;
+        transition: all 0.15s ease-in-out !important;
         outline: none !important;
         text-decoration: none !important;
         vertical-align: middle !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
 
     /* Alignment & Spacing */
     div[width="100%"] .float-left,
     div[role="document"] .float-left {
         float: left !important;
-        margin-right: 12px !important;
+        margin-right: 10px !important;
         margin-left: 0 !important;
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
     }
 
     div[width="100%"] .float-right,
     div[role="document"] .float-right {
         float: right !important;
-        margin-left: 12px !important;
+        margin-left: 10px !important;
         margin-right: 0 !important;
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
-    }
-
-    /* Hover Lift Effect */
-    div[width="100%"] .btn:hover,
-    div[width="100%"] a.btn:hover,
-    div[role="document"] .btn:hover,
-    div[role="document"] a.btn:hover,
-    .card-body div > .btn-approval:hover,
-    .card-body div > .btn-denial:hover,
-    .card-body div > .btn-clear-form:hover,
-    .card-body div > .btn-ajukan:hover,
-    .card-body div > a[href*="print_page"]:hover,
-    .card-body div > a[href*="print"]:hover,
-    .card-body div > button[onclick*="openAdminEditModal"]:hover {
-        transform: translateY(-2px) !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
     }
 
     /* Icon Spacing */
@@ -1137,37 +1119,37 @@
     div[role="document"] .btn i,
     div[role="document"] a.btn i {
         margin-right: 6px !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
     }
 
-    /* 1. Setujui / Ajukan Button (Emerald Green Gradient) */
+    /* 1. Setujui / Ajukan Button (Calm Forest Green) */
     .btn-approval,
     .btn-ajukan,
     div[width="100%"] .btn-success,
     div[role="document"] .btn-success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        background-color: #15803d !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+        border: 1px solid #166534 !important;
     }
 
     .btn-approval:hover,
     .btn-ajukan:hover,
     div[width="100%"] .btn-success:hover,
     div[role="document"] .btn-success:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45) !important;
+        background-color: #166534 !important;
+        border-color: #14532d !important;
         color: #ffffff !important;
     }
 
-    /* 2. Tolak Button (Crimson / Rose Gradient) */
+    /* 2. Tolak Button (Calm Brick Red) */
     .btn-denial,
     div[width="100%"] .btn-denial,
     div[width="100%"] .btn-danger,
     div[role="document"] .btn-denial,
     div[role="document"] .btn-danger {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        background-color: #dc2626 !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+        border: 1px solid #b91c1c !important;
     }
 
     .btn-denial:hover,
@@ -1175,21 +1157,21 @@
     div[width="100%"] .btn-danger:hover,
     div[role="document"] .btn-denial:hover,
     div[role="document"] .btn-danger:hover {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-        box-shadow: 0 6px 18px rgba(239, 68, 68, 0.45) !important;
+        background-color: #b91c1c !important;
+        border-color: #991b1b !important;
         color: #ffffff !important;
     }
 
-    /* 3. Cetak Button (Amber Gold Gradient) */
+    /* 3. Cetak Button (Calm Amber) */
     a[href*="print_page"],
     a[href*="print_custom"],
     div[width="100%"] a[href*="print"],
     div[width="100%"] .btn-warning:not([onclick*="openAdminEditModal"]),
     div[role="document"] a[href*="print"],
     div[role="document"] .btn-warning {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        background-color: #d97706 !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+        border: 1px solid #b45309 !important;
     }
 
     a[href*="print_page"]:hover,
@@ -1198,59 +1180,59 @@
     div[width="100%"] .btn-warning:not([onclick*="openAdminEditModal"]):hover,
     div[role="document"] a[href*="print"]:hover,
     div[role="document"] .btn-warning:hover {
-        background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
-        box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+        background-color: #b45309 !important;
+        border-color: #92400e !important;
         color: #ffffff !important;
     }
 
-    /* 4. Edit Data (Admin) Button (Royal Indigo / Violet Gradient) */
+    /* 4. Edit Data (Admin) Button (Calm Slate Indigo) */
     button[onclick*="openAdminEditModal"],
     .btn-admin-edit {
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        background-color: #4f46e5 !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+        border: 1px solid #4338ca !important;
     }
 
     button[onclick*="openAdminEditModal"]:hover,
     .btn-admin-edit:hover {
-        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
-        box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45) !important;
+        background-color: #4338ca !important;
+        border-color: #3730a3 !important;
         color: #ffffff !important;
     }
 
-    /* 5. Kembali Button (Slate Charcoal Gradient) */
+    /* 5. Kembali Button (Clean Neutral Slate Outline) */
     .btn-clear-form,
     button[onclick*="goBack"],
     div[width="100%"] .btn-secondary.btn-clear-form,
     div[role="document"] .btn-secondary.btn-clear-form {
-        background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
-        color: #ffffff !important;
-        box-shadow: 0 4px 10px rgba(71, 85, 105, 0.25) !important;
+        background-color: #ffffff !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
     }
 
     .btn-clear-form:hover,
     button[onclick*="goBack"]:hover,
     div[width="100%"] .btn-secondary.btn-clear-form:hover,
     div[role="document"] .btn-secondary.btn-clear-form:hover {
-        background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
-        box-shadow: 0 6px 16px rgba(71, 85, 105, 0.35) !important;
-        color: #ffffff !important;
+        background-color: #f1f5f9 !important;
+        border-color: #94a3b8 !important;
+        color: #1e293b !important;
     }
 
-    /* 6. Lampiran Button (Sky Blue Gradient) */
+    /* 6. Lampiran Button (Calm Classic Blue) */
     div[width="100%"] a[href*="uploads"],
     div[width="100%"] a[href*="lampiran"],
     div[width="100%"] .btn-primary {
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        background-color: #0284c7 !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+        border: 1px solid #0369a1 !important;
     }
 
     div[width="100%"] a[href*="uploads"]:hover,
     div[width="100%"] a[href*="lampiran"]:hover,
     div[width="100%"] .btn-primary:hover {
-        background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
-        box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45) !important;
+        background-color: #0369a1 !important;
+        border-color: #075985 !important;
         color: #ffffff !important;
     }
 </style>
