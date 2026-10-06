@@ -37,6 +37,9 @@
 					<div class="input-group">
 						<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
 						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+						<div class="input-group-append">
+							<button type="button" id="btn_print_rekap" class="btn btn-danger text-white" title="Cetak Rekapitulasi Tunjangan Tidak Tetap (PDF)"><i class="fas fa-file-pdf"></i></button>
+						</div>
 					</div>
 				</div>
 
@@ -179,11 +182,9 @@
 			table.ajax.reload()
 		})
 
-		$('#print_month').change(function() {
-			var month = $(this).val();
-			if (month) {
-				window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
-			}
+		$('#btn_print_rekap').click(function() {
+			var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
+			window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
 		});
 
 		$('#btn_print_foto_gps').click(function() {
