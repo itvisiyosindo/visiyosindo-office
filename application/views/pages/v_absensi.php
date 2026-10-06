@@ -33,10 +33,13 @@
 					</select>
 				</div>
 				<div class="col-md-2">
-					<small> <i class="fas fa-print"></i> Print By Month:</small>
+					<small> <i class="fas fa-file-pdf text-danger"></i> Print By Month (PDF):</small>
 					<div class="input-group">
 						<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
 						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+						<div class="input-group-append">
+							<button type="button" class="btn btn-sm btn-danger" id="btn_print_pdf" title="Cetak Rekapitulasi Tunjangan Tidak Tetap PDF"><i class="fas fa-file-pdf"></i></button>
+						</div>
 					</div>
 				</div>
 
@@ -180,21 +183,16 @@
 		})
 
 		$('#print_month').change(function() {
-			// $.ajax({
-			// 	method: 'POST',
-			// 	url: 'absensi/print/allKaryawanByMonth', 
-			// 	dataType: 'JSON',
-			// 	data: {
-			// 		print_month: $('#print_month').val(),
-			// 		csrf_token: token
-			// 	},
-			// 	success: function(resp) {
-			// 		console.log('fuadi');
-					
-			// 	}
-			// })
-			window.location.href = '<?= base_url() ?>' + 'absensi/print/allKaryawanByMonth/' + $('#print_month').val();
-		})
+			var month = $(this).val();
+			if (month) {
+				window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
+			}
+		});
+
+		$('#btn_print_pdf').click(function() {
+			var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
+			window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
+		});
 
 		$('#btn_print_foto_gps').click(function() {
 			var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
