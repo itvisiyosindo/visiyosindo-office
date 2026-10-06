@@ -9,111 +9,103 @@
 </header>
 
 <style>
-	.card-modern-table {
+	.table-card-container {
 		background: #ffffff;
-		border-radius: 16px;
-		border: 1px solid #e2e8f0;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+		border: 1px solid #cbd5e1;
+		border-radius: 12px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 		overflow: hidden;
 		margin-bottom: 25px;
 	}
 
-	.table-header-toolbar {
-		padding: 18px 24px;
-		background: #ffffff;
-		border-bottom: 1px solid #f1f5f9;
+	.table-top-bar {
+		padding: 16px 20px;
+		background: #f8fafc;
+		border-bottom: 1px solid #cbd5e1;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 15px;
-	}
-
-	.table-header-title {
-		display: flex;
-		align-items: center;
 		gap: 12px;
 	}
 
-	.table-header-title .icon-box {
-		width: 42px;
-		height: 42px;
-		border-radius: 10px;
-		background: #eff6ff;
-		color: #2563eb;
+	.table-top-title {
+		font-size: 16px;
+		font-weight: 700;
+		color: #1e293b;
+		margin: 0;
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		font-size: 18px;
+		gap: 8px;
 	}
 
-	.table-header-title h4 {
-		margin: 0;
-		font-size: 17px;
-		font-weight: 700;
-		color: #0f172a;
-	}
-
-	.table-header-title p {
-		margin: 0;
-		font-size: 13px;
-		color: #64748b;
-	}
-
+	/* Simple, Crisp Table with Clear Row Separation */
 	#kt_table_1 {
-		margin-bottom: 0 !important;
-		border-collapse: separate !important;
-		border-spacing: 0;
 		width: 100% !important;
+		margin-bottom: 0 !important;
+		border-collapse: collapse !important;
 	}
 
 	#kt_table_1 thead th {
-		background-color: #f8fafc !important;
-		color: #475569 !important;
+		background-color: #f1f5f9 !important;
+		color: #334155 !important;
 		font-weight: 700 !important;
-		font-size: 12px !important;
+		font-size: 12.5px !important;
 		text-transform: uppercase !important;
 		letter-spacing: 0.5px !important;
-		border-top: none !important;
-		border-bottom: 2px solid #e2e8f0 !important;
-		padding: 14px 16px !important;
+		border: 1px solid #cbd5e1 !important;
+		padding: 12px 14px !important;
 		vertical-align: middle !important;
-		white-space: nowrap !important;
+		text-align: center;
 	}
 
 	#kt_table_1 tbody td {
-		padding: 14px 16px !important;
+		padding: 11px 14px !important;
 		vertical-align: middle !important;
-		border-top: none !important;
-		border-bottom: 1px solid #f1f5f9 !important;
-		font-size: 13.5px;
-		color: #334155;
+		border: 1px solid #e2e8f0 !important;
+		font-size: 13px !important;
+		color: #1e293b;
 	}
 
-	#kt_table_1 tbody tr:hover {
+	/* Jelas Perbedaan Setiap Baris Item (Zebra Striping Kontras) */
+	#kt_table_1 tbody tr:nth-of-type(odd) {
+		background-color: #ffffff !important;
+	}
+
+	#kt_table_1 tbody tr:nth-of-type(even) {
 		background-color: #f8fafc !important;
 	}
 
-	#kt_table_1 tbody tr:last-child td {
-		border-bottom: none !important;
+	/* Highlight Row Saat Diarahkan Kursor */
+	#kt_table_1 tbody tr:hover {
+		background-color: #e0f2fe !important;
+	}
+
+	#kt_table_1 tbody tr:hover td {
+		background-color: transparent !important;
+		color: #0f172a !important;
+	}
+
+	.dataTables_wrapper {
+		padding: 15px !important;
 	}
 
 	.dataTables_wrapper .dataTables_length select {
-		border-radius: 8px !important;
+		border-radius: 6px !important;
 		border: 1px solid #cbd5e1 !important;
 		padding: 4px 8px !important;
 	}
 
 	.dataTables_wrapper .dataTables_filter input {
-		border-radius: 8px !important;
+		border-radius: 6px !important;
 		border: 1px solid #cbd5e1 !important;
-		padding: 6px 12px !important;
+		padding: 5px 10px !important;
 		outline: none !important;
 	}
 
 	.dataTables_wrapper .dataTables_filter input:focus {
-		border-color: #3b82f6 !important;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+		border-color: #2563eb !important;
+		box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
 	}
 
 	.dataTables_wrapper .dataTables_paginate .paginate_button.current, 
@@ -121,34 +113,28 @@
 		background: #2563eb !important;
 		color: #ffffff !important;
 		border: 1px solid #2563eb !important;
-		border-radius: 6px !important;
+		border-radius: 4px !important;
 	}
 
 	.dataTables_wrapper .dataTables_paginate .paginate_button {
-		border-radius: 6px !important;
+		border-radius: 4px !important;
 		border: 1px solid transparent !important;
 	}
 </style>
 
 <div class="row">
 	<div class="col-12">
-		<div class="card-modern-table">
-			<div class="table-header-toolbar">
-				<div class="table-header-title">
-					<div class="icon-box">
-						<i class="fas fa-file-contract"></i>
-					</div>
-					<div>
-						<h4>Daftar Berita Acara</h4>
-						<p>Kelola dan pantau seluruh pengajuan Berita Acara (BA)</p>
-					</div>
+		<div class="table-card-container">
+			<div class="table-top-bar">
+				<div class="table-top-title">
+					<i class="fas fa-file-contract text-primary"></i> Daftar Berita Acara
 				</div>
-				<div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+				<div class="d-flex align-items-center" style="gap: 10px;">
 					<div class="input-group input-group-sm" style="width: auto;">
 						<div class="input-group-prepend">
-							<span class="input-group-text bg-light border-right-0"><i class="far fa-calendar-alt text-muted"></i></span>
+							<span class="input-group-text bg-white border-right-0"><i class="far fa-calendar-alt text-muted"></i></span>
 						</div>
-						<select class="form-control form-control-sm border-left-0" id="tahun" style="border-radius: 0 8px 8px 0; font-weight: 600;">
+						<select class="form-control form-control-sm border-left-0" id="tahun" style="border-radius: 0 6px 6px 0; font-weight: 600;">
 							<option value="">Semua Tahun</option>
 							<?php
 							$current_year = date('Y');
@@ -158,30 +144,28 @@
 							?>
 						</select>
 					</div>
-					<a href="<?= base_url('surat_part_two/show/add/ba') ?>" class="btn btn-sm btn-primary shadow-sm font-weight-bold" style="border-radius: 8px; padding: 7px 16px;">
+					<a href="<?= base_url('surat_part_two/show/add/ba') ?>" class="btn btn-sm btn-primary font-weight-bold" style="border-radius: 6px;">
 						<i class="fas fa-plus mr-1"></i> Buat Berita Acara
 					</a>
 				</div>
 			</div>
 
-			<div class="p-3">
-				<div class="table-responsive">
-					<table class="table table-hover" id="kt_table_1">
-						<thead>
-							<tr>
-								<th width="40"> # </th>
-								<th> No. Berita Acara </th>
-								<th> Pengaju </th>
-								<th> Jabatan </th>
-								<th> Tanggal </th>
-								<th> Diketahui Oleh </th>
-								<th> Disetujui Oleh </th>
-								<th> Status </th>
-								<th width="80"> Aksi </th>
-							</tr>
-						</thead>
-					</table>
-				</div>
+			<div class="table-responsive">
+				<table class="table table-bordered" id="kt_table_1">
+					<thead>
+						<tr>
+							<th width="40"> # </th>
+							<th> No </th>
+							<th> Nama </th>
+							<th> Jabatan </th>
+							<th> Tanggal </th>
+							<th> Diketahui Oleh </th>
+							<th> Disetujui Oleh </th>
+							<th> Status </th>
+							<th width="70"> Aksi </th>
+						</tr>
+					</thead>
+				</table>
 			</div>
 		</div>
 	</div>
