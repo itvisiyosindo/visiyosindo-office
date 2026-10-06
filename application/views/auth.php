@@ -7,7 +7,7 @@
 	<meta name="keywords" content="Sistem Informasi" />
 	<meta name="description" content="<?= $this->config->item('apps_name') ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="<?= base_url() ?>assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="<?= base_url() ?>assets/vendor/animate/animate.compat.css">
 	<link rel="stylesheet" href="<?= base_url() ?>assets/vendor/font-awesome/css/all.min.css" />
@@ -20,17 +20,17 @@
 	<link rel="stylesheet" href="<?= base_url() ?>assets/css/custom.css">
 	<link rel="shortcut icon" href="<?= base_url('assets/') ?>img/favicon.png" />
 	<script src="<?= base_url() ?>assets/vendor/modernizr/modernizr.js"></script>
-	<script src="<?= base_url() ?>assets/master/style-switcher/style.switcher.localstorage.js"></script>
 
 	<style>
-		/* Custom Redesign CSS for Premium Split Screen Login Page */
+		/* Modern Split Screen Auth Layout */
 		html,
 		body {
 			margin: 0;
 			padding: 0;
 			height: 100%;
-			font-family: 'Poppins', sans-serif;
-			background: #f4f7f6;
+			font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+			background: #f8fafc;
+			color: #1e293b;
 		}
 
 		.auth-container {
@@ -39,9 +39,9 @@
 			width: 100%;
 		}
 
-		/* Left Section: Slider */
+		/* Left Section: Hero Slider */
 		.auth-slider-section {
-			flex: 1.2;
+			flex: 1.15;
 			position: relative;
 			background-color: #0b1d33;
 			overflow: hidden;
@@ -53,31 +53,30 @@
 		@media (max-width: 991px) {
 			.auth-slider-section {
 				display: none;
-				/* Hide slider on smaller screens */
 			}
 		}
 
-		/* Right Section: Form Box */
+		/* Right Section: Form Container */
 		.auth-form-section {
-			flex: 0.8;
+			flex: 0.85;
 			display: flex;
+			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			padding: 40px;
-			background: #ffffff;
+			padding: 40px 24px;
+			background: #f8fafc;
 			position: relative;
-			box-shadow: -5px 0 25px rgba(0, 0, 0, 0.05);
+			box-shadow: -10px 0 30px rgba(0, 0, 0, 0.03);
 		}
 
 		@media (max-width: 991px) {
 			.auth-form-section {
 				flex: 1;
 				padding: 40px 20px;
-				background: #f4f7f6;
 			}
 		}
 
-		/* Slider Content Styling */
+		/* Slider Content */
 		.auth-carousel {
 			position: absolute;
 			top: 0;
@@ -93,13 +92,13 @@
 			width: 100%;
 			height: 100%;
 			opacity: 0;
-			transition: opacity 1s ease-in-out;
+			transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 			background-size: cover;
 			background-position: center;
 			display: flex;
 			flex-direction: column;
 			justify-content: flex-end;
-			padding: 80px 60px;
+			padding: 60px;
 			z-index: 1;
 		}
 
@@ -115,38 +114,45 @@
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background: linear-gradient(to top, rgba(11, 29, 51, 0.95) 0%, rgba(11, 29, 51, 0.4) 60%, rgba(11, 29, 51, 0.2) 100%);
+			background: linear-gradient(180deg, rgba(11, 29, 51, 0.4) 0%, rgba(11, 29, 51, 0.7) 60%, rgba(11, 29, 51, 0.95) 100%);
 			z-index: 1;
 		}
 
-		.slide-content {
+		.slide-content-card {
 			position: relative;
 			z-index: 2;
 			color: #ffffff;
-			max-width: 600px;
+			max-width: 580px;
+			background: rgba(15, 23, 42, 0.65);
+			backdrop-filter: blur(16px);
+			-webkit-backdrop-filter: blur(16px);
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			border-radius: 20px;
+			padding: 28px 32px;
+			margin-bottom: 24px;
 			transform: translateY(20px);
-			transition: transform 0.8s ease;
+			transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 		}
 
-		.carousel-slide.active .slide-content {
+		.carousel-slide.active .slide-content-card {
 			transform: translateY(0);
 		}
 
 		.slide-title {
-			font-size: 2.2rem;
-			font-weight: 700;
-			margin-bottom: 15px;
+			font-size: 24px;
+			font-weight: 800;
+			margin-bottom: 10px;
 			line-height: 1.3;
 			color: #ffffff;
-			text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+			letter-spacing: -0.3px;
 		}
 
 		.slide-desc {
-			font-size: 1.1rem;
+			font-size: 13.5px;
 			color: rgba(255, 255, 255, 0.85);
 			line-height: 1.6;
-			margin-bottom: 30px;
-			text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+			margin: 0;
 		}
 
 		.carousel-indicators-custom {
@@ -154,201 +160,201 @@
 			bottom: 40px;
 			left: 60px;
 			display: flex;
-			gap: 10px;
+			gap: 8px;
 			z-index: 10;
 		}
 
 		.indicator-dot {
-			width: 30px;
+			width: 28px;
 			height: 4px;
 			background: rgba(255, 255, 255, 0.3);
-			border-radius: 2px;
+			border-radius: 4px;
 			cursor: pointer;
-			transition: background 0.3s ease, width 0.3s ease;
+			transition: all 0.3s ease;
 		}
 
 		.indicator-dot.active {
-			background: #007bff;
-			width: 45px;
+			background: #38bdf8;
+			width: 48px;
 		}
 
-		/* Form Card/Box Styling */
+		/* Brand Overlay */
+		.brand-overlay {
+			position: absolute;
+			top: 36px;
+			left: 50px;
+			z-index: 10;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			background: rgba(15, 23, 42, 0.6);
+			backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			border-radius: 30px;
+			padding: 8px 18px;
+		}
+
+		.brand-logo-mini {
+			height: 32px;
+			width: auto;
+		}
+
+		.brand-name {
+			color: #ffffff;
+			font-size: 14px;
+			font-weight: 700;
+			letter-spacing: 0.3px;
+		}
+
+		/* Form Card Styling */
 		.auth-form-card {
 			width: 100%;
-			max-width: 450px;
+			max-width: 440px;
 			background: #ffffff;
-			border-radius: 16px;
-			box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-			border: 1px solid rgba(0, 0, 0, 0.05);
-			padding: 40px 35px;
-			transition: transform 0.3s ease;
+			border-radius: 20px;
+			box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(226, 232, 240, 0.8);
+			padding: 38px 34px;
+			position: relative;
+			z-index: 2;
 		}
 
-		@media (max-width: 575px) {
-			.auth-form-card {
-				padding: 30px 20px;
-				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-			}
-		}
-
-		.auth-form-card:hover {
-			transform: translateY(-2px);
+		.auth-logo-box {
+			text-align: center;
+			margin-bottom: 22px;
 		}
 
 		.auth-logo {
-			display: block;
-			margin: 0 auto 30px auto;
-			max-height: 65px;
+			max-height: 60px;
 			width: auto;
 			object-fit: contain;
 		}
 
 		.auth-header {
 			text-align: center;
-			margin-bottom: 30px;
+			margin-bottom: 28px;
 		}
 
 		.auth-header h2 {
-			font-size: 1.8rem;
-			font-weight: 700;
-			color: #1a2530;
-			margin: 0 0 8px 0;
+			font-size: 24px;
+			font-weight: 800;
+			color: #0f172a;
+			margin: 0 0 6px 0;
+			letter-spacing: -0.4px;
 		}
 
 		.auth-header p {
-			color: #6c757d;
-			font-size: 0.95rem;
+			color: #64748b;
+			font-size: 13.5px;
 			margin: 0;
 		}
 
-		/* Input Form Tweaks */
-		.lgn-form .form-group,
-		.rgstr-form .form-group {
-			margin-bottom: 22px;
+		/* Form Group & Input Styling */
+		.auth-form-group {
+			margin-bottom: 20px;
 		}
 
-		.lgn-form label,
-		.rgstr-form label {
-			font-weight: 500;
-			font-size: 0.85rem;
-			color: #495057;
+		.auth-label {
+			font-weight: 600;
+			font-size: 13px;
+			color: #334155;
 			margin-bottom: 6px;
-			display: inline-block;
+			display: block;
 		}
 
-		.lgn-form .input-group,
-		.rgstr-form .input-group {
-			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-			border-radius: 8px;
+		.auth-input-group {
+			border: 1.5px solid #e2e8f0;
+			border-radius: 12px;
+			background: #f8fafc;
 			overflow: hidden;
-			border: 1px solid #ced4da;
-			transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+			display: flex;
+			align-items: center;
+			transition: all 0.2s ease;
 		}
 
-		.lgn-form .input-group:focus-within,
-		.rgstr-form .input-group:focus-within {
-			border-color: #007bff;
-			box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .15);
+		.auth-input-group:focus-within {
+			border-color: #2563eb;
+			background: #ffffff;
+			box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 		}
 
-		.lgn-form .form-control,
-		.rgstr-form .form-control {
+		.auth-input-group .form-control {
 			border: none;
+			background: transparent;
 			height: 48px;
-			font-size: 0.95rem;
-			padding-left: 16px;
+			font-size: 14px;
+			color: #1e293b;
+			padding: 0 16px;
+			box-shadow: none;
 		}
 
-		.lgn-form .form-control:focus,
-		.rgstr-form .form-control:focus {
+		.auth-input-group .form-control:focus {
 			box-shadow: none;
 			outline: none;
 		}
 
-		.lgn-form .input-group-text,
-		.rgstr-form .input-group-text {
-			background-color: #f8f9fa;
-			border: none;
-			color: #6c757d;
-			font-size: 1.1rem;
-			padding: 0 15px;
+		.auth-input-group-addon {
+			padding: 0 14px;
+			color: #94a3b8;
+			font-size: 18px;
 			display: flex;
 			align-items: center;
+			justify-content: center;
 		}
 
-		.lgn-form .input-group-append svg,
-		.rgstr-form .input-group-append svg {
-			color: #6c757d;
-			transition: color 0.2s ease;
+		/* Action Button */
+		.btn-auth-submit {
+			width: 100%;
+			height: 48px;
+			background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+			color: #ffffff;
+			border: none;
+			border-radius: 12px;
+			font-size: 15px;
+			font-weight: 700;
+			letter-spacing: 0.3px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+			transition: all 0.25s ease;
+			cursor: pointer;
 		}
 
-		.lgn-form .input-group-append:hover svg,
-		.rgstr-form .input-group-append:hover svg {
-			color: #333333;
+		.btn-auth-submit:hover {
+			background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+			transform: translateY(-2px);
+			box-shadow: 0 10px 22px rgba(37, 99, 235, 0.4);
+			color: #ffffff;
 		}
 
-		.btn-primary {
-			background-color: #007bff;
-			border-color: #007bff;
-			font-weight: 600;
-			font-size: 0.95rem;
-			padding: 12px 24px;
-			border-radius: 8px;
-			transition: all 0.2s ease;
-			box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15);
-		}
-
-		.btn-primary:hover,
-		.btn-primary:focus {
-			background-color: #0069d9;
-			border-color: #0062cc;
-			transform: translateY(-1px);
-			box-shadow: 0 6px 15px rgba(0, 123, 255, 0.25);
-		}
-
-		.btn-primary:active {
+		.btn-auth-submit:active {
 			transform: translateY(0);
 		}
 
-		.btn-block {
-			display: block;
-			width: 100%;
-		}
-
-		/* Absolut footer copyright */
-		.auth-footer {
-			position: absolute;
-			bottom: 20px;
-			left: 0;
-			width: 100%;
+		.auth-bottom-text {
 			text-align: center;
-			font-size: 0.8rem;
-			color: #adb5bd;
-			z-index: 10;
+			margin-top: 20px;
+			font-size: 13.5px;
+			color: #64748b;
 		}
 
-		/* Slide background images overlay decoration */
-		.brand-overlay {
-			position: absolute;
-			top: 40px;
-			left: 60px;
-			z-index: 10;
-			display: flex;
-			align-items: center;
-			gap: 12px;
-		}
-
-		.brand-logo-mini {
-			height: 40px;
-			width: auto;
-		}
-
-		.brand-name {
-			color: #ffffff;
-			font-size: 1.3rem;
+		.auth-bottom-text a {
+			color: #2563eb;
 			font-weight: 700;
-			letter-spacing: 0.5px;
-			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+			text-decoration: none;
+		}
+
+		.auth-bottom-text a:hover {
+			text-decoration: underline;
+		}
+
+		/* Footer */
+		.auth-footer {
+			margin-top: 24px;
+			text-align: center;
+			font-size: 12px;
+			color: #94a3b8;
 		}
 	</style>
 </head>
@@ -366,21 +372,21 @@
 			<div class="auth-carousel">
 				<!-- Slide 1 -->
 				<div class="carousel-slide active" style="background-image: url('<?= base_url('assets/img/gedung.jpg') ?>');">
-					<div class="slide-content">
+					<div class="slide-content-card">
 						<h3 class="slide-title">Integrated Office System</h3>
 						<p class="slide-desc">Sistem pendukung operasional yang handal untuk menunjang produktivitas dan koordinasi tim secara efisien.</p>
 					</div>
 				</div>
 				<!-- Slide 2 -->
-				<div class="carousel-slide" style="background-image: url('https://visiyosindo.com/storage/galleries/Aqkh8BmsUM7Vqpfj6rP8gNwe0j7NQCA4w7g7eiYO.jpg">
-					<div class="slide-content">
+				<div class="carousel-slide" style="background-image: url('https://visiyosindo.com/storage/galleries/Aqkh8BmsUM7Vqpfj6rP8gNwe0j7NQCA4w7g7eiYO.jpg');">
+					<div class="slide-content-card">
 						<h3 class="slide-title">Visi Yosindo Medikal</h3>
 						<p class="slide-desc">Mitra terpercaya penyedia alat kesehatan berkualitas tinggi dan layanan purna jual terbaik di Indonesia.</p>
 					</div>
 				</div>
 				<!-- Slide 3 -->
-				<div class="carousel-slide" style="background-image: url('https://visiyosindo.com/storage/galleries/oM0IEUBtdewkoxkWYGhlZj6VqlW91gq05nM4bOjl.jpg">
-					<div class="slide-content">
+				<div class="carousel-slide" style="background-image: url('https://visiyosindo.com/storage/galleries/oM0IEUBtdewkoxkWYGhlZj6VqlW91gq05nM4bOjl.jpg');">
+					<div class="slide-content-card">
 						<h3 class="slide-title">Helpdesk & Service Center</h3>
 						<p class="slide-desc">Kemudahan pelaporan masalah teknis, pemantauan status tiket, dan respons cepat untuk menjamin kepuasan pelanggan.</p>
 					</div>
@@ -399,151 +405,142 @@
 		<div class="auth-form-section">
 			<div class="auth-form-card">
 				<!-- Logo -->
-				<img src="<?= base_url('assets/img/logovym2023.png') ?>" alt="logo vym" class="auth-logo" />
+				<div class="auth-logo-box">
+					<img src="<?= base_url('assets/img/logovym2023.png') ?>" alt="logo vym" class="auth-logo" />
+				</div>
 
 				<!-- Login Mode -->
 				<?php if ($mode == "form-login") { ?>
 					<div class="auth-header">
 						<h2>Sign In</h2>
-						<p>Silahkan masukkan Email & Password anda</p>
+						<p>Silakan masukkan Email & Password anda</p>
 					</div>
 
-					<?= $this->session->flashdata('error') ? '<div class="alert alert-danger text-center" role="alert">' . $this->session->flashdata('error') . '</div>' : '' ?>
-					<?= $this->session->flashdata('success') ? '<div class="alert alert-success text-center" role="alert">' . $this->session->flashdata('success') . '</div>' : '' ?>
+					<?= $this->session->flashdata('error') ? '<div class="alert alert-danger text-center mb-3" role="alert" style="border-radius: 10px; font-size: 13px;">' . $this->session->flashdata('error') . '</div>' : '' ?>
+					<?= $this->session->flashdata('success') ? '<div class="alert alert-success text-center mb-3" role="alert" style="border-radius: 10px; font-size: 13px;">' . $this->session->flashdata('success') . '</div>' : '' ?>
 
 					<?= form_open("auth/oauth", array('id' => 'kt_login_signin_form', 'class' => 'form', 'autocomplete' => 'off')); ?>
-					<div class="lgn-form">
-						<div class="form-group">
-							<label for="email">Email Address</label>
-							<div class="input-group">
-								<input name="email" type="email" class="form-control" placeholder="example@email.com" required />
-								<span class="input-group-append">
-									<span class="input-group-text">
-										<i class="bx bx-envelope"></i>
-									</span>
+					<div>
+						<div class="auth-form-group">
+							<label class="auth-label" for="email">Email Address</label>
+							<div class="auth-input-group">
+								<input name="email" type="email" class="form-control" placeholder="nama@email.com" required />
+								<span class="auth-input-group-addon">
+									<i class="bx bx-envelope"></i>
 								</span>
 							</div>
 						</div>
 
-						<div class="form-group">
-							<label for="login_password">Password</label>
-							<div class="input-group">
+						<div class="auth-form-group">
+							<label class="auth-label" for="login_password">Password</label>
+							<div class="auth-input-group">
 								<input name="password" type="password" class="form-control" id="login_password" placeholder="••••••••" required />
-								<span class="input-group-append toggle-password" data-target="#login_password" style="cursor: pointer;">
-									<span class="input-group-text">
-										<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-											<circle cx="12" cy="12" r="3"></circle>
-										</svg>
-										<svg class="eye-hide" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-											<line x1="1" y1="1" x2="23" y2="23"></line>
-										</svg>
-									</span>
+								<span class="auth-input-group-addon toggle-password" data-target="#login_password" style="cursor: pointer;">
+									<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+										<circle cx="12" cy="12" r="3"></circle>
+									</svg>
+									<svg class="eye-hide" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+										<line x1="1" y1="1" x2="23" y2="23"></line>
+									</svg>
 								</span>
 							</div>
 						</div>
 
-						<div class="row align-items-center mt-4">
-							<div class="col-7">
-								<p class="mb-0" style="font-size: 0.85rem; color: #6c757d;">
-									Belum punya akun? <a href="auth/register/form-register" style="font-weight: 600; color: #007bff;">Daftar</a>
-								</p>
-							</div>
-							<div class="col-5">
-								<button type="submit" class="btn btn-primary btn-block" id="btn-submit">Sign In</button>
-							</div>
+						<div class="mt-4">
+							<button type="submit" class="btn-auth-submit" id="btn-submit">
+								<span>Sign In</span>
+								<i class="fas fa-arrow-right ml-1"></i>
+							</button>
+						</div>
+
+						<div class="auth-bottom-text">
+							Belum punya akun? <a href="auth/register/form-register">Daftar Sekarang</a>
 						</div>
 					</div>
 					<?= form_close() ?>
 
-					<!-- Register Mode -->
+				<!-- Register Mode -->
 				<?php } else if ($mode == "form-register") { ?>
 					<div class="auth-header">
 						<h2>Sign Up</h2>
-						<p>Silahkan isi Biodata anda dengan benar</p>
+						<p>Silakan isi Biodata anda dengan benar</p>
 					</div>
 
-					<?= $this->session->flashdata('error') ? '<div class="alert alert-danger" role="alert">' . $this->session->flashdata('error') . '</div>' : '' ?>
-					<?= $this->session->flashdata('success') ? '<div class="alert alert-success" role="alert">' . $this->session->flashdata('success') . '</div>' : '' ?>
+					<?= $this->session->flashdata('error') ? '<div class="alert alert-danger" role="alert" style="border-radius: 10px; font-size: 13px;">' . $this->session->flashdata('error') . '</div>' : '' ?>
+					<?= $this->session->flashdata('success') ? '<div class="alert alert-success" role="alert" style="border-radius: 10px; font-size: 13px;">' . $this->session->flashdata('success') . '</div>' : '' ?>
 
 					<?= form_open("auth/register", array('id' => 'kt_login_signin_form', 'class' => 'form', 'autocomplete' => 'off')); ?>
-					<div class="rgstr-form">
-						<h5 class="mb-3" style="font-weight: 600; color: #495057; border-bottom: 1px solid #eee; padding-bottom: 8px;">Data Diri</h5>
+					<div>
+						<h6 class="mb-3 font-weight-bold text-primary" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Data Diri</h6>
 
-						<div class="form-group">
-							<label for="nama">Nama Lengkap</label>
-							<div class="input-group">
+						<div class="auth-form-group">
+							<label class="auth-label" for="nama">Nama Lengkap</label>
+							<div class="auth-input-group">
 								<input class="form-control" type="text" placeholder="Masukkan Nama Lengkap" name="nama" id="nama" required>
-								<span class="input-group-append">
-									<span class="input-group-text"><i class="bx bx-user"></i></span>
-								</span>
+								<span class="auth-input-group-addon"><i class="bx bx-user"></i></span>
 							</div>
 						</div>
 
-						<div class="form-group">
-							<label for="no_hp">No Handphone</label>
-							<div class="input-group">
-								<input class="form-control" type="text" placeholder="Masukkan Nomor HP" name="no_hp" id="no_hp" autocomplete="off" required>
-								<span class="input-group-append">
-									<span class="input-group-text"><i class="bx bx-phone"></i></span>
-								</span>
+						<div class="auth-form-group">
+							<label class="auth-label" for="no_hp">No Handphone</label>
+							<div class="auth-input-group">
+								<input class="form-control" type="text" placeholder="08xxxxxxxxxx" name="no_hp" id="no_hp" autocomplete="off" required>
+								<span class="auth-input-group-addon"><i class="bx bx-phone"></i></span>
 							</div>
 						</div>
 
-						<h5 class="mb-3 mt-4" style="font-weight: 600; color: #495057; border-bottom: 1px solid #eee; padding-bottom: 8px;">Akun Email & Password</h5>
+						<h6 class="mb-3 mt-4 font-weight-bold text-primary" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Akun Email & Password</h6>
 
-						<div class="form-group">
-							<label for="email">Email</label>
-							<div class="input-group">
-								<input class="form-control" type="email" placeholder="example@email.com" name="email" id="email" autocomplete="off" required>
-								<span class="input-group-append">
-									<span class="input-group-text"><i class="bx bx-envelope"></i></span>
-								</span>
+						<div class="auth-form-group">
+							<label class="auth-label" for="email">Email</label>
+							<div class="auth-input-group">
+								<input class="form-control" type="email" placeholder="nama@email.com" name="email" id="email" autocomplete="off" required>
+								<span class="auth-input-group-addon"><i class="bx bx-envelope"></i></span>
 							</div>
 						</div>
 
-						<div class="form-group">
-							<label for="password">Password</label>
-							<div class="input-group">
+						<div class="auth-form-group">
+							<label class="auth-label" for="password">Password</label>
+							<div class="auth-input-group">
 								<input class="form-control" type="password" placeholder="••••••••" name="password" id="password" required>
-								<span class="input-group-append toggle-password" data-target="#password" style="cursor: pointer;">
-									<span class="input-group-text">
-										<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-											<circle cx="12" cy="12" r="3"></circle>
-										</svg>
-										<svg class="eye-hide" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-											<line x1="1" y1="1" x2="23" y2="23"></line>
-										</svg>
-									</span>
+								<span class="auth-input-group-addon toggle-password" data-target="#password" style="cursor: pointer;">
+									<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+										<circle cx="12" cy="12" r="3"></circle>
+									</svg>
+									<svg class="eye-hide" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+										<line x1="1" y1="1" x2="23" y2="23"></line>
+									</svg>
 								</span>
 							</div>
 						</div>
 
-						<div class="form-group">
-							<label for="cpassword">Confirm Password</label>
-							<div class="input-group">
+						<div class="auth-form-group">
+							<label class="auth-label" for="cpassword">Konfirmasi Password</label>
+							<div class="auth-input-group">
 								<input class="form-control" type="password" placeholder="••••••••" name="cpassword" id="cpassword" required>
-								<span class="input-group-append toggle-password" data-target="#cpassword" style="cursor: pointer;">
-									<span class="input-group-text">
-										<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-											<circle cx="12" cy="12" r="3"></circle>
-										</svg>
-										<svg class="eye-hide" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-											<line x1="1" y1="1" x2="23" y2="23"></line>
-										</svg>
-									</span>
+								<span class="auth-input-group-addon toggle-password" data-target="#cpassword" style="cursor: pointer;">
+									<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+										<circle cx="12" cy="12" r="3"></circle>
+									</svg>
+									<svg class="eye-hide" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+										<line x1="1" y1="1" x2="23" y2="23"></line>
+									</svg>
 								</span>
 							</div>
 						</div>
 
-						<div class="text-center mt-4">
-							<button type="button" class="btn btn-primary btn-submit-daftar px-5 mr-2">Submit</button>
-							<a class="btn btn-danger btn-cancel px-5" href="javascript:history.back()" style="border-radius: 8px; font-weight: 600; padding: 12px 24px; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.15);">Cancel</a>
+						<div class="mt-4">
+							<button type="button" class="btn-auth-submit btn-submit-daftar mb-2">
+								<span>Daftar Sekarang</span>
+								<i class="fas fa-user-plus ml-1"></i>
+							</button>
+							<a class="btn btn-block btn-light text-muted" href="javascript:history.back()" style="border-radius: 12px; font-weight: 600; padding: 10px;">Batal</a>
 						</div>
 					</div>
 					<?= form_close() ?>
@@ -552,7 +549,7 @@
 
 			<!-- Footer Copyright inside Form Area -->
 			<div class="auth-footer">
-				&copy; All Rights Reserved 2022 - <?= date('Y') ?>. PT VISI YOSINDO MEDIKAL
+				&copy; 2022 - <?= date('Y') ?> PT VISI YOSINDO MEDIKAL. All Rights Reserved.
 			</div>
 		</div>
 	</div>
@@ -607,7 +604,7 @@
 						success: function(resp) {
 							const endTime = new Date().getTime();
 							const timeDiff = endTime - startTime;
-							const delay = Math.max(0, 3000 - timeDiff);
+							const delay = Math.max(0, 2000 - timeDiff);
 							
 							setTimeout(function() {
 								if (resp.status === 'success') {
@@ -632,7 +629,7 @@
 						error: function(xhr, status, error) {
 							const endTime = new Date().getTime();
 							const timeDiff = endTime - startTime;
-							const delay = Math.max(0, 3000 - timeDiff);
+							const delay = Math.max(0, 2000 - timeDiff);
 							
 							setTimeout(function() {
 								Swal.fire({
