@@ -1323,6 +1323,8 @@ class Absensi extends CI_Controller
         $start = $this->input->post('start');
         $data  = array();
 
+        $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
+
         foreach ($dt['data'] as $row) {
             $id       = encrypt($row->id_absensi);
             $pengguna_id = encrypt($row->pengguna_id);
@@ -1461,6 +1463,10 @@ class Absensi extends CI_Controller
             $th[] = ($row->type_absen == 'keluar' || $row->type_absen == 'istirahat') ? '' : ($row->type_absen == 'masuk' || $row->type_absen == 'izin' ? $li_btn : '');
             $th[] = isset($row->jenis_lokasi) && $row->jenis_lokasi ? $row->jenis_lokasi : '-';
             $th[] = $row->jenis_absen;
+            if ($can_edit) {
+                $btn_edit = '<button type="button" class="btn btn-sm btn-warning btn-edit-absen text-white" data-id="' . $id . '" title="Edit Absensi"><i class="fas fa-pencil-alt"></i> Edit</button>';
+                $th[] = $btn_edit;
+            }
             $data[] = $th;
         }
         $dt['totals'] = $this->md_absensi->getRekapTotals($pengguna_id);
@@ -1480,6 +1486,111 @@ class Absensi extends CI_Controller
 
         $dt['data'] = $data;
         echo json_encode($dt);
+        die;
+    }
+
+    public function get_absen_detail($encrypted_id = '')
+    {
+        $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
+        if (!$can_edit) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak. Fitur ini hanya untuk General Affair dan Administrator.']);
+            die;
+        }
+
+        $id = decrypt($encrypted_id);
+        if (empty($id)) {
+            echo json_encode(['status' => 'error', 'msg' => 'ID Absensi tidak valid.']);
+            die;
+        }
+
+        $row = $this->md_absensi->getAbsenMasukById($id);
+        if (empty($row)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Data absensi tidak ditemukan.']);
+            die;
+        }
+
+        $absen = $row[0];
+        $tanggal = !empty($absen->data_created) ? date('Y-m-d', strtotime($absen->data_created)) : date('Y-m-d');
+
+        $response = [
+            'status' => 'success',
+            'id_encrypted' => $encrypted_id,
+            'data' => [
+                'id_absensi' => $absen->id_absensi,
+                'pengguna_id' => $absen->pengguna_id,
+                'tanggal' => $tanggal,
+                'waktu_absen' => $absen->waktu_absen,
+                'type_absen' => $absen->type_absen,
+                'status_absen' => $absen->status_absen,
+                'jenis_absen' => $absen->jenis_absen,
+                'jenis_lokasi' => $absen->jenis_lokasi,
+                'tanpa_tunjangan' => $absen->tanpa_tunjangan,
+                'approval' => $absen->approval,
+                'keterangan' => $absen->keterangan,
+                'ip_addr' => $absen->ip_addr,
+            ]
+        ];
+
+        echo json_encode($response);
+        die;
+    }
+
+    public function update_absen()
+    {
+        $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
+        if (!$can_edit) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak. Fitur ini hanya untuk General Affair dan Administrator.']);
+            die;
+        }
+
+        $encrypted_id = $this->input->post('id_absensi');
+        $id_absensi = decrypt($encrypted_id);
+
+        if (empty($id_absensi)) {
+            echo json_encode(['status' => 'error', 'msg' => 'ID Absensi tidak valid.']);
+            die;
+        }
+
+        $existing = $this->md_absensi->getAbsenMasukById($id_absensi);
+        if (empty($existing)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Data absensi tidak ditemukan.']);
+            die;
+        }
+
+        $tanggal = trim($this->input->post('tanggal_absen'));
+        $waktu_absen = trim($this->input->post('waktu_absen'));
+        $type_absen = trim($this->input->post('type_absen'));
+        $status_absen = trim($this->input->post('status_absen'));
+        $jenis_absen = trim($this->input->post('jenis_absen'));
+        $jenis_lokasi = trim($this->input->post('jenis_lokasi'));
+        $tanpa_tunjangan = trim($this->input->post('tanpa_tunjangan'));
+        $approval = trim($this->input->post('approval'));
+        $keterangan = trim($this->input->post('keterangan'));
+        $ip_addr = trim($this->input->post('ip_addr'));
+
+        // Format data_created sinkron dengan tanggal + waktu_absen
+        $data_created = (!empty($tanggal) && !empty($waktu_absen)) ? ($tanggal . ' ' . $waktu_absen) : (empty($tanggal) ? $existing[0]->data_created : ($tanggal . ' 00:00:00'));
+
+        $update_data = [
+            'waktu_absen' => $waktu_absen,
+            'data_created' => $data_created,
+            'type_absen' => $type_absen,
+            'status_absen' => !empty($status_absen) ? $status_absen : NULL,
+            'jenis_absen' => $jenis_absen,
+            'jenis_lokasi' => $jenis_lokasi,
+            'tanpa_tunjangan' => ($jenis_lokasi == 'WFA' || $tanpa_tunjangan == '1') ? 1 : 0,
+            'approval' => !empty($approval) ? $approval : NULL,
+            'keterangan' => $keterangan,
+            'ip_addr' => $ip_addr
+        ];
+
+        $this->md_absensi->updateByWhere($update_data, ['id_absensi' => $id_absensi]);
+
+        $karyawan_info = $this->md_pengguna->getById($existing[0]->pengguna_id);
+        $nama_karyawan = !empty($karyawan_info) ? $karyawan_info[0]->nama : 'ID ' . $existing[0]->pengguna_id;
+        addlog('Edit Absensi', 'Mengubah data absensi ID: ' . $id_absensi . ' milik: ' . $nama_karyawan . ' (Tanggal: ' . $tanggal . ', Tipe: ' . $type_absen . ')');
+
+        echo json_encode(['status' => 'success', 'msg' => 'Data absensi berhasil diperbarui.']);
         die;
     }
 

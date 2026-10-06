@@ -1,3 +1,6 @@
+<?php
+$can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
+?>
 <header class="page-header">
     <h2><i class="icons icon-user-follow"></i>&nbsp;<?= $page_title ?></h2>
     <div class="right-wrapper text-left">
@@ -143,6 +146,9 @@
                                 <th> Approval </th>
                                 <th> Lokasi Kerja </th>
                                 <th> Jenis Absen </th>
+                                <?php if ($can_edit): ?>
+                                    <th> Aksi </th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                     </table>
@@ -180,6 +186,102 @@
             </div>
         </div>
     </div>
+
+    <?php if ($can_edit): ?>
+    <div id="modal-edit-absen" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalEditAbsenLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-light">
+                    <h5 class="modal-title" id="modalEditAbsenLabel"><i class="fas fa-edit text-warning"></i> Edit Data Absensi</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+                <form id="form-edit-absen" autocomplete="off">
+                    <input type="hidden" name="id_absensi" id="edit_id_absensi">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="edit_tanggal_absen" class="font-weight-bold">Tanggal Absensi <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="edit_tanggal_absen" name="tanggal_absen" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="edit_waktu_absen" class="font-weight-bold">Waktu / Jam Absen <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit_waktu_absen" name="waktu_absen" placeholder="HH:MM:SS (cth: 07:45:00)" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="edit_type_absen" class="font-weight-bold">Tipe Absen <span class="text-danger">*</span></label>
+                                <select class="form-control" id="edit_type_absen" name="type_absen" required>
+                                    <option value="masuk">Absen Masuk</option>
+                                    <option value="istirahat">Absen Istirahat</option>
+                                    <option value="keluar">Absen Keluar</option>
+                                    <option value="izin">Izin</option>
+                                    <option value="cuti">Cuti</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="edit_status_absen" class="font-weight-bold">Status Absen</label>
+                                <select class="form-control" id="edit_status_absen" name="status_absen">
+                                    <option value="">- Tidak Ada / Kosong -</option>
+                                    <option value="tepat_waktu">Tepat Waktu</option>
+                                    <option value="terlambat">Terlambat</option>
+                                    <option value="izin">Izin</option>
+                                    <option value="cuti">Cuti</option>
+                                    <option value="sakit">Sakit</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="edit_jenis_absen" class="font-weight-bold">Jenis Absen <span class="text-danger">*</span></label>
+                                <select class="form-control" id="edit_jenis_absen" name="jenis_absen" required>
+                                    <option value="Kantor">Kantor</option>
+                                    <option value="WFA">WFA</option>
+                                    <option value="Dinas">Dinas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="edit_jenis_lokasi" class="font-weight-bold">Lokasi Kerja</label>
+                                <input type="text" class="form-control" id="edit_jenis_lokasi" name="jenis_lokasi" placeholder="Kantor / WFA / Dinas / Nama Lokasi">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="edit_tanpa_tunjangan" class="font-weight-bold">Tunjangan Kehadiran <span class="text-danger">*</span></label>
+                                <select class="form-control" id="edit_tanpa_tunjangan" name="tanpa_tunjangan" required>
+                                    <option value="0">Ya (Dapat Tunjangan)</option>
+                                    <option value="1">Tidak (Tanpa Tunjangan)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="edit_approval" class="font-weight-bold">Status Approval</label>
+                                <select class="form-control" id="edit_approval" name="approval">
+                                    <option value="">- Belum Ditentukan / Menunggu -</option>
+                                    <option value="terima">Diterima</option>
+                                    <option value="tolak">Ditolak</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="edit_ip_addr" class="font-weight-bold">IP Address</label>
+                                <input type="text" class="form-control" id="edit_ip_addr" name="ip_addr" placeholder="cth: 103.129.25.12">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="edit_keterangan" class="font-weight-bold">Keterangan</label>
+                                <textarea class="form-control" id="edit_keterangan" name="keterangan" rows="2" placeholder="Keterangan tambahan (opsional)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Batal</button>
+                        <button type="button" class="btn btn-primary btn-save-edit-absen"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <script src="https://maps.googleapis.com/maps/api/js"></script>
     <script>
@@ -250,7 +352,7 @@
                     }
                 },
                 columnDefs: [{
-                    targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                    targets: '_all',
                     className: 'text-center'
                 }]
             })
@@ -266,33 +368,7 @@
                         csrf_token: token
                     },
                     success: function(resp) {
-
-                        /*if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(function(p) {
-                                var LatLng = new google.maps.LatLng(resp.latitude, resp.longitude);
-                                var mapOptions = {
-                                    center: LatLng,
-                                    zoom: 19,
-                                    mapTypeId: google.maps.MapTypeId.ROADMAP
-                                };
-                                var map = new google.maps.Map(document.getElementById("dvMap"), mapOptions);
-                                var marker = new google.maps.Marker({
-                                    position: LatLng,
-                                    map: map,
-                                    title: "Latitude: " + p.coords.latitude + "Longitude: " + p.coords.longitude
-                                });
-                                google.maps.event.addListener(marker, "click", function(e) {
-                                    var infoWindow = new google.maps.InfoWindow();
-                                    infoWindow.setContent(marker.title);
-                                    infoWindow.open(map, marker);
-                                });
-                            });
-                        } else {
-                            alert('Geo Location feature is not supported in this browser.');
-                        }*/
                         if ((resp.latitude != null) && (resp.longitude != null)) {
-                            // $('#main-modal').modal()
-                            //document.getElementById("dvMap").innerHTML = "<iframe style='overflow:hidden;height:100%;width:100%' loading='lazy' allowfullscreen referrerpolicy='no-referrer-when-downgrade' src='https://www.google.com/maps/embed/v1/place?key=AIzaSyAFycbDEoOn8GPKQ1_fij6S1e1UpRZgKJo &q="+ resp.latitude + "," + resp.longitude + " &center="+ resp.latitude + "," + resp.longitude + " &zoom=21 &maptype=roadmap'></iframe>"
                             $('#main-modal').modal();
 
                             // Menampilkan peta di dalam dvMap
@@ -373,6 +449,108 @@
                     }
                 })
             })
+
+            <?php if ($can_edit): ?>
+            $(document).on('click', '.btn-edit-absen', function() {
+                var id = $(this).attr('data-id');
+                $.ajax({
+                    url: 'absensi/get_absen_detail/' + id,
+                    type: 'GET',
+                    dataType: 'JSON',
+                    beforeSend: function() {
+                        Swal.fire({
+                            html: `<h4>Memuat Data...</h4>`,
+                            icon: 'info',
+                            allowOutsideClick: false,
+                            showConfirmButton: false,
+                            timer: 500
+                        });
+                    },
+                    success: function(resp) {
+                        Swal.close();
+                        if (resp.status == 'error') {
+                            Swal.fire('Error', resp.msg, 'error');
+                            return;
+                        }
+                        var d = resp.data;
+                        $('#edit_id_absensi').val(resp.id_encrypted);
+                        $('#edit_tanggal_absen').val(d.tanggal);
+                        $('#edit_waktu_absen').val(d.waktu_absen);
+                        $('#edit_type_absen').val(d.type_absen);
+                        $('#edit_status_absen').val(d.status_absen || '');
+                        $('#edit_jenis_absen').val(d.jenis_absen || 'Kantor');
+                        $('#edit_jenis_lokasi').val(d.jenis_lokasi || 'Kantor');
+                        $('#edit_tanpa_tunjangan').val(d.tanpa_tunjangan);
+                        $('#edit_approval').val(d.approval || '');
+                        $('#edit_ip_addr').val(d.ip_addr || '');
+                        $('#edit_keterangan').val(d.keterangan || '');
+
+                        $('#modal-edit-absen').modal('show');
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Gagal memuat detail absensi.', 'error');
+                    }
+                });
+            });
+
+            $(document).on('click', '.btn-save-edit-absen', function() {
+                var form = $('#form-edit-absen');
+                if (!$('#edit_tanggal_absen').val() || !$('#edit_waktu_absen').val()) {
+                    Swal.fire('Perhatian', 'Tanggal dan Waktu Absen wajib diisi!', 'warning');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Simpan Perubahan Absensi?',
+                    text: 'Pastikan data yang diinput sudah sesuai.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Simpan',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.value) {
+                        var formData = new FormData(form[0]);
+                        formData.append('csrf_token', token);
+                        $.ajax({
+                            url: 'absensi/update_absen',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            dataType: 'JSON',
+                            beforeSend: function() {
+                                Swal.fire({
+                                    html: `<h4>Menyimpan Perubahan...</h4>`,
+                                    icon: 'info',
+                                    allowOutsideClick: false,
+                                    showConfirmButton: false,
+                                });
+                            },
+                            success: function(resp) {
+                                if (resp.status == 'success') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: resp.msg || 'Data absensi berhasil diperbarui.',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(function() {
+                                        $('#modal-edit-absen').modal('hide');
+                                        updateDatatable();
+                                        updateStatsCards();
+                                    });
+                                } else {
+                                    Swal.fire('Error', resp.msg || 'Gagal menyimpan perubahan.', 'error');
+                                }
+                            },
+                            error: function() {
+                                Swal.fire('Error', 'Terjadi kesalahan pada server saat memperbarui data.', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+            <?php endif; ?>
         })
 
         function updateDatatable() {
