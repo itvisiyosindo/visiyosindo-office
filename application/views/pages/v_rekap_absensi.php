@@ -101,6 +101,7 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                             <option value="">Semua</option>
                             <option value="terlambat">Terlambat</option>
                             <option value="tepat_waktu">Tepat Waktu</option>
+                            <option value="dinas">Dinas</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -225,6 +226,7 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                                     <option value="">- Tidak Ada / Kosong -</option>
                                     <option value="tepat_waktu">Tepat Waktu</option>
                                     <option value="terlambat">Terlambat</option>
+                                    <option value="dinas">Dinas</option>
                                     <option value="izin">Izin</option>
                                     <option value="cuti">Cuti</option>
                                     <option value="sakit">Sakit</option>

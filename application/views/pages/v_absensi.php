@@ -30,6 +30,7 @@
 						<option value="">Semua</option>
 						<option value="terlambat">Terlambat</option>
 						<option value="tepat_waktu">Tepat Waktu</option>
+						<option value="dinas">Dinas</option>
 					</select>
 				</div>
 				<div class="col-md-2">
@@ -126,6 +127,7 @@
 						<select data-plugin-selectTwo class="form-control populate" id="status_absen" name="status_absen" required>
 							<option value="">- Pilih -</option>
 							<option value="tepat_waktu">Tepat Waktu (Jika Masuk)</option>
+							<option value="dinas">Dinas</option>
 						</select>
 					</div>
 

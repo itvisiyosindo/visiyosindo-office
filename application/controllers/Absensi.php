@@ -1345,6 +1345,8 @@ class Absensi extends CI_Controller
                     $status_absen = '<span class="badge-danger badge-pill">Terlambat</span>';
                 } else if ($row->status_absen == "tepat_waktu" || $row->status_absen == "tepat") {
                     $status_absen = '<span class="badge-primary badge-pill">Tepat Waktu</span>';
+                } else if ($row->status_absen == "dinas") {
+                    $status_absen = '<span class="badge-success badge-pill">Dinas</span>';
                 } else if ($row->status_absen == "izin") {
                     $status_absen = '<span class="badge-warning badge-pill">Izin</span>';
                 } else if ($row->status_absen == "cuti") {
