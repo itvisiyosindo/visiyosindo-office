@@ -27,6 +27,7 @@
                                 <th> # </th>
                                 <th> Kode Surat</th>
                                 <th> Kategori</th>
+                                <th> Karyawan Dinas</th>
                                 <th> Diajukan Oleh</th>
                                 <th> Status</th>
                                 <th> Aksi</th>
@@ -57,7 +58,7 @@
                 }
             },
             columnDefs: [{
-                targets: [0, 1, 2, 3, 4, 5],
+                targets: [0, 1, 2, 3, 4, 5, 6],
                 className: 'text-center'
             }]
         })

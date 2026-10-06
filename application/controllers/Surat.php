@@ -7532,11 +7532,13 @@ class Surat extends CI_Controller
 					$aksi = '<a href="javascript:void(0)" onclick="openAdminEditModal(\'surat_dinas\', \'' . encrypt($row->id) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>';
 				}
 
+				$karyawan_dinas = !empty($row->nama_karyawan) ? '<span class="font-weight-bold text-dark">' . htmlspecialchars($row->nama_karyawan) . '</span>' : '-';
+
 				$th = array();
 				$th[] = ++$start;
 				$th[] = $kode_surat;
 				$th[] = $row->kategori;
-				//$th[] = $row->perihal;
+				$th[] = $karyawan_dinas;
 				$th[] = $row->pengaju;
 				$th[] = $stat_surat;
 				$th[] = $aksi;
@@ -7569,11 +7571,13 @@ class Surat extends CI_Controller
 					$aksi = '<a href="javascript:void(0)" onclick="openAdminEditModal(\'surat_dinas\', \'' . encrypt($row->id) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>';
 				}
 
+				$karyawan_dinas = !empty($row->nama_karyawan) ? '<span class="font-weight-bold text-dark">' . htmlspecialchars($row->nama_karyawan) . '</span>' : '-';
+
 				$th = array();
 				$th[] = ++$start;
 				$th[] = $kode_surat;
 				$th[] = $row->kategori;
-				//$th[] = $row->perihal;
+				$th[] = $karyawan_dinas;
 				$th[] = $row->pengaju;
 				$th[] = $stat_surat;
 				$th[] = $aksi;
