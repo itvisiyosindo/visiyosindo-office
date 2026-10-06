@@ -185,8 +185,22 @@
                         $konsumsi = 5000000;
                     }
 
-                    // 4. LOGIKA TRAINING - Tidak dihitung untuk tunjangan tidak tetap
-                    if (strtolower($row->status_karyawan) == 'training') {
+                    // 4. LOGIKA TRAINING & MAGANG - Tidak dihitung untuk tunjangan tidak tetap
+                    $is_magang = (strtolower(trim($row->status_karyawan ?? '')) == 'magang' || $row->pengguna_id == 758);
+                    $is_training = (strtolower(trim($row->status_karyawan ?? '')) == 'training');
+
+                    if ($is_magang) {
+                        $absen_approved = 0;
+                        $jabatan = 0;
+                        $kinerja = 0;
+                        $konsumsi = 0;
+                        $konsumsi_tampil = 0;
+                        $komunikasi = 0;
+                        $transportasi = 0;
+                        $bbm = 0;
+                        $pendapatanlain = 0;
+                        $potongan1 = 0;
+                    } else if ($is_training) {
                         $kinerja = 0;
                         $konsumsi = 0;
                         $komunikasi = 0;
@@ -197,6 +211,9 @@
                         if ($row->pengguna_id == 771 && strpos($month, '2026-07') !== false) {
                             $konsumsi = 162000;
                         }
+                        $konsumsi_tampil = $konsumsi;
+                    } else {
+                        $konsumsi_tampil = $konsumsi;
                     }
 
                     if (($row->pengguna_id == 771 || $row->pengguna_id == 766 || strpos(strtolower($row->nama), 'novemby') !== false || strpos(strtolower($row->nama), 'afylmardopila') !== false) && strpos($month, '2026-07') !== false) {
@@ -210,8 +227,6 @@
                         $bbm = 0;
                         $pendapatanlain = 0;
                         $absen_approved = $days;
-                    } else {
-                        $konsumsi_tampil = $konsumsi;
                     }
 
                     // 3. HITUNG TOTAL AKHIR

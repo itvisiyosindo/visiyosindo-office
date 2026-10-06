@@ -322,13 +322,21 @@ class Salary_tidak_tetap extends CI_Controller
                 $hitung_bbm = $g * $dinas_approved;
                 $total_bbm = 'Rp. ' . ($hitung_bbm ? rupiah($hitung_bbm) : '-');
                 $s_karyawan = $row->status_karyawan;
+                $is_training = (strtolower(trim($row->status_karyawan ?? '')) == 'training');
+                $is_magang = (strtolower(trim($row->status_karyawan ?? '')) == 'magang' || $row->pengguna_id == 758);
+                if ($is_magang) {
+                    $kantor_approved = 0;
+                    $dinas_approved = 0;
+                }
                 //Total Tujangan Tidak Tetap
-                if ($s_karyawan == "training") {
+                if ($is_training) {
                     if ($row->pengguna_id == 771 && strpos($monthfield, '2026-07') !== false) {
                         $f = 162000;
                     } else {
                         $f = '0';
                     }
+                } else if ($is_magang) {
+                    $f = '0';
                 } else {
                     $f = ($a + $hitung_kinerja + $hitung_konsumsi + $d + $e + $hitung_bbm - $pott) + $s_pendapatanlain;
                 }
@@ -351,9 +359,8 @@ class Salary_tidak_tetap extends CI_Controller
                 $th[] = $row->level;
                 $th[] = $row->status_karyawan;
 
-                $s_karyawan = $row->status_karyawan;
-                //Training Tidak ada
-                if ($s_karyawan == "training") {
+                //Training & Magang Tidak ada
+                if ($is_training) {
                     if (($row->pengguna_id == 771 || strpos(strtolower($row->nama), 'novemby') !== false) && strpos($monthfield, '2026-07') !== false) {
                         $th[] = '<i class="fa fa-times"></i>';
                         $th[] = '<i class="fa fa-times"></i>';
@@ -371,6 +378,14 @@ class Salary_tidak_tetap extends CI_Controller
                         $th[] = 'Training';
                         $th[] = 'Training';
                     }
+                } else if ($is_magang) {
+                    $th[] = 'Magang';
+                    $th[] = 'Magang';
+                    $th[] = 'Magang';
+                    $th[] = 'Magang';
+                    $th[] = 'Magang';
+                    $th[] = 'Magang';
+                    $th[] = 'Magang';
                 } else {
                     if ($s_jabatan == 1) {
                         $th[] = $jabatan;
@@ -591,10 +606,19 @@ class Salary_tidak_tetap extends CI_Controller
             $lainnya = ($pengguna[0]->id_pendapatan_lain > 0 && $dataSistem['total_tunjanganlain'] > 0) ? $dataSistem['total_tunjanganlain'] : 0;
             $potongan = isset($salary[0]->potongan) ? $salary[0]->potongan : 0;
 
-            if (strtolower($row->status_karyawan) == 'training') {
+            $is_training_or_magang = in_array(strtolower(trim($row->status_karyawan ?? '')), ['training', 'magang']) || ($row->pengguna_id == 758);
+            if ($is_training_or_magang) {
                 if (($row->pengguna_id == 771 || $row->pengguna_id == 766 || strpos(strtolower($row->nama), 'novemby') !== false || strpos(strtolower($row->nama), 'afylmardopila') !== false) && strpos($month, '2026-07') !== false) {
                     $total = $kinerja + $konsumsi;
                 } else {
+                    $jabatan = 0;
+                    $kinerja = 0;
+                    $konsumsi = 0;
+                    $komunikasi = 0;
+                    $transportasi = 0;
+                    $bbm = 0;
+                    $lainnya = 0;
+                    $potongan = 0;
                     $total = 0;
                 }
             } else {
