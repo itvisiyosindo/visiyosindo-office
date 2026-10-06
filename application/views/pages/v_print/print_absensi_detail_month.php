@@ -58,8 +58,7 @@
 </head>
 
 <body>
-    <img src="assets/img/kop_baru.jpg" width="100%" height="15%" />
-    <br />
+    <img src="assets/img/kop_baru.jpg" width="100%" />
     <br />
     <table style="border-collapse: collapse; width: 100%; height: 36px;">
         <tbody>

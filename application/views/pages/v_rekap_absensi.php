@@ -106,9 +106,14 @@
                             <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
                             <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
                         </div>
-                        <button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white w-100 mt-1" style="font-weight: 700;" title="Print Absensi 1 Bulan Lengkap Foto Selfie & GPS">
-                            <i class="fas fa-camera"></i> Cetak Foto & GPS
-                        </button>
+                        <div class="btn-group w-100 mt-1" role="group">
+                            <button type="button" id="btn_print_rekap_tunjangan" class="btn btn-sm btn-danger text-white" style="font-weight: 600;" title="Cetak Rekapitulasi Tunjangan Tidak Tetap (PDF)">
+                                <i class="fas fa-file-pdf"></i> Rekap PDF
+                            </button>
+                            <button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white" style="font-weight: 600;" title="Print Absensi 1 Bulan Lengkap Foto Selfie & GPS">
+                                <i class="fas fa-camera"></i> Foto & GPS
+                            </button>
+                        </div>
                     </div>
                     <div class="col-md-2">
                         <small>Filter By Jenis Absen:</small>
@@ -343,6 +348,11 @@
                 var id = $('#pengguna_id').val();
                 var link = 'absensi/print/detailKaryawanMonth/' + month + '/' + id;
                 window.open('<?= base_url() ?>' + link, '_blank');
+            })
+
+            $('#btn_print_rekap_tunjangan').click(function() {
+                var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
+                window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
             })
 
             $('#btn_print_foto_gps').click(function() {
