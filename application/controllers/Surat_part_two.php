@@ -545,7 +545,7 @@ class Surat_part_two extends CI_Controller
         'kode'           => $kodeFpp
       ];
 
-      $this->notifWaAddSurat(2, $dataWa);
+      $this->notifWaAddSurat(1, $dataWa);
 
 
       /** LOG */
@@ -599,7 +599,7 @@ class Surat_part_two extends CI_Controller
         'kode'           => $kodeFpp
       ];
 
-      $this->notifWaAddSurat(2, $dataWa);
+      $this->notifWaAddSurat(1, $dataWa);
 
 
       /** LOG */
@@ -653,7 +653,7 @@ class Surat_part_two extends CI_Controller
         'kode'           => $kodeFpp
       ];
 
-      $this->notifWaAddSurat(2, $dataWa);
+      $this->notifWaAddSurat(1, $dataWa);
 
 
       /** LOG */

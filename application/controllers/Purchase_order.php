@@ -203,7 +203,7 @@ class Purchase_order extends CI_Controller
       'kode'           => $kodeFpp
     ];
 
-    $this->notifWaAddSurat(2, $dataWa);
+    $this->notifWaAddSurat(1, $dataWa);
 
 
     //send notif Group wa Gudang
@@ -305,7 +305,7 @@ class Purchase_order extends CI_Controller
       'kode'           => $kodeFpp
     ];
 
-    $this->notifWaAddSurat(2, $dataWa);
+    $this->notifWaAddSurat(1, $dataWa);
 
 
     //send notif Group wa Gudang

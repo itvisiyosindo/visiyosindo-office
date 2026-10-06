@@ -122,7 +122,7 @@ class Surat extends CI_Controller
 				'kode' 	        => $kodePb
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi 	= $this->md_pengguna->getById(107);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -203,14 +203,14 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> 33,
-				'idPenerima2' 	=> 1,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Permintaan Pembayaran',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => '',
 				'kode' 	        => $kodeSpp
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -390,7 +390,7 @@ class Surat extends CI_Controller
 				'perihal' 	    => "",
 				'kode' 	        => $kodePbok
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(107);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -508,7 +508,7 @@ class Surat extends CI_Controller
 				'perihal' 	    => $data['keterangan_pengaju'],
 				'kode' 	        => $kodePkk
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(107);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -631,7 +631,7 @@ class Surat extends CI_Controller
 				'perihal' 	    => $data['keterangan_pengaju'],
 				'kode' 	        => $kodePkk
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(107);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -697,13 +697,13 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> "58",
-				'idPenerima2' 	=> "109",
+				'idPenerima2' 	=> "",
 				'namaSurat' 	=> 'Surat Kunjungan Gudang',
 				'penerima' 	    => '_General Affair_',
 				'perihal' 	    => $data['perihal'],
 				'kode' 	        => $data['kode']
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(58);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -798,7 +798,7 @@ class Surat extends CI_Controller
 				'perihal' 	    => "",
 				'kode' 	        => $kodePPA
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(107);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -916,7 +916,7 @@ class Surat extends CI_Controller
 				//send notif wa ke Admin Visilab
 				$dataWa = [
 					'idPenerima1' 	=> 754,
-					'idPenerima2' 	=> 83,
+					'idPenerima2' 	=> '',
 					'namaSurat' 	=> 'Surat Approval',
 					'penerima' 	    => '_Admin Visilab_',
 					'perihal' 	    => "",
@@ -924,12 +924,12 @@ class Surat extends CI_Controller
 					'kode' 	        => $data['kode']
 				];
 
-				$this->notifWaApproval(2, $dataWa);
+				$this->notifWaApproval(1, $dataWa);
 
-				//send notif wa Ke GM dan CRO
+				//send notif wa Ke GM
 				$dataWa = [
 					'idPenerima1' 	=> 33,
-					'idPenerima2' 	=> 72,
+					'idPenerima2' 	=> '',
 					'namaSurat' 	=> 'Surat Approval',
 					'penerima' 	    => '_General Manager_',
 					'perihal' 	    => "",
@@ -937,13 +937,13 @@ class Surat extends CI_Controller
 					'kode' 	        => $data['kode']
 				];
 
-				$this->notifWaAddSurat(2, $dataWa);
+				$this->notifWaAddSurat(1, $dataWa);
 			} else {
 
 				//send notif wa
 				$dataWa = [
 					'idPenerima1' 	=> 33,
-					'idPenerima2' 	=> 72,
+					'idPenerima2' 	=> '',
 					'namaSurat' 	=> 'Surat Approval',
 					'penerima' 	    => '_General Manager_',
 					'perihal' 	    => "",
@@ -951,7 +951,7 @@ class Surat extends CI_Controller
 					'kode' 	        => $data['kode']
 				];
 
-				$this->notifWaAddSurat(2, $dataWa);
+				$this->notifWaAddSurat(1, $dataWa);
 			}
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(107);
@@ -1067,7 +1067,7 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> 771,
-				'idPenerima2' 	=> 714,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Permintaan Dinas',
 				'penerima' 	    => '_General  Affair_',
 				'perihal' 	    => "",
@@ -1075,7 +1075,7 @@ class Surat extends CI_Controller
 				'kode' 	        => $data['kode']
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(771, 714);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1166,13 +1166,13 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> "33",
-				'idPenerima2' 	=> "771",
+				'idPenerima2' 	=> "",
 				'namaSurat' 	=> 'Surat Dinas',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
 				'kode' 	        => $data['kode']
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1258,13 +1258,13 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> "33",
-				'idPenerima2' 	=> "771",
+				'idPenerima2' 	=> "",
 				'namaSurat' 	=> 'Surat Dinas',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
 				'kode' 	        => $data['kode']
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1350,14 +1350,14 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> "33",
-				'idPenerima2' 	=> "771",
+				'idPenerima2' 	=> "",
 				'namaSurat' 	=> 'Surat Dinas',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
 				'link' 	        => 'surat/show/detail_surat/sd/' . $lastSdId . '/1',
 				'kode' 	        => $data['kode']
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1449,14 +1449,14 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> "33",
-				'idPenerima2' 	=> "771",
+				'idPenerima2' 	=> "",
 				'namaSurat' 	=> 'Surat Dinas',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
 				'link' 	        => 'surat/show/detail_surat/sd/' . $lastSdId . '/1',
 				'kode' 	        => $data['kode']
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1579,7 +1579,7 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> 771,
-				'idPenerima2' 	=> 714,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Permintaan Dinas',
 				'penerima' 	    => '_General  Affair_',
 				'perihal' 	    => "",
@@ -1587,7 +1587,7 @@ class Surat extends CI_Controller
 				'kode' 	        => $data['kode']
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(771, 714);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1781,8 +1781,7 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> 58,
-				'idPenerima2' 	=> 771,
-				'idPenerima3' 	=> 714,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Permintaan Dinas Karyawan',
 				'penerima' 	    => '_General  Affair_',
 				'perihal' 	    => "",
@@ -1790,7 +1789,7 @@ class Surat extends CI_Controller
 				'kode' 	        => $data['kode']
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(58, 771, 714);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1874,7 +1873,7 @@ class Surat extends CI_Controller
 				'kode' => $data['kode']
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -1962,7 +1961,7 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'idPenerima1' 	=> 33,
-				'idPenerima2' 	=> 58,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Tugas',
 				'penerima' 	    => '_HR and Legal_',
 				'perihal' 	    => $data['perihal'],
@@ -1970,7 +1969,7 @@ class Surat extends CI_Controller
 				'kode' 	        => $kode
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -2146,7 +2145,7 @@ class Surat extends CI_Controller
 
 			$dataWa = [
 				'idPenerima1' 	=> 33,
-				'idPenerima2' 	=> 58,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Rekomendasi',
 				'penerima' 	    => '_General Manager_',
 				'perihal' 	    => $data['perihal'],
@@ -2154,7 +2153,7 @@ class Surat extends CI_Controller
 				'kode' 	        => $kode
 			];
 
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(33);
@@ -2248,7 +2247,7 @@ class Surat extends CI_Controller
 				'link' 	        => 'surat/show/detail_surat/keterangan/' . $lastStId . '/1',
 				'kode' 	        => $kode
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			$datapenggunanotifikasi = $this->md_pengguna->getById(741);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
@@ -5927,13 +5926,13 @@ class Surat extends CI_Controller
 			$dataWa = [
 				'id' 	        => $id,
 				'idPenerima1' 	=> 58,
-				'idPenerima2' 	=> 1,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Laporan Kunjungan Gudang',
 				'penerima' 	    => 'General Affair',
 				'perihal' 	    => $perihal,
 				'kode'          => $kode
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
 			//addLog('Update Laporan Kunjungan Gudang', 'Submit Laporan Kunjungan Gudang');
 			ajaxReturnDie('success', 'Laporan Kunjungan Gudang Berhasil Disubmit', true);
@@ -10809,7 +10808,7 @@ class Surat extends CI_Controller
 					'perihal' => "",
 					'kode' => $kode
 				];
-				$this->notifWaAddSurat(2, $dataWa);
+				$this->notifWaAddSurat(1, $dataWa);
 			} else if ($pbok->aju_ttd2 != 1) {
 				$dataWa = [
 					'id' => $id,
@@ -10879,7 +10878,7 @@ class Surat extends CI_Controller
 					'perihal' => "",
 					'kode' => $kode
 				];
-				$this->notifWaAddSurat(2, $dataWa);
+				$this->notifWaAddSurat(1, $dataWa);
 			} else if ($ppa->aju_ttd2 != 1) {
 				$dataWa = [
 					'id' => $id,
@@ -10953,13 +10952,13 @@ class Surat extends CI_Controller
 			if ($spp->aju_ttd1 != 1) {
 				$dataWa = [
 					'idPenerima1' => 33,
-					'idPenerima2' => 1,
+					'idPenerima2' => '',
 					'namaSurat' => 'Surat Permintaan Pembayaran',
 					'penerima' => '_General Manager_',
 					'perihal' => '',
 					'kode' => $kode
 				];
-				$this->notifWaAddSurat(2, $dataWa);
+				$this->notifWaAddSurat(1, $dataWa);
 			} else if ($spp->aju_ttd2 != 1) {
 				$dataWa = [
 					'id' => $id,
@@ -11033,7 +11032,7 @@ class Surat extends CI_Controller
 					'perihal' => $pkk->keterangan_pengaju,
 					'kode' => $kode
 				];
-				$this->notifWaAddSurat(2, $dataWa);
+				$this->notifWaAddSurat(1, $dataWa);
 			} else if ($pkk->aju_ttd2 != 1) {
 				$dataWa = [
 					'id' => $id,
