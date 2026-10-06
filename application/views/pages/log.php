@@ -1,3 +1,21 @@
+<style>
+    .log-action-link {
+        transition: all 0.2s ease-in-out;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .log-action-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        opacity: 0.95;
+        text-decoration: none;
+    }
+    .log-action-link i {
+        font-size: 9px;
+        opacity: 0.85;
+    }
+</style>
+
 <header class="page-header">
     <h2><i class="icons icon-list"></i>&nbsp;&nbsp;<?= $page_title ?></h2>
     <div class="right-wrapper text-left">

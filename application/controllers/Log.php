@@ -80,7 +80,12 @@ class Log extends CI_Controller {
                 $badgeClass = 'badge-primary';
             }
 
-            $th[] = '<span class="badge ' . $badgeClass . '" style="font-size: 11px; padding: 4px 8px; font-weight: 500;">' . $aksi . '</span>';
+            $targetUrl = getLogTargetUrl($row->jenis_aksi, $row->keterangan);
+            if (!empty($targetUrl)) {
+                $th[] = '<a href="' . base_url($targetUrl) . '" target="_blank" class="badge ' . $badgeClass . ' log-action-link" style="font-size: 11px; padding: 5px 8px; font-weight: 500; text-decoration: none; display: inline-block;" title="Buka Detail: ' . htmlspecialchars($row->keterangan, ENT_QUOTES) . '"><i class="fa fa-external-link mr-1"></i> ' . $aksi . '</a>';
+            } else {
+                $th[] = '<span class="badge ' . $badgeClass . '" style="font-size: 11px; padding: 4px 8px; font-weight: 500;">' . $aksi . '</span>';
+            }
             $th[] = htmlspecialchars($row->keterangan);
             $th[] = !empty($row->ip_addr) ? '<span class="badge badge-dark" style="font-size: 10px; font-family: monospace;"><i class="fa fa-desktop"></i> ' . htmlspecialchars($row->ip_addr) . '</span>' : '<span class="text-muted">-</span>';
             $th[] = '<small class="text-muted" style="white-space: nowrap;"><i class="fa fa-clock-o"></i> ' . date('d-M-Y | H:i:s', strtotime($row->tgl)) . '</small>';
