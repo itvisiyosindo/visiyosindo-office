@@ -208,27 +208,35 @@ class Salary_tidak_tetap extends CI_Controller
                     $data[] = $th;
                     continue;
                 }
-                $absen_approved = tunjangan($row->pengguna_id, $monthfield)['absen_approved'];
-                $dinas_approved = tunjangan($row->pengguna_id, $monthfield)['dinas_approved'];
+                $dataTunjangan = tunjangan($row->pengguna_id, $monthfield);
+                $absen_approved = $dataTunjangan['absen_approved'];
+                $dinas_approved = $dataTunjangan['dinas_approved'];
+                $kantor_approved = isset($dataTunjangan['kantor_approved']) ? $dataTunjangan['kantor_approved'] : $dinas_approved;
                 if ($row->pengguna_id == 94) {
                     $salaryBoddyB = $this->md_absensi->getTunjanganBoddyBiasa($row->pengguna_id, $monthfield);
                     $salaryBoddyL = $this->md_absensi->getTunjanganBoddyLibur($row->pengguna_id, $monthfield);
                     $dinas_approved = count($salaryBoddyB) + (count($salaryBoddyL) * 3);
+                    $kantor_approved = $dinas_approved;
                     if (strpos($monthfield, '2026-07') !== false) {
                         $dinas_approved = 53;
+                        $kantor_approved = 53;
                     }
                 }
                 if ($row->pengguna_id == 14 && strpos($monthfield, '2026-07') !== false) {
                     $dinas_approved = 19;
+                    $kantor_approved = 19;
                 }
                 if ($row->pengguna_id == 25 && strpos($monthfield, '2026-07') !== false) {
                     $dinas_approved = 21;
+                    $kantor_approved = 21;
                 }
                 if ($row->pengguna_id == 102 && strpos($monthfield, '2026-07') !== false) {
                     $dinas_approved = 19;
+                    $kantor_approved = 19;
                 }
                 if (($row->pengguna_id == 771 || strpos(strtolower($row->nama), 'novemby') !== false) && strpos($monthfield, '2026-07') !== false) {
                     $dinas_approved = 9;
+                    $kantor_approved = 9;
                 }
 
                 //Tunjangan Formated Rp
@@ -339,7 +347,7 @@ class Salary_tidak_tetap extends CI_Controller
                 $th = array();
                 $th[] = ++$start . '.';
                 $th[] = $nama_pengguna;
-                $th[] = ($dinas_approved) . ' hari';
+                $th[] = ($kantor_approved) . ' hari';
                 $th[] = $row->level;
                 $th[] = $row->status_karyawan;
 
@@ -705,6 +713,7 @@ class Salary_tidak_tetap extends CI_Controller
         $salary = $this->md_salary->getById($pengguna[0]->id_latestriwayat_salary ?? 0);
         $dataSistem = tunjangan($pengguna_id, $month);
 
+        $kantor_approved = $dataSistem['kantor_approved'] ?? $dataSistem['dinas_approved'] ?? 0;
         $dinas_approved = $dataSistem['dinas_approved'] ?? 0;
         $rate_kinerja = isset($salary[0]->tunjangan_kinerja) ? (float)$salary[0]->tunjangan_kinerja : 0;
         $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? (float)$salary[0]->tunjangan_konsumsi : 0;
@@ -716,7 +725,7 @@ class Salary_tidak_tetap extends CI_Controller
         $rate_lainnya = isset($salary[0]->pendapatan_lain) ? (float)$salary[0]->pendapatan_lain : 0;
 
         $auto = [
-            'hari_kerja' => $dinas_approved,
+            'hari_kerja' => $kantor_approved,
             'tunjangan_jabatan' => ($pengguna[0]->terima_tunjangan_jabatan == 1) ? $rate_jabatan : 0,
             'tunjangan_kinerja' => ($pengguna[0]->terima_tunjangan_kinerja == 1) ? ($dataSistem['total_kinerjadinas'] ?? ($rate_kinerja * $dinas_approved)) : 0,
             'tunjangan_konsumsi' => ($pengguna[0]->terima_tunjangan_konsumsi == 1) ? ($dataSistem['total_konsumsidinas'] ?? ($rate_konsumsi * $dinas_approved)) : 0,

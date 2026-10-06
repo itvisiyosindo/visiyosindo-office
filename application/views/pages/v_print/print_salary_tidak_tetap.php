@@ -103,7 +103,7 @@
                     if (in_array($row->pengguna_id, $excluded_ids)) continue;
                     // 1. AMBIL DATA DASAR DARI HELPER
                     $dataSistem      = tunjangan($row->pengguna_id, $month);
-                    $absen_approved  = $dataSistem['dinas_approved'];
+                    $absen_approved  = $dataSistem['kantor_approved'] ?? $dataSistem['dinas_approved'];
                     $potongan1       = $dataSistem['total_potongan'];
 
                     // Variabel Tunjangan Asli

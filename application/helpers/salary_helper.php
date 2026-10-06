@@ -40,12 +40,14 @@ function tunjangan($pengguna_id, $month = "")
 
     $salary = $CI->md_absensi->getTunjanganByMonth($pengguna_id, $month);
     $salarydinas = $CI->md_absensi->getTunjanganByMonthDinas($pengguna_id, $month);
+    $salarykantor = $CI->md_absensi->getAbsenKantorByMonth($pengguna_id, $month);
     
     $salaryBoddyB = $CI->md_absensi->getTunjanganBoddyBiasa($pengguna_id, $month);
     $salaryBoddyL = $CI->md_absensi->getTunjanganBoddyLibur($pengguna_id, $month);
 
     $count = count($salary);
     $countdinas = count($salarydinas);
+    $countkantor = count($salarykantor);
     $total_kinerja = $count * $tunjangan_kinerja;
     $total_konsumsi = $count * $tunjangan_konsumsi;
     $total_kinerjadinas = $countdinas * $tunjangan_kinerja;
@@ -64,6 +66,8 @@ function tunjangan($pengguna_id, $month = "")
     $data = [
         'absen_approved' => $count,
         'dinas_approved' => $countdinas,
+        'kantor_approved' => $countkantor,
+        'hari_kerja' => $countkantor,
         'total_kinerja' => $total_kinerja,
         'total_kinerjadinas' => $total_kinerjadinas,
         'total_konsumsi' => $total_konsumsi,

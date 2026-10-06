@@ -688,6 +688,15 @@ class Md_absensi extends CI_Model
         return $this->db->get_where('absensi', ['pengguna_id' => $pengguna_id, 'perusahaan' => grantAccessForPerusahaan()])->result();
     }
 
+    public function getAbsenKantorByMonth($pengguna_id, $month)
+    {
+        $this->db->where("DATE_FORMAT(data_created,'%Y-%m')", $month);
+        $this->db->where("UPPER(jenis_absen)", 'KANTOR');
+        $this->db->where('approval', 'terima');
+        $this->db->where('type_absen', 'masuk');
+        return $this->db->get_where('absensi', ['pengguna_id' => $pengguna_id, 'perusahaan' => grantAccessForPerusahaan()])->result();
+    }
+
 
 
     public function getKehadiran($pengguna_id, $month)
