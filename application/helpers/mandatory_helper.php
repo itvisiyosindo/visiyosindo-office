@@ -223,7 +223,7 @@ function FileUpload($name_input, $id = null, $id_name = null)
 /**
  * Resolves log entry to its corresponding document / page URL
  */
-function getLogTargetUrl($jenis_aksi = '', $keterangan = '')
+function getLogTargetUrl($jenis_aksi = '', $keterangan = '', $log_id = null, $pengguna_id = null, $tgl = null)
 {
 	$CI = &get_instance();
 	$aksiUpper = strtoupper(trim($jenis_aksi));
@@ -466,7 +466,46 @@ function getLogTargetUrl($jenis_aksi = '', $keterangan = '')
 		}
 	}
 
-	// 6. Fallback based on jenis_aksi / keywords
+	// 6. Look up in notifikasipengguna by timestamp & user (Correlate approval actions with their generated notifications)
+	if (!empty($pengguna_id) && !empty($tgl)) {
+		$rowNotif = $CI->db->select('link')
+			->from('notifikasipengguna')
+			->where('idpenggunaakses', $pengguna_id)
+			->where('ABS(TIMESTAMPDIFF(SECOND, data_created, "' . $CI->db->escape_str($tgl) . '")) <=', 5)
+			->order_by('id', 'DESC')
+			->limit(1)
+			->get()
+			->row();
+		if (!empty($rowNotif) && !empty($rowNotif->link)) {
+			$dec = decryptvym($rowNotif->link);
+			if (!empty($dec)) {
+				return $dec;
+			}
+		}
+
+		// 7. Look up adjacent log by same user within 5 seconds that might contain document code
+		if (!empty($log_id)) {
+			$adjLog = $CI->db->select('jenis_aksi, keterangan')
+				->from('log')
+				->where('pengguna_id', $pengguna_id)
+				->where('log_id !=', $log_id)
+				->where('ABS(TIMESTAMPDIFF(SECOND, tgl, "' . $CI->db->escape_str($tgl) . '")) <=', 5)
+				->order_by('log_id', 'DESC')
+				->limit(1)
+				->get()
+				->row();
+			if (!empty($adjLog) && !empty($adjLog->keterangan)) {
+				if (preg_match('/([0-9A-Za-z\.\-\/]+(?:VYM|PT\.VYM|PKU|S\.App|AppDir|FP|SPP|PBOK|PKK|PPPA|PPA|GC|KG|AHK|SPD|PD|SD|PB|SP|STG|ST|SKD|REKOM|BA|MR|CUTI|IJK|IZIN|STA|STFP|STP|SPI|PO|PPKK|SKORS|PRA)[0-9A-Za-z\.\-\/]*)/i', $adjLog->keterangan)) {
+					$resAdj = getLogTargetUrl($adjLog->jenis_aksi, $adjLog->keterangan);
+					if (!empty($resAdj)) {
+						return $resAdj;
+					}
+				}
+			}
+		}
+	}
+
+	// 8. Fallback based on jenis_aksi / keywords
 	if (strpos($aksiUpper, 'SURAT DINAS') !== false || strpos($aksiUpper, 'PERMINTAAN DINAS') !== false) {
 		return 'surat/show/surat_dinas';
 	}

@@ -80,7 +80,7 @@ class Log extends CI_Controller {
                 $badgeClass = 'badge-primary';
             }
 
-            $targetUrl = getLogTargetUrl($row->jenis_aksi, $row->keterangan);
+            $targetUrl = getLogTargetUrl($row->jenis_aksi, $row->keterangan, $row->log_id, $row->pengguna_id ?? null, $row->tgl ?? null);
             if (!empty($targetUrl)) {
                 $th[] = '<a href="' . base_url($targetUrl) . '" target="_blank" class="badge ' . $badgeClass . ' log-action-link" style="font-size: 11px; padding: 5px 8px; font-weight: 500; text-decoration: none; display: inline-block;" title="Buka Detail: ' . htmlspecialchars($row->keterangan, ENT_QUOTES) . '"><i class="fa fa-external-link mr-1"></i> ' . $aksi . '</a>';
             } else {

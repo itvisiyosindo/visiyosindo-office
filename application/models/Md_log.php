@@ -181,6 +181,7 @@ class Md_log extends CI_Model {
         return $this->datatables
         ->select('  
             lg.log_id,
+            lg.pengguna_id,
             pg.nama as nama_pengguna,
             lg.jenis_aksi,
             lg.keterangan,
