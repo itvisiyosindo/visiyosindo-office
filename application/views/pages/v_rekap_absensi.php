@@ -342,7 +342,7 @@
                 var month = $('#print_month').val();
                 var id = $('#pengguna_id').val();
                 var link = 'absensi/print/detailKaryawanMonth/' + month + '/' + id;
-                window.open('<?= base_url() ?>' + link)
+                window.open('<?= base_url() ?>' + link, '_blank');
             })
 
             $('#btn_print_foto_gps').click(function() {

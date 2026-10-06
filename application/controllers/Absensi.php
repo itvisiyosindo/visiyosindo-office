@@ -1630,13 +1630,11 @@ class Absensi extends CI_Controller
 
             $html = $this->load->view('pages/v_print/print_absensi_detail_month', $dta, TRUE);
 
-            //load mpdf dan membuat page size legal
-            $mpdf = new Mpdf(['format' => 'Legal']);
-            //  orientasi ketas 'L' untuk Landscape 'P' untuk Portait
-            $mpdf->AddPage('P');
-
-            $mpdf->WriteHTML($html);
-            $mpdf->Output($dta['title_pdf'] . '.pdf', 'I');
+            $this->load->library('pdfgenerator');
+            $file_pdf = $dta['title_pdf'];
+            $paper = 'legal';
+            $orientation = 'portrait';
+            $this->pdfgenerator->generate($html, $file_pdf, $paper, $orientation);
         }
     }
 
