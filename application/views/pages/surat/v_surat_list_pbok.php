@@ -15,14 +15,19 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 </header>
 
 <div class="row">
-	<div class="col">
-		<div class="card card-modern">
-			<div class="card-body">
+	<div class="col-12">
+		<div class="table-card-container">
+			<div class="table-top-bar">
+				<div class="d-flex align-items-center">
+					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-list mr-1"></i> Data PBOK</span>
+				</div>
+			</div>
+			<div class="card-body p-3">
 				<!-- Filter & Action Menu -->
-				<div class="row mb-3 align-items-end" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">
+				<div class="row mb-3 align-items-end" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
 					<div class="col-md-5 col-sm-12 mb-2 mb-md-0">
-						<label for="id_pengaju" class="font-weight-bold text-dark">
-							<i class="fas fa-user-check text-primary"></i> Pilih Nama Pengaju:
+						<label for="id_pengaju" class="font-weight-bold text-dark mb-1">
+							<i class="fas fa-user-check text-primary mr-1"></i> Pilih Nama Pengaju:
 						</label>
 						<select data-plugin-selectTwo class="form-control populate" id="id_pengaju" name="id_pengaju">
 							<option value="">-- Semua Pengaju --</option>
@@ -36,11 +41,11 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 						</select>
 					</div>
 					<div class="col-md-7 col-sm-12 text-md-left">
-						<button type="button" id="btn-print-menjabat" class="btn btn-primary btn-sm" title="Print Pengajuan Selama Menjabat">
-							<i class="fas fa-print"></i> &nbsp;Print Pengajuan (Masa Menjabat)
+						<button type="button" id="btn-print-menjabat" class="btn btn-primary btn-sm shadow-sm" title="Print Pengajuan Selama Menjabat">
+							<i class="fas fa-print mr-1"></i> Print Pengajuan (Masa Menjabat)
 						</button>
-						<button type="button" id="btn-reset-filter" class="btn btn-secondary btn-sm ml-1" title="Reset Filter">
-							<i class="fas fa-sync-alt"></i> &nbsp;Reset Filter
+						<button type="button" id="btn-reset-filter" class="btn btn-secondary btn-sm shadow-sm ml-1" title="Reset Filter">
+							<i class="fas fa-sync-alt mr-1"></i> Reset Filter
 						</button>
 					</div>
 				</div>

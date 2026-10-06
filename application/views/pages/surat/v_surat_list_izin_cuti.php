@@ -178,24 +178,30 @@
 		</div>
 
 		<!-- Data Table Section -->
-		<div class="card-body">
-			<h5 class="mb-3"><i class="fas fa-list text-primary"></i> Daftar Persetujuan Cuti Tahunan</h5>
-			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-					<thead>
-						<tr>
-							<th> # </th>
-							<th> No</th>
-							<th> Nama</th>
-							<th> Jabatan</th>
-							<th> Keperluan</th>
-							<th> Tanggal</th>
-							<th> Total Hari</th>
-							<th> Status</th>
-							<th> Aksi</th>
-						</tr>
-					</thead>
-				</table>
+		<div class="table-card-container mt-4">
+			<div class="table-top-bar">
+				<div class="d-flex align-items-center">
+					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-list mr-1"></i> Daftar Persetujuan Cuti Tahunan</span>
+				</div>
+			</div>
+			<div class="card-body p-3">
+				<div class="table-responsive">
+					<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
+						<thead>
+							<tr>
+								<th> # </th>
+								<th> No</th>
+								<th> Nama</th>
+								<th> Jabatan</th>
+								<th> Keperluan</th>
+								<th> Tanggal</th>
+								<th> Total Hari</th>
+								<th> Status</th>
+								<th> Aksi</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
 			</div>
 		</div>
 	</div>

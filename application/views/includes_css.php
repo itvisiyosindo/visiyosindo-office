@@ -869,4 +869,125 @@
             display: none !important;
         }
     }
+
+    /* ========== Global Modern Table & DataTables Styling ========== */
+    .table-card-container, 
+    .card-modern-table {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .table-top-bar {
+        padding: 16px 20px;
+        background: #f8fafc;
+        border-bottom: 1px solid #cbd5e1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .table-top-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Clean Table with Clear Row Separation */
+    #kt_table_1,
+    table.table {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        border-collapse: collapse !important;
+    }
+
+    #kt_table_1 thead th,
+    table.table thead th {
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        font-size: 12.5px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 12px 14px !important;
+        vertical-align: middle !important;
+        text-align: center;
+    }
+
+    #kt_table_1 tbody td,
+    table.table tbody td {
+        padding: 11px 14px !important;
+        vertical-align: middle !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 13px !important;
+        color: #1e293b;
+    }
+
+    /* Jelas Perbedaan Setiap Baris Item (Zebra Striping Kontras) */
+    #kt_table_1 tbody tr:nth-of-type(odd),
+    table.table-striped tbody tr:nth-of-type(odd) {
+        background-color: #ffffff !important;
+    }
+
+    #kt_table_1 tbody tr:nth-of-type(even),
+    table.table-striped tbody tr:nth-of-type(even) {
+        background-color: #f8fafc !important;
+    }
+
+    /* Highlight Row Saat Diarahkan Kursor */
+    #kt_table_1 tbody tr:hover,
+    table.table tbody tr:hover {
+        background-color: #e0f2fe !important;
+    }
+
+    #kt_table_1 tbody tr:hover td,
+    table.table tbody tr:hover td {
+        background-color: transparent !important;
+        color: #0f172a !important;
+    }
+
+    .dataTables_wrapper {
+        padding: 15px 0 !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 6px !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 4px 8px !important;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 6px !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 5px 10px !important;
+        outline: none !important;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border: 1px solid #2563eb !important;
+        border-radius: 4px !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 4px !important;
+        border: 1px solid transparent !important;
+    }
 </style>
