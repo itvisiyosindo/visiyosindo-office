@@ -288,24 +288,23 @@ class Surat extends CI_Controller
 			}
 			//send notif wa
 			$dataWa = [
-				'idPenerima1' 	=> 107,
-				'idPenerima2' 	=> '714',
+				'idPenerima1' 	=> 777,
+				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Pengajuan Limit Gojek Corporate',
 				'penerima' 	    => '_Staff Accounting_',
 				'perihal' 	    => $data['keperluan'],
 				'kode' 	        => $data['kode']
 			];
-			$this->notifWaAddSurat(2, $dataWa);
+			$this->notifWaAddSurat(1, $dataWa);
 
-			$datapenggunanotifikasi = $this->md_pengguna->getById(29, 714);
-			$nope           = $datapenggunanotifikasi[0]->no_hp;
-			$email           = $datapenggunanotifikasi[0]->email;
+			$datapenggunanotifikasi = $this->md_pengguna->getById(777);
+			$nope           = !empty($datapenggunanotifikasi) ? $datapenggunanotifikasi[0]->no_hp : '';
+			$email          = !empty($datapenggunanotifikasi) ? $datapenggunanotifikasi[0]->email : '';
 
 			$datanotifikasi['jenis'] = 3;
 			$datanotifikasi['idsurat'] = $lastGcId;
 			$datanotifikasi['idpenggunaakses'] = sessPenggunaId();
-			$datanotifikasi['id_pengguna'] = 107;
-			$datanotifikasi['id_pengguna'] = 714;
+			$datanotifikasi['id_pengguna'] = 777;
 			$datanotifikasi['keterangan'] = 'Pengajuan Surat ' . $kodeGc;
 			$datanotifikasi['link'] = encryptvym('surat/show/detail_surat/gc/' . $lastGcId . '/1');
 			$datanotifikasi['status'] = 0;
