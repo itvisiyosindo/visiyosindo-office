@@ -61,54 +61,66 @@
     }
     .surat-card {
         background: #ffffff;
-        border: 1px solid #eef2f6;
-        border-radius: 14px;
-        padding: 20px;
-        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 22px;
+        margin-bottom: 24px;
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: calc(100% - 20px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        height: calc(100% - 24px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
     .surat-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.07);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
         border-color: #cbd5e1;
     }
+    .surat-card-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
     .surat-icon-wrapper {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
-        margin-bottom: 14px;
+        font-size: 24px;
         flex-shrink: 0;
+    }
+    .surat-title-area {
+        flex-grow: 1;
+        min-width: 0;
     }
     .surat-tag {
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        padding: 4px 10px;
+        padding: 3px 8px;
         border-radius: 6px;
+        display: inline-block;
+        margin-bottom: 4px;
     }
     .surat-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 6px;
-        line-height: 1.35;
+        font-size: 18.5px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.25;
+        letter-spacing: -0.2px;
     }
     .surat-desc {
-        font-size: 12.5px;
+        font-size: 13px;
         color: #64748b;
-        line-height: 1.45;
+        line-height: 1.5;
         margin-bottom: 16px;
-        min-height: 36px;
+        min-height: 38px;
     }
     .surat-actions {
         border-top: 1px dashed #e2e8f0;
@@ -121,7 +133,7 @@
     }
     .surat-btn-action {
         border-radius: 8px;
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 600;
         padding: 6px 14px;
         display: inline-flex;
@@ -194,13 +206,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="operasional" data-name="surat tugas penugasan">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #e0f2fe; color: #0284c7;">
                             <i class="fas fa-briefcase"></i>
                         </div>
-                        <span class="surat-tag" style="background: #e0f2fe; color: #0369a1;">Operasional</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #e0f2fe; color: #0369a1;">Operasional</span>
+                            <h3 class="surat-title">Surat Tugas</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Tugas</h3>
                     <p class="surat-desc">Penerbitan dan persetujuan surat tugas operasional & perjalanan dinas karyawan.</p>
                 </div>
                 <div class="surat-actions">
@@ -225,13 +239,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="kepegawaian" data-name="surat skorsing sanksi">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #fee2e2; color: #dc2626;">
                             <i class="fas fa-user-slash"></i>
                         </div>
-                        <span class="surat-tag" style="background: #fee2e2; color: #b91c1c;">Kepegawaian</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #fee2e2; color: #b91c1c;">Kepegawaian</span>
+                            <h3 class="surat-title">Surat Skorsing</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Skorsing</h3>
                     <p class="surat-desc">Penerbitan surat keputusan tindakan sanksi dan skorsing kerja karyawan.</p>
                 </div>
                 <div class="surat-actions">
@@ -247,13 +263,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="aset" data-name="serah terima aset sta inventaris barang">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #ccfbf1; color: #0d9488;">
                             <i class="fas fa-laptop-house"></i>
                         </div>
-                        <span class="surat-tag" style="background: #ccfbf1; color: #0f766e;">Aset & Inventaris</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #ccfbf1; color: #0f766e;">Aset & Inventaris</span>
+                            <h3 class="surat-title">Serah Terima Aset</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Serah Terima Aset</h3>
                     <p class="surat-desc">Berita acara penyerahan aset, perangkat kerja, dan inventaris kantor.</p>
                 </div>
                 <div class="surat-actions">
@@ -271,13 +289,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="aset" data-name="serah terima fisik perlengkapan stfp alat kerja">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #f3e8ff; color: #9333ea;">
                             <i class="fas fa-tools"></i>
                         </div>
-                        <span class="surat-tag" style="background: #f3e8ff; color: #7e22ce;">Aset & Inventaris</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #f3e8ff; color: #7e22ce;">Aset & Inventaris</span>
+                            <h3 class="surat-title">Serah Terima Fisik Perlengkapan</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Serah Terima Fisik Perlengkapan</h3>
                     <p class="surat-desc">Formulir serah terima fisik sarana dan perlengkapan perlengkapan kerja.</p>
                 </div>
                 <div class="surat-actions">
@@ -297,13 +317,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="kepegawaian" data-name="surat keterangan aktif bekerja karyawan">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #dcfce7; color: #16a34a;">
                             <i class="fas fa-id-badge"></i>
                         </div>
-                        <span class="surat-tag" style="background: #dcfce7; color: #15803d;">Kepegawaian</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #dcfce7; color: #15803d;">Kepegawaian</span>
+                            <h3 class="surat-title">Surat Keterangan Aktif Bekerja</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Keterangan Aktif Bekerja</h3>
                     <p class="surat-desc">Penerbitan surat resmi status aktif karyawan untuk keperluan perbankan/kedinasan.</p>
                 </div>
                 <div class="surat-actions">
@@ -328,13 +350,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="operasional" data-name="surat pemberitahuan pengumuman internal">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #e0e7ff; color: #4f46e5;">
                             <i class="fas fa-bullhorn"></i>
                         </div>
-                        <span class="surat-tag" style="background: #e0e7ff; color: #4338ca;">Operasional</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #e0e7ff; color: #4338ca;">Operasional</span>
+                            <h3 class="surat-title">Surat Pemberitahuan</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Pemberitahuan</h3>
                     <p class="surat-desc">Pemberitahuan edaran resmi dan pengumuman kedinasan perusahaan.</p>
                 </div>
                 <div class="surat-actions">
@@ -350,13 +374,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="kepegawaian" data-name="serah terima pekerjaan stp handover tugas">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #cffafe; color: #0891b2;">
                             <i class="fas fa-handshake"></i>
                         </div>
-                        <span class="surat-tag" style="background: #cffafe; color: #0e7490;">Kepegawaian</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #cffafe; color: #0e7490;">Kepegawaian</span>
+                            <h3 class="surat-title">Serah Terima Pekerjaan</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Serah Terima Pekerjaan</h3>
                     <p class="surat-desc">Handover tugas, tanggung jawab, dan berkas pekerjaan (mutasi/resign).</p>
                 </div>
                 <div class="surat-actions">
@@ -376,13 +402,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="direksi" data-name="surat keputusan direksi skd kebijakan">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #f1f5f9; color: #334155;">
                             <i class="fas fa-stamp"></i>
                         </div>
-                        <span class="surat-tag" style="background: #f1f5f9; color: #1e293b;">Legal & Direksi</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #f1f5f9; color: #1e293b;">Legal & Direksi</span>
+                            <h3 class="surat-title">Surat Keputusan Direksi</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Keputusan Direksi</h3>
                     <p class="surat-desc">Penerbitan surat ketetapan kebijakan dan keputusan jajaran direksi perusahaan.</p>
                 </div>
                 <div class="surat-actions">
@@ -405,13 +433,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="direksi" data-name="surat kuasa wewenang legal">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #fef3c7; color: #d97706;">
                             <i class="fas fa-file-contract"></i>
                         </div>
-                        <span class="surat-tag" style="background: #fef3c7; color: #b45309;">Legal & Direksi</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #fef3c7; color: #b45309;">Legal & Direksi</span>
+                            <h3 class="surat-title">Surat Kuasa</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Kuasa</h3>
                     <p class="surat-desc">Pemberian wewenang dan kuasa perwakilan untuk tindakan hukum/operasional.</p>
                 </div>
                 <div class="surat-actions">
@@ -427,13 +457,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="kepegawaian" data-name="surat rekomendasi prestasi kinerja">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #ecfdf5; color: #059669;">
                             <i class="fas fa-award"></i>
                         </div>
-                        <span class="surat-tag" style="background: #ecfdf5; color: #047857;">Kepegawaian</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #ecfdf5; color: #047857;">Kepegawaian</span>
+                            <h3 class="surat-title">Surat Rekomendasi</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Rekomendasi</h3>
                     <p class="surat-desc">Surat rekomendasi kinerja, kelayakan, dan kualifikasi karyawan.</p>
                 </div>
                 <div class="surat-actions">
@@ -457,13 +489,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="kepegawaian" data-name="surat peringatan sp disiplin teguran">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #ffe4e6; color: #e11d48;">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <span class="surat-tag" style="background: #ffe4e6; color: #be123c;">Kepegawaian</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #ffe4e6; color: #be123c;">Kepegawaian</span>
+                            <h3 class="surat-title">Surat Peringatan</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Peringatan</h3>
                     <p class="surat-desc">Penerbitan surat peringatan (SP 1, SP 2, SP 3) dan pembinaan disiplin karyawan.</p>
                 </div>
                 <div class="surat-actions">
@@ -482,13 +516,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="operasional" data-name="berita acara ba serah terima kejadian">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">
                             <i class="fas fa-scroll"></i>
                         </div>
-                        <span class="surat-tag" style="background: #f1f5f9; color: #334155;">Operasional</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #f1f5f9; color: #334155;">Operasional</span>
+                            <h3 class="surat-title">Berita Acara</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Berita Acara</h3>
                     <p class="surat-desc">Penyusunan berkas berita acara verifikasi, kejadian, atau kesepakatan resmi.</p>
                 </div>
                 <div class="surat-actions">
@@ -508,13 +544,15 @@
         <div class="col-xl-4 col-md-6 mb-4 surat-item" data-category="kepegawaian" data-name="surat keterangan pengalaman kerja paklaring resign">
             <div class="surat-card">
                 <div>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="surat-card-header">
                         <div class="surat-icon-wrapper" style="background: #eef2ff; color: #6366f1;">
                             <i class="fas fa-user-graduate"></i>
                         </div>
-                        <span class="surat-tag" style="background: #eef2ff; color: #4f46e5;">Kepegawaian</span>
+                        <div class="surat-title-area">
+                            <span class="surat-tag" style="background: #eef2ff; color: #4f46e5;">Kepegawaian</span>
+                            <h3 class="surat-title">Surat Keterangan Pengalaman Kerja</h3>
+                        </div>
                     </div>
-                    <h3 class="surat-title">Surat Keterangan Pengalaman Kerja</h3>
                     <p class="surat-desc">Penerbitan paklaring dan riwayat masa kerja resmi bagi mantan karyawan.</p>
                 </div>
                 <div class="surat-actions">
