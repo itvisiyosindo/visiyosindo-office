@@ -990,4 +990,267 @@
         border-radius: 4px !important;
         border: 1px solid transparent !important;
     }
+
+    /* ========== Global Surat Action Buttons & UI Enhancement ========== */
+    /* Surat Document Card Container (Clean Elevated Paper) */
+    .col-xl-10 > .card-body[style*="background-color:#FFFFFF"],
+    .col-xl-10 > .card-body[style*="background-color: #FFFFFF"],
+    .col-xl-10 > .card-body[style*="background:#FFFFFF"],
+    .card-body[style*="padding:5%"],
+    .card-body[style*="padding: 5%"] {
+        background: #ffffff !important;
+        border-radius: 16px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+        margin-bottom: 30px !important;
+    }
+
+    /* Surat Top Status Badges (Pill Format) */
+    .card-body .text-right > .btn,
+    .card-body .text-right > span.btn,
+    .card-body .text-right > button.btn {
+        border-radius: 50px !important;
+        font-size: 12.5px !important;
+        font-weight: 700 !important;
+        padding: 6px 18px !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: default !important;
+        border: 1.5px solid transparent !important;
+    }
+
+    .card-body .text-right > .btn-warning,
+    .card-body .text-right > span.btn-warning {
+        background: #fffbeb !important;
+        color: #d97706 !important;
+        border-color: #fde68a !important;
+    }
+
+    .card-body .text-right > .btn-success,
+    .card-body .text-right > span.btn-success {
+        background: #ecfdf5 !important;
+        color: #059669 !important;
+        border-color: #a7f3d0 !important;
+    }
+
+    .card-body .text-right > .btn-danger,
+    .card-body .text-right > span.btn-danger {
+        background: #fef2f2 !important;
+        color: #dc2626 !important;
+        border-color: #fecaca !important;
+    }
+
+    .card-body .text-right > .btn-secondary,
+    .card-body .text-right > span.btn-secondary {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    /* Surat Bottom Action Toolbar Container */
+    div[width="100%"],
+    div[role="document"] {
+        width: 100% !important;
+        padding-top: 20px !important;
+        margin-top: 25px !important;
+        border-top: 1px solid #e2e8f0 !important;
+        display: block !important;
+        clear: both !important;
+    }
+
+    div[width="100%"]::after,
+    div[role="document"]::after {
+        content: "" !important;
+        display: table !important;
+        clear: both !important;
+    }
+
+    /* Modern Elevated Surat Buttons */
+    div[width="100%"] .btn,
+    div[width="100%"] a.btn,
+    div[role="document"] .btn,
+    div[role="document"] a.btn,
+    .card-body div > .btn-approval,
+    .card-body div > .btn-denial,
+    .card-body div > .btn-clear-form,
+    .card-body div > .btn-ajukan,
+    .card-body div > a[href*="print_page"],
+    .card-body div > a[href*="print"],
+    .card-body div > button[onclick*="openAdminEditModal"] {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 13.5px !important;
+        padding: 9px 20px !important;
+        letter-spacing: 0.3px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1.5 !important;
+        border: none !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        outline: none !important;
+        text-decoration: none !important;
+        vertical-align: middle !important;
+    }
+
+    /* Alignment & Spacing */
+    div[width="100%"] .float-left,
+    div[role="document"] .float-left {
+        float: left !important;
+        margin-right: 12px !important;
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    div[width="100%"] .float-right,
+    div[role="document"] .float-right {
+        float: right !important;
+        margin-left: 12px !important;
+        margin-right: 0 !important;
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* Hover Lift Effect */
+    div[width="100%"] .btn:hover,
+    div[width="100%"] a.btn:hover,
+    div[role="document"] .btn:hover,
+    div[role="document"] a.btn:hover,
+    .card-body div > .btn-approval:hover,
+    .card-body div > .btn-denial:hover,
+    .card-body div > .btn-clear-form:hover,
+    .card-body div > .btn-ajukan:hover,
+    .card-body div > a[href*="print_page"]:hover,
+    .card-body div > a[href*="print"]:hover,
+    .card-body div > button[onclick*="openAdminEditModal"]:hover {
+        transform: translateY(-2px) !important;
+    }
+
+    /* Icon Spacing */
+    div[width="100%"] .btn i,
+    div[width="100%"] a.btn i,
+    div[role="document"] .btn i,
+    div[role="document"] a.btn i {
+        margin-right: 6px !important;
+        font-size: 13px !important;
+    }
+
+    /* 1. Setujui / Ajukan Button (Emerald Green Gradient) */
+    .btn-approval,
+    .btn-ajukan,
+    div[width="100%"] .btn-success,
+    div[role="document"] .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .btn-approval:hover,
+    .btn-ajukan:hover,
+    div[width="100%"] .btn-success:hover,
+    div[role="document"] .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45) !important;
+        color: #ffffff !important;
+    }
+
+    /* 2. Tolak Button (Crimson / Rose Gradient) */
+    .btn-denial,
+    div[width="100%"] .btn-denial,
+    div[width="100%"] .btn-danger,
+    div[role="document"] .btn-denial,
+    div[role="document"] .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    }
+
+    .btn-denial:hover,
+    div[width="100%"] .btn-denial:hover,
+    div[width="100%"] .btn-danger:hover,
+    div[role="document"] .btn-denial:hover,
+    div[role="document"] .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+        box-shadow: 0 6px 18px rgba(239, 68, 68, 0.45) !important;
+        color: #ffffff !important;
+    }
+
+    /* 3. Cetak Button (Amber Gold Gradient) */
+    a[href*="print_page"],
+    a[href*="print_custom"],
+    div[width="100%"] a[href*="print"],
+    div[width="100%"] .btn-warning:not([onclick*="openAdminEditModal"]),
+    div[role="document"] a[href*="print"],
+    div[role="document"] .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+    }
+
+    a[href*="print_page"]:hover,
+    a[href*="print_custom"]:hover,
+    div[width="100%"] a[href*="print"]:hover,
+    div[width="100%"] .btn-warning:not([onclick*="openAdminEditModal"]):hover,
+    div[role="document"] a[href*="print"]:hover,
+    div[role="document"] .btn-warning:hover {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+        box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+        color: #ffffff !important;
+    }
+
+    /* 4. Edit Data (Admin) Button (Royal Indigo / Violet Gradient) */
+    button[onclick*="openAdminEditModal"],
+    .btn-admin-edit {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+    }
+
+    button[onclick*="openAdminEditModal"]:hover,
+    .btn-admin-edit:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+        box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45) !important;
+        color: #ffffff !important;
+    }
+
+    /* 5. Kembali Button (Slate Charcoal Gradient) */
+    .btn-clear-form,
+    button[onclick*="goBack"],
+    div[width="100%"] .btn-secondary.btn-clear-form,
+    div[role="document"] .btn-secondary.btn-clear-form {
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(71, 85, 105, 0.25) !important;
+    }
+
+    .btn-clear-form:hover,
+    button[onclick*="goBack"]:hover,
+    div[width="100%"] .btn-secondary.btn-clear-form:hover,
+    div[role="document"] .btn-secondary.btn-clear-form:hover {
+        background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+        box-shadow: 0 6px 16px rgba(71, 85, 105, 0.35) !important;
+        color: #ffffff !important;
+    }
+
+    /* 6. Lampiran Button (Sky Blue Gradient) */
+    div[width="100%"] a[href*="uploads"],
+    div[width="100%"] a[href*="lampiran"],
+    div[width="100%"] .btn-primary {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+    }
+
+    div[width="100%"] a[href*="uploads"]:hover,
+    div[width="100%"] a[href*="lampiran"]:hover,
+    div[width="100%"] .btn-primary:hover {
+        background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+        box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45) !important;
+        color: #ffffff !important;
+    }
 </style>
