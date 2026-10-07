@@ -717,167 +717,216 @@
 
 
 						<br>
-						<div>
-								<!--<a href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/'  . ($week_offset - 1)) ?>" class="btn btn-outline-secondary">< Minggu Sebelumnya</a>
-								<a href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/'  . ($week_offset + 1)) ?>" class="btn btn-outline-secondary">Minggu Berikutnya ></a>-->
-								
-								<button type="button" class="btn btn-success btn-save float-right">Simpan</button>
-						</div>
-				</div>
-
+		                <div class="mt-3 clearfix">
+                    <button type="button" class="btn btn-success btn-save float-right shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 20px;"><i class="fas fa-save mr-1"></i> Simpan Penilaian</button>
+                </div>
 			</div>
 		</div>
 		<!-- PENCAPAIAN -->
 		<?= form_close(); ?>
-		
-
 
 		<br>
 
-<?= form_open('laporan/inputNilaiUmumAdm', array('id' => 'main-form-umum', 'autocomplete' => 'off')); ?>
+		<?= form_open('laporan/inputNilaiUmumAdm', array('id' => 'main-form-umum', 'autocomplete' => 'off')); ?>
 		<input type="hidden" name="id_pengg" value="<?= $data_job->pengguna_id ?>">
 		<input type="hidden" name="hari_rabu" value="<?= $wednesday ?>">
 
-
 		<!-- PENILAIAN UMUM -->
-		<div class="card-body">
-			<div class="table-responsive">
-
-				<div>
-						<h4>Penilaian Umum dari Tanggal <strong> <?= $startDate ?> </strong> sampai <strong> <?= $endDate ?> </strong></h4>
-
-					<div style="max-width: 100%;">
-    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%; table-layout: fixed;">
-     
-                            <thead>
-                                <tr>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="1%"><font color='#000000'> No </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Indikator </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="15%"><font color='#000000'> Keterangan</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'> Nilai A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="2%"><font color='#000000'> Nilai B</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Catatan A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Catatan B</th>
-                                </tr>
-                            </thead>
-                      <tbody>
-                       <tr>
-													<td style="text-align:center">1</td>
-													<td style="text-align:center">Inisiatif & Kreativitas	</td>
-													<td style="text-align:left;">a. Mampu mengerjakan pekerjaan rutin secara efektif dan/atau secara keseluruhan meskipun tanpa arahan atasan tanpa kendala.<br>
-															b. Mampu melaksanakan tindakan awal sesuai kapasitas/kewenangannya untuk mencegah/menyelesaikan permasalahan yang dihadapi pribadi/bersama				
-													</td>
-													<td><input class="form-control" type="text" name="nilaia1" value="<?= htmlspecialchars($penilaian_umum->nilaia1) ?>" style="background-color: #ffffff;"></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib1) ?></td>
-													<td><input class="form-control" type="text" name="catatana1" value="<?= htmlspecialchars($penilaian_umum->catatana1) ?>" style="background-color: #ffffff;"></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb1) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">2</td>
-													<td style="text-align:center">Kepatuhan Peraturan	</td>
-													<td style="text-align:left;">a. Memahami setiap SOP pekerjaaannya.<br>
-															b. Melaksanakan pekerjaannya sesuai SOP yang diberikan.<br>
-															c. Memahami Peraturan dan Tata Tertib Perusahaan.<br>
-															d. Melaksanakan pekerjaan sesuai SOP dan Peraturan/Tata Tertib Perusahaan.<br>
-															e. Kepatuhan dalam menjalankan semua Peraturan/Tata Tertib Peraturan.				
-													</td>
-													<td><input class="form-control" type="text" name="nilaia2" value="<?= htmlspecialchars($penilaian_umum->nilaia2) ?>" style="background-color: #ffffff;"></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib2) ?></td>
-													<td><input class="form-control" type="text" name="catatana2" value="<?= htmlspecialchars($penilaian_umum->catatana2) ?>" style="background-color: #ffffff;"></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb2) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">3</td>
-													<td style="text-align:center">Analisa atas Masalah	</td>
-													<td style="text-align:left;">a. Mampu melakukan analisa atas trouble/problem yang dihadapi.<br>
-															b. Mampu menganalisa risiko/hasil akhir atas trouble/problem yang dihadapi.<br>
-															c. Mampu melakukan penanganan awal atas trouble/problem yang dihadapi sesuai kewenangan/kapasitasnya.				
-													</td>
-													<td><input class="form-control" type="text" name="nilaia3" value="<?= htmlspecialchars($penilaian_umum->nilaia3) ?>" style="background-color: #ffffff;"></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib3) ?></td>
-													<td><input class="form-control" type="text" name="catatana3" value="<?= htmlspecialchars($penilaian_umum->catatana3) ?>" style="background-color: #ffffff;"></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb3) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">4</td>
-													<td style="text-align:center">Komunikasi & Kerja sama tim	</td>
-													<td style="text-align:left;">a. Mampu berkoordinasi lintas fungsi.<br>
-															b. Mampu berkomunikasi dengan baik secara internal maupun eksternal divisi maupun perusahaan.<br>
-															c. Mampu berkomunikasi dengan efektif.<br>
-															d. Kesesuaian lokasi komunikasi (Personal/Group).<br>
-															e. Kemampuan membuat pelaporan on time.				
-													</td>
-													<td><input class="form-control" type="text" name="nilaia4" value="<?= htmlspecialchars($penilaian_umum->nilaia4) ?>" style="background-color: #ffffff;"></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib4) ?></td>
-													<td><input class="form-control" type="text" name="catatana4" value="<?= htmlspecialchars($penilaian_umum->catatana4) ?>" style="background-color: #ffffff;"></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb4) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">5</td>
-													<td style="text-align:center">Ketelitian, Administrasi dan Teknologi	</td>
-													<td style="text-align:left;">a. Kemampuan penguasaan penggunaan platform komunikasi/laporan secara maksimal dalam melaksanakan pekerjaan.<br>
-															b. Kemampuan melakukan administrasi pekerjaan yang dilakukan sesuai jobdesc/kewenangannya secara lengkap.<br>
-															c. Pelaksanaan pekerjaan secara efektif dan minim human error.						
-													</td>
-													<td><input class="form-control" type="text" name="nilaia5" value="<?= htmlspecialchars($penilaian_umum->nilaia5) ?>" style="background-color: #ffffff;"></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib5) ?></td>
-													<td><input class="form-control" type="text" name="catatana5" value="<?= htmlspecialchars($penilaian_umum->catatana5) ?>" style="background-color: #ffffff;"></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb5) ?></td>
-											</tr>
-											
-											<?php
-												$nilaiRataa = ($penilaian_umum->nilaia1 + $penilaian_umum->nilaia2 + $penilaian_umum->nilaia3 + $penilaian_umum->nilaia4 + $penilaian_umum->nilaia5)/5;
-												$nilaiRatab = ($penilaian_umum->nilaib1 + $penilaian_umum->nilaib2 + $penilaian_umum->nilaib3 + $penilaian_umum->nilaib4 + $penilaian_umum->nilaib5)/5;
-												$nilaiRataPumum = ($nilaiRataa + $nilaiRatab)/2;
-											?>
-											<tr class="fw-bold bg-light">
-                        <td colspan="3" style="text-align:right; border: 1px solid black;"><font color='#000000'><strong>Rata-rata :</strong></td>
-												<td style="text-align:center"><strong><?= number_format($nilaiRataa, 2) ?></strong></td>
-												<td style="text-align:center"><strong><?= number_format($nilaiRatab, 2) ?></strong></td>
-												<td style="text-align:center"><strong><?= number_format($nilaiRataPumum, 2) ?></strong></td>
-												<td></td>
-											</tr>
-
-                            </tbody>
-                        </table>
-
-                    </div>
-
-
-						<br>
-						<div>
-							
-							<strong class="fw-bold text-dark">Rangkuman Nilai :
-								<table style="margin-top: 4px;">
-										<tr>
-												<td style="padding-right: 17px;">Laporan Mingguan</td>
-												<td>: <?= number_format($rataAll, 2) ?></td>
-										</tr>
-										<tr>
-												<td>Penilaian Umum</td>
-												<td>: <?= number_format($nilaiRataPumum, 2) ?></td>
-										</tr>
-										<tr>
-												<td>Rata-rata (Laporan Mingguan + Penilaian Umum)</td>
-												<td>: <?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></td>
-										</tr>
-										<tr>
-												<td>Pencapaian</td>
-												<td>: <?= number_format($nilaiRataPencapaian, 2) ?></td>
-										</tr>
-								</table></strong><br>
-
-
-
-
-
-								<a href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/'  . ($week_offset - 1)) ?>" class="btn btn-outline-secondary">< Minggu Sebelumnya</a>
-								<a href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/'  . ($week_offset + 1)) ?>" class="btn btn-outline-secondary">Minggu Berikutnya ></a>
-								
-								<button type="button" class="btn btn-success btn-save float-right">Simpan</button>
-                <!--<button type="button" class="btn btn-success float-right btn-selesai" style="margin-right: 10px;" id-Sijk="<?=$data_job->pengguna_id?>"> <i class="fas fa-check"></i> Selesai </button>-->
-						</div>
+		<div class="card laporan-card mb-4">
+			<div class="card-body p-3 p-md-4">
+				<div class="d-flex align-items-center justify-content-between mb-3">
+					<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+						<i class="fas fa-star text-warning mr-1"></i> Penilaian Umum: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+					</h5>
 				</div>
+
+				<div class="table-responsive">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_umum" style="min-width: 1200px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; min-width: 45px;">No</th>
+                                <th style="width: 200px; min-width: 180px; text-align: left;">Indikator</th>
+                                <th style="min-width: 320px; text-align: left;">Keterangan</th>
+                                <th style="width: 90px; min-width: 85px;">Nilai A</th>
+                                <th style="width: 80px; min-width: 75px;">Nilai B</th>
+                                <th style="min-width: 160px; text-align: left;">Catatan A</th>
+                                <th style="min-width: 160px; text-align: left;">Catatan B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">1</td>
+								<td style="font-weight: 600; color: #1e293b;">Inisiatif & Kreativitas</td>
+								<td style="line-height: 1.6;">
+                                    a. Mampu mengerjakan pekerjaan rutin secara efektif dan/atau secara keseluruhan meskipun tanpa arahan atasan tanpa kendala.<br>
+									b. Mampu melaksanakan tindakan awal sesuai kapasitas/kewenangannya untuk mencegah/menyelesaikan permasalahan yang dihadapi pribadi/bersama.				
+								</td>
+								<td style="text-align:center;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia1" value="<?= htmlspecialchars($penilaian_umum->nilaia1) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                </td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib1) ?></td>
+								<td>
+                                    <input class="form-control form-control-sm" type="text" name="catatana1" value="<?= htmlspecialchars($penilaian_umum->catatana1) ?>" style="border-radius: 6px; border-color: #cbd5e1; background-color: #ffffff;">
+                                </td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb1) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">2</td>
+								<td style="font-weight: 600; color: #1e293b;">Kepatuhan Peraturan</td>
+								<td style="line-height: 1.6;">
+                                    a. Memahami setiap SOP pekerjaaannya.<br>
+									b. Melaksanakan pekerjaannya sesuai SOP yang diberikan.<br>
+									c. Memahami Peraturan dan Tata Tertib Perusahaan.<br>
+									d. Melaksanakan pekerjaan sesuai SOP dan Peraturan/Tata Tertib Perusahaan.<br>
+									e. Kepatuhan dalam menjalankan semua Peraturan/Tata Tertib Peraturan.				
+								</td>
+								<td style="text-align:center;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia2" value="<?= htmlspecialchars($penilaian_umum->nilaia2) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                </td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib2) ?></td>
+								<td>
+                                    <input class="form-control form-control-sm" type="text" name="catatana2" value="<?= htmlspecialchars($penilaian_umum->catatana2) ?>" style="border-radius: 6px; border-color: #cbd5e1; background-color: #ffffff;">
+                                </td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb2) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">3</td>
+								<td style="font-weight: 600; color: #1e293b;">Analisa atas Masalah</td>
+								<td style="line-height: 1.6;">
+                                    a. Mampu melakukan analisa atas trouble/problem yang dihadapi.<br>
+									b. Mampu menganalisa risiko/hasil akhir atas trouble/problem yang dihadapi.<br>
+									c. Mampu melakukan penanganan awal atas trouble/problem yang dihadapi sesuai kewenangan/kapasitasnya.				
+								</td>
+								<td style="text-align:center;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia3" value="<?= htmlspecialchars($penilaian_umum->nilaia3) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                </td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib3) ?></td>
+								<td>
+                                    <input class="form-control form-control-sm" type="text" name="catatana3" value="<?= htmlspecialchars($penilaian_umum->catatana3) ?>" style="border-radius: 6px; border-color: #cbd5e1; background-color: #ffffff;">
+                                </td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb3) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">4</td>
+								<td style="font-weight: 600; color: #1e293b;">Komunikasi & Kerja sama tim</td>
+								<td style="line-height: 1.6;">
+                                    a. Mampu berkoordinasi lintas fungsi.<br>
+									b. Mampu berkomunikasi dengan baik secara internal maupun eksternal divisi maupun perusahaan.<br>
+									c. Mampu berkomunikasi dengan efektif.<br>
+									d. Kesesuaian lokasi komunikasi (Personal/Group).<br>
+									e. Kemampuan membuat pelaporan on time.				
+								</td>
+								<td style="text-align:center;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia4" value="<?= htmlspecialchars($penilaian_umum->nilaia4) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                </td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib4) ?></td>
+								<td>
+                                    <input class="form-control form-control-sm" type="text" name="catatana4" value="<?= htmlspecialchars($penilaian_umum->catatana4) ?>" style="border-radius: 6px; border-color: #cbd5e1; background-color: #ffffff;">
+                                </td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb4) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">5</td>
+								<td style="font-weight: 600; color: #1e293b;">Ketelitian, Administrasi dan Teknologi</td>
+								<td style="line-height: 1.6;">
+                                    a. Kemampuan penguasaan penggunaan platform komunikasi/laporan secara maksimal dalam melaksanakan pekerjaan.<br>
+									b. Kemampuan melakukan administrasi pekerjaan yang dilakukan sesuai jobdesc/kewenangannya secara lengkap.<br>
+									c. Pelaksanaan pekerjaan secara efektif dan minim human error.						
+								</td>
+								<td style="text-align:center;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia5" value="<?= htmlspecialchars($penilaian_umum->nilaia5) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                </td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib5) ?></td>
+								<td>
+                                    <input class="form-control form-control-sm" type="text" name="catatana5" value="<?= htmlspecialchars($penilaian_umum->catatana5) ?>" style="border-radius: 6px; border-color: #cbd5e1; background-color: #ffffff;">
+                                </td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb5) ?></td>
+							</tr>
+							<?php
+								$nilaiRataa = ($penilaian_umum->nilaia1 + $penilaian_umum->nilaia2 + $penilaian_umum->nilaia3 + $penilaian_umum->nilaia4 + $penilaian_umum->nilaia5)/5;
+								$nilaiRatab = ($penilaian_umum->nilaib1 + $penilaian_umum->nilaib2 + $penilaian_umum->nilaib3 + $penilaian_umum->nilaib4 + $penilaian_umum->nilaib5)/5;
+								$nilaiRataPumum = ($nilaiRataa + $nilaiRatab)/2;
+							?>
+							<tr class="row-summary">
+                                <td colspan="3" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
+								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataa, 2) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRatab, 2) ?></td>
+								<td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPumum, 2) ?></td>
+							</tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Modern Summary Card -->
+                <div class="p-3 mt-4" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <div class="d-flex align-items-center mb-3" style="font-size: 13px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-calculator text-primary mr-2"></i> Rangkuman Nilai Akhir
+                    </div>
+                    <div class="row" style="row-gap: 12px;">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Laporan Mingguan</div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($rataAll, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Penilaian Umum</div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPumum, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Rata-rata Gabungan</div>
+                                    <div class="font-weight-bold text-primary mt-1" style="font-size: 18px;"><?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #e0e7ff; color: #4338ca; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Pencapaian</div>
+                                    <div class="font-weight-bold text-success mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPencapaian, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Action & Navigation Buttons -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2" style="gap: 10px;">
+                    <div>
+                        <a href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/'  . ($week_offset - 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm mr-2" style="border-radius: 8px; font-weight: 600; padding: 7px 16px;">
+                            <i class="fas fa-chevron-left mr-1"></i> Minggu Sebelumnya
+                        </a>
+                        <a href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/'  . ($week_offset + 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 16px;">
+                            Minggu Berikutnya <i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-success btn-save shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 20px;">
+                            <i class="fas fa-save mr-1"></i> Simpan Penilaian Umum
+                        </button>
+                    </div>
+                </div>
 
 			</div>
 		</div>

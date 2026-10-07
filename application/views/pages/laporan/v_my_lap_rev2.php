@@ -584,270 +584,296 @@ foreach ($data_detail as $row) {
 		</div>
 </div>
 <div class="row">
-	<div class="col">
-
+	<div class="col-12">
 
 		<!-- PENCAPAIAN -->
-		<div class="card-body">
-			<div class="table-responsive">
-
-				<div>
-						<h4>Pencapaian Mingguan dari Tanggal <strong> <?= $startDate ?> </strong> sampai <strong> <?= $endDate ?> </strong></h4>
-
-						
-					<div class="">
-						<a href="javascript:;" id="btn-show-add-form-pencapaian" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah</a><br>
-					</div> <br>
-						
-					<div class="table-responsive">
-                        <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 1100px;">
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px; min-width: 45px;">No</th>
-                                    <th style="width: 140px; min-width: 130px;">Tanggal</th>
-                                    <th style="min-width: 250px; text-align: left;">Deskripsi</th>
-                                    <th style="min-width: 150px;">Hasil Kerja</th>
-                                    <th style="width: 80px; min-width: 75px;">Nilai A</th>
-                                    <th style="width: 80px; min-width: 75px;">Nilai B</th>
-                                    <th style="min-width: 140px;">Catatan A</th>
-                                    <th style="min-width: 140px;">Catatan B</th>
-                                    <th style="width: 90px; min-width: 85px;">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                               <?php 
-                                $no = 1;
-                                $total_nilai = 0; // Variabel untuk menampung total nilai
-                                $total_nilai_b = 0; // Variabel untuk menampung total nilai
-                                $jumlah_data = count($data_detail_pencapaian); // Jumlah data untuk menghitung rata-rata
-
-                                foreach ($data_detail_pencapaian as $row) {
-                                    
-                                    if (!empty($row->link) && empty($row->keterangan)) {
-                                        $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary shadow-sm" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;"><i class="fas fa-link mr-1"></i> Hasil Kerja</a>';
-                                    } elseif (empty($row->link) && !empty($row->keterangan)) {
-                                        $link_download = htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8');
-                                    } else {
-                                        $link_download = '<span class="text-muted small">-</span>';
-                                    }
-
-                                    $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
-                                    $nama_hari = $hari[date('l', strtotime($row->tanggal))];
-
-                                    // Gunakan week_offset untuk menghitung Senin dan Jumat berdasarkan minggu
-                                    $monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
-                                    $Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
-
-                                    // Cek apakah tanggal created_at berada di luar rentang minggu
-                                    $created_at = date('Y-m-d', strtotime($row->created_at));
-                                    $is_outside_range = ($created_at < $monday || $created_at > $Sunday);
-
-                                    $id = $row->id;
-                                    $id_edit = encrypt($row->id);
-
-                                    // Tambahkan nilai ke total_nilai
-                                    $total_nilai += $row->nilai_a;
-                                    $total_nilai_b += $row->nilai_b;
-
-                                ?>
-                                    <tr <?php if ($is_outside_range) { echo 'style="background-color: #fff1f2;"'; } ?>>
-                                        <td style="text-align:center; font-weight: 600; color: #475569;"><input type="hidden" name="id_sodetail[]" value="<?= $id ?>"><?= $no++ ?></td>
-                                        <td style="text-align:center; white-space: nowrap; font-weight: 500;"><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
-                                        <td style="word-break: normal; overflow-wrap: break-word;"><?= $row->detail ?></td>
-                                        <td style="text-align:center"><?= $link_download ?></td>
-                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_a ?></td>
-                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_b ?></td>
-                                        <td><?= $row->catatan_a ?></td>
-                                        <td><?= $row->catatan_b ?></td>
-                                        <td style="text-align:center">
-                                            <?php if($row->nilai_a == '' && $row->nilai_b == ''){ ?>
-                                                <div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
-                                                    <button type="button" class="btn btn-sm btn-primary btn-edit-pencapaian shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= $id_edit ?>"><i class="fas fa-pencil-alt"></i></button>
-                                                    <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Data" data-id="<?= $row->id ?>" data-object="laporan/deletePencapaian/<?= $row->id ?>"><i class="fas fa-trash-alt"></i></button>
-                                                </div>
-                                            <?php } ?>
-                                        </td>
-                                    </tr>
-
-                                <?php } 
-
-                                // Menghitung rata-rata, jika jumlah data > 0
-                                if ($jumlah_data > 0) {
-                                    $nilaiRataA = $total_nilai / $jumlah_data;
-                                    $nilaiRataB = $total_nilai_b / $jumlah_data;
-                                    $nilaiRataPencapaian = ($nilaiRataA+$nilaiRataB)/2;
-                                } else {
-                                    $nilaiRataA = 0; // Jika tidak ada data, set rata-rata 0
-                                    $nilaiRataB = 0; // Jika tidak ada data, set rata-rata 0
-                                    $nilaiRataPencapaian = 0;
-                                }
-                                ?>
-
-                                <tr class="row-summary">
-                                    <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
-                                    <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataA, 2) ?></td>
-                                    <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataB, 2) ?></td>
-                                    <td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
-                                    <td></td>
-                                </tr>
-
-                            </tbody>
-                        </table>
-                    </div>
-
-
-						<br>
-						<div>
-								<!--<a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset - 1)) ?>" class="btn btn-outline-secondary">< Minggu Sebelumnya</a>
-								<a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset + 1)) ?>" class="btn btn-outline-secondary">Minggu Berikutnya ></a>-->
-						</div>
+		<div class="card laporan-card mb-4">
+			<div class="card-body p-3 p-md-4">
+				<div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
+					<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+						<i class="fas fa-trophy text-warning mr-1"></i> Pencapaian Mingguan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+					</h5>
+					<button type="button" id="btn-show-add-form-pencapaian" class="btn btn-sm btn-success shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+						<i class="fas fa-plus"></i> Tambah Pencapaian
+					</button>
 				</div>
+				
+				<div class="table-responsive">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 1200px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; min-width: 45px;">No</th>
+                                <th style="width: 140px; min-width: 130px;">Tanggal</th>
+                                <th style="min-width: 250px; text-align: left;">Deskripsi</th>
+                                <th style="min-width: 160px; text-align: left;">Hasil Kerja</th>
+                                <th style="width: 80px; min-width: 75px;">Nilai A</th>
+                                <th style="width: 80px; min-width: 75px;">Nilai B</th>
+                                <th style="min-width: 160px; text-align: left;">Catatan A</th>
+                                <th style="min-width: 160px; text-align: left;">Catatan B</th>
+                                <th style="width: 90px; min-width: 85px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                           <?php 
+                            $no = 1;
+                            $total_nilai = 0;
+                            $total_nilai_b = 0;
+                            $jumlah_data = count($data_detail_pencapaian);
 
+                            foreach ($data_detail_pencapaian as $row) {
+                                
+                                if (!empty($row->link) && empty($row->keterangan)) {
+                                    $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary shadow-sm" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;"><i class="fas fa-link mr-1"></i> Hasil Kerja</a>';
+                                } elseif (empty($row->link) && !empty($row->keterangan)) {
+                                    $link_download = htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8');
+                                } else {
+                                    $link_download = '<span class="text-muted small">-</span>';
+                                }
+
+                                $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
+                                $nama_hari = $hari[date('l', strtotime($row->tanggal))];
+
+                                $monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
+                                $Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
+
+                                $created_at = date('Y-m-d', strtotime($row->created_at));
+                                $is_outside_range = ($created_at < $monday || $created_at > $Sunday);
+
+                                $id = $row->id;
+                                $id_edit = encrypt($row->id);
+
+                                $total_nilai += $row->nilai_a;
+                                $total_nilai_b += $row->nilai_b;
+                            ?>
+                                <tr <?php if ($is_outside_range) { echo 'style="background-color: #fff1f2;"'; } ?>>
+                                    <td style="text-align:center; font-weight: 600; color: #475569;"><input type="hidden" name="id_sodetail[]" value="<?= $id ?>"><?= $no++ ?></td>
+                                    <td style="text-align:center; white-space: nowrap; font-weight: 500;"><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
+                                    <td style="word-break: normal; overflow-wrap: break-word;"><?= $row->detail ?></td>
+                                    <td style="min-width: 160px;"><?= $link_download ?></td>
+                                    <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_a ?></td>
+                                    <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_b ?></td>
+                                    <td style="min-width: 160px;"><?= $row->catatan_a ?></td>
+                                    <td style="min-width: 160px;"><?= $row->catatan_b ?></td>
+                                    <td style="text-align:center">
+                                        <?php if($row->nilai_a == '' && $row->nilai_b == ''){ ?>
+                                            <div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
+                                                <button type="button" class="btn btn-sm btn-primary btn-edit-pencapaian shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= $id_edit ?>"><i class="fas fa-pencil-alt"></i></button>
+                                                <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Data" data-id="<?= $row->id ?>" data-object="laporan/deletePencapaian/<?= $row->id ?>"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+
+                            <?php } 
+
+                            if ($jumlah_data > 0) {
+                                $nilaiRataA = $total_nilai / $jumlah_data;
+                                $nilaiRataB = $total_nilai_b / $jumlah_data;
+                                $nilaiRataPencapaian = ($nilaiRataA+$nilaiRataB)/2;
+                            } else {
+                                $nilaiRataA = 0;
+                                $nilaiRataB = 0;
+                                $nilaiRataPencapaian = 0;
+                            }
+                            ?>
+
+                            <tr class="row-summary">
+                                <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
+                                <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataA, 2) ?></td>
+                                <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataB, 2) ?></td>
+                                <td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
+                                <td></td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
 			</div>
 		</div>
 		<!-- PENCAPAIAN -->
 
 	</div>
 </div>
+
 <div class="row">
-	<div class="col">
+	<div class="col-12">
 
 		<!-- PENILAIAN UMUM -->
-		<div class="card-body">
-			<div class="table-responsive">
-
-				<div>
-						<h4>Penilaian Umum dari Tanggal <strong> <?= $startDate ?> </strong> sampai <strong> <?= $endDate ?> </strong></h4>
-
-					<div style="max-width: 100%;">
-    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%; table-layout: fixed;">
-     
-                            <thead>
-                                <tr>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="1%"><font color='#000000'> No </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Indikator </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="15%"><font color='#000000'> Keterangan</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'> Nilai A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'> Nilai B</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Catatan A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Catatan B</th>
-                                </tr>
-                            </thead>
-                      <tbody>
-                       <tr>
-													<td style="text-align:center">1</td>
-													<td style="text-align:center">Inisiatif & Kreativitas	</td>
-													<td style="text-align:left;">a. Mampu mengerjakan pekerjaan rutin secara efektif dan/atau secara keseluruhan meskipun tanpa arahan atasan tanpa kendala.<br>
-															b. Mampu melaksanakan tindakan awal sesuai kapasitas/kewenangannya untuk mencegah/menyelesaikan permasalahan yang dihadapi pribadi/bersama				
-													</td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaia1) ?></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib1) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatana1) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb1) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">2</td>
-													<td style="text-align:center">Kepatuhan Peraturan	</td>
-													<td style="text-align:left;">a. Memahami setiap SOP pekerjaaannya.<br>
-															b. Melaksanakan pekerjaannya sesuai SOP yang diberikan.<br>
-															c. Memahami Peraturan dan Tata Tertib Perusahaan.<br>
-															d. Melaksanakan pekerjaan sesuai SOP dan Peraturan/Tata Tertib Perusahaan.<br>
-															e. Kepatuhan dalam menjalankan semua Peraturan/Tata Tertib Peraturan.				
-													</td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaia2) ?></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib2) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatana2) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb2) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">3</td>
-													<td style="text-align:center">Analisa atas Masalah	</td>
-													<td style="text-align:left;">a. Mampu melakukan analisa atas trouble/problem yang dihadapi.<br>
-															b. Mampu menganalisa risiko/hasil akhir atas trouble/problem yang dihadapi.<br>
-															c. Mampu melakukan penanganan awal atas trouble/problem yang dihadapi sesuai kewenangan/kapasitasnya.				
-													</td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaia3) ?></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib3) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatana3) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb3) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">4</td>
-													<td style="text-align:center">Komunikasi & Kerja sama tim	</td>
-													<td style="text-align:left;">a. Mampu berkoordinasi lintas fungsi.<br>
-															b. Mampu berkomunikasi dengan baik secara internal maupun eksternal divisi maupun perusahaan.<br>
-															c. Mampu berkomunikasi dengan efektif.<br>
-															d. Kesesuaian lokasi komunikasi (Personal/Group).<br>
-															e. Kemampuan membuat pelaporan on time.				
-													</td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaia4) ?></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib4) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatana4) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb4) ?></td>
-											</tr>
-											<tr>
-													<td style="text-align:center">5</td>
-													<td style="text-align:center">Ketelitian, Administrasi dan Teknologi	</td>
-													<td style="text-align:left;">a. Kemampuan penguasaan penggunaan platform komunikasi/laporan secara maksimal dalam melaksanakan pekerjaan.<br>
-															b. Kemampuan melakukan administrasi pekerjaan yang dilakukan sesuai jobdesc/kewenangannya secara lengkap.<br>
-															c. Pelaksanaan pekerjaan secara efektif dan minim human error.						
-													</td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaia5) ?></td>
-													<td style="text-align:center"><?= htmlspecialchars($penilaian_umum->nilaib5) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatana5) ?></td>
-													<td><?= htmlspecialchars($penilaian_umum->catatanb5) ?></td>
-											</tr>
-											<?php
-												$nilaiRataa = ($penilaian_umum->nilaia1 + $penilaian_umum->nilaia2 + $penilaian_umum->nilaia3 + $penilaian_umum->nilaia4 + $penilaian_umum->nilaia5)/5;
-												$nilaiRatab = ($penilaian_umum->nilaib1 + $penilaian_umum->nilaib2 + $penilaian_umum->nilaib3 + $penilaian_umum->nilaib4 + $penilaian_umum->nilaib5)/5;
-												$nilaiRataPumum = ($nilaiRataa + $nilaiRatab)/2;
-											?>
-											<tr class="fw-bold bg-light">
-                        <td colspan="3" style="text-align:right; border: 1px solid black;"><font color='#000000'><strong>Rata-rata :</strong></td>
-												<td style="text-align:center"><strong><?= number_format($nilaiRataa, 2) ?></strong></td>
-												<td style="text-align:center"><strong><?= number_format($nilaiRatab, 2) ?></strong></td>
-												<td style="text-align:center"><strong><?= number_format($nilaiRataPumum, 2) ?></strong></td>
-												<td></td>
-											</tr>
-
-                            </tbody>
-                        </table>
-
-                    </div>
-
-
-						<br>
-						<div>
-							
-							<strong class="fw-bold text-dark">Rangkuman Nilai :
-								<table style="margin-top: 4px;">
-										<tr>
-												<td style="padding-right: 17px;">Laporan Mingguan</td>
-												<td>: <?= number_format($rataAll, 2) ?></td>
-										</tr>
-										<tr>
-												<td>Penilaian Umum</td>
-												<td>: <?= number_format($nilaiRataPumum, 2) ?></td>
-										</tr>
-										<tr>
-												<td>Rata-rata (Laporan Mingguan + Penilaian Umum)</td>
-												<td>: <?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></td>
-										</tr>
-										<tr>
-												<td>Pencapaian</td>
-												<td>: <?= number_format($nilaiRataPencapaian, 2) ?></td>
-										</tr>
-								</table></strong><br>
-
-								
-								<a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset - 1)) ?>" class="btn btn-outline-secondary">< Minggu Sebelumnya</a>
-								<a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset + 1)) ?>" class="btn btn-outline-secondary">Minggu Berikutnya ></a>
-						</div>
+		<div class="card laporan-card mb-4">
+			<div class="card-body p-3 p-md-4">
+				<div class="d-flex align-items-center justify-content-between mb-3">
+					<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+						<i class="fas fa-star text-warning mr-1"></i> Penilaian Umum: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+					</h5>
 				</div>
+
+				<div class="table-responsive">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_umum" style="min-width: 1200px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; min-width: 45px;">No</th>
+                                <th style="width: 200px; min-width: 180px; text-align: left;">Indikator</th>
+                                <th style="min-width: 320px; text-align: left;">Keterangan</th>
+                                <th style="width: 80px; min-width: 75px;">Nilai A</th>
+                                <th style="width: 80px; min-width: 75px;">Nilai B</th>
+                                <th style="min-width: 160px; text-align: left;">Catatan A</th>
+                                <th style="min-width: 160px; text-align: left;">Catatan B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">1</td>
+								<td style="font-weight: 600; color: #1e293b;">Inisiatif & Kreativitas</td>
+								<td style="line-height: 1.6;">
+                                    a. Mampu mengerjakan pekerjaan rutin secara efektif dan/atau secara keseluruhan meskipun tanpa arahan atasan tanpa kendala.<br>
+									b. Mampu melaksanakan tindakan awal sesuai kapasitas/kewenangannya untuk mencegah/menyelesaikan permasalahan yang dihadapi pribadi/bersama.				
+								</td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia1) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib1) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatana1) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb1) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">2</td>
+								<td style="font-weight: 600; color: #1e293b;">Kepatuhan Peraturan</td>
+								<td style="line-height: 1.6;">
+                                    a. Memahami setiap SOP pekerjaaannya.<br>
+									b. Melaksanakan pekerjaannya sesuai SOP yang diberikan.<br>
+									c. Memahami Peraturan dan Tata Tertib Perusahaan.<br>
+									d. Melaksanakan pekerjaan sesuai SOP dan Peraturan/Tata Tertib Perusahaan.<br>
+									e. Kepatuhan dalam menjalankan semua Peraturan/Tata Tertib Peraturan.				
+								</td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia2) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib2) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatana2) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb2) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">3</td>
+								<td style="font-weight: 600; color: #1e293b;">Analisa atas Masalah</td>
+								<td style="line-height: 1.6;">
+                                    a. Mampu melakukan analisa atas trouble/problem yang dihadapi.<br>
+									b. Mampu menganalisa risiko/hasil akhir atas trouble/problem yang dihadapi.<br>
+									c. Mampu melakukan penanganan awal atas trouble/problem yang dihadapi sesuai kewenangan/kapasitasnya.				
+								</td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia3) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib3) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatana3) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb3) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">4</td>
+								<td style="font-weight: 600; color: #1e293b;">Komunikasi & Kerja sama tim</td>
+								<td style="line-height: 1.6;">
+                                    a. Mampu berkoordinasi lintas fungsi.<br>
+									b. Mampu berkomunikasi dengan baik secara internal maupun eksternal divisi maupun perusahaan.<br>
+									c. Mampu berkomunikasi dengan efektif.<br>
+									d. Kesesuaian lokasi komunikasi (Personal/Group).<br>
+									e. Kemampuan membuat pelaporan on time.				
+								</td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia4) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib4) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatana4) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb4) ?></td>
+							</tr>
+							<tr>
+								<td style="text-align:center; font-weight: 600; color: #475569;">5</td>
+								<td style="font-weight: 600; color: #1e293b;">Ketelitian, Administrasi dan Teknologi</td>
+								<td style="line-height: 1.6;">
+                                    a. Kemampuan penguasaan penggunaan platform komunikasi/laporan secara maksimal dalam melaksanakan pekerjaan.<br>
+									b. Kemampuan melakukan administrasi pekerjaan yang dilakukan sesuai jobdesc/kewenangannya secara lengkap.<br>
+									c. Pelaksanaan pekerjaan secara efektif dan minim human error.						
+								</td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia5) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib5) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatana5) ?></td>
+								<td><?= htmlspecialchars($penilaian_umum->catatanb5) ?></td>
+							</tr>
+							<?php
+								$nilaiRataa = ($penilaian_umum->nilaia1 + $penilaian_umum->nilaia2 + $penilaian_umum->nilaia3 + $penilaian_umum->nilaia4 + $penilaian_umum->nilaia5)/5;
+								$nilaiRatab = ($penilaian_umum->nilaib1 + $penilaian_umum->nilaib2 + $penilaian_umum->nilaib3 + $penilaian_umum->nilaib4 + $penilaian_umum->nilaib5)/5;
+								$nilaiRataPumum = ($nilaiRataa + $nilaiRatab)/2;
+							?>
+							<tr class="row-summary">
+                                <td colspan="3" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
+								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataa, 2) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRatab, 2) ?></td>
+								<td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPumum, 2) ?></td>
+							</tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Modern Summary Card -->
+                <div class="p-3 mt-4" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <div class="d-flex align-items-center mb-3" style="font-size: 13px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-calculator text-primary mr-2"></i> Rangkuman Nilai Akhir
+                    </div>
+                    <div class="row" style="row-gap: 12px;">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Laporan Mingguan</div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($rataAll, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Penilaian Umum</div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPumum, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Rata-rata Gabungan</div>
+                                    <div class="font-weight-bold text-primary mt-1" style="font-size: 18px;"><?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #e0e7ff; color: #4338ca; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Pencapaian</div>
+                                    <div class="font-weight-bold text-success mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPencapaian, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation Buttons -->
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+                    <a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset - 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 16px;">
+                        <i class="fas fa-chevron-left mr-1"></i> Minggu Sebelumnya
+                    </a>
+                    <a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset + 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 16px;">
+                        Minggu Berikutnya <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                </div>
 
 			</div>
 		</div>
 		<!-- PENILAIAN UMUM -->
+
+	</div>
+</div>
 
 
 	</div>
