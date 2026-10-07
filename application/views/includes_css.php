@@ -294,7 +294,7 @@
         display: flex !important;
         align-items: center;
         justify-content: flex-end;
-        gap: 20px !important;
+        gap: 14px !important;
         height: 100% !important;
         padding-right: 20px !important;
     }
@@ -319,19 +319,24 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 4px 8px;
+        padding: 5px 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
 
     .header-clock-widget .clock-icon {
-        font-size: 15px;
-        color: #0284c7;
-        background: #f0f9ff;
-        width: 32px;
-        height: 32px;
+        font-size: 13px;
+        color: #2563eb;
+        background: #eff6ff;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
     }
 
     .header-clock-widget .clock-text-wrapper {
@@ -341,41 +346,59 @@
     }
 
     .header-clock-widget .clock-time {
-        font-size: 13.5px;
+        font-size: 12.5px;
         font-weight: 700;
         color: #0f172a;
-        line-height: 1.2;
+        line-height: 1.15;
+        font-family: 'Poppins', sans-serif;
     }
 
     .header-clock-widget .clock-date {
-        font-size: 11px;
+        font-size: 10.5px;
         color: #64748b;
         font-weight: 500;
-        line-height: 1.2;
+        line-height: 1.15;
+    }
+
+    /* Separator bar */
+    .header .separator {
+        width: 1px;
+        height: 22px;
+        background: #e2e8f0;
+        margin: 0 2px;
+        display: inline-block;
     }
 
     /* Modern User Profile Box */
     .userbox-modern {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 9px;
         padding: 4px 8px;
+        border-radius: 20px;
+        transition: background 0.2s ease;
+    }
+
+    .userbox-modern:hover {
+        background: #f8fafc;
     }
 
     .user-avatar-circle {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
         color: #ffffff;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
         text-transform: uppercase;
+        flex-shrink: 0;
+        overflow: hidden;
     }
 
     .user-info-wrapper {
@@ -385,17 +408,19 @@
     }
 
     .user-greeting {
-        font-size: 10px;
-        color: #64748b;
+        font-size: 9.5px;
+        color: #94a3b8;
         font-weight: 500;
         line-height: 1.1;
+        letter-spacing: 0.02em;
     }
 
     .user-name {
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 700;
         color: #0f172a;
         line-height: 1.2;
+        letter-spacing: -0.01em;
     }
 
     /* Modern Notifications Dropdown */
@@ -405,8 +430,8 @@
     }
 
     .notif-icon-box {
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
         background: #f8fafc;
         color: #64748b;
         border-radius: 50%;
@@ -414,16 +439,17 @@
         align-items: center;
         justify-content: center;
         position: relative;
-        transition: all 0.2s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid #e2e8f0;
+        font-size: 13px;
     }
 
     .notif-icon-box:hover {
-        background: #f1f5f9;
-        color: #0f172a;
-        border-color: #cbd5e1;
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #bfdbfe;
         transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 3px 6px rgba(37, 99, 235, 0.1);
     }
 
     .notif-icon-box.has-notifications {
@@ -438,17 +464,14 @@
         border-color: #f87171;
     }
 
-    /* Page Header Modern Styling (Title Halaman) */
+    /* Page Header Modern Styling (Title Halaman & Breadcrumb) */
     .page-header {
         background: #ffffff !important;
-        /* Clean white background matching the topbar */
         border-bottom: 1px solid #e2e8f0 !important;
-        /* Subtle bottom border */
-        border-left: 4px solid #0ea5e9 !important;
-        /* Aksen biru korporat di sebelah kiri */
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-        /* Bayangan tipis */
-        height: 50px !important;
+        border-left: 3px solid #2563eb !important;
+        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04) !important;
+        height: 46px !important;
+        min-height: 46px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
@@ -457,12 +480,12 @@
 
     @media only screen and (min-width: 768px) {
         .page-header {
-            padding: 0 24px !important;
+            padding: 0 20px !important;
         }
 
         /* Only apply negative margins if layout is NOT fixed to prevent overlapping fixed header */
         html:not(.fixed) .page-header {
-            margin: -40px -40px 30px -40px !important;
+            margin: -40px -40px 24px -40px !important;
         }
 
         html.fixed .page-header {
@@ -473,65 +496,78 @@
     @media only screen and (max-width: 767px) {
         .page-header {
             margin: 0 -15px 15px -15px !important;
+            height: auto !important;
+            min-height: 46px !important;
+            padding: 8px 15px !important;
+            flex-wrap: wrap !important;
+            gap: 6px !important;
         }
     }
 
     .page-header h2 {
         color: #0f172a !important;
-        /* Deep dark slate for title text */
-        font-size: 15px !important;
-        font-weight: 600 !important;
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
         padding: 0 !important;
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
-        line-height: 50px !important;
+        line-height: normal !important;
         font-family: 'Poppins', sans-serif !important;
+        letter-spacing: -0.01em !important;
     }
 
     .page-header h2 i {
-        color: #0ea5e9 !important;
-        /* Ikon biru aksen */
-        background: #f0f9ff !important;
-        /* Badge biru muda lembut */
-        width: 28px !important;
-        height: 28px !important;
-        border-radius: 6px !important;
+        color: #2563eb !important;
+        background: #eff6ff !important;
+        width: 26px !important;
+        height: 26px !important;
+        border-radius: 7px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08) !important;
+        flex-shrink: 0;
     }
 
-    /* Page Header Breadcrumbs High Contrast Styling */
+    /* Page Header Breadcrumbs & Subtitle Styling */
+    .page-header .breadcrumbs {
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+    }
+
     .page-header .breadcrumbs li {
         color: #64748b !important;
-        /* Slate grey */
+        font-size: 11.5px !important;
         font-weight: 500 !important;
+        display: inline-flex !important;
+        align-items: center !important;
     }
 
     .page-header .breadcrumbs li:after {
-        color: #94a3b8 !important;
-        /* Soft grey divider */
+        color: #cbd5e1 !important;
+        font-size: 10px !important;
+        margin: 0 6px !important;
     }
 
     .page-header .breadcrumbs a {
-        color: #0284c7 !important;
-        /* Corporate blue */
+        color: #2563eb !important;
         font-weight: 500 !important;
+        font-size: 11.5px !important;
         transition: color 0.15s ease !important;
     }
 
     .page-header .breadcrumbs a:hover {
-        color: #0369a1 !important;
-        /* Darker blue on hover */
+        color: #1d4ed8 !important;
         text-decoration: none !important;
     }
 
     .page-header .breadcrumbs span {
         color: #64748b !important;
-        /* Slate grey */
+        font-size: 11.5px !important;
         font-weight: 500 !important;
     }
 

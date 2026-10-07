@@ -8,28 +8,35 @@
 </header>
 
 <div class="row">
-	<div class="col">
-		<div class="">
-				<a href="pinjam/show/pengajuan" id="btn-a-gc" class="btn btn-sm btn-success"><i class="fas fa-plus"></i>&nbsp;&nbsp;Ajukan</a>
-				<?php if (isAdmin() || isHrd() || isCRO() || isGa()) { ?>
-				<!--<a href="javascript:;" id="btn-laporan-form" class="btn btn-sm btn-success"><i class="fas fa-print"></i>&nbsp;&nbsp;Cetak Laporan</a> -->
-				<?php } ?>
-		</div>
-		<br>
-		<div class="card-body">
-			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-					<thead>
-						<tr>
-							<th> # </th>
-							<th> Nomor</th>
-							<th> Nama Peminjam</th>
-							<th> Jabatan</th>
-							<th> Kategori</th>
-							<th> Tanggal</th>
-							<th> Status</th>
-					</thead>
-				</table>
+	<div class="col-12">
+		<div class="table-card-container">
+			<div class="table-top-bar">
+				<div class="d-flex align-items-center">
+					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-box-open mr-1"></i> Data Peminjaman Unit</span>
+				</div>
+				<div class="table-actions d-flex align-items-center">
+					<a href="pinjam/show/pengajuan" id="btn-a-gc" class="btn btn-sm btn-success shadow-sm" style="font-weight: 600;">
+						<i class="fas fa-plus mr-1"></i> Ajukan Peminjaman
+					</a>
+				</div>
+			</div>
+
+			<div class="card-body p-3">
+				<div class="table-responsive">
+					<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%;">
+						<thead>
+							<tr>
+								<th> # </th>
+								<th> Nomor </th>
+								<th> Nama Peminjam </th>
+								<th> Jabatan </th>
+								<th> Kategori </th>
+								<th> Tanggal </th>
+								<th> Status </th>
+							</tr>
+						</thead>
+					</table>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -184,7 +191,7 @@
                 $('#main-modal-marketing').modal('hide')
 			}
         });
-		--
+
 		$("#btn-export").click(function(){
 		     if($('#main-modal-marketing #namamarketing').val()==''){
 					Swal.fire({
