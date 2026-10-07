@@ -2948,4 +2948,17 @@ ul.pagination .page-item.disabled span.page-link,
 	}
 }
 
+/* ==========================================================================
+   SIDEBAR MODERN TYPOGRAPHY
+   ========================================================================== */
+.sidebar-left,
+html.modern ul.nav-main li > a,
+html.modern ul.nav-main li .nav-children li a,
+html.modern ul.nav-main li.nav-group-label,
+#switch_menu,
+.sidebar-mobile-title {
+	font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+
 

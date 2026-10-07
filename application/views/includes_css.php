@@ -1,5 +1,7 @@
 <!-- Web Fonts  -->
-<link href="https://fonts.googleapis.com/css?family=Poppins:100,300,400,600,700,800,900" rel="stylesheet" type="text/css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Vendor CSS -->
 <link rel="stylesheet" href="<?= base_url('assets/') ?>vendor/bootstrap/css/bootstrap.css" />
@@ -148,25 +150,26 @@
         }
     }
 
-    /* Modern & Compact Sidebar Menu */
+    /* Modern & Compact Sidebar Menu Typography & Styling */
     .sidebar-left {
         background: #0f172a !important;
-        /* Elegant Slate Blue dark background */
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
     .sidebar-left .nano-content {
         background: #0f172a !important;
     }
 
-    /* Nav Menu Compact Styling */
+    /* Nav Menu Styling & Modern Font */
     html.modern ul.nav-main li>a {
-        padding: 10px 16px !important;
-        font-size: 13.5px !important;
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        padding: 9.5px 16px !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
+        letter-spacing: -0.01em !important;
         color: #94a3b8 !important;
-        /* Lighter slate color for inactive links */
         border-left: 3px solid transparent !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
     /* Icon modern colors */
@@ -183,7 +186,6 @@
     html.modern ul.nav-main li>a:hover {
         background-color: #1e293b !important;
         color: #38bdf8 !important;
-        /* Soft cyan color */
         border-left-color: #38bdf8 !important;
     }
 
@@ -215,13 +217,15 @@
 
     html.modern ul.nav-main li .nav-children {
         background: #0b0f19 !important;
-        /* Darker sub-menu background */
         padding-left: 0 !important;
     }
 
     html.modern ul.nav-main li .nav-children li a {
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         padding: 8px 16px 8px 45px !important;
-        font-size: 12.5px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        letter-spacing: -0.005em !important;
         color: #94a3b8 !important;
         transition: all 0.2s ease !important;
     }
@@ -238,23 +242,26 @@
 
     /* Group labels (Lain Lain, etc.) */
     html.modern ul.nav-main li.nav-group-label {
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         color: #475569 !important;
-        font-size: 11px !important;
+        font-size: 10.5px !important;
         font-weight: 700 !important;
-        letter-spacing: 0.05em !important;
-        padding: 15px 16px 8px 16px !important;
+        letter-spacing: 0.06em !important;
+        padding: 15px 16px 6px 16px !important;
         margin-top: 10px !important;
         text-transform: uppercase !important;
     }
 
     /* Elegantly style the switch menu in sidebar */
     #switch_menu {
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
         border: 1px solid #334155 !important;
         border-radius: 6px !important;
         padding: 6px 10px !important;
-        font-size: 13px !important;
+        font-size: 12.5px !important;
+        font-weight: 500 !important;
         height: auto !important;
         width: calc(100% - 24px) !important;
         margin: 12px !important;
@@ -829,8 +836,8 @@
     }
 
     .sidebar-mobile-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 13px;
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-size: 12.5px;
         font-weight: 700;
         color: #e2e8f0;
         letter-spacing: 0.3px;
