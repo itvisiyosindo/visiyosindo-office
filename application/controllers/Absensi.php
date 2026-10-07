@@ -59,18 +59,17 @@ class Absensi extends CI_Controller
         $data['pengguna_id']      = $this->input->post('pengguna_id', TRUE);
         $data['status_absen']      = $this->input->post('status_absen', TRUE);
 
-        if ($data['status_absen'] == 'tepat_waktu') {
+        if ($data['status_absen'] == 'tepat_waktu' || $data['status_absen'] == 'sakit' || $data['status_absen'] == 'izin' || $data['status_absen'] == 'cuti' || $data['status_absen'] == 'dinas') {
             $data['approval'] = 'terima';
         } else {
             $data['approval'] = '';
         }
 
-
         $data['type_absen']      = $this->input->post('type_absen', TRUE);
         $data['jenis_absen']      = $this->input->post('jenis_absen', TRUE) ?: 'Kantor';
+        $data['perusahaan']       = grantAccessForPerusahaan();
 
         $this->md_absensi->add($data);
-
 
         ajaxReturnDie('success', 'Data Berhasil Disimpan', TRUE);
     }
@@ -1585,6 +1584,71 @@ class Absensi extends CI_Controller
         addlog('Edit Absensi', 'Mengubah data absensi ID: ' . $id_absensi . ' milik: ' . $nama_karyawan . ' (Tanggal: ' . $tanggal . ', Tipe: ' . $type_absen . ')');
 
         echo json_encode(['status' => 'success', 'msg' => 'Data absensi berhasil diperbarui.']);
+        die;
+    }
+
+    public function add_manual_absen()
+    {
+        $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
+        if (!$can_edit) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak. Fitur ini hanya untuk General Affair dan Administrator.']);
+            die;
+        }
+
+        $raw_pengguna_id = $this->input->post('pengguna_id');
+        $pengguna_id = is_numeric($raw_pengguna_id) ? $raw_pengguna_id : decrypt($raw_pengguna_id);
+
+        if (empty($pengguna_id)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Karyawan tidak valid atau belum dipilih.']);
+            die;
+        }
+
+        $tanggal = trim($this->input->post('tanggal_absen'));
+        if (empty($tanggal)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Tanggal absensi wajib diisi.']);
+            die;
+        }
+
+        $waktu_absen = trim($this->input->post('waktu_absen'));
+        if (empty($waktu_absen)) {
+            $waktu_absen = '08:00:00';
+        } elseif (strlen($waktu_absen) == 5) {
+            $waktu_absen .= ':00';
+        }
+
+        $type_absen = trim($this->input->post('type_absen')) ?: 'masuk';
+        $status_absen = trim($this->input->post('status_absen'));
+        $jenis_absen = trim($this->input->post('jenis_absen')) ?: 'Kantor';
+        $jenis_lokasi = trim($this->input->post('jenis_lokasi')) ?: 'Kantor';
+        $tanpa_tunjangan = trim($this->input->post('tanpa_tunjangan'));
+        $approval = trim($this->input->post('approval')) ?: 'terima';
+        $keterangan = trim($this->input->post('keterangan'));
+        $ip_addr = trim($this->input->post('ip_addr')) ?: $this->input->ip_address();
+
+        $data_created = $tanggal . ' ' . $waktu_absen;
+
+        $insert_data = [
+            'pengguna_id' => $pengguna_id,
+            'waktu_absen' => $waktu_absen,
+            'data_created' => $data_created,
+            'type_absen' => $type_absen,
+            'status_absen' => !empty($status_absen) ? $status_absen : NULL,
+            'jenis_absen' => $jenis_absen,
+            'jenis_lokasi' => $jenis_lokasi,
+            'tanpa_tunjangan' => ($jenis_lokasi == 'WFA' || $tanpa_tunjangan == '1') ? 1 : 0,
+            'approval' => !empty($approval) ? $approval : 'terima',
+            'keterangan' => $keterangan,
+            'ip_addr' => $ip_addr,
+            'perusahaan' => grantAccessForPerusahaan()
+        ];
+
+        $this->md_absensi->add($insert_data);
+
+        $karyawan_info = $this->md_pengguna->getById($pengguna_id);
+        $nama_karyawan = !empty($karyawan_info) ? $karyawan_info[0]->nama : 'ID ' . $pengguna_id;
+        addlog('Tambah Absensi Manual', 'Menambah data absensi tanggal ' . $tanggal . ' milik: ' . $nama_karyawan . ' (Status: ' . ($status_absen ?: '-') . ', Tipe: ' . $type_absen . ')');
+
+        echo json_encode(['status' => 'success', 'msg' => 'Data absensi berhasil ditambahkan.']);
         die;
     }
 

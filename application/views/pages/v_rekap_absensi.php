@@ -521,8 +521,17 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
 
     <!-- Table Card -->
     <div class="rekap-table-card">
-        <div class="card-header-clean">
-            <i class="fas fa-table"></i> Rincian Data Log Kehadiran
+        <div class="card-header-clean d-flex align-items-center justify-content-between flex-wrap" style="gap: 12px;">
+            <div>
+                <i class="fas fa-table"></i> Rincian Data Log Kehadiran
+            </div>
+            <?php if ($can_edit): ?>
+            <div>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-tambah-absen-rekap" style="border-radius: 10px; font-weight: 600; padding: 6px 14px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);">
+                    <i class="fas fa-plus-circle mr-1"></i> Input / Tambah Absen (Tanggal Kosong)
+                </button>
+            </div>
+            <?php endif; ?>
         </div>
         <div class="table-responsive">
             <table class="table table-hover table-striped table-sm" id="kt_table_1" style="width: 100%;">
@@ -681,6 +690,109 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal" style="border-radius: 10px; font-weight: 600;"><i class="fas fa-times mr-1"></i> Batal</button>
                         <button type="button" class="btn btn-primary btn-sm px-4 btn-save-edit-absen" style="border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none;"><i class="fas fa-save mr-1"></i> Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add Absensi (Untuk Tanggal Kosong / Sakit / Izin / Cuti / dsb) -->
+    <div id="modal-add-absen" class="modal fade modal-modern" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalAddAbsenLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                    <div>
+                        <h5 class="modal-title text-white font-weight-bold" id="modalAddAbsenLabel"><i class="fas fa-plus-circle mr-2"></i> Input / Tambah Data Absensi Manual</h5>
+                        <small class="text-white-50">Gunakan untuk mengisi tanggal kosong / tidak hadir (Sakit, Cuti, Izin, Dinas, dsb) untuk <strong><?= $pengguna[0]->nama ?></strong></small>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="form-add-absen" autocomplete="off">
+                    <input type="hidden" name="pengguna_id" value="<?= $pengguna_id ?>">
+                    <div class="modal-body">
+                        <div class="alert alert-info py-2 px-3 mb-3" style="font-size: 12.5px; border-radius: 8px;">
+                            <i class="fas fa-info-circle mr-1"></i> Jika karyawan tidak hadir karena <strong>Sakit / Izin / Cuti</strong>, pilih <strong>Tipe Absen = Izin / Cuti / Masuk</strong> dan <strong>Status Absen = Sakit / Izin / Cuti</strong>.
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="add_tanggal_absen" class="font-weight-bold">Tanggal Absensi <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="add_tanggal_absen" name="tanggal_absen" value="<?= date('Y-m-d') ?>" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="add_waktu_absen" class="font-weight-bold">Waktu / Jam Absen <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="add_waktu_absen" name="waktu_absen" value="08:00:00" placeholder="HH:MM:SS (cth: 08:00:00)" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="add_type_absen" class="font-weight-bold">Tipe Absen <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add_type_absen" name="type_absen" required>
+                                    <option value="masuk" selected>Absen Masuk</option>
+                                    <option value="izin">Izin</option>
+                                    <option value="cuti">Cuti</option>
+                                    <option value="istirahat">Absen Istirahat</option>
+                                    <option value="keluar">Absen Keluar</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="add_status_absen" class="font-weight-bold">Status Kehadiran / Kategori <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add_status_absen" name="status_absen">
+                                    <option value="tepat_waktu">Tepat Waktu</option>
+                                    <option value="sakit">Sakit</option>
+                                    <option value="izin">Izin</option>
+                                    <option value="cuti">Cuti</option>
+                                    <option value="terlambat">Terlambat</option>
+                                    <option value="dinas">Dinas</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="add_jenis_absen" class="font-weight-bold">Jenis Absen <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add_jenis_absen" name="jenis_absen" required>
+                                    <option value="Kantor" selected>Kantor</option>
+                                    <option value="WFA">WFA</option>
+                                    <option value="Dinas">Dinas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="add_jenis_lokasi" class="font-weight-bold">Lokasi Kerja</label>
+                                <input type="text" class="form-control" id="add_jenis_lokasi" name="jenis_lokasi" value="Kantor" placeholder="Kantor / WFA / Dinas / Nama Lokasi">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="add_tanpa_tunjangan" class="font-weight-bold">Tunjangan Kehadiran <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add_tanpa_tunjangan" name="tanpa_tunjangan" required>
+                                    <option value="0" selected>Ya (Dapat Tunjangan)</option>
+                                    <option value="1">Tidak (Tanpa Tunjangan)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="add_approval" class="font-weight-bold">Status Approval <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add_approval" name="approval">
+                                    <option value="terima" selected>Diterima (Disetujui)</option>
+                                    <option value="tolak">Ditolak</option>
+                                    <option value="">- Belum Ditentukan -</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="add_ip_addr" class="font-weight-bold">IP Address</label>
+                                <input type="text" class="form-control" id="add_ip_addr" name="ip_addr" value="127.0.0.1" placeholder="cth: 127.0.0.1">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="add_keterangan" class="font-weight-bold">Keterangan Tambahan</label>
+                                <textarea class="form-control" id="add_keterangan" name="keterangan" rows="2" placeholder="cth: Sakit demam/surat dokter, Cuti tahunan, dsb."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal" style="border-radius: 10px; font-weight: 600;"><i class="fas fa-times mr-1"></i> Batal</button>
+                        <button type="button" class="btn btn-success btn-sm px-4 btn-save-add-absen" style="border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none;"><i class="fas fa-save mr-1"></i> Simpan Data Absen</button>
                     </div>
                 </form>
             </div>
@@ -950,6 +1062,102 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                             },
                             error: function() {
                                 Swal.fire('Error', 'Terjadi kesalahan pada server saat memperbarui data.', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Open Add Modal
+            $('#btn-tambah-absen-rekap').click(function() {
+                var activeFilterDate = $('#filter_date').val();
+                if (activeFilterDate) {
+                    $('#add_tanggal_absen').val(activeFilterDate);
+                } else {
+                    $('#add_tanggal_absen').val('<?= date('Y-m-d') ?>');
+                }
+                $('#add_waktu_absen').val('08:00:00');
+                $('#add_type_absen').val('masuk');
+                $('#add_status_absen').val('tepat_waktu');
+                $('#add_jenis_absen').val('Kantor');
+                $('#add_jenis_lokasi').val('Kantor');
+                $('#add_tanpa_tunjangan').val('0');
+                $('#add_approval').val('terima');
+                $('#add_keterangan').val('');
+                $('#modal-add-absen').modal('show');
+            });
+
+            // Auto-adjust form fields based on selected status
+            $('#add_status_absen').change(function() {
+                var st = $(this).val();
+                if (st === 'sakit') {
+                    $('#add_type_absen').val('izin');
+                    $('#add_keterangan').attr('placeholder', 'cth: Sakit demam / flu (Surat Dokter)');
+                } else if (st === 'izin') {
+                    $('#add_type_absen').val('izin');
+                    $('#add_keterangan').attr('placeholder', 'cth: Izin urusan keluarga / SIMP');
+                } else if (st === 'cuti') {
+                    $('#add_type_absen').val('cuti');
+                    $('#add_keterangan').attr('placeholder', 'cth: Cuti tahunan');
+                } else if (st === 'dinas') {
+                    $('#add_type_absen').val('masuk');
+                    $('#add_jenis_absen').val('Dinas');
+                    $('#add_jenis_lokasi').val('Dinas Luar Kota');
+                }
+            });
+
+            $(document).on('click', '.btn-save-add-absen', function() {
+                var form = $('#form-add-absen');
+                if (!$('#add_tanggal_absen').val() || !$('#add_waktu_absen').val()) {
+                    Swal.fire('Perhatian', 'Tanggal dan Waktu Absen wajib diisi!', 'warning');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Tambah Absensi Manual?',
+                    text: 'Data absensi akan dicatat untuk karyawan ini.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Simpan',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.value) {
+                        var formData = new FormData(form[0]);
+                        formData.append('csrf_token', token);
+                        $.ajax({
+                            url: 'absensi/add_manual_absen',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            dataType: 'JSON',
+                            beforeSend: function() {
+                                Swal.fire({
+                                    html: `<h4>Menyimpan Data...</h4>`,
+                                    icon: 'info',
+                                    allowOutsideClick: false,
+                                    showConfirmButton: false,
+                                });
+                            },
+                            success: function(resp) {
+                                if (resp.status == 'success') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: resp.msg || 'Data absensi berhasil ditambahkan.',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(function() {
+                                        $('#modal-add-absen').modal('hide');
+                                        updateDatatable();
+                                        updateStatsCards();
+                                    });
+                                } else {
+                                    Swal.fire('Error', resp.msg || 'Gagal menambahkan data absensi.', 'error');
+                                }
+                            },
+                            error: function() {
+                                Swal.fire('Error', 'Terjadi kesalahan pada server saat menambahkan data.', 'error');
                             }
                         });
                     }

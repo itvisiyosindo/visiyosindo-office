@@ -134,6 +134,10 @@
 						<select data-plugin-selectTwo class="form-control populate" id="status_absen" name="status_absen" required>
 							<option value="">- Pilih -</option>
 							<option value="tepat_waktu">Tepat Waktu (Jika Masuk)</option>
+							<option value="sakit">Sakit</option>
+							<option value="izin">Izin</option>
+							<option value="cuti">Cuti</option>
+							<option value="terlambat">Terlambat</option>
 							<option value="dinas">Dinas</option>
 						</select>
 					</div>
@@ -143,6 +147,8 @@
 						<select data-plugin-selectTwo class="form-control populate" id="type_absen" name="type_absen" required>
 							<option value="">- Pilih -</option>
 							<option value="masuk">Masuk</option>
+							<option value="izin">Izin</option>
+							<option value="cuti">Cuti</option>
 							<option value="istirahat">Istirahat</option>
 							<option value="keluar">Keluar</option>
 						</select>
@@ -153,6 +159,7 @@
 						<select data-plugin-selectTwo class="form-control populate" id="jenis_absen" name="jenis_absen" required>
 							<option value="">- Pilih -</option>
 							<option value="Kantor">Kantor</option>
+							<option value="WFA">WFA</option>
 							<option value="Dinas">Dinas</option>
 						</select>
 					</div>
