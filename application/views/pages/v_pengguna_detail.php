@@ -299,36 +299,143 @@
         border-radius: 0 10px 10px 0;
     }
 
-    /* Checkbox Styles */
-    .benefit-checkbox {
+    /* Modern Benefit Checkbox Cards */
+    .benefit-item-card {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         padding: 10px 14px;
-        background: #f8fafc;
-        border-radius: 10px;
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-        border: 1px solid #e2e8f0;
-    }
-
-    .benefit-checkbox:hover {
-        background: #f1f5f9;
-        border-color: #cbd5e1;
-    }
-
-    .benefit-checkbox input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        margin-right: 12px;
-        accent-color: #2563eb;
-    }
-
-    .benefit-checkbox label {
-        margin: 0;
-        font-weight: 600;
-        font-size: 13px;
-        color: #334155;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        margin-bottom: 10px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
+        position: relative;
+        user-select: none;
+    }
+
+    .benefit-item-card:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .benefit-item-card.is-active {
+        background: #eff6ff;
+        border-color: #3b82f6;
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.12);
+    }
+
+    .benefit-item-card .benefit-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .benefit-item-card .benefit-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .benefit-item-card.is-active .benefit-icon {
+        transform: scale(1.05);
+    }
+
+    .benefit-icon-jabatan { background: #eff6ff; color: #2563eb; }
+    .benefit-icon-tt { background: #ecfdf5; color: #059669; }
+    .benefit-icon-konsumsi { background: #fffbeb; color: #d97706; }
+    .benefit-icon-kinerja { background: #f5f3ff; color: #7c3aed; }
+    .benefit-icon-komunikasi { background: #fff1f2; color: #e11d48; }
+    .benefit-icon-transportasi { background: #eef2ff; color: #4f46e5; }
+    .benefit-icon-bbm { background: #f0fdfa; color: #0d9488; }
+    .benefit-icon-raya { background: #fff7ed; color: #ea580c; }
+    .benefit-icon-bonus { background: #fdf2f8; color: #db2777; }
+
+    .benefit-item-card .benefit-meta {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .benefit-item-card .benefit-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+    }
+
+    .benefit-item-card .benefit-status-badge {
+        font-size: 10.5px;
+        font-weight: 600;
+        margin-top: 1px;
+        color: #94a3b8;
+    }
+
+    .benefit-item-card.is-active .benefit-status-badge {
+        color: #2563eb;
+    }
+
+    /* iOS / Modern Custom Toggle Switch */
+    .custom-switch-clean {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 22px;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .custom-switch-clean input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+    }
+
+    .custom-switch-clean .slider-clean {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 22px;
+    }
+
+    .custom-switch-clean .slider-clean:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #ffffff;
+        transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .custom-switch-clean input:checked + .slider-clean {
+        background-color: #2563eb;
+    }
+
+    .custom-switch-clean input:focus + .slider-clean {
+        box-shadow: 0 0 1px #2563eb;
+    }
+
+    .custom-switch-clean input:checked + .slider-clean:before {
+        transform: translateX(18px);
     }
 
     /* Document Cards */
@@ -1135,43 +1242,167 @@
                     <div class="card-body-custom">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_jabatan" name="terima_tunjangan_jabatan" <?= $data_pengguna[0]->terima_tunjangan_jabatan == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_jabatan"><i class="fas fa-user-tie text-primary"></i> Tunjangan Jabatan</label>
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_jabatan == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-jabatan">
+                                            <i class="fas fa-user-tie"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Jabatan</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_jabatan == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_jabatan" name="terima_tunjangan_jabatan" <?= $data_pengguna[0]->terima_tunjangan_jabatan == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_tt" name="terima_tunjangan_tt" <?= $data_pengguna[0]->terima_tunjangan_tt == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_tt"><i class="fas fa-random text-info"></i> Tunjangan Tidak Tetap</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_tt == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-tt">
+                                            <i class="fas fa-random"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Tidak Tetap</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_tt == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_tt" name="terima_tunjangan_tt" <?= $data_pengguna[0]->terima_tunjangan_tt == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_konsumsi" name="terima_tunjangan_konsumsi" <?= $data_pengguna[0]->terima_tunjangan_konsumsi == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_konsumsi"><i class="fas fa-utensils text-warning"></i> Tunjangan Konsumsi</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_konsumsi == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-konsumsi">
+                                            <i class="fas fa-utensils"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Konsumsi</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_konsumsi == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_konsumsi" name="terima_tunjangan_konsumsi" <?= $data_pengguna[0]->terima_tunjangan_konsumsi == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_kinerja" name="terima_tunjangan_kinerja" <?= $data_pengguna[0]->terima_tunjangan_kinerja == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_kinerja"><i class="fas fa-chart-line text-success"></i> Tunjangan Kinerja</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_kinerja == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-kinerja">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Kinerja</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_kinerja == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_kinerja" name="terima_tunjangan_kinerja" <?= $data_pengguna[0]->terima_tunjangan_kinerja == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_komunikasi" name="terima_tunjangan_komunikasi" <?= $data_pengguna[0]->terima_tunjangan_komunikasi == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_komunikasi"><i class="fas fa-phone text-danger"></i> Tunjangan Komunikasi</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_komunikasi == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-komunikasi">
+                                            <i class="fas fa-phone-alt"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Komunikasi</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_komunikasi == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_komunikasi" name="terima_tunjangan_komunikasi" <?= $data_pengguna[0]->terima_tunjangan_komunikasi == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_transportasi" name="terima_tunjangan_transportasi" <?= $data_pengguna[0]->terima_tunjangan_transportasi == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_transportasi"><i class="fas fa-bus text-secondary"></i> Tunjangan Transportasi</label>
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_transportasi == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-transportasi">
+                                            <i class="fas fa-bus"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Transportasi</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_transportasi == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_transportasi" name="terima_tunjangan_transportasi" <?= $data_pengguna[0]->terima_tunjangan_transportasi == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_bbm" name="terima_tunjangan_bbm" <?= $data_pengguna[0]->terima_tunjangan_bbm == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_bbm"><i class="fas fa-gas-pump text-dark"></i> Tunjangan BBM</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_bbm == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-bbm">
+                                            <i class="fas fa-gas-pump"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan BBM</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_bbm == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_bbm" name="terima_tunjangan_bbm" <?= $data_pengguna[0]->terima_tunjangan_bbm == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_tunjangan_raya" name="terima_tunjangan_raya" <?= $data_pengguna[0]->terima_tunjangan_raya == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_tunjangan_raya"><i class="fas fa-star text-warning"></i> Tunjangan Hari Raya</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_tunjangan_raya == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-raya">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Tunjangan Hari Raya</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_tunjangan_raya == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_tunjangan_raya" name="terima_tunjangan_raya" <?= $data_pengguna[0]->terima_tunjangan_raya == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="benefit-checkbox">
-                                    <input type="checkbox" id="terima_bonus_tahunan" name="terima_bonus_tahunan" <?= $data_pengguna[0]->terima_bonus_tahunan == 1 ? 'checked' : '' ?>>
-                                    <label for="terima_bonus_tahunan"><i class="fas fa-gift text-danger"></i> Bonus Tahunan</label>
+
+                                <div class="benefit-item-card <?= $data_pengguna[0]->terima_bonus_tahunan == 1 ? 'is-active' : '' ?>">
+                                    <div class="benefit-left">
+                                        <div class="benefit-icon benefit-icon-bonus">
+                                            <i class="fas fa-gift"></i>
+                                        </div>
+                                        <div class="benefit-meta">
+                                            <span class="benefit-title">Bonus Tahunan</span>
+                                            <span class="benefit-status-badge"><?= $data_pengguna[0]->terima_bonus_tahunan == 1 ? 'Aktif' : 'Tidak Aktif' ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-right">
+                                        <label class="custom-switch-clean">
+                                            <input type="checkbox" id="terima_bonus_tahunan" name="terima_bonus_tahunan" <?= $data_pengguna[0]->terima_bonus_tahunan == 1 ? 'checked' : '' ?>>
+                                            <span class="slider-clean"></span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2048,6 +2279,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // ============ BENEFIT CHECKBOX CARDS INTERACTION ============
+    $(document).on('click', '.benefit-item-card', function(e) {
+        if ($(e.target).closest('.custom-switch-clean').length > 0) {
+            return; // Let the switch handle its own click
+        }
+        var chk = $(this).find('input[type="checkbox"]');
+        var newState = !chk.prop('checked');
+        chk.prop('checked', newState).trigger('change');
+    });
+
+    $(document).on('change', '.custom-switch-clean input[type="checkbox"]', function() {
+        var isChecked = $(this).prop('checked');
+        var card = $(this).closest('.benefit-item-card');
+        card.toggleClass('is-active', isChecked);
+        card.find('.benefit-status-badge').text(isChecked ? 'Aktif' : 'Tidak Aktif');
+    });
 
     // Delete Signature
     $('#btn-delete-signature').on('click', function() {
