@@ -717,11 +717,11 @@ class Salary extends CI_Controller
                         : "salary/print_slip/" . encryptvym($id_enc . "," . $tglcetakstamp);
     
             $li_btn = '
-                <div class="btn-group" role="group">
-                    <button type="button" title="Edit Salary" class="btn btn-sm btn-warning btn-edit" data-id="' . $id_enc . '"><i class="bx bx-pencil"></i></button>
-                    <button type="button" title="Edit Komisi" class="btn btn-sm btn-primary btn-komisi" data-id="' . $id_enc . '"><i class="bx bx-dollar-circle"></i></button>
-                    <button type="button" title="Tambah Pendapatan Lain" class="btn btn-sm btn-info btn-pen_lain" data-id="' . $id_enc . '"><i class="bx bx-message-alt-add"></i></button> 
-                    <a target="_blank" class="btn btn-sm btn-danger" href="' . base_url($url_slip) . '" title="Print Slip Gaji">
+                <div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
+                    <button type="button" title="Edit Salary" class="btn btn-sm btn-warning text-white shadow-sm btn-edit" data-id="' . $id_enc . '" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="bx bx-pencil"></i></button>
+                    <button type="button" title="Edit Komisi" class="btn btn-sm btn-primary shadow-sm btn-komisi" data-id="' . $id_enc . '" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="bx bx-dollar-circle"></i></button>
+                    <button type="button" title="Tambah Pendapatan Lain" class="btn btn-sm btn-info text-white shadow-sm btn-pen_lain" data-id="' . $id_enc . '" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="bx bx-message-alt-add"></i></button> 
+                    <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url($url_slip) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
                         <i class="fas fa-file-invoice-dollar"></i> Slip ' . ($month_filter ?: "Terbaru") . '
                     </a>
                 </div>';
@@ -786,10 +786,10 @@ class Salary extends CI_Controller
             $myObj = $id . "," . $tglcetakstamp;
             $parJSON = encryptvym($myObj);
             $li_btn = '
-                <div class="btn-group" role="group" aria-label="First group">
-                    <button type="button" title="Edit Salary" class="btn btn-sm btn-warning btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
-                    <button type="button" title="Tambah Pendapatan Lain" class="btn btn-sm btn-info btn-pen_lain" data-id="' . $id . '"><i class="bx bx-message-alt-add"></i></button>
-                    <a target="_blank" class="btn btn-sm btn-danger" href="' . base_url('salary/print_slip/' . $parJSON) . '" title="Print Slip Gaji"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
+                <div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
+                    <button type="button" title="Edit Salary" class="btn btn-sm btn-warning text-white shadow-sm btn-edit" data-id="' . $id . '" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="bx bx-pencil"></i></button>
+                    <button type="button" title="Tambah Pendapatan Lain" class="btn btn-sm btn-info text-white shadow-sm btn-pen_lain" data-id="' . $id . '" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="bx bx-message-alt-add"></i></button>
+                    <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url('salary/print_slip/' . $parJSON) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
                 </div>';
             $th = array();
             $th[] = ++$start . '.';
@@ -831,9 +831,9 @@ class Salary extends CI_Controller
             $myObj = $id . "," . $tglcetakstamp;
             $parJSON = encryptvym($myObj);
             $li_btn = '
-                <div class="btn-group" role="group" aria-label="First group">
-                    <button type="button" title="Tambah Pendapatan Lain" class="btn btn-sm btn-info btn-pen_lain" data-id="' . $id . '"><i class="bx bx-message-alt-add"></i></button>
-                    <a target="_blank" class="btn btn-sm btn-danger" href="' . base_url('salary/print_slip/' . $parJSON) . '" title="Print Slip Gaji"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
+                <div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
+                    <button type="button" title="Tambah Pendapatan Lain" class="btn btn-sm btn-info text-white shadow-sm btn-pen_lain" data-id="' . $id . '" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="bx bx-message-alt-add"></i></button>
+                    <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url('salary/print_slip/' . $parJSON) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
                 </div>';
             $th = array();
             $th[] = ++$start . '.';

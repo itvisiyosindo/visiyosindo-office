@@ -184,9 +184,9 @@ class Salary_tidak_tetap extends CI_Controller
                         $total_val = $kinerja_val + $konsumsi_val;
                     }
 
-                    $btn_action = '<div class="btn-group" role="group">
-                        <button type="button" class="btn btn-xs btn-warning btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan"><i class="fa fa-edit"></i> Edit</button>
-                        <a target="_blank" class="btn btn-xs btn-danger" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
+                    $btn_action = '<div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
+                        <button type="button" class="btn btn-sm btn-warning text-white shadow-sm btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="fa fa-edit"></i> Edit</button>
+                        <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
                     </div>';
 
                     $th = array();
@@ -500,9 +500,9 @@ class Salary_tidak_tetap extends CI_Controller
                     $f = ($a + $hitung_kinerja + $hitung_konsumsi + $d + $e + $g - $pott) + $s_pendapatanlain;
                 }
 
-                $btn_action = '<div class="btn-group" role="group">
-                    <button type="button" class="btn btn-xs btn-warning btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan"><i class="fa fa-edit"></i> Edit</button>
-                    <a target="_blank" class="btn btn-xs btn-danger" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
+                $btn_action = '<div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
+                    <button type="button" class="btn btn-sm btn-warning text-white shadow-sm btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="fa fa-edit"></i> Edit</button>
+                    <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
                 </div>';
 
                 $th[] = $potongan;
