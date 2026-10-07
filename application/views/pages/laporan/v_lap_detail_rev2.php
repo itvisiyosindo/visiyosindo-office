@@ -82,6 +82,104 @@
 
   .badge-kurang-sekali { background: #fff1f2; border-color: #fecdd3; color: #9f1239; }
   .badge-kurang-sekali .score-range { background: #e11d48; color: #ffffff; }
+
+  /* Custom Week Dropdown Styling */
+  .custom-week-dropdown .dropdown-toggle {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      transition: all 0.2s ease;
+  }
+  .custom-week-dropdown .dropdown-toggle:hover,
+  .custom-week-dropdown.show .dropdown-toggle {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+      background: #f8fafc;
+  }
+  .custom-week-dropdown .dropdown-toggle::after {
+      display: none !important;
+  }
+  .custom-week-dropdown.show .dropdown-arrow {
+      transform: rotate(180deg);
+  }
+  .dropdown-arrow {
+      transition: transform 0.2s ease;
+  }
+  .custom-week-menu {
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+      padding: 0;
+      min-width: 320px;
+      max-width: 360px;
+      margin-top: 6px;
+      animation: weekDropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transform-origin: top right;
+      overflow: hidden;
+  }
+  @keyframes weekDropdownIn {
+      from {
+          opacity: 0;
+          transform: scale(0.97) translateY(-6px);
+      }
+      to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+      }
+  }
+  .custom-week-scroll {
+      max-height: 290px;
+      overflow-y: auto;
+      padding: 6px;
+  }
+  .custom-week-scroll::-webkit-scrollbar {
+      width: 6px;
+  }
+  .custom-week-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+  }
+  .custom-week-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+  }
+  .custom-week-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+  }
+  .custom-week-item {
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 3px;
+      transition: all 0.15s ease;
+      color: #334155;
+      border-left: 3px solid transparent;
+      display: block;
+      text-decoration: none !important;
+  }
+  .custom-week-item:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-left-color: #3b82f6;
+      transform: translateX(2px);
+  }
+  .custom-week-item.active {
+      background: #eff6ff !important;
+      color: #1d4ed8 !important;
+      border-left-color: #2563eb;
+  }
+  .custom-week-item .week-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.3;
+  }
+  .custom-week-item .week-dates {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+  }
+  .custom-week-item.active .week-dates {
+      color: #3b82f6;
+      font-weight: 500;
+  }
 </style>
 
 <div class="row">
@@ -121,31 +219,65 @@
 						</button>
 					</div>
 
-					<!-- Right: Week Selector -->
+					<!-- Right: Week Selector Custom Dropdown -->
 					<div class="d-flex align-items-center" style="gap: 8px;">
-						<div class="input-group input-group-sm" style="width: auto;">
-							<div class="input-group-prepend">
-								<span class="input-group-text bg-light border-right-0 text-muted" style="border-radius: 8px 0 0 8px; font-weight: 600; font-size: 12px;">
-									<i class="fas fa-calendar-week mr-1 text-primary"></i> Pilih Minggu:
+						<?php 
+							$curr_m_time = strtotime("monday this week {$week_offset} week");
+							$curr_s_time = strtotime("sunday this week {$week_offset} week");
+							$curr_start = date('d/m/Y', $curr_m_time);
+							$curr_end = date('d/m/Y', $curr_s_time);
+							$curr_title = ($week_offset == 0) ? 'Minggu Ini' : 'Minggu ' . abs($week_offset) . ' Lalu';
+						?>
+						<div class="dropdown custom-week-dropdown">
+							<button class="btn btn-sm btn-white border dropdown-toggle d-flex align-items-center justify-content-between shadow-sm" type="button" id="dropdownWeekMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="min-width: 290px; border-radius: 8px; font-weight: 500; font-size: 12.5px; padding: 7px 14px; background: #ffffff; color: #334155; border-color: #cbd5e1;">
+								<span class="d-flex align-items-center text-truncate mr-2">
+									<i class="fas fa-calendar-week text-primary mr-2" style="font-size: 13px;"></i>
+									<span class="font-weight-bold text-dark mr-1"><?= $curr_title ?></span>
+									<span class="text-muted" style="font-size: 11.5px;">(<?= $curr_start ?> - <?= $curr_end ?>)</span>
 								</span>
+								<i class="fas fa-chevron-down text-muted dropdown-arrow" style="font-size: 10px;"></i>
+							</button>
+							<div class="dropdown-menu dropdown-menu-right shadow-lg custom-week-menu" aria-labelledby="dropdownWeekMenu">
+								<div class="dropdown-header d-flex align-items-center justify-content-between py-2 px-3 bg-light border-bottom">
+									<span class="font-weight-bold text-dark" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+										<i class="fas fa-history mr-1 text-primary"></i> Pilih Periode Minggu
+									</span>
+									<span class="badge badge-primary badge-pill" style="font-size: 10px; font-weight: 600;">Riwayat Minggu</span>
+								</div>
+								<div class="p-2 border-bottom bg-white">
+									<div class="input-group input-group-sm">
+										<div class="input-group-prepend">
+											<span class="input-group-text bg-light border-right-0" style="border-radius: 6px 0 0 6px;"><i class="fas fa-search text-muted" style="font-size: 11px;"></i></span>
+										</div>
+										<input type="text" class="form-control form-control-sm border-left-0 week-search-input" placeholder="Cari minggu / tanggal..." style="border-radius: 0 6px 6px 0; font-size: 12px;" onclick="event.stopPropagation();">
+									</div>
+								</div>
+								<div class="custom-week-scroll">
+									<?php for ($i = 0; $i >= -50; $i--): ?>
+										<?php 
+											$m_time = strtotime("monday this week $i week");
+											$s_time = strtotime("sunday this week $i week");
+											$start_w = date('d/m/Y', $m_time);
+											$end_w = date('d/m/Y', $s_time);
+											$is_active = ($week_offset == $i);
+											$title = ($i == 0) ? 'Minggu Ini' : 'Minggu ' . abs($i) . ' Lalu';
+										?>
+										<a class="dropdown-item custom-week-item <?= $is_active ? 'active' : '' ?>" href="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/' . $i) ?>" data-text="<?= strtolower($title . ' ' . $start_w . ' ' . $end_w) ?>">
+											<div class="d-flex align-items-center justify-content-between w-100">
+												<div>
+													<div class="week-title"><?= $title ?></div>
+													<div class="week-dates"><i class="far fa-calendar-alt mr-1"></i><?= $start_w ?> - <?= $end_w ?></div>
+												</div>
+												<?php if ($is_active): ?>
+													<span class="badge badge-primary badge-pill px-2 py-1" style="font-size: 10px; font-weight: 600;">
+														<i class="fas fa-check mr-1"></i> Aktif
+													</span>
+												<?php endif; ?>
+											</div>
+										</a>
+									<?php endfor; ?>
+								</div>
 							</div>
-							<select class="form-control form-control-sm custom-select" style="max-width: 280px; border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500;" onchange="if (this.value) window.location.href = this.value;">
-								<?php for ($i = 0; $i >= -250; $i--): ?>
-									<?php 
-										$m_time = strtotime("monday this week $i week");
-										$s_time = strtotime("sunday this week $i week");
-										$start_w = date('d/m/Y', $m_time);
-										$end_w = date('d/m/Y', $s_time);
-										$sel = ($week_offset == $i) ? 'selected' : '';
-										if ($i == 0) {
-											$label = "Minggu Ini ($start_w - $end_w)";
-										} else {
-											$label = "Minggu " . abs($i) . " Lalu ($start_w - $end_w)";
-										}
-									?>
-									<option value="<?= base_url('laporan/show/detail/laporan_detail_rev2/' . $id_pengaju . '/' . $i) ?>" <?= $sel ?>><?= $label ?></option>
-								<?php endfor; ?>
-							</select>
 						</div>
 					</div>
 				</div>
@@ -950,10 +1082,21 @@
 							$('.btn-isactive').remove();       // Hapus elemen kalau ada
 							$('#main-modal-indikatorPenilaian').modal('show'); // Tampilkan modal
 					});
-			});
+				// Search filter for custom week dropdown
+				$(document).on('keyup', '.week-search-input', function(e) {
+					e.stopPropagation();
+					var val = $(this).val().toLowerCase().trim();
+					var $menu = $(this).closest('.custom-week-menu');
+					$menu.find('.custom-week-item').each(function() {
+						var text = $(this).attr('data-text') || $(this).text().toLowerCase();
+						if (text.indexOf(val) > -1) {
+							$(this).show();
+						} else {
+							$(this).hide();
+						}
+					});
+				});
 
-        
-		
 	 })
 
 	function goBack() {
