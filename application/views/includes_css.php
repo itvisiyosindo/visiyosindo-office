@@ -166,40 +166,50 @@
     /* Nav Menu Styling & Clean Font */
     html.modern ul.nav-main li>a {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        padding: 9px 16px !important;
+        padding: 8px 14px !important;
         font-size: 12.5px !important;
         font-weight: 500 !important;
         letter-spacing: 0.01em !important;
         color: #94a3b8 !important;
         border-left: 3px solid transparent !important;
+        display: flex !important;
+        align-items: center !important;
         transition: all 0.18s ease-in-out !important;
         -webkit-font-smoothing: antialiased !important;
     }
 
-    /* Icon modern colors */
+    /* Modern & Clean Sidebar Icon Styling */
     html.modern ul.nav-main li>a i {
         color: #64748b !important;
-        font-size: 14px !important;
-        margin-right: 12px !important;
-        transition: color 0.18s ease !important;
-        width: 18px;
+        font-size: 13px !important;
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        border-radius: 6px !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-right: 10px !important;
+        transition: all 0.18s ease-in-out !important;
         text-align: center;
     }
 
     /* Hover State */
     html.modern ul.nav-main li>a:hover {
-        background-color: rgba(255, 255, 255, 0.04) !important;
+        background-color: rgba(255, 255, 255, 0.035) !important;
         color: #f1f5f9 !important;
         border-left-color: rgba(56, 189, 248, 0.6) !important;
     }
 
     html.modern ul.nav-main li>a:hover i {
         color: #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.12) !important;
     }
 
     /* Active State */
     html.modern ul.nav-main li.nav-active>a {
-        background-color: rgba(56, 189, 248, 0.08) !important;
+        background-color: rgba(56, 189, 248, 0.07) !important;
         color: #38bdf8 !important;
         border-left-color: #38bdf8 !important;
         font-weight: 600 !important;
@@ -207,12 +217,15 @@
 
     html.modern ul.nav-main li.nav-active>a i {
         color: #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.18) !important;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
     }
 
     /* Children menu style (collapsed/expanded) */
     html.modern ul.nav-main li.nav-parent>a:after {
         color: #64748b !important;
-        font-size: 8px !important;
+        font-size: 8.5px !important;
+        transition: transform 0.2s ease, color 0.2s ease !important;
     }
 
     html.modern ul.nav-main li.nav-parent.nav-expanded>a:after {
@@ -226,13 +239,28 @@
 
     html.modern ul.nav-main li .nav-children li a {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        padding: 7.5px 16px 7.5px 42px !important;
+        padding: 7px 16px 7px 38px !important;
         font-size: 12px !important;
         font-weight: 400 !important;
         letter-spacing: 0.005em !important;
         color: #94a3b8 !important;
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
         transition: all 0.18s ease !important;
         -webkit-font-smoothing: antialiased !important;
+    }
+
+    /* Clean Sub-menu Bullet Indicator */
+    html.modern ul.nav-main li .nav-children li a::before {
+        content: "" !important;
+        width: 4.5px !important;
+        height: 4.5px !important;
+        border-radius: 50% !important;
+        background: #475569 !important;
+        position: absolute !important;
+        left: 22px !important;
+        transition: all 0.18s ease !important;
     }
 
     html.modern ul.nav-main li .nav-children li a:hover {
@@ -240,9 +268,20 @@
         background: rgba(255, 255, 255, 0.02) !important;
     }
 
+    html.modern ul.nav-main li .nav-children li a:hover::before {
+        background: #38bdf8 !important;
+        transform: scale(1.3) !important;
+    }
+
     html.modern ul.nav-main li .nav-children li.nav-active a {
         color: #38bdf8 !important;
         font-weight: 600 !important;
+    }
+
+    html.modern ul.nav-main li .nav-children li.nav-active a::before {
+        background: #38bdf8 !important;
+        transform: scale(1.3) !important;
+        box-shadow: 0 0 6px rgba(56, 189, 248, 0.6) !important;
     }
 
     /* Group labels (Lain Lain, etc.) */
