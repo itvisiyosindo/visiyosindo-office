@@ -1662,6 +1662,7 @@ class Absensi extends CI_Controller
                     $istirahat = $day_records['istirahat'] ?? null;
                     $keluar = $day_records['keluar'] ?? null;
                     $izin = $day_records['izin'] ?? null;
+                    $cuti = $day_records['cuti'] ?? null;
 
                     if ($masuk) {
                         $dt['jenis_absen'] = 'Absensi';
@@ -1670,6 +1671,10 @@ class Absensi extends CI_Controller
                         $dt['istirahat'] = $istirahat ? $istirahat->waktu_absen : '';
                         $dt['keluar'] = $keluar ? $keluar->waktu_absen : '';
                         $dt['ket'] = $masuk->status_absen ?: ($masuk->keterangan ?: '');
+                    } elseif ($cuti) {
+                        $dt['jenis_absen'] = 'Cuti';
+                        $dt['lokasi'] = '-';
+                        $dt['ket'] = $cuti->keterangan ?: 'Cuti Tahunan';
                     } elseif ($izin) {
                         $dt['jenis_absen'] = !empty($izin->status_absen) ? ucfirst($izin->status_absen) : 'Izin';
                         $dt['lokasi'] = ($keluar || $istirahat) ? (($keluar ?: $istirahat)->jenis_absen ?: 'Kantor') : '-';
