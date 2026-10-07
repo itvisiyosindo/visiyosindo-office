@@ -327,6 +327,20 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
         background-color: #f8fafc !important;
     }
 
+    /* Badges in table */
+    #kt_table_1 .badge,
+    #kt_table_1 span[class*="badge"] {
+        display: inline-block !important;
+        white-space: nowrap !important;
+        padding: 4px 10px !important;
+        border-radius: 20px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+        letter-spacing: 0.02em !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
     /* Modal Modern */
     .modal-modern .modal-content {
         border: none;

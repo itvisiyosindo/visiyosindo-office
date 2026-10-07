@@ -1329,32 +1329,31 @@ class Absensi extends CI_Controller
             $id       = encrypt($row->id_absensi);
             $pengguna_id = encrypt($row->pengguna_id);
 
-            $type_absen = $row->type_absen == 'masuk' ? '<span class="badge-success badge-pill">Absen Masuk</span>' : '<span class="badge-warning badge-pill">Absen Keluar</span>';
             if ($row->type_absen == 'masuk') {
-                $type_absen = '<span class="badge-success badge-pill">Absen Masuk</span>';
+                $type_absen = '<span class="badge badge-pill badge-success" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Absen Masuk</span>';
             } elseif ($row->type_absen == 'keluar') {
-                $type_absen = '<span class="badge-warning badge-pill">Absen Keluar</span>';
+                $type_absen = '<span class="badge badge-pill badge-warning text-white" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Absen Keluar</span>';
             } elseif ($row->type_absen == 'istirahat') {
-                $type_absen = '<span class="badge-info badge-pill">Absen Istirahat</span>';
+                $type_absen = '<span class="badge badge-pill badge-info" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Absen Istirahat</span>';
             } else {
-                $type_absen = '<span class="badge-info badge-pill">' . ucwords($row->type_absen) . '</span>';
+                $type_absen = '<span class="badge badge-pill badge-info" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">' . ucwords($row->type_absen) . '</span>';
             }
 
             if ($row->status_absen) {
                 if ($row->status_absen == "terlambat") {
-                    $status_absen = '<span class="badge-danger badge-pill">Terlambat</span>';
+                    $status_absen = '<span class="badge badge-pill badge-danger" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Terlambat</span>';
                 } else if ($row->status_absen == "tepat_waktu" || $row->status_absen == "tepat") {
-                    $status_absen = '<span class="badge-primary badge-pill">Tepat Waktu</span>';
+                    $status_absen = '<span class="badge badge-pill badge-primary" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Tepat Waktu</span>';
                 } else if ($row->status_absen == "dinas") {
-                    $status_absen = '<span class="badge-success badge-pill">Dinas</span>';
+                    $status_absen = '<span class="badge badge-pill badge-success" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Dinas</span>';
                 } else if ($row->status_absen == "izin") {
-                    $status_absen = '<span class="badge-warning badge-pill">Izin</span>';
+                    $status_absen = '<span class="badge badge-pill badge-warning text-white" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Izin</span>';
                 } else if ($row->status_absen == "cuti") {
-                    $status_absen = '<span class="badge-warning badge-pill">Cuti</span>';
+                    $status_absen = '<span class="badge badge-pill badge-warning text-white" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Cuti</span>';
                 } else if ($row->status_absen == "sakit") {
-                    $status_absen = '<span class="badge-warning badge-pill">Sakit</span>';
+                    $status_absen = '<span class="badge badge-pill badge-warning text-white" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Sakit</span>';
                 } else {
-                    $status_absen = '<span class="badge-info badge-pill">' . ucwords(str_replace('_', ' ', $row->status_absen)) . '</span>';
+                    $status_absen = '<span class="badge badge-pill badge-info" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">' . ucwords(str_replace('_', ' ', $row->status_absen)) . '</span>';
                 }
             } else {
                 $status_absen = '';
@@ -1377,16 +1376,10 @@ class Absensi extends CI_Controller
 
             if (isAdmin() || isHrd() || isGa()) {
                 if ($row->approval) {
-                    /*if ($row->approval == 'tolak') {
-                        $li_btn = '<span class="badge-danger badge-pill">Di Tolak</span>';
-                    } else {
-                        $li_btn = '<span class="badge-success badge-pill">Diterima</span>';
-                    }*/
-
                     if ($row->approval == 'tolak') {
                         // Kalau ditolak → badge merah + tombol TERIMA
                         $li_btn = '
-                            <span class="badge badge-danger badge-pill">Di Tolak</span>&nbsp;
+                            <span class="badge badge-danger badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Di Tolak</span>&nbsp;
                             <div class="btn-group" role="group" aria-label="First group">
                                 <button type="button" class="btn btn-sm btn-success btn-approval" 
                                     pengguna-id="' . $pengguna_id . '" 
@@ -1399,7 +1392,7 @@ class Absensi extends CI_Controller
                     } else {
                         // Kalau bukan ditolak → badge hijau + tombol TOLAK
                         $li_btn = '
-                            <span class="badge badge-success badge-pill">Diterima</span>&nbsp;
+                            <span class="badge badge-success badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Diterima</span>&nbsp;
                             <div class="btn-group" role="group" aria-label="First group">
                                 <button type="button" class="btn btn-sm btn-danger btn-approval" 
                                     pengguna-id="' . $pengguna_id . '"  
@@ -1420,28 +1413,27 @@ class Absensi extends CI_Controller
             } else {
                 if ($row->approval) {
                     if ($row->approval == 'tolak') {
-                        $li_btn = '<span class="badge-danger badge-pill">Di Tolak</span>';
+                        $li_btn = '<span class="badge badge-danger badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Di Tolak</span>';
                     } else {
-                        $li_btn = '<span class="badge-success badge-pill">Diterima</span>';
+                        $li_btn = '<span class="badge badge-success badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Diterima</span>';
                     }
                 } else {
-                    $li_btn = '<span class="badge-warning badge-pill">Menunggu</span>';
+                    $li_btn = '<span class="badge badge-warning badge-pill text-white" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Menunggu</span>';
                 }
             }
 
             if ($row->tanpa_tunjangan == 1) {
-                $tunjangan = '<span class="badge-danger badge-pill">Tidak</span>';
+                $tunjangan = '<span class="badge badge-danger badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Tidak</span>';
             } else {
-                $tunjangan = '<span class="badge-success badge-pill">Ya</span>';
+                $tunjangan = '<span class="badge badge-success badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Ya</span>';
             }
 
-            $jenis_absen = $row->jenis_absen == 'Kantor' ? '<span class="badge-success badge-pill">Absen Kantor</span>' : '<span class="badge-warning badge-pill">Absen Dinas</span>';
             if ($row->jenis_absen == 'Kantor') {
-                $jenis_absen = '<span class="badge-success badge-pill">Absen Kantor</span>';
+                $jenis_absen = '<span class="badge badge-success badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Absen Kantor</span>';
             } elseif ($row->jenis_absen == 'Dinas') {
-                $jenis_absen = '<span class="badge-warning badge-pill">Absen Dinas</span>';
+                $jenis_absen = '<span class="badge badge-warning badge-pill text-white" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">Absen Dinas</span>';
             } else {
-                $jenis_absen = '<span class="badge-info badge-pill">' . ucwords($row->jenis_absen) . '</span>';
+                $jenis_absen = '<span class="badge badge-info badge-pill" style="white-space:nowrap;font-size:11px;padding:4px 10px;font-weight:600;">' . ucwords($row->jenis_absen) . '</span>';
             }
 
             $btn_map   = '
