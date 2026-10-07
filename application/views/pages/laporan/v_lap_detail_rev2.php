@@ -32,40 +32,104 @@
       max-width: 800px; /* Ubah ini sesuai kebutuhan (default Bootstrap = 500px) */
     }
   }
+  .laporan-card {
+    border-radius: 12px;
+    border: 1px solid #eef2f6;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  }
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 6px;
+    font-size: 11.5px;
+    overflow: hidden;
+    border: 1px solid;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .score-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+  }
+  .score-badge .score-range {
+    padding: 4px 8px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+  }
+  .score-badge .score-label {
+    padding: 4px 8px;
+    font-weight: 600;
+  }
+
+  .badge-istimewa { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+  .badge-istimewa .score-range { background: #10b981; color: #ffffff; }
+
+  .badge-sangat-baik { background: #f0fdfa; border-color: #99f6e4; color: #115e59; }
+  .badge-sangat-baik .score-range { background: #0d9488; color: #ffffff; }
+
+  .badge-baik { background: #f0f9ff; border-color: #bae6fd; color: #075985; }
+  .badge-baik .score-range { background: #0284c7; color: #ffffff; }
+
+  .badge-cukup-baik { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+  .badge-cukup-baik .score-range { background: #6366f1; color: #ffffff; }
+
+  .badge-cukup { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .badge-cukup .score-range { background: #f59e0b; color: #ffffff; }
+
+  .badge-kurang { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+  .badge-kurang .score-range { background: #ea580c; color: #ffffff; }
+
+  .badge-kurang-sekali { background: #fff1f2; border-color: #fecdd3; color: #9f1239; }
+  .badge-kurang-sekali .score-range { background: #e11d48; color: #ffffff; }
 </style>
 
-
 <div class="row">
-	<div class="col">
-		<div class="card-body">
-				<strong class="fw-bold text-dark">Nama &nbsp; &nbsp; &nbsp; &nbsp; : <?= $data_job->nama ?></strong>
-				<br><strong class="fw-bold text-dark">NPP &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;    : <?= $data_job->no_pegawai ?></strong>
-				<br><strong class="fw-bold text-dark">Jabatan &nbsp; : <?= $data_job->jabatan ?></strong>
-				<br><br><strong class="fw-bold text-dark">Keterangan Nilai : </strong>
-				<!--<br><strong class="fw-bold text-dark"> &lt;60 &nbsp; = &nbsp; Buruk Sekali  &nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 60-69 &nbsp; = &nbsp; Buruk  
-					&nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 70-79 &nbsp; = &nbsp; Biasa Saja  &nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 80-89 &nbsp; = &nbsp; Baik  
-					&nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 90-100 &nbsp; = &nbsp; Sangat Baik </strong>-->
-				<br><strong class="fw-bold text-dark">
-									96 – 100 = Istimewa &nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 90 – 95 = Sangat Baik &nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 85 – 89 = Baik 
-									&nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 80 – 84 = Cukup Baik &nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 75 – 79 = Cukup &nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp; 70 – 74 = Kurang 
-									&nbsp; &nbsp; &nbsp; | &nbsp; &nbsp; &nbsp;  60 – 69 = Kurang Sekali 
-				</strong>
-  
-				<br><br>
-				<div class="row mb-3 align-items-center">
-					<div class="col-md-7 mb-2 mb-md-0">
-						<a href="<?= base_url('laporan/print_mingguan/' . encrypt($data_job->pengguna_id) . '/' . $week_offset) ?>" target="_blank" class="btn btn-sm btn-success">
-							<i class="fas fa-print"></i>&nbsp; Cetak Laporan Mingguan
-						</a>
-						&nbsp;
-						<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modal-cetak-bulanan">
-							<i class="fas fa-file-pdf"></i>&nbsp; Cetak Rangkuman 1 Bulan
+	<div class="col-12">
+		<div class="card laporan-card mb-4">
+			<div class="card-body p-3 p-md-4">
+				<!-- User Info Header -->
+				<div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3" style="border-bottom: 1px solid #f1f5f9; gap: 15px;">
+					<div class="d-flex align-items-center" style="gap: 14px;">
+						<div style="width: 46px; height: 46px; border-radius: 10px; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+							<i class="fas fa-user-circle"></i>
+						</div>
+						<div>
+							<h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;"><?= $data_job->nama ?></h5>
+							<div class="text-muted small" style="font-size: 12px;">
+								<span class="mr-3"><i class="fas fa-id-badge text-primary mr-1"></i> NPP: <strong><?= $data_job->no_pegawai ?></strong></span>
+								<span><i class="fas fa-briefcase text-info mr-1"></i> Jabatan: <strong><?= $data_job->jabatan ?></strong></span>
+							</div>
+						</div>
+					</div>
+					<div class="d-flex align-items-center" style="gap: 8px;">
+						<button type="button" class="btn btn-sm btn-outline-danger shadow-sm btn-petujuk" style="border-radius: 8px; font-weight: 600; padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;">
+							<i class="fas fa-info-circle"></i> Petunjuk Nilai
 						</button>
 					</div>
-					<div class="col-md-5">
-						<div class="form-inline justify-content-md-end">
-							<label class="mr-2 font-weight-bold text-dark"><i class="fas fa-history"></i>&nbsp;Pilih Minggu :</label>
-							<select class="form-control form-control-sm" style="max-width: 260px;" onchange="if (this.value) window.location.href = this.value;">
+				</div>
+
+				<!-- Toolbar & Week Selector Row -->
+				<div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3" style="border-bottom: 1px solid #f1f5f9; gap: 12px;">
+					<!-- Left: Action Buttons -->
+					<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+						<a href="<?= base_url('laporan/print_mingguan/' . encrypt($data_job->pengguna_id) . '/' . $week_offset) ?>" target="_blank" class="btn btn-sm btn-success shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;">
+							<i class="fas fa-print"></i> Cetak Laporan Mingguan
+						</a>
+						<button type="button" class="btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#modal-cetak-bulanan" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;">
+							<i class="fas fa-file-pdf"></i> Cetak Rangkuman 1 Bulan
+						</button>
+					</div>
+
+					<!-- Right: Week Selector -->
+					<div class="d-flex align-items-center" style="gap: 8px;">
+						<div class="input-group input-group-sm" style="width: auto;">
+							<div class="input-group-prepend">
+								<span class="input-group-text bg-light border-right-0 text-muted" style="border-radius: 8px 0 0 8px; font-weight: 600; font-size: 12px;">
+									<i class="fas fa-calendar-week mr-1 text-primary"></i> Pilih Minggu:
+								</span>
+							</div>
+							<select class="form-control form-control-sm custom-select" style="max-width: 280px; border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500;" onchange="if (this.value) window.location.href = this.value;">
 								<?php for ($i = 0; $i >= -250; $i--): ?>
 									<?php 
 										$m_time = strtotime("monday this week $i week");
@@ -85,9 +149,45 @@
 						</div>
 					</div>
 				</div>
-					<!--<button type="button" class="btn btn-info float-right btn-selesai" style="margin-right: 10px;" id-Sijk="<?=$data_job->pengguna_id?>"> <i class="fas fa-check"></i> Selesaikan Penilaian</button>-->
-					<button type="button" class="btn btn-danger float-right btn-petujuk" style="margin-right: 10px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Petunjuk Nilai</button>
-				<br><br>
+
+				<!-- Modern Keterangan Nilai Legend Bar -->
+				<div class="p-2 p-md-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+					<div class="d-flex align-items-center mb-2" style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
+						<i class="fas fa-award mr-2 text-primary" style="font-size: 13px;"></i> Keterangan Skala Nilai:
+					</div>
+					<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+						<span class="score-badge badge-istimewa" title="Nilai 96 s/d 100: Istimewa">
+							<span class="score-range">96 – 100</span>
+							<span class="score-label">Istimewa</span>
+						</span>
+						<span class="score-badge badge-sangat-baik" title="Nilai 90 s/d 95: Sangat Baik">
+							<span class="score-range">90 – 95</span>
+							<span class="score-label">Sangat Baik</span>
+						</span>
+						<span class="score-badge badge-baik" title="Nilai 85 s/d 89: Baik">
+							<span class="score-range">85 – 89</span>
+							<span class="score-label">Baik</span>
+						</span>
+						<span class="score-badge badge-cukup-baik" title="Nilai 80 s/d 84: Cukup Baik">
+							<span class="score-range">80 – 84</span>
+							<span class="score-label">Cukup Baik</span>
+						</span>
+						<span class="score-badge badge-cukup" title="Nilai 75 s/d 79: Cukup">
+							<span class="score-range">75 – 79</span>
+							<span class="score-label">Cukup</span>
+						</span>
+						<span class="score-badge badge-kurang" title="Nilai 70 s/d 74: Kurang">
+							<span class="score-range">70 – 74</span>
+							<span class="score-label">Kurang</span>
+						</span>
+						<span class="score-badge badge-kurang-sekali" title="Nilai 60 s/d 69: Kurang Sekali">
+							<span class="score-range">60 – 69</span>
+							<span class="score-label">Kurang Sekali</span>
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
 
 				<input type="hidden" id="id_po" value="<?= $data_job->pengguna_id ?>" />
 
