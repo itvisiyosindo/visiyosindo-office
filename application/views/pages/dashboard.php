@@ -7,7 +7,6 @@
 <style>
 	.big-icon {
 		font-size: 45px;
-		/* Sesuaikan ukuran sesuai kebutuhan */
 	}
 
 	.dashboard-calendar-panel {
@@ -20,27 +19,538 @@
 		padding: 18px;
 	}
 
-	.jadwal-calendar-card {
-		border: 1px solid #e2e8f0;
-		border-radius: 14px;
-		box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+	/* =========================================================
+	   VISILAB CALENDAR WIDGET
+	========================================================= */
+	.visilab-calendar-widget {
+		background: #ffffff;
+		border: 1px solid rgba(226, 232, 240, 0.9);
+		border-radius: 20px;
+		box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.06);
+		padding: 24px;
+		margin-bottom: 28px;
+		font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
 	}
 
-	.jadwal-calendar-card .card-body {
-		padding: 18px;
+	.visilab-calendar-widget .calendar-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 16px;
+		margin-bottom: 20px;
+		padding-bottom: 16px;
+		border-bottom: 1px solid #f1f5f9;
 	}
 
-	.jadwal-calendar-card .calendar-subtitle {
-		font-size: 0.92rem;
-		color: #6b7280;
+	.visilab-calendar-widget .calendar-title-wrap {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.visilab-calendar-widget .calendar-icon-badge {
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
+		background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+		color: #059669;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		flex-shrink: 0;
+	}
+
+	.visilab-calendar-widget .calendar-title {
+		margin: 0;
+		font-weight: 700;
+		font-size: 1.15rem;
+		color: #0f172a;
+		letter-spacing: -0.01em;
+	}
+
+	.visilab-calendar-widget .calendar-subtitle {
+		margin: 2px 0 0 0;
+		font-size: 0.82rem;
+		color: #64748b;
 	}
 
 	#dashboard-visilab-calendar {
-		min-height: 460px;
+		min-height: 480px;
+	}
+
+	#dashboard-visilab-calendar .fc-toolbar {
+		margin-bottom: 16px !important;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	#dashboard-visilab-calendar .fc-toolbar-title {
+		font-size: 1.15rem !important;
+		font-weight: 700 !important;
+		color: #0f172a !important;
+	}
+
+	#dashboard-visilab-calendar .fc-button {
+		background: #f8fafc !important;
+		color: #334155 !important;
+		border: 1px solid #e2e8f0 !important;
+		font-size: 12px !important;
+		font-weight: 600 !important;
+		padding: 6px 14px !important;
+		border-radius: 10px !important;
+		box-shadow: none !important;
+		transition: all 0.2s ease !important;
+		text-transform: capitalize !important;
+	}
+
+	#dashboard-visilab-calendar .fc-button:hover {
+		background: #e2e8f0 !important;
+		color: #0f172a !important;
+	}
+
+	#dashboard-visilab-calendar .fc-button-active,
+	#dashboard-visilab-calendar .fc-button-primary:not(:disabled).fc-button-active {
+		background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important;
+		color: #ffffff !important;
+		border-color: transparent !important;
+		box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25) !important;
+	}
+
+	#dashboard-visilab-calendar .fc-button-group {
+		gap: 4px;
+	}
+
+	#dashboard-visilab-calendar .fc-button-group > .fc-button {
+		border-radius: 10px !important;
+		margin: 0 !important;
+	}
+
+	#dashboard-visilab-calendar .fc-col-header-cell {
+		background: #f8fafc;
+		padding: 10px 0;
+		border-color: #e2e8f0;
+	}
+
+	#dashboard-visilab-calendar .fc-col-header-cell-cushion {
+		font-size: 12px;
+		font-weight: 700;
+		color: #475569;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	#dashboard-visilab-calendar .fc-daygrid-day {
+		border-color: #f1f5f9;
+		transition: background-color 0.15s ease;
+	}
+
+	#dashboard-visilab-calendar .fc-daygrid-day:hover {
+		background-color: #f8fafc;
+	}
+
+	#dashboard-visilab-calendar .fc-day-today {
+		background-color: #f0fdf4 !important;
+	}
+
+	#dashboard-visilab-calendar .fc-daygrid-day-number {
+		font-size: 12px;
+		font-weight: 600;
+		color: #64748b;
+		padding: 6px 8px;
 	}
 
 	#dashboard-visilab-calendar .fc-event {
+		border: none !important;
+		background: transparent !important;
+		margin: 2px 4px !important;
 		cursor: pointer;
+		transition: transform 0.15s ease;
+	}
+
+	#dashboard-visilab-calendar .fc-event:hover {
+		transform: translateY(-1px);
+	}
+
+	.visilab-event-chip {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 3px 8px;
+		font-size: 11px;
+		font-weight: 600;
+		color: #1e293b;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	.visilab-event-chip:hover {
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+	}
+
+	.visilab-badge-tag {
+		display: inline-block;
+		padding: 1px 7px;
+		border-radius: 999px;
+		color: #ffffff;
+		font-size: 10px;
+		font-weight: 700;
+		flex-shrink: 0;
+	}
+
+	/* =========================================================
+	   MODERN DASHBOARD SECTION CARDS (Pengumuman & Log)
+	========================================================= */
+	.modern-dashboard-widget {
+		background: #ffffff;
+		border: 1px solid rgba(226, 232, 240, 0.9);
+		border-radius: 20px;
+		box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.06);
+		padding: 24px;
+		margin-bottom: 28px;
+		font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+		height: calc(100% - 28px);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.modern-dashboard-widget .widget-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 16px;
+		margin-bottom: 20px;
+		padding-bottom: 16px;
+		border-bottom: 1px solid #f1f5f9;
+	}
+
+	.modern-dashboard-widget .widget-title-wrap {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.modern-dashboard-widget .widget-icon-badge {
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		flex-shrink: 0;
+	}
+
+	.badge-announcement {
+		background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+		color: #d97706;
+	}
+
+	.badge-activity-log {
+		background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+		color: #7c3aed;
+	}
+
+	.modern-dashboard-widget .widget-title {
+		margin: 0;
+		font-weight: 700;
+		font-size: 1.15rem;
+		color: #0f172a;
+		letter-spacing: -0.01em;
+	}
+
+	.modern-dashboard-widget .widget-subtitle {
+		margin: 2px 0 0 0;
+		font-size: 0.82rem;
+		color: #64748b;
+	}
+
+	/* Announcement Items */
+	.announcement-feed-container {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		max-height: 480px;
+		overflow-y: auto;
+		padding-right: 4px;
+		margin-bottom: 16px;
+		flex: 1;
+	}
+
+	.announcement-feed-container::-webkit-scrollbar {
+		width: 5px;
+	}
+	.announcement-feed-container::-webkit-scrollbar-thumb {
+		background: #cbd5e1;
+		border-radius: 10px;
+	}
+
+	.announcement-item-card {
+		background: #f8fafc;
+		border: 1px solid #f1f5f9;
+		border-radius: 14px;
+		padding: 16px;
+		transition: all 0.2s ease;
+	}
+
+	.announcement-item-card:hover {
+		background: #ffffff;
+		border-color: #e2e8f0;
+		box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+		transform: translateY(-1px);
+	}
+
+	.announcement-item-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 10px;
+	}
+
+	.announcement-author-info {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.announcement-avatar {
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+		color: #ffffff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 14px;
+		box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+		flex-shrink: 0;
+	}
+
+	.announcement-author-name {
+		font-weight: 700;
+		font-size: 0.92rem;
+		color: #0f172a;
+		line-height: 1.2;
+	}
+
+	.announcement-date-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 11px;
+		color: #64748b;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		padding: 3px 8px;
+		border-radius: 20px;
+		font-weight: 500;
+	}
+
+	.announcement-item-body {
+		font-size: 0.92rem;
+		color: #334155;
+		line-height: 1.6;
+		margin-bottom: 10px;
+		word-break: break-word;
+	}
+
+	.announcement-item-body a {
+		color: #1e293b;
+		text-decoration: none;
+	}
+
+	.announcement-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 8px;
+		padding-top: 8px;
+		border-top: 1px dashed #e2e8f0;
+	}
+
+	.btn-pill-action {
+		border-radius: 20px !important;
+		font-size: 11px !important;
+		font-weight: 600 !important;
+		padding: 4px 12px !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		gap: 5px !important;
+		transition: all 0.2s ease !important;
+	}
+
+	.btn-view-all-announcement {
+		background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+		color: #ffffff !important;
+		font-weight: 600;
+		border: none;
+		border-radius: 12px;
+		padding: 10px 16px;
+		font-size: 13px;
+		box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+		transition: all 0.2s ease;
+		text-align: center;
+		display: block;
+	}
+
+	.btn-view-all-announcement:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+	}
+
+	/* Activity Log Modern Styling */
+	.activity-filter-box {
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 10px 14px;
+		margin-bottom: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.activity-filter-box label {
+		font-size: 12px;
+		font-weight: 600;
+		color: #475569;
+		margin: 0;
+	}
+
+	.activity-filter-input-wrap {
+		width: 190px;
+	}
+
+	.activity-filter-input-wrap .input-group-text {
+		background: #ffffff;
+		border-color: #cbd5e1;
+		color: #64748b;
+		border-top-left-radius: 8px;
+		border-bottom-left-radius: 8px;
+	}
+
+	.activity-filter-input-wrap input {
+		border-color: #cbd5e1;
+		font-size: 12px;
+		font-weight: 500;
+		border-top-right-radius: 8px;
+		border-bottom-right-radius: 8px;
+	}
+
+	.modern-table-wrap {
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		overflow: hidden;
+	}
+
+	#kt_table_1 {
+		margin: 0 !important;
+		font-size: 12px;
+	}
+
+	#kt_table_1 thead th {
+		background: #f8fafc;
+		color: #475569;
+		font-weight: 700;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		border-bottom: 1px solid #e2e8f0 !important;
+		padding: 10px 12px;
+	}
+
+	#kt_table_1 tbody td {
+		padding: 10px 12px;
+		vertical-align: middle;
+		border-color: #f1f5f9;
+		color: #334155;
+	}
+
+	#kt_table_1 tbody tr:hover td {
+		background-color: #f8fafc;
+	}
+
+	/* Visilab Detail Modal */
+	.modern-visilab-modal .modal-content {
+		border: none;
+		border-radius: 20px;
+		overflow: hidden;
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+	}
+
+	.modern-visilab-modal .modal-header {
+		background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+		color: #ffffff;
+		border-bottom: none;
+		padding: 18px 24px;
+	}
+
+	.modern-visilab-modal .modal-title {
+		font-weight: 700;
+		font-size: 1.1rem;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.modern-visilab-modal .modal-body {
+		padding: 24px;
+		background: #ffffff;
+	}
+
+	.visilab-detail-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 12px;
+	}
+
+	@media (max-width: 576px) {
+		.visilab-detail-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.visilab-detail-card {
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 10px;
+		padding: 10px 14px;
+	}
+
+	.visilab-detail-card.full-width {
+		grid-column: span 2;
+	}
+
+	@media (max-width: 576px) {
+		.visilab-detail-card.full-width {
+			grid-column: span 1;
+		}
+	}
+
+	.visilab-detail-label {
+		font-size: 11px;
+		font-weight: 600;
+		color: #64748b;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		margin-bottom: 2px;
+	}
+
+	.visilab-detail-value {
+		font-size: 13px;
+		font-weight: 600;
+		color: #0f172a;
 	}
 </style>
 
@@ -530,111 +1040,185 @@
 
 <div class="row mb-4">
 	<div class="col-12">
-		<div class="card jadwal-calendar-card">
-			<div class="card-body">
-				<div class="d-flex justify-content-between align-items-center mb-3">
+		<div class="visilab-calendar-widget">
+			<div class="calendar-header">
+				<div class="calendar-title-wrap">
+					<div class="calendar-icon-badge">
+						<i class="fas fa-microscope"></i>
+					</div>
 					<div>
-						<h4 class="mb-1">Kalender Jadwal Visilab</h4>
-						<p class="calendar-subtitle mb-0">Pantau jadwal Ukes & Upar dari dashboard utama.</p>
+						<h4 class="calendar-title">Kalender Jadwal Visilab</h4>
+						<p class="calendar-subtitle">Pantau agenda jadwal Ukes & Upar dari dashboard utama.</p>
 					</div>
 				</div>
-				<div id="dashboard-visilab-calendar"></div>
 			</div>
+			<div id="dashboard-visilab-calendar"></div>
 		</div>
 	</div>
 </div>
 
-<div class="modal fade" id="dashboardVisilabDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
-	<div class="modal-dialog" role="document">
+<div class="modal fade modern-visilab-modal" id="dashboardVisilabDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
 		<div class="modal-content">
-			<div class="modal-header bg-primary text-white">
+			<div class="modal-header">
 				<h5 class="modal-title"><i class="fas fa-calendar-check"></i> Detail Jadwal Visilab</h5>
-				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 			<div class="modal-body">
-				<div><strong>Jenis Jadwal:</strong> <span id="dashVisiJenis">-</span></div>
-				<div><strong>Teknisi:</strong> <span id="dashVisiTeknisi">-</span></div>
-				<div><strong>Tanggal:</strong> <span id="dashVisiTanggal">-</span></div>
-				<div><strong>Jam:</strong> <span id="dashVisiJam">-</span></div>
-				<div><strong>Status:</strong> <span id="dashVisiStatus">-</span></div>
-				<div><strong>Pelanggan:</strong> <span id="dashVisiPelanggan">-</span></div>
-				<div><strong>Wilayah:</strong> <span id="dashVisiWilayah">-</span></div>
-				<div><strong>Provinsi:</strong> <span id="dashVisiProvinsi">-</span></div>
-				<div><strong>Kab/Kota:</strong> <span id="dashVisiKabKota">-</span></div>
-				<div><strong>Alamat:</strong> <span id="dashVisiAlamat">-</span></div>
+				<div class="visilab-detail-grid">
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Jenis Jadwal</div>
+						<div class="visilab-detail-value text-primary" id="dashVisiJenis">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Teknisi</div>
+						<div class="visilab-detail-value" id="dashVisiTeknisi">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Tanggal</div>
+						<div class="visilab-detail-value" id="dashVisiTanggal">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Jam</div>
+						<div class="visilab-detail-value" id="dashVisiJam">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Status</div>
+						<div class="visilab-detail-value" id="dashVisiStatus">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Wilayah</div>
+						<div class="visilab-detail-value" id="dashVisiWilayah">-</div>
+					</div>
+					<div class="visilab-detail-card full-width">
+						<div class="visilab-detail-label">Pelanggan</div>
+						<div class="visilab-detail-value" id="dashVisiPelanggan">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Provinsi</div>
+						<div class="visilab-detail-value" id="dashVisiProvinsi">-</div>
+					</div>
+					<div class="visilab-detail-card">
+						<div class="visilab-detail-label">Kabupaten / Kota</div>
+						<div class="visilab-detail-value" id="dashVisiKabKota">-</div>
+					</div>
+					<div class="visilab-detail-card full-width">
+						<div class="visilab-detail-label">Alamat Lengkap</div>
+						<div class="visilab-detail-value" id="dashVisiAlamat" style="font-weight: 500; font-size: 12px; line-height: 1.5;">-</div>
+					</div>
+				</div>
 			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+			<div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #f1f5f9; padding: 12px 24px;">
+				<button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal" style="border-radius: 10px; font-weight: 600;">Tutup</button>
 			</div>
 		</div>
 	</div>
 </div>
 
 <div class="row">
-	<div class="col-md-6">
-		<div class="text-center">
-			<h2>PENGUMUMAN</h2>
-		</div>
-		<div class="card-body">
-			<div class="span6">
-				<div class="widget-box">
-					<div class="widget-title bg_ly" data-toggle="collapse" href="#collapseG2" aria-expanded="true"><span class="icon"><i class="fas fa-chevron-down"></i></span>
+	<div class="col-lg-6 mb-4">
+		<div class="modern-dashboard-widget">
+			<div class="widget-header">
+				<div class="widget-title-wrap">
+					<div class="widget-icon-badge badge-announcement">
+						<i class="fas fa-bullhorn"></i>
 					</div>
-					<div class="widget-content nopadding in collapse show" id="collapseG2">
-						<ul class="recent-posts">
-							<li>
-								<?php
-								foreach ($announce as $value) {
-									echo "<li>";
-									echo "<div class='user-thumb'><div id='userbox' class='userbox'> <span class='profile-picture profile-picture-as-text'>" . substr($value->nama, 0, 1) . "</span></div></div>";
-									echo "<div class='article-post'>";
-									echo "<span class='user-info'> Dibuat Oleh : " . $value->nama . " <br/> Tanggal : " . date('Y-m-d', strtotime($value->data_created)) . " </span>";
-									echo "</br></br>";
-									echo "<p><a href='#'>" . $value->message . "</a> </p>";
-									if ($value->lampiran != "") {
-										echo '<div class="float-right d-flex align-items-center" style="gap: 5px;">';
-										echo '<a href="' . $value->lampiran . '" target="_blank" class="btn btn-info btn-xs"> <i class="fas fa-external-link-alt"></i>&nbsp;&nbsp;Lampiran </a>';
-										echo '<button type="button" class="btn btn-warning btn-xs btn-preview-gdrive" data-url="' . $value->lampiran . '"> <i class="fas fa-eye"></i>&nbsp;&nbsp;Preview </button>';
-										echo '</div>';
-									}
-									echo "<div></br></div>";
-								}
-								//echo"</div>";
-								echo "</li>";
-								?>
-								<div class="text-center mt-2">
-									<a href="<?= base_url('Announcement/daftar') ?>" class="btn btn-primary btn-sm btn-block" style="border-radius: 4px;"><i class="fas fa-eye"></i> Lihat Semua Pengumuman</a>
+					<div>
+						<h4 class="widget-title">Pengumuman Kantor</h4>
+						<p class="widget-subtitle">Informasi dan edaran resmi terkini.</p>
+					</div>
+				</div>
+			</div>
+			
+			<div class="announcement-feed-container">
+				<?php if (!empty($announce)) {
+					foreach ($announce as $value) { 
+						$firstChar = !empty($value->nama) ? strtoupper(substr($value->nama, 0, 1)) : 'A';
+						$createdDate = !empty($value->data_created) ? date('d M Y, H:i', strtotime($value->data_created)) : '-';
+				?>
+						<div class="announcement-item-card">
+							<div class="announcement-item-header">
+								<div class="announcement-author-info">
+									<div class="announcement-avatar"><?= $firstChar ?></div>
+									<div>
+										<div class="announcement-author-name"><?= htmlspecialchars($value->nama) ?></div>
+									</div>
 								</div>
-							</li>
-						</ul>
+								<span class="announcement-date-pill">
+									<i class="far fa-clock"></i> <?= $createdDate ?>
+								</span>
+							</div>
+							
+							<div class="announcement-item-body">
+								<?= nl2br($value->message) ?>
+							</div>
+
+							<?php if (!empty($value->lampiran)) { ?>
+								<div class="announcement-actions">
+									<a href="<?= $value->lampiran ?>" target="_blank" class="btn btn-outline-primary btn-sm btn-pill-action">
+										<i class="fas fa-paperclip"></i> Lampiran
+									</a>
+									<button type="button" class="btn btn-warning btn-sm btn-pill-action btn-preview-gdrive" data-url="<?= $value->lampiran ?>" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
+										<i class="fas fa-eye"></i> Preview
+									</button>
+								</div>
+							<?php } ?>
+						</div>
+				<?php 
+					} 
+				} else { ?>
+					<div class="text-center py-5 text-muted">
+						<i class="fas fa-info-circle fa-2x mb-2 text-slate-400"></i>
+						<p class="mb-0" style="font-size: 13px;">Belum ada pengumuman terbaru saat ini.</p>
 					</div>
-				</div><!-- Visit codeastro.com for more projects -->
+				<?php } ?>
+			</div>
+
+			<div class="pt-2">
+				<a href="<?= base_url('Announcement/daftar') ?>" class="btn-view-all-announcement">
+					<i class="fas fa-list-ul mr-1"></i> Lihat Semua Pengumuman
+				</a>
 			</div>
 		</div>
 	</div>
-	<div class="col-md-6">
-		<div class="text-center">
-			<h2>Log Aktivitas Anda</h2>
-		</div>
-		<div class="card-body">
-			<div class="row form-group col-md-4">
-				<small>Filter By Month:</small>
-				<div class="input-group">
-					<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-					<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+
+	<div class="col-lg-6 mb-4">
+		<div class="modern-dashboard-widget">
+			<div class="widget-header">
+				<div class="widget-title-wrap">
+					<div class="widget-icon-badge badge-activity-log">
+						<i class="fas fa-history"></i>
+					</div>
+					<div>
+						<h4 class="widget-title">Log Aktivitas Anda</h4>
+						<p class="widget-subtitle">Riwayat aktivitas dan tindakan pengguna pada sistem.</p>
+					</div>
 				</div>
 			</div>
-			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
+
+			<div class="activity-filter-box">
+				<label><i class="fas fa-filter text-primary mr-1"></i> Filter Berdasarkan Bulan:</label>
+				<div class="activity-filter-input-wrap">
+					<div class="input-group input-group-sm">
+						<div class="input-group-prepend">
+							<span class="input-group-text"><i class="fa fa-calendar"></i></span>
+						</div>
+						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+					</div>
+				</div>
+			</div>
+
+			<div class="table-responsive modern-table-wrap">
+				<table class="table table-hover table-striped table-sm" id="kt_table_1" style="width: 100%;">
 					<thead>
 						<tr>
-							<th> # </th>
-							<th> Pengguna</th>
-							<th> Aksi </th>
-							<th> Keterangan </th>
-							<th> Tanggal </th>
+							<th>#</th>
+							<th>Pengguna</th>
+							<th>Aksi</th>
+							<th>Keterangan</th>
+							<th>Tanggal</th>
 						</tr>
 					</thead>
 				</table>
@@ -1313,8 +1897,9 @@
 					var props = arg.event.extendedProps || {};
 					var wilayah = props.wilayah || 'Lainnya';
 					var badgeColor = props.wilayah_badge_color || '#6c757d';
+					var title = arg.event.title || '';
 					return {
-						html: '<div><span style="display:inline-block;padding:1px 6px;border-radius:999px;background:' + badgeColor + ';color:#fff;font-size:10px;font-weight:700;margin-right:4px;">' + wilayah + '</span><span>' + (arg.event.title || '') + '</span></div>'
+						html: '<div class="visilab-event-chip"><span class="visilab-badge-tag" style="background:' + badgeColor + ';">' + wilayah + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + title + '</span></div>'
 					};
 				},
 				eventClick: function(info) {
