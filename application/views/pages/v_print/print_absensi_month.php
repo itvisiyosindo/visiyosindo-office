@@ -62,117 +62,146 @@
     <style>
         html.modern html,
         html.modern body {
-            background: none !important;
+            background: #ffffff !important;
+            font-family: 'Poppins', sans-serif !important;
         }
 
-        .page-header {
-            background: #1D2127 !important;
+        body {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-family: 'Poppins', sans-serif !important;
         }
 
-        .header .logo-container {
-            background-image: none;
-            background-color: #1D2127;
-            border-bottom-color: #161a1e;
-            border-top-color: #1D2127;
-            /* background-color: #1D2127; */
-
+        .table-print-absensi {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-bottom: 20px !important;
+            font-size: 12px !important;
         }
 
-        .modal-header {
-            padding: 5px 5px 5px 20px;
+        .table-print-absensi th,
+        .table-print-absensi td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 8px 10px !important;
+            vertical-align: middle !important;
         }
 
-        @media only screen and (min-width: 768px) {
-            html.modern .header:not(.header-nav-menu) .logo {
-                line-height: 20px;
-                padding: 5px 20px 0 15px;
-                font-size: 18px
+        .table-print-absensi thead th {
+            background-color: #f8fafc !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+            font-size: 12px !important;
+            letter-spacing: 0.2px;
+        }
+
+        .table-print-absensi tbody tr:nth-of-type(even) {
+            background-color: #fafbfc;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 10mm 12mm 10mm;
             }
-        }
-
-        @media (max-width: 767px) {
-            html.modern .header .logo-container .logo {
-                margin-top: 10px;
-                line-height: 20px;
-                font-size: 18px
+            body {
+                font-family: 'Poppins', sans-serif !important;
+                font-size: 11px !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .content-body {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .table-print-absensi th,
+            .table-print-absensi td {
+                padding: 6px 8px !important;
+                font-size: 11px !important;
+                border: 1px solid #94a3b8 !important;
+            }
+            .table-print-absensi thead th {
+                background-color: #f1f5f9 !important;
+                color: #000000 !important;
+                font-weight: 700 !important;
+            }
+            .no-print {
+                display: none !important;
             }
         }
     </style>
     <!-- end includes_css.php -->
-
 
     <!-- Head Libs -->
     <script src="<?= base_url('assets/') ?>vendor/modernizr/modernizr.js"></script>
 
 </head>
 
-<body>
-    <section class="body" style="font-size: 14px;">
+<body style="background: #ffffff;">
+    <section class="body" style="font-size: 13px; background: #ffffff;">
         <div class="inner-wrapper" style="padding-top: 0px">
-            <section role="main" class="content-body content-body-modern" style="padding-top: 0px;">
+            <section role="main" class="content-body content-body-modern" style="padding: 20px 30px; background: #ffffff;">
                 <!-- start: page -->
-                <div style="text-align:center">
+                <div style="text-align:center; margin-bottom: 25px;">
                     <?php $bulan =  explode("-", $month) ?>
-                    <h2>Absensi Karyawan <?= all_bulan()[(int)$bulan[1]] . ' ' . $bulan[0] ?></h2>
-                    <br>
+                    <h2 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 24px; color: #0f172a; margin: 0 0 10px 0;">Absensi Karyawan <?= all_bulan()[(int)$bulan[1]] . ' ' . $bulan[0] ?></h2>
                 </div>
 
-                <br>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-                        <thead class="text-center">
+                <div class="table-responsive" style="overflow: visible;">
+                    <table class="table-print-absensi table table-bordered" id="kt_table_1">
+                        <thead>
                             <tr>
-                                <th> No </th>
-                                <th> No Pegawai </th>
-                                <th> Nama Karyawan</th>
-                                <th> Jabatan</th>
-                                <th> Total Hari Masuk</th>
-                                <th> Total Keterlambatan</th>
-                                <th> Total Cuti</th>
-                                <th> Total Izin</th>
-                                <th> Total WFA</th>
-                                <th> Total Dinas</th>
-                                <th> Total Perhitungan Dasar Tunjangan</th>
+                                <th style="width: 40px; text-align: center;"> No </th>
+                                <th style="width: 70px; text-align: center;"> No Pegawai </th>
+                                <th style="text-align: left;"> Nama Karyawan</th>
+                                <th style="text-align: left;"> Jabatan</th>
+                                <th style="text-align: center;"> Total Hari Masuk</th>
+                                <th style="text-align: center;"> Total Keterlambatan</th>
+                                <th style="text-align: center;"> Total Cuti</th>
+                                <th style="text-align: center;"> Total Izin</th>
+                                <th style="text-align: center;"> Total WFA</th>
+                                <th style="text-align: center;"> Total Dinas</th>
+                                <th style="text-align: center;"> Total Perhitungan Dasar Tunjangan</th>
                             </tr>
                         </thead>
                         <tbody>
-
                             <?php $x = 1;
                             foreach ($absen as $row) { ?>
                                 <tr>
-                                    <td><?= $x++ ?></td>
+                                    <td style="text-align: center;"><?= $x++ ?></td>
                                     <td style="text-align: center;"><?= $row['no_pegawai'] ?></td>
-                                    <td><?= ucwords(strtolower($row['nama'])) ?></td>
+                                    <td style="font-weight: 500;"><?= ucwords(strtolower($row['nama'])) ?></td>
                                     <td><?= $row['jabatan'] ?></td>
                                     <td style="text-align: center;"><?= $row['total_kehadiran'] ?> hari</td>
                                     <td style="text-align: center;"><?= $row['total_terlambat'] ?> hari</td>
                                     <td style="text-align: center;"><?= $row['total_cuti'] ?> hari</td>
                                     <td style="text-align: center;"><?= $row['total_izin'] ?> hari</td>
                                     <td style="text-align: center;"><?= $row['total_wfa'] ?> hari</td>
-                                <td style="text-align: center;"><?= $row['total_dinas'] ?> hari</td>
-                                <td style="text-align: center;"><?= $row['total_dasar_tunjangan'] ?> hari</td>
-                            </tr>
+                                    <td style="text-align: center;"><?= $row['total_dinas'] ?> hari</td>
+                                    <td style="text-align: center; font-weight: 600;"><?= $row['total_dasar_tunjangan'] ?> hari</td>
+                                </tr>
                             <?php } ?>
                         </tbody>
                     </table>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6"></div>
-                    <div class="col-md-6">
-                        <br>
-                        <div class="text-center mt-3">
+                <div class="row" style="margin-top: 30px; page-break-inside: avoid;">
+                    <div class="col-7"></div>
+                    <div class="col-5 text-center">
+                        <div style="font-size: 13px; color: #334155; margin-bottom: 8px;">
                             Pekanbaru, <?= indo_dates(date('Y-m-d')) ?>
                         </div>
 
-                        <div class="text-center">
+                        <div>
                             <?php
                             $img_path     = "uploads/file_karyawan/ttd/";
                             $ttd3 = $img_path . "stample.png";
-                            echo '<img src="' . $ttd3 . '" height="150">'; ?>
+                            echo '<img src="' . base_url($ttd3) . '" height="130" style="margin: 5px 0;">'; ?>
                             <br>
-                            <strong>Dian Melati Amelia</strong><br>
-                            HR and Legal
+                            <strong style="font-size: 14px; color: #0f172a;">Dian Melati Amelia</strong><br>
+                            <span style="font-size: 12.5px; color: #64748b;">HR and Legal</span>
                         </div>
                     </div>
                 </div>

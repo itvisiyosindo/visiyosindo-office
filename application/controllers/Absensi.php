@@ -1702,45 +1702,24 @@ class Absensi extends CI_Controller
             return;
         }
 
-        if ($param == 'allKaryawanByMonth' || $param == 'pdf' || $param == 'rekap_pdf') {
-            $this->load->library('pdfgenerator');
+        if ($param == 'allKaryawanByMonth' || $param == 'html_month' || $param == 'pdf' || $param == 'rekap_pdf') {
             $month = $param2 ? $param2 : date("Y-m");
-            $data = [
-                'dt' => $this->md_pengguna->getByWherenotIn(['p.is_active' => 1, 'p.status' => 1, 'p.level !=' => 'Administrator'], [58, 47, 84, 714, 77, 79, 110, 87, 72, 70, 81, 69, 83, 107, 86, 74, 57, 738, 55, 56, 721, 743, 750, 746, 29]),
-                'overrides' => $this->md_salary_tidak_tetap->getOverridesByMonth($month),
-                'title_pdf' => 'Rekapitulasi Tunjangan Tidak Tetap',
-                'periode' => getMonthName(date('m', strtotime($month))) . ' ' . date('Y', strtotime($month)),
-                'month' => $month
-            ];
-
-            // filename dari pdf ketika didownload
-            $file_pdf = 'Rekapitulasi Tunjangan Tidak Tetap ' . $data['periode'];
-            // setting paper
-            $paper = 'legal';
-            // orientasi paper potrait / landscape
-            $orientation = "landscape";
-            $html = $this->load->view('pages/v_print/print_salary_tidak_tetap', $data, true);
-
-            // run dompdf
-            $this->pdfgenerator->generate($html, $file_pdf, $paper, $orientation);
-            return;
-        } else if ($param == 'html_month') {
             $karyawan = $this->md_pengguna->getByWherenotIn(['p.is_active' => 1, 'p.status' => 1, 'p.level !=' => 'Administrator', 'pengguna_id !=' => 1, 'p.status_print_absen !=' => 2], [58, 47, 84, 714, 77, 79, 110, 87, 72, 70, 81, 69, 83, 107, 86, 74, 57, 738, 721, 743]);
             
             // Hitung hari kerja efektif
-            $year = date('Y', strtotime($param2));
-            $month = date('m', strtotime($param2));
-            $num_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+            $year = date('Y', strtotime($month));
+            $month_num = date('m', strtotime($month));
+            $num_days = cal_days_in_month(CAL_GREGORIAN, $month_num, $year);
             
             $holidays = [];
-            $libur_db = $this->db->like('tgl', $param2)->get('absensi_config_libur')->result();
+            $libur_db = $this->db->like('tgl', $month)->get('absensi_config_libur')->result();
             foreach ($libur_db as $l) {
                 $holidays[] = date('Y-m-d', strtotime($l->tgl));
             }
             
             $working_days_in_month = 0;
             for ($d = 1; $d <= $num_days; $d++) {
-                $date_str = sprintf('%04d-%02d-%02d', $year, $month, $d);
+                $date_str = sprintf('%04d-%02d-%02d', $year, $month_num, $d);
                 $day_of_week = date('N', strtotime($date_str));
                 if ($day_of_week < 6 && !in_array($date_str, $holidays)) {
                     $working_days_in_month++;
@@ -1749,17 +1728,17 @@ class Absensi extends CI_Controller
 
             $data = [];
             foreach ($karyawan as $row) {
-                $tmp = $this->md_absensi->countTerlambat($row->pengguna_id, $param2);
-                $tmp1 = $this->md_absensi->countCuti($row->pengguna_id, $param2);
-                $tmp2 = $this->md_absensi->countIzin($row->pengguna_id, $param2);
-                $tmp3 = $this->md_absensi->countDinas($row->pengguna_id, $param2);
-                $tmp4 = $this->md_absensi->countWfa($row->pengguna_id, $param2);
+                $tmp = $this->md_absensi->countTerlambat($row->pengguna_id, $month);
+                $tmp1 = $this->md_absensi->countCuti($row->pengguna_id, $month);
+                $tmp2 = $this->md_absensi->countIzin($row->pengguna_id, $month);
+                $tmp3 = $this->md_absensi->countDinas($row->pengguna_id, $month);
+                $tmp4 = $this->md_absensi->countWfa($row->pengguna_id, $month);
 
                 $dt['total_kehadiran'] = $working_days_in_month;
-                if ($row->pengguna_id == 94) {
-                    $dt['total_kehadiran'] = ($param2 == '2026-07') ? 53 : 56;
+                if ($row->pengguna_id == 94 || $row->pengguna_id == 62) {
+                    $dt['total_kehadiran'] = ($month == '2026-07') ? 53 : ($month == '2026-08' ? 55 : ($working_days_in_month > 0 ? $working_days_in_month : 19));
                 }
-                if ($param2 == '2026-07' && ($row->pengguna_id == 771 || $row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false || stripos($row->nama, 'Novemby') !== false)) {
+                if ($month == '2026-07' && ($row->pengguna_id == 771 || $row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false || stripos($row->nama, 'Novemby') !== false)) {
                     $dt['total_kehadiran'] = 9;
                 }
                 $dt['total_terlambat'] = $tmp[0]->total_terlambat;
@@ -1767,14 +1746,14 @@ class Absensi extends CI_Controller
                 $dt['total_izin'] = $tmp2[0]->total;
                 $dt['total_dinas'] = $tmp3[0]->total;
                 $dt['total_wfa'] = $tmp4[0]->total;
-                if ($param2 == '2026-07' && ($row->pengguna_id == 771 || $row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false || stripos($row->nama, 'Novemby') !== false)) {
+                if ($month == '2026-07' && ($row->pengguna_id == 771 || $row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false || stripos($row->nama, 'Novemby') !== false)) {
                     $dt['total_terlambat'] = ($row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false) ? 2 : 0;
                     $dt['total_cuti'] = 0;
                     $dt['total_izin'] = 0;
                     $dt['total_dinas'] = 0;
                     $dt['total_wfa'] = 0;
                 }
-                if ($param2 == '2026-07' && $row->pengguna_id == 736) {
+                if ($month == '2026-07' && $row->pengguna_id == 736) {
                     $dt['total_cuti'] = 2;
                     $dt['total_izin'] = 3;
                 }
@@ -1785,9 +1764,10 @@ class Absensi extends CI_Controller
                 $dt['no_pegawai'] = $row->no_pegawai;
                 array_push($data, $dt);
             }
-            $dta['month'] = $param2;
+            $dta['month'] = $month;
             $dta['absen'] = $data;
             $this->load->view('pages/v_print/print_absensi_month', $dta);
+            return;
         } else {
             $idPengguna =  decrypt($param3);
 

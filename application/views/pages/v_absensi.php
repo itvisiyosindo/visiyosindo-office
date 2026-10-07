@@ -193,13 +193,13 @@
 
 		$('#btn_print_rekap').click(function() {
 			var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
-			window.open('<?= base_url("absensi/print/allKaryawanByMonth/") ?>' + month, '_blank');
+			window.open('<?= base_url("absensi/print/html_month/") ?>' + month, '_blank');
 		});
 
 		$('#btn_print_foto_gps').click(function() {
 			var month = $('#print_month').val() || $('#filter_month').val() || '<?= date("Y-m") ?>';
 			window.open('<?= base_url("absensi/print_foto_gps/") ?>' + month, '_blank');
-		})
+		});
 
 		table = $('#kt_table_1').DataTable({
 			responsive: false,
