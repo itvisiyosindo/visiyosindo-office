@@ -213,14 +213,9 @@ class Salary_tidak_tetap extends CI_Controller
                 $dinas_approved = $dataTunjangan['dinas_approved'];
                 $kantor_approved = isset($dataTunjangan['kantor_approved']) ? $dataTunjangan['kantor_approved'] : $dinas_approved;
                 if ($row->pengguna_id == 94) {
-                    $salaryBoddyB = $this->md_absensi->getTunjanganBoddyBiasa($row->pengguna_id, $monthfield);
-                    $salaryBoddyL = $this->md_absensi->getTunjanganBoddyLibur($row->pengguna_id, $monthfield);
-                    $dinas_approved = count($salaryBoddyB) + (count($salaryBoddyL) * 3);
+                    $sec_summary = $this->md_absensi->getSecurityKehadiranSummary($row->pengguna_id, $monthfield);
+                    $dinas_approved = $sec_summary['total_kehadiran'] > 0 ? $sec_summary['total_kehadiran'] : $dinas_approved;
                     $kantor_approved = $dinas_approved;
-                    if (strpos($monthfield, '2026-07') !== false) {
-                        $dinas_approved = 53;
-                        $kantor_approved = 53;
-                    }
                 }
                 if ($row->pengguna_id == 14 && strpos($monthfield, '2026-07') !== false) {
                     $dinas_approved = 19;
@@ -312,10 +307,8 @@ class Salary_tidak_tetap extends CI_Controller
                 //Tunjangan Kinerja
                 $hitung_kinerja = $b * $dinas_approved;
                 if ($row->pengguna_id == 94) {
-                    $hitung_kinerja = $b * count($salaryBoddyL) * 3;
-                    if (strpos($monthfield, '2026-07') !== false) {
-                        $hitung_kinerja = $b * 33;
-                    }
+                    $sec_summary = $this->md_absensi->getSecurityKehadiranSummary($row->pengguna_id, $monthfield);
+                    $hitung_kinerja = $b * $sec_summary['hari_libur'] * 3;
                 }
                 $total_kinerja = 'Rp. ' . ($hitung_kinerja ? rupiah($hitung_kinerja) : '-');
                 //bbm
@@ -551,14 +544,10 @@ class Salary_tidak_tetap extends CI_Controller
                 $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? $salary[0]->tunjangan_konsumsi : 0;
                 $rate_bbm = isset($salary[0]->tunjangan_bbm) ? $salary[0]->tunjangan_bbm : 0;
 
-                $salaryBoddyB = $this->md_absensi->getTunjanganBoddyBiasa($row->pengguna_id, $month);
-                $salaryBoddyL = $this->md_absensi->getTunjanganBoddyLibur($row->pengguna_id, $month);
-                $dinas_approved_94 = count($salaryBoddyB) + (count($salaryBoddyL) * 3);
-                if (strpos($month, '2026-07') !== false) {
-                    $dinas_approved_94 = 56;
-                }
+                $sec_summary = $this->md_absensi->getSecurityKehadiranSummary($row->pengguna_id, $month);
+                $dinas_approved_94 = $sec_summary['total_kehadiran'] > 0 ? $sec_summary['total_kehadiran'] : 0;
 
-                $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * count($salaryBoddyL) * 3) : 0;
+                $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * $sec_summary['hari_libur'] * 3) : 0;
                 $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? ($rate_konsumsi * $dinas_approved_94) : 0;
                 $bbm = $row->terima_tunjangan_bbm == 1 ? ($rate_bbm * $dinas_approved_94) : 0;
             }

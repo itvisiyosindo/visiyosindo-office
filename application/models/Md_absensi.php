@@ -665,10 +665,60 @@ class Md_absensi extends CI_Model
         return $this->db->get_where('absensi', ['pengguna_id' => $pengguna_id, 'perusahaan' => grantAccessForPerusahaan()])->result();
     }
 
+    /**
+     * Hitung ringkasan kehadiran & lembur untuk Security (Pak Boddy dkk)
+     * Menggunakan bobot dinamis: Hari Biasa (1x) + Hari Libur/Weekend (3x)
+     */
+    public function getSecurityKehadiranSummary($pengguna_id, $month)
+    {
+        // Ambil semua daftar libur di bulan tersebut dari config
+        $config_libur = $this->db->like('tgl', $month)->get('absensi_config_libur')->result();
+        $libur_dates = array_map(function ($item) {
+            return date('Y-m-d', strtotime($item->tgl));
+        }, $config_libur);
+
+        // Ambil semua absensi masuk pada bulan tersebut
+        $records = $this->db->select("id_absensi, data_created, keterangan, approval, status_absen, type_absen, DAYOFWEEK(data_created) as day_of_week")
+            ->where("DATE_FORMAT(data_created,'%Y-%m')", $month)
+            ->where('type_absen', 'masuk')
+            ->where('perusahaan', grantAccessForPerusahaan())
+            ->get('absensi')
+            ->result();
+
+        $hari_biasa = 0;
+        $hari_libur = 0;
+        $total_fisik = count($records);
+
+        foreach ($records as $r) {
+            $tgl = date('Y-m-d', strtotime($r->data_created));
+            $is_weekend = in_array((int)$r->day_of_week, [1, 7]); // 1=Sunday, 7=Saturday
+            $is_libur_nasional = in_array($tgl, $libur_dates);
+            $is_ket_libur = ($r->keterangan == 'hari_libur');
+
+            if ($is_ket_libur || $is_weekend || $is_libur_nasional) {
+                $hari_libur++;
+            } else {
+                $hari_biasa++;
+            }
+        }
+
+        // Bobot: hari biasa (x1) + hari libur (x3)
+        $total_kehadiran = $hari_biasa + ($hari_libur * 3);
+        $hari_lembur = $hari_libur * 2; // tambahan hari hasil lembur di luar hari fisik
+
+        return [
+            'total_kehadiran' => $total_kehadiran,
+            'hari_fisik'      => $total_fisik,
+            'hari_biasa'      => $hari_biasa,
+            'hari_libur'      => $hari_libur,
+            'hari_lembur'     => $hari_lembur
+        ];
+    }
+
     // Fungsi untuk mengetahui pak boddy hari kerja Biasa
     public function getTunjanganBoddyBiasa($pengguna_id, $month)
     {
-        $this->datatables->where("DATE_FORMAT(data_created,'%Y-%m')", $month);
+        $this->db->where("DATE_FORMAT(data_created,'%Y-%m')", $month);
 
         // $this->db->where("DATE_FORMAT(data_created,'%W') !=", 'Saturday'); //hari sabtu tidak ada tunjangan
         $this->db->where('keterangan', 'hari_biasa');
@@ -682,7 +732,7 @@ class Md_absensi extends CI_Model
     // Fungsi untuk mengetahui pak boddy hari Libur & Weekend
     public function getTunjanganBoddyLibur($pengguna_id, $month)
     {
-        $this->datatables->where("DATE_FORMAT(data_created,'%Y-%m')", $month);
+        $this->db->where("DATE_FORMAT(data_created,'%Y-%m')", $month);
 
         // $this->db->where("DATE_FORMAT(data_created,'%W') !=", 'Saturday'); //hari sabtu tidak ada tunjangan
         $this->db->where('keterangan', 'hari_libur');
