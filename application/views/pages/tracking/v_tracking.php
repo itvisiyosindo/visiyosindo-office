@@ -6,40 +6,127 @@
 		/* Agar muncul di atas modal */
 	}
 
-	.btn-group-toggle .btn {
-		cursor: pointer;
+	/* Top Action Buttons */
+	.tracking-top-actions .btn {
+		font-weight: 600;
+		font-size: 0.84rem;
+		border-radius: 8px;
+		padding: 7px 14px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 		transition: all 0.2s ease;
+		display: inline-flex;
+		align-items: center;
+		border: 1px solid transparent;
+	}
+	.tracking-top-actions .btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 	}
 
-	.btn-group-toggle .btn.active {
-		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+	/* Filter Card Container */
+	.tracking-filter-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+		padding: 10px 16px;
 	}
 
-	.btn-group-toggle .btn-outline-secondary.active {
-		background-color: #6c757d !important;
-		color: white !important;
-		border-color: #6c757d !important;
+	.tracking-filter-label {
+		display: inline-flex;
+		align-items: center;
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: #475569;
+		margin-bottom: 0;
+		user-select: none;
 	}
 
-	.btn-group-toggle .btn-outline-primary.active {
-		background-color: #007bff !important;
-		color: white !important;
-		border-color: #007bff !important;
+	.tracking-filter-label i {
+		font-size: 0.95rem;
+		color: #3b82f6;
+		margin-right: 6px;
 	}
 
-	.btn-group-toggle .btn-outline-warning.active {
-		background-color: #ffc107 !important;
-		color: #212529 !important;
-		border-color: #ffc107 !important;
+	/* Segmented Filter Pills */
+	.tracking-filter-group {
+		background: #f1f5f9;
+		padding: 4px;
+		border-radius: 10px;
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		border: 1px solid #e2e8f0;
 	}
 
-	.btn-group-toggle .btn-outline-info.active {
-		background-color: #17a2b8 !important;
-		color: white !important;
-		border-color: #17a2b8 !important;
+	.tracking-filter-group .btn {
+		border: none;
+		background: transparent;
+		color: #64748b;
+		font-size: 0.82rem;
+		font-weight: 600;
+		padding: 6px 14px;
+		border-radius: 7px;
+		cursor: pointer;
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		display: inline-flex;
+		align-items: center;
+		white-space: nowrap;
+		margin: 0 !important;
 	}
 
-	.btn-group-toggle .btn input[type="radio"] {
+	.tracking-filter-group .btn:hover:not(.active) {
+		color: #1e293b;
+		background: rgba(255, 255, 255, 0.6);
+	}
+
+	.tracking-filter-group .btn.active {
+		background: #ffffff !important;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+	}
+
+	/* Filter Buttons Active Color Themes */
+	#btn-filter-all.active {
+		color: #1e293b !important;
+	}
+	#btn-filter-all i {
+		color: #64748b;
+	}
+	#btn-filter-all.active i {
+		color: #0f172a;
+	}
+
+	#btn-filter-sjbk.active {
+		color: #1d4ed8 !important;
+	}
+	#btn-filter-sjbk i {
+		color: #3b82f6;
+	}
+	#btn-filter-sjbk.active i {
+		color: #1d4ed8;
+	}
+
+	#btn-filter-ttbk.active {
+		color: #b45309 !important;
+	}
+	#btn-filter-ttbk i {
+		color: #d97706;
+	}
+	#btn-filter-ttbk.active i {
+		color: #b45309;
+	}
+
+	#btn-filter-sttb.active {
+		color: #0f766e !important;
+	}
+	#btn-filter-sttb i {
+		color: #0d9488;
+	}
+	#btn-filter-sttb.active i {
+		color: #0f766e;
+	}
+
+	.tracking-filter-group .btn input[type="radio"] {
 		display: none;
 	}
 </style>
@@ -76,53 +163,48 @@
 
 <div class="row">
 	<div class="col">
-		<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+		<div class="d-flex flex-wrap align-items-center tracking-top-actions gap-2 mb-3">
 			<?php if (in_array(sessPenggunaId(), [1, 15, 33, 7, 73, 763, 769])) { ?>
-				<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success mr-2">
-					<i class="icons icon-plus"></i>&nbsp;Tambah Tracking Pengeluaran
+				<a href="javascript:;" id="btn-show-add-form" class="btn btn-success mr-2 mb-2">
+					<i class="icons icon-plus mr-1"></i> Tambah Tracking Pengeluaran
 				</a>
-				<a href="javascript:;" id="btn-show-add-form-ps" class="btn btn-sm btn-warning mr-2">
-					<i class="icons icon-plus"></i>&nbsp;Tambah Tracking Pengiriman Stok
+				<a href="javascript:;" id="btn-show-add-form-ps" class="btn btn-warning mr-2 mb-2">
+					<i class="icons icon-plus mr-1"></i> Tambah Tracking Pengiriman Stok
 				</a>
-				<a href="javascript:;" id="btn-show-add-form-stb" class="btn btn-sm btn-info mr-2">
-					<i class="icons icon-plus"></i>&nbsp;Tambah Tracking Serah Terima Barang
+				<a href="javascript:;" id="btn-show-add-form-stb" class="btn btn-info mr-2 mb-2">
+					<i class="icons icon-plus mr-1"></i> Tambah Tracking Serah Terima Barang
 				</a>
-				<!-- COMMENTED OUT: Button untuk Penerimaan Stok - diganti dengan Serah Terima Barang
-				<a href="javascript:;" id="btn-show-add-form-pns" class="btn btn-sm btn-info mr-2">
-					<i class="icons icon-plus"></i>&nbsp;Tambah Tracking Penerimaan Stok
-				</a>
-				-->
-				<a href="javascript:;" id="btn-laporan-form" class="btn btn-sm btn-success">
-					<i class="fas fa-print"></i>&nbsp;Print Rekapan
+				<a href="javascript:;" id="btn-laporan-form" class="btn btn-secondary mb-2">
+					<i class="fas fa-print mr-1"></i> Print Rekapan
 				</a>
 			<?php } ?>
 		</div>
 
-		<!-- Filter Tipe Tracking dengan Button -->
-		<div class="card mb-3">
-			<div class="card-body py-2">
-				<div class="d-flex flex-wrap align-items-center gap-2">
-					<label class="mb-0 mr-3"><strong>Filter Tipe:</strong></label>
-					<div class="btn-group btn-group-toggle" data-toggle="buttons">
-						<label class="btn btn-outline-secondary active" id="btn-filter-all">
-							<input type="radio" name="filter_type" value="" autocomplete="off" checked>
-							<i class="fas fa-list mr-1"></i> Semua
-						</label>
-						<label class="btn btn-outline-primary" id="btn-filter-sjbk">
-							<input type="radio" name="filter_type" value="pengeluaran_barang" autocomplete="off">
-							<i class="fas fa-shopping-cart mr-1"></i> Pengeluaran (SJBK)
-						</label>
-						<label class="btn btn-outline-warning" id="btn-filter-ttbk">
-							<input type="radio" name="filter_type" value="pengiriman_stok" autocomplete="off">
-							<i class="fas fa-exchange-alt mr-1"></i> Pengiriman Stok (TTB)
-						</label>
-						<label class="btn btn-outline-info" id="btn-filter-sttb">
-							<input type="radio" name="filter_type" value="serah_terima_barang" autocomplete="off">
-							<i class="fas fa-handshake mr-1"></i> Serah Terima (STTB)
-						</label>
-						<!-- Filter Kirim Dokumen dihapus karena sudah ada halaman terpisah -->
-						<!-- Filter Kirim Dokumen dihapus karena sudah ada halaman terpisah -->
-					</div>
+		<!-- Filter Tipe Tracking Segmented Control -->
+		<div class="tracking-filter-card mb-3">
+			<div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+				<div class="d-flex align-items-center mr-3 py-1">
+					<span class="tracking-filter-label">
+						<i class="fas fa-filter"></i> Filter Tipe :
+					</span>
+				</div>
+				<div class="btn-group btn-group-toggle tracking-filter-group" data-toggle="buttons">
+					<label class="btn active" id="btn-filter-all">
+						<input type="radio" name="filter_type" value="" autocomplete="off" checked>
+						<i class="fas fa-list mr-1"></i> Semua
+					</label>
+					<label class="btn" id="btn-filter-sjbk">
+						<input type="radio" name="filter_type" value="pengeluaran_barang" autocomplete="off">
+						<i class="fas fa-box mr-1"></i> Pengeluaran (SJBK)
+					</label>
+					<label class="btn" id="btn-filter-ttbk">
+						<input type="radio" name="filter_type" value="pengiriman_stok" autocomplete="off">
+						<i class="fas fa-truck-moving mr-1"></i> Pengiriman Stok (TTB)
+					</label>
+					<label class="btn" id="btn-filter-sttb">
+						<input type="radio" name="filter_type" value="serah_terima_barang" autocomplete="off">
+						<i class="fas fa-handshake mr-1"></i> Serah Terima (STTB)
+					</label>
 				</div>
 			</div>
 		</div>
