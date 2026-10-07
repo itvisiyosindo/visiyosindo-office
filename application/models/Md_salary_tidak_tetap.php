@@ -95,4 +95,92 @@ class Md_salary_tidak_tetap extends CI_Model
         $this->db->where('month', $month);
         $this->db->delete('salary_tidak_tetap_override');
     }
+
+    public function getPenggunaWithSalaryDatatables($excluded_ids = [29])
+    {
+        $this->db->order_by('pg.nama', 'ASC');
+        if (!empty($excluded_ids)) {
+            $this->datatables->where_not_in('pg.pengguna_id', $excluded_ids);
+        }
+        return $this->datatables
+            ->select('
+                pg.pengguna_id,
+                pg.nama,
+                pg.jabatan,
+                pg.status_karyawan,
+                pg.email,
+                pg.username,
+                pg.terima_tunjangan_tt,
+                pg.terima_tunjangan_kinerja,
+                pg.terima_tunjangan_konsumsi,
+                pg.terima_tunjangan_komunikasi,
+                pg.terima_tunjangan_transportasi,
+                pg.terima_tunjangan_jabatan,
+                pg.terima_tunjangan_bbm,
+                pg.id_pendapatan_lain,
+                pg.id_latestriwayat_salary,
+                pg.level,
+                pg.status,
+                pg.status_approval,
+                pg.is_active,
+                rs.tunjangan_jabatan,
+                rs.tunjangan_kinerja,
+                rs.tunjangan_konsumsi,
+                rs.tunjangan_komunikasi,
+                rs.tunjangan_transportasi,
+                rs.tunjangan_bbm,
+                rs.pendapatan_lain,
+                rs.potongan
+            ')
+            ->from('pengguna pg')
+            ->join('riwayat_salary rs', 'rs.id_riwayat_salary = pg.id_latestriwayat_salary', 'left')
+            ->where('pg.status = 1')
+            ->where('pg.is_active = 1')
+            ->where('pg.pengguna_id != 1')
+            ->generate();
+    }
+
+    public function getAllPenggunaWithSalaryList($excluded_ids = [29])
+    {
+        $this->db->select('
+            pg.pengguna_id,
+            pg.nama,
+            pg.jabatan,
+            pg.status_karyawan,
+            pg.email,
+            pg.username,
+            pg.terima_tunjangan_tt,
+            pg.terima_tunjangan_kinerja,
+            pg.terima_tunjangan_konsumsi,
+            pg.terima_tunjangan_komunikasi,
+            pg.terima_tunjangan_transportasi,
+            pg.terima_tunjangan_jabatan,
+            pg.terima_tunjangan_bbm,
+            pg.id_pendapatan_lain,
+            pg.id_latestriwayat_salary,
+            pg.level,
+            pg.status,
+            pg.status_approval,
+            pg.is_active,
+            rs.tunjangan_jabatan,
+            rs.tunjangan_kinerja,
+            rs.tunjangan_konsumsi,
+            rs.tunjangan_komunikasi,
+            rs.tunjangan_transportasi,
+            rs.tunjangan_bbm,
+            rs.pendapatan_lain,
+            rs.potongan
+        ');
+        $this->db->from('pengguna pg');
+        $this->db->join('riwayat_salary rs', 'rs.id_riwayat_salary = pg.id_latestriwayat_salary', 'left');
+        $this->db->where('pg.status = 1');
+        $this->db->where('pg.is_active = 1');
+        $this->db->where('pg.pengguna_id != 1');
+        if (!empty($excluded_ids)) {
+            $this->db->where_not_in('pg.pengguna_id', $excluded_ids);
+        }
+        $this->db->order_by('pg.nama', 'ASC');
+        return $this->db->get()->result();
+    }
 }
+

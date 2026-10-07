@@ -147,30 +147,35 @@ class Salary_tidak_tetap extends CI_Controller
             die;
         } else {
 
-            $excluded_ids = [29]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (contoh: [29, 30, 31])
-            $this->db->where_not_in('pg.pengguna_id', $excluded_ids);
-            $dt = $this->md_pengguna->getAllPenggunaAktif();
-            $start = $this->input->post('start');
+            $excluded_ids = [29]; // ID karyawan yang dikecualikan
             $month = $this->input->post('filter_month');
             $monthfield = $month ? $month : date("Y-m");
+            
+            // 1 query untuk ambil seluruh attendance data bulan terkait
+            $attendance_map = $this->md_absensi->getMonthlyAttendanceSummary($monthfield);
+            // 1 query untuk ambil seluruh override
             $overrides = $this->md_salary_tidak_tetap->getOverridesByMonth($monthfield);
-
+            // 1 query dengan datatables server-side pagination & join riwayat_salary
+            $dt = $this->md_salary_tidak_tetap->getPenggunaWithSalaryDatatables($excluded_ids);
+            
+            $start = $this->input->post('start');
             $data = array();
 
             foreach ($dt['data'] as $row) {
-                // Reconnect database karna looping terlalu berat
-                $this->db->reconnect();
-
-                $pengguna = $this->md_pengguna->getById($row->pengguna_id);
-                $salary = $this->md_salary->getById($pengguna[0]->id_latestriwayat_salary);
-
                 $id = encrypt($row->pengguna_id);
+                $nama_pengguna = '<a href="salary_tidak_tetap/show/detail/' . $id . '">' . $row->nama . '</a>';
+                $ov_check = isset($overrides[$row->pengguna_id]) ? $overrides[$row->pengguna_id] : null;
+                if ($ov_check) {
+                    $nama_pengguna .= ' <span class="badge badge-warning text-dark ml-1" style="font-size:10px;" title="' . htmlspecialchars($ov_check->keterangan ?? 'Manual Override', ENT_QUOTES) . '">Manual</span>';
+                }
+
+                $btn_action = '<div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
+                    <button type="button" class="btn btn-sm btn-warning text-white shadow-sm btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="fa fa-edit"></i> Edit</button>
+                    <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
+                </div>';
+
+                // Kasus khusus Juli 2026 untuk novemby / afyl
                 if (($row->pengguna_id == 771 || $row->pengguna_id == 766 || strpos(strtolower($row->nama), 'novemby') !== false || strpos(strtolower($row->nama), 'afylmardopila') !== false) && strpos($monthfield, '2026-07') !== false) {
-                    $nama_pengguna = '<a href="salary_tidak_tetap/show/detail/' . $id . '">' . $row->nama . '</a>';
-                    $ov_check = isset($overrides[$row->pengguna_id]) ? $overrides[$row->pengguna_id] : null;
-                    if ($ov_check) {
-                        $nama_pengguna .= ' <span class="badge badge-warning text-dark ml-1" style="font-size:10px;" title="' . htmlspecialchars($ov_check->keterangan ?? 'Manual Override', ENT_QUOTES) . '">Manual</span>';
-                    }
                     $is_afyl = ($row->pengguna_id == 766 || strpos(strtolower($row->nama), 'afylmardopila') !== false);
                     $days = $is_afyl ? 7 : 9;
                     $kinerja_val = $days * 30000;
@@ -183,11 +188,6 @@ class Salary_tidak_tetap extends CI_Controller
                         if ($ov_check->tunjangan_konsumsi !== null && $ov_check->tunjangan_konsumsi !== '') $konsumsi_val = (float)$ov_check->tunjangan_konsumsi;
                         $total_val = $kinerja_val + $konsumsi_val;
                     }
-
-                    $btn_action = '<div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
-                        <button type="button" class="btn btn-sm btn-warning text-white shadow-sm btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="fa fa-edit"></i> Edit</button>
-                        <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
-                    </div>';
 
                     $th = array();
                     $th[] = ++$start . '.';
@@ -208,14 +208,26 @@ class Salary_tidak_tetap extends CI_Controller
                     $data[] = $th;
                     continue;
                 }
-                $dataTunjangan = tunjangan($row->pengguna_id, $monthfield);
-                $absen_approved = $dataTunjangan['absen_approved'];
-                $dinas_approved = $dataTunjangan['dinas_approved'];
-                $kantor_approved = isset($dataTunjangan['kantor_approved']) ? $dataTunjangan['kantor_approved'] : $dinas_approved;
+
+                // Ambil data kehadiran dari batch map
+                $att = isset($attendance_map[$row->pengguna_id]) ? $attendance_map[$row->pengguna_id] : ['absen_approved' => 0, 'dinas_approved' => 0, 'kantor_approved' => 0, 'hari_biasa' => 0, 'hari_libur' => 0];
+                $absen_approved = $att['absen_approved'];
+                $dinas_approved = $att['dinas_approved'];
+                $kantor_approved = $att['kantor_approved'];
+
+                // Rate tunjangan dari joined table riwayat_salary
+                $rate_jabatan = isset($row->tunjangan_jabatan) ? (float)$row->tunjangan_jabatan : 0;
+                $rate_kinerja = isset($row->tunjangan_kinerja) ? (float)$row->tunjangan_kinerja : 0;
+                $rate_konsumsi = isset($row->tunjangan_konsumsi) ? (float)$row->tunjangan_konsumsi : 0;
+                $rate_komunikasi = isset($row->tunjangan_komunikasi) ? (float)$row->tunjangan_komunikasi : 0;
+                $rate_transportasi = isset($row->tunjangan_transportasi) ? (float)$row->tunjangan_transportasi : 0;
+                $rate_bbm = isset($row->tunjangan_bbm) ? (float)$row->tunjangan_bbm : 0;
+                $rate_potongan = isset($row->potongan) ? (float)$row->potongan : 0;
+                $rate_pendapatanlain = (($row->id_pendapatan_lain ?? 0) > 0 && isset($row->pendapatan_lain)) ? (float)$row->pendapatan_lain : 0;
+
+                // Penyesuaian khusus Pak Boddy (ID 94)
                 if ($row->pengguna_id == 94) {
-                    $salaryBoddyB = $this->md_absensi->getTunjanganBoddyBiasa($row->pengguna_id, $monthfield);
-                    $salaryBoddyL = $this->md_absensi->getTunjanganBoddyLibur($row->pengguna_id, $monthfield);
-                    $dinas_approved = count($salaryBoddyB) + (count($salaryBoddyL) * 3);
+                    $dinas_approved = $att['hari_biasa'] + ($att['hari_libur'] * 3);
                     $kantor_approved = $dinas_approved;
                     if (strpos($monthfield, '2026-07') !== false) {
                         $dinas_approved = 53;
@@ -243,88 +255,6 @@ class Salary_tidak_tetap extends CI_Controller
                     $kantor_approved = 9;
                 }
 
-                //Tunjangan Formated Rp
-                $jabatan = isset($salary[0]->tunjangan_jabatan) ? 'Rp. ' . rupiah($salary[0]->tunjangan_jabatan) : 'Rp. -';
-                $kinerja = isset($salary[0]->tunjangan_kinerja) ? 'Rp. ' . rupiah($salary[0]->tunjangan_kinerja) : 'Rp. -';
-                $konsumsi = isset($salary[0]->tunjangan_konsumsi) ? 'Rp. ' . rupiah($salary[0]->tunjangan_konsumsi) : 'Rp. -';
-                $komunikasi = isset($salary[0]->tunjangan_komunikasi) ? 'Rp. ' . rupiah($salary[0]->tunjangan_komunikasi) : 'Rp. -';
-                $transportasi = isset($salary[0]->tunjangan_transportasi) ? 'Rp. ' . rupiah($salary[0]->tunjangan_transportasi) : 'Rp. -';
-                if ($row->pengguna_id == 724 && $row->terima_tunjangan_transportasi == 1) {
-                    $rate_transport = isset($salary[0]->tunjangan_transportasi) ? $salary[0]->tunjangan_transportasi : 0;
-                    $transportasi = 'Rp. ' . rupiah($rate_transport * $dinas_approved);
-                }
-                $bbm = isset($salary[0]->tunjangan_bbm) ? 'Rp. ' . rupiah($salary[0]->tunjangan_bbm) : 'Rp. -';
-                $potongan = isset($salary[0]->potongan) ? 'Rp. ' . rupiah($salary[0]->potongan) : 'Rp. -';
-                $s_pendapatanlain = isset($salary[0]->pendapatan_lain) ? 'Rp. ' . rupiah($salary[0]->pendapatan_lain) : 'Rp. -';
-
-                //variabel ceklis tanpa tunjanan
-                $s_karyawan = $row->status_karyawan;
-                $s_jabatan = $row->terima_tunjangan_jabatan;
-                $s_kinerja = $row->terima_tunjangan_kinerja;
-                $s_konsumsi = $row->terima_tunjangan_konsumsi;
-                $s_komunikasi = $row->terima_tunjangan_komunikasi;
-                $s_transportasi = $row->terima_tunjangan_transportasi;
-                $s_bbm = $row->terima_tunjangan_bbm;
-                if (($pengguna[0]->id_pendapatan_lain) <= 0) {
-                    $s_pendapatanlain = 0;
-                } else {
-                    $s_pendapatanlain = $salary[0]->pendapatan_lain;
-                }
-
-                //Tunjangan Tanpa Format Rp
-                if ($s_jabatan == 1) {
-                    $a = isset($salary[0]->tunjangan_jabatan) ? '' . ($salary[0]->tunjangan_jabatan) : '0';
-                } else {
-                    $a = 0;
-                }
-                if ($s_kinerja == 1) {
-                    $b = isset($salary[0]->tunjangan_kinerja) ? '' . ($salary[0]->tunjangan_kinerja) : '0';
-                } else {
-                    $b = 0;
-                }
-                if ($s_konsumsi == 1) {
-                    $c = isset($salary[0]->tunjangan_konsumsi) ? '' . ($salary[0]->tunjangan_konsumsi) : '0';
-                } else {
-                    $c = 0;
-                }
-                if ($s_komunikasi == 1) {
-                    $d = isset($salary[0]->tunjangan_komunikasi) ? '' . ($salary[0]->tunjangan_komunikasi) : '0';
-                } else {
-                    $d = 0;
-                }
-                 if ($s_transportasi == 1) {
-                     $e = isset($salary[0]->tunjangan_transportasi) ? '' . ($salary[0]->tunjangan_transportasi) : '0';
-                     if ($row->pengguna_id == 724) {
-                         $e = $e * $dinas_approved;
-                     }
-                 } else {
-                     $e = 0;
-                 }
-                if ($s_bbm == 1) {
-                    $g = isset($salary[0]->tunjangan_bbm) ? '' . ($salary[0]->tunjangan_bbm) : '0'; //sementara
-                } else {
-                    $g = 0;
-                }
-
-                //variabel status karyawan dan dapat tunjangan atau tidak
-
-                // $terima_jabatan = $row->tgl_keluar;
-                //Tunjangan Konsumsi
-                $hitung_konsumsi = $c * $dinas_approved;
-                $total_konsumsi = 'Rp. ' . ($hitung_konsumsi ? rupiah($hitung_konsumsi) : '-');
-                $pott = isset($salary[0]->potongan) ? '' . ($salary[0]->potongan) : '0';
-                //Tunjangan Kinerja
-                $hitung_kinerja = $b * $dinas_approved;
-                if ($row->pengguna_id == 94) {
-                    $hitung_kinerja = $b * count($salaryBoddyL) * 3;
-                    if (strpos($monthfield, '2026-07') !== false) {
-                        $hitung_kinerja = $b * 33;
-                    }
-                }
-                $total_kinerja = 'Rp. ' . ($hitung_kinerja ? rupiah($hitung_kinerja) : '-');
-                //bbm
-                $hitung_bbm = $g * $dinas_approved;
-                $total_bbm = 'Rp. ' . ($hitung_bbm ? rupiah($hitung_bbm) : '-');
                 $s_karyawan = $row->status_karyawan;
                 $is_training = (strtolower(trim($row->status_karyawan ?? '')) == 'training');
                 $is_magang = (strtolower(trim($row->status_karyawan ?? '')) == 'magang' || $row->pengguna_id == 758);
@@ -332,15 +262,37 @@ class Salary_tidak_tetap extends CI_Controller
                     $kantor_approved = 0;
                     $dinas_approved = 0;
                 }
-                //Total Tujangan Tidak Tetap
+
+                // Perhitungan otomatis awal
+                $a = ($row->terima_tunjangan_jabatan == 1) ? $rate_jabatan : 0;
+                $hitung_kinerja = ($row->terima_tunjangan_kinerja == 1) ? ($rate_kinerja * $dinas_approved) : 0;
+                if ($row->pengguna_id == 94) {
+                    $hitung_kinerja = ($row->terima_tunjangan_kinerja == 1) ? ($rate_kinerja * $att['hari_libur'] * 3) : 0;
+                    if (strpos($monthfield, '2026-07') !== false) {
+                        $hitung_kinerja = ($row->terima_tunjangan_kinerja == 1) ? ($rate_kinerja * 33) : 0;
+                    }
+                }
+
+                $hitung_konsumsi = ($row->terima_tunjangan_konsumsi == 1) ? ($rate_konsumsi * $dinas_approved) : 0;
+                if ($row->pengguna_id == 54) { // pak bob
+                    $hitung_konsumsi = ($row->terima_tunjangan_konsumsi == 1) ? 5000000 : 0;
+                }
+
+                $d = ($row->terima_tunjangan_komunikasi == 1) ? $rate_komunikasi : 0;
+                $e = ($row->terima_tunjangan_transportasi == 1) ? ($row->pengguna_id == 724 ? $rate_transportasi * $dinas_approved : $rate_transportasi) : 0;
+                $hitung_bbm = ($row->terima_tunjangan_bbm == 1) ? ($rate_bbm * $dinas_approved) : 0;
+                $pott = $rate_potongan;
+                $s_pendapatanlain = $rate_pendapatanlain;
+
+                // Total Tunjangan
                 if ($is_training) {
                     if ($row->pengguna_id == 771 && strpos($monthfield, '2026-07') !== false) {
                         $f = 162000;
                     } else {
-                        $f = '0';
+                        $f = 0;
                     }
                 } else if ($is_magang) {
-                    $f = '0';
+                    $f = 0;
                 } else {
                     $f = ($a + $hitung_kinerja + $hitung_konsumsi + $d + $e + $hitung_bbm - $pott) + $s_pendapatanlain;
                 }
@@ -350,10 +302,47 @@ class Salary_tidak_tetap extends CI_Controller
                     $f = 162000;
                 }
 
-                $nama_pengguna = '<a href="salary_tidak_tetap/show/detail/' . $id . '">' . $row->nama . '</a>';
-                $ov_check = isset($overrides[$row->pengguna_id]) ? $overrides[$row->pengguna_id] : null;
+                // Terapkan Override Manual jika ada
                 if ($ov_check) {
-                    $nama_pengguna .= ' <span class="badge badge-warning text-dark ml-1" style="font-size:10px;" title="' . htmlspecialchars($ov_check->keterangan ?? 'Manual Override', ENT_QUOTES) . '">Manual</span>';
+                    if ($ov_check->hari_kerja !== null && $ov_check->hari_kerja !== '') {
+                        $dinas_approved = (int)$ov_check->hari_kerja;
+                        $kantor_approved = $dinas_approved;
+                        if ($row->terima_tunjangan_kinerja == 1 && ($ov_check->tunjangan_kinerja === null || $ov_check->tunjangan_kinerja === '')) {
+                            $hitung_kinerja = $rate_kinerja * $dinas_approved;
+                        }
+                        if ($row->terima_tunjangan_konsumsi == 1 && ($ov_check->tunjangan_konsumsi === null || $ov_check->tunjangan_konsumsi === '')) {
+                            $hitung_konsumsi = $rate_konsumsi * $dinas_approved;
+                        }
+                        if ($row->terima_tunjangan_bbm == 1 && ($ov_check->tunjangan_bbm === null || $ov_check->tunjangan_bbm === '')) {
+                            $hitung_bbm = $rate_bbm * $dinas_approved;
+                        }
+                    }
+                    if ($ov_check->tunjangan_jabatan !== null && $ov_check->tunjangan_jabatan !== '') {
+                        $a = (float)$ov_check->tunjangan_jabatan;
+                    }
+                    if ($ov_check->tunjangan_kinerja !== null && $ov_check->tunjangan_kinerja !== '') {
+                        $hitung_kinerja = (float)$ov_check->tunjangan_kinerja;
+                    }
+                    if ($ov_check->tunjangan_konsumsi !== null && $ov_check->tunjangan_konsumsi !== '') {
+                        $hitung_konsumsi = (float)$ov_check->tunjangan_konsumsi;
+                    }
+                    if ($ov_check->tunjangan_komunikasi !== null && $ov_check->tunjangan_komunikasi !== '') {
+                        $d = (float)$ov_check->tunjangan_komunikasi;
+                    }
+                    if ($ov_check->tunjangan_transportasi !== null && $ov_check->tunjangan_transportasi !== '') {
+                        $e = (float)$ov_check->tunjangan_transportasi;
+                    }
+                    if ($ov_check->tunjangan_bbm !== null && $ov_check->tunjangan_bbm !== '') {
+                        $hitung_bbm = (float)$ov_check->tunjangan_bbm;
+                    }
+                    if ($ov_check->tunjangan_lainnya !== null && $ov_check->tunjangan_lainnya !== '') {
+                        $s_pendapatanlain = (float)$ov_check->tunjangan_lainnya;
+                    }
+                    if ($ov_check->potongan !== null && $ov_check->potongan !== '') {
+                        $pott = (float)$ov_check->potongan;
+                    }
+
+                    $f = ($a + $hitung_kinerja + $hitung_konsumsi + $d + $e + $hitung_bbm - $pott) + $s_pendapatanlain;
                 }
 
                 $th = array();
@@ -363,7 +352,7 @@ class Salary_tidak_tetap extends CI_Controller
                 $th[] = $row->level;
                 $th[] = $row->status_karyawan;
 
-                //Training & Magang Tidak ada
+                // Training & Magang Display
                 if ($is_training) {
                     if (($row->pengguna_id == 771 || strpos(strtolower($row->nama), 'novemby') !== false) && strpos($monthfield, '2026-07') !== false) {
                         $th[] = '<i class="fa fa-times"></i>';
@@ -391,121 +380,16 @@ class Salary_tidak_tetap extends CI_Controller
                     $th[] = 'Magang';
                     $th[] = 'Magang';
                 } else {
-                    if ($s_jabatan == 1) {
-                        $th[] = $jabatan;
-                    } else {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    }
-                    if ($s_kinerja == 1) {
-                        $th[] = $total_kinerja;
-                    } else {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    }
-                    if ($s_konsumsi == 1) {
-                        if ($row->pengguna_id == 54) { // pak bob
-                            $hitung_konsumsi = 5000000;
-                            $total_konsumsi = 'Rp. 5.000.000';
-                        }
-                        $th[] = $total_konsumsi;
-                    } else {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    }
-                    if ($s_komunikasi == 1) {
-                        $th[] = $komunikasi;
-                    } else {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    }
-                    if ($s_transportasi == 1) {
-                        $th[] = $transportasi;
-                    } else {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    }
-                    if ($s_bbm == 1) {
-                        $th[] = $total_bbm;
-                    } else {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    }
-
-                    if (($pengguna[0]->id_pendapatan_lain) <= 0) {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    } else if ($s_pendapatanlain <= 0) {
-                        $th[] = '<i class="fa fa-times"></i>';
-                    } else {
-                        $th[] = isset($s_pendapatanlain) ? 'Rp. ' . rupiah($s_pendapatanlain) : 'Rp. -';
-                    }
+                    $th[] = ($row->terima_tunjangan_jabatan == 1 || ($ov_check && $ov_check->tunjangan_jabatan !== null)) ? ($a ? 'Rp. ' . rupiah($a) : 'Rp. -') : '<i class="fa fa-times"></i>';
+                    $th[] = ($row->terima_tunjangan_kinerja == 1 || ($ov_check && $ov_check->tunjangan_kinerja !== null)) ? ($hitung_kinerja ? 'Rp. ' . rupiah($hitung_kinerja) : 'Rp. -') : '<i class="fa fa-times"></i>';
+                    $th[] = ($row->terima_tunjangan_konsumsi == 1 || ($ov_check && $ov_check->tunjangan_konsumsi !== null)) ? ($hitung_konsumsi ? 'Rp. ' . rupiah($hitung_konsumsi) : 'Rp. -') : '<i class="fa fa-times"></i>';
+                    $th[] = ($row->terima_tunjangan_komunikasi == 1 || ($ov_check && $ov_check->tunjangan_komunikasi !== null)) ? ($d ? 'Rp. ' . rupiah($d) : 'Rp. -') : '<i class="fa fa-times"></i>';
+                    $th[] = ($row->terima_tunjangan_transportasi == 1 || ($ov_check && $ov_check->tunjangan_transportasi !== null)) ? ($e ? 'Rp. ' . rupiah($e) : 'Rp. -') : '<i class="fa fa-times"></i>';
+                    $th[] = ($row->terima_tunjangan_bbm == 1 || ($ov_check && $ov_check->tunjangan_bbm !== null)) ? ($hitung_bbm ? 'Rp. ' . rupiah($hitung_bbm) : 'Rp. -') : '<i class="fa fa-times"></i>';
+                    $th[] = (($row->id_pendapatan_lain > 0 && $s_pendapatanlain > 0) || ($ov_check && $ov_check->tunjangan_lainnya !== null)) ? ($s_pendapatanlain ? 'Rp. ' . rupiah($s_pendapatanlain) : 'Rp. -') : '<i class="fa fa-times"></i>';
                 }
 
-                $ov = isset($overrides[$row->pengguna_id]) ? $overrides[$row->pengguna_id] : null;
-                if ($ov) {
-                    if ($ov->hari_kerja !== null && $ov->hari_kerja !== '') {
-                        $dinas_approved = (int)$ov->hari_kerja;
-                        $th[2] = $dinas_approved . ' hari';
-
-                        // Recalculate automatic kinerja & konsumsi based on updated days if not manually set
-                        if ($s_kinerja == 1 && ($ov->tunjangan_kinerja === null || $ov->tunjangan_kinerja === '')) {
-                            $hitung_kinerja = $b * $dinas_approved;
-                            $total_kinerja = 'Rp. ' . rupiah($hitung_kinerja);
-                            $th[6] = $total_kinerja;
-                        }
-                        if ($s_konsumsi == 1 && ($ov->tunjangan_konsumsi === null || $ov->tunjangan_konsumsi === '')) {
-                            $hitung_konsumsi = $c * $dinas_approved;
-                            $total_konsumsi = 'Rp. ' . rupiah($hitung_konsumsi);
-                            $th[7] = $total_konsumsi;
-                        }
-                        if ($s_bbm == 1 && ($ov->tunjangan_bbm === null || $ov->tunjangan_bbm === '')) {
-                            $hitung_bbm = $g * $dinas_approved;
-                            $total_bbm = 'Rp. ' . rupiah($hitung_bbm);
-                            $th[10] = $total_bbm;
-                        }
-                    }
-                    if ($ov->tunjangan_jabatan !== null && $ov->tunjangan_jabatan !== '') {
-                        $a = (float)$ov->tunjangan_jabatan;
-                        $jabatan = 'Rp. ' . rupiah($a);
-                        $th[5] = $jabatan;
-                    }
-                    if ($ov->tunjangan_kinerja !== null && $ov->tunjangan_kinerja !== '') {
-                        $hitung_kinerja = (float)$ov->tunjangan_kinerja;
-                        $total_kinerja = 'Rp. ' . rupiah($hitung_kinerja);
-                        $th[6] = $total_kinerja;
-                    }
-                    if ($ov->tunjangan_konsumsi !== null && $ov->tunjangan_konsumsi !== '') {
-                        $hitung_konsumsi = (float)$ov->tunjangan_konsumsi;
-                        $total_konsumsi = 'Rp. ' . rupiah($hitung_konsumsi);
-                        $th[7] = $total_konsumsi;
-                    }
-                    if ($ov->tunjangan_komunikasi !== null && $ov->tunjangan_komunikasi !== '') {
-                        $d = (float)$ov->tunjangan_komunikasi;
-                        $komunikasi = 'Rp. ' . rupiah($d);
-                        $th[8] = $komunikasi;
-                    }
-                    if ($ov->tunjangan_transportasi !== null && $ov->tunjangan_transportasi !== '') {
-                        $e = (float)$ov->tunjangan_transportasi;
-                        $transportasi = 'Rp. ' . rupiah($e);
-                        $th[9] = $transportasi;
-                    }
-                    if ($ov->tunjangan_bbm !== null && $ov->tunjangan_bbm !== '') {
-                        $g = (float)$ov->tunjangan_bbm;
-                        $total_bbm = 'Rp. ' . rupiah($g);
-                        $th[10] = $total_bbm;
-                    }
-                    if ($ov->tunjangan_lainnya !== null && $ov->tunjangan_lainnya !== '') {
-                        $s_pendapatanlain = (float)$ov->tunjangan_lainnya;
-                        $th[11] = 'Rp. ' . rupiah($s_pendapatanlain);
-                    }
-                    if ($ov->potongan !== null && $ov->potongan !== '') {
-                        $pott = (float)$ov->potongan;
-                        $potongan = 'Rp. ' . rupiah($pott);
-                    }
-
-                    $f = ($a + $hitung_kinerja + $hitung_konsumsi + $d + $e + $g - $pott) + $s_pendapatanlain;
-                }
-
-                $btn_action = '<div class="d-inline-flex align-items-center" style="gap: 5px; white-space: nowrap;">
-                    <button type="button" class="btn btn-sm btn-warning text-white shadow-sm btn-edit-override" data-id="' . $row->pengguna_id . '" data-nama="' . htmlspecialchars($row->nama, ENT_QUOTES) . '" title="Edit Manual Hitungan Tunjangan" style="padding: 4px 8px; border-radius: 6px; font-size: 11px;"><i class="fa fa-edit"></i> Edit</button>
-                    <a target="_blank" class="btn btn-sm btn-danger text-white shadow-sm" href="' . base_url("salary/print_slip_month/" . $monthfield . "/" . $id) . '" title="Print Slip Gaji" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-file-invoice-dollar"></i> Slip Gaji</a>
-                </div>';
-
-                $th[] = $potongan;
+                $th[] = $pott ? 'Rp. ' . rupiah($pott) : 'Rp. -';
                 $th[] = 'Rp. ' . ($f ? rupiah($f) : '0');
                 $th[] = $btn_action;
                 $data[] = $th;
@@ -522,10 +406,12 @@ class Salary_tidak_tetap extends CI_Controller
         grantAccessFor(['Administrator', 'Hrd', 'Ga']);
 
         $month = $this->input->post('filter_month') ? $this->input->post('filter_month') : date("Y-m");
+        $excluded_ids = [29]; // ID karyawan yang dikecualikan
+        
+        // Batch query efisien: 1 query attendance + 1 query overrides + 1 query pengguna with salary
+        $attendance_map = $this->md_absensi->getMonthlyAttendanceSummary($month);
         $overrides = $this->md_salary_tidak_tetap->getOverridesByMonth($month);
-        $excluded_ids = [29]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (contoh: [29, 30, 31])
-        $this->db->where_not_in('pg.pengguna_id', $excluded_ids);
-        $dt = $this->md_pengguna->getAllPenggunaAktifList();
+        $dt = $this->md_salary_tidak_tetap->getAllPenggunaWithSalaryList($excluded_ids);
 
         $totals = [
             'total_jabatan' => 0,
@@ -540,24 +426,25 @@ class Salary_tidak_tetap extends CI_Controller
         ];
 
         foreach ($dt as $row) {
-            $this->db->reconnect();
-            $pengguna = $this->md_pengguna->getById($row->pengguna_id);
-            $salary = $this->md_salary->getById($pengguna[0]->id_latestriwayat_salary);
-            $dataSistem = tunjangan($row->pengguna_id, $month);
+            $att = isset($attendance_map[$row->pengguna_id]) ? $attendance_map[$row->pengguna_id] : ['absen_approved' => 0, 'dinas_approved' => 0, 'kantor_approved' => 0, 'hari_biasa' => 0, 'hari_libur' => 0];
+            $dinas_approved = $att['dinas_approved'];
 
-            $jabatan = $row->terima_tunjangan_jabatan == 1 ? (isset($salary[0]->tunjangan_jabatan) ? $salary[0]->tunjangan_jabatan : 0) : 0;
-            $kinerja = $row->terima_tunjangan_kinerja == 1 ? $dataSistem['total_kinerjadinas'] : 0;
-            $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? $dataSistem['total_konsumsidinas'] : 0;
-            $bbm = $row->terima_tunjangan_bbm == 1 ? $dataSistem['total_bbm'] : 0;
+            $rate_jabatan = isset($row->tunjangan_jabatan) ? (float)$row->tunjangan_jabatan : 0;
+            $rate_kinerja = isset($row->tunjangan_kinerja) ? (float)$row->tunjangan_kinerja : 0;
+            $rate_konsumsi = isset($row->tunjangan_konsumsi) ? (float)$row->tunjangan_konsumsi : 0;
+            $rate_komunikasi = isset($row->tunjangan_komunikasi) ? (float)$row->tunjangan_komunikasi : 0;
+            $rate_transportasi = isset($row->tunjangan_transportasi) ? (float)$row->tunjangan_transportasi : 0;
+            $rate_bbm = isset($row->tunjangan_bbm) ? (float)$row->tunjangan_bbm : 0;
+            $rate_potongan = isset($row->potongan) ? (float)$row->potongan : 0;
+            $rate_pendapatanlain = (($row->id_pendapatan_lain ?? 0) > 0 && isset($row->pendapatan_lain)) ? (float)$row->pendapatan_lain : 0;
+
+            $jabatan = $row->terima_tunjangan_jabatan == 1 ? $rate_jabatan : 0;
+            $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * $dinas_approved) : 0;
+            $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? ($rate_konsumsi * $dinas_approved) : 0;
+            $bbm = $row->terima_tunjangan_bbm == 1 ? ($rate_bbm * $dinas_approved) : 0;
 
             if ($row->pengguna_id == 94) {
-                $rate_kinerja = isset($salary[0]->tunjangan_kinerja) ? $salary[0]->tunjangan_kinerja : 0;
-                $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? $salary[0]->tunjangan_konsumsi : 0;
-                $rate_bbm = isset($salary[0]->tunjangan_bbm) ? $salary[0]->tunjangan_bbm : 0;
-
-                $salaryBoddyB = $this->md_absensi->getTunjanganBoddyBiasa($row->pengguna_id, $month);
-                $salaryBoddyL = $this->md_absensi->getTunjanganBoddyLibur($row->pengguna_id, $month);
-                $dinas_approved_94 = count($salaryBoddyB) + (count($salaryBoddyL) * 3);
+                $dinas_approved_94 = $att['hari_biasa'] + ($att['hari_libur'] * 3);
                 if (strpos($month, '2026-07') !== false) {
                     $dinas_approved_94 = 56;
                 }
@@ -565,36 +452,24 @@ class Salary_tidak_tetap extends CI_Controller
                     $dinas_approved_94 = 46;
                 }
 
-                $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * count($salaryBoddyL) * 3) : 0;
+                $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * $att['hari_libur'] * 3) : 0;
                 $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? ($rate_konsumsi * $dinas_approved_94) : 0;
                 $bbm = $row->terima_tunjangan_bbm == 1 ? ($rate_bbm * $dinas_approved_94) : 0;
             }
 
             if ($row->pengguna_id == 14 && strpos($month, '2026-07') !== false) {
-                $rate_kinerja = isset($salary[0]->tunjangan_kinerja) ? $salary[0]->tunjangan_kinerja : 0;
-                $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? $salary[0]->tunjangan_konsumsi : 0;
-                $rate_bbm = isset($salary[0]->tunjangan_bbm) ? $salary[0]->tunjangan_bbm : 0;
-
                 $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * 19) : 0;
                 $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? ($rate_konsumsi * 19) : 0;
                 $bbm = $row->terima_tunjangan_bbm == 1 ? ($rate_bbm * 19) : 0;
             }
 
             if ($row->pengguna_id == 25 && strpos($month, '2026-07') !== false) {
-                $rate_kinerja = isset($salary[0]->tunjangan_kinerja) ? $salary[0]->tunjangan_kinerja : 0;
-                $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? $salary[0]->tunjangan_konsumsi : 0;
-                $rate_bbm = isset($salary[0]->tunjangan_bbm) ? $salary[0]->tunjangan_bbm : 0;
-
                 $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * 21) : 0;
                 $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? ($rate_konsumsi * 21) : 0;
                 $bbm = $row->terima_tunjangan_bbm == 1 ? ($rate_bbm * 21) : 0;
             }
 
             if ($row->pengguna_id == 102 && strpos($month, '2026-07') !== false) {
-                $rate_kinerja = isset($salary[0]->tunjangan_kinerja) ? $salary[0]->tunjangan_kinerja : 0;
-                $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? $salary[0]->tunjangan_konsumsi : 0;
-                $rate_bbm = isset($salary[0]->tunjangan_bbm) ? $salary[0]->tunjangan_bbm : 0;
-
                 $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * 19) : 0;
                 $konsumsi = $row->terima_tunjangan_konsumsi == 1 ? ($rate_konsumsi * 19) : 0;
                 $bbm = $row->terima_tunjangan_bbm == 1 ? ($rate_bbm * 19) : 0;
@@ -608,10 +483,10 @@ class Salary_tidak_tetap extends CI_Controller
             if ($row->pengguna_id == 54 && $row->terima_tunjangan_konsumsi == 1) {
                 $konsumsi = 5000000;
             }
-            $komunikasi = $row->terima_tunjangan_komunikasi == 1 ? $dataSistem['total_komunikasi'] : 0;
-            $transportasi = $row->terima_tunjangan_transportasi == 1 ? $dataSistem['total_transportasi'] : 0;
-            $lainnya = ($pengguna[0]->id_pendapatan_lain > 0 && $dataSistem['total_tunjanganlain'] > 0) ? $dataSistem['total_tunjanganlain'] : 0;
-            $potongan = isset($salary[0]->potongan) ? $salary[0]->potongan : 0;
+            $komunikasi = $row->terima_tunjangan_komunikasi == 1 ? $rate_komunikasi : 0;
+            $transportasi = $row->terima_tunjangan_transportasi == 1 ? ($row->pengguna_id == 724 ? $rate_transportasi * $dinas_approved : $rate_transportasi) : 0;
+            $lainnya = $rate_pendapatanlain;
+            $potongan = $rate_potongan;
 
             $is_training_or_magang = in_array(strtolower(trim($row->status_karyawan ?? '')), ['training', 'magang']) || ($row->pengguna_id == 758);
             if ($is_training_or_magang) {
@@ -648,18 +523,14 @@ class Salary_tidak_tetap extends CI_Controller
                 $ov = $overrides[$row->pengguna_id];
                 if ($ov->hari_kerja !== null && $ov->hari_kerja !== '') {
                     $days_ov = (int)$ov->hari_kerja;
-                    $rate_kinerja_val = isset($salary[0]->tunjangan_kinerja) ? (float)$salary[0]->tunjangan_kinerja : 0;
-                    $rate_konsumsi_val = isset($salary[0]->tunjangan_konsumsi) ? (float)$salary[0]->tunjangan_konsumsi : 0;
-                    $rate_bbm_val = isset($salary[0]->tunjangan_bbm) ? (float)$salary[0]->tunjangan_bbm : 0;
-
                     if ($row->terima_tunjangan_kinerja == 1 && ($ov->tunjangan_kinerja === null || $ov->tunjangan_kinerja === '')) {
-                        $kinerja = $rate_kinerja_val * $days_ov;
+                        $kinerja = $rate_kinerja * $days_ov;
                     }
                     if ($row->terima_tunjangan_konsumsi == 1 && ($ov->tunjangan_konsumsi === null || $ov->tunjangan_konsumsi === '')) {
-                        $konsumsi = $rate_konsumsi_val * $days_ov;
+                        $konsumsi = $rate_konsumsi * $days_ov;
                     }
                     if ($row->terima_tunjangan_bbm == 1 && ($ov->tunjangan_bbm === null || $ov->tunjangan_bbm === '')) {
-                        $bbm = $rate_bbm_val * $days_ov;
+                        $bbm = $rate_bbm * $days_ov;
                     }
                 }
                 if ($ov->tunjangan_jabatan !== null && $ov->tunjangan_jabatan !== '') $jabatan = (float)$ov->tunjangan_jabatan;
@@ -742,10 +613,26 @@ class Salary_tidak_tetap extends CI_Controller
 
         $pengguna = $this->md_pengguna->getById($pengguna_id);
         $salary = $this->md_salary->getById($pengguna[0]->id_latestriwayat_salary ?? 0);
-        $dataSistem = tunjangan($pengguna_id, $month);
+        
+        $attendance_map = $this->md_absensi->getMonthlyAttendanceSummary($month);
+        $att = isset($attendance_map[$pengguna_id]) ? $attendance_map[$pengguna_id] : ['absen_approved' => 0, 'dinas_approved' => 0, 'kantor_approved' => 0, 'hari_biasa' => 0, 'hari_libur' => 0];
 
-        $kantor_approved = $dataSistem['kantor_approved'] ?? $dataSistem['dinas_approved'] ?? 0;
-        $dinas_approved = $dataSistem['dinas_approved'] ?? 0;
+        $kantor_approved = $att['kantor_approved'];
+        $dinas_approved = $att['dinas_approved'];
+
+        if ($pengguna_id == 94) {
+            $dinas_approved = $att['hari_biasa'] + ($att['hari_libur'] * 3);
+            $kantor_approved = $dinas_approved;
+            if (strpos($month, '2026-07') !== false) {
+                $dinas_approved = 53;
+                $kantor_approved = 53;
+            }
+            if (strpos($month, '2026-09') !== false) {
+                $dinas_approved = 46;
+                $kantor_approved = 46;
+            }
+        }
+
         $rate_kinerja = isset($salary[0]->tunjangan_kinerja) ? (float)$salary[0]->tunjangan_kinerja : 0;
         $rate_konsumsi = isset($salary[0]->tunjangan_konsumsi) ? (float)$salary[0]->tunjangan_konsumsi : 0;
         $rate_komunikasi = isset($salary[0]->tunjangan_komunikasi) ? (float)$salary[0]->tunjangan_komunikasi : 0;
@@ -753,17 +640,27 @@ class Salary_tidak_tetap extends CI_Controller
         $rate_bbm = isset($salary[0]->tunjangan_bbm) ? (float)$salary[0]->tunjangan_bbm : 0;
         $rate_jabatan = isset($salary[0]->tunjangan_jabatan) ? (float)$salary[0]->tunjangan_jabatan : 0;
         $rate_potongan = isset($salary[0]->potongan) ? (float)$salary[0]->potongan : 0;
-        $rate_lainnya = isset($salary[0]->pendapatan_lain) ? (float)$salary[0]->pendapatan_lain : 0;
+        $rate_lainnya = (($pengguna[0]->id_pendapatan_lain ?? 0) > 0 && isset($salary[0]->pendapatan_lain)) ? (float)$salary[0]->pendapatan_lain : 0;
+
+        $auto_kinerja = ($pengguna[0]->terima_tunjangan_kinerja == 1) ? ($rate_kinerja * $dinas_approved) : 0;
+        if ($pengguna_id == 94) {
+            $auto_kinerja = ($pengguna[0]->terima_tunjangan_kinerja == 1) ? ($rate_kinerja * $att['hari_libur'] * 3) : 0;
+        }
+
+        $auto_konsumsi = ($pengguna[0]->terima_tunjangan_konsumsi == 1) ? ($rate_konsumsi * $dinas_approved) : 0;
+        if ($pengguna_id == 54) {
+            $auto_konsumsi = ($pengguna[0]->terima_tunjangan_konsumsi == 1) ? 5000000 : 0;
+        }
 
         $auto = [
             'hari_kerja' => $kantor_approved,
             'tunjangan_jabatan' => ($pengguna[0]->terima_tunjangan_jabatan == 1) ? $rate_jabatan : 0,
-            'tunjangan_kinerja' => ($pengguna[0]->terima_tunjangan_kinerja == 1) ? ($dataSistem['total_kinerjadinas'] ?? ($rate_kinerja * $dinas_approved)) : 0,
-            'tunjangan_konsumsi' => ($pengguna[0]->terima_tunjangan_konsumsi == 1) ? ($dataSistem['total_konsumsidinas'] ?? ($rate_konsumsi * $dinas_approved)) : 0,
-            'tunjangan_komunikasi' => ($pengguna[0]->terima_tunjangan_komunikasi == 1) ? ($dataSistem['total_komunikasi'] ?? $rate_komunikasi) : 0,
-            'tunjangan_transportasi' => ($pengguna[0]->terima_tunjangan_transportasi == 1) ? ($dataSistem['total_transportasi'] ?? $rate_transportasi) : 0,
-            'tunjangan_bbm' => ($pengguna[0]->terima_tunjangan_bbm == 1) ? ($dataSistem['total_bbm'] ?? ($rate_bbm * $dinas_approved)) : 0,
-            'tunjangan_lainnya' => ($pengguna[0]->id_pendapatan_lain > 0) ? ($dataSistem['total_tunjanganlain'] ?? $rate_lainnya) : 0,
+            'tunjangan_kinerja' => $auto_kinerja,
+            'tunjangan_konsumsi' => $auto_konsumsi,
+            'tunjangan_komunikasi' => ($pengguna[0]->terima_tunjangan_komunikasi == 1) ? $rate_komunikasi : 0,
+            'tunjangan_transportasi' => ($pengguna[0]->terima_tunjangan_transportasi == 1) ? ($pengguna_id == 724 ? $rate_transportasi * $dinas_approved : $rate_transportasi) : 0,
+            'tunjangan_bbm' => ($pengguna[0]->terima_tunjangan_bbm == 1) ? ($rate_bbm * $dinas_approved) : 0,
+            'tunjangan_lainnya' => $rate_lainnya,
             'potongan' => $rate_potongan
         ];
 

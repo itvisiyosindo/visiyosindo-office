@@ -882,4 +882,40 @@ class Md_absensi extends CI_Model
         $this->db->order_by('a.id_absensi', 'ASC');
         return $this->db->get()->result();
     }
+
+    /**
+     * Ambil rekap absensi kehadiran & tunjangan seluruh karyawan untuk 1 bulan dalam 1 query batch
+     * @param string $month format 'YYYY-MM'
+     * @return array map [pengguna_id => [...]]
+     */
+    public function getMonthlyAttendanceSummary($month)
+    {
+        $perusahaan = grantAccessForPerusahaan();
+        $this->db->select("
+            pengguna_id,
+            SUM(CASE WHEN approval = 'terima' AND type_absen = 'masuk' AND tanpa_tunjangan = 0 AND (jenis_lokasi IS NULL OR UPPER(jenis_lokasi) != 'WFA') THEN 1 ELSE 0 END) as total_tunjangan,
+            SUM(CASE WHEN approval = 'terima' AND type_absen = 'masuk' AND UPPER(jenis_absen) = 'KANTOR' AND tanpa_tunjangan = 0 AND (jenis_lokasi IS NULL OR UPPER(jenis_lokasi) != 'WFA') THEN 1 ELSE 0 END) as total_dinas,
+            SUM(CASE WHEN approval = 'terima' AND type_absen = 'masuk' AND UPPER(jenis_absen) = 'KANTOR' THEN 1 ELSE 0 END) as total_kantor,
+            SUM(CASE WHEN keterangan = 'hari_biasa' AND approval = 'terima' AND type_absen = 'masuk' AND tanpa_tunjangan = 0 AND (jenis_lokasi IS NULL OR UPPER(jenis_lokasi) != 'WFA') THEN 1 ELSE 0 END) as total_boddy_biasa,
+            SUM(CASE WHEN keterangan = 'hari_libur' AND approval = 'terima' AND type_absen = 'masuk' AND tanpa_tunjangan = 0 AND (jenis_lokasi IS NULL OR UPPER(jenis_lokasi) != 'WFA') THEN 1 ELSE 0 END) as total_boddy_libur
+        ", false);
+        $this->db->from('absensi');
+        $this->db->where('perusahaan', $perusahaan);
+        $this->db->like("DATE_FORMAT(data_created, '%Y-%m')", $month);
+        $this->db->group_by('pengguna_id');
+        $query = $this->db->get();
+
+        $result = [];
+        foreach ($query->result() as $r) {
+            $result[$r->pengguna_id] = [
+                'absen_approved' => (int)$r->total_tunjangan,
+                'dinas_approved' => (int)$r->total_dinas,
+                'kantor_approved' => (int)$r->total_kantor,
+                'hari_biasa' => (int)$r->total_boddy_biasa,
+                'hari_libur' => (int)$r->total_boddy_libur,
+            ];
+        }
+        return $result;
+    }
 }
+
