@@ -129,5 +129,64 @@
                 }
             });
         });
+
+        // Initialize Custom Animated Switch Menu Dropdown
+        var $nativeSwitchSelect = $('#switch_menu');
+        if ($nativeSwitchSelect.length && !$('.custom-switch-dropdown').length) {
+            var $selectedOpt = $nativeSwitchSelect.find('option:selected');
+            var selectedText = ($selectedOpt.length && $selectedOpt.text()) ? $selectedOpt.text() : 'Pilih Menu';
+            var selectedVal = $nativeSwitchSelect.val();
+
+            var $wrapper = $('<div class="custom-switch-dropdown"></div>');
+            var $trigger = $(
+                '<button type="button" class="custom-switch-trigger" aria-haspopup="true" aria-expanded="false">' +
+                    '<span class="custom-switch-text">' + selectedText + '</span>' +
+                    '<i class="fas fa-chevron-down custom-switch-arrow"></i>' +
+                '</button>'
+            );
+            var $menu = $('<div class="custom-switch-menu"></div>');
+
+            $nativeSwitchSelect.find('option').each(function() {
+                var val = $(this).val();
+                var text = $(this).text();
+                var isSelected = $(this).is(':selected') || (val === selectedVal);
+                var $item = $(
+                    '<a href="' + val + '" class="custom-switch-item ' + (isSelected ? 'active' : '') + '" data-value="' + val + '">' +
+                        '<span class="custom-switch-item-text">' + text + '</span>' +
+                        '<i class="fas fa-check custom-switch-item-check"></i>' +
+                    '</a>'
+                );
+                $menu.append($item);
+            });
+
+            $nativeSwitchSelect.hide().after($wrapper);
+            $wrapper.append($trigger).append($menu);
+
+            $trigger.on('click', function(e) {
+                e.stopPropagation();
+                var isOpen = $wrapper.hasClass('open');
+                $('.custom-switch-dropdown').removeClass('open');
+                if (!isOpen) {
+                    $wrapper.addClass('open');
+                    $trigger.attr('aria-expanded', 'true');
+                } else {
+                    $trigger.attr('aria-expanded', 'false');
+                }
+            });
+
+            $(document).on('click', function(e) {
+                if (!$wrapper.is(e.target) && $wrapper.has(e.target).length === 0) {
+                    $wrapper.removeClass('open');
+                    $trigger.attr('aria-expanded', 'false');
+                }
+            });
+
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape' && $wrapper.hasClass('open')) {
+                    $wrapper.removeClass('open');
+                    $trigger.attr('aria-expanded', 'false');
+                }
+            });
+        }
     });
 </script>
