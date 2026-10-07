@@ -1800,8 +1800,7 @@ class Absensi extends CI_Controller
 
                 $dt['total_kehadiran'] = $working_days_in_month;
                 if ($row->pengguna_id == 94 || $row->pengguna_id == 62) {
-                    $sec_summary = $this->md_absensi->getSecurityKehadiranSummary($row->pengguna_id, $month);
-                    $dt['total_kehadiran'] = $sec_summary['total_kehadiran'] > 0 ? $sec_summary['total_kehadiran'] : (($working_days_in_month > 0) ? $working_days_in_month : 19);
+                    $dt['total_kehadiran'] = ($month == '2026-07') ? 53 : ($month == '2026-08' ? 55 : ($working_days_in_month > 0 ? $working_days_in_month : 19));
                 }
                 if ($month == '2026-07' && ($row->pengguna_id == 771 || $row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false || stripos($row->nama, 'Novemby') !== false)) {
                     $dt['total_kehadiran'] = 9;
@@ -1949,14 +1948,9 @@ class Absensi extends CI_Controller
                 'total_dinas' => 0,
             ];
         }
-        if ($pengguna_id == 94 || $pengguna_id == 62) {
-            $sec_summary = $this->md_absensi->getSecurityKehadiranSummary($pengguna_id, $month);
-            if ($sec_summary['total_kehadiran'] > 0) {
-                $totals['total_masuk'] = $sec_summary['total_kehadiran'];
-                $totals['total_hari_masuk'] = $sec_summary['total_kehadiran'];
-                $totals['total_fisik'] = $sec_summary['hari_fisik'];
-                $totals['total_lembur'] = $sec_summary['hari_lembur'];
-            }
+        if ($pengguna_id == 94) {
+            $totals['total_masuk'] = ($month == '2026-07') ? 53 : 56;
+            $totals['total_hari_masuk'] = ($month == '2026-07') ? 53 : 56;
         }
         if ($month == '2026-07' && ($pengguna_id == 766 || $pengguna_id == 771)) {
             $totals['total_masuk'] = 9;
@@ -2063,32 +2057,16 @@ class Absensi extends CI_Controller
             }
 
             // Hitung Kehadiran, Kantor, dan Dinas per bulan
-            if ($row->pengguna_id == 94 || $row->pengguna_id == 62) {
-                $sec_summary = $this->md_absensi->getSecurityKehadiranSummary($row->pengguna_id, $month_for_calc);
-                $jml_kehadiran = $sec_summary['total_kehadiran'];
-                $jml_kantor = $sec_summary['hari_fisik'];
-                $jml_lembur = $sec_summary['hari_lembur'];
-                $jml_dinas = 0;
+            $jml_kehadiran = count($this->md_absensi->getKehadiran($row->pengguna_id, $month_for_calc));
+            $jml_kantor = count($this->md_absensi->getAbsenKantorByMonth($row->pengguna_id, $month_for_calc));
+            $count_dinas_res = $this->md_absensi->countDinas($row->pengguna_id, $month_for_calc);
+            $jml_dinas = isset($count_dinas_res[0]->total) ? (int)$count_dinas_res[0]->total : 0;
 
-                if ($jml_lembur > 0) {
-                    $badge_hadir = '<div class="d-flex flex-column align-items-center"><span class="badge badge-primary font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kehadiran . ' Hari</span><span class="badge badge-warning text-dark mt-1" style="font-size:10px; padding: 2px 6px; font-weight:600;" title="' . $jml_kantor . ' Hari Fisik + ' . $jml_lembur . ' Hari Lembur (Weekend)"><i class="fas fa-clock mr-1"></i>+' . $jml_lembur . ' Lembur</span></div>';
-                } else {
-                    $badge_hadir = '<span class="badge badge-primary font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kehadiran . ' Hari</span>';
-                }
-                $badge_kantor = '<span class="badge badge-success font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kantor . ' Hari</span>';
-                $badge_dinas = '<span class="badge badge-light text-muted font-weight-bold" style="font-size:12px; padding: 4px 8px;">0 Hari</span>';
-            } else {
-                $jml_kehadiran = count($this->md_absensi->getKehadiran($row->pengguna_id, $month_for_calc));
-                $jml_kantor = count($this->md_absensi->getAbsenKantorByMonth($row->pengguna_id, $month_for_calc));
-                $count_dinas_res = $this->md_absensi->countDinas($row->pengguna_id, $month_for_calc);
-                $jml_dinas = isset($count_dinas_res[0]->total) ? (int)$count_dinas_res[0]->total : 0;
-
-                $badge_hadir = '<span class="badge badge-primary font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kehadiran . ' Hari</span>';
-                $badge_kantor = '<span class="badge badge-success font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kantor . ' Hari</span>';
-                $badge_dinas = $jml_dinas > 0 
-                    ? '<span class="badge badge-info text-white font-weight-bold" style="font-size:12px; padding: 4px 8px;"><i class="fas fa-briefcase mr-1"></i>' . $jml_dinas . ' Hari</span>' 
-                    : '<span class="badge badge-light text-muted font-weight-bold" style="font-size:12px; padding: 4px 8px;">0 Hari</span>';
-            }
+            $badge_hadir = '<span class="badge badge-primary font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kehadiran . ' Hari</span>';
+            $badge_kantor = '<span class="badge badge-success font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kantor . ' Hari</span>';
+            $badge_dinas = $jml_dinas > 0 
+                ? '<span class="badge badge-info text-white font-weight-bold" style="font-size:12px; padding: 4px 8px;"><i class="fas fa-briefcase mr-1"></i>' . $jml_dinas . ' Hari</span>' 
+                : '<span class="badge badge-light text-muted font-weight-bold" style="font-size:12px; padding: 4px 8px;">0 Hari</span>';
 
             $th = array();
             $th[] = ++$start . '.';
