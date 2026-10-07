@@ -1800,7 +1800,7 @@ class Absensi extends CI_Controller
 
                 $dt['total_kehadiran'] = $working_days_in_month;
                 if ($row->pengguna_id == 94 || $row->pengguna_id == 62) {
-                    $dt['total_kehadiran'] = ($month == '2026-07') ? 53 : ($month == '2026-08' ? 55 : ($working_days_in_month > 0 ? $working_days_in_month : 19));
+                    $dt['total_kehadiran'] = ($month == '2026-07') ? 53 : ($month == '2026-08' ? 55 : ($month == '2026-09' ? 46 : ($working_days_in_month > 0 ? $working_days_in_month : 19)));
                 }
                 if ($month == '2026-07' && ($row->pengguna_id == 771 || $row->pengguna_id == 766 || stripos($row->nama, 'Afyl') !== false || stripos($row->nama, 'Novemby') !== false)) {
                     $dt['total_kehadiran'] = 9;
@@ -1949,8 +1949,8 @@ class Absensi extends CI_Controller
             ];
         }
         if ($pengguna_id == 94) {
-            $totals['total_masuk'] = ($month == '2026-07') ? 53 : 56;
-            $totals['total_hari_masuk'] = ($month == '2026-07') ? 53 : 56;
+            $totals['total_masuk'] = ($month == '2026-07') ? 53 : (($month == '2026-09') ? 46 : 56);
+            $totals['total_hari_masuk'] = ($month == '2026-07') ? 53 : (($month == '2026-09') ? 46 : 56);
         }
         if ($month == '2026-07' && ($pengguna_id == 766 || $pengguna_id == 771)) {
             $totals['total_masuk'] = 9;

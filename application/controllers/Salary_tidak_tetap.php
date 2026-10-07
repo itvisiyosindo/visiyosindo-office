@@ -221,6 +221,10 @@ class Salary_tidak_tetap extends CI_Controller
                         $dinas_approved = 53;
                         $kantor_approved = 53;
                     }
+                    if (strpos($monthfield, '2026-09') !== false) {
+                        $dinas_approved = 46;
+                        $kantor_approved = 46;
+                    }
                 }
                 if ($row->pengguna_id == 14 && strpos($monthfield, '2026-07') !== false) {
                     $dinas_approved = 19;
@@ -556,6 +560,9 @@ class Salary_tidak_tetap extends CI_Controller
                 $dinas_approved_94 = count($salaryBoddyB) + (count($salaryBoddyL) * 3);
                 if (strpos($month, '2026-07') !== false) {
                     $dinas_approved_94 = 56;
+                }
+                if (strpos($month, '2026-09') !== false) {
+                    $dinas_approved_94 = 46;
                 }
 
                 $kinerja = $row->terima_tunjangan_kinerja == 1 ? ($rate_kinerja * count($salaryBoddyL) * 3) : 0;
