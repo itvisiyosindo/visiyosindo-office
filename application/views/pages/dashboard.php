@@ -298,43 +298,145 @@
 
 
 		<style>
-			.stat-card {
-				border: none;
+			.modern-stat-card {
+				background: #ffffff;
+				border: 1px solid rgba(226, 232, 240, 0.85);
 				border-radius: 18px;
-				transition: all 0.3s ease-in-out;
+				padding: 22px 20px;
+				box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+				transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+				position: relative;
+				overflow: hidden;
 			}
 
-			.stat-card:hover {
-				transform: translateY(-6px);
-				box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+			.modern-stat-card::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				height: 4px;
+				background: transparent;
+				transition: all 0.3s ease;
 			}
 
-			.stat-icon {
-				width: 55px;
-				height: 55px;
-				border-radius: 50%;
+			.modern-stat-card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 14px 28px -4px rgba(15, 23, 42, 0.1);
+				border-color: rgba(203, 213, 225, 0.9);
+			}
+
+			/* Card Accents */
+			.stat-card-blue:hover::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+			.stat-card-rose:hover::before { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+			.stat-card-purple:hover::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+			.stat-card-teal:hover::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+
+			.stat-icon-wrapper {
+				width: 54px;
+				height: 54px;
+				border-radius: 16px;
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				font-size: 26px;
+				flex-shrink: 0;
+				transition: transform 0.3s ease;
+			}
+
+			.modern-stat-card:hover .stat-icon-wrapper {
+				transform: scale(1.08) rotate(3deg);
+			}
+
+			.stat-icon-blue {
+				background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+				color: #2563eb;
+			}
+
+			.stat-icon-rose {
+				background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+				color: #e11d48;
+			}
+
+			.stat-icon-purple {
+				background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+				color: #7c3aed;
+			}
+
+			.stat-icon-teal {
+				background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+				color: #0284c7;
+			}
+
+			.stat-card-label {
+				font-size: 0.82rem;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				margin-bottom: 6px;
+			}
+
+			.stat-card-value {
+				font-size: 1.85rem;
+				font-weight: 800;
+				color: #0f172a;
+				line-height: 1;
+				font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+			}
+
+			.stat-detail-pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				font-size: 0.75rem;
+				font-weight: 600;
+				padding: 3px 9px;
+				border-radius: 20px;
+				transition: all 0.2s ease;
+			}
+
+			.stat-detail-pill.blue {
+				background: #eff6ff;
+				color: #2563eb;
+			}
+			.modern-stat-card:hover .stat-detail-pill.blue {
+				background: #2563eb;
+				color: #ffffff;
+			}
+
+			.stat-detail-pill.rose {
+				background: #fff1f2;
+				color: #e11d48;
+			}
+			.modern-stat-card:hover .stat-detail-pill.rose {
+				background: #e11d48;
+				color: #ffffff;
+			}
+
+			.stat-detail-pill.purple {
+				background: #f5f3ff;
+				color: #7c3aed;
+			}
+			.modern-stat-card:hover .stat-detail-pill.purple {
+				background: #7c3aed;
+				color: #ffffff;
 			}
 		</style>
 
-		<div class="container-fluid mt-4">
+		<div class="container-fluid mt-3 mb-2 px-0">
 			<div class="row">
 				<!-- Sisa Cuti Tahunan -->
-				<div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+				<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
 					<a href="javascript:;" id="btn-show-cutiTahunan" class="text-decoration-none">
-						<div class="card stat-card shadow-sm">
-							<div class="card-body d-flex justify-content-between align-items-center">
+						<div class="modern-stat-card stat-card-blue">
+							<div class="d-flex justify-content-between align-items-center">
 								<div>
-									<h6 class="text-primary mb-1"><strong>Sisa Cuti Tahunan</strong></h6>
-									<div class="d-flex align-items-baseline">
-										<h3 class="font-weight-bold mb-0 me-2"><?= $cuti_tahunan ?></h3>
-										<small class="text-primary">&nbsp;&nbsp;&nbsp; Detail</small>
+									<div class="stat-card-label text-primary">Sisa Cuti Tahunan</div>
+									<div class="d-flex align-items-center gap-2 mt-1">
+										<span class="stat-card-value"><?= $cuti_tahunan ?></span>
+										<span class="stat-detail-pill blue ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
 								</div>
-								<div class="stat-icon bg-primary text-white">
+								<div class="stat-icon-wrapper stat-icon-blue">
 									<i class="bx bx-calendar-check"></i>
 								</div>
 							</div>
@@ -343,18 +445,18 @@
 				</div>
 
 				<!-- Izin pada Jam Kerja -->
-				<div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+				<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
 					<a href="javascript:;" id="btn-show-open" class="text-decoration-none">
-						<div class="card stat-card shadow-sm">
-							<div class="card-body d-flex justify-content-between align-items-center">
+						<div class="modern-stat-card stat-card-rose">
+							<div class="d-flex justify-content-between align-items-center">
 								<div>
-									<h6 class="text-danger mb-1"><strong>Izin pada Jam Kerja</strong></h6>
-									<div class="d-flex align-items-baseline">
-										<h3 class="font-weight-bold mb-0 me-2"><?= $izin_jam ?></h3>
-										<small class="text-primary">&nbsp;&nbsp;&nbsp; Detail</small>
+									<div class="stat-card-label" style="color: #e11d48;">Izin pada Jam Kerja</div>
+									<div class="d-flex align-items-center gap-2 mt-1">
+										<span class="stat-card-value"><?= $izin_jam ?></span>
+										<span class="stat-detail-pill rose ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
 								</div>
-								<div class="stat-icon bg-danger text-white">
+								<div class="stat-icon-wrapper stat-icon-rose">
 									<i class="bx bx-user-x"></i>
 								</div>
 							</div>
@@ -362,19 +464,19 @@
 					</a>
 				</div>
 
-				<!-- Izin Meninggalkan Pekerjaan -->
-				<div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+				<!-- Izin dari Pekerjaan -->
+				<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
 					<a href="javascript:;" id="btn-show-submit" class="text-decoration-none">
-						<div class="card stat-card shadow-sm">
-							<div class="card-body d-flex justify-content-between align-items-center">
+						<div class="modern-stat-card stat-card-purple">
+							<div class="d-flex justify-content-between align-items-center">
 								<div>
-									<h6 class="text-danger mb-1"><strong>Izin dari Pekerjaan</strong></h6>
-									<div class="d-flex align-items-baseline">
-										<h3 class="font-weight-bold mb-0 me-2"><?= $izin_meinggalkan ?></h3>
-										<small class="text-primary">&nbsp;&nbsp;&nbsp; Detail</small>
+									<div class="stat-card-label" style="color: #7c3aed;">Izin dari Pekerjaan</div>
+									<div class="d-flex align-items-center gap-2 mt-1">
+										<span class="stat-card-value"><?= $izin_meinggalkan ?></span>
+										<span class="stat-detail-pill purple ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
 								</div>
-								<div class="stat-icon bg-danger text-white">
+								<div class="stat-icon-wrapper stat-icon-purple">
 									<i class="bx bx-user-pin"></i>
 								</div>
 							</div>
@@ -383,17 +485,16 @@
 				</div>
 
 				<!-- Pengumuman -->
-				<div class="col-lg-3 col-md-6 col-sm-12 mb-4">
-					<div class="card stat-card shadow-sm">
-						<div class="card-body d-flex justify-content-between align-items-center">
+				<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+					<div class="modern-stat-card stat-card-teal">
+						<div class="d-flex justify-content-between align-items-center">
 							<div>
-								<h6 class="text-info mb-1"><strong>Pengumuman</strong></h6>
-								<div class="d-flex align-items-baseline">
-									<h3 class="font-weight-bold mb-0 me-2"><?= $pengumuman[0]->total ?></h3>
-									<small class="text-primary">&nbsp;&nbsp;&nbsp; </small>
+								<div class="stat-card-label" style="color: #0284c7;">Pengumuman</div>
+								<div class="d-flex align-items-center gap-2 mt-1">
+									<span class="stat-card-value"><?= $pengumuman[0]->total ?></span>
 								</div>
 							</div>
-							<div class="stat-icon bg-info text-white">
+							<div class="stat-icon-wrapper stat-icon-teal">
 								<i class="bx bx-bell"></i>
 							</div>
 						</div>
