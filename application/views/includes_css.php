@@ -163,7 +163,7 @@
         background: #0f172a !important;
     }
 
-    /* Nav Menu Styling & Clean Font */
+    /* Nav Menu Styling & Clean Font with Lightweight Micro-animations */
     html.modern ul.nav-main li>a {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         padding: 8px 14px !important;
@@ -174,7 +174,8 @@
         border-left: 3px solid transparent !important;
         display: flex !important;
         align-items: center !important;
-        transition: all 0.18s ease-in-out !important;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease !important;
+        will-change: transform;
         -webkit-font-smoothing: antialiased !important;
     }
 
@@ -191,25 +192,29 @@
         align-items: center !important;
         justify-content: center !important;
         margin-right: 10px !important;
-        transition: all 0.18s ease-in-out !important;
+        transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease !important;
         text-align: center;
+        will-change: transform;
     }
 
-    /* Hover State */
+    /* Hover State with Subtle Slide & Icon Pop */
     html.modern ul.nav-main li>a:hover {
         background-color: rgba(255, 255, 255, 0.035) !important;
         color: #f1f5f9 !important;
         border-left-color: rgba(56, 189, 248, 0.6) !important;
+        transform: translateX(3px) !important;
     }
 
     html.modern ul.nav-main li>a:hover i {
         color: #38bdf8 !important;
-        background: rgba(56, 189, 248, 0.12) !important;
+        background: rgba(56, 189, 248, 0.14) !important;
+        transform: scale(1.08) !important;
+        box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2) !important;
     }
 
     /* Active State */
     html.modern ul.nav-main li.nav-active>a {
-        background-color: rgba(56, 189, 248, 0.07) !important;
+        background-color: rgba(56, 189, 248, 0.08) !important;
         color: #38bdf8 !important;
         border-left-color: #38bdf8 !important;
         font-weight: 600 !important;
@@ -218,23 +223,40 @@
     html.modern ul.nav-main li.nav-active>a i {
         color: #38bdf8 !important;
         background: rgba(56, 189, 248, 0.18) !important;
-        box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.25) !important;
     }
 
-    /* Children menu style (collapsed/expanded) */
+    /* Children menu style (collapsed/expanded) with smooth chevron rotation */
     html.modern ul.nav-main li.nav-parent>a:after {
         color: #64748b !important;
         font-size: 8.5px !important;
-        transition: transform 0.2s ease, color 0.2s ease !important;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease !important;
+        will-change: transform;
     }
 
     html.modern ul.nav-main li.nav-parent.nav-expanded>a:after {
         color: #38bdf8 !important;
+        transform: rotate(90deg) !important;
     }
 
     html.modern ul.nav-main li .nav-children {
         background: #0b1120 !important;
         padding-left: 0 !important;
+    }
+
+    html.modern ul.nav-main li.nav-parent.nav-expanded > .nav-children {
+        animation: sidebarSubMenuSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes sidebarSubMenuSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     html.modern ul.nav-main li .nav-children li a {
@@ -247,11 +269,12 @@
         position: relative !important;
         display: flex !important;
         align-items: center !important;
-        transition: all 0.18s ease !important;
+        transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease, background-color 0.18s ease !important;
+        will-change: transform;
         -webkit-font-smoothing: antialiased !important;
     }
 
-    /* Clean Sub-menu Bullet Indicator */
+    /* Clean Sub-menu Bullet Indicator with Pulse Animation on Hover */
     html.modern ul.nav-main li .nav-children li a::before {
         content: "" !important;
         width: 4.5px !important;
@@ -260,17 +283,20 @@
         background: #475569 !important;
         position: absolute !important;
         left: 22px !important;
-        transition: all 0.18s ease !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.18s ease, box-shadow 0.18s ease !important;
+        will-change: transform;
     }
 
     html.modern ul.nav-main li .nav-children li a:hover {
         color: #38bdf8 !important;
-        background: rgba(255, 255, 255, 0.02) !important;
+        background: rgba(255, 255, 255, 0.025) !important;
+        transform: translateX(3px) !important;
     }
 
     html.modern ul.nav-main li .nav-children li a:hover::before {
         background: #38bdf8 !important;
-        transform: scale(1.3) !important;
+        transform: scale(1.4) !important;
+        box-shadow: 0 0 6px rgba(56, 189, 248, 0.6) !important;
     }
 
     html.modern ul.nav-main li .nav-children li.nav-active a {
