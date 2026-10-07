@@ -150,43 +150,47 @@
         }
     }
 
-    /* Modern & Compact Sidebar Menu Typography & Styling */
+    /* Modern & Clean Sidebar Menu Typography & Styling */
     .sidebar-left {
         background: #0f172a !important;
-        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
     }
 
     .sidebar-left .nano-content {
         background: #0f172a !important;
     }
 
-    /* Nav Menu Styling & Modern Font */
+    /* Nav Menu Styling & Clean Font */
     html.modern ul.nav-main li>a {
-        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        padding: 9.5px 16px !important;
-        font-size: 13px !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        padding: 9px 16px !important;
+        font-size: 12.5px !important;
         font-weight: 500 !important;
-        letter-spacing: -0.01em !important;
+        letter-spacing: 0.01em !important;
         color: #94a3b8 !important;
         border-left: 3px solid transparent !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transition: all 0.18s ease-in-out !important;
+        -webkit-font-smoothing: antialiased !important;
     }
 
     /* Icon modern colors */
     html.modern ul.nav-main li>a i {
         color: #64748b !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
         margin-right: 12px !important;
-        transition: color 0.2s ease !important;
-        width: 20px;
+        transition: color 0.18s ease !important;
+        width: 18px;
         text-align: center;
     }
 
     /* Hover State */
     html.modern ul.nav-main li>a:hover {
-        background-color: #1e293b !important;
-        color: #38bdf8 !important;
-        border-left-color: #38bdf8 !important;
+        background-color: rgba(255, 255, 255, 0.04) !important;
+        color: #f1f5f9 !important;
+        border-left-color: rgba(56, 189, 248, 0.6) !important;
     }
 
     html.modern ul.nav-main li>a:hover i {
@@ -195,7 +199,7 @@
 
     /* Active State */
     html.modern ul.nav-main li.nav-active>a {
-        background-color: #1e293b !important;
+        background-color: rgba(56, 189, 248, 0.08) !important;
         color: #38bdf8 !important;
         border-left-color: #38bdf8 !important;
         font-weight: 600 !important;
@@ -216,23 +220,24 @@
     }
 
     html.modern ul.nav-main li .nav-children {
-        background: #0b0f19 !important;
+        background: #0b1120 !important;
         padding-left: 0 !important;
     }
 
     html.modern ul.nav-main li .nav-children li a {
-        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        padding: 8px 16px 8px 45px !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        padding: 7.5px 16px 7.5px 42px !important;
         font-size: 12px !important;
-        font-weight: 500 !important;
-        letter-spacing: -0.005em !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.005em !important;
         color: #94a3b8 !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.18s ease !important;
+        -webkit-font-smoothing: antialiased !important;
     }
 
     html.modern ul.nav-main li .nav-children li a:hover {
         color: #38bdf8 !important;
-        background: transparent !important;
+        background: rgba(255, 255, 255, 0.02) !important;
     }
 
     html.modern ul.nav-main li .nav-children li.nav-active a {
@@ -242,25 +247,26 @@
 
     /* Group labels (Lain Lain, etc.) */
     html.modern ul.nav-main li.nav-group-label {
-        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        color: #475569 !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.06em !important;
-        padding: 15px 16px 6px 16px !important;
-        margin-top: 10px !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        color: #64748b !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.08em !important;
+        padding: 14px 16px 5px 16px !important;
+        margin-top: 8px !important;
         text-transform: uppercase !important;
+        -webkit-font-smoothing: antialiased !important;
     }
 
     /* Elegantly style the switch menu in sidebar */
     #switch_menu {
-        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
         border: 1px solid #334155 !important;
-        border-radius: 6px !important;
-        padding: 6px 10px !important;
-        font-size: 12.5px !important;
+        border-radius: 8px !important;
+        padding: 7px 12px !important;
+        font-size: 12px !important;
         font-weight: 500 !important;
         height: auto !important;
         width: calc(100% - 24px) !important;
@@ -268,11 +274,12 @@
         cursor: pointer;
         outline: none;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        -webkit-font-smoothing: antialiased !important;
     }
 
     #switch_menu:focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important;
     }
 
     /* Mobile scrolling safe area and force-momentum scroll */
