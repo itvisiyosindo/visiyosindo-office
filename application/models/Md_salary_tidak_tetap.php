@@ -100,7 +100,7 @@ class Md_salary_tidak_tetap extends CI_Model
     {
         $this->db->order_by('pg.nama', 'ASC');
         if (!empty($excluded_ids)) {
-            $this->datatables->where_not_in('pg.pengguna_id', $excluded_ids);
+            $this->datatables->where('pg.pengguna_id NOT IN (' . implode(',', array_map('intval', $excluded_ids)) . ')');
         }
         return $this->datatables
             ->select('
