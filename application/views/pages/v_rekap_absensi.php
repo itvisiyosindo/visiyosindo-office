@@ -1,200 +1,589 @@
 <?php
 $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
 ?>
-<header class="page-header">
-    <h2><i class="icons icon-user-follow"></i>&nbsp;<?= $page_title ?></h2>
-    <div class="right-wrapper text-left">
-        <ol class="breadcrumbs">
-            <li><span><?= $page_desc ?></span></li>
-        </ol>
-    </div>
-</header>
-<div class="row mb-3" id="absensi-summary-cards">
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Total Baris Absensi</div>
-            <div class="h3 mb-0" id="stats_total_absensi">0</div>
+
+<style>
+    /* Modern Rekap Absensi Styles */
+    .rekap-container {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        padding-bottom: 30px;
+    }
+
+    /* Page Header */
+    .rekap-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .rekap-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .rekap-header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .rekap-header-title {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+    }
+
+    .rekap-header-desc {
+        margin: 2px 0 0 0;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    /* Stats Cards Grid */
+    .rekap-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 1200px) {
+        .rekap-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .rekap-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .rekap-stat-card {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .rekap-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -3px rgba(15, 23, 42, 0.08);
+    }
+
+    .rekap-stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .rekap-stat-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .rekap-stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .icon-total { background: #eff6ff; color: #2563eb; }
+    .icon-masuk { background: #ecfdf5; color: #059669; }
+    .icon-terlambat { background: #fff1f2; color: #e11d48; }
+    .icon-izin { background: #f5f3ff; color: #7c3aed; }
+    .icon-cuti { background: #fffbeb; color: #d97706; }
+    .icon-wfa { background: #f0f9ff; color: #0284c7; }
+    .icon-dinas { background: #eef2ff; color: #4f46e5; }
+    .icon-weekend { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+
+    .rekap-stat-val {
+        font-size: 26px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.2;
+        margin: 0;
+    }
+
+    .rekap-stat-sub {
+        font-size: 11.5px;
+        color: #64748b;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px dashed #f1f5f9;
+    }
+
+    /* Alert Banner */
+    .rekap-alert-banner {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 14px;
+        padding: 12px 18px;
+        color: #0369a1;
+        font-size: 12.5px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .rekap-alert-banner i {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    /* Filter Card */
+    .rekap-filter-card {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.06);
+        margin-bottom: 24px;
+    }
+
+    .rekap-filter-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .rekap-filter-header i {
+        color: #2563eb;
+    }
+
+    .rekap-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        gap: 14px;
+        align-items: flex-end;
+    }
+
+    .rekap-form-group {
+        margin: 0;
+    }
+
+    .rekap-form-group label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 6px;
+    }
+
+    .rekap-form-group .form-control {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #0f172a;
+        height: auto;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+
+    .rekap-form-group .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        outline: none;
+    }
+
+    .rekap-form-group .input-group-text {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .rekap-form-group .input-group .form-control {
+        border-radius: 0 10px 10px 0;
+    }
+
+    .btn-rekap-pdf {
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+        color: #ffffff !important;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 11.5px;
+        padding: 6px 12px;
+        box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+        transition: all 0.2s ease;
+    }
+
+    .btn-rekap-pdf:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+    }
+
+    .btn-rekap-foto {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        color: #ffffff !important;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 11.5px;
+        padding: 6px 12px;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+        transition: all 0.2s ease;
+    }
+
+    .btn-rekap-foto:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+    }
+
+    /* Table Card */
+    .rekap-table-card {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 20px;
+        box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.06);
+        padding: 24px;
+        overflow: hidden;
+    }
+
+    .rekap-table-card .card-header-clean {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 20px;
+    }
+
+    .rekap-table-card .card-header-clean i {
+        color: #2563eb;
+    }
+
+    #kt_table_1 {
+        margin: 0 !important;
+        font-size: 12.5px;
+    }
+
+    #kt_table_1 thead th {
+        background: #f8fafc !important;
+        color: #475569 !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 12px 14px !important;
+        white-space: nowrap;
+    }
+
+    #kt_table_1 tbody td {
+        padding: 12px 14px !important;
+        vertical-align: middle !important;
+        border-color: #f1f5f9 !important;
+        color: #334155 !important;
+    }
+
+    #kt_table_1 tbody tr:hover td {
+        background-color: #f8fafc !important;
+    }
+
+    /* Modal Modern */
+    .modal-modern .modal-content {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-modern .modal-header {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        border: none;
+        padding: 18px 24px;
+    }
+
+    .modal-modern .modal-header .close {
+        color: #ffffff;
+        opacity: 0.9;
+    }
+
+    .modal-modern .modal-body {
+        padding: 24px;
+        background: #ffffff;
+    }
+
+    .modal-modern .modal-footer {
+        padding: 16px 24px;
+        background: #f8fafc;
+        border-top: 1px solid #f1f5f9;
+    }
+</style>
+
+<div class="rekap-container">
+    <!-- Modern Header -->
+    <div class="rekap-page-header">
+        <div class="rekap-header-left">
+            <div class="rekap-header-icon">
+                <i class="fas fa-user-clock"></i>
+            </div>
+            <div>
+                <h3 class="rekap-header-title">Rekap Absensi "<?= $pengguna[0]->nama ?>"</h3>
+                <p class="rekap-header-desc"><?= $page_desc ?> &bull; Pantau riwayat dan statistik kehadiran karyawan.</p>
+            </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Hari Masuk</div>
-            <div class="h3 mb-0" id="stats_total_masuk">0</div>
+
+    <!-- Summary Stats Cards -->
+    <div class="rekap-stats-grid" id="absensi-summary-cards">
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Total Baris Absensi</span>
+                <div class="rekap-stat-icon icon-total"><i class="fas fa-list-ol"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_absensi">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Hari Masuk</span>
+                <div class="rekap-stat-icon icon-masuk"><i class="fas fa-user-check"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_masuk">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Terlambat</span>
+                <div class="rekap-stat-icon icon-terlambat"><i class="fas fa-user-clock"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_terlambat">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Izin</span>
+                <div class="rekap-stat-icon icon-izin"><i class="fas fa-envelope-open-text"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_izin">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Cuti</span>
+                <div class="rekap-stat-icon icon-cuti"><i class="fas fa-calendar-minus"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_cuti">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">WFA</span>
+                <div class="rekap-stat-icon icon-wfa"><i class="fas fa-laptop-house"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_wfa">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Hari Dinas</span>
+                <div class="rekap-stat-icon icon-dinas"><i class="fas fa-plane-departure"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_dinas">0</div>
+        </div>
+        <div class="rekap-stat-card">
+            <div class="rekap-stat-top">
+                <span class="rekap-stat-label">Weekend Masuk</span>
+                <div class="rekap-stat-icon icon-weekend"><i class="fas fa-calendar-week"></i></div>
+            </div>
+            <div class="rekap-stat-val" id="stats_total_weekend_masuk">0</div>
+            <div class="rekap-stat-sub" id="stats_weekend_masuk_list">Tidak ada absen masuk Sabtu/Minggu.</div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Terlambat</div>
-            <div class="h3 mb-0" id="stats_total_terlambat">0</div>
-        </div>
+
+    <!-- Info Banner -->
+    <div class="rekap-alert-banner">
+        <i class="fas fa-info-circle"></i>
+        <span><strong>Catatan:</strong> Total Baris Absensi menghitung semua baris absen masuk/istirahat/keluar. Hari Masuk adalah jumlah hari hadir dengan absen tipe "masuk".</span>
     </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Izin</div>
-            <div class="h3 mb-0" id="stats_total_izin">0</div>
+
+    <!-- Filter & Action Card -->
+    <div class="rekap-filter-card">
+        <div class="rekap-filter-header">
+            <i class="fas fa-filter"></i> Filter & Cetak Rekap
         </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Cuti</div>
-            <div class="h3 mb-0" id="stats_total_cuti">0</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">WFA</div>
-            <div class="h3 mb-0" id="stats_total_wfa">0</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Hari Dinas</div>
-            <div class="h3 mb-0" id="stats_total_dinas">0</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-        <div class="card card-body bg-light h-100 text-center">
-            <div class="text-uppercase font-weight-bold small">Weekend Masuk</div>
-            <div class="h3 mb-0" id="stats_total_weekend_masuk">0</div>
-            <div class="small text-left mt-2" id="stats_weekend_masuk_list">Tidak ada absen masuk Sabtu/Minggu.</div>
-        </div>
-    </div>
-</div>
-<div class="row mb-3">
-    <div class="col">
-        <div class="alert alert-info small mb-0">
-            Total Baris Absensi menghitung semua baris absen masuk/istirahat/keluar. Hari Masuk adalah jumlah hari hadir dengan absen tipe "masuk".
-        </div>
-    </div>
-</div>
-<h2>Rekap Absensi "<?= $pengguna[0]->nama ?>"</h1>
-    <div class="row">
-        <div class="col">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-2">
-                        <small>Filter By Month:</small>
-                        <div class="input-group">
-                            <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-                            <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <small>Filter By date:</small>
-                        <div class="input-group">
-                            <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-                            <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm-dd", "minViewMode": "days"}' class="form-control" id="filter_date" placeholder="Pilih Tanggal" required data-plugin-datepicker>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <small>Filter By Type Absen:</small>
-                        <select class="form-control " name="filter_type" id="filter_type">
-                            <option value="">Semua</option>
-                            <option value="masuk">Absen Masuk</option>
-                            <option value="istirahat">Absen Istirahat</option>
-                            <option value="keluar">Absen Keluar</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <small>Filter By Status Absen:</small>
-                        <select class="form-control " name="filter_status" id="filter_status">
-                            <option value="">Semua</option>
-                            <option value="terlambat">Terlambat</option>
-                            <option value="tepat_waktu">Tepat Waktu</option>
-                            <option value="dinas">Dinas</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <small> <i class="fas fa-print"></i> Print By Month:</small>
-                        <div class="input-group mb-1">
-                            <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-                            <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
-                        </div>
-                        <div class="btn-group w-100 mt-1" role="group">
-                            <button type="button" id="btn_print_rekap_pdf" class="btn btn-sm btn-danger text-white" style="font-weight: 600;" title="Cetak Rekap Absensi Karyawan (PDF)">
-                                <i class="fas fa-file-pdf"></i> Rekap PDF
-                            </button>
-                            <button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white" style="font-weight: 600;" title="Print Absensi 1 Bulan Lengkap Foto Selfie & GPS">
-                                <i class="fas fa-camera"></i> Foto & GPS
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <small>Filter By Jenis Absen:</small>
-                        <select class="form-control " name="jenis_absen" id="jenis_absen">
-                            <option value="">Semua</option>
-                            <option value="Kantor">Kantor</option>
-                            <option value="WFA">WFA</option>
-                            <option value="Dinas">Dinas</option>
-                        </select>
-                    </div>
+        <div class="rekap-filter-grid">
+            <div class="rekap-form-group">
+                <label>Filter By Month:</label>
+                <div class="input-group">
+                    <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                    <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
                 </div>
-                <br>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-                        <thead>
-                            <tr>
-                                <th> # </th>
-                                <th> Tanggal Absensi </th>
-                                <th> Type Absen </th>
-                                <th> Waktu Absen </th>
-                                <th> Status Absen </th>
-                                <th> Lokasi Absen & Foto</th>
-                                <th> Tunjangan </th>
-                                <th> File Pendukung </th>
-                                <th> Keterangan </th>
-                                <th> IP Address </th>
-                                <th> Approval </th>
-                                <th> Lokasi Kerja </th>
-                                <th> Jenis Absen </th>
-                                <?php if ($can_edit): ?>
-                                    <th> Aksi </th>
-                                <?php endif; ?>
-                            </tr>
-                        </thead>
-                    </table>
+            </div>
+            <div class="rekap-form-group">
+                <label>Filter By Date:</label>
+                <div class="input-group">
+                    <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                    <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm-dd", "minViewMode": "days"}' class="form-control" id="filter_date" placeholder="Pilih Tanggal" required data-plugin-datepicker>
+                </div>
+            </div>
+            <div class="rekap-form-group">
+                <label>Filter By Type Absen:</label>
+                <select class="form-control" name="filter_type" id="filter_type">
+                    <option value="">Semua Tipe</option>
+                    <option value="masuk">Absen Masuk</option>
+                    <option value="istirahat">Absen Istirahat</option>
+                    <option value="keluar">Absen Keluar</option>
+                </select>
+            </div>
+            <div class="rekap-form-group">
+                <label>Filter By Status Absen:</label>
+                <select class="form-control" name="filter_status" id="filter_status">
+                    <option value="">Semua Status</option>
+                    <option value="terlambat">Terlambat</option>
+                    <option value="tepat_waktu">Tepat Waktu</option>
+                    <option value="dinas">Dinas</option>
+                </select>
+            </div>
+            <div class="rekap-form-group">
+                <label>Filter By Jenis Absen:</label>
+                <select class="form-control" name="jenis_absen" id="jenis_absen">
+                    <option value="">Semua Jenis</option>
+                    <option value="Kantor">Kantor</option>
+                    <option value="WFA">WFA</option>
+                    <option value="Dinas">Dinas</option>
+                </select>
+            </div>
+            <div class="rekap-form-group">
+                <label><i class="fas fa-print mr-1"></i> Cetak Rekap (1 Bulan):</label>
+                <div class="input-group mb-1">
+                    <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                    <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="print_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+                </div>
+                <div class="d-flex" style="gap: 6px;">
+                    <button type="button" id="btn_print_rekap_pdf" class="btn btn-rekap-pdf flex-fill" title="Cetak Rekap Absensi Karyawan (PDF)">
+                        <i class="fas fa-file-pdf mr-1"></i> Rekap PDF
+                    </button>
+                    <button type="button" id="btn_print_foto_gps" class="btn btn-rekap-foto flex-fill" title="Print Absensi 1 Bulan Lengkap Foto Selfie & GPS">
+                        <i class="fas fa-camera mr-1"></i> Foto & GPS
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-    <input type="hidden" id="pengguna_id" value="<?= $pengguna_id ?>">
-    <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content ">
-                <div class="modal-header bg-dark text-light">
-                    <h4 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i>Lokasi Absen</h4>
-                    <button type="button" class="close" style="color:white;margin: -1px" data-dismiss="modal" aria-label="Close"><i class="far fa-times-circle"></i></button>
+
+    <!-- Table Card -->
+    <div class="rekap-table-card">
+        <div class="card-header-clean">
+            <i class="fas fa-table"></i> Rincian Data Log Kehadiran
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-striped table-sm" id="kt_table_1" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th> # </th>
+                        <th> Tanggal Absensi </th>
+                        <th> Type Absen </th>
+                        <th> Waktu Absen </th>
+                        <th> Status Absen </th>
+                        <th> Lokasi Absen & Foto</th>
+                        <th> Tunjangan </th>
+                        <th> File Pendukung </th>
+                        <th> Keterangan </th>
+                        <th> IP Address </th>
+                        <th> Approval </th>
+                        <th> Lokasi Kerja </th>
+                        <th> Jenis Absen </th>
+                        <?php if ($can_edit): ?>
+                            <th> Aksi </th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="pengguna_id" value="<?= $pengguna_id ?>">
+    <!-- Modal Lokasi Absen & Foto -->
+    <div id="main-modal" class="modal fade modal-modern" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white"><i class="fas fa-map-marked-alt mr-2"></i> Lokasi & Foto Absensi</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-0">
                     <style>
                         #dvImage {
                             display: flex;
                             justify-content: center;
-                            /* Center horizontally */
                             align-items: center;
-                            /* Center vertically */
-                            height: 300px;
-                            background-color: lightgray;
+                            height: 280px;
+                            background-color: #f1f5f9;
+                            overflow: hidden;
+                        }
+                        #dvImage img {
+                            max-height: 100%;
+                            width: auto;
+                            object-fit: contain;
                         }
                     </style>
-                    <div id="dvImage" style="height: 300px"></div>
-                    <div id="dvMap" style="height: 400px"></div><br>
-                    <div class="text-right">
-                        <!-- <input type="hidden" id='latitude' value="">
-					<input type="hidden" id='longitude' value=""> -->
-                    </div>
+                    <div id="dvImage"></div>
+                    <div id="dvMap" style="height: 320px; width: 100%;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal" style="border-radius: 10px; font-weight: 600;">Tutup</button>
                 </div>
             </div>
         </div>
     </div>
 
     <?php if ($can_edit): ?>
-    <div id="modal-edit-absen" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalEditAbsenLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+    <!-- Modal Edit Absensi -->
+    <div id="modal-edit-absen" class="modal fade modal-modern" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalEditAbsenLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-dark text-light">
-                    <h5 class="modal-title" id="modalEditAbsenLabel"><i class="fas fa-edit text-warning"></i> Edit Data Absensi</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+                <div class="modal-header">
+                    <h5 class="modal-title text-white" id="modalEditAbsenLabel"><i class="fas fa-edit mr-2"></i> Edit Data Absensi</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <form id="form-edit-absen" autocomplete="off">
                     <input type="hidden" name="id_absensi" id="edit_id_absensi">
@@ -276,8 +665,8 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Batal</button>
-                        <button type="button" class="btn btn-primary btn-save-edit-absen"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                        <button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal" style="border-radius: 10px; font-weight: 600;"><i class="fas fa-times mr-1"></i> Batal</button>
+                        <button type="button" class="btn btn-primary btn-sm px-4 btn-save-edit-absen" style="border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none;"><i class="fas fa-save mr-1"></i> Simpan Perubahan</button>
                     </div>
                 </form>
             </div>
