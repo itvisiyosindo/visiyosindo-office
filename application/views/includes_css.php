@@ -42,7 +42,7 @@
 
 
 <!-- Theme Custom CSS -->
-<link rel="stylesheet" href="<?= base_url('assets/') ?>css/custom.css">
+<link rel="stylesheet" href="<?= base_url('assets/') ?>css/custom.css?v=<?= time() ?>">
 <link rel="shortcut icon" href="<?= base_url('assets/') ?>img/favicon.png" />
 <!-- Head Libs -->
 

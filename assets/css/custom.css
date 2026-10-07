@@ -2527,3 +2527,209 @@ html.dark .wizard-progress .wizard-steps li.active a span {
 .multiselect-container > .active > a:focus {
 	background-color: #0088CC;
 }
+
+/* ==========================================================================
+   GLOBAL SWEETALERT2 & VALIDATION / CONFIRMATION MODAL MODERNIZATION
+   ========================================================================== */
+.swal2-container {
+	z-index: 100000 !important;
+}
+
+.swal2-container.swal2-backdrop-show,
+.swal2-container.swal2-noanimation {
+	background: rgba(15, 23, 42, 0.45) !important;
+	backdrop-filter: blur(8px) !important;
+	-webkit-backdrop-filter: blur(8px) !important;
+}
+
+.swal2-popup {
+	font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+	border-radius: 24px !important;
+	padding: 32px 28px !important;
+	background: #ffffff !important;
+	border: 1px solid rgba(226, 232, 240, 0.9) !important;
+	box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+}
+
+.swal2-title {
+	font-family: 'Poppins', sans-serif !important;
+	font-size: 1.35rem !important;
+	font-weight: 700 !important;
+	color: #0f172a !important;
+	letter-spacing: -0.01em !important;
+	margin: 14px 0 8px 0 !important;
+	padding: 0 !important;
+	line-height: 1.3 !important;
+}
+
+.swal2-html-container,
+.swal2-content {
+	font-family: 'Poppins', sans-serif !important;
+	font-size: 0.95rem !important;
+	font-weight: 500 !important;
+	color: #475569 !important;
+	line-height: 1.6 !important;
+	margin: 8px 0 0 0 !important;
+	padding: 0 10px !important;
+}
+
+.swal2-html-container h4,
+.swal2-content h4 {
+	font-family: 'Poppins', sans-serif !important;
+	font-size: 1.15rem !important;
+	font-weight: 700 !important;
+	color: #0f172a !important;
+	margin: 0 !important;
+	line-height: 1.4 !important;
+}
+
+/* SweetAlert Icons Modernization */
+.swal2-icon {
+	margin: 10px auto 16px auto !important;
+	border-width: 3px !important;
+	box-sizing: border-box !important;
+}
+
+.swal2-icon.swal2-warning {
+	border-color: #f59e0b !important;
+	color: #f59e0b !important;
+	background: #fffbeb !important;
+	box-shadow: 0 0 24px rgba(245, 158, 11, 0.15) !important;
+}
+
+.swal2-icon.swal2-success {
+	border-color: #10b981 !important;
+	color: #10b981 !important;
+	background: #ecfdf5 !important;
+	box-shadow: 0 0 24px rgba(16, 185, 129, 0.15) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+	border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+	background-color: #10b981 !important;
+}
+
+.swal2-icon.swal2-error {
+	border-color: #ef4444 !important;
+	color: #ef4444 !important;
+	background: #fff1f2 !important;
+	box-shadow: 0 0 24px rgba(239, 68, 68, 0.15) !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+	background-color: #ef4444 !important;
+}
+
+.swal2-icon.swal2-info {
+	border-color: #3b82f6 !important;
+	color: #3b82f6 !important;
+	background: #eff6ff !important;
+	box-shadow: 0 0 24px rgba(59, 130, 246, 0.15) !important;
+}
+
+.swal2-icon.swal2-question {
+	border-color: #6366f1 !important;
+	color: #6366f1 !important;
+	background: #eef2ff !important;
+	box-shadow: 0 0 24px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* SweetAlert Action Buttons */
+.swal2-actions {
+	margin-top: 24px !important;
+	gap: 12px !important;
+	width: 100% !important;
+	justify-content: center !important;
+}
+
+.swal2-styled {
+	font-family: 'Poppins', sans-serif !important;
+	font-size: 13.5px !important;
+	font-weight: 600 !important;
+	padding: 10px 24px !important;
+	border-radius: 12px !important;
+	border: none !important;
+	box-shadow: none !important;
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	outline: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+
+.swal2-styled.swal2-confirm {
+	background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+	color: #ffffff !important;
+	box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28) !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+	transform: translateY(-2px) !important;
+	box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38) !important;
+}
+
+/* Specific button themes based on context */
+.swal2-styled.swal2-confirm[style*="rgb(220, 53, 69)"],
+.swal2-styled.swal2-confirm[style*="#dc3545"],
+.swal2-styled.swal2-confirm[style*="#ef4444"],
+.swal2-styled.swal2-confirm[style*="#e11d48"],
+.swal2-styled.swal2-confirm[style*="red"] {
+	background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+	color: #ffffff !important;
+	box-shadow: 0 4px 14px rgba(225, 29, 72, 0.28) !important;
+}
+
+.swal2-styled.swal2-confirm[style*="rgb(220, 53, 69)"]:hover,
+.swal2-styled.swal2-confirm[style*="#dc3545"]:hover,
+.swal2-styled.swal2-confirm[style*="#ef4444"]:hover,
+.swal2-styled.swal2-confirm[style*="#e11d48"]:hover {
+	transform: translateY(-2px) !important;
+	box-shadow: 0 6px 20px rgba(225, 29, 72, 0.38) !important;
+}
+
+.swal2-styled.swal2-confirm[style*="rgb(40, 167, 69)"],
+.swal2-styled.swal2-confirm[style*="#28a745"],
+.swal2-styled.swal2-confirm[style*="#10b981"],
+.swal2-styled.swal2-confirm[style*="#059669"],
+.swal2-styled.swal2-confirm[style*="green"] {
+	background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+	color: #ffffff !important;
+	box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28) !important;
+}
+
+.swal2-styled.swal2-confirm[style*="rgb(40, 167, 69)"]:hover,
+.swal2-styled.swal2-confirm[style*="#28a745"]:hover,
+.swal2-styled.swal2-confirm[style*="#10b981"]:hover,
+.swal2-styled.swal2-confirm[style*="#059669"]:hover {
+	transform: translateY(-2px) !important;
+	box-shadow: 0 6px 20px rgba(5, 150, 105, 0.38) !important;
+}
+
+.swal2-styled.swal2-cancel {
+	background: #f1f5f9 !important;
+	color: #475569 !important;
+	border: 1px solid #e2e8f0 !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+	background: #e2e8f0 !important;
+	color: #0f172a !important;
+	transform: translateY(-2px) !important;
+}
+
+.swal2-timer-progress-bar {
+	background: linear-gradient(135deg, #2563eb 0%, #059669 100%) !important;
+	height: 4px !important;
+	border-radius: 0 0 24px 24px !important;
+}
+
+.swal2-popup.swal2-toast {
+	border-radius: 14px !important;
+	padding: 12px 18px !important;
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12) !important;
+	border: 1px solid #e2e8f0 !important;
+}
+

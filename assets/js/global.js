@@ -15,12 +15,15 @@ var globalJS = function () {
         const formId = form.attr('id')
         Swal.fire({
             title: 'Simpan Data?',
+            text: 'Pastikan seluruh informasi yang Anda isi sudah benar.',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Ya',
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Simpan',
             cancelButtonText: 'Batal'
         }).then(function (result) {
-            if (result.value) {
+            if (result.value || result.isConfirmed) {
                 $.ajax({
                     url: url,
                     type: "POST",
@@ -30,15 +33,26 @@ var globalJS = function () {
                     dataType: "JSON",
                     beforeSend: function () {
                         Swal.fire({
-                            html: `<h4>Mohon Tunggu...</h4>`,
-                            icon: 'info',
+                            title: 'Menyimpan Data...',
+                            text: 'Mohon tunggu sebentar',
                             allowOutsideClick: false,
-                            timerProgressBar: true,
                             showConfirmButton: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
                         })
                     },
                     success: function (resp) {
                         handleResponse(resp)
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'Terjadi Kesalahan!',
+                            text: 'Gagal menghubungi server.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444',
+                            confirmButtonText: 'Tutup'
+                        });
                     }
                 });
             }
@@ -50,13 +64,24 @@ var globalJS = function () {
         const objek = $(this).data('object')
         Swal.fire({
             title: 'Hapus Data?',
-            icon: 'error',
             text: 'Data yang sudah dihapus tidak dapat dikembalikan lagi!',
+            icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Ya',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Hapus',
             cancelButtonText: 'Batal'
         }).then(function (result) {
-            if (result.value) {
+            if (result.value || result.isConfirmed) {
+                Swal.fire({
+                    title: 'Menghapus Data...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
                 $.ajax({
                     url: objek + '/' + id,
                     method: 'POST',
@@ -66,6 +91,15 @@ var globalJS = function () {
                     },
                     success: function (resp) {
                         handleResponse(resp)
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: 'Terjadi kesalahan saat menghapus data.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444',
+                            confirmButtonText: 'Tutup'
+                        });
                     }
                 });
             }
@@ -77,13 +111,24 @@ var globalJS = function () {
         const objek = $(this).data('object')
         Swal.fire({
             title: 'Hapus Surat?',
-            icon: 'error',
             text: 'Data yang sudah dihapus tidak dapat dikembalikan lagi!',
+            icon: 'warning',
             showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
             confirmButtonText: 'Ya, Hapus',
             cancelButtonText: 'Batal'
         }).then(function (result) {
-            if (result.value) {
+            if (result.value || result.isConfirmed) {
+                Swal.fire({
+                    title: 'Menghapus Surat...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
                 $.ajax({
                     url: objek + '/' + id,
                     method: 'POST',
@@ -94,14 +139,18 @@ var globalJS = function () {
                     success: function (resp) {
                         if (resp.status == 'error') {
                             Swal.fire({
-                                html: `<h4>${resp.msg}</h4>`,
-                                icon: 'error'
+                                title: 'Gagal!',
+                                text: resp.msg || 'Gagal menghapus surat.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444',
+                                confirmButtonText: 'Tutup'
                             })
                         } else {
                             Swal.fire({
-                                html: `<h4>${resp.msg || 'Data berhasil dihapus'}</h4>`,
+                                title: 'Berhasil!',
+                                text: resp.msg || 'Data berhasil dihapus.',
                                 icon: 'success',
-                                timer: 1200,
+                                timer: 1500,
                                 timerProgressBar: true,
                                 showConfirmButton: false,
                             }).then(function () {
@@ -110,7 +159,13 @@ var globalJS = function () {
                         }
                     },
                     error: function () {
-                        Swal.fire('Error', 'Gagal menghapus data', 'error')
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Gagal menghapus data.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444',
+                            confirmButtonText: 'Tutup'
+                        })
                     }
                 });
             }
@@ -235,7 +290,9 @@ function handleResponse(resp) {
         else if (resp['reload'] == 'reload_table') {
             $("table").each(function () {
                 var table_id = $(this).attr('id')
-                $('#' + table_id).DataTable().ajax.reload(null);
+                if ($.fn.DataTable && $.fn.DataTable.isDataTable('#' + table_id)) {
+                    $('#' + table_id).DataTable().ajax.reload(null, false);
+                }
             });
         }
         else
@@ -243,14 +300,18 @@ function handleResponse(resp) {
     }
     if (resp['status'] == 'error') {
         return Swal.fire({
-            html: `<h4>${resp['msg']}</h4>`,
-            icon: resp['status']
+            title: 'Gagal!',
+            text: resp['msg'] || 'Terjadi kesalahan sistem.',
+            icon: 'error',
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Tutup'
         })
     } else {
         return Swal.fire({
-            html: `<h4>${resp['msg']}</h4>`,
-            icon: resp['status'],
-            timer: 800,
+            title: 'Berhasil!',
+            text: resp['msg'] || 'Operasi berhasil dijalankan.',
+            icon: 'success',
+            timer: 1500,
             timerProgressBar: true,
             showConfirmButton: false,
         })
