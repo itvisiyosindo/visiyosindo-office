@@ -163,16 +163,71 @@
         font-weight: 500;
     }
 
-    table.table-bordered, 
-    table.table-bordered th, 
-    table.table-bordered td {
-        border: 1px solid #dee2e6 !important;
+    /* Modern Table Styling & Responsive Behavior */
+    .table-responsive {
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
     }
-    table.striped tbody tr:nth-child(odd) {
-        background-color: #f8fafc;
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
     }
-    table.striped tbody tr:nth-child(even) {
-        background-color: #ffffff; 
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    .table-modern {
+        margin-bottom: 0 !important;
+        border: none !important;
+        width: 100%;
+        min-width: 1450px;
+    }
+    .table-modern thead th {
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        font-weight: 700 !important;
+        font-size: 11.5px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        padding: 12px 10px !important;
+        vertical-align: middle !important;
+        border-bottom: 2px solid #cbd5e1 !important;
+        border-top: none !important;
+        border-left: 1px solid #e2e8f0 !important;
+        border-right: 1px solid #e2e8f0 !important;
+        white-space: nowrap !important;
+        text-align: center;
+    }
+    .table-modern tbody td {
+        padding: 10px 12px !important;
+        font-size: 12.5px !important;
+        color: #334155 !important;
+        vertical-align: middle !important;
+        border: 1px solid #e2e8f0 !important;
+        line-height: 1.5 !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        white-space: normal;
+    }
+    .table-modern tbody tr:nth-of-type(even) {
+        background-color: #fafbfd;
+    }
+    .table-modern tbody tr:hover {
+        background-color: #f0f7ff !important;
+    }
+    .table-modern .row-summary td {
+        background-color: #f8fafc !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        border-top: 2px solid #cbd5e1 !important;
+        padding: 11px 12px !important;
     }
 </style>
 
@@ -306,51 +361,48 @@
                             <i class="fas fa-calendar-day text-primary mr-1"></i> Laporan Mingguan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
                         </h5>
                     </div>
-                    <div style="max-width: 100%;">									
-    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%; table-layout: fixed;">
+                    <div class="table-responsive">									
+                        <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_1">
                             <thead>
                                 <tr>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'>&nbsp; No &nbsp;</th>
-                                    <th style="text-align:center; width:20%; word-wrap: break-word; white-space: normal;" bgcolor="#C6DEFF"><font color='#000000'> Jobdesk </th>
-																		<th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> + </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'> Jenis</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'> Tanggal </th>
-                                    <th style="text-align:center; width:20%; word-wrap: break-word; white-space: normal;" bgcolor="#C6DEFF"><font color='#000000'> Keterangan Proyek</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'>&nbsp; Status Pekerjaan &nbsp;</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'>&nbsp; Hasil Kerja &nbsp;</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'> Pihak Terkait</th>
-                                    <th style="text-align:center; width:20%; word-wrap: break-word; white-space: normal;" bgcolor="#C6DEFF"><font color='#000000'> Keterangan</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Nilai A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'>Nilai B</th>
-                                		<th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'>  Aksi </th>
-																</tr>
+                                    <th style="width: 50px; min-width: 45px;">No</th>
+                                    <th style="min-width: 240px; max-width: 320px; text-align: left;">Jobdesk</th>
+                                    <th style="width: 45px; min-width: 45px;">+</th>
+                                    <th style="width: 130px; min-width: 120px;">Jenis</th>
+                                    <th style="width: 140px; min-width: 130px;">Tanggal</th>
+                                    <th style="min-width: 200px; max-width: 300px; text-align: left;">Keterangan Proyek</th>
+                                    <th style="width: 130px; min-width: 120px;">Status Pekerjaan</th>
+                                    <th style="min-width: 180px; max-width: 260px; text-align: left;">Hasil Kerja</th>
+                                    <th style="width: 140px; min-width: 130px; text-align: left;">Pihak Terkait</th>
+                                    <th style="min-width: 180px; max-width: 260px; text-align: left;">Keterangan</th>
+                                    <th style="width: 80px; min-width: 75px;">Nilai A</th>
+                                    <th style="width: 80px; min-width: 75px;">Nilai B</th>
+                                    <th style="width: 90px; min-width: 85px;">Aksi</th>
+                                </tr>
                             </thead>
 
-														<?php
-														
-																$total_nilai_a = 0;
-																$jumlah_nilai_a = 0;
-																$total_nilai_b = 0;
-																$jumlah_nilai_b = 0;
+                            <?php
+                                $total_nilai_a = 0;
+                                $jumlah_nilai_a = 0;
+                                $total_nilai_b = 0;
+                                $jumlah_nilai_b = 0;
 
-																foreach ($nilai_point_map as $poin) {
-																		if (!empty($poin->nilai_a) && is_numeric($poin->nilai_a)) {
-																				$total_nilai_a += $poin->nilai_a;
-																				$jumlah_nilai_a++;
-																		}
+                                foreach ($nilai_point_map as $poin) {
+                                    if (!empty($poin->nilai_a) && is_numeric($poin->nilai_a)) {
+                                        $total_nilai_a += $poin->nilai_a;
+                                        $jumlah_nilai_a++;
+                                    }
 
-																		if (!empty($poin->nilai_b) && is_numeric($poin->nilai_b)) {
-																				$total_nilai_b += $poin->nilai_b;
-																				$jumlah_nilai_b++;
-																		}
-																}
+                                    if (!empty($poin->nilai_b) && is_numeric($poin->nilai_b)) {
+                                        $total_nilai_b += $poin->nilai_b;
+                                        $jumlah_nilai_b++;
+                                    }
+                                }
 
-																$nilaiRataLapA = ($jumlah_nilai_a > 0) ? ($total_nilai_a / $jumlah_nilai_a) : 0;
-																$nilaiRataLap = ($jumlah_nilai_b > 0) ? ($total_nilai_b / $jumlah_nilai_b) : 0;
-
-																$rataAll = ($nilaiRataLapA + $nilaiRataLap)/2;
-															?>
-
+                                $nilaiRataLapA = ($jumlah_nilai_a > 0) ? ($total_nilai_a / $jumlah_nilai_a) : 0;
+                                $nilaiRataLap = ($jumlah_nilai_b > 0) ? ($total_nilai_b / $jumlah_nilai_b) : 0;
+                                $rataAll = ($nilaiRataLapA + $nilaiRataLap)/2;
+                            ?>
 
                             <tbody>
                               <?php 
@@ -372,132 +424,150 @@ foreach ($data_detail as $row) {
 }
 ?>
 
-																<?php foreach ($grouped_data as $id_desc => $rows): ?>
-																		<?php 
-																		$firstRow = true;
-																		$rowspan = count($rows);
-																		foreach ($rows as $row): 
+                                <?php foreach ($grouped_data as $id_desc => $rows): ?>
+                                    <?php 
+                                    $firstRow = true;
+                                    $rowspan = count($rows);
+                                    foreach ($rows as $row): 
 
-																				$hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
-																				$nama_hari = $hari[date('l', strtotime($row->tanggal))];
+                                        $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
+                                        $nama_hari = $hari[date('l', strtotime($row->tanggal))];
 
-																				$tgl_format = date('d-m-Y', strtotime($row->tanggal));
+                                        $tgl_format = date('d-m-Y', strtotime($row->tanggal));
 
-																				if (!empty($row->link) && empty($row->ket_hasil)) {
-																						$link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer"><i class="fas fa-link"></i> Link</a>';
-																				} elseif (empty($row->link) && !empty($row->ket_hasil)) {
-																						$link_download = htmlspecialchars($row->ket_hasil, ENT_QUOTES, 'UTF-8');
-																				} else {
-																						$link_download = 'Tidak Ada';
-																				}
+                                        if (!empty($row->link) && empty($row->ket_hasil)) {
+                                            $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary shadow-sm" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;"><i class="fas fa-link mr-1"></i> Link</a>';
+                                        } elseif (empty($row->link) && !empty($row->ket_hasil)) {
+                                            $link_download = htmlspecialchars($row->ket_hasil, ENT_QUOTES, 'UTF-8');
+                                        } else {
+                                            $link_download = '<span class="text-muted small">-</span>';
+                                        }
 
+                                        // Gunakan week_offset untuk menghitung Senin dan Jumat berdasarkan minggu
+                                        $monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
+                                        $Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
 
-																				// Gunakan week_offset untuk menghitung Senin dan Jumat berdasarkan minggu
-																				$monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
-																				$Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
+                                        // Cek apakah tanggal created_at berada di luar rentang minggu
+                                        $created_at = date('Y-m-d', strtotime($row->created_at));
+                                        $is_outside_range = ($created_at < $monday || $created_at > $Sunday);
+                                        
+                                        // Menambahkan nilai ke total hanya jika id_lap tidak kosong
+                                        if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
+                                            $total_nilai += $row->nilai;
+                                            $total_nilai_b += $row->nilai_b;
+                                            $jumlah_data++; // Hanya hitung jika data valid
+                                        }
+                                    ?>
+                                    <tr 
+                                        <?php 
+                                            if ($row->nilai_isi == 1) {
+                                                echo 'style="background-color: #f1f5f9; font-weight: 600;"';
+                                            } elseif ($is_outside_range && !empty($row->id_lap)) {
+                                                echo 'style="background-color: #fff1f2;"';
+                                            }
+                                        ?>
+                                    >
 
-																				// Cek apakah tanggal created_at berada di luar rentang minggu
-																				$created_at = date('Y-m-d', strtotime($row->created_at));
-																				$is_outside_range = ($created_at < $monday || $created_at > $Sunday);
-																				
-																				// Menambahkan nilai ke total hanya jika id_lap tidak kosong
-																				if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
-																						$total_nilai += $row->nilai;
-																						$total_nilai_b += $row->nilai_b;
-																						$jumlah_data++; // Hanya hitung jika data valid
-																				}
-																		?>
-																		<tr 
-																			<?php 
-																				if ($row->nilai_isi == 1) {
-																						echo 'style="background-color: #C7C6C1;"';
-																				} elseif ($is_outside_range && !empty($row->id_lap)) {
-																						echo 'style="background-color: #ffebee;"';
-																				}
-																			?>
-																		>
+                                        <?php if ($firstRow): ?>
+                                            <td rowspan="<?= $rowspan ?>" style="text-align:center; font-weight: 600; color: #475569;"><?= $no++ ?></td>
+                                            <?php if($row->nilai_isi != 1){ ?>
+                                                <td rowspan="<?= $rowspan ?>" style="min-width: 240px; max-width: 320px; font-weight: 500;"><?= $row->deskripsi ?></td>
+                                                <td rowspan="<?= $rowspan ?>" style="text-align:center">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-edit2 shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= $row->id ?>" title="Tambah Detail Pekerjaan"><i class="fas fa-plus"></i></button>
+                                                </td>
+                                            <?php }else{ ?>
+                                                <td rowspan="<?= $rowspan ?>" style="min-width: 240px; max-width: 320px; font-weight: 700; color: #1e293b;"><?= $row->deskripsi ?></td>
+                                                <td rowspan="<?= $rowspan ?>"></td>
+                                            <?php } ?>
+                                        <?php endif; ?>
 
-																				<?php if ($firstRow): ?>
-                                        <td rowspan="<?= $rowspan ?>" style="text-align:center"><font color='#000000'>&nbsp;<?= $no++ ?>&nbsp;</td>
-                                        <?php if($row->nilai_isi != 1){ ?>
-                                        <td rowspan="<?= $rowspan ?>" style="width:20%; word-wrap: break-word; white-space: normal;"><font color='#000000'><?= $row->deskripsi ?></td>
-                                        <td rowspan="<?= $rowspan ?>" style="text-align:center">&nbsp;<button type="button" class="btn btn-sm btn-primary btn-edit2" data-id="<?= $row->id ?>"><i class="icons icon-plus"></i></button>&nbsp;</td>
+                                        <td style="text-align:center">
+                                            <?php if (!empty($row->id_lap)): ?>
+                                                <span class="badge badge-light border text-dark font-weight-bold" style="font-size: 11px; padding: 4px 7px; border-radius: 6px;"><?= $row->jenis ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="text-align:center; white-space: nowrap;">
+                                            <?php if (!empty($row->id_lap)): ?>
+                                                <div style="font-weight: 600; font-size: 12px; color: #334155;"><?= $nama_hari ?>, <?= $tgl_format ?></div>
+                                                <?php if ($is_outside_range): ?>
+                                                    <span class="badge badge-danger mt-1" style="font-size: 10px; border-radius: 4px;" title="Diisi terlambat / di luar minggu berjalan"><i class="fas fa-exclamation-triangle mr-1"></i> Terlambat</span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="min-width: 200px; max-width: 300px;">
+                                            <?= !empty($row->id_lap) ? $row->progress : '' ?> 
+                                            <input type="hidden" name="id_sodetail[]" value="<?= $row->id_lap ?>">
+                                        </td>
+                                        <?php if($row->jenis == 'TIDAK ADA PEKERJAAN DI MINGGU INI'){ ?>
+                                            <td style="text-align:center">-</td>
+                                            <td style="text-align:center">-</td>
                                         <?php }else{ ?>
-                                        <td rowspan="<?= $rowspan ?>" style="width:20%; word-wrap: break-word; white-space: normal;"><font color='#000000'><b><?= $row->deskripsi ?></b></font></td>
-                                        <td rowspan="<?= $rowspan ?>"></td>
+                                            <td style="text-align:center">
+                                                <?php 
+                                                    if (!empty($row->id_lap)) {
+                                                        $st = strtoupper(trim($row->status_pekerjaan));
+                                                        if ($st == 'SELESAI') {
+                                                            echo '<span class="badge badge-success px-2 py-1 font-weight-bold" style="font-size: 11px; border-radius: 6px;"><i class="fas fa-check-circle mr-1"></i> SELESAI</span>';
+                                                        } elseif ($st == 'PROSES') {
+                                                            echo '<span class="badge badge-warning text-dark px-2 py-1 font-weight-bold" style="font-size: 11px; border-radius: 6px;"><i class="fas fa-clock mr-1"></i> PROSES</span>';
+                                                        } elseif (!empty($st)) {
+                                                            echo '<span class="badge badge-secondary px-2 py-1 font-weight-bold" style="font-size: 11px; border-radius: 6px;">' . htmlspecialchars($row->status_pekerjaan) . '</span>';
+                                                        }
+                                                    }
+                                                ?>
+                                            </td>
+                                            <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $link_download : '' ?></td>
                                         <?php } ?>
-                                    <?php endif; ?>
+                                        <td><?= !empty($row->id_lap) ? $row->pihak : '' ?></td>
+                                        <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $row->keterangan : '' ?></td>
+                                        <td style="text-align:center">
+                                            <?php 
+                                            $nilai_a = '';
+                                            if ($row->nilai_isi == 1) { 
+                                                $nilai_a = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_a : '';
+                                            ?>
+                                                <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_a) ?></span>
+                                            <?php 
+                                            } 
+                                            ?>
+                                        </td>
+                                        <td style="text-align:center">
+                                            <?php 
+                                            $nilai_b = '';
+                                            if ($row->nilai_isi == 1) { 
+                                                $nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
+                                            ?>
+                                                <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_b) ?></span>
+                                            <?php 
+                                            } 
+                                            ?>
+                                        </td>
+                                        <td style="text-align:center">
+                                            <?php if(!empty($row->id_lap)){ ?>
+                                                <?php if($nilai_a == '' && $nilai_b == ''){ ?>
+                                                    <div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
+                                                        <button type="button" class="btn btn-sm btn-primary btn-edit shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= encrypt($row->id_lap) ?>" title="Edit Data"><i class="fas fa-pencil-alt"></i></button>
+                                                        <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Data" data-id="<?= $row->id_lap ?>" data-object="laporan/delete/<?= $row->id_lap ?>"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                <?php }?>		 
+                                            <?php }?>
+                                        </td>
+                                    </tr>
+                                    <?php 
+                                    $firstRow = false;
+                                    endforeach; 
+                                    ?>
+                                <?php endforeach; ?>
 
-																				<td style="text-align:center"><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $row->jenis : '' ?>&nbsp;</td>
-																				<td style="text-align:center">
-																					<font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $nama_hari . ', ' . $tgl_format : '' ?>&nbsp;</font>
-																					<?php if ($is_outside_range && !empty($row->id_lap)): ?>
-																						<br><span class="badge badge-danger" style="font-size: 10px;" title="Diisi terlambat / di luar minggu berjalan"><i class="fas fa-exclamation-triangle"></i> Terlambat</span>
-																					<?php endif; ?>
-																				</td>
-																				<td style="width:20%; word-wrap: break-word; white-space: normal;"><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $row->progress : '' ?> <input type="hidden" name="id_sodetail[]" value="<?= $row->id_lap ?>"> &nbsp;</td>
-																				<?php if($row->jenis == 'TIDAK ADA PEKERJAAN DI MINGGU INI'){ ?>
-																				<td style="text-align:center"><font color='#000000'>&nbsp; &nbsp;</td>
-																				<td style="text-align:center"><font color='#000000'>&nbsp; &nbsp;</td>
-																				<?php }else{ ?>
-																				<td style="text-align:center"><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $row->status_pekerjaan : '' ?>&nbsp;</td>
-																				<td style="width:20%; word-wrap: break-word; white-space: normal;"><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $link_download : '' ?>&nbsp;</td>
-																				<?php } ?>
-																				<td><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $row->pihak : '' ?>&nbsp;</td>
-																				<td style="width:15%; word-wrap: break-word; white-space: normal;"><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $row->keterangan : '' ?>&nbsp;</td>
-																				<td style="text-align:center">
-                                        <?php 
-                                        if ($row->nilai_isi == 1) { 
-                                            $nilai_a = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_a : '';
-                                        ?>
-                                            <font color='#000000'><?= htmlspecialchars($nilai_a) ?></font>
-                                        <?php 
-                                        } 
-                                        ?>
-                                    </td>
-                                    <td style="text-align:center">
-                                        <?php 
-                                        if ($row->nilai_isi == 1) { 
-                                            $nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
-                                        ?>
-                                            <font color='#000000'><?= htmlspecialchars($nilai_b) ?></font>
-                                        <?php 
-                                        } 
-                                        ?>
-                                    </td>
-																				<td style="text-align:center">&nbsp;
-																						<?php if(!empty($row->id_lap)){ ?>
-																							<?php if($nilai_a == '' && $nilai_b == ''){ ?>
-																								<button type="button" class="btn btn-sm btn-primary btn-edit" data-id="<?= encrypt($row->id_lap) ?>"><i class="bx bx-pencil"></i></button>
-																								<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="<?= $row->id_lap ?>" data-object="laporan/delete/<?= $row->id_lap ?>"> <i class="bx bx-trash"></i> </button>
-																							<?php }?>		 
-																						<?php }?> &nbsp;
-																				</td>
-																		</tr>
-																		<?php 
-																		$firstRow = false;
-																		endforeach; 
-																		?>
-																<?php endforeach; ?>
-
-																<?php 
-																// Menghitung rata-rata hanya jika ada data valid
-																$nilaiRata = ($jumlah_data > 0) ? ($total_nilai / $jumlah_data) : 0;
-																$nilaiRata_b = ($jumlah_data > 0) ? ($total_nilai_b / $jumlah_data) : 0;
-																$nilaiRataAll = ($jumlah_data > 0) ? ($nilaiRata + $nilaiRata_b)/2 : 0;
-																?>
-
-																<tr>
-																		<td colspan="10" style="text-align:right; border: 1px solid black;"><font color='#000000'><strong>Rata-rata : &nbsp;</strong></td>		
-																		<td style="text-align:center;border: 1px solid black;"><font color='#000000'>&nbsp;<strong><?= number_format($nilaiRataLapA, 2) ?></strong>&nbsp;</td>
-																		<td style="text-align:center;border: 1px solid black;"><font color='#000000'>&nbsp;<strong><?= number_format($nilaiRataLap, 2) ?></strong>&nbsp;</td>
-																		<td style="text-align:center;border: 1px solid black;"><font color='#000000'>&nbsp;<strong><?= number_format($rataAll, 2) ?></strong>&nbsp;</td>
-																
-																</tr>
+                                <tr class="row-summary">
+                                    <td colspan="10" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>		
+                                    <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataLapA, 2) ?></td>
+                                    <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataLap, 2) ?></td>
+                                    <td style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;"><?= number_format($rataAll, 2) ?></td>
+                                </tr>
 
                             </tbody>
                         </table>
-
                     </div>
 
 
@@ -529,19 +599,19 @@ foreach ($data_detail as $row) {
 						<a href="javascript:;" id="btn-show-add-form-pencapaian" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah</a><br>
 					</div> <br>
 						
-					<div style="max-width: 100%;">
-    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%; table-layout: fixed;">
+					<div class="table-responsive">
+                        <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 1100px;">
                             <thead>
                                 <tr>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="1%"><font color='#000000'> No </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Tanggal </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="15%"><font color='#000000'> Deskripsi</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Hasil Kerja</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'> Nilai A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'> Nilai B</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Catatan A</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Catatan B</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="3%"><font color='#000000'> Aksi</th>
+                                    <th style="width: 50px; min-width: 45px;">No</th>
+                                    <th style="width: 140px; min-width: 130px;">Tanggal</th>
+                                    <th style="min-width: 250px; text-align: left;">Deskripsi</th>
+                                    <th style="min-width: 150px;">Hasil Kerja</th>
+                                    <th style="width: 80px; min-width: 75px;">Nilai A</th>
+                                    <th style="width: 80px; min-width: 75px;">Nilai B</th>
+                                    <th style="min-width: 140px;">Catatan A</th>
+                                    <th style="min-width: 140px;">Catatan B</th>
+                                    <th style="width: 90px; min-width: 85px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -554,47 +624,49 @@ foreach ($data_detail as $row) {
                                 foreach ($data_detail_pencapaian as $row) {
                                     
                                     if (!empty($row->link) && empty($row->keterangan)) {
-																						$link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer"><i class="fas fa-link"></i> Hasil Kerja</a>';
-																				} elseif (empty($row->link) && !empty($row->keterangan)) {
-																						$link_download = htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8');
-																				} else {
-																						$link_download = 'Tidak Ada';
-																				}
+                                        $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary shadow-sm" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;"><i class="fas fa-link mr-1"></i> Hasil Kerja</a>';
+                                    } elseif (empty($row->link) && !empty($row->keterangan)) {
+                                        $link_download = htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8');
+                                    } else {
+                                        $link_download = '<span class="text-muted small">-</span>';
+                                    }
 
                                     $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
                                     $nama_hari = $hari[date('l', strtotime($row->tanggal))];
 
                                     // Gunakan week_offset untuk menghitung Senin dan Jumat berdasarkan minggu
-																				$monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
-																				$Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
+                                    $monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
+                                    $Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
 
-																				// Cek apakah tanggal created_at berada di luar rentang minggu
-																				$created_at = date('Y-m-d', strtotime($row->created_at));
-																				$is_outside_range = ($created_at < $monday || $created_at > $Sunday);
+                                    // Cek apakah tanggal created_at berada di luar rentang minggu
+                                    $created_at = date('Y-m-d', strtotime($row->created_at));
+                                    $is_outside_range = ($created_at < $monday || $created_at > $Sunday);
 
                                     $id = $row->id;
-																		$id_edit = encrypt($row->id);
+                                    $id_edit = encrypt($row->id);
 
                                     // Tambahkan nilai ke total_nilai
                                     $total_nilai += $row->nilai_a;
                                     $total_nilai_b += $row->nilai_b;
 
                                 ?>
-                                    <tr <?php if ($is_outside_range) { echo 'style="background-color: red;"'; } ?>>
-                                        <td style="text-align:center"><font color='#000000'><input type="hidden" name="id_sodetail[]" value="<?= $id ?>"><?= $no++ ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
-                                        <td><font color='#000000'><?= $row->detail ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $link_download ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $row->nilai_a ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $row->nilai_b ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $row->catatan_a ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $row->catatan_b ?></td>
+                                    <tr <?php if ($is_outside_range) { echo 'style="background-color: #fff1f2;"'; } ?>>
+                                        <td style="text-align:center; font-weight: 600; color: #475569;"><input type="hidden" name="id_sodetail[]" value="<?= $id ?>"><?= $no++ ?></td>
+                                        <td style="text-align:center; white-space: nowrap; font-weight: 500;"><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
+                                        <td style="word-break: normal; overflow-wrap: break-word;"><?= $row->detail ?></td>
+                                        <td style="text-align:center"><?= $link_download ?></td>
+                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_a ?></td>
+                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_b ?></td>
+                                        <td><?= $row->catatan_a ?></td>
+                                        <td><?= $row->catatan_b ?></td>
                                         <td style="text-align:center">
-																					<?php if($row->nilai_a == '' && $row->nilai_b == ''){ ?>
-																						<button type="button" class="btn btn-sm btn-primary btn-edit-pencapaian" data-id="<?= $id_edit ?>"><i class="bx bx-pencil"></i></button>
-                    												<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="<?= $row->id ?>" data-object="laporan/deletePencapaian/<?= $row->id ?>"> <i class="bx bx-trash"></i> </button>
-																				  <?php } ?>
-																				</td>
+                                            <?php if($row->nilai_a == '' && $row->nilai_b == ''){ ?>
+                                                <div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
+                                                    <button type="button" class="btn btn-sm btn-primary btn-edit-pencapaian shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= $id_edit ?>"><i class="fas fa-pencil-alt"></i></button>
+                                                    <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Data" data-id="<?= $row->id ?>" data-object="laporan/deletePencapaian/<?= $row->id ?>"><i class="fas fa-trash-alt"></i></button>
+                                                </div>
+                                            <?php } ?>
+                                        </td>
                                     </tr>
 
                                 <?php } 
@@ -603,24 +675,24 @@ foreach ($data_detail as $row) {
                                 if ($jumlah_data > 0) {
                                     $nilaiRataA = $total_nilai / $jumlah_data;
                                     $nilaiRataB = $total_nilai_b / $jumlah_data;
-																		$nilaiRataPencapaian = ($nilaiRataA+$nilaiRataB)/2;
+                                    $nilaiRataPencapaian = ($nilaiRataA+$nilaiRataB)/2;
                                 } else {
                                     $nilaiRataA = 0; // Jika tidak ada data, set rata-rata 0
                                     $nilaiRataB = 0; // Jika tidak ada data, set rata-rata 0
-																		$nilaiRataPencapaian = 0;
+                                    $nilaiRataPencapaian = 0;
                                 }
                                 ?>
 
-                                <tr>
-                                    <td colspan="4" style="text-align:right; border: 1px solid black;"><font color='#000000'><strong>Rata-rata :</strong></td>
-                                    <td style="text-align:center;border: 1px solid black;"><font color='#000000'><strong><?= number_format($nilaiRataA, 2) ?></strong></td>
-                                    <td style="text-align:center;border: 1px solid black;"><font color='#000000'><strong><?= number_format($nilaiRataB, 2) ?></strong></td>
-                                    <td style="text-align:center;border: 1px solid black;"><font color='#000000'><strong><?= number_format($nilaiRataPencapaian, 2) ?></strong></td>
+                                <tr class="row-summary">
+                                    <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
+                                    <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataA, 2) ?></td>
+                                    <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataB, 2) ?></td>
+                                    <td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
+                                    <td></td>
                                 </tr>
 
                             </tbody>
                         </table>
-
                     </div>
 
 
