@@ -552,6 +552,95 @@
 		font-weight: 600;
 		color: #0f172a;
 	}
+
+	/* Modern Dashboard Attendance Stats Cards */
+	.dash-stat-card {
+		background: #ffffff;
+		border: 1px solid rgba(226, 232, 240, 0.9);
+		border-radius: 16px;
+		padding: 16px 18px;
+		box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		position: relative;
+		overflow: hidden;
+		height: 100%;
+	}
+
+	.dash-stat-card:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 10px 25px -3px rgba(15, 23, 42, 0.08);
+		border-color: #cbd5e1;
+	}
+
+	.dash-stat-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 8px;
+	}
+
+	.dash-stat-label {
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: #64748b;
+		margin: 0;
+	}
+
+	.dash-stat-icon {
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 16px;
+		flex-shrink: 0;
+		transition: transform 0.2s ease;
+	}
+
+	.dash-stat-card:hover .dash-stat-icon {
+		transform: scale(1.08);
+	}
+
+	.dash-stat-val {
+		font-size: 26px;
+		font-weight: 800;
+		color: #0f172a;
+		line-height: 1.1;
+		margin: 0;
+		font-family: 'Poppins', sans-serif;
+	}
+
+	.dash-stat-link {
+		font-size: 11px;
+		font-weight: 600;
+		color: #94a3b8;
+		margin-top: 8px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		transition: color 0.2s ease;
+	}
+
+	.dash-stat-card:hover .dash-stat-link {
+		color: #2563eb;
+	}
+
+	.icon-dash-hadir { background: #ecfdf5; color: #059669; }
+	.icon-dash-terlambat { background: #fff1f2; color: #e11d48; }
+	.icon-dash-istirahat { background: #eff6ff; color: #2563eb; }
+	.icon-dash-noistirahat { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+	.icon-dash-izin { background: #f5f3ff; color: #7c3aed; }
+	.icon-dash-cuti { background: #ecfeff; color: #0891b2; }
+	.icon-dash-sakit { background: #fffbeb; color: #d97706; }
+	.icon-dash-pulang { background: #fdf2f8; color: #db2777; }
+	.icon-dash-pengumuman { background: #eef2ff; color: #4f46e5; }
+	.icon-dash-birthday { background: #fef3c7; color: #d97706; }
 </style>
 
 <div class="row">
@@ -559,223 +648,138 @@
 	<?php if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 58 || sessPenggunaId() == 54) { ?>
 
 		<?php if ($ulangtahun[0]->total != 0) { ?>
-			<div class="col-xl-4 col-sm-6 col-12 mb-2">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h5 class="text-3-1 text-color-success line-height-2 my-0"> <strong>Happy Birthday</strong></h5>
-							</div>
-							<?php foreach ($daftar_ulangtahun as $row) { ?>
-								<h4 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $row->nama ?></strong></h4>
-							<?php } ?>
-
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-cake icon icon-inline icon-md bg-success rounded-circle text-color-light"></i>
-									<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-									<circle cx="8.5" cy="7" r="4"></circle>
-									<line x1="20" y1="8" x2="20" y2="14"></line>
-									<line x1="23" y1="11" x2="17" y2="11"></line>
-									</svg>
-								</span> </div>
-						</div>
+			<div class="col-xl-4 col-sm-6 col-12 mb-3">
+				<div class="dash-stat-card" style="border-left: 4px solid #f59e0b;">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label" style="color: #d97706;"><i class="fas fa-birthday-cake mr-1"></i> Happy Birthday</span>
+						<div class="dash-stat-icon icon-dash-birthday"><i class="fas fa-gift"></i></div>
+					</div>
+					<div>
+						<?php foreach ($daftar_ulangtahun as $row) { ?>
+							<h5 class="font-weight-bold text-dark mb-1" style="font-size: 15px;"><?= $row->nama ?></h5>
+						<?php } ?>
 					</div>
 				</div>
 			</div>
 		<?php } ?>
 
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<a href="javascript:;" id="btn-show-hadir">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $present[0]->total ?></strong></h3>
-								<h6 class="text-3-1 text-color-success line-height-2 my-0">Total <strong>Hadir</strong></h6>
-							</div>
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-check icon icon-inline icon-md bg-success rounded-circle text-color-light"></i>
-									<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-									<circle cx="8.5" cy="7" r="4"></circle>
-									<line x1="20" y1="8" x2="20" y2="14"></line>
-									<line x1="23" y1="11" x2="17" y2="11"></line>
-									</svg>
-								</span> </div>
-						</div>
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="javascript:;" id="btn-show-hadir" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Total Hadir</span>
+						<div class="dash-stat-icon icon-dash-hadir"><i class="fas fa-user-check"></i></div>
 					</div>
+					<div class="dash-stat-val"><?= $present[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 				</div>
 			</a>
 		</div>
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<a href="javascript:;" id="btn-show-terlambat">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $terlambat[0]->total ?></strong></h3>
-								<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Terlambat</strong></h6>
-							</div>
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-x icon icon-inline icon-md bg-dark rounded-circle text-color-light"></i>
-									<line x1="12" y1="1" x2="12" y2="23"></line>
-									<path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-									</svg>
-								</span> </div>
-						</div>
+
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="javascript:;" id="btn-show-terlambat" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Total Terlambat</span>
+						<div class="dash-stat-icon icon-dash-terlambat"><i class="fas fa-user-clock"></i></div>
 					</div>
+					<div class="dash-stat-val"><?= $terlambat[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 				</div>
 			</a>
 		</div>
 
 		<?php if ($istirahat[0]->total != 0) { ?>
-			<div class="col-xl-2 col-sm-6 col-12 mb-2">
-				<a href="javascript:;" id="btn-show-istirahat">
-					<div class="card board1 fill">
-						<div class="card-body">
-							<div class="dash-widget-header">
-								<div>
-									<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $istirahat[0]->total ?></strong></h3>
-									<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Absen Istirahat &darr;</strong></h6>
-								</div>
-								<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-check icon icon-inline icon-md bg-dark rounded-circle text-color-light"></i>
-										</path>
-										<polyline points="14 2 14 8 20 8"></polyline>
-										<line x1="12" y1="18" x2="12" y2="12"></line>
-										<line x1="9" y1="15" x2="15" y2="15"></line>
-										</svg>
-									</span> </div>
-							</div>
+			<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+				<a href="javascript:;" id="btn-show-istirahat" class="text-decoration-none">
+					<div class="dash-stat-card">
+						<div class="dash-stat-top">
+							<span class="dash-stat-label">Absen Istirahat</span>
+							<div class="dash-stat-icon icon-dash-istirahat"><i class="fas fa-coffee"></i></div>
 						</div>
+						<div class="dash-stat-val"><?= $istirahat[0]->total ?></div>
+						<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 					</div>
 				</a>
 			</div>
 
-
-			<div class="col-xl-2 col-sm-6 col-12 mb-2">
-				<a href="javascript:;" id="btn-show-noistirahat">
-					<div class="card board1 fill">
-						<div class="card-body">
-							<div class="dash-widget-header">
-								<div>
-									<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $noistirahat ?></strong></h3>
-									<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Tidak Absen Istirahat &darr;</strong></h6>
-								</div>
-								<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-check icon icon-inline icon-md bg-dark rounded-circle text-color-light"></i>
-										</path>
-										<polyline points="14 2 14 8 20 8"></polyline>
-										<line x1="12" y1="18" x2="12" y2="12"></line>
-										<line x1="9" y1="15" x2="15" y2="15"></line>
-										</svg>
-									</span> </div>
-							</div>
+			<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+				<a href="javascript:;" id="btn-show-noistirahat" class="text-decoration-none">
+					<div class="dash-stat-card">
+						<div class="dash-stat-top">
+							<span class="dash-stat-label">Tidak Istirahat</span>
+							<div class="dash-stat-icon icon-dash-noistirahat"><i class="fas fa-utensils"></i></div>
 						</div>
+						<div class="dash-stat-val"><?= $noistirahat ?></div>
+						<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 					</div>
 				</a>
 			</div>
 		<?php } ?>
 
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="javascript:;" id="btn-show-izin" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Total Izin</span>
+						<div class="dash-stat-icon icon-dash-izin"><i class="fas fa-envelope-open-text"></i></div>
+					</div>
+					<div class="dash-stat-val"><?= $izin[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
+				</div>
+			</a>
+		</div>
 
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<a href="javascript:;" id="btn-show-izin">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $izin[0]->total ?></strong></h3>
-								<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Izin</strong></h6>
-							</div>
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-pin icon icon-inline icon-md bg-primary rounded-circle text-color-light"></i>
-									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-									</path>
-									<polyline points="14 2 14 8 20 8"></polyline>
-									<line x1="12" y1="18" x2="12" y2="12"></line>
-									<line x1="9" y1="15" x2="15" y2="15"></line>
-									</svg>
-								</span> </div>
-						</div>
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="javascript:;" id="btn-show-cuti" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Total Cuti</span>
+						<div class="dash-stat-icon icon-dash-cuti"><i class="fas fa-calendar-minus"></i></div>
 					</div>
+					<div class="dash-stat-val"><?= $cuti[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 				</div>
 			</a>
 		</div>
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<a href="javascript:;" id="btn-show-cuti">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $cuti[0]->total ?></strong></h3>
-								<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Cuti &darr;</strong></h6>
-							</div>
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-circle icon icon-inline icon-md bg-info rounded-circle text-color-light"></i>
-									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-									</path>
-									<polyline points="14 2 14 8 20 8"></polyline>
-									<line x1="12" y1="18" x2="12" y2="12"></line>
-									<line x1="9" y1="15" x2="15" y2="15"></line>
-									</svg>
-								</span> </div>
-						</div>
+
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="javascript:;" id="btn-show-sakit" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Total Sakit</span>
+						<div class="dash-stat-icon icon-dash-sakit"><i class="fas fa-procedures"></i></div>
 					</div>
+					<div class="dash-stat-val"><?= $sakit[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 				</div>
 			</a>
 		</div>
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<a href="javascript:;" id="btn-show-sakit">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $sakit[0]->total ?></strong></h3>
-								<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Sakit &darr;</strong></h6>
-							</div>
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-minus icon icon-inline icon-md bg-warning rounded-circle text-color-light"></i>
-									</path>
-									<polyline points="14 2 14 8 20 8"></polyline>
-									<line x1="12" y1="18" x2="12" y2="12"></line>
-									<line x1="9" y1="15" x2="15" y2="15"></line>
-									</svg>
-								</span> </div>
-						</div>
+
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="javascript:;" id="btn-show-pulang" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Total Pulang</span>
+						<div class="dash-stat-icon icon-dash-pulang"><i class="fas fa-sign-out-alt"></i></div>
 					</div>
+					<div class="dash-stat-val"><?= $pulang[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Detail <i class="fas fa-chevron-right ml-auto"></i></div>
 				</div>
 			</a>
 		</div>
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<a href="javascript:;" id="btn-show-pulang">
-				<div class="card board1 fill">
-					<div class="card-body">
-						<div class="dash-widget-header">
-							<div>
-								<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $pulang[0]->total ?></strong></h3>
-								<h6 class="text-3-1 text-color-danger line-height-2 my-0">Total <strong>Pulang &darr;</strong></h6>
-							</div>
-							<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="bx bx-user-minus icon icon-inline icon-md bg-danger rounded-circle text-color-light"></i>
-									</path>
-									<polyline points="14 2 14 8 20 8"></polyline>
-									<line x1="12" y1="18" x2="12" y2="12"></line>
-									<line x1="9" y1="15" x2="15" y2="15"></line>
-									</svg>
-								</span> </div>
-						</div>
+
+		<div class="col-xl-2 col-md-4 col-sm-6 col-12 mb-3">
+			<a href="<?= base_url('announcement') ?>" class="text-decoration-none">
+				<div class="dash-stat-card">
+					<div class="dash-stat-top">
+						<span class="dash-stat-label">Pengumuman</span>
+						<div class="dash-stat-icon icon-dash-pengumuman"><i class="fas fa-bullhorn"></i></div>
 					</div>
+					<div class="dash-stat-val"><?= $pengumuman[0]->total ?></div>
+					<div class="dash-stat-link">Lihat Pengumuman <i class="fas fa-chevron-right ml-auto"></i></div>
 				</div>
 			</a>
-		</div>
-		<div class="col-xl-2 col-sm-6 col-12 mb-2">
-			<div class="card board1 fill">
-				<div class="card-body">
-					<div class="dash-widget-header">
-						<div>
-							<h3 class="card_widget_header"><strong class="text-6 text-color-dark"><?= $pengumuman[0]->total ?></strong></h3>
-							<h6 class="text-3-1 text-color-danger line-height-2 my-0"><strong>PENGUMUMAN &darr;</strong></h6>
-						</div>
-						<div class="ml-auto mt-md-3 mt-lg-0"> <span class="opacity-7 text-muted"><i class="fas fa-bullhorn icon icon-inline icon-md bg-danger rounded-circle text-color-light"></i>
-								</path>
-								<polyline points="14 2 14 8 20 8"></polyline>
-								<line x1="12" y1="18" x2="12" y2="12"></line>
-								<line x1="9" y1="15" x2="15" y2="15"></line>
-								</svg>
-							</span> </div>
-					</div>
-				</div>
-			</div>
 		</div>
 
 	<?php } else { ?>
