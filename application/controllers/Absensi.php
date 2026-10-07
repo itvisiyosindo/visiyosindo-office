@@ -1672,7 +1672,9 @@ class Absensi extends CI_Controller
                         $dt['ket'] = $masuk->status_absen ?: ($masuk->keterangan ?: '');
                     } elseif ($izin) {
                         $dt['jenis_absen'] = !empty($izin->status_absen) ? ucfirst($izin->status_absen) : 'Izin';
-                        $dt['lokasi'] = '-';
+                        $dt['lokasi'] = ($keluar || $istirahat) ? (($keluar ?: $istirahat)->jenis_absen ?: 'Kantor') : '-';
+                        $dt['istirahat'] = $istirahat ? $istirahat->waktu_absen : '';
+                        $dt['keluar'] = $keluar ? $keluar->waktu_absen : '';
                         $dt['ket'] = $izin->keterangan ?: ($izin->status_absen ?: '-');
                     } elseif ($keluar || $istirahat) {
                         $rec = $keluar ?: $istirahat;
