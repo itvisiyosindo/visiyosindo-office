@@ -7,142 +7,278 @@
     </div>
 </header>
 
+<style>
+    .salary-tt-card {
+        border-radius: 12px;
+        border: 1px solid #eef2f6;
+        background: #ffffff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 13px 15px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+    }
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+    .stat-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+    }
+    .stat-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+    .stat-value {
+        font-size: 16.5px;
+        font-weight: 700;
+        color: #1e293b;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: -0.2px;
+    }
+    .icon-blue { background: #eff6ff; color: #3b82f6; }
+    .icon-purple { background: #f5f3ff; color: #8b5cf6; }
+    .icon-amber { background: #fffbeb; color: #f59e0b; }
+    .icon-cyan { background: #ecfeff; color: #06b6d4; }
+    .icon-emerald { background: #ecfdf5; color: #10b981; }
+    .icon-rose { background: #fff1f2; color: #f43f5e; }
+    .icon-teal { background: #f0fdfa; color: #14b8a6; }
+    .icon-red { background: #fef2f2; color: #ef4444; }
+
+    #kt_table_1 thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid #e2e8f0;
+        vertical-align: middle;
+        padding: 11px 8px;
+    }
+    #kt_table_1 tbody td {
+        vertical-align: middle;
+        font-size: 12.5px;
+        padding: 9px 8px;
+    }
+</style>
+
 <div class="row">
+    <div class="col-12">
+        <div class="card salary-tt-card mb-4">
+            <div class="card-body p-3 p-md-4">
+                <!-- Top Toolbar & Filter Row -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-4" style="border-bottom: 1px solid #f1f5f9; gap: 12px;">
+                    <!-- Left: Filters & Add Button -->
+                    <div class="d-flex flex-wrap align-items-center" style="gap: 10px;">
+                        <?php if (isAdmin()) { ?>
+                            <a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa fa-plus-circle"></i> Tambah Tunjangan
+                            </a>
+                        <?php } ?>
 
-    <div class="col">
-        <div class="">
-            <?php if (isAdmin()) { ?>
-                <a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i
-                        class="icons icon-plus"></i>&nbsp;Tambah Tunjangan</a>
-            <?php } ?>
-        </div>
-        <br>
-        <div class="card-body">
+                        <div class="input-group input-group-sm" style="width: auto;">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light border-right-0 text-muted" style="border-radius: 8px 0 0 8px; font-weight: 600; font-size: 12px;">
+                                    <i class="fa fa-calendar-alt mr-1 text-primary"></i> Periode:
+                                </span>
+                            </div>
+                            <select class="form-control form-control-sm custom-select" id="sel_bulan" style="width: 145px; border-radius: 0; font-size: 12px; font-weight: 500;">
+                                <option value="01">01 - Januari</option>
+                                <option value="02">02 - Februari</option>
+                                <option value="03">03 - Maret</option>
+                                <option value="04">04 - April</option>
+                                <option value="05">05 - Mei</option>
+                                <option value="06">06 - Juni</option>
+                                <option value="07">07 - Juli</option>
+                                <option value="08">08 - Agustus</option>
+                                <option value="09">09 - September</option>
+                                <option value="10">10 - Oktober</option>
+                                <option value="11">11 - November</option>
+                                <option value="12">12 - Desember</option>
+                            </select>
+                            <select class="form-control form-control-sm custom-select" id="sel_tahun" style="width: 90px; border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500;">
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                                <option value="2029">2029</option>
+                                <option value="2030">2030</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="filter_month" value="<?= date('Y-m') ?>">
+                    </div>
 
-            <div class="row align-items-end mb-3">
-                <div class="col-md-3 col-sm-6 mb-2">
-                    <label class="font-weight-bold mb-1"><i class="fa fa-calendar-alt"></i> Pilih Bulan:</label>
-                    <select class="form-control" id="sel_bulan">
-                        <option value="01">01 - Januari</option>
-                        <option value="02">02 - Februari</option>
-                        <option value="03">03 - Maret</option>
-                        <option value="04">04 - April</option>
-                        <option value="05">05 - Mei</option>
-                        <option value="06">06 - Juni</option>
-                        <option value="07">07 - Juli</option>
-                        <option value="08">08 - Agustus</option>
-                        <option value="09">09 - September</option>
-                        <option value="10">10 - Oktober</option>
-                        <option value="11">11 - November</option>
-                        <option value="12">12 - Desember</option>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6 mb-2">
-                    <label class="font-weight-bold mb-1"><i class="fa fa-calendar"></i> Pilih Tahun:</label>
-                    <select class="form-control" id="sel_tahun">
-                        <option value="2023">2023</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                        <option value="2028">2028</option>
-                        <option value="2029">2029</option>
-                        <option value="2030">2030</option>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6 mb-2">
-                    <label class="font-weight-bold mb-1"><i class="fa fa-calendar-check"></i> Datepicker:</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-                        <input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+                    <!-- Right: Actions Buttons -->
+                    <div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+                        <button type="button" id="btn-show-all" class="btn btn-sm btn-outline-info shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 13px; display: inline-flex; align-items: center; gap: 5px; font-size: 12px;">
+                            <i class="fas fa-users"></i> Tampilkan Semua
+                        </button>
+                        <button type="button" id="btn-print" class="btn btn-sm btn-primary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 5px; font-size: 12px;">
+                            <i class="fas fa-print"></i> Print Rekap
+                        </button>
+                        <button type="button" id="btn-print-skor" class="btn btn-sm btn-outline-primary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 5px; font-size: 12px;">
+                            <i class="fas fa-file-invoice"></i> Print Skor
+                        </button>
                     </div>
                 </div>
-                <div class="col-md-5 col-sm-12 mb-2 text-right">
-                    <button type="button" id="btn-show-all" class="btn btn-info mr-1" title="Tampilkan Seluruh Karyawan Tanpa Halaman">
-                        <i class="icons fas fa-users"></i> Tampilkan Seluruh Karyawan
-                    </button>
-                    <button type="button" id="btn-print" class="btn btn-primary mr-1"><i class="icons fas fa-print"></i> Print</button>
-                    <button type="button" id="btn-print-skor" class="btn btn-primary"><i class="icons fas fa-print"></i> Print Skor</button>
-                </div>
-            </div><br>
-            <div class="row mb-3" id="salary-total-cards">
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Jabatan</div>
-                        <div class="h3 mb-0" id="stats_total_jabatan">Rp. 0</div>
+
+                <!-- Grand Total Banner & Component Cards -->
+                <div class="mb-4">
+                    <!-- Grand Total Banner -->
+                    <div class="card border-0 mb-3" style="border-radius: 12px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); box-shadow: 0 4px 15px rgba(15, 23, 42, 0.15);">
+                        <div class="card-body p-3 p-md-4 d-flex flex-wrap align-items-center justify-content-between" style="gap: 15px;">
+                            <div class="d-flex align-items-center" style="gap: 16px;">
+                                <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 22px;">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div>
+                                    <div class="text-uppercase text-white-50 font-weight-bold" style="font-size: 11px; letter-spacing: 1px;">Grand Total Tunjangan Tidak Tetap</div>
+                                    <div class="text-white font-weight-normal mb-0" style="font-size: 13px; opacity: 0.85;">Akumulasi seluruh tunjangan tidak tetap karyawan bulan ini</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="badge badge-primary px-3 py-1 mb-1" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 20px; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">Total Keseluruhan</span>
+                                <div class="h2 mb-0 font-weight-bold" id="stats_total_tunjangan" style="color: #38bdf8; font-family: 'Inter', sans-serif; letter-spacing: -0.5px;">Rp. 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8 Component Stat Cards in 4x2 Grid -->
+                    <div class="row" id="salary-total-cards" style="margin: 0 -5px;">
+                        <!-- 1. Total Jabatan -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Jabatan</span>
+                                    <div class="stat-icon icon-blue"><i class="fas fa-user-tie"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_jabatan">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 2. Total Kinerja -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Kinerja</span>
+                                    <div class="stat-icon icon-purple"><i class="fas fa-chart-line"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_kinerja">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 3. Total Konsumsi -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Konsumsi</span>
+                                    <div class="stat-icon icon-amber"><i class="fas fa-utensils"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_konsumsi">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 4. Total Komunikasi -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Komunikasi</span>
+                                    <div class="stat-icon icon-cyan"><i class="fas fa-phone-alt"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_komunikasi">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 5. Total Transportasi -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Transportasi</span>
+                                    <div class="stat-icon icon-emerald"><i class="fas fa-car"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_transportasi">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 6. Total BBM -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total BBM</span>
+                                    <div class="stat-icon icon-rose"><i class="fas fa-gas-pump"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_bbm">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 7. Total Lainnya -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Lainnya</span>
+                                    <div class="stat-icon icon-teal"><i class="fas fa-hand-holding-usd"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_lainnya">Rp. 0</div>
+                            </div>
+                        </div>
+                        <!-- 8. Total Potongan -->
+                        <div class="col-xl-3 col-md-6 col-sm-6 p-1 mb-2">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <span class="stat-title">Total Potongan</span>
+                                    <div class="stat-icon icon-red"><i class="fas fa-minus-circle"></i></div>
+                                </div>
+                                <div class="stat-value" id="stats_total_potongan">Rp. 0</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Kinerja</div>
-                        <div class="h3 mb-0" id="stats_total_kinerja">Rp. 0</div>
-                    </div>
+
+                <!-- Table Wrapper -->
+                <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <table class="table table-striped table-sm table-bordered table-hover mb-0" id="kt_table_1">
+                        <thead>
+                            <tr>
+                                <th> # </th>
+                                <th> Nama Karyawan</th>
+                                <th> Jumlah Hari Kerja</th>
+                                <th> Jabatan</th>
+                                <th> Status</th>
+                                <th> Tunjangan Jabatan</th>
+                                <th> Tunjangan Kinerja</th>
+                                <th> Tunjangan Konsumsi</th>
+                                <th> Tunjangan Komunikasi</th>
+                                <th> Tunjangan Transportasi</th>
+                                <th> Tunjangan BBM</th>
+                                <th> Tunjungan Lainnya</th>
+                                <th> Potongan</th>
+                                <th> Total</th>
+                                <th> Aksi</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Konsumsi</div>
-                        <div class="h3 mb-0" id="stats_total_konsumsi">Rp. 0</div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Komunikasi</div>
-                        <div class="h3 mb-0" id="stats_total_komunikasi">Rp. 0</div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Transportasi</div>
-                        <div class="h3 mb-0" id="stats_total_transportasi">Rp. 0</div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total BBM</div>
-                        <div class="h3 mb-0" id="stats_total_bbm">Rp. 0</div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Lainnya</div>
-                        <div class="h3 mb-0" id="stats_total_lainnya">Rp. 0</div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-light h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Potongan</div>
-                        <div class="h3 mb-0" id="stats_total_potongan">Rp. 0</div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                    <div class="card card-body bg-secondary text-white h-100 text-center">
-                        <div class="text-uppercase font-weight-bold small">Total Tunjangan</div>
-                        <div class="h3 mb-0" id="stats_total_tunjangan">Rp. 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-                    <thead>
-                        <tr>
-                            <th> # </th>
-                            <th> Nama Karyawan</th>
-                            <th> Jumlah Hari Kerja</th>
-                            <th> Jabatan</th>
-                            <th> Status</th>
-                            <th> Tunjangan Jabatan</th>
-                            <th> Tunjangan Kinerja</th>
-                            <th> Tunjangan Konsumsi</th>
-                            <th> Tunjangan Komunikasi</th>
-                            <th> Tunjangan Transportasi</th>
-                            <th> Tunjangan BBM</th>
-                            <th> Tunjungan Lainnya</th>
-                            <th> Potongan</th>
-                            <th> Total</th>
-                            <th> Aksi</th>
-                        </tr>
-                    </thead>
-                </table>
             </div>
         </div>
     </div>
@@ -500,6 +636,12 @@
         table.ajax.reload(null, false)
     }
 
+    function formatTotal(val) {
+        if (!val || val === '' || val === '0' || val === 0) return 'Rp. 0';
+        if (typeof val === 'string' && val.indexOf('Rp.') !== -1) return val;
+        return 'Rp. ' + val;
+    }
+
     function updateTotals() {
         $.ajax({
             method: 'POST',
@@ -511,22 +653,22 @@
             },
             success: function(resp) {
                 if (resp.status == 'success' && resp.totals) {
-                    $('#stats_total_jabatan').text(resp.totals.total_jabatan_formatted)
-                    $('#stats_total_kinerja').text(resp.totals.total_kinerja_formatted)
-                    $('#stats_total_konsumsi').text(resp.totals.total_konsumsi_formatted)
-                    $('#stats_total_komunikasi').text(resp.totals.total_komunikasi_formatted)
-                    $('#stats_total_transportasi').text(resp.totals.total_transportasi_formatted)
-                    $('#stats_total_bbm').text(resp.totals.total_bbm_formatted)
-                    $('#stats_total_lainnya').text(resp.totals.total_lainnya_formatted)
-                    $('#stats_total_potongan').text(resp.totals.total_potongan_formatted)
-                    $('#stats_total_tunjangan').text(resp.totals.total_tunjangan_formatted)
+                    $('#stats_total_jabatan').text(formatTotal(resp.totals.total_jabatan_formatted));
+                    $('#stats_total_kinerja').text(formatTotal(resp.totals.total_kinerja_formatted));
+                    $('#stats_total_konsumsi').text(formatTotal(resp.totals.total_konsumsi_formatted));
+                    $('#stats_total_komunikasi').text(formatTotal(resp.totals.total_komunikasi_formatted));
+                    $('#stats_total_transportasi').text(formatTotal(resp.totals.total_transportasi_formatted));
+                    $('#stats_total_bbm').text(formatTotal(resp.totals.total_bbm_formatted));
+                    $('#stats_total_lainnya').text(formatTotal(resp.totals.total_lainnya_formatted));
+                    $('#stats_total_potongan').text(formatTotal(resp.totals.total_potongan_formatted));
+                    $('#stats_total_tunjangan').text(formatTotal(resp.totals.total_tunjangan_formatted));
                 } else {
-                    console.warn('getTotals returned empty or error', resp)
+                    console.warn('getTotals returned empty or error', resp);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('getTotals AJAX error', status, error, xhr.responseText)
+                console.error('getTotals AJAX error', status, error, xhr.responseText);
             }
-        })
+        });
     }
 </script>
