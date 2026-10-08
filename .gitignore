@@ -10,6 +10,7 @@ error_log
 
 # Database / backup
 DB/
+_archive_backup/
 *.sql
 *.zip
 
