@@ -724,16 +724,21 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 
 
 <style>
-    /* Modal Dialog & DataTables Fixes */
+    /* Modal Dialog Resizable & Wide Layout */
     .modal-kepegawaian .modal-dialog {
-        max-width: 620px !important;
-        margin: 1.75rem auto;
+        max-width: 820px !important;
+        width: 90% !important;
+        margin: 2rem auto !important;
     }
     .modal-kepegawaian .modal-content {
         border-radius: 12px !important;
-        overflow: hidden !important;
         border: 1px solid #cbd5e1 !important;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+        resize: both !important;
+        overflow: hidden !important;
+        min-width: 480px !important;
+        min-height: 350px !important;
+        max-width: 96vw !important;
     }
     .modal-kepegawaian .modal-header {
         background: #1e293b !important;
@@ -771,6 +776,7 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
     }
     .modal-kepegawaian .modal-body {
         padding: 20px !important;
+        overflow-x: hidden !important;
     }
     .modal-kepegawaian .dataTables_wrapper {
         width: 100% !important;
@@ -778,29 +784,33 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_length {
         float: left !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 12px !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_filter {
         float: right !important;
         text-align: right !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 12px !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_filter input {
         display: inline-block !important;
-        width: auto !important;
-        min-width: 130px !important;
-        max-width: 160px !important;
-        margin-left: 6px !important;
+        width: 180px !important;
+        margin-left: 8px !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 4px 8px !important;
-        font-size: 12.5px !important;
+        padding: 5px 10px !important;
+        font-size: 13px !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_length select {
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 4px 6px !important;
-        font-size: 12.5px !important;
+        padding: 5px 8px !important;
+        font-size: 13px !important;
+    }
+    .modal-kepegawaian table.dataTable {
+        width: 100% !important;
+        margin-top: 8px !important;
+        margin-bottom: 12px !important;
+        border-collapse: collapse !important;
     }
     .modal-kepegawaian .modal-footer {
         background: #f8fafc !important;
@@ -820,26 +830,24 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="table-responsive">
-					<table id="myTable" class="table table-striped table-sm table-bordered table-hover w-100">
-						<thead class="bg-light">
+				<table id="myTable" class="table table-striped table-sm table-bordered table-hover w-100">
+					<thead class="bg-light">
+						<tr>
+							<th style="width: 50px; text-align: center;">#</th>
+							<th>Nama Karyawan</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$x = 1;
+						foreach ($daftar_hadir as $row) { ?>
 							<tr>
-								<th style="width: 50px; text-align: center;">#</th>
-								<th>Nama Karyawan</th>
+								<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+								<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
 							</tr>
-						</thead>
-						<tbody>
-							<?php
-							$x = 1;
-							foreach ($daftar_hadir as $row) { ?>
-								<tr>
-									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
-									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
-								</tr>
-							<?php } ?>
-						</tbody>
-					</table>
-				</div>
+						<?php } ?>
+					</tbody>
+				</table>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
@@ -859,26 +867,24 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="table-responsive">
-					<table id="myTable1" class="table table-striped table-sm table-bordered table-hover w-100">
-						<thead class="bg-light">
+				<table id="myTable1" class="table table-striped table-sm table-bordered table-hover w-100">
+					<thead class="bg-light">
+						<tr>
+							<th style="width: 50px; text-align: center;">#</th>
+							<th>Nama Karyawan</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$x = 1;
+						foreach ($daftar_sakit as $row) { ?>
 							<tr>
-								<th style="width: 50px; text-align: center;">#</th>
-								<th>Nama Karyawan</th>
+								<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+								<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
 							</tr>
-						</thead>
-						<tbody>
-							<?php
-							$x = 1;
-							foreach ($daftar_sakit as $row) { ?>
-								<tr>
-									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
-									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
-								</tr>
-							<?php } ?>
-						</tbody>
-					</table>
-				</div>
+						<?php } ?>
+					</tbody>
+				</table>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
@@ -898,26 +904,24 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="table-responsive">
-					<table id="myTable2" class="table table-striped table-sm table-bordered table-hover w-100">
-						<thead class="bg-light">
+				<table id="myTable2" class="table table-striped table-sm table-bordered table-hover w-100">
+					<thead class="bg-light">
+						<tr>
+							<th style="width: 50px; text-align: center;">#</th>
+							<th>Nama Karyawan</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$x = 1;
+						foreach ($daftar_cuti as $row) { ?>
 							<tr>
-								<th style="width: 50px; text-align: center;">#</th>
-								<th>Nama Karyawan</th>
+								<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+								<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
 							</tr>
-						</thead>
-						<tbody>
-							<?php
-							$x = 1;
-							foreach ($daftar_cuti as $row) { ?>
-								<tr>
-									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
-									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
-								</tr>
-							<?php } ?>
-						</tbody>
-					</table>
-				</div>
+						<?php } ?>
+					</tbody>
+				</table>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
@@ -937,26 +941,24 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="table-responsive">
-					<table id="myTable3" class="table table-striped table-sm table-bordered table-hover w-100">
-						<thead class="bg-light">
+				<table id="myTable3" class="table table-striped table-sm table-bordered table-hover w-100">
+					<thead class="bg-light">
+						<tr>
+							<th style="width: 50px; text-align: center;">#</th>
+							<th>Nama Karyawan</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$x = 1;
+						foreach ($daftar_izin as $row) { ?>
 							<tr>
-								<th style="width: 50px; text-align: center;">#</th>
-								<th>Nama Karyawan</th>
+								<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+								<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
 							</tr>
-						</thead>
-						<tbody>
-							<?php
-							$x = 1;
-							foreach ($daftar_izin as $row) { ?>
-								<tr>
-									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
-									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
-								</tr>
-							<?php } ?>
-						</tbody>
-					</table>
-				</div>
+						<?php } ?>
+					</tbody>
+				</table>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
@@ -964,6 +966,7 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 		</div>
 	</div>
 </div>
+
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
 		$('#filter_month').change(function() {
@@ -986,6 +989,22 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 					previous: "Sebelumnya"
 				}
 			}
+		});
+
+		// Aktifkan Fitur Resizable (Bisa ditarik melebar) pada Modal Kepegawaian
+		$('.modal-kepegawaian').on('shown.bs.modal', function() {
+			var $modalContent = $(this).find('.modal-content');
+			if (typeof $.fn.resizable !== 'undefined') {
+				$modalContent.resizable({
+					minWidth: 460,
+					minHeight: 280,
+					handles: 'e, s, se, w, sw',
+					resize: function(event, ui) {
+						$.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+					}
+				});
+			}
+			$.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
 		});
 
 		table = $('#kt_table_1').DataTable({
