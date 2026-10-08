@@ -95,13 +95,13 @@ class Dashboard_accounting extends CI_Controller
                 fp.link_lampiran,
                 fp.created_at,
                 COALESCE(p.nama, "-") as nama_pengaju,
-                COALESCE(m.nama, "-") as nama_marketing,
-                COALESCE(c.nama, "-") as nama_customer
-            ')
+                CASE WHEN fp.id_marketing = 1 THEN "Office / Kantor Pusat" ELSE COALESCE(m.nama, "-") END as nama_marketing,
+                COALESCE(c.identitas_pelanggan, "-") as nama_customer
+            ', FALSE)
             ->from('approval_faktur_pajak fp')
             ->join('pengguna p', 'fp.id_pengaju = p.pengguna_id', 'left')
             ->join('pengguna m', 'fp.id_marketing = m.pengguna_id', 'left')
-            ->join('customer c', 'fp.id_customer = c.id', 'left')
+            ->join('pelanggan c', 'fp.id_customer = c.id_pelanggan', 'left')
             ->order_by('fp.id', 'DESC')
             ->limit(10)
             ->get()
