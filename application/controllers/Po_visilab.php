@@ -181,7 +181,7 @@ class Po_visilab extends CI_Controller
                   ];
               }
           
-              $this->notifWaAddSurat(2, $dataWa);
+              $this->notifWaAddSurat(1, $dataWa);
 
 
               //send notif Group wa Gudang
@@ -723,17 +723,27 @@ public function notifWaAddSurat($ulang, $detail){
 
       for($i=1; $i<=$ulang; $i++){
         if($i == 1){
-            $idpenerima = $detail['idPenerima1'];
+            $idpenerima = !empty($detail['idPenerima1']) ? $detail['idPenerima1'] : '';
         }else if($i == 2){
-            $idpenerima = $detail['idPenerima2'];
+            $idpenerima = !empty($detail['idPenerima2']) ? $detail['idPenerima2'] : '';
         }
         
+        if (empty($idpenerima)) {
+            continue;
+        }
+
         $dataPenerima 	= $this->md_pengguna->getById($idpenerima);
+        if (empty($dataPenerima) || !isset($dataPenerima[0])) {
+            continue;
+        }
         //abaikan error
-      error_reporting(E_ALL & ~E_NOTICE);
-      ini_set('display_errors', 0);
-      //
-        $nope           = $dataPenerima[0]->no_hp;
+        error_reporting(E_ALL & ~E_NOTICE);
+        ini_set('display_errors', 0);
+        
+        $nope           = !empty($dataPenerima[0]->no_hp) ? $dataPenerima[0]->no_hp : '';
+        if (empty($nope)) {
+            continue;
+        }
         $dataWa = [
             'id'            => isset($detail['id']) ? $detail['id'] : '',
             'namaSurat' 	=> $detail['namaSurat'],

@@ -696,9 +696,9 @@ class Surat_part_two extends CI_Controller
       $data['penanganan']     = $this->input->post('penanganan', TRUE);
       $data['id_diketahui']    = $this->input->post('id_diketahui', TRUE);
       $data['id_disetujui']    = $this->input->post('id_disetujui', TRUE);
-      $data['id_dir']          = $this->input->post('id_dir', TRUE);
+      $data['status_dir']      = ($this->input->post('direktor', TRUE) == 1) ? 1 : 0;
+      $data['id_dir']          = ($data['status_dir'] == 1) ? $this->input->post('id_dir', TRUE) : null;
       $data['lampiran']        = $this->input->post('lampiran', TRUE);
-      $data['status_dir']      = $this->input->post('direktor', TRUE);
       $data['status']         = 0;
             $this->md_surat_part_two->addBeritaAcara($data);
 
@@ -711,7 +711,7 @@ class Surat_part_two extends CI_Controller
           $lastRow = $this->db->select('id')->from('surat_berita_acara')->where('kode_ba', $kodeFpp)->get()->row();
           $lastBaId = $lastRow ? $lastRow->id : '';
       }
-      $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : $data['id_dir']);
+      $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : ($data['status_dir'] == 1 ? $data['id_dir'] : ''));
       if (empty($idPenerima)) {
           ajaxReturnDie('error', 'DEBUG FAIL: Anda belum memilih Atasan (Diketahui/Disetujui/Direktur)!', FALSE);
       }

@@ -4917,10 +4917,10 @@ class Surat extends CI_Controller
 					//update status surat
 					$this->md_surat_list->update_surat_list('8', $id_approval, 1);
 
-					//Kondisi jika modal 3 baru kirim nofit ke pak Bob
+					//Kondisi jika modal 3 baru kirim notif ke pak Bob (Director)
 					$modal3 = $this->md_surat_list->countApprovalModal($id_approval, 3)->num_rows();
 					if ($modal3 > 0) {
-						//send notif wa
+						//send notif wa ke Director
 						$dataWa = [
 							'id' 	        => $id_approval,
 							'idPenerima1' 	=> '54',
@@ -4934,25 +4934,22 @@ class Surat extends CI_Controller
 
 						$this->notifWaAprov($param1, 2, 1, $dataWa);
 					} else {
-						//send notif wa
+						// Jika HANYA Modal 2 (tanpa Modal 3), persetujuan selesai sampai Director of Corp Planning, notifikasi selesai ke pengaju / CRO
 						$dataWa = [
 							'id' 	        => $id_approval,
-							'idPenerima1' 	=> '1',
-							'idPenerima2' 	=> '72',
+							'idPenerima1' 	=> '72',
+							'idPenerima2' 	=> '',
 							'namaSurat' 	=> 'Surat Approval Harga',
-							'penerima' 	    => '*Director*',
+							'penerima' 	    => '*Customer Relation Officer*',
 							'ttd_sebelum1' 	=> 'Head of Accounting and Tax',
 							'ttd_sebelum2' 	=> 'Director of Corp Planning and Bussinees Management',
 							'ttd_sebelum3' 	=> ''
 						];
 
-						$this->notifWaAprov($param1, 2, 1, $dataWa);
+						$this->notifWaAprov($param1, 1, 2, $dataWa);
 					}
 
-
-
-
-					addLog('Update Permintaan Pembayaran', 'Persetujuan Permintaan Pembayaran');
+					addLog('Update Pengajuan Surat Approval', 'Persetujuan Pengajuan Surat Approval');
 					ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
 				} else if ($param3 == "ttd_gm") {
 					$id_approval = decrypt($this->input->post('id_approval'));
