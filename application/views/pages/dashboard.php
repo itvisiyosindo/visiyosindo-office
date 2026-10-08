@@ -679,7 +679,7 @@
 							<i class="fas fa-home"></i>
 						</div>
 						<div>
-							<h3 style="font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Selamat Datang, <?= sessPenggunaNama() ?: 'Karyawan PT Visi Yosindo Medikal' ?>!</h3>
+							<h3 style="font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Selamat Datang, <?= sessNama() ?: 'Karyawan PT Visi Yosindo Medikal' ?>!</h3>
 							<p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.4;">Sistem Informasi Manajemen, Presensi Terpadu & Layanan Operasional Kantor.</p>
 						</div>
 					</div>
