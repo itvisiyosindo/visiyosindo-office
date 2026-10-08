@@ -1652,4 +1652,201 @@
         border-color: #075985 !important;
         color: #ffffff !important;
     }
+
+    /* ==========================================================================
+       GLOBAL MODERN BUTTON SYSTEM (Enterprise UI Upgrade Across All Pages)
+       ========================================================================== */
+    .btn {
+        font-family: 'Plus Jakarta Sans', 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        letter-spacing: 0.2px !important;
+        line-height: 1.4 !important;
+        text-decoration: none !important;
+        vertical-align: middle !important;
+        cursor: pointer !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        outline: none !important;
+    }
+
+    .btn:active,
+    .btn.active {
+        transform: translateY(1px) scale(0.99) !important;
+        box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn:disabled,
+    .btn.disabled {
+        opacity: 0.65 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Standard Button Sizing */
+    .btn {
+        padding: 7px 16px !important;
+        font-size: 13px !important;
+    }
+
+    .btn-lg {
+        padding: 10px 22px !important;
+        font-size: 14.5px !important;
+        border-radius: 8px !important;
+    }
+
+    .btn-sm {
+        padding: 6px 13px !important;
+        font-size: 12px !important;
+        border-radius: 6px !important;
+    }
+
+    .btn-xs {
+        padding: 3px 8px !important;
+        font-size: 11px !important;
+        border-radius: 5px !important;
+        gap: 4px !important;
+    }
+
+    /* Icon Alignment inside all buttons */
+    .btn i,
+    .btn .icons,
+    .btn .fas,
+    .btn .far,
+    .btn .fa,
+    .btn .bx {
+        font-size: 1.05em !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+    }
+
+    /* 1. BUTTON SUCCESS / TAMBAH DATA (Modern Emerald Green) */
+    .btn-success {
+        background-color: #10b981 !important;
+        border: 1px solid #059669 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(16, 185, 129, 0.25), 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn-success:hover,
+    .btn-success:focus {
+        background-color: #059669 !important;
+        border-color: #047857 !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px -1px rgba(16, 185, 129, 0.35), 0 2px 4px -1px rgba(16, 185, 129, 0.2) !important;
+    }
+
+    .btn-success:focus-visible {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+    }
+
+    /* 2. BUTTON PRIMARY (Modern Royal Blue) */
+    .btn-primary {
+        background-color: #2563eb !important;
+        border: 1px solid #1d4ed8 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.25), 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+        background-color: #1d4ed8 !important;
+        border-color: #1e40af !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px -1px rgba(37, 99, 235, 0.35), 0 2px 4px -1px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    .btn-primary:focus-visible {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+    }
+
+    /* 3. BUTTON INFO (Vibrant Sky Blue) */
+    .btn-info {
+        background-color: #0284c7 !important;
+        border: 1px solid #0369a1 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(2, 132, 199, 0.25), 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn-info:hover,
+    .btn-info:focus {
+        background-color: #0369a1 !important;
+        border-color: #075985 !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px -1px rgba(2, 132, 199, 0.35), 0 2px 4px -1px rgba(2, 132, 199, 0.2) !important;
+    }
+
+    /* 4. BUTTON WARNING (Warm Amber) */
+    .btn-warning {
+        background-color: #f59e0b !important;
+        border: 1px solid #d97706 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(245, 158, 11, 0.25), 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn-warning:hover,
+    .btn-warning:focus {
+        background-color: #d97706 !important;
+        border-color: #b45309 !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px -1px rgba(245, 158, 11, 0.35), 0 2px 4px -1px rgba(245, 158, 11, 0.2) !important;
+    }
+
+    /* 5. BUTTON DANGER (Clean Rose Red) */
+    .btn-danger {
+        background-color: #ef4444 !important;
+        border: 1px solid #dc2626 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(239, 68, 68, 0.25), 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn-danger:hover,
+    .btn-danger:focus {
+        background-color: #dc2626 !important;
+        border-color: #b91c1c !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px -1px rgba(239, 68, 68, 0.35), 0 2px 4px -1px rgba(239, 68, 68, 0.2) !important;
+    }
+
+    /* 6. BUTTON SECONDARY / DEFAULT (Clean Neutral Slate) */
+    .btn-secondary,
+    .btn-default {
+        background-color: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #334155 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .btn-secondary:hover,
+    .btn-secondary:focus,
+    .btn-default:hover,
+    .btn-default:focus {
+        background-color: #f1f5f9 !important;
+        border-color: #94a3b8 !important;
+        color: #0f172a !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Button Group Spacing & Depth */
+    .btn-group .btn {
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    .btn-group .btn:hover {
+        z-index: 2 !important;
+    }
 </style>
