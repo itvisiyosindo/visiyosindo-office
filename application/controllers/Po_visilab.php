@@ -129,6 +129,9 @@ class Po_visilab extends CI_Controller
             $data['kota_pengajuan']	= $this->input->post('kota_aju', TRUE);
             $data['tgl_pengajuan']	= date_db_format($this->input->post('pengajuan', TRUE));
             $data['status']       	= 0;
+            if ($data['id_pengaju'] == 751) {
+                $data['ttd_gm'] = 1;
+            }
             $this->md_po_visilab->addPO($data);
 
 
@@ -156,16 +159,27 @@ class Po_visilab extends CI_Controller
             
 
               //send notif wa po
-              $dataWa = [
-                'id'            => $lastGcId,
-                'idPenerima1' 	=> 751,
-                //'idPenerima1' 	=> 737,
-                'idPenerima2' 	=> '',
-                'namaSurat' 	  => 'Permintaan PO Aset Visilab',
-                'penerima' 	    => '_Intan Kurnia_',
-                'suplier' 	    => $dataDetailGc['supplier'],
-                'kode' 	        => $kodeFpp
-              ];
+              if ($data['id_pengaju'] == 751) {
+                  $dataWa = [
+                    'id'            => $lastGcId,
+                    'idPenerima1' 	=> 75,
+                    'idPenerima2' 	=> '',
+                    'namaSurat' 	=> 'Permintaan PO Aset Visilab',
+                    'penerima' 	    => '_Head of Visilab (Mrs. Mega Ratu)_',
+                    'suplier' 	    => $dataDetailGc['supplier'],
+                    'kode' 	        => $kodeFpp
+                  ];
+              } else {
+                  $dataWa = [
+                    'id'            => $lastGcId,
+                    'idPenerima1' 	=> 751,
+                    'idPenerima2' 	=> '',
+                    'namaSurat' 	=> 'Permintaan PO Aset Visilab',
+                    'penerima' 	    => '_Intan Kurnia_',
+                    'suplier' 	    => $dataDetailGc['supplier'],
+                    'kode' 	        => $kodeFpp
+                  ];
+              }
           
               $this->notifWaAddSurat(2, $dataWa);
 
