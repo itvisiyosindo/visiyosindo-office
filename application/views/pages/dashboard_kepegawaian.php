@@ -775,40 +775,97 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
         color: #ef4444 !important;
     }
     .modal-kepegawaian .modal-body {
-        padding: 20px !important;
+        padding: 18px 20px !important;
         overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
     .modal-kepegawaian .dataTables_wrapper {
         width: 100% !important;
+        box-sizing: border-box !important;
         padding: 0 !important;
+        margin: 0 !important;
+        clear: both !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .row > [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        box-sizing: border-box !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_length {
-        float: left !important;
+        float: none !important;
         margin-bottom: 12px !important;
+        display: inline-flex !important;
+        align-items: center !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_filter {
-        float: right !important;
+        float: none !important;
         text-align: right !important;
         margin-bottom: 12px !important;
+        margin-right: 0 !important;
+        padding-right: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        width: 100% !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_filter label {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        font-size: 12.5px !important;
+        color: #475569 !important;
+        font-weight: 500 !important;
+        gap: 6px !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_filter input {
         display: inline-block !important;
-        width: 180px !important;
-        margin-left: 8px !important;
+        width: 170px !important;
+        min-width: 120px !important;
+        max-width: 100% !important;
+        margin: 0 0 0 6px !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 5px 10px !important;
-        font-size: 13px !important;
+        padding: 4px 10px !important;
+        font-size: 12.5px !important;
+        height: 32px !important;
+        box-sizing: border-box !important;
+        background-color: #ffffff !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
     }
     .modal-kepegawaian .dataTables_wrapper .dataTables_length select {
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 5px 8px !important;
-        font-size: 13px !important;
+        padding: 4px 8px !important;
+        font-size: 12.5px !important;
+        height: 32px !important;
+        box-sizing: border-box !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_info {
+        font-size: 12px !important;
+        color: #64748b !important;
+        padding-top: 8px !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_paginate {
+        padding-top: 6px !important;
+        margin: 0 !important;
+        display: flex !important;
+        justify-content: flex-end !important;
     }
     .modal-kepegawaian table.dataTable {
         width: 100% !important;
-        margin-top: 8px !important;
+        margin-top: 6px !important;
         margin-bottom: 12px !important;
         border-collapse: collapse !important;
     }
