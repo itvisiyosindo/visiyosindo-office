@@ -26,10 +26,17 @@
 									<option value="<?= base_url('dashboard_visilab') ?>">Visilab</option>
 								<?php } ?>
 								<?php if (isAccountingUser()) { ?>
-									<option value="<?= base_url('acc_pemasok') ?>" selected>Accounting & Tax</option>
+									<option value="<?= base_url('dashboard_accounting') ?>" selected>Accounting & Tax</option>
 								<?php } ?>
 							</select>
 						</span>
+					</li>
+
+					<li class="<?= $page_name == 'dashboard_accounting' ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('dashboard_accounting') ?>">
+							<i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+							<span>Dashboard</span>
+						</a>
 					</li>
 
 					<li class="<?= in_array($page_name, ['acc_pemasok/v_data_pemasok', 'acc_pemasok/v_detail_pemasok']) ? 'nav-active' : '' ?>">
@@ -64,6 +71,13 @@
 						<a class="nav-link" href="<?= base_url('acc_laporan_keuangan') ?>">
 							<i class="fas fa-balance-scale" aria-hidden="true"></i>
 							<span>Data Laporan Keuangan</span>
+						</a>
+					</li>
+
+					<li class="<?= in_array($page_name, ['surat_new/v_list_app_pajak', 'surat_new/v_detail_app_pajak', 'surat_new/v_app_pajak']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('surat_new/show/list_app_pajak') ?>">
+							<i class="fas fa-file-invoice" aria-hidden="true"></i>
+							<span>Approval Faktur Pajak</span>
 						</a>
 					</li>
 

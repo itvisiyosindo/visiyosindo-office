@@ -27,7 +27,7 @@
 								<?php } ?>
 
 								<?php if (isAccountingUser()) { ?>
-									<option value="<?= base_url('acc_pemasok') ?>" <?= $switch == 'accounting' ? 'selected' : '' ?>>Accounting & Tax</option>
+									<option value="<?= base_url('dashboard_accounting') ?>" <?= $switch == 'accounting' ? 'selected' : '' ?>>Accounting & Tax</option>
 								<?php } ?>
 							</select>
 						</span>
