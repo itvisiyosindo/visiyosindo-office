@@ -178,15 +178,15 @@
 				<tr>	
 					<td rowspan="5"></td>
 					
-						<?php if(sessPenggunaId() == '1' || sessPenggunaId() == '107'){ ?>
+						<?php if(isAdmin() || isAccountingUser()){ ?>
 							<?php if($data_po[0]->ttd_4 == '1') {?>
 							<tr>
 							<td width="10%">No PO</td>
-							<td>:&nbsp;&nbsp;<input id='no_po' type="text" placeholder='Klik Untuk Memasukkan No PO (Diisi oleh Senior Accounting & Finance)' required></td>
+							<td>:&nbsp;&nbsp;<input id='no_po' type="text" placeholder='Klik Untuk Memasukkan No PO (Diisi oleh Staff Accounting)' required></td>
 							</tr>
 							<tr>
 							<td width="10%">Lampiran PO</td>
-							<td>:&nbsp;&nbsp;<input id='lampiran_finance' type="text" placeholder='Klik Untuk Memasukkan Link Lampiran PO (Diisi oleh Senior Accounting & Finance)' required></td>
+							<td>:&nbsp;&nbsp;<input id='lampiran_finance' type="text" placeholder='Klik Untuk Memasukkan Link Lampiran PO (Diisi oleh Staff Accounting)' required></td>
 							</tr>
 						<?php }
 						} ?>
@@ -347,7 +347,7 @@
 			</div>
 			<br><br>
 		<div role="document">
-		<?php if (sessPenggunaId() == '107') { ?>
+		<?php if (isAdmin() || isAccountingUser()) { ?>
 			<?php if($data_po[0]->ttd_4 == '1') {?>
 				<button type="button" class="btn btn-success float-right btn-submit" style="margin-left:12px; margin-top:12px;" id-po="<?=encrypt($data_po[0]->id_po)?>"> <i class="fas fa-check"></i> Submit (PO) </button>				
             <?php } 

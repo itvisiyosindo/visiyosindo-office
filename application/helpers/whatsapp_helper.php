@@ -1505,7 +1505,7 @@ function waPermintaanPoVisilabGroup($data)
 
 function waPoVisilabAprovOnProg($data)
 {
-	for ($i = 1; $i < 5; $i++) {
+	for ($i = 1; $i <= 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 
@@ -1543,7 +1543,7 @@ function waPoVisilabAprovAll($data)
 
 function waPoVisilabAprovAllGroup($data)
 {
-	for ($i = 1; $i < 5; $i++) {
+	for ($i = 1; $i <= 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
 

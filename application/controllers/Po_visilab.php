@@ -284,10 +284,11 @@ class Po_visilab extends CI_Controller
                       'namaSurat' 	  => 'Permintaan PO Aset Visilab',
                       'penerima' 	    => '_Director of Corporate Planning and Business Management_',
                       'proses' 	      => 'periksa detail',
-                      'ttd_sebelum1' 	=> 'Staff Teknis',
-                      'ttd_sebelum2' 	=> 'Manager Puncak',
-                      'ttd_sebelum3' 	=> 'Senior Accounting and Finance',
-                      'ttd_sebelum4' 	=> ''
+                      'ttd_sebelum1' 	=> 'Head of Visilab',
+                      'ttd_sebelum2' 	=> 'Head of Accounting and Tax',
+                      'ttd_sebelum3' 	=> '',
+                      'ttd_sebelum4' 	=> '',
+                      'ttd_sebelum5' 	=> ''
                       ];
                   
                   $this->notifWaAprovPb(1, 1, $dataWa);
@@ -312,10 +313,11 @@ class Po_visilab extends CI_Controller
                       'namaSurat' 	  => 'Permintaan PO Aset Visilab',
                       'penerima' 	    => '_Director_',
                       'proses' 	      => 'periksa detail',
-                      'ttd_sebelum1' 	=> 'Staff Teknis',
-                      'ttd_sebelum2' 	=> 'Manager Puncak',
-                      'ttd_sebelum3' 	=> 'Senior Accounting and Finance',
-                      'ttd_sebelum4' 	=> 'Director of Corporate Planning and Business Management'
+                      'ttd_sebelum1' 	=> 'Head of Visilab',
+                      'ttd_sebelum2' 	=> 'Head of Accounting and Tax',
+                      'ttd_sebelum3' 	=> 'Director of Corporate Planning & Business Management',
+                      'ttd_sebelum4' 	=> '',
+                      'ttd_sebelum5' 	=> ''
                   ];
               
               $this->notifWaAprovPb(1, 1, $dataWa);
@@ -332,24 +334,25 @@ class Po_visilab extends CI_Controller
           $data['ttd_4'] = 1;
           $this->md_po_visilab->updatePO($id_sp, $data);
 
-          
-          
-              //send notif wa
-              $dataWa = [
-                'id' 	          => $id_sp,
-                'idPenerima1' 	=> '107',
-                'idPenerima2' 	=> '',
-                'namaSurat' 	  => 'Permintaan PO Aset Visilab',
-                'penerima' 	    => 'Senior Accounting and Finance',
-                'proses' 	      => 'Masukkan No dan Link PO pada',
-                'ttd_sebelum1' 	=> 'Staff Teknis',
-                'ttd_sebelum2' 	=> 'Manager Puncak',
-                'ttd_sebelum3' 	=> 'Senior Accounting and Finance',
-                'ttd_sebelum4' 	=> 'Director of Corporate Planning and Business Management',
-                'ttd_sebelum5' 	=> 'Director'
-            ];
+          $ambilDataPo = $this->md_po_visilab->getNotifPoId($id_sp);
+          $is_pengaju_mutu = (isset($ambilDataPo[0]) && $ambilDataPo[0]->idPengaju == 751);
+
+          //send notif wa to Staff Accounting (ID 714)
+          $dataWa = [
+            'id' 	          => $id_sp,
+            'idPenerima1' 	=> '714',
+            'idPenerima2' 	=> '',
+            'namaSurat' 	=> 'Permintaan PO Aset Visilab',
+            'penerima' 	    => '_Staff Accounting_',
+            'proses' 	    => 'Masukkan No dan Link PO pada',
+            'ttd_sebelum1' 	=> $is_pengaju_mutu ? 'Head of Visilab' : 'Manager Mutu',
+            'ttd_sebelum2' 	=> $is_pengaju_mutu ? 'Head of Accounting and Tax' : 'Head of Visilab',
+            'ttd_sebelum3' 	=> $is_pengaju_mutu ? 'Director of Corporate Planning & Business Management' : 'Head of Accounting and Tax',
+            'ttd_sebelum4' 	=> $is_pengaju_mutu ? 'Director' : 'Director of Corporate Planning & Business Management',
+            'ttd_sebelum5' 	=> $is_pengaju_mutu ? '' : 'Director'
+          ];
         
-            $this->notifWaAprovPb(1, 1, $dataWa);
+          $this->notifWaAprovPb(1, 1, $dataWa);
 
            
           
