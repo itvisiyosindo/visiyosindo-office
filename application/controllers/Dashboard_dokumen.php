@@ -11,7 +11,6 @@ class Dashboard_dokumen extends CI_Controller
         $this->load->model('md_dashboard');
         $this->load->model('md_log');
         $this->load->model('md_dokumen');
-        $this->load->model('md_surat_list');
     }
 
     function id_navbar()
@@ -34,42 +33,58 @@ class Dashboard_dokumen extends CI_Controller
 
         // 2. Total Dokumen Umum
         $page_data['total_dokumen_umum'] = $this->db
-            ->where('deleted', 0)
+            ->where('status', 1)
             ->count_all_results('dokumen_umum');
 
         // 3. Total Dokumen Produk & Brosur
         $page_data['total_dokumen_product'] = $this->db
-            ->where('deleted', 0)
+            ->where('status', 1)
             ->count_all_results('dokumen_product');
 
-        // 4. Total Surat Diterbitkan Bulan Ini
-        $page_data['surat_bulan_ini'] = $this->db
-            ->where('MONTH(data_created)', date('m'))
-            ->where('YEAR(data_created)', date('Y'))
-            ->count_all_results('surat_list');
+        // 4. Total Dokumen Rahasia
+        $page_data['total_dokumen_rahasia'] = $this->db
+            ->where('status', 1)
+            ->count_all_results('dokumen_rahasia');
 
-        // 5. Daftar 10 Dokumen / Surat Terbaru
+        // 5. Total Dokumen Dibuat Bulan Ini (Dokumen Umum + Produk)
+        $doc_umum_month = $this->db
+            ->where('status', 1)
+            ->where('MONTH(created_at)', date('m'))
+            ->where('YEAR(created_at)', date('Y'))
+            ->count_all_results('dokumen_umum');
+
+        $doc_prod_month = $this->db
+            ->where('status', 1)
+            ->where('MONTH(created_at)', date('m'))
+            ->where('YEAR(created_at)', date('Y'))
+            ->count_all_results('dokumen_product');
+
+        $page_data['surat_bulan_ini'] = $doc_umum_month + $doc_prod_month;
+
+        // 6. Daftar 10 Dokumen Terbaru
         $page_data['dokumen_terbaru'] = $this->db
             ->select('
-                sl.id_list_surat,
-                sl.kode,
-                sl.kategori,
-                sl.data_created,
-                COALESCE(p.nama, "-") as nama_pengaju
+                du.id as id_dokumen,
+                du.nama_dokumen,
+                du.created_at,
+                COALESCE(kt.nama, "Umum") as nama_kategori,
+                COALESCE(p.nama, "-") as nama_pengunggah
             ')
-            ->from('surat_list sl')
-            ->join('pengguna p', 'p.pengguna_id = sl.id_pengguna', 'left')
-            ->order_by('sl.id_list_surat', 'DESC')
+            ->from('dokumen_umum du')
+            ->join('dokumen_kategori kt', 'du.id_kategori = kt.id', 'left')
+            ->join('pengguna p', 'p.pengguna_id = du.created_by', 'left')
+            ->where('du.status', 1)
+            ->order_by('du.id', 'DESC')
             ->limit(10)
             ->get()
             ->result();
 
-        // 6. Distribusi Jenis Dokumen
+        // 7. Distribusi Jenis Dokumen
         $page_data['distribusi_dokumen'] = [
             'Surat & Izin Dinas' => (int)$page_data['total_surat'],
             'Dokumen Umum'       => (int)$page_data['total_dokumen_umum'],
             'Dokumen Produk'     => (int)$page_data['total_dokumen_product'],
-            'Dokumen Rahasia'    => (int)$this->db->where('deleted', 0)->count_all_results('dokumen_rahasia')
+            'Dokumen Rahasia'    => (int)$page_data['total_dokumen_rahasia']
         ];
 
         $this->load->view('index', $page_data);
@@ -79,22 +94,23 @@ class Dashboard_dokumen extends CI_Controller
     {
         $tahun = $this->input->get('tahun') ?: date('Y');
 
-        // Surat per bulan
-        $surat = $this->db
-            ->select('MONTH(data_created) as bulan, COUNT(id_list_surat) as total')
-            ->from('surat_list')
-            ->where('YEAR(data_created)', $tahun)
-            ->group_by('MONTH(data_created)')
+        // Dokumen Umum per bulan
+        $umum = $this->db
+            ->select('MONTH(created_at) as bulan, COUNT(id) as total')
+            ->from('dokumen_umum')
+            ->where('status', 1)
+            ->where('YEAR(created_at)', $tahun)
+            ->group_by('MONTH(created_at)')
             ->get()
             ->result();
 
-        // Dokumen Umum per bulan
-        $dokumen = $this->db
-            ->select('MONTH(data_created) as bulan, COUNT(id_dokumen_umum) as total')
-            ->from('dokumen_umum')
-            ->where('deleted', 0)
-            ->where('YEAR(data_created)', $tahun)
-            ->group_by('MONTH(data_created)')
+        // Dokumen Produk per bulan
+        $product = $this->db
+            ->select('MONTH(created_at) as bulan, COUNT(id) as total')
+            ->from('dokumen_product')
+            ->where('status', 1)
+            ->where('YEAR(created_at)', $tahun)
+            ->group_by('MONTH(created_at)')
             ->get()
             ->result();
 
@@ -107,11 +123,11 @@ class Dashboard_dokumen extends CI_Controller
             ];
         }
 
-        foreach ($surat as $row) {
+        foreach ($umum as $row) {
             $result[$row->bulan]['surat'] = (int)$row->total;
         }
 
-        foreach ($dokumen as $row) {
+        foreach ($product as $row) {
             $result[$row->bulan]['dokumen'] = (int)$row->total;
         }
 

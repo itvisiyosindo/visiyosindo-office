@@ -267,11 +267,11 @@
 					<table class="table table-hover table-dok mb-0">
 						<thead>
 							<tr>
-								<th>#</th>
-								<th>Nomor / Kode Surat</th>
-								<th>Kategori / Perihal</th>
-								<th>Pengaju / Pemohon</th>
-								<th>Tanggal Dibuat</th>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Nama Dokumen</th>
+								<th>Kategori</th>
+								<th>Diupload Oleh</th>
+								<th>Tanggal Upload</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -279,17 +279,17 @@
 								$no = 1;
 								foreach ($dokumen_terbaru as $row) { ?>
 									<tr>
-										<td class="font-weight-bold text-muted" style="width: 50px;"><?= $no++ ?></td>
-										<td class="font-weight-bold text-primary"><?= $row->kode ?: '-' ?></td>
-										<td><span class="badge badge-light border text-dark" style="font-size: 11px;"><?= $row->kategori ?: 'Surat Umum' ?></span></td>
-										<td class="font-weight-semibold text-dark"><?= $row->nama_pengaju ?></td>
-										<td class="text-muted" style="font-size: 12px;"><?= date('d M Y, H:i', strtotime($row->data_created)) ?></td>
+										<td class="font-weight-bold text-muted text-center" style="width: 50px;"><?= $no++ ?></td>
+										<td class="font-weight-bold text-primary"><?= $row->nama_dokumen ?: '-' ?></td>
+										<td><span class="badge badge-light border text-dark" style="font-size: 11px;"><?= $row->nama_kategori ?: 'Umum' ?></span></td>
+										<td class="font-weight-semibold text-dark"><?= $row->nama_pengunggah ?></td>
+										<td class="text-muted" style="font-size: 12px;"><?= date('d M Y, H:i', strtotime($row->created_at)) ?></td>
 									</tr>
 								<?php }
 							} else { ?>
 								<tr>
 									<td colspan="5" class="text-center py-4 text-muted">
-										<i class="fas fa-info-circle mr-1"></i> Belum ada data surat terbaru.
+										<i class="fas fa-info-circle mr-1"></i> Belum ada data dokumen terbaru.
 									</td>
 								</tr>
 							<?php } ?>
