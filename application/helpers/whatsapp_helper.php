@@ -2518,12 +2518,23 @@ function sendWaConvia($dataSend)
 
 		if ($response && ($httpCode >= 200 && $httpCode < 300)) {
 			$json = json_decode($response, true);
-			if (isset($json['success']) && $json['success'] === true) {
-				return true;
+			if (is_array($json)) {
+				// Cek jika API mengembalikan status error eksplisit
+				if (isset($json['status']) && ($json['status'] === false || $json['status'] === 'error' || $json['status'] === 'failed')) {
+					if (function_exists('log_message')) {
+						log_message('error', 'Convia Send WA Error status: ' . $response);
+					}
+					return false;
+				}
+				if (isset($json['success']) && ($json['success'] === false || $json['success'] === 'false')) {
+					if (function_exists('log_message')) {
+						log_message('error', 'Convia Send WA Error success=false: ' . $response);
+					}
+					return false;
+				}
 			}
-			if (isset($json['status']) && ($json['status'] == true || $json['status'] == 'success' || $json['status'] == 'sent')) {
-				return true;
-			}
+			// HTTP 2xx diterima oleh Convia gateway, anggap sukses terkirim
+			return true;
 		}
 
 		if (function_exists('log_message')) {
@@ -2591,11 +2602,17 @@ function sendWaConviaGroup($dataSend)
 		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
-		if ($response && ($httpCode == 200 || $httpCode == 201)) {
+		if ($response && ($httpCode >= 200 && $httpCode < 300)) {
 			$json = json_decode($response, true);
-			if (isset($json['status']) && ($json['status'] == true || $json['status'] == 'success')) {
-				return true;
+			if (is_array($json)) {
+				if (isset($json['status']) && ($json['status'] === false || $json['status'] === 'error' || $json['status'] === 'failed')) {
+					return false;
+				}
+				if (isset($json['success']) && ($json['success'] === false || $json['success'] === 'false')) {
+					return false;
+				}
 			}
+			return true;
 		}
 	}
 
@@ -2674,11 +2691,14 @@ function sendWaFonnte($dataSend)
 		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
-		if ($response && ($httpCode == 200 || $httpCode == 201)) {
+		if ($response && ($httpCode >= 200 && $httpCode < 300)) {
 			$json = json_decode($response, true);
-			if (isset($json['status']) && $json['status'] == true) {
-				return true;
+			if (is_array($json)) {
+				if (isset($json['status']) && ($json['status'] === false || $json['status'] === 'false' || $json['status'] === 'error' || $json['status'] === 'failed')) {
+					return false;
+				}
 			}
+			return true;
 		}
 	}
 
