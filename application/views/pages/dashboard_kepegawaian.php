@@ -14,27 +14,109 @@ if (!function_exists('safe_divide')) {
 ?>
 
 <style>
-    table.table-border-hitam,
-    table.table-border-hitam th,
-    table.table-border-hitam td {
-        border: 1px solid black !important;
+    /* Kepegawaian Executive Dashboard Custom Styles */
+    .kpi-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
     }
 
-    table.table-border-hitam thead {
-        background-color: #d3d3d3;
-        text-align: center;
-        vertical-align: middle;
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        border-color: #cbd5e1;
     }
 
-		/* Baris ganjil: abu terang */
-		.table-border-hitam tbody tr:nth-child(odd) td {
-				background-color: #f9f9f9;
-		}
+    .kpi-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
 
-		/* Baris genap: putih (atau biarkan default) */
-		.table-border-hitam tbody tr:nth-child(even) td {
-				background-color: #ffffff;
-		}
+    .dashboard-panel-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .dashboard-panel-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .dashboard-panel-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Modern Clean Table Styling */
+    .table-rekap-modern {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+
+    .table-rekap-modern thead th {
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+        font-size: 11.5px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
+        padding: 10px 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    .table-rekap-modern tbody td {
+        font-size: 12.5px !important;
+        color: #1e293b !important;
+        padding: 8px 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        vertical-align: middle !important;
+        transition: background-color 0.15s ease;
+    }
+
+    .table-rekap-modern tbody tr:nth-child(even) td {
+        background-color: #f8fafc !important;
+    }
+
+    .table-rekap-modern tbody tr:hover td {
+        background-color: #eff6ff !important;
+    }
+
+    .score-badge {
+        font-weight: 600;
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
 </style>
 
 <div class="row">
@@ -83,19 +165,20 @@ $total_izin = isset($izin[0]->total) ? (int)$izin[0]->total : 0;
 $total_sakit = isset($sakit[0]->total) ? (int)$sakit[0]->total : 0;
 $total_cuti = isset($cuti[0]->total) ? (int)$cuti[0]->total : 0;
 $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izin + $total_sakit + $total_cuti));
+$rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karyawan_aktif) * 100, 1) : 0;
 ?>
 
 	<!-- 1. Executive Top Banner Overview -->
 	<div class="col-12 mb-3">
 		<div class="card p-3 p-md-4 border-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; color: #ffffff; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);">
 			<div class="d-flex flex-wrap justify-content-between align-items-center">
-				<div class="d-flex align-items-center gap-3">
-					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 12px;">
+				<div class="d-flex align-items-center">
+					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 14px; flex-shrink: 0;">
 						<i class="fas fa-users-cog"></i>
 					</div>
 					<div>
 						<h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Kepegawaian</h3>
-						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Monitoring kehadiran harian, performa SDM, dan rekapitulasi evaluasi kerja PT Visi Yosindo Medikal.</p>
+						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Monitoring kehadiran harian real-time, performa SDM, dan rekapitulasi nilai kerja PT Visi Yosindo Medikal.</p>
 					</div>
 				</div>
 				<div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
@@ -114,15 +197,15 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 
 	<!-- 2. Four Key Performance Indicator (KPI) Cards -->
 	<div class="col-xl-3 col-sm-6 mb-3">
-		<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+		<div class="kpi-card h-100">
 			<div class="card-body p-3">
 				<div class="d-flex justify-content-between align-items-center">
 					<div>
 						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Karyawan Aktif</span>
-						<h3 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 4px 0 2px 0;"><?= $total_karyawan_aktif ?></h3>
-						<span style="font-size: 11.5px; color: #10b981; font-weight: 500;"><i class="fas fa-check-circle mr-1"></i> Terdaftar aktif</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 4px 0 2px 0;"><?= $total_karyawan_aktif ?></h3>
+						<span style="font-size: 11.5px; color: #10b981; font-weight: 600;"><i class="fas fa-check-circle mr-1"></i> Terdaftar Aktif</span>
 					</div>
-					<div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+					<div class="kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
 						<i class="fas fa-users"></i>
 					</div>
 				</div>
@@ -132,15 +215,15 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 
 	<div class="col-xl-3 col-sm-6 mb-3">
 		<a href="javascript:;" id="btn-show-hadir" style="text-decoration: none; color: inherit;">
-			<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease;">
+			<div class="kpi-card h-100" style="cursor: pointer;">
 				<div class="card-body p-3">
 					<div class="d-flex justify-content-between align-items-center">
 						<div>
 							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Hadir Hari Ini</span>
-							<h3 style="font-size: 24px; font-weight: 700; color: #047857; margin: 4px 0 2px 0;"><?= $total_hadir ?></h3>
-							<span style="font-size: 11.5px; color: #2563eb; font-weight: 500;"><i class="fas fa-eye mr-1"></i> Klik lihat daftar</span>
+							<h3 style="font-size: 26px; font-weight: 800; color: #047857; margin: 4px 0 2px 0;"><?= $total_hadir ?></h3>
+							<span style="font-size: 11.5px; color: #2563eb; font-weight: 600;"><i class="fas fa-chart-line mr-1"></i> <?= $rate_kehadiran ?>% Kehadiran</span>
 						</div>
-						<div style="width: 44px; height: 44px; border-radius: 10px; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+						<div class="kpi-icon-box" style="background: #ecfdf5; color: #10b981;">
 							<i class="fas fa-user-check"></i>
 						</div>
 					</div>
@@ -151,18 +234,18 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 
 	<div class="col-xl-3 col-sm-6 mb-3">
 		<a href="javascript:;" id="btn-show-izin" style="text-decoration: none; color: inherit;">
-			<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease;">
+			<div class="kpi-card h-100" style="cursor: pointer;">
 				<div class="card-body p-3">
 					<div class="d-flex justify-content-between align-items-center">
 						<div>
 							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Izin & Sakit</span>
-							<h3 style="font-size: 24px; font-weight: 700; color: #b45309; margin: 4px 0 2px 0;"><?= $total_izin + $total_sakit ?></h3>
+							<h3 style="font-size: 26px; font-weight: 800; color: #b45309; margin: 4px 0 2px 0;"><?= $total_izin + $total_sakit ?></h3>
 							<span style="font-size: 11.5px; color: #64748b; font-weight: 500;">
 								<span class="text-warning font-weight-bold mr-1"><?= $total_izin ?> Izin</span> &bull; 
 								<span class="text-info font-weight-bold ml-1"><?= $total_sakit ?> Sakit</span>
 							</span>
 						</div>
-						<div style="width: 44px; height: 44px; border-radius: 10px; background: #fffbeb; color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+						<div class="kpi-icon-box" style="background: #fffbeb; color: #f59e0b;">
 							<i class="fas fa-user-clock"></i>
 						</div>
 					</div>
@@ -173,15 +256,15 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 
 	<div class="col-xl-3 col-sm-6 mb-3">
 		<a href="javascript:;" id="btn-show-cuti" style="text-decoration: none; color: inherit;">
-			<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease;">
+			<div class="kpi-card h-100" style="cursor: pointer;">
 				<div class="card-body p-3">
 					<div class="d-flex justify-content-between align-items-center">
 						<div>
 							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Sedang Cuti</span>
-							<h3 style="font-size: 24px; font-weight: 700; color: #b91c1c; margin: 4px 0 2px 0;"><?= $total_cuti ?></h3>
-							<span style="font-size: 11.5px; color: #ef4444; font-weight: 500;"><i class="fas fa-calendar-times mr-1"></i> Klik rincian cuti</span>
+							<h3 style="font-size: 26px; font-weight: 800; color: #b91c1c; margin: 4px 0 2px 0;"><?= $total_cuti ?></h3>
+							<span style="font-size: 11.5px; color: #ef4444; font-weight: 600;"><i class="fas fa-calendar-times mr-1"></i> Klik rincian cuti</span>
 						</div>
-						<div style="width: 44px; height: 44px; border-radius: 10px; background: #fef2f2; color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+						<div class="kpi-icon-box" style="background: #fef2f2; color: #ef4444;">
 							<i class="fas fa-calendar-day"></i>
 						</div>
 					</div>
@@ -192,15 +275,17 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 
 	<!-- 3. Visual Charts (Tren Kinerja Mingguan & Donut Absensi) -->
 	<div class="col-lg-8 mb-4">
-		<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-			<div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 pb-0 px-3">
-				<h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0;">
-					<i class="fas fa-chart-line text-primary mr-1"></i> Rata-rata Skor Kinerja SDM Mingguan (<?= $bulanIni ?>)
+		<div class="dashboard-panel-card h-100">
+			<div class="dashboard-panel-header">
+				<h5 class="dashboard-panel-title">
+					<i class="fas fa-chart-line text-primary"></i> Rata-rata Skor Kinerja SDM Mingguan (<?= $bulanIni ?>)
 				</h5>
-				<span class="badge badge-light text-muted" style="font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;">Periode Aktif</span>
+				<span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 11px; font-weight: 600; padding: 4px 8px;">
+					Laporan vs Pencapaian
+				</span>
 			</div>
 			<div class="card-body p-3">
-				<div style="height: 230px; position: relative;">
+				<div style="height: 240px; position: relative;">
 					<canvas id="kepegawaianTrendChart"></canvas>
 				</div>
 			</div>
@@ -208,18 +293,20 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 	</div>
 
 	<div class="col-lg-4 mb-4">
-		<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-			<div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 pb-0 px-3">
-				<h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0;">
-					<i class="fas fa-chart-pie text-success mr-1"></i> Status Kehadiran Hari Ini
+		<div class="dashboard-panel-card h-100">
+			<div class="dashboard-panel-header">
+				<h5 class="dashboard-panel-title">
+					<i class="fas fa-chart-pie text-success"></i> Status Absensi Hari Ini
 				</h5>
-				<span class="badge" style="background: #ecfdf5; color: #059669; font-size: 11px; font-weight: 600;">Real-time</span>
+				<span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px; font-weight: 600; padding: 4px 8px;">
+					Live Real-time
+				</span>
 			</div>
 			<div class="card-body p-3 d-flex flex-column align-items-center justify-content-center">
-				<div style="height: 165px; width: 165px; position: relative;">
+				<div style="height: 175px; width: 175px; position: relative;">
 					<canvas id="kepegawaianAttendanceChart"></canvas>
 				</div>
-				<div class="d-flex justify-content-center flex-wrap gap-2 mt-3 text-center" style="font-size: 11px; font-weight: 600;">
+				<div class="d-flex justify-content-center flex-wrap gap-2 mt-3 text-center" style="font-size: 11.5px; font-weight: 600;">
 					<span class="mr-2" style="color: #047857;"><i class="fas fa-circle" style="color: #10b981;"></i> Hadir (<?= $total_hadir ?>)</span>
 					<span class="mr-2" style="color: #b45309;"><i class="fas fa-circle" style="color: #f59e0b;"></i> Izin (<?= $total_izin ?>)</span>
 					<span class="mr-2" style="color: #0369a1;"><i class="fas fa-circle" style="color: #0ea5e9;"></i> Sakit (<?= $total_sakit ?>)</span>
@@ -231,76 +318,73 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 
   <?php if (sessPenggunaId()=='1' || sessPenggunaId()=='54' || sessPenggunaId()=='69' || sessPenggunaId()=='744' || sessPenggunaId()=='58') { ?>
 
-		<div class="col-md-12">
-			<div class="card-body">
-				<form method="get">
-						<div class="form-row d-flex align-items-end">
-								<div class="col-md-2">
-										<small>Pilih Bulan:</small>
-										<div class="input-group">
-												<div class="input-group-prepend">
-														<span class="input-group-text"><i class="fa fa-calendar"></i></span>
-												</div>
-												<input type="text" name="bulan"
-															data-plugin-datepicker
-															data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}'
-															class="form-control"
-															id="filter_bulan"
-															placeholder="Pilih Bulan"
-															value="<?= isset($_GET['bulan']) ? $_GET['bulan'] : date('Y-m') ?>"
-															required>
-										</div>
-								</div>
-
-								<div class="col-auto">
-										<button type="submit" class="btn btn-outline-secondary"><i class="fa fa-filter"></i> Filter</button>
-								</div>
+	<!-- 4. Section Rekap Nilai Karyawan Mingguan (Admin/HR) -->
+	<div class="col-12 mb-4">
+		<div class="dashboard-panel-card">
+			<div class="dashboard-panel-header">
+				<h5 class="dashboard-panel-title">
+					<i class="fas fa-clipboard-list text-info"></i> Rekapitulasi Nilai & Evaluasi Karyawan (<?= $bulanIni ?>)
+				</h5>
+				<div>
+					<form method="get" class="d-inline-flex align-items-center gap-2 m-0">
+						<div class="input-group input-group-sm" style="width: 170px;">
+							<div class="input-group-prepend">
+								<span class="input-group-text bg-white" style="border-right: none;"><i class="far fa-calendar-alt text-muted"></i></span>
+							</div>
+							<input type="text" name="bulan"
+								data-plugin-datepicker
+								data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}'
+								class="form-control form-control-sm"
+								id="filter_bulan"
+								style="border-left: none; font-weight: 600;"
+								placeholder="Pilih Bulan"
+								value="<?= isset($_GET['bulan']) ? $_GET['bulan'] : date('Y-m') ?>"
+								required>
 						</div>
-				</form>
-
-			</br>
-
-			<div class="card-body">
-				<div class="text-center">
-					<h4>Rekap Nilai pada Bulan <strong> <?= $bulanIni ?> </strong> </h4>
+						<button type="submit" class="btn btn-sm btn-primary ml-2">
+							<i class="fa fa-filter mr-1"></i> Filter
+						</button>
+					</form>
 				</div>
-
-				<!-- Tambahkan wrapper responsif di sini -->
+			</div>
+			<div class="card-body p-0">
 				<div class="table-responsive">
-					<!--<table class="table table-bordered">-->
-					<table class="table table-bordered table-border-hitam">
-
-						<thead style="background-color: #d3d3d3; text-align: center; vertical-align: middle;">
+					<table class="table table-rekap-modern">
+						<thead>
 							<tr>
-									<th rowspan="3" style="vertical-align: middle;">No</th>
-									<th rowspan="3" style="vertical-align: middle;">Nama</th>
-									<th colspan="<?= count($data_mingguan) * 4 ?>">Periode</th>
+								<th rowspan="3" style="width: 50px;">No</th>
+								<th rowspan="3" style="min-width: 180px; text-align: left !important; padding-left: 14px !important;">Nama Karyawan</th>
+								<th colspan="<?= count($data_mingguan) * 4 ?>" style="background: #e2e8f0; color: #1e293b;">Periode Penilaian Mingguan</th>
 							</tr>
 							<tr>
-									<?php foreach ($data_mingguan as $minggu): ?>
-											<th colspan="4"><?= $minggu['periode'] ?></th>
-									<?php endforeach; ?>
+								<?php foreach ($data_mingguan as $minggu): ?>
+									<th colspan="4" style="background: #f1f5f9; color: #0284c7; font-size: 11px;"><?= $minggu['periode'] ?></th>
+								<?php endforeach; ?>
 							</tr>
 							<tr>
-									<?php foreach ($data_mingguan as $minggu): ?>
-											<th style="vertical-align: middle;">Laporan</th>
-											<th style="vertical-align: middle;">Penilaian Umum</th>
-											<th style="vertical-align: middle;">Laporan + Penilaian Umum</th>
-											<th style="vertical-align: middle;">Pencapaian</th>
-									<?php endforeach; ?>
+								<?php foreach ($data_mingguan as $minggu): ?>
+									<th style="font-size: 10.5px;">Laporan</th>
+									<th style="font-size: 10.5px;">Penilaian Umum</th>
+									<th style="font-size: 10.5px; background: #e0f2fe; color: #0369a1;">Rata-rata</th>
+									<th style="font-size: 10.5px; background: #ecfdf5; color: #047857;">Pencapaian</th>
+								<?php endforeach; ?>
 							</tr>
-					</thead>
-
+						</thead>
 						<tbody>
 							<?php $no = 1; foreach ($list_pengguna as $pengguna): ?>
 								<tr>
-									<td><?= $no++ ?></td>
-									<td><?= $pengguna->nama ?></td>
-									<?php foreach ($data_mingguan as $minggu): ?>
-										<td style="text-align:center"><?= $minggu['nilai_laporan_adm'][$pengguna->pengguna_id] ?? '-' ?></td>
-										<td style="text-align:center"><?= $minggu['nilai_penilaianumum_adm'][$pengguna->pengguna_id] ?? '-' ?></td>
-										<td style="text-align:center"><?= $minggu['rata_lap_adms'][$pengguna->pengguna_id] ?? '-' ?></td>
-										<td style="text-align:center"><?= $minggu['nilai_pencapaian_adm'][$pengguna->pengguna_id] ?? '-' ?></td>
+									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $no++ ?></td>
+									<td style="font-weight: 600; color: #0f172a; padding-left: 14px !important;"><?= $pengguna->nama ?></td>
+									<?php foreach ($data_mingguan as $minggu): 
+										$v_lap = $minggu['nilai_laporan_adm'][$pengguna->pengguna_id] ?? '-';
+										$v_pen = $minggu['nilai_penilaianumum_adm'][$pengguna->pengguna_id] ?? '-';
+										$v_avg = $minggu['rata_lap_adms'][$pengguna->pengguna_id] ?? '-';
+										$v_penc = $minggu['nilai_pencapaian_adm'][$pengguna->pengguna_id] ?? '-';
+									?>
+										<td style="text-align:center;"><?= $v_lap ?></td>
+										<td style="text-align:center;"><?= $v_pen ?></td>
+										<td style="text-align:center; font-weight: 700; color: #0284c7; background-color: rgba(224, 242, 254, 0.4);"><?= $v_avg ?></td>
+										<td style="text-align:center; font-weight: 700; color: #059669; background-color: rgba(236, 253, 245, 0.4);"><?= $v_penc ?></td>
 									<?php endforeach; ?>
 								</tr>
 							<?php endforeach; ?>
@@ -308,126 +392,42 @@ $total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izi
 					</table>
 				</div>
 			</div>
-
-
-			
-				
-			</div>
-		</div>
-
-
-
-	<div class="col-md-6">
-		<div class="text-center">
-			<h2>Log Aktivitas Anda</h2>
-		</div>
-		<div class="card-body">
-			<div class="row form-group col-md-4">
-				<small>Filter By Month:</small>
-				<div class="input-group">
-					<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-					<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
-				</div>
-			</div>
-			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-					<thead>
-						<tr>
-							<th> # </th>
-							<th> Pengguna</th>
-							<th> Aksi </th>
-							<th> Keterangan </th>
-							<th> Tanggal </th>
-						</tr>
-					</thead>
-				</table>
-			</div>
 		</div>
 	</div>
-	<div class="col-md-6">
-		<div class="text-center">
-			<h2>&nbsp;</h2>
+
+	<!-- 5. Section Log Aktivitas (Admin/HR) -->
+	<div class="col-12 mb-4">
+		<div class="dashboard-panel-card">
+			<div class="dashboard-panel-header">
+				<h5 class="dashboard-panel-title">
+					<i class="fas fa-history text-secondary"></i> Log Aktivitas Pengguna & Audit Kepegawaian
+				</h5>
+				<div class="d-inline-flex align-items-center gap-2">
+					<small class="text-muted mr-1 font-weight-bold">Filter Bulan:</small>
+					<div class="input-group input-group-sm" style="width: 150px;">
+						<div class="input-group-prepend">
+							<span class="input-group-text bg-white" style="border-right: none;"><i class="far fa-calendar-alt text-muted"></i></span>
+						</div>
+						<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control form-control-sm" id="filter_month" placeholder="Pilih Bulan" style="border-left: none;" required>
+					</div>
+				</div>
+			</div>
+			<div class="card-body p-3">
+				<div class="table-responsive">
+					<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%;">
+						<thead>
+							<tr>
+								<th style="width: 50px;"> # </th>
+								<th> Pengguna</th>
+								<th> Aksi </th>
+								<th> Keterangan </th>
+								<th> Tanggal </th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
 		</div>
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-hadir">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $present[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-success line-height-2 my-0">Karyawan <strong>Hadir &uarr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-
-
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-izin">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $izin[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Karyawan <strong>Izin &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-
-
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-cuti">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $cuti[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Karyawan <strong>Cuti &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-sakit">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $sakit[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Karyawan <strong>Sakit &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
 	</div>
 
 	<?php } else { ?>
