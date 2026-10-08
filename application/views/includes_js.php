@@ -188,5 +188,13 @@
                 }
             });
         }
+
+        // Smooth Page Transition Trigger on Sidebar Click
+        $(document).on('click', '#sidebar-left .nav-main a.nav-link, .custom-switch-item', function(e) {
+            var href = $(this).attr('href');
+            if (href && href !== '#' && href !== 'javascript:;' && !href.startsWith('#') && !$(this).parent().hasClass('nav-parent')) {
+                $('.content-body, .content-body-modern').addClass('page-transitioning');
+            }
+        });
     });
 </script>

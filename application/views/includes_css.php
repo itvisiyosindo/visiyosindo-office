@@ -1849,4 +1849,57 @@
     .btn-group .btn:hover {
         z-index: 2 !important;
     }
+
+    /* ==========================================================================
+       MODERN PAGE ENTRANCE & NAVIGATION TRANSITION ANIMATION (Sidebar Page Switch)
+       ========================================================================== */
+    @keyframes modernContentEnter {
+        0% {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .content-body,
+    .content-body-modern {
+        animation: modernContentEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        will-change: opacity, transform;
+        transition: opacity 0.18s ease-in-out, transform 0.18s ease-in-out !important;
+    }
+
+    .content-body.page-transitioning {
+        opacity: 0.35 !important;
+        transform: translateY(6px) !important;
+        pointer-events: none;
+    }
+
+    /* Staggered smooth entrance for key inner sections */
+    .content-body > .page-header {
+        animation: modernContentEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    .content-body > .row,
+    .content-body > .card,
+    .content-body > .card-body,
+    .content-body > .tabs,
+    .content-body > div:not(.page-header) {
+        animation: modernContentEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .content-body,
+        .content-body-modern,
+        .content-body > .page-header,
+        .content-body > .row,
+        .content-body > .card,
+        .content-body > .card-body,
+        .content-body > .tabs,
+        .content-body > div:not(.page-header) {
+            animation: none !important;
+        }
+    }
 </style>
