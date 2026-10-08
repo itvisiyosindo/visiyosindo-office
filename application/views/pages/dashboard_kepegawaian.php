@@ -15,6 +15,30 @@ if (!function_exists('safe_divide')) {
 
 <style>
     /* Kepegawaian Executive Dashboard Custom Styles */
+    .dash-banner {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 12px;
+        color: #ffffff;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+        padding: 18px 22px;
+        margin-bottom: 20px;
+    }
+
+    .dash-banner-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(59, 130, 246, 0.2);
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: #60a5fa;
+        margin-right: 14px;
+        flex-shrink: 0;
+    }
+
     .kpi-card {
         background: #ffffff;
         border-radius: 12px;
@@ -169,27 +193,31 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 ?>
 
 	<!-- 1. Executive Top Banner Overview -->
-	<div class="col-12 mb-3">
-		<div class="card p-3 p-md-4 border-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; color: #ffffff; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);">
-			<div class="d-flex flex-wrap justify-content-between align-items-center">
-				<div class="d-flex align-items-center">
-					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 14px; flex-shrink: 0;">
-						<i class="fas fa-users-cog"></i>
-					</div>
-					<div>
-						<h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Kepegawaian</h3>
-						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Monitoring kehadiran harian real-time, performa SDM, dan rekapitulasi nilai kerja PT Visi Yosindo Medikal.</p>
+	<div class="col-12">
+		<div class="dash-banner">
+			<div class="row align-items-center">
+				<div class="col-lg-7 col-12 mb-3 mb-lg-0">
+					<div class="d-flex align-items-center">
+						<div class="dash-banner-icon">
+							<i class="fas fa-users-cog"></i>
+						</div>
+						<div>
+							<h3 style="font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Kepegawaian</h3>
+							<p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.4;">Monitoring kehadiran harian real-time, performa SDM, dan rekapitulasi nilai kerja PT Visi Yosindo Medikal.</p>
+						</div>
 					</div>
 				</div>
-				<div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
-					<span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 600; padding: 6px 12px; border-radius: 9999px; font-size: 12px;">
-						<i class="fas fa-calendar-day mr-1"></i> <?= date('d M Y') ?>
-					</span>
-					<?php if (isAdmin() || isHrd() || isGa()) { ?>
-						<a href="<?= base_url('dashboard_kepegawaian/sisa_cuti_karyawan') ?>" class="btn btn-sm btn-info" style="font-size: 12px; margin-left: 8px;">
-							<i class="fas fa-calendar-check mr-1"></i> Sisa Cuti
-						</a>
-					<?php } ?>
+				<div class="col-lg-5 col-12 text-lg-right">
+					<div class="d-inline-flex flex-wrap align-items-center justify-content-start justify-content-lg-end" style="gap: 8px;">
+						<span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 600; padding: 6px 12px; border-radius: 9999px; font-size: 12px;">
+							<i class="fas fa-calendar-day mr-1"></i> <?= date('d M Y') ?>
+						</span>
+						<?php if (isAdmin() || isHrd() || isGa()) { ?>
+							<a href="<?= base_url('dashboard_kepegawaian/sisa_cuti_karyawan') ?>" class="btn btn-sm btn-info" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+								<i class="fas fa-calendar-check mr-1"></i> Sisa Cuti
+							</a>
+						<?php } ?>
+					</div>
 				</div>
 			</div>
 		</div>

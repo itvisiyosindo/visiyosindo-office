@@ -83,43 +83,92 @@
 		padding: 10px 12px !important;
 		vertical-align: middle !important;
 	}
+	/* Inventory Executive Dashboard Custom Styles */
+	.dash-banner {
+		background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+		border-radius: 12px;
+		color: #ffffff;
+		box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+		padding: 18px 22px;
+		margin-bottom: 20px;
+	}
+
+	.dash-banner-icon {
+		width: 48px;
+		height: 48px;
+		background: rgba(59, 130, 246, 0.2);
+		border: 1px solid rgba(59, 130, 246, 0.35);
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 22px;
+		color: #60a5fa;
+		margin-right: 14px;
+		flex-shrink: 0;
+	}
+
+	.dash-year-box {
+		display: inline-flex;
+		align-items: center;
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 8px;
+		padding: 4px 10px;
+	}
+
+	.dash-year-box input {
+		width: 72px;
+		height: 28px;
+		background: #ffffff;
+		color: #0f172a;
+		border: none;
+		border-radius: 5px;
+		font-size: 12px;
+		font-weight: 700;
+		text-align: center;
+		padding: 0 4px;
+	}
 </style>
 
 <div class="row">
 	<!-- 1. Executive Top Banner Overview -->
-	<div class="col-12 mb-3">
-		<div class="card p-3 p-md-4 border-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; color: #ffffff; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);">
-			<div class="d-flex flex-wrap justify-content-between align-items-center">
-				<div class="d-flex align-items-center">
-					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 14px; flex-shrink: 0;">
-						<i class="fas fa-boxes"></i>
-					</div>
-					<div>
-						<h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Inventory</h3>
-						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Monitoring persediaan master barang, transaksi keluar/masuk gudang, dan peringatan stok minimum.</p>
+	<div class="col-12">
+		<div class="dash-banner">
+			<div class="row align-items-center">
+				<div class="col-lg-5 col-12 mb-3 mb-lg-0">
+					<div class="d-flex align-items-center">
+						<div class="dash-banner-icon">
+							<i class="fas fa-boxes"></i>
+						</div>
+						<div>
+							<h3 style="font-size: 17px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Inventory</h3>
+							<p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.4;">Monitoring persediaan master barang, transaksi keluar/masuk, dan batas minimum stok.</p>
+						</div>
 					</div>
 				</div>
-				<div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
-					<div class="d-flex align-items-center bg-white bg-opacity-10 rounded px-2 py-1" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
-						<small class="text-white-50 mr-2"><i class="fas fa-calendar-alt"></i> Tahun:</small>
-						<input type="text"
-							data-plugin-datepicker
-							data-plugin-options='{"orientation": "bottom", "format": "yyyy", "minViewMode": "years"}'
-							class="form-control form-control-sm text-center font-weight-bold"
-							id="filter_year"
-							value="<?= isset($tahun_sekarang) ? $tahun_sekarang : date('Y') ?>"
-							style="width: 85px; height: 28px; background: #ffffff; color: #0f172a; border-radius: 6px; font-size: 12.5px;"
-							required>
+				<div class="col-lg-7 col-12 text-lg-right">
+					<div class="d-inline-flex flex-wrap align-items-center justify-content-start justify-content-lg-end" style="gap: 8px;">
+						<div class="dash-year-box">
+							<small style="color: #cbd5e1; margin-right: 6px; font-size: 11.5px;"><i class="fas fa-calendar-alt mr-1"></i> Tahun:</small>
+							<input type="text"
+								data-plugin-datepicker
+								data-plugin-options='{"orientation": "bottom", "format": "yyyy", "minViewMode": "years"}'
+								class="form-control"
+								id="filter_year"
+								value="<?= isset($tahun_sekarang) ? $tahun_sekarang : date('Y') ?>"
+								required>
+						</div>
+						<a href="<?= base_url('barang') ?>" class="btn btn-sm btn-primary" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+							<i class="fas fa-cubes mr-1"></i> Master Barang
+						</a>
+						<a href="<?= base_url('penerimaan_barang') ?>" class="btn btn-sm btn-success" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+							<i class="fas fa-arrow-down mr-1"></i> Penerimaan
+						</a>
+						<a href="<?= base_url('pengeluaran_barang') ?>" class="btn btn-sm btn-info" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+							<i class="fas fa-arrow-up mr-1"></i> Pengeluaran
+						</a>
 					</div>
-					<a href="<?= base_url('barang') ?>" class="btn btn-sm btn-primary ml-2" style="font-size: 12px;">
-						<i class="fas fa-cubes mr-1"></i> Master Barang
-					</a>
-					<a href="<?= base_url('penerimaan_barang') ?>" class="btn btn-sm btn-success ml-1" style="font-size: 12px;">
-						<i class="fas fa-arrow-down mr-1"></i> Penerimaan
-					</a>
-					<a href="<?= base_url('pengeluaran_barang') ?>" class="btn btn-sm btn-info ml-1" style="font-size: 12px;">
-						<i class="fas fa-arrow-up mr-1"></i> Pengeluaran
-					</a>
 				</div>
 			</div>
 		</div>
