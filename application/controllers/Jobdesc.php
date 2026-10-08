@@ -335,11 +335,22 @@ class Jobdesc extends CI_Controller
               $t_end   = !empty($row->tgl_selesai) ? $row->tgl_selesai : '2099-12-31';
               $is_active = ($t_start <= $today && $t_end >= $today);
 
-              $badge_status = $is_active 
-                  ? '<span class="badge badge-success">Aktif</span>' 
-                  : '<span class="badge badge-secondary">Histori / Non-Aktif</span>';
+              if ($is_active) {
+                  $badge_status = '<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 9999px; letter-spacing: 0.2px;"><span style="width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; display: inline-block;"></span> Aktif</span>';
+              } else {
+                  $badge_status = '<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 9999px; letter-spacing: 0.2px;"><span style="width: 6px; height: 6px; border-radius: 50%; background-color: #94a3b8; display: inline-block;"></span> Histori / Non-Aktif</span>';
+              }
 
-              $masa_berlaku = '<div style="font-size:0.85rem;"><strong>' . $tgl_mulai . ' - ' . $tgl_selesai . '</strong><br>' . $badge_status . '</div>';
+              $masa_berlaku = '
+              <div style="display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 6px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-width: 175px;">
+                  <div style="display: flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: #1e293b; white-space: nowrap;">
+                      <i class="far fa-calendar-alt" style="color: #64748b; font-size: 12px;"></i>
+                      <span>' . $tgl_mulai . '</span>
+                      <span style="color: #94a3b8; font-weight: 400;">—</span>
+                      <span>' . $tgl_selesai . '</span>
+                  </div>
+                  <div>' . $badge_status . '</div>
+              </div>';
 
               $th = array();
               $th[] = ++$start;

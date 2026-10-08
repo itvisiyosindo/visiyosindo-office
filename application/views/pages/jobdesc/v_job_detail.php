@@ -17,10 +17,11 @@
 					<strong>NPP :</strong> <?= $data_job->no_pegawai ?><br>
 					<strong>Jabatan :</strong> <?= $data_job->jabatan ?><br>
 					<strong>Masa Berlaku Jobdesk :</strong> 
-					<span class="badge badge-info px-2 py-1" style="font-size: 0.85rem;">
+					<span class="badge" style="background-color: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 13px;">
+						<i class="far fa-calendar-alt text-muted mr-1"></i>
 						<?= (!empty($data_job->tgl_mulai) && $data_job->tgl_mulai != '0000-00-00') ? date('d/m/Y', strtotime($data_job->tgl_mulai)) : '01/01/2024' ?>
-						s.d.
-						<?= (!empty($data_job->tgl_selesai) && $data_job->tgl_selesai != '0000-00-00' && $data_job->tgl_selesai != '2099-12-31') ? date('d/m/Y', strtotime($data_job->tgl_selesai)) : 'Sekarang' ?>
+						<span style="color: #94a3b8; font-weight: 400; margin: 0 4px;">—</span>
+						<?= (!empty($data_job->tgl_selesai) && $data_job->tgl_selesai != '0000-00-00' && $data_job->tgl_selesai != '2099-12-31') ? date('d/m/Y', strtotime($data_job->tgl_selesai)) : 'Seterusnya' ?>
 					</span>
 				</div>
 				<?php if(sessPenggunaId() == 1) { ?>
