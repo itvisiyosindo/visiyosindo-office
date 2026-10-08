@@ -650,9 +650,9 @@ window.theme.fn = {
 
 				$search
 					.attr({
-						placeholder: typeof options.searchPlaceholder !== 'undefined' ? options.searchPlaceholder : 'Search...'
+						placeholder: typeof options.searchPlaceholder !== 'undefined' ? options.searchPlaceholder : 'Cari...'
 					})
-					.removeClass('form-control-sm').addClass('form-control pull-right');
+					.removeClass('form-control-sm');
 
 				if ( $.isFunction( $.fn.placeholder ) ) {
 					$search.placeholder();
