@@ -3,328 +3,518 @@
 	<div class="right-wrapper text-left">
 	</div>
 </header>
+
+<style>
+	/* Dokumen Executive Dashboard Custom Styles */
+	.dok-kpi-card {
+		background: #ffffff;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+		transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+		position: relative;
+		overflow: hidden;
+		text-decoration: none !important;
+		display: block;
+		height: 100%;
+	}
+
+	.dok-kpi-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+		border-color: #cbd5e1;
+	}
+
+	.dok-kpi-icon-box {
+		width: 48px;
+		height: 48px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		flex-shrink: 0;
+	}
+
+	.dok-panel-card {
+		background: #ffffff;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+		margin-bottom: 24px;
+		overflow: hidden;
+	}
+
+	.dok-panel-header {
+		background: #f8fafc;
+		border-bottom: 1px solid #e2e8f0;
+		padding: 14px 20px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.dok-panel-title {
+		font-size: 15px;
+		font-weight: 700;
+		color: #1e293b;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.table-dok thead th {
+		background-color: #f1f5f9 !important;
+		color: #334155 !important;
+		font-size: 12px !important;
+		font-weight: 700 !important;
+		text-transform: uppercase !important;
+		letter-spacing: 0.3px !important;
+		border-bottom: 1px solid #e2e8f0 !important;
+		padding: 10px 12px !important;
+	}
+
+	.table-dok tbody td {
+		font-size: 12.5px !important;
+		color: #1e293b !important;
+		padding: 10px 12px !important;
+		vertical-align: middle !important;
+	}
+</style>
+
 <div class="row">
-	<div class="col-md-6">
-		<div class="text-center">
-			<h2>Log Aktivitas Anda</h2>
-		</div>
-		<div class="card-body">
-			<div class="row form-group col-md-4">
-				<small>Filter By Month:</small>
-				<div class="input-group">
-					<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-					<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
+	<!-- 1. Executive Top Banner Overview -->
+	<div class="col-12 mb-3">
+		<div class="card p-3 p-md-4 border-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; color: #ffffff; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);">
+			<div class="d-flex flex-wrap justify-content-between align-items-center">
+				<div class="d-flex align-items-center">
+					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 14px; flex-shrink: 0;">
+						<i class="fas fa-folder-open"></i>
+					</div>
+					<div>
+						<h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Dokumen</h3>
+						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Pusat arsip persuratan resmi, dokumen perizinan umum, legalitas, dan dokumen produk PT Visi Yosindo Medikal.</p>
+					</div>
+				</div>
+				<div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+					<div class="d-flex align-items-center bg-white bg-opacity-10 rounded px-2 py-1" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
+						<small class="text-white-50 mr-2"><i class="fas fa-calendar-alt"></i> Tahun:</small>
+						<input type="text"
+							data-plugin-datepicker
+							data-plugin-options='{"orientation": "bottom", "format": "yyyy", "minViewMode": "years"}'
+							class="form-control form-control-sm text-center font-weight-bold"
+							id="filter_year"
+							value="<?= isset($tahun_sekarang) ? $tahun_sekarang : date('Y') ?>"
+							style="width: 85px; height: 28px; background: #ffffff; color: #0f172a; border-radius: 6px; font-size: 12.5px;"
+							required>
+					</div>
+					<a href="<?= base_url('surat') ?>" class="btn btn-sm btn-primary ml-2" style="font-size: 12px;">
+						<i class="fas fa-envelope-open-text mr-1"></i> Data Surat
+					</a>
+					<a href="<?= base_url('dokumen') ?>" class="btn btn-sm btn-info ml-1" style="font-size: 12px;">
+						<i class="fas fa-file-pdf mr-1"></i> Dokumen Umum
+					</a>
 				</div>
 			</div>
-			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-					<thead>
-						<tr>
-							<th> # </th>
-							<th> Pengguna</th>
-							<th> Aksi </th>
-							<th> Keterangan </th>
-							<th> Tanggal </th>
-						</tr>
-					</thead>
-				</table>
+		</div>
+	</div>
+
+	<!-- 2. Four Executive Dokumen KPI Cards -->
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('surat') ?>" class="dok-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Surat Terbit</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #1e40af; margin: 4px 0 2px 0;">
+							<?= isset($total_surat) ? number_format($total_surat, 0, ',', '.') : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #2563eb; font-weight: 600;"><i class="fas fa-mail-bulk mr-1"></i> Surat Resmi & Dinas</span>
+					</div>
+					<div class="dok-kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
+						<i class="fas fa-envelope-open-text"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('dokumen') ?>" class="dok-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Dokumen Umum</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #047857; margin: 4px 0 2px 0;">
+							<?= isset($total_dokumen_umum) ? number_format($total_dokumen_umum, 0, ',', '.') : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #10b981; font-weight: 600;"><i class="fas fa-file-alt mr-1"></i> Arsip Legalitas Perusahaan</span>
+					</div>
+					<div class="dok-kpi-icon-box" style="background: #ecfdf5; color: #10b981;">
+						<i class="fas fa-folder"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('dokumen') ?>" class="dok-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Dokumen Produk</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #0284c7; margin: 4px 0 2px 0;">
+							<?= isset($total_dokumen_product) ? number_format($total_dokumen_product, 0, ',', '.') : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #0284c7; font-weight: 600;"><i class="fas fa-certificate mr-1"></i> Brosur & Izin Edar AKL</span>
+					</div>
+					<div class="dok-kpi-icon-box" style="background: #f0f9ff; color: #0284c7;">
+						<i class="fas fa-file-invoice"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('surat') ?>" class="dok-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Surat Bulan Ini</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #d97706; margin: 4px 0 2px 0;">
+							<?= isset($surat_bulan_ini) ? $surat_bulan_ini : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #d97706; font-weight: 600;"><i class="fas fa-calendar-check mr-1"></i> Periode <?= date('M Y') ?></span>
+					</div>
+					<div class="dok-kpi-icon-box" style="background: #fffbeb; color: #d97706;">
+						<i class="fas fa-paper-plane"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<!-- 3. Charts: Trend Penerbitan Surat & Distribusi Dokumen -->
+	<div class="col-lg-8 mb-4">
+		<div class="dok-panel-card h-100">
+			<div class="dok-panel-header">
+				<h5 class="dok-panel-title">
+					<i class="fas fa-chart-line text-primary"></i> Trend Penerbitan Surat & Dokumen (<span id="dok-span-tahun"><?= date('Y') ?></span>)
+				</h5>
+				<span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 11px;">
+					Monthly Issuance
+				</span>
+			</div>
+			<div class="card-body p-3">
+				<div style="height: 260px; position: relative;">
+					<canvas id="chartDokTransaksi"></canvas>
+				</div>
 			</div>
 		</div>
 	</div>
-	<div class="col-md-6">
-		<div class="text-center">
-			<h2>&nbsp;</h2>
-		</div>
-		<?php if (isHrd() || isAdmin()) { ?>
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-hadir">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $present[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-success line-height-2 my-0">Karyawan <strong>Hadir &uarr;</strong></h3>
 
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
+	<div class="col-lg-4 mb-4">
+		<div class="dok-panel-card h-100">
+			<div class="dok-panel-header">
+				<h5 class="dok-panel-title">
+					<i class="fas fa-chart-pie text-success"></i> Distribusi Arsip Dokumen
+				</h5>
+			</div>
+			<div class="card-body p-3 d-flex flex-column align-items-center justify-content-center">
+				<div style="height: 200px; width: 100%; position: relative;">
+					<canvas id="chartDokKategori"></canvas>
+				</div>
+				<div class="w-100 mt-2">
+					<ul class="list-unstyled mb-0" style="font-size: 12px;">
+						<?php 
+						$colors = ['#2563eb', '#10b981', '#06b6d4', '#8b5cf6'];
+						if (!empty($distribusi_dokumen)) {
+							$idx = 0;
+							foreach ($distribusi_dokumen as $kategori => $jml) {
+								$col = isset($colors[$idx]) ? $colors[$idx] : '#64748b';
+								echo '<li class="d-flex justify-content-between align-items-center py-1 border-bottom">';
+								echo '<span><i class="fas fa-circle mr-1" style="color:' . $col . '; font-size: 8px;"></i> ' . $kategori . '</span>';
+								echo '<span class="font-weight-bold text-dark">' . $jml . ' berkas</span>';
+								echo '</li>';
+								$idx++;
+							}
+						}
+						?>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 4. Dokumen & Surat Terbaru yang Diterbitkan -->
+	<div class="col-12 mb-4">
+		<div class="dok-panel-card">
+			<div class="dok-panel-header">
+				<h5 class="dok-panel-title">
+					<i class="fas fa-list-alt text-primary"></i> Riwayat Surat & Dokumen Terbaru
+				</h5>
+				<a href="<?= base_url('surat') ?>" class="btn btn-sm btn-outline-primary" style="font-size: 12px;">
+					Buka Data Surat <i class="fas fa-arrow-right ml-1"></i>
 				</a>
 			</div>
-
-
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-izin">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $izin[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Karyawan <strong>Izin &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-
-
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-cuti">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $cuti[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Karyawan <strong>Cuti &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-sakit">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $sakit[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Karyawan <strong>Sakit &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-		<?php } else { ?>
-			<img style="width: 100%;height: 75vh" src="<?= base_url('/assets/img/gedung.jpg') ?>" alt="">
-
-		<?php } ?>
-
-
-		<!-- <br><br><br> -->
-	</div>
-</div>
-
-
-<div id="main-modal-hadir" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Hadir</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
-
-			<div class="modal-body">
-				<table id="myTable" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_hadir as $row) { ?>
+			<div class="card-body p-0">
+				<div class="table-responsive">
+					<table class="table table-hover table-dok mb-0">
+						<thead>
 							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
+								<th>#</th>
+								<th>Nomor / Kode Surat</th>
+								<th>Kategori / Perihal</th>
+								<th>Pengaju / Pemohon</th>
+								<th>Tanggal Dibuat</th>
 							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php if (!empty($dokumen_terbaru)) {
+								$no = 1;
+								foreach ($dokumen_terbaru as $row) { ?>
+									<tr>
+										<td class="font-weight-bold text-muted" style="width: 50px;"><?= $no++ ?></td>
+										<td class="font-weight-bold text-primary"><?= $row->kode ?: '-' ?></td>
+										<td><span class="badge badge-light border text-dark" style="font-size: 11px;"><?= $row->kategori ?: 'Surat Umum' ?></span></td>
+										<td class="font-weight-semibold text-dark"><?= $row->nama_pengaju ?></td>
+										<td class="text-muted" style="font-size: 12px;"><?= date('d M Y, H:i', strtotime($row->data_created)) ?></td>
+									</tr>
+								<?php }
+							} else { ?>
+								<tr>
+									<td colspan="5" class="text-center py-4 text-muted">
+										<i class="fas fa-info-circle mr-1"></i> Belum ada data surat terbaru.
+									</td>
+								</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
 			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-			</div>
+		</div>
+	</div>
 
+	<!-- 5. Log Aktivitas Pengguna -->
+	<div class="col-12 mb-4">
+		<div class="dok-panel-card">
+			<div class="dok-panel-header">
+				<h5 class="dok-panel-title">
+					<i class="fas fa-history text-secondary"></i> Log Aktivitas Pengguna
+				</h5>
+				<div class="d-flex align-items-center">
+					<small class="text-muted mr-2">Filter Bulan:</small>
+					<input type="text"
+						data-plugin-datepicker
+						data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}'
+						class="form-control form-control-sm"
+						id="filter_month"
+						placeholder="Pilih Bulan"
+						style="width: 130px; height: 30px; font-size: 12.5px; border-radius: 6px;">
+				</div>
+			</div>
+			<div class="card-body p-3">
+				<div class="table-responsive">
+					<table class="table table-striped table-sm table-bordered table-hover w-100" id="kt_table_1">
+						<thead class="bg-light">
+							<tr>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Pengguna</th>
+								<th>Aksi</th>
+								<th>Keterangan</th>
+								<th style="width: 170px;">Tanggal & Waktu</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
 
-<div id="main-modal-sakit" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Sakit</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
-
-			<div class="modal-body">
-				<table id="myTable1" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_sakit as $row) { ?>
-							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-			</div>
-
-		</div>
-	</div>
-</div>
-
-<div id="main-modal-cuti" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Cuti</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
-
-			<div class="modal-body">
-				<table id="myTable2" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_cuti as $row) { ?>
-							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-			</div>
-
-		</div>
-	</div>
-</div>
-
-<div id="main-modal-izin" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Izin</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
-
-			<div class="modal-body">
-				<table id="myTable3" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_izin as $row) { ?>
-							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-			</div>
-
-		</div>
-	</div>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
-		$('#filter_month').change(function() {
-			table.ajax.reload()
-		})
-		$('#myTable').DataTable();
-		$('#myTable1').DataTable();
-		$('#myTable2').DataTable();
-		$('#myTable3').DataTable();
+		const baseUrl = "<?= base_url(); ?>";
+		const bulanNames = [
+			"Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+			"Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+		];
 
-		table = $('#kt_table_1').DataTable({
-			responsive: false,
+		let chartDokInstance = null;
+		let currentYear = $('#filter_year').val() || new Date().getFullYear();
+
+		function loadDokumenChart(year) {
+			$('#dok-span-tahun').text(year);
+			$.ajax({
+				url: baseUrl + 'dashboard_dokumen/chart_data_dokumen',
+				method: 'GET',
+				data: { tahun: year },
+				dataType: 'json',
+				success: function(data) {
+					let labels = [];
+					let dataSurat = [];
+					let dataDokumen = [];
+
+					data.forEach(function(item) {
+						labels.push(bulanNames[item.month - 1]);
+						dataSurat.push(item.surat);
+						dataDokumen.push(item.dokumen);
+					});
+
+					const chartData = {
+						labels: labels,
+						datasets: [
+							{
+								label: 'Penerbitan Surat Resmi',
+								data: dataSurat,
+								backgroundColor: 'rgba(37, 99, 235, 0.85)',
+								borderColor: '#2563eb',
+								borderWidth: 1.5,
+								borderRadius: 6,
+								maxBarThickness: 18
+							},
+							{
+								label: 'Dokumen Umum / Legalitas',
+								data: dataDokumen,
+								backgroundColor: 'rgba(16, 185, 129, 0.85)',
+								borderColor: '#10b981',
+								borderWidth: 1.5,
+								borderRadius: 6,
+								maxBarThickness: 18
+							}
+						]
+					};
+
+					const canvas = document.getElementById('chartDokTransaksi');
+					if (!canvas) return;
+
+					if (chartDokInstance) {
+						chartDokInstance.destroy();
+					}
+
+					const ctx = canvas.getContext('2d');
+					chartDokInstance = new Chart(ctx, {
+						type: 'bar',
+						data: chartData,
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							scales: {
+								y: {
+									beginAtZero: true,
+									grid: { color: '#f1f5f9' },
+									ticks: {
+										precision: 0,
+										font: { family: 'Plus Jakarta Sans', size: 11 }
+									}
+								},
+								x: {
+									grid: { display: false },
+									ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+								}
+							},
+							plugins: {
+								legend: {
+									position: 'top',
+									labels: {
+										boxWidth: 12,
+										font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' }
+									}
+								},
+								tooltip: {
+									backgroundColor: '#1e293b',
+									titleFont: { size: 12, weight: 'bold' },
+									bodyFont: { size: 11.5 },
+									padding: 10,
+									cornerRadius: 8
+								}
+							}
+						}
+					});
+				}
+			});
+		}
+
+		// Initial load chart
+		loadDokumenChart(currentYear);
+
+		$('#filter_year').change(function() {
+			currentYear = $(this).val() || new Date().getFullYear();
+			loadDokumenChart(currentYear);
+		});
+
+		// Donut Chart Kategori Dokumen
+		const kategoriCanvas = document.getElementById('chartDokKategori');
+		if (kategoriCanvas) {
+			const katLabels = <?= json_encode(!empty($distribusi_dokumen) ? array_keys($distribusi_dokumen) : ['Surat']) ?>;
+			const katData = <?= json_encode(!empty($distribusi_dokumen) ? array_values($distribusi_dokumen) : [1]) ?>;
+
+			const ctxKat = kategoriCanvas.getContext('2d');
+			new Chart(ctxKat, {
+				type: 'doughnut',
+				data: {
+					labels: katLabels,
+					datasets: [{
+						data: katData,
+						backgroundColor: ['#2563eb', '#10b981', '#06b6d4', '#8b5cf6'],
+						borderWidth: 2,
+						borderColor: '#ffffff'
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					cutout: '68%',
+					plugins: {
+						legend: { display: false }
+					}
+				}
+			});
+		}
+
+		// Log Aktivitas DataTables
+		var logTable = $('#kt_table_1').DataTable({
+			responsive: true,
 			searchDelay: 500,
 			processing: true,
 			serverSide: true,
-			scrollY: '50vh',
-			scrollX: true,
-			scrollCollapse: true,
-			order: [
-				[0, 'desc']
-			],
+			order: [[4, 'desc']],
 			ajax: {
-				url: 'dashboard/pagination_log',
+				url: '<?= base_url("dashboard/pagination_log") ?>',
 				type: 'POST',
 				data: function(e) {
-					e.filter_month = $('#filter_month').val()
-					e.csrf_token = token
+					e.filter_month = $('#filter_month').val();
+					e.csrf_token = typeof token !== 'undefined' ? token : '';
 				}
 			},
-			columnDefs: [{
-				targets: [0],
-				className: 'text-center'
-			}]
-		})
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Cari riwayat aksi...",
+				lengthMenu: "_MENU_ data/hal",
+				emptyTable: "Tidak ada riwayat aktivitas",
+				zeroRecords: "Tidak ada data yang cocok",
+				info: "Menampilkan _START_-_END_ dari _TOTAL_",
+				infoEmpty: "0 data",
+				paginate: {
+					next: "Selanjutnya",
+					previous: "Sebelumnya"
+				}
+			},
+			columnDefs: [
+				{ targets: [0], className: 'text-center font-weight-bold text-muted' },
+				{ targets: [1], className: 'font-weight-semibold text-dark' },
+				{ targets: [4], className: 'text-muted text-nowrap' }
+			]
+		});
 
-		$('#btn-show-izin').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-izin').modal()
-		})
-
-		$('#btn-show-hadir').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-hadir').modal()
-		})
-
-		
-		$('#btn-show-sakit').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-sakit').modal()
-		})
-
-		
-		$('#btn-show-cuti').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-cuti').modal()
-		})
-	})
+		$('#filter_month').change(function() {
+			logTable.ajax.reload();
+		});
+	});
 </script>
