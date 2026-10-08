@@ -38,27 +38,6 @@ if (!function_exists('safe_divide')) {
 </style>
 
 <div class="row">
-  <?php if (sessPenggunaId() == '58' || sessPenggunaId() == '1' || isGa() || isAdmin()) { ?>
-		<div class="col-md-12 mb-4">
-			<div class="card card-modern border border-primary">
-				<div class="card-header bg-dark text-white d-flex align-items-center justify-content-between py-2 px-3" style="background: #1e293b; color: #fff; padding: 10px 15px; border-radius: 6px 6px 0 0;">
-					<h4 class="card-title text-white my-0" style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0;">
-						<i class="fa fa-clipboard-check text-info"></i> Modul Audit Internal PBOK & Pembelian Aset (PPA)
-					</h4>
-					<a href="<?= base_url('audit/index.html') ?>" target="_blank" class="btn btn-sm btn-info text-white" style="font-size: 12px; font-weight: 600;">
-						<i class="fa fa-external-link"></i> Buka Layar Penuh
-					</a>
-				</div>
-				<div class="card-body p-0" style="padding: 0;">
-					<iframe 
-						src="<?= base_url('audit/index.html?user_id=58&role=GeneralAffair') ?>" 
-						style="width: 100%; height: 800px; border: none; border-radius: 0 0 6px 6px;"
-						title="Modul Audit PBOK PPA Visi Yosindo Medikal">
-					</iframe>
-				</div>
-			</div>
-		</div>
-  <?php } ?>
 
   <?php if (sessPenggunaId()=='1' || sessPenggunaId()=='54' || sessPenggunaId()=='69' || sessPenggunaId()=='744' || sessPenggunaId()=='58') { ?>
 
