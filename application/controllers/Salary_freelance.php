@@ -291,9 +291,9 @@ class Salary_freelance extends CI_Controller
 
         //  orientasi ketas 'L' untuk Landscape 'P' untuk Portait
         $mpdf->AddPage('L');
-        // Data bulan, jika tidak ada dipilih mengambil hari pertama di bulan sebelum nya
-        $month = date("Y-m");
-        $idPe=77;
+        // Data bulan, jika tidak ada dipilih mengambil bulan sekarang
+        $month = !empty($param2) ? $param2 : date("Y-m");
+        $idPe = 77;
         // Data tunjangan
         $data = [
             //'dt' => $this->md_pengguna->getByWherenotIn(['p.is_active' => 1, 'p.status' => 1, 'p.level !=' => 'Administrator'], [58, 47,84,714,77,79,110,87,72,70,81,69,83,107,86,74,57,56]),

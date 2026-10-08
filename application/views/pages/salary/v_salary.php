@@ -465,10 +465,11 @@
         })
 
         $(document).on('click', '.btn-print-salary', function () {
-            var print = $(this).attr('print')
-            var link = 'salary/print/'
-            window.open('<?= base_url() ?>' + link)
-        })
+            var print = $(this).attr('print');
+            var month = $('#filter_month').val() || '<?= date("Y-m") ?>';
+            var link = 'salary/print/' + month;
+            window.open('<?= base_url() ?>' + link);
+        });
         $('#btn-tutupbuku').click(function() {
             var print = $(this).attr('print')
             console.log(print);

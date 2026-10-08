@@ -15,26 +15,22 @@
     <div class="col">
         <div class="card-body">
             <div class="table-responsive">
-                <div class="row">
-                    <div class="ml-3">
+                <div class="row mb-3 ml-1">
+                    <div>
                         <button type="button" print="gapok" class="btn btn-success btn-print-salary"><i
                                 class="icons fas fa-print"></i> Print Gapok</button>
                     </div>
-                    &nbsp <?php /* ?>
-                    <div>
-                        <button type="button" print="tunjangan" class="btn btn-warning btn-print"><i
-                                class="icons fas fa-print"></i> Print T. Jabatan</button>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold">Filter Bulan & Tahun:</label>
+                            <input type="text" id="filter_month" class="form-control" 
+                                   data-plugin-datepicker 
+                                   data-plugin-options='{"format": "yyyy-mm", "minViewMode": "months", "orientation": "bottom"}' 
+                                   placeholder="Pilih Bulan" value="<?= date('Y-m') ?>">
+                        </div>
                     </div>
-                    &nbsp
-                    <div>
-                        <button type="button" id="btn-tutupbuku" class="btn btn-danger btn-save"><i
-                                class="icons fas fa-print"></i> Tutup Buku</button>
-                    </div>
-                    &nbsp
-                    <div>
-                        <button type="button" id="btn-history" class="btn btn-outline-secondary btn-history"><i
-                                class="icons fas fa-print"></i> History Salary Freelance</button>
-                    </div> */ ?>
                 </div>
                 <br>
                 <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
@@ -272,10 +268,11 @@
         })
 
         $(document).on('click', '.btn-print-salary', function () {
-            var print = $(this).attr('print')
-            var link = 'salary_freelance/print/'
-            window.open('<?= base_url() ?>' + link)
-        })
+            var print = $(this).attr('print');
+            var month = $('#filter_month').val() || '<?= date("Y-m") ?>';
+            var link = 'salary_freelance/print/' + month;
+            window.open('<?= base_url() ?>' + link);
+        });
         $('#btn-tutupbuku').click(function() {
             var print = $(this).attr('print')
             console.log(print);

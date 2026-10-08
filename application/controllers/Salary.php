@@ -561,7 +561,7 @@ class Salary extends CI_Controller
     {
 
         $this->load->library('pdfgenerator');
-        $month = date("Y-m");
+        $month = !empty($param2) ? $param2 : date("Y-m");
         $date = DateTime::createFromFormat("Y-m", $month); // Mengubah string ke objek DateTime
         $date->modify("-1 month"); // Mengurangi 1 bulan
         $month1 = $date->format("Y-m");
