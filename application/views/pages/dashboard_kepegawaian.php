@@ -723,146 +723,244 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 </div>
 
 
-<div id="main-modal-hadir" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Hadir</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
+<style>
+    /* Modal Dialog & DataTables Fixes */
+    .modal-kepegawaian .modal-dialog {
+        max-width: 620px !important;
+        margin: 1.75rem auto;
+    }
+    .modal-kepegawaian .modal-content {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    }
+    .modal-kepegawaian .modal-header {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        padding: 14px 20px !important;
+        border-bottom: 1px solid #334155 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    .modal-kepegawaian .modal-header h5 {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    .modal-kepegawaian .modal-header .close {
+        color: #ffffff !important;
+        opacity: 0.85 !important;
+        font-size: 24px !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        text-shadow: none !important;
+        cursor: pointer !important;
+    }
+    .modal-kepegawaian .modal-header .close:hover {
+        opacity: 1 !important;
+        color: #ef4444 !important;
+    }
+    .modal-kepegawaian .modal-body {
+        padding: 20px !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_length {
+        float: left !important;
+        margin-bottom: 10px !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_filter {
+        float: right !important;
+        text-align: right !important;
+        margin-bottom: 10px !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_filter input {
+        display: inline-block !important;
+        width: auto !important;
+        min-width: 130px !important;
+        max-width: 160px !important;
+        margin-left: 6px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+        font-size: 12.5px !important;
+    }
+    .modal-kepegawaian .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 4px 6px !important;
+        font-size: 12.5px !important;
+    }
+    .modal-kepegawaian .modal-footer {
+        background: #f8fafc !important;
+        border-top: 1px solid #e2e8f0 !important;
+        padding: 10px 20px !important;
+    }
+</style>
 
+<!-- Modal Karyawan Hadir -->
+<div id="main-modal-hadir" class="modal fade modal-kepegawaian" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5><i class="fas fa-user-check text-success"></i> Data Karyawan Hadir Hari Ini</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
 			<div class="modal-body">
-				<table id="myTable" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_hadir as $row) { ?>
+				<div class="table-responsive">
+					<table id="myTable" class="table table-striped table-sm table-bordered table-hover w-100">
+						<thead class="bg-light">
 							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Nama Karyawan</th>
 							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php
+							$x = 1;
+							foreach ($daftar_hadir as $row) { ?>
+								<tr>
+									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
+								</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
 			</div>
-
 		</div>
 	</div>
 </div>
 
-<div id="main-modal-sakit" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Sakit</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Karyawan Sakit -->
+<div id="main-modal-sakit" class="modal fade modal-kepegawaian" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5><i class="fas fa-stethoscope text-info"></i> Data Karyawan Sakit Hari Ini</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
 			</div>
-
 			<div class="modal-body">
-				<table id="myTable1" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_sakit as $row) { ?>
+				<div class="table-responsive">
+					<table id="myTable1" class="table table-striped table-sm table-bordered table-hover w-100">
+						<thead class="bg-light">
 							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Nama Karyawan</th>
 							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php
+							$x = 1;
+							foreach ($daftar_sakit as $row) { ?>
+								<tr>
+									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
+								</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
 			</div>
-
 		</div>
 	</div>
 </div>
 
-<div id="main-modal-cuti" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Cuti</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Karyawan Cuti -->
+<div id="main-modal-cuti" class="modal fade modal-kepegawaian" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5><i class="fas fa-calendar-times text-danger"></i> Data Karyawan Cuti Hari Ini</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
 			</div>
-
 			<div class="modal-body">
-				<table id="myTable2" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_cuti as $row) { ?>
+				<div class="table-responsive">
+					<table id="myTable2" class="table table-striped table-sm table-bordered table-hover w-100">
+						<thead class="bg-light">
 							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Nama Karyawan</th>
 							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php
+							$x = 1;
+							foreach ($daftar_cuti as $row) { ?>
+								<tr>
+									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
+								</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
 			</div>
-
 		</div>
 	</div>
 </div>
 
-<div id="main-modal-izin" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Izin</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Karyawan Izin -->
+<div id="main-modal-izin" class="modal fade modal-kepegawaian" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5><i class="fas fa-user-clock text-warning"></i> Data Karyawan Izin Hari Ini</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
 			</div>
-
 			<div class="modal-body">
-				<table id="myTable3" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_izin as $row) { ?>
+				<div class="table-responsive">
+					<table id="myTable3" class="table table-striped table-sm table-bordered table-hover w-100">
+						<thead class="bg-light">
 							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Nama Karyawan</th>
 							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php
+							$x = 1;
+							foreach ($daftar_izin as $row) { ?>
+								<tr>
+									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+									<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
+								</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
 			</div>
-
 		</div>
 	</div>
 </div>
@@ -871,10 +969,24 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 		$('#filter_month').change(function() {
 			table.ajax.reload()
 		})
-		$('#myTable').DataTable();
-		$('#myTable1').DataTable();
-		$('#myTable2').DataTable();
-		$('#myTable3').DataTable();
+		$('#myTable, #myTable1, #myTable2, #myTable3').DataTable({
+			responsive: true,
+			autoWidth: false,
+			pageLength: 10,
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Cari nama...",
+				lengthMenu: "_MENU_ data/hal",
+				emptyTable: "Tidak ada data karyawan hari ini",
+				zeroRecords: "Tidak ada data yang cocok",
+				info: "Menampilkan _START_-_END_ dari _TOTAL_",
+				infoEmpty: "0 data",
+				paginate: {
+					next: "Selanjutnya",
+					previous: "Sebelumnya"
+				}
+			}
+		});
 
 		table = $('#kt_table_1').DataTable({
 			responsive: false,
