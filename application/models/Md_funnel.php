@@ -121,6 +121,11 @@ class Md_funnel extends CI_Model
             $this->db->select('count(*) as total')->where('deleted',0);
             return $this->db->get('funnel')->result();
     }
+    function countFpp()
+    {
+            $this->db->select('count(*) as total')->where('status !=', 3);
+            return $this->db->get('fpp')->result();
+    }
     function add($data)
     {
         $this->db->insert('funnel', $data);

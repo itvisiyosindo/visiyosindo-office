@@ -111,7 +111,8 @@ class Dashboard_marketing extends CI_Controller
         $page_data['countcalonpelanggan'] 	= $this->md_funnel->countCalonPelanggan();
         $page_data['countpelanggan'] 		= $this->md_funnel->countPelanggan();
         $page_data['countfunnel'] 			= $this->md_funnel->countFunnel();
-        
+        $page_data['countfpp'] 				= $this->md_funnel->countFpp();
+        $page_data['tahun_sekarang'] 		= date('Y');
 
         $this->load->view('index', $page_data);
     }

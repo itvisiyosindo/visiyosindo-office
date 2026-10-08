@@ -9,165 +9,357 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/id.js"></script>
 
 <style>
-	.marketing-panel-card {
+	/* Marketing Executive Dashboard Custom Styles */
+	.mkt-kpi-card {
+		background: #ffffff;
+		border-radius: 12px;
 		border: 1px solid #e2e8f0;
-		border-radius: 14px;
-		box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+		box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+		transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+		position: relative;
+		overflow: hidden;
+		text-decoration: none !important;
+		display: block;
+		height: 100%;
 	}
 
-	.marketing-panel-card .card-body {
-		padding: 18px;
+	.mkt-kpi-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+		border-color: #cbd5e1;
 	}
 
-	.marketing-chart-title {
+	.mkt-kpi-icon-box {
+		width: 48px;
+		height: 48px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		flex-shrink: 0;
+	}
+
+	.mkt-panel-card {
+		background: #ffffff;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+		margin-bottom: 24px;
+		overflow: hidden;
+	}
+
+	.mkt-panel-header {
+		background: #f8fafc;
+		border-bottom: 1px solid #e2e8f0;
+		padding: 14px 20px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.mkt-panel-title {
+		font-size: 15px;
 		font-weight: 700;
-		font-size: 1.05rem;
-		margin-bottom: 14px;
-		color: #1f2a37;
+		color: #1e293b;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
 
-	.jadwal-calendar-card {
+	.mkt-chart-card {
+		background: #ffffff;
 		border: 1px solid #e2e8f0;
-		border-radius: 14px;
-		box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+		border-radius: 12px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+		height: 100%;
+		display: flex;
+		flex-direction: column;
 	}
 
-	.jadwal-calendar-card .card-body {
-		padding: 18px;
+	.mkt-chart-card .card-header {
+		background: #f8fafc;
+		border-bottom: 1px solid #e2e8f0;
+		padding: 12px 18px;
+		font-weight: 700;
+		font-size: 14px;
+		color: #1e293b;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 	}
 
-	.jadwal-calendar-card .calendar-subtitle {
-		font-size: 0.92rem;
-		color: #6b7280;
+	.mkt-chart-card .card-body {
+		padding: 16px;
+		flex: 1;
+		position: relative;
 	}
 
 	#dashboard-marketing-visilab-calendar {
-		min-height: 460px;
+		min-height: 480px;
 	}
 
 	#dashboard-marketing-visilab-calendar .fc-event {
 		cursor: pointer;
+		border-radius: 4px;
+	}
+
+	#dashboard-marketing-visilab-calendar .fc-toolbar-title {
+		font-size: 1.15rem;
+		font-weight: 700;
+		color: #1e293b;
+	}
+
+	.nav-pills-custom .nav-link {
+		border-radius: 8px;
+		font-size: 13px;
+		font-weight: 600;
+		color: #64748b;
+		padding: 6px 14px;
+		border: 1px solid transparent;
+		transition: all 0.2s ease;
+	}
+
+	.nav-pills-custom .nav-link.active {
+		background-color: #2563eb;
+		color: #ffffff;
+		box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+	}
+
+	.nav-pills-custom .nav-link:hover:not(.active) {
+		background-color: #f1f5f9;
+		color: #1e293b;
 	}
 </style>
 
-<div class="row mb-3">
-	<div class="col-lg-4 col-md-6 col-sm-12">
-		<div class="card marketing-panel-card">
-			<div class="card-body">
-				<small><i class="fas fa-calendar"></i> Pilih Tahun:</small>
-				<div class="input-group mt-2">
-					<div class="input-group-prepend">
-						<span class="input-group-text"><i class="fa fa-calendar"></i></span>
-					</div>
-					<input type="text"
-						data-plugin-datepicker
-						data-plugin-options='{"orientation": "bottom", "format": "yyyy", "minViewMode": "years"}'
-						class="form-control"
-						id="filter_year"
-						placeholder="Pilih Tahun"
-						required>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
 <div class="row">
-	<div class="col-12 mb-4">
-		<div class="card marketing-panel-card">
-			<div class="card-body">
-				<h3 id="judul" class="marketing-chart-title text-center">Diagram Calon Pelanggan</h3>
-				<canvas id="bar" height="100"></canvas>
-			</div>
-		</div>
-	</div>
-
-	<div class="col-12 mb-4">
-		<div class="card marketing-panel-card">
-			<div class="card-body">
-				<h3 id="id_funnel" class="marketing-chart-title text-center">Data Funnel</h3>
-				<canvas id="bar2" height="100"></canvas>
-			</div>
-		</div>
-	</div>
-
-	<div class="col-12 mb-4">
-		<div class="card marketing-panel-card">
-			<div class="card-body">
-				<h3 id="id_fpp" class="marketing-chart-title text-center">Data Permintaan Penawaran</h3>
-				<canvas id="bar3" height="100"></canvas>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="row mb-4">
-	<div class="col-12">
-		<div class="card jadwal-calendar-card">
-			<div class="card-body">
-				<div class="d-flex justify-content-between align-items-center mb-3">
+	<!-- 1. Executive Top Banner Overview -->
+	<div class="col-12 mb-3">
+		<div class="card p-3 p-md-4 border-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; color: #ffffff; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);">
+			<div class="d-flex flex-wrap justify-content-between align-items-center">
+				<div class="d-flex align-items-center">
+					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 14px; flex-shrink: 0;">
+						<i class="fas fa-chart-line"></i>
+					</div>
 					<div>
-						<h4 class="mb-1">Kalender Jadwal Visilab</h4>
-						<p class="calendar-subtitle mb-0">Pantau jadwal Ukes & Upar yang terkait dengan aktivitas marketing.</p>
+						<h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Marketing</h3>
+						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Monitoring perolehan prospek leads, funnel pipeline, permohonan penawaran (FPP), dan jadwal operasional.</p>
 					</div>
 				</div>
+				<div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+					<div class="d-flex align-items-center bg-white bg-opacity-10 rounded px-2 py-1" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
+						<small class="text-white-50 mr-2"><i class="fas fa-calendar-alt"></i> Tahun:</small>
+						<input type="text"
+							data-plugin-datepicker
+							data-plugin-options='{"orientation": "bottom", "format": "yyyy", "minViewMode": "years"}'
+							class="form-control form-control-sm text-center font-weight-bold"
+							id="filter_year"
+							value="<?= isset($tahun_sekarang) ? $tahun_sekarang : date('Y') ?>"
+							style="width: 85px; height: 28px; background: #ffffff; color: #0f172a; border-radius: 6px; font-size: 12.5px;"
+							required>
+					</div>
+					<a href="<?= base_url('funnel') ?>" class="btn btn-sm btn-primary ml-2" style="font-size: 12px;">
+						<i class="fas fa-filter mr-1"></i> Data Funnel
+					</a>
+					<a href="<?= base_url('calonpelanggan') ?>" class="btn btn-sm btn-info ml-1" style="font-size: 12px;">
+						<i class="fas fa-user-plus mr-1"></i> Calon Pelanggan
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 2. Four Executive Marketing KPI Cards -->
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('calonpelanggan') ?>" class="mkt-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Calon Pelanggan</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #1e40af; margin: 4px 0 2px 0;">
+							<?= isset($countcalonpelanggan[0]->total) ? $countcalonpelanggan[0]->total : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #2563eb; font-weight: 600;"><i class="fas fa-user-tie mr-1"></i> Prospek Masuk</span>
+					</div>
+					<div class="mkt-kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
+						<i class="fas fa-users"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('funnel') ?>" class="mkt-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Funnel Sales</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #b45309; margin: 4px 0 2px 0;">
+							<?= isset($countfunnel[0]->total) ? $countfunnel[0]->total : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #d97706; font-weight: 600;"><i class="fas fa-filter mr-1"></i> Pipeline Aktif</span>
+					</div>
+					<div class="mkt-kpi-icon-box" style="background: #fffbeb; color: #d97706;">
+						<i class="fas fa-funnel-dollar"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('fpp') ?>" class="mkt-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Permintaan Penawaran</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #047857; margin: 4px 0 2px 0;">
+							<?= isset($countfpp[0]->total) ? $countfpp[0]->total : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #10b981; font-weight: 600;"><i class="fas fa-check-circle mr-1"></i> FPP Disetujui</span>
+					</div>
+					<div class="mkt-kpi-icon-box" style="background: #ecfdf5; color: #10b981;">
+						<i class="fas fa-file-invoice-dollar"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="<?= base_url('pelangganan') ?>" class="mkt-kpi-card">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Pelanggan Terdaftar</span>
+						<h3 style="font-size: 26px; font-weight: 800; color: #6d28d9; margin: 4px 0 2px 0;">
+							<?= isset($countpelanggan[0]->total) ? $countpelanggan[0]->total : 0 ?>
+						</h3>
+						<span style="font-size: 11.5px; color: #7c3aed; font-weight: 600;"><i class="fas fa-handshake mr-1"></i> Institusi Resmi</span>
+					</div>
+					<div class="mkt-kpi-icon-box" style="background: #f5f3ff; color: #7c3aed;">
+						<i class="fas fa-building"></i>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<!-- 3. Multi-Tabbed Marketing Analytics Charts -->
+	<div class="col-12 mb-4">
+		<div class="mkt-panel-card">
+			<div class="mkt-panel-header">
+				<div class="d-flex align-items-center gap-3">
+					<h5 class="mkt-panel-title">
+						<i class="fas fa-chart-bar text-primary"></i> Grafik Kinerja Bulanan Marketing (<span id="span-tahun"><?= date('Y') ?></span>)
+					</h5>
+				</div>
+				<ul class="nav nav-pills nav-pills-custom" id="chartTabs" role="tablist">
+					<li class="nav-item mr-1">
+						<a class="nav-link active" id="tab-calon-link" data-toggle="pill" href="#tab-calon" role="tab">
+							<i class="fas fa-user-plus mr-1"></i> Calon Pelanggan
+						</a>
+					</li>
+					<li class="nav-item mr-1">
+						<a class="nav-link" id="tab-funnel-link" data-toggle="pill" href="#tab-funnel" role="tab">
+							<i class="fas fa-filter mr-1"></i> Funnel Pipeline
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" id="tab-fpp-link" data-toggle="pill" href="#tab-fpp" role="tab">
+							<i class="fas fa-file-invoice mr-1"></i> Permintaan Penawaran (FPP)
+						</a>
+					</li>
+				</ul>
+			</div>
+			<div class="card-body p-3">
+				<div class="tab-content" id="chartTabsContent">
+					<!-- Tab 1: Calon Pelanggan -->
+					<div class="tab-pane fade show active" id="tab-calon" role="tabpanel">
+						<div class="d-flex justify-content-between align-items-center mb-2">
+							<span class="text-muted" style="font-size: 13px;">Jumlah calon prospek yang didaftarkan oleh masing-masing tim marketing per bulan.</span>
+							<span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 11px;">Leads Acquired</span>
+						</div>
+						<div style="height: 280px; position: relative;">
+							<canvas id="bar"></canvas>
+						</div>
+					</div>
+
+					<!-- Tab 2: Funnel Pipeline -->
+					<div class="tab-pane fade" id="tab-funnel" role="tabpanel">
+						<div class="d-flex justify-content-between align-items-center mb-2">
+							<span class="text-muted" style="font-size: 13px;">Aktivitas funnel peluang sales yang dibuat dan ditindaklanjuti per bulan.</span>
+							<span class="badge" style="background: #fffbeb; color: #d97706; border: 1px solid #fde68a; font-size: 11px;">Pipeline Activity</span>
+						</div>
+						<div style="height: 280px; position: relative;">
+							<canvas id="bar2"></canvas>
+						</div>
+					</div>
+
+					<!-- Tab 3: FPP -->
+					<div class="tab-pane fade" id="tab-fpp" role="tabpanel">
+						<div class="d-flex justify-content-between align-items-center mb-2">
+							<span class="text-muted" style="font-size: 13px;">Permintaan penawaran harga yang telah disetujui untuk customer per bulan.</span>
+							<span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px;">Approved Proposals</span>
+						</div>
+						<div style="height: 280px; position: relative;">
+							<canvas id="bar3"></canvas>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 4. Kalender Jadwal Visilab Operasional -->
+	<div class="col-12 mb-4">
+		<div class="mkt-panel-card">
+			<div class="mkt-panel-header">
+				<h5 class="mkt-panel-title">
+					<i class="fas fa-calendar-check text-info"></i> Kalender Jadwal Visilab (Ukes & Upar)
+				</h5>
+				<span class="badge" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-size: 11.5px; padding: 5px 10px;">
+					<i class="fas fa-info-circle mr-1"></i> Klik kegiatan untuk melihat detail lokasi & teknisi
+				</span>
+			</div>
+			<div class="card-body p-3">
 				<div id="dashboard-marketing-visilab-calendar"></div>
 			</div>
 		</div>
 	</div>
-</div>
 
-<div class="modal fade" id="dashboardMarketingVisilabDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			<div class="modal-header bg-primary text-white">
-				<h5 class="modal-title"><i class="fas fa-calendar-check"></i> Detail Jadwal Visilab</h5>
-				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body">
-				<div><strong>Jenis Jadwal:</strong> <span id="marketingVisiJenis">-</span></div>
-				<div><strong>Teknisi:</strong> <span id="marketingVisiTeknisi">-</span></div>
-				<div><strong>Tanggal:</strong> <span id="marketingVisiTanggal">-</span></div>
-				<div><strong>Jam:</strong> <span id="marketingVisiJam">-</span></div>
-				<div><strong>Status:</strong> <span id="marketingVisiStatus">-</span></div>
-				<div><strong>Pelanggan:</strong> <span id="marketingVisiPelanggan">-</span></div>
-				<div><strong>Wilayah:</strong> <span id="marketingVisiWilayah">-</span></div>
-				<div><strong>Provinsi:</strong> <span id="marketingVisiProvinsi">-</span></div>
-				<div><strong>Kab/Kota:</strong> <span id="marketingVisiKabKota">-</span></div>
-				<div><strong>Alamat:</strong> <span id="marketingVisiAlamat">-</span></div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-md-7 mb-4">
-		<div class="card marketing-panel-card h-100">
-			<div class="card-body">
-				<div class="d-flex flex-wrap justify-content-between align-items-end mb-3">
-					<h4 class="mb-0">Log Aktivitas Anda</h4>
-					<div class="form-group mb-0" style="min-width: 220px;">
-						<small>Filter By Month:</small>
-						<div class="input-group mt-1">
-							<div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-							<input type="text" data-plugin-datepicker data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}' class="form-control" id="filter_month" placeholder="Pilih Bulan" required data-plugin-datepicker>
-						</div>
-					</div>
+	<!-- 5. Log Aktivitas Marketing -->
+	<div class="col-12 mb-4">
+		<div class="mkt-panel-card">
+			<div class="mkt-panel-header">
+				<h5 class="mkt-panel-title">
+					<i class="fas fa-history text-secondary"></i> Log Aktivitas Pengguna
+				</h5>
+				<div class="d-flex align-items-center">
+					<small class="text-muted mr-2">Filter Bulan:</small>
+					<input type="text"
+						data-plugin-datepicker
+						data-plugin-options='{"orientation": "bottom", "format": "yyyy-mm", "minViewMode": "months"}'
+						class="form-control form-control-sm"
+						id="filter_month"
+						placeholder="Pilih Bulan"
+						style="width: 130px; height: 30px; font-size: 12.5px; border-radius: 6px;">
 				</div>
+			</div>
+			<div class="card-body p-3">
 				<div class="table-responsive">
-					<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
-						<thead>
+					<table class="table table-striped table-sm table-bordered table-hover w-100" id="kt_table_1">
+						<thead class="bg-light">
 							<tr>
-								<th> # </th>
-								<th> Pengguna</th>
-								<th> Aksi </th>
-								<th> Keterangan </th>
-								<th> Tanggal </th>
+								<th style="width: 50px; text-align: center;">#</th>
+								<th>Pengguna</th>
+								<th>Aksi</th>
+								<th>Keterangan</th>
+								<th style="width: 170px;">Tanggal & Waktu</th>
 							</tr>
 						</thead>
 					</table>
@@ -175,497 +367,303 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-md-5 mb-4">
-		<div class="text-center">
-			<h2>&nbsp;</h2>
-		</div>
-		<?php if (isHrd() || isAdmin()) { ?>
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-hadir">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $countcalonpelanggan[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-success line-height-2 my-0">Data <strong>Calon Pelanggan &uarr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-
-
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-izin">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $countpelanggan[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Data <strong>Pelanggan &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-
-			<div class="card card-modern">
-				<a href="javascript:;" id="btn-show-izin">
-					<div class="card-body py-4">
-						<div class="row align-items-center">
-							<div class="col-6 col-md-4">
-								<h3 class="text-4-1 my-0"></h3>
-								<strong class="text-6 text-color-dark"><?= $countfunnel[0]->total ?></strong>
-							</div>
-							<div class="col-6 col-md-4 border border-top-0 border-end-0 border-bottom-0 border-color-light-grey py-3">
-								<h3 class="text-4-1 text-color-danger line-height-2 my-0">Data <strong>Funnel &darr;</strong></h3>
-
-							</div>
-							<div class="col-md-4 text-left text-md-right pe-md-4 mt-4 mt-md-0">
-								<i class="bx bx-user icon icon-inline icon-xl bg-primary rounded-circle text-color-light"></i>
-							</div>
-						</div>
-					</div>
-				</a>
-			</div>
-			
-		<?php } else { ?>
-			<img style="width: 100%;height: 75vh" src="<?= base_url('/assets/img/gedung.jpg') ?>" alt="">
-
-		<?php } ?>
-
-
-		<!-- <br><br><br> -->
-	</div>
 </div>
 
-
-<div id="main-modal-hadir" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Calon Pelanggan</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Detail Jadwal Visilab -->
+<div class="modal fade" id="dashboardMarketingVisilabDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content" style="border-radius: 12px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+			<div class="modal-header" style="background: #1e293b; color: #ffffff; padding: 14px 20px;">
+				<h5 class="modal-title" style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 8px;">
+					<i class="fas fa-calendar-alt text-info"></i> Detail Jadwal Operasional Visilab
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.85;">
+					<span aria-hidden="true">&times;</span>
+				</button>
 			</div>
-
-			<div class="modal-body">
-				<table id="myTable" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_hadir as $row) { ?>
-							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
+			<div class="modal-body p-4" style="font-size: 13px; color: #334155;">
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Jenis Jadwal:</div>
+					<div class="col-sm-8 font-weight-semibold text-dark" id="marketingVisiJenis">-</div>
+				</div>
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Teknisi:</div>
+					<div class="col-sm-8 font-weight-semibold text-dark" id="marketingVisiTeknisi">-</div>
+				</div>
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Tanggal:</div>
+					<div class="col-sm-8 text-dark" id="marketingVisiTanggal">-</div>
+				</div>
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Jam:</div>
+					<div class="col-sm-8 text-dark" id="marketingVisiJam">-</div>
+				</div>
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Status:</div>
+					<div class="col-sm-8" id="marketingVisiStatus">-</div>
+				</div>
+				<hr class="my-2" style="border-color: #f1f5f9;">
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Pelanggan:</div>
+					<div class="col-sm-8 font-weight-bold text-primary" id="marketingVisiPelanggan">-</div>
+				</div>
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Wilayah / Prov:</div>
+					<div class="col-sm-8 text-dark"><span id="marketingVisiWilayah">-</span> / <span id="marketingVisiProvinsi">-</span></div>
+				</div>
+				<div class="row mb-2">
+					<div class="col-sm-4 font-weight-bold text-muted">Kab / Kota:</div>
+					<div class="col-sm-8 text-dark" id="marketingVisiKabKota">-</div>
+				</div>
+				<div class="row mb-0">
+					<div class="col-sm-4 font-weight-bold text-muted">Alamat:</div>
+					<div class="col-sm-8 text-dark" id="marketingVisiAlamat">-</div>
+				</div>
 			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+			<div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 10px 20px;">
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
 			</div>
-
 		</div>
 	</div>
 </div>
 
-<div id="main-modal-sakit" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Pelanggan</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
-
-			<div class="modal-body">
-				<table id="myTable1" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_sakit as $row) { ?>
-							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-			</div>
-
-		</div>
-	</div>
-</div>
-
-
-<div id="main-modal-izin" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
-			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Data Karyawan Izin</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-			</div>
-
-			<div class="modal-body">
-				<table id="myTable3" class="table table-striped table-sm table-bordered table-hover">
-					<thead>
-						<tr>
-							<th style="width:5%">#</th>
-							<th>Nama</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$x = 1;
-						foreach ($daftar_izin as $row) { ?>
-							<tr>
-								<td><?= $x++ ?></td>
-								<td><?= $row->nama ?></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-			</div>
-
-		</div>
-	</div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
 <script>
-
 	document.addEventListener('DOMContentLoaded', function() {
+		const baseUrl = "<?= base_url(); ?>";
+		const bulanNames = [
+			"Januari", "Februari", "Maret", "April", "Mei", "Juni",
+			"Juli", "Agustus", "September", "Oktober", "November", "Desember"
+		];
 
-		const judul = document.getElementById('judul');
-    const idFunnel = document.getElementById('id_funnel');
-    const idFpp = document.getElementById('id_fpp');
+		let chartInstances = {};
+		let currentYear = $('#filter_year').val() || new Date().getFullYear();
 
+		// Modern Color Palette for Team Members
+		const memberStyles = [
+			{ label: 'M Tamrin', bg: 'rgba(37, 99, 235, 0.85)', border: '#2563eb' },
+			{ label: 'Rizqilillah', bg: 'rgba(6, 182, 212, 0.85)', border: '#06b6d4' },
+			{ label: 'Nurdiansyah', bg: 'rgba(16, 185, 129, 0.85)', border: '#10b981' }
+		];
 
-    // Set tahun saat ini sebagai nilai awal
-    const tahunSekarang = new Date().getFullYear();
-    judul.innerText = `Diagram Calon Pelanggan ${tahunSekarang}`;
-    idFunnel.innerText = `Diagram Funnel ${tahunSekarang}`;
-    idFpp.innerText = `Diagram Permintaan Penawaran ${tahunSekarang} yang Disetujui`;
+		function buildBarChart(canvasId, urlEndpoint, year) {
+			$.ajax({
+				url: baseUrl + urlEndpoint,
+				method: 'GET',
+				data: { tahun: year },
+				dataType: 'json',
+				success: function(data) {
+					let labels = [];
+					let dataset1 = [];
+					let dataset2 = [];
+					let dataset3 = [];
 
-		// Inisialisasi tahun default
-    let tahunDipilih = new Date().getFullYear();
+					data.forEach(function(item) {
+						labels.push(bulanNames[item.month - 1]);
+						dataset1.push(item['105'] || 0);
+						dataset2.push(item['742'] || 0);
+						dataset3.push(item['745'] || 0);
+					});
 
-    // Event listener untuk perubahan tahun
-    $('#filter_year').change(function () {
-        tahunDipilih = $(this).val(); // Ambil tahun yang dipilih
-        updateCharts(tahunDipilih); // Update chart berdasarkan tahun
+					const chartData = {
+						labels: labels,
+						datasets: [
+							{
+								label: memberStyles[0].label,
+								data: dataset1,
+								backgroundColor: memberStyles[0].bg,
+								borderColor: memberStyles[0].border,
+								borderWidth: 1.5,
+								borderRadius: 6,
+								maxBarThickness: 18
+							},
+							{
+								label: memberStyles[1].label,
+								data: dataset2,
+								backgroundColor: memberStyles[1].bg,
+								borderColor: memberStyles[1].border,
+								borderWidth: 1.5,
+								borderRadius: 6,
+								maxBarThickness: 18
+							},
+							{
+								label: memberStyles[2].label,
+								data: dataset3,
+								backgroundColor: memberStyles[2].bg,
+								borderColor: memberStyles[2].border,
+								borderWidth: 1.5,
+								borderRadius: 6,
+								maxBarThickness: 18
+							}
+						]
+					};
 
-				    judul.innerText = `Diagram Calon Pelanggan ${tahunDipilih}`;
-            idFunnel.innerText = `Diagram Funnel ${tahunDipilih}`;
-            idFpp.innerText = `Diagram Permintaan Penawaran ${tahunDipilih} yang Disetujui`;
-       
-    });
+					const canvas = document.getElementById(canvasId);
+					if (!canvas) return;
 
-    // Fungsi untuk memperbarui chart
-    function updateCharts(tahun) {
-        myChart('bar', tahun);
-        myChart2(tahun);
-        myChart3(tahun);
-    }
+					if (chartInstances[canvasId]) {
+						chartInstances[canvasId].destroy();
+					}
 
-    // Panggilan awal untuk data default (tahun sekarang)
-    updateCharts(tahunDipilih);
+					const ctx = canvas.getContext('2d');
+					chartInstances[canvasId] = new Chart(ctx, {
+						type: 'bar',
+						data: chartData,
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							scales: {
+								y: {
+									beginAtZero: true,
+									grid: { color: '#f1f5f9' },
+									ticks: {
+										precision: 0,
+										font: { family: 'Plus Jakarta Sans', size: 11 }
+									}
+								},
+								x: {
+									grid: { display: false },
+									ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+								}
+							},
+							plugins: {
+								legend: {
+									position: 'top',
+									labels: {
+										boxWidth: 12,
+										font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' }
+									}
+								},
+								tooltip: {
+									backgroundColor: '#1e293b',
+									titleFont: { size: 12, weight: 'bold' },
+									bodyFont: { size: 11.5 },
+									padding: 10,
+									cornerRadius: 8
+								}
+							}
+						}
+					});
+				},
+				error: function(err) {
+					console.error("Error fetching chart data for " + canvasId + ":", err);
+				}
+			});
+		}
 
+		function loadAllMarketingCharts(year) {
+			$('#span-tahun').text(year);
+			buildBarChart('bar', 'dashboard_marketing/chart_data', year);
+			buildBarChart('bar2', 'dashboard_marketing/chart_data_funnel', year);
+			buildBarChart('bar3', 'dashboard_marketing/chart_data_fpp', year);
+		}
 
+		// Initial load
+		loadAllMarketingCharts(currentYear);
 
+		// Year Change Listener
+		$('#filter_year').change(function() {
+			currentYear = $(this).val() || new Date().getFullYear();
+			loadAllMarketingCharts(currentYear);
+		});
 
-		$('#filter_month').change(function() {
-			table.ajax.reload()
-		})
-		$('#myTable').DataTable();
-		$('#myTable1').DataTable();
-		$('#myTable2').DataTable();
-		$('#myTable3').DataTable();
+		// Trigger chart resize when tabs are switched
+		$('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+			Object.values(chartInstances).forEach(function(instance) {
+				instance.resize();
+			});
+		});
 
-		table = $('#kt_table_1').DataTable({
-			responsive: false,
+		// Log Aktivitas Datatable
+		var logTable = $('#kt_table_1').DataTable({
+			responsive: true,
 			searchDelay: 500,
 			processing: true,
 			serverSide: true,
-			scrollY: '50vh',
-			scrollX: true,
-			scrollCollapse: true,
-			order: [
-				[0, 'desc']
-			],
+			order: [[4, 'desc']],
 			ajax: {
-				url: 'dashboard/pagination_log',
+				url: '<?= base_url("dashboard/pagination_log") ?>',
 				type: 'POST',
 				data: function(e) {
-					e.filter_month = $('#filter_month').val()
-					e.csrf_token = token
+					e.filter_month = $('#filter_month').val();
+					e.csrf_token = typeof token !== 'undefined' ? token : '';
 				}
 			},
-			columnDefs: [{
-				targets: [0],
-				className: 'text-center'
-			}]
-		})
-
-		$('#btn-show-izin').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-izin').modal()
-		})
-
-		$('#btn-show-hadir').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-hadir').modal()
-		})
-
-		
-		$('#btn-show-sakit').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-sakit').modal()
-		})
-
-		
-		$('#btn-show-cuti').click(function() {
-			$('.btn-isactive').remove()
-			$('#main-modal-cuti').modal()
-		})
-	})
-
-
-		// Mengambil tahun saat ini
-    //const tahunSekarang = new Date().getFullYear();
-    // Mengupdate teks judul
-    //document.getElementById('judul').innerText = `Diagram Calon Pelanggan ${tahunSekarang}`;
-    //document.getElementById('id_funnel').innerText = `Diagram Funnel ${tahunSekarang}`;
-    //document.getElementById('id_fpp').innerText = `Diagram Permintaan Penawaran ${tahunSekarang} yang Disetujui`;
-
-		
-
-
-
-		const baseUrl = "<?php echo base_url();?>";
-
-		const myChart = (chartType, tahun) => {
-    $.ajax({
-        url: baseUrl + 'dashboard_marketing/chart_data',
-        method: 'get',
-        data: { tahun: tahun }, // Kirim parameter tahun
-        dataType: 'json',
-        success: data => {
-            let chartX = [];
-            let chartY = [];
-            let chartY2 = [];
-            let chartY3 = [];
-
-            const bulanNames = [
-                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-            ];
-
-            data.forEach(item => {
-                chartX.push(bulanNames[item.month - 1]);
-                chartY.push(item['105'] || 0);
-                chartY2.push(item['742'] || 0);
-                chartY3.push(item['745'] || 0);
-            });
-
-            const chartData = {
-                labels: chartX,
-                datasets: [
-                    { label: 'M Tamrin', data: chartY, backgroundColor: 'Blue', borderColor: 'Blue', borderWidth: 2 },
-                    { label: 'Rizqilillah', data: chartY2, backgroundColor: 'skyblue', borderColor: 'skyblue', borderWidth: 2 },
-                    { label: 'Nurdiansyah', data: chartY3, backgroundColor: 'Green', borderColor: 'Green', borderWidth: 2 }
-                ]
-            };
-
-            const ctx = document.getElementById(chartType).getContext('2d');
-            new Chart(ctx, { type: 'bar', data: chartData, options: { scales: { y: { beginAtZero: true } } } });
-        },
-        error: (xhr, status, error) => {
-            console.error("Error fetching data: ", error);
-        }
-    });
-};
-
-
-
-
-// Modifikasi fungsi myChart2
-const myChart2 = (tahun) => {
-    $.ajax({
-        url: baseUrl + 'dashboard_marketing/chart_data_funnel',
-        data: { tahun: tahun }, // Kirim tahun sebagai parameter
-        dataType: 'json',
-        method: 'get',
-        success: data => {
-            let chartX = [];
-            let chartY = [];
-            let chartY2 = [];
-            let chartY3 = [];
-
-            const bulanNames = [
-                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-            ];
-
-            data.forEach(item => {
-                chartX.push(bulanNames[item.month - 1]);
-                chartY.push(item['105'] || 0);
-                chartY2.push(item['742'] || 0);
-                chartY3.push(item['745'] || 0);
-            });
-
-            const chartData = {
-                labels: chartX,
-                datasets: [
-                    { label: 'M Tamrin', data: chartY, backgroundColor: 'Blue', borderColor: 'Blue', borderWidth: 2 },
-                    { label: 'Rizqilillah', data: chartY2, backgroundColor: 'skyblue', borderColor: 'skyblue', borderWidth: 2 },
-                    { label: 'Nurdiansyah', data: chartY3, backgroundColor: 'Green', borderColor: 'Green', borderWidth: 2 }
-                ]
-            };
-
-            const ctx = document.getElementById('bar2').getContext('2d');
-            const config = {
-                type: 'bar',
-                data: chartData,
-                options: { scales: { y: { beginAtZero: true } } }
-            };
-
-            new Chart(ctx, config);
-        },
-        error: (xhr, status, error) => {
-            console.error("Error fetching data: ", error);
-        }
-    });
-};
-
-// Modifikasi fungsi myChart3
-const myChart3 = (tahun) => {
-    $.ajax({
-        url: baseUrl + 'dashboard_marketing/chart_data_fpp',
-        data: { tahun: tahun }, // Kirim tahun sebagai parameter
-        dataType: 'json',
-        method: 'get',
-        success: data => {
-            let chartX = [];
-            let chartY = [];
-            let chartY2 = [];
-            let chartY3 = [];
-
-            const bulanNames = [
-                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-            ];
-
-            data.forEach(item => {
-                chartX.push(bulanNames[item.month - 1]);
-                chartY.push(item['105'] || 0);
-                chartY2.push(item['742'] || 0);
-                chartY3.push(item['745'] || 0);
-            });
-
-            const chartData = {
-                labels: chartX,
-                datasets: [
-                    { label: 'M Tamrin', data: chartY, backgroundColor: 'Blue', borderColor: 'Blue', borderWidth: 2 },
-                    { label: 'Rizqilillah', data: chartY2, backgroundColor: 'skyblue', borderColor: 'skyblue', borderWidth: 2 },
-                    { label: 'Nurdiansyah', data: chartY3, backgroundColor: 'Green', borderColor: 'Green', borderWidth: 2 }
-                ]
-            };
-
-            const ctx = document.getElementById('bar3').getContext('2d');
-            const config = {
-                type: 'bar',
-                data: chartData,
-                options: { scales: { y: { beginAtZero: true } } }
-            };
-
-            new Chart(ctx, config);
-        },
-        error: (xhr, status, error) => {
-            console.error("Error fetching data: ", error);
-        }
-    });
-};
-
-	var visilabMarketingCalendarEl = document.getElementById('dashboard-marketing-visilab-calendar');
-	if (visilabMarketingCalendarEl && typeof FullCalendar !== 'undefined') {
-		var visilabMarketingCalendar = new FullCalendar.Calendar(visilabMarketingCalendarEl, {
-			initialView: 'dayGridMonth',
-			locale: 'id',
-			height: 520,
-			headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridWeek' },
-			events: function(info, successCallback, failureCallback) {
-				var viewYear = new Date((info.start.getTime() + info.end.getTime()) / 2).getFullYear();
-				$.getJSON('<?= base_url('visilab_jadwal/get_events') ?>', { year: viewYear })
-					.done(function(resp) { successCallback(resp); })
-					.fail(function() { failureCallback(); });
-			},
-			eventContent: function(arg) {
-				var props = arg.event.extendedProps || {};
-				var wilayah = props.wilayah || 'Lainnya';
-				var badgeColor = props.wilayah_badge_color || '#6c757d';
-				return {
-					html: '<div><span style="display:inline-block;padding:1px 6px;border-radius:999px;background:' + badgeColor + ';color:#fff;font-size:10px;font-weight:700;margin-right:4px;">' + wilayah + '</span><span>' + (arg.event.title || '') + '</span></div>'
-				};
-			},
-			eventClick: function(info) {
-				var props = info.event.extendedProps || {};
-				var opt = { year: 'numeric', month: 'long', day: 'numeric' };
-				var tanggalMulai = props.tanggal_mulai || (info.event.startStr || '');
-				var tanggalSelesai = props.tanggal_selesai || tanggalMulai;
-				var tanggal = '-';
-				if (tanggalMulai) {
-					var tStart = new Date(tanggalMulai + 'T00:00:00').toLocaleDateString('id-ID', opt);
-					var tEnd = new Date(tanggalSelesai + 'T00:00:00').toLocaleDateString('id-ID', opt);
-					tanggal = tStart === tEnd ? tStart : (tStart + ' s/d ' + tEnd);
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Cari riwayat aksi...",
+				lengthMenu: "_MENU_ data/hal",
+				emptyTable: "Tidak ada riwayat aktivitas",
+				zeroRecords: "Tidak ada data yang cocok",
+				info: "Menampilkan _START_-_END_ dari _TOTAL_",
+				infoEmpty: "0 data",
+				paginate: {
+					next: "Selanjutnya",
+					previous: "Sebelumnya"
 				}
-				$('#marketingVisiJenis').text(props.jenis_jadwal || '-');
-				$('#marketingVisiTeknisi').text(props.teknisi_nama || (props.teknisi_id ? ('ID ' + props.teknisi_id) : '-'));
-				$('#marketingVisiTanggal').text(tanggal);
-				$('#marketingVisiJam').text(props.jam || '-');
-				$('#marketingVisiStatus').text(props.status || '-');
-				$('#marketingVisiPelanggan').text(props.lokasi_pelanggan_nama || '-');
-				$('#marketingVisiWilayah').text(props.wilayah || '-');
-				$('#marketingVisiProvinsi').text(props.provinsi || '-');
-				$('#marketingVisiKabKota').text(props.kab_kota || '-');
-				$('#marketingVisiAlamat').text(props.lokasi_alamat || '-');
-				$('#dashboardMarketingVisilabDetailModal').modal('show');
-			}
+			},
+			columnDefs: [
+				{ targets: [0], className: 'text-center font-weight-bold text-muted' },
+				{ targets: [1], className: 'font-weight-semibold text-dark' },
+				{ targets: [4], className: 'text-muted text-nowrap' }
+			]
 		});
-		visilabMarketingCalendar.render();
-	}
 
+		$('#filter_month').change(function() {
+			logTable.ajax.reload();
+		});
 
-
+		// FullCalendar Visilab
+		var visilabMarketingCalendarEl = document.getElementById('dashboard-marketing-visilab-calendar');
+		if (visilabMarketingCalendarEl && typeof FullCalendar !== 'undefined') {
+			var visilabMarketingCalendar = new FullCalendar.Calendar(visilabMarketingCalendarEl, {
+				initialView: 'dayGridMonth',
+				locale: 'id',
+				height: 520,
+				headerToolbar: {
+					left: 'prev,next today',
+					center: 'title',
+					right: 'dayGridMonth,dayGridWeek'
+				},
+				events: function(info, successCallback, failureCallback) {
+					var viewYear = new Date((info.start.getTime() + info.end.getTime()) / 2).getFullYear();
+					$.getJSON('<?= base_url("visilab_jadwal/get_events") ?>', { year: viewYear })
+						.done(function(resp) { successCallback(resp); })
+						.fail(function() { failureCallback(); });
+				},
+				eventContent: function(arg) {
+					var props = arg.event.extendedProps || {};
+					var wilayah = props.wilayah || 'Lainnya';
+					var badgeColor = props.wilayah_badge_color || '#6c757d';
+					return {
+						html: '<div style="padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display:inline-block;padding:1px 6px;border-radius:999px;background:' + badgeColor + ';color:#fff;font-size:9.5px;font-weight:700;margin-right:4px;">' + wilayah + '</span><span style="font-size:11.5px;font-weight:600;">' + (arg.event.title || '') + '</span></div>'
+					};
+				},
+				eventClick: function(info) {
+					var props = info.event.extendedProps || {};
+					var opt = { year: 'numeric', month: 'long', day: 'numeric' };
+					var tanggalMulai = props.tanggal_mulai || (info.event.startStr || '');
+					var tanggalSelesai = props.tanggal_selesai || tanggalMulai;
+					var tanggal = '-';
+					if (tanggalMulai) {
+						var tStart = new Date(tanggalMulai + 'T00:00:00').toLocaleDateString('id-ID', opt);
+						var tEnd = new Date(tanggalSelesai + 'T00:00:00').toLocaleDateString('id-ID', opt);
+						tanggal = tStart === tEnd ? tStart : (tStart + ' s/d ' + tEnd);
+					}
+					$('#marketingVisiJenis').text(props.jenis_jadwal || '-');
+					$('#marketingVisiTeknisi').text(props.teknisi_nama || (props.teknisi_id ? ('ID ' + props.teknisi_id) : '-'));
+					$('#marketingVisiTanggal').text(tanggal);
+					$('#marketingVisiJam').text(props.jam || '-');
+					$('#marketingVisiStatus').html('<span class="badge badge-primary font-weight-normal">' + (props.status || '-') + '</span>');
+					$('#marketingVisiPelanggan').text(props.lokasi_pelanggan_nama || '-');
+					$('#marketingVisiWilayah').text(props.wilayah || '-');
+					$('#marketingVisiProvinsi').text(props.provinsi || '-');
+					$('#marketingVisiKabKota').text(props.kab_kota || '-');
+					$('#marketingVisiAlamat').text(props.lokasi_alamat || '-');
+					$('#dashboardMarketingVisilabDetailModal').modal('show');
+				}
+			});
+			visilabMarketingCalendar.render();
+		}
+	});
 </script>
