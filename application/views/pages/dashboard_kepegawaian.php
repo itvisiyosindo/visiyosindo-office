@@ -38,6 +38,196 @@ if (!function_exists('safe_divide')) {
 </style>
 
 <div class="row">
+<?php
+// Hitung data agregat untuk chart analitik kepegawaian
+$chart_labels = [];
+$chart_scores_lap = [];
+$chart_scores_penc = [];
+
+if (!empty($data_mingguan)) {
+    $w_num = 1;
+    foreach ($data_mingguan as $minggu) {
+        $p_parts = explode(' s/d ', $minggu['periode']);
+        $short_p = isset($p_parts[0]) ? date('d/m', strtotime($p_parts[0])) : 'M' . $w_num;
+        $chart_labels[] = 'Minggu ' . $w_num . ' (' . $short_p . ')';
+
+        $total_lap = 0;
+        $total_pen = 0;
+        $total_penc = 0;
+        $cnt_emp = 0;
+
+        if (!empty($list_pengguna)) {
+            foreach ($list_pengguna as $p) {
+                $pid = $p->pengguna_id;
+                if (isset($minggu['nilai_laporan_adm'][$pid])) {
+                    $total_lap += (float)$minggu['nilai_laporan_adm'][$pid];
+                    $total_pen += (float)$minggu['nilai_penilaianumum_adm'][$pid];
+                    $total_penc += (float)$minggu['nilai_pencapaian_adm'][$pid];
+                    $cnt_emp++;
+                }
+            }
+        }
+        $avg_lap = $cnt_emp > 0 ? round($total_lap / $cnt_emp, 2) : 0;
+        $avg_pen = $cnt_emp > 0 ? round($total_pen / $cnt_emp, 2) : 0;
+        $avg_penc = $cnt_emp > 0 ? round($total_penc / $cnt_emp, 2) : 0;
+        $avg_combined = round(($avg_lap + $avg_pen) / 2, 2);
+
+        $chart_scores_lap[] = $avg_combined;
+        $chart_scores_penc[] = $avg_penc;
+        $w_num++;
+    }
+}
+$total_karyawan_aktif = !empty($list_pengguna) ? count($list_pengguna) : 0;
+$total_hadir = isset($present[0]->total) ? (int)$present[0]->total : 0;
+$total_izin = isset($izin[0]->total) ? (int)$izin[0]->total : 0;
+$total_sakit = isset($sakit[0]->total) ? (int)$sakit[0]->total : 0;
+$total_cuti = isset($cuti[0]->total) ? (int)$cuti[0]->total : 0;
+$total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izin + $total_sakit + $total_cuti));
+?>
+
+	<!-- 1. Executive Top Banner Overview -->
+	<div class="col-12 mb-3">
+		<div class="card p-3 p-md-4 border-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; color: #ffffff; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);">
+			<div class="d-flex flex-wrap justify-content-between align-items-center">
+				<div class="d-flex align-items-center gap-3">
+					<div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #60a5fa; margin-right: 12px;">
+						<i class="fas fa-users-cog"></i>
+					</div>
+					<div>
+						<h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 4px 0;">Executive Overview & Analytics Kepegawaian</h3>
+						<p style="font-size: 12.5px; color: #94a3b8; margin: 0;">Monitoring kehadiran harian, performa SDM, dan rekapitulasi evaluasi kerja PT Visi Yosindo Medikal.</p>
+					</div>
+				</div>
+				<div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+					<span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 600; padding: 6px 12px; border-radius: 9999px; font-size: 12px;">
+						<i class="fas fa-calendar-day mr-1"></i> <?= date('d M Y') ?>
+					</span>
+					<?php if (isAdmin() || isHrd() || isGa()) { ?>
+						<a href="<?= base_url('dashboard_kepegawaian/sisa_cuti_karyawan') ?>" class="btn btn-sm btn-info" style="font-size: 12px; margin-left: 8px;">
+							<i class="fas fa-calendar-check mr-1"></i> Sisa Cuti
+						</a>
+					<?php } ?>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 2. Four Key Performance Indicator (KPI) Cards -->
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+			<div class="card-body p-3">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Karyawan Aktif</span>
+						<h3 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 4px 0 2px 0;"><?= $total_karyawan_aktif ?></h3>
+						<span style="font-size: 11.5px; color: #10b981; font-weight: 500;"><i class="fas fa-check-circle mr-1"></i> Terdaftar aktif</span>
+					</div>
+					<div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+						<i class="fas fa-users"></i>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="javascript:;" id="btn-show-hadir" style="text-decoration: none; color: inherit;">
+			<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease;">
+				<div class="card-body p-3">
+					<div class="d-flex justify-content-between align-items-center">
+						<div>
+							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Hadir Hari Ini</span>
+							<h3 style="font-size: 24px; font-weight: 700; color: #047857; margin: 4px 0 2px 0;"><?= $total_hadir ?></h3>
+							<span style="font-size: 11.5px; color: #2563eb; font-weight: 500;"><i class="fas fa-eye mr-1"></i> Klik lihat daftar</span>
+						</div>
+						<div style="width: 44px; height: 44px; border-radius: 10px; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+							<i class="fas fa-user-check"></i>
+						</div>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="javascript:;" id="btn-show-izin" style="text-decoration: none; color: inherit;">
+			<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease;">
+				<div class="card-body p-3">
+					<div class="d-flex justify-content-between align-items-center">
+						<div>
+							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Izin & Sakit</span>
+							<h3 style="font-size: 24px; font-weight: 700; color: #b45309; margin: 4px 0 2px 0;"><?= $total_izin + $total_sakit ?></h3>
+							<span style="font-size: 11.5px; color: #64748b; font-weight: 500;">
+								<span class="text-warning font-weight-bold mr-1"><?= $total_izin ?> Izin</span> &bull; 
+								<span class="text-info font-weight-bold ml-1"><?= $total_sakit ?> Sakit</span>
+							</span>
+						</div>
+						<div style="width: 44px; height: 44px; border-radius: 10px; background: #fffbeb; color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+							<i class="fas fa-user-clock"></i>
+						</div>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-xl-3 col-sm-6 mb-3">
+		<a href="javascript:;" id="btn-show-cuti" style="text-decoration: none; color: inherit;">
+			<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease;">
+				<div class="card-body p-3">
+					<div class="d-flex justify-content-between align-items-center">
+						<div>
+							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Sedang Cuti</span>
+							<h3 style="font-size: 24px; font-weight: 700; color: #b91c1c; margin: 4px 0 2px 0;"><?= $total_cuti ?></h3>
+							<span style="font-size: 11.5px; color: #ef4444; font-weight: 500;"><i class="fas fa-calendar-times mr-1"></i> Klik rincian cuti</span>
+						</div>
+						<div style="width: 44px; height: 44px; border-radius: 10px; background: #fef2f2; color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+							<i class="fas fa-calendar-day"></i>
+						</div>
+					</div>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<!-- 3. Visual Charts (Tren Kinerja Mingguan & Donut Absensi) -->
+	<div class="col-lg-8 mb-4">
+		<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+			<div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 pb-0 px-3">
+				<h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0;">
+					<i class="fas fa-chart-line text-primary mr-1"></i> Rata-rata Skor Kinerja SDM Mingguan (<?= $bulanIni ?>)
+				</h5>
+				<span class="badge badge-light text-muted" style="font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;">Periode Aktif</span>
+			</div>
+			<div class="card-body p-3">
+				<div style="height: 230px; position: relative;">
+					<canvas id="kepegawaianTrendChart"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-lg-4 mb-4">
+		<div class="card border-0 h-100" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+			<div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 pb-0 px-3">
+				<h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0;">
+					<i class="fas fa-chart-pie text-success mr-1"></i> Status Kehadiran Hari Ini
+				</h5>
+				<span class="badge" style="background: #ecfdf5; color: #059669; font-size: 11px; font-weight: 600;">Real-time</span>
+			</div>
+			<div class="card-body p-3 d-flex flex-column align-items-center justify-content-center">
+				<div style="height: 165px; width: 165px; position: relative;">
+					<canvas id="kepegawaianAttendanceChart"></canvas>
+				</div>
+				<div class="d-flex justify-content-center flex-wrap gap-2 mt-3 text-center" style="font-size: 11px; font-weight: 600;">
+					<span class="mr-2" style="color: #047857;"><i class="fas fa-circle" style="color: #10b981;"></i> Hadir (<?= $total_hadir ?>)</span>
+					<span class="mr-2" style="color: #b45309;"><i class="fas fa-circle" style="color: #f59e0b;"></i> Izin (<?= $total_izin ?>)</span>
+					<span class="mr-2" style="color: #0369a1;"><i class="fas fa-circle" style="color: #0ea5e9;"></i> Sakit (<?= $total_sakit ?>)</span>
+					<span style="color: #b91c1c;"><i class="fas fa-circle" style="color: #ef4444;"></i> Cuti (<?= $total_cuti ?>)</span>
+				</div>
+			</div>
+		</div>
+	</div>
 
   <?php if (sessPenggunaId()=='1' || sessPenggunaId()=='54' || sessPenggunaId()=='69' || sessPenggunaId()=='744' || sessPenggunaId()=='58') { ?>
 
@@ -732,5 +922,95 @@ if (!function_exists('safe_divide')) {
 			$('.btn-isactive').remove()
 			$('#main-modal-cuti').modal()
 		})
+
+		// 1. Chart Tren Rata-rata Skor Kinerja Mingguan
+		var trendCanvas = document.getElementById('kepegawaianTrendChart');
+		if (trendCanvas) {
+			var ctxTrend = trendCanvas.getContext('2d');
+			new Chart(ctxTrend, {
+				type: 'line',
+				data: {
+					labels: <?= json_encode(!empty($chart_labels) ? $chart_labels : ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4']) ?>,
+					datasets: [
+						{
+							label: 'Rata-rata Laporan + Penilaian Umum',
+							data: <?= json_encode(!empty($chart_scores_lap) ? $chart_scores_lap : [0, 0, 0, 0]) ?>,
+							borderColor: '#2563eb',
+							backgroundColor: 'rgba(37, 99, 235, 0.08)',
+							borderWidth: 2.5,
+							pointRadius: 4,
+							pointBackgroundColor: '#2563eb',
+							fill: true,
+							tension: 0.35
+						},
+						{
+							label: 'Rata-rata Pencapaian',
+							data: <?= json_encode(!empty($chart_scores_penc) ? $chart_scores_penc : [0, 0, 0, 0]) ?>,
+							borderColor: '#10b981',
+							backgroundColor: 'rgba(16, 185, 129, 0.05)',
+							borderWidth: 2.5,
+							pointRadius: 4,
+							pointBackgroundColor: '#10b981',
+							fill: true,
+							tension: 0.35
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					scales: {
+						y: {
+							beginAtZero: true,
+							max: 100,
+							grid: { color: '#f1f5f9' },
+							ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+						},
+						x: {
+							grid: { display: false },
+							ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+						}
+					},
+					plugins: {
+						legend: {
+							position: 'top',
+							labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' } }
+						}
+					}
+				}
+			});
+		}
+
+		// 2. Chart Donut Status Kehadiran Hari Ini
+		var attCanvas = document.getElementById('kepegawaianAttendanceChart');
+		if (attCanvas) {
+			var ctxAtt = attCanvas.getContext('2d');
+			new Chart(ctxAtt, {
+				type: 'doughnut',
+				data: {
+					labels: ['Hadir', 'Izin', 'Sakit', 'Cuti', 'Belum/Lainnya'],
+					datasets: [{
+						data: [
+							<?= $total_hadir ?>,
+							<?= $total_izin ?>,
+							<?= $total_sakit ?>,
+							<?= $total_cuti ?>,
+							<?= $total_absen_lainnya ?>
+						],
+						backgroundColor: ['#10b981', '#f59e0b', '#0ea5e9', '#ef4444', '#e2e8f0'],
+						borderWidth: 2,
+						borderColor: '#ffffff'
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					cutout: '70%',
+					plugins: {
+						legend: { display: false }
+					}
+				}
+			});
+		}
 	})
 </script>
