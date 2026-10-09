@@ -3702,6 +3702,10 @@ class Surat extends CI_Controller
 			if ($param2 == "1") {
 				if ($param3 == "ttd_1") {
 					$id_spp = decrypt($this->input->post('id_spp'));
+					$cekSpp = $this->md_surat_list->getSppById($id_spp);
+					if (!empty($cekSpp) && $cekSpp[0]->aju_ttd1 == 1) {
+						ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
+					}
 					$data['ttd1'] = 1;
 					$this->md_surat_list->update_spp($id_spp, $data);
 
@@ -3743,6 +3747,10 @@ class Surat extends CI_Controller
 					ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
 				} else if ($param3 == "ttd_2") {
 					$id_spp = decrypt($this->input->post('id_spp'));
+					$cekSpp = $this->md_surat_list->getSppById($id_spp);
+					if (!empty($cekSpp) && $cekSpp[0]->aju_ttd2 == 1) {
+						ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
+					}
 					$data['ttd2'] = 1;
 					$this->md_surat_list->update_spp($id_spp, $data);
 
@@ -3791,6 +3799,10 @@ class Surat extends CI_Controller
 					ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
 				} else if ($param3 == "ttd_3") {
 					$id_spp = decrypt($this->input->post('id_spp'));
+					$cekSpp = $this->md_surat_list->getSppById($id_spp);
+					if (!empty($cekSpp) && $cekSpp[0]->aju_ttd3 == 1) {
+						ajaxReturnDie('success', 'Surat Berhasil Disetujui', TRUE);
+					}
 					$data['ttd3'] = 1;
 					$this->md_surat_list->update_spp($id_spp, $data);
 
@@ -3809,8 +3821,11 @@ class Surat extends CI_Controller
 						'ttd_sebelum3' => 'Director'
 					];
 
-					// Notifikasi ke pengaju bahwa surat disetujui penuh
-					$this->notifWaAprovSpp(1, 2, $dataWa);
+					// Notifikasi ke pengaju hanya jika pengaju bukan penerima Finance (107)
+					$idpengaju = !empty($cekSpp) ? $cekSpp[0]->idPengaju : null;
+					if (!empty($idpengaju) && $idpengaju != 107) {
+						$this->notifWaAprovSpp(1, 2, $dataWa);
+					}
 
 					// Notifikasi ke Finance untuk proses pembayaran
 					$this->notifWaAprovSpp(1, 1, $dataWa);
@@ -8947,7 +8962,7 @@ class Surat extends CI_Controller
 				'kodeSurat' 	=> $kode,
 				'namaPengaju' 	=> $namaPengaju,
 				'perihal' 		=> $perihal,
-				'namaPenerima' 	=> $detail['penerima'],
+				'namaPenerima' 	=> ($param == 2 ? $namaPengaju : $detail['penerima']),
 				'ttd_sebelum1' 	=> $detail['ttd_sebelum1'],
 				'ttd_sebelum2' 	=> $detail['ttd_sebelum2'],
 				'ttd_sebelum3' 	=> $detail['ttd_sebelum3'],
@@ -10996,7 +11011,9 @@ class Surat extends CI_Controller
 					'ttd_sebelum3' => 'Director',
 					'ttd_sebelum4' => ''
 				];
-				$this->notifWaAprovSpp(2, 2, $dataWa);
+				if (!empty($spp->idPengaju) && $spp->idPengaju != 107) {
+					$this->notifWaAprovSpp(1, 2, $dataWa);
+				}
 
 				$dataWaFi = [
 					'id' => $id,

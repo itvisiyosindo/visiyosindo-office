@@ -472,10 +472,11 @@ $this->load->helper('mata_uang');
 		})
 
 		$(document).on('click', '.btn-approval', function() {
-			const id_spp = $(this).attr("id-spp");
+			const btn = $(this);
+			if (btn.prop('disabled')) return;
+			const id_spp = btn.attr("id-spp");
 
 			Swal.fire({
-				//title: approval + ' absensi?',
 				title: 'Setujui Permintaan Pembayaran?',
 				icon: 'question',
 				showCancelButton: true,
@@ -483,6 +484,15 @@ $this->load->helper('mata_uang');
 				cancelButtonText: 'Tidak'
 			}).then(function(result) {
 				if (result.value) {
+					btn.prop('disabled', true).addClass('disabled');
+					Swal.fire({
+						title: 'Memproses...',
+						text: 'Mohon tunggu sebentar',
+						allowOutsideClick: false,
+						didOpen: () => {
+							Swal.showLoading();
+						}
+					});
 					$.ajax({
 						method: 'POST',
 						url: 'surat/ttd_update/spp/1/' + level_ttd,
@@ -493,20 +503,23 @@ $this->load->helper('mata_uang');
 							csrf_token: token
 						},
 						success: function(resp) {
-							handleResponse(resp)
+							handleResponse(resp);
+						},
+						error: function() {
+							btn.prop('disabled', false).removeClass('disabled');
+							Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
 						}
-					})
-
+					});
 				}
-
-			})
-		})
+			});
+		});
 
 		$(document).on('click', '.btn-catatan', function() {
+			const btn = $(this);
+			if (btn.prop('disabled')) return;
 			var catatan = $('#catatan').val();
 			var id = $('#id-spp').val();
-			// var level_ttd = $('#level_ttd').val();
-			console.log(catatan);
+
 			Swal.fire({
 				title: 'Data telah tepat?',
 				icon: 'question',
@@ -515,10 +528,9 @@ $this->load->helper('mata_uang');
 				cancelButtonText: 'Tidak'
 			}).then(function(result) {
 				if (result.value) {
-					console.log('' + catatan);
+					btn.prop('disabled', true).addClass('disabled');
 					$.ajax({
 						method: 'POST',
-						//url: 'surat/updatecatatanSpp/'+id+'/'+catatan,
 						url: 'surat/updatecatatanSpp/' + id,
 						dataType: 'JSON',
 						data: {
@@ -526,15 +538,21 @@ $this->load->helper('mata_uang');
 							csrf_token: token
 						},
 						success: function(resp) {
-							handleResponse(resp)
+							handleResponse(resp);
+						},
+						error: function() {
+							btn.prop('disabled', false).removeClass('disabled');
 						}
-					})
+					});
 				}
-			})
-		})
+			});
+		});
 
 		$(document).on('click', '.btn-denial', function() {
-			const id_spp = $(this).attr("id-spp")
+			const btn = $(this);
+			if (btn.prop('disabled')) return;
+			const id_spp = btn.attr("id-spp");
+
 			Swal.fire({
 				title: 'Tolak Permintaan Pembayaran?',
 				icon: 'question',
@@ -543,6 +561,15 @@ $this->load->helper('mata_uang');
 				cancelButtonText: 'Tidak'
 			}).then(function(result) {
 				if (result.value) {
+					btn.prop('disabled', true).addClass('disabled');
+					Swal.fire({
+						title: 'Memproses...',
+						text: 'Mohon tunggu sebentar',
+						allowOutsideClick: false,
+						didOpen: () => {
+							Swal.showLoading();
+						}
+					});
 					$.ajax({
 						method: 'POST',
 						url: 'surat/ttd_update/spp/2/' + level_ttd,
@@ -553,12 +580,16 @@ $this->load->helper('mata_uang');
 							csrf_token: token
 						},
 						success: function(resp) {
-							handleResponse(resp)
+							handleResponse(resp);
+						},
+						error: function() {
+							btn.prop('disabled', false).removeClass('disabled');
+							Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
 						}
-					})
+					});
 				}
-			})
-		})
+			});
+		});
 
 	})
 

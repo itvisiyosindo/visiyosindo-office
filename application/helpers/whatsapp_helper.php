@@ -2771,7 +2771,7 @@ function sendWa($dataSend)
 		}
 	}
 
-	// Deduplikasi pengiriman pesan yang identik dalam satu request ke nomor yang sama
+	// Deduplikasi pengiriman pesan yang identik ke nomor yang sama (in-process + file-based lock 60 detik)
 	static $sent_messages = [];
 	$penerimaClean = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
 	$msgHash = md5($penerimaClean . '_' . trim(strip_tags(urldecode($dataSend['pesan'] ?? ''))));
@@ -2779,6 +2779,16 @@ function sendWa($dataSend)
 		return true; // Lewati karena pesan yang sama persis sudah dikirim ke nomor ini dalam satu proses
 	}
 	$sent_messages[$msgHash] = true;
+
+	$lockDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
+	if (!is_dir($lockDir)) {
+		@mkdir($lockDir, 0777, true);
+	}
+	$lockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_' . $msgHash . '.lock';
+	if (file_exists($lockFile) && (time() - filemtime($lockFile)) < 60) {
+		return true; // Lewati karena pesan yang sama persis sudah dikirim dalam 60 detik terakhir
+	}
+	@file_put_contents($lockFile, (string)time());
 
 	// 1. Coba kirim via Convia API lebih dulu
 	if (sendWaConvia($dataSend)) {
@@ -2871,6 +2881,27 @@ function sendWaGroup($dataSend)
 			}
 		}
 	}
+
+	// Deduplikasi pengiriman pesan group yang identik (in-process + file-based lock 60 detik)
+	static $sent_group_messages = [];
+	$groupTarget = trim((string)($dataSend['penerima'] ?? ''));
+	$cleanGroupMsg = trim(strip_tags(urldecode($dataSend['pesan'] ?? '')));
+	$msgGroupHash = md5($groupTarget . '_' . $cleanGroupMsg);
+
+	if (isset($sent_group_messages[$msgGroupHash])) {
+		return true;
+	}
+	$sent_group_messages[$msgGroupHash] = true;
+
+	$lockDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
+	if (!is_dir($lockDir)) {
+		@mkdir($lockDir, 0777, true);
+	}
+	$lockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_group_' . $msgGroupHash . '.lock';
+	if (file_exists($lockFile) && (time() - filemtime($lockFile)) < 60) {
+		return true;
+	}
+	@file_put_contents($lockFile, (string)time());
 
 	// 1. Coba Convia API Group
 	if (sendWaConviaGroup($dataSend)) {
