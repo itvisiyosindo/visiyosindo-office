@@ -94,6 +94,21 @@ class Jobdesc extends CI_Controller
             $page_data['page_desc']     = 'Form Jobdesk';
             $this->load->view('index', $page_data);
           }
+			  }else if($param == 'edit'){
+          if ($param2 == 'jobdesc'){
+            $id_jobdesc                 = decrypt($param3);
+            $page_data['switch']        = $this->id_navbar();
+            $page_data['data_job']      = $this->md_jobdesc->getJobById($id_jobdesc);
+            $Detail                     = $page_data['data_job'];
+            $idPengguna                 = $Detail ? $Detail->id_pengguna : null;
+            $page_data['data_detail']   = $this->md_jobdesc->getDetailPOById($id_jobdesc, $idPengguna);
+            $page_data['list_nama']     = $this->md_surat_part_two->getBywhereActive();
+            $page_data['id_jobdesc_enc'] = $param3;
+            $page_data['page_name']     = 'jobdesc/v_edit_job';
+            $page_data['page_title']    = 'Jobdesk';
+            $page_data['page_desc']     = 'Edit Data Jobdesk';
+            $this->load->view('index', $page_data);
+          }
 			  }
           
 
@@ -273,6 +288,79 @@ class Jobdesc extends CI_Controller
         ajaxReturnDie('success', 'Data Jobdesk berhasil diperbarui', TRUE);
 	}
 
+    public function updateAll()
+    {
+        grantAccessFor('all');
+
+        $id_jobdesc_enc = $this->input->post('id_jobdesc', TRUE);
+        $id_jobdesc     = decrypt($id_jobdesc_enc);
+        $id_pengguna    = $this->input->post('id_pengguna', TRUE);
+        $tgl_mulai      = $this->input->post('tgl_mulai', TRUE);
+        $tgl_selesai    = $this->input->post('tgl_selesai', TRUE);
+
+        if (empty($id_jobdesc)) {
+            ajaxReturnDie('error', 'ID Jobdesk tidak valid.', false);
+        }
+
+        if (empty($id_pengguna)) {
+            ajaxReturnDie('error', 'Silakan pilih Nama Karyawan terlebih dahulu.', false);
+        }
+
+        if (empty($tgl_mulai)) {
+            $tgl_mulai = date('Y-m-d');
+        }
+        if (empty($tgl_selesai)) {
+            $tgl_selesai = '2099-12-31';
+        }
+
+        // Update Header Jobdesk
+        $headerData = [
+            'id_pengguna' => $id_pengguna,
+            'tgl_mulai'   => $tgl_mulai,
+            'tgl_selesai' => $tgl_selesai,
+        ];
+        $this->db->where('id', $id_jobdesc)->update('jobdesc', $headerData);
+
+        // Hapus detail lama untuk jobdesk ini
+        $this->db->where('id_jobdesc', $id_jobdesc)->delete('jobdesc_detail');
+
+        // Insert ulang detail
+        $deskripsi_arr = $this->input->post('deskripsi');
+        $idurut_arr    = $this->input->post('idurut');
+        $point_arr     = $this->input->post('point');
+        $nilai_arr     = $this->input->post('nilai');
+
+        if (is_array($deskripsi_arr) && count($deskripsi_arr) > 0) {
+            $urut_counter = 1;
+            foreach ($deskripsi_arr as $x => $deskripsi) {
+                $deskripsi_clean = trim($deskripsi);
+                if ($deskripsi_clean !== '') {
+                    $id_urut = (isset($idurut_arr[$x]) && $idurut_arr[$x] !== '') ? trim($idurut_arr[$x]) : $urut_counter;
+                    $point   = (isset($point_arr[$x]) && $point_arr[$x] !== '') ? trim($point_arr[$x]) : '1';
+                    $nilai   = (isset($nilai_arr[$x]) && $nilai_arr[$x] !== '') ? trim($nilai_arr[$x]) : '2';
+
+                    $dataDetail = [
+                        'idPengguna'  => $id_pengguna,
+                        'id_jobdesc'  => $id_jobdesc,
+                        'id_urut'     => $id_urut,
+                        'point'       => $point,
+                        'nilai'       => $nilai,
+                        'deskripsi'   => $deskripsi_clean,
+                        'tgl_mulai'   => $tgl_mulai,
+                        'tgl_selesai' => $tgl_selesai,
+                        'status'      => 1
+                    ];
+
+                    $this->md_jobdesc->addJobdetail($dataDetail);
+                    $urut_counter++;
+                }
+            }
+        }
+
+        addLog('Jobdesk', 'Mengubah Seluruh Poin Jobdesk ID ' . $id_jobdesc);
+        ajaxReturnDie('success', 'Data Jobdesk berhasil diperbarui.', 'jobdesc/show/list/jobdesc');
+    }
+
     
 
     
@@ -342,8 +430,9 @@ class Jobdesc extends CI_Controller
               
               $id_po     = encrypt($row->id_po);
               $pegawai   = '<a href="jobdesc/show/detail/jobdesc/'.$id_po.'">'.$row->pegawai.'</a>';
-                            $li_btn = '<a href="jobdesc/print_jobdesc/'.$id_po.'" target="_blank" class="btn btn-xs btn-info" title="Print Jobdesk"><i class="fas fa-print"></i> Print</a>';
+              $li_btn = '<a href="jobdesc/print_jobdesc/'.$id_po.'" target="_blank" class="btn btn-xs btn-info" title="Print Jobdesk"><i class="fas fa-print"></i> Print</a>';
               if (sessPenggunaId() == 1) {
+                  $li_btn .= ' <a href="jobdesc/show/edit/jobdesc/'.$id_po.'" class="btn btn-xs btn-primary" title="Edit Jobdesk"><i class="fas fa-edit"></i> Edit</a>';
                   $li_btn .= ' <button type="button" class="btn btn-xs btn-danger btn-delete-jobdesc" data-id="' . $id_po . '" title="Hapus Jobdesk"><i class="fas fa-trash"></i> Hapus</button>';
               }
 

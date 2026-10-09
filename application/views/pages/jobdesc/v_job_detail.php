@@ -40,7 +40,8 @@
 			<div class="table-responsive">
 				<div class="mb-3" style="margin-bottom: 15px;">
 					<?php if(sessPenggunaId() == 1) {?>
-						<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah Point Jobdesk</a>
+						<a href="jobdesc/show/edit/jobdesc/<?= encrypt($data_job->id_po) ?>" class="btn btn-sm btn-primary text-white mr-1"><i class="fas fa-edit"></i>&nbsp;Edit Seluruh Jobdesk</a>
+						<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success mr-1"><i class="icons icon-plus"></i>&nbsp;Tambah Point Jobdesk</a>
 					<?php } ?>
 					<a href="jobdesc/print_jobdesc/<?= encrypt($data_job->id_po) ?>" target="_blank" class="btn btn-sm btn-info text-white float-right"><i class="fas fa-print"></i>&nbsp;Cetak Jobdesk PDF</a>
 				</div>
