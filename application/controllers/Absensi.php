@@ -1972,14 +1972,107 @@ class Absensi extends CI_Controller
         $dt    = $this->md_pengguna->getAllPenggunaAktif();
         $start = $this->input->post('start') ?: 0;
         $filter_month = $this->input->post('filter_month');
+        $filter_date  = $this->input->post('filter_date');
         $filter_status = $this->input->post('filter_status');
         $month_for_calc = $filter_month ? date('Y-m', strtotime($filter_month)) : date('Y-m');
 
+        // Optimasi: kumpulkan ID pengguna untuk query batch (menghindari N+1 query yang lambat)
+        $userIds = [];
+        if (!empty($dt['data'])) {
+            foreach ($dt['data'] as $row) {
+                $userIds[] = (int)$row->pengguna_id;
+            }
+        }
+
+        $absenMasukMap = [];
+        $absenIzinMap  = [];
+        $statsMap      = [];
+
+        if (!empty($userIds)) {
+            $perusahaan = grantAccessForPerusahaan();
+
+            // 1. Batch query Absen Masuk untuk tanggal/filter terpilih
+            $this->db->select('id_absensi, pengguna_id, status_absen, jenis_absen, waktu_absen, approval, ip_addr, latitude, longitude, data_created');
+            $this->db->where_in('pengguna_id', $userIds);
+            $this->db->where('type_absen', 'masuk');
+            $this->db->where('perusahaan', $perusahaan);
+            if ($filter_month || $filter_date) {
+                if ($filter_month) $this->db->like('data_created', $filter_month);
+                if ($filter_date) $this->db->like('data_created', $filter_date);
+            } else {
+                $this->db->like('data_created', date('Y-m-d'));
+            }
+            if ($filter_status) {
+                if ($filter_status == 'dinas') {
+                    $this->db->group_start();
+                    $this->db->where('status_absen', 'dinas');
+                    $this->db->or_where('UPPER(jenis_absen)', 'DINAS');
+                    $this->db->group_end();
+                } else {
+                    $this->db->where('status_absen', $filter_status);
+                }
+            }
+            $this->db->order_by('data_created', 'DESC');
+            $qMasuk = $this->db->get('absensi')->result();
+            foreach ($qMasuk as $m) {
+                if (!isset($absenMasukMap[$m->pengguna_id])) {
+                    $absenMasukMap[$m->pengguna_id] = $m;
+                }
+            }
+
+            // 2. Batch query Absen Izin untuk tanggal/filter terpilih
+            $this->db->select('id_absensi, pengguna_id, status_absen, jenis_absen, waktu_absen, approval, ip_addr, data_created');
+            $this->db->where_in('pengguna_id', $userIds);
+            $this->db->where('type_absen', 'izin');
+            $this->db->where('perusahaan', $perusahaan);
+            if ($filter_month || $filter_date) {
+                if ($filter_month) $this->db->like('data_created', $filter_month);
+                if ($filter_date) $this->db->like('data_created', $filter_date);
+            } else {
+                $this->db->like('data_created', date('Y-m-d'));
+            }
+            if ($filter_status) {
+                if ($filter_status == 'dinas') {
+                    $this->db->group_start();
+                    $this->db->where('status_absen', 'dinas');
+                    $this->db->or_where('UPPER(jenis_absen)', 'DINAS');
+                    $this->db->group_end();
+                } else {
+                    $this->db->where('status_absen', $filter_status);
+                }
+            }
+            $this->db->order_by('data_created', 'DESC');
+            $qIzin = $this->db->get('absensi')->result();
+            foreach ($qIzin as $iz) {
+                if (!isset($absenIzinMap[$iz->pengguna_id])) {
+                    $absenIzinMap[$iz->pengguna_id] = $iz;
+                }
+            }
+
+            // 3. Batch query hitung Kehadiran, Kantor, dan Dinas bulanan
+            $this->db->select("
+                pengguna_id,
+                COUNT(CASE WHEN type_absen = 'masuk' THEN 1 END) AS jml_kehadiran,
+                COUNT(CASE WHEN type_absen = 'masuk' AND UPPER(jenis_absen) = 'KANTOR' AND approval = 'terima' THEN 1 END) AS jml_kantor,
+                COUNT(CASE WHEN type_absen = 'masuk' AND (UPPER(jenis_absen) = 'DINAS' OR status_absen = 'dinas') THEN 1 END) AS jml_dinas
+            ");
+            $this->db->where_in('pengguna_id', $userIds);
+            $this->db->like('data_created', $month_for_calc, 'after');
+            $this->db->where('perusahaan', $perusahaan);
+            $this->db->group_by('pengguna_id');
+            $qStats = $this->db->get('absensi')->result();
+            foreach ($qStats as $st) {
+                $statsMap[$st->pengguna_id] = $st;
+            }
+        }
+
         $data  = array();
         foreach ($dt['data'] as $row) {
-            $id             = encrypt($row->pengguna_id);
-            $data_absen     = $this->md_absensi->getAbsenMasukByPenggunaId($row->pengguna_id);
-            $data_absen_izin = $this->md_absensi->getAbsenIzinByPenggunaId($row->pengguna_id);
+            $pId = $row->pengguna_id;
+            $id  = encrypt($pId);
+
+            $data_absen      = isset($absenMasukMap[$pId]) ? [$absenMasukMap[$pId]] : [];
+            $data_absen_izin = isset($absenIzinMap[$pId]) ? [$absenIzinMap[$pId]] : [];
 
             $current_status = isset($data_absen[0]->status_absen) ? strtolower($data_absen[0]->status_absen) : (isset($data_absen_izin[0]->status_absen) ? strtolower($data_absen_izin[0]->status_absen) : '');
             $current_jenis  = isset($data_absen[0]->jenis_absen) ? strtolower($data_absen[0]->jenis_absen) : '';
@@ -2056,11 +2149,11 @@ class Absensi extends CI_Controller
                 $status_absen = '<span class="text-muted">-</span>';
             }
 
-            // Hitung Kehadiran, Kantor, dan Dinas per bulan
-            $jml_kehadiran = count($this->md_absensi->getKehadiran($row->pengguna_id, $month_for_calc));
-            $jml_kantor = count($this->md_absensi->getAbsenKantorByMonth($row->pengguna_id, $month_for_calc));
-            $count_dinas_res = $this->md_absensi->countDinas($row->pengguna_id, $month_for_calc);
-            $jml_dinas = isset($count_dinas_res[0]->total) ? (int)$count_dinas_res[0]->total : 0;
+            // Ambil Kehadiran, Kantor, dan Dinas per bulan dari statsMap
+            $stUser = isset($statsMap[$pId]) ? $statsMap[$pId] : null;
+            $jml_kehadiran = $stUser ? (int)$stUser->jml_kehadiran : 0;
+            $jml_kantor    = $stUser ? (int)$stUser->jml_kantor : 0;
+            $jml_dinas     = $stUser ? (int)$stUser->jml_dinas : 0;
 
             $badge_hadir = '<span class="badge badge-primary font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kehadiran . ' Hari</span>';
             $badge_kantor = '<span class="badge badge-success font-weight-bold" style="font-size:12px; padding: 4px 8px;">' . $jml_kantor . ' Hari</span>';
