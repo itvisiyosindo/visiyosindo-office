@@ -2774,7 +2774,11 @@ function sendWa($dataSend)
 	// Deduplikasi pengiriman pesan yang identik ke nomor yang sama (in-process + file-based lock 60 detik)
 	static $sent_messages = [];
 	$penerimaClean = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
-	$msgHash = md5($penerimaClean . '_' . trim(strip_tags(urldecode($dataSend['pesan'] ?? ''))));
+	if (substr($penerimaClean, 0, 2) === '62') {
+		$penerimaClean = '0' . substr($penerimaClean, 2);
+	}
+	$cleanMsg = preg_replace('/\s+/', ' ', trim(strip_tags(urldecode((string)($dataSend['pesan'] ?? '')))));
+	$msgHash = md5($penerimaClean . '_' . $cleanMsg);
 	if (isset($sent_messages[$msgHash])) {
 		return true; // Lewati karena pesan yang sama persis sudah dikirim ke nomor ini dalam satu proses
 	}
@@ -2885,7 +2889,7 @@ function sendWaGroup($dataSend)
 	// Deduplikasi pengiriman pesan group yang identik (in-process + file-based lock 60 detik)
 	static $sent_group_messages = [];
 	$groupTarget = trim((string)($dataSend['penerima'] ?? ''));
-	$cleanGroupMsg = trim(strip_tags(urldecode($dataSend['pesan'] ?? '')));
+	$cleanGroupMsg = preg_replace('/\s+/', ' ', trim(strip_tags(urldecode((string)($dataSend['pesan'] ?? '')))));
 	$msgGroupHash = md5($groupTarget . '_' . $cleanGroupMsg);
 
 	if (isset($sent_group_messages[$msgGroupHash])) {

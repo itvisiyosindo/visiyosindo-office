@@ -8824,6 +8824,7 @@ class Surat extends CI_Controller
 		// }
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -8837,9 +8838,10 @@ class Surat extends CI_Controller
 				$idpenerima = $detail['idPenerima2'];
 			}
 
-			if (empty($idpenerima)) {
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
 				continue;
 			}
+			$sentRecipients[] = $idpenerima;
 
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
 			if (empty($dataPenerima)) {
@@ -8932,6 +8934,7 @@ class Surat extends CI_Controller
 		}
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -8945,9 +8948,10 @@ class Surat extends CI_Controller
 				$idpenerima = $detail['idPenerima2'];
 			}
 
-			if (empty($idpenerima)) {
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
 				continue;
 			}
+			$sentRecipients[] = $idpenerima;
 
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
 			if (empty($dataPenerima)) {
@@ -8995,6 +8999,7 @@ class Surat extends CI_Controller
 		}
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -9008,11 +9013,19 @@ class Surat extends CI_Controller
 				$idpenerima = $detail['idPenerima2'];
 			}
 
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
+				continue;
+			}
+			$sentRecipients[] = $idpenerima;
+
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
+			if (empty($dataPenerima)) {
+				continue;
+			}
 			$nope           = $dataPenerima[0]->no_hp;
 
 			$dataPenerimaSP 	= $this->md_pengguna->getById($idKar);
-			$namaSP           = $dataPenerimaSP[0]->nama;
+			$namaSP           = !empty($dataPenerimaSP) ? $dataPenerimaSP[0]->nama : '-';
 
 			$dataWa = [
 				'id'            => $detail['id'],
@@ -9058,6 +9071,7 @@ class Surat extends CI_Controller
 		}
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -9070,6 +9084,11 @@ class Surat extends CI_Controller
 				//id ???
 				$idpenerima = $detail['idPenerima2'];
 			}
+
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
+				continue;
+			}
+			$sentRecipients[] = $idpenerima;
 
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
 			$nope           = $dataPenerima[0]->no_hp;
@@ -9115,6 +9134,7 @@ class Surat extends CI_Controller
 		// }
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -9128,7 +9148,15 @@ class Surat extends CI_Controller
 				$idpenerima = $detail['idPenerima2'];
 			}
 
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
+				continue;
+			}
+			$sentRecipients[] = $idpenerima;
+
 			$dataPenerima = $this->md_pengguna->getById($idpenerima);
+			if (empty($dataPenerima)) {
+				continue;
+			}
 			$nope = $dataPenerima[0]->no_hp;
 			$dataWa = [
 				'id'            => $detail['id'],
@@ -9172,6 +9200,7 @@ class Surat extends CI_Controller
 		// }
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -9185,7 +9214,15 @@ class Surat extends CI_Controller
 				$idpenerima = $detail['idPenerima2'];
 			}
 
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
+				continue;
+			}
+			$sentRecipients[] = $idpenerima;
+
 			$dataPenerima = $this->md_pengguna->getById($idpenerima);
+			if (empty($dataPenerima)) {
+				continue;
+			}
 			$nope = $dataPenerima[0]->no_hp;
 			$dataWa = [
 				'id'            => $detail['id'],
@@ -9225,6 +9262,7 @@ class Surat extends CI_Controller
 		}
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -9238,7 +9276,15 @@ class Surat extends CI_Controller
 				$idpenerima = $detail['idPenerima2'];
 			}
 
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
+				continue;
+			}
+			$sentRecipients[] = $idpenerima;
+
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
+			if (empty($dataPenerima)) {
+				continue;
+			}
 			$nope           = $dataPenerima[0]->no_hp;
 			$dataWa = [
 				'id'            => $detail['id'],
@@ -9277,6 +9323,7 @@ class Surat extends CI_Controller
 		}
 
 		//send notif wa
+		$sentRecipients = [];
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
 				//id pengaju surat
@@ -9289,6 +9336,11 @@ class Surat extends CI_Controller
 				//id ???
 				$idpenerima = $detail['idPenerima2'];
 			}
+
+			if (empty($idpenerima) || in_array($idpenerima, $sentRecipients)) {
+				continue;
+			}
+			$sentRecipients[] = $idpenerima;
 
 			$dataPenerima 	= $this->md_pengguna->getById($idpenerima);
 			$nope           = $dataPenerima[0]->no_hp;
