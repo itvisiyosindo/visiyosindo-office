@@ -111,7 +111,7 @@ class Jobdesc extends CI_Controller
         $tgl_selesai = $this->input->post('tgl_selesai', TRUE);
 
         if (empty($id_pengguna)) {
-            ajaxReturnDie('error', 'Silakan pilih Nama Karyawan terlebih dahulu.', TRUE);
+            ajaxReturnDie('error', 'Silakan pilih Nama Karyawan terlebih dahulu.', false);
         }
 
         if (empty($tgl_mulai)) {
@@ -140,7 +140,7 @@ class Jobdesc extends CI_Controller
         $this->md_jobdesc->addJob($data);
 
         $lastGcId = $this->md_jobdesc->getLastId();
-        $lastGcId = $lastGcId->id;
+        $lastGcId = $lastGcId ? $lastGcId->id : 0;
 
         // 2. Tambah Detail Jobdesk dengan Rentang Tanggal
         $deskripsi_arr = $this->input->post('deskripsi');
@@ -149,12 +149,13 @@ class Jobdesc extends CI_Controller
         $nilai_arr     = $this->input->post('nilai');
 
         if (is_array($deskripsi_arr) && count($deskripsi_arr) > 0) {
+            $urut_counter = 1;
             foreach ($deskripsi_arr as $x => $deskripsi) {
                 $deskripsi_clean = trim($deskripsi);
                 if ($deskripsi_clean !== '') {
-                    $id_urut = isset($idurut_arr[$x]) ? trim($idurut_arr[$x]) : '';
-                    $point   = isset($point_arr[$x]) ? trim($point_arr[$x]) : '';
-                    $nilai   = isset($nilai_arr[$x]) ? trim($nilai_arr[$x]) : '2';
+                    $id_urut = (isset($idurut_arr[$x]) && $idurut_arr[$x] !== '') ? trim($idurut_arr[$x]) : $urut_counter;
+                    $point   = (isset($point_arr[$x]) && $point_arr[$x] !== '') ? trim($point_arr[$x]) : '1';
+                    $nilai   = (isset($nilai_arr[$x]) && $nilai_arr[$x] !== '') ? trim($nilai_arr[$x]) : '2';
 
                     $dataDetailGc = [
                         'idPengguna'  => $id_pengguna,
@@ -169,12 +170,13 @@ class Jobdesc extends CI_Controller
                     ];
 
                     $this->md_jobdesc->addJobdetail($dataDetailGc);
+                    $urut_counter++;
                 }
             }
         }
 
         addLog('Jobdesk', 'Menambah Jobdesk Berdasarkan Rentang Tanggal');
-        ajaxReturnDie('success', 'Jobdesk Berhasil Ditambahkan dengan Masa Berlaku ' . date('d/m/Y', strtotime($tgl_mulai)) . ' - ' . date('d/m/Y', strtotime($tgl_selesai)), TRUE);
+        ajaxReturnDie('success', 'Jobdesk Berhasil Ditambahkan dengan Masa Berlaku ' . date('d/m/Y', strtotime($tgl_mulai)) . ' - ' . date('d/m/Y', strtotime($tgl_selesai)), 'jobdesc/show/list/jobdesc');
     }
 
     public function addDetail()

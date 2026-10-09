@@ -356,7 +356,7 @@
 
 					$.ajax({
 						method: 'POST',
-						url: 'jobdesc/add',
+						url: '<?= base_url("jobdesc/add") ?>',
 						dataType: 'JSON',
 						data: {
 							id_pengguna : id_pengguna,
@@ -370,11 +370,32 @@
 						},
 						success: function(resp) {
 							$btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Simpan Jobdesk');
-							handleResponse(resp);
+							if (resp && (resp.status === 'success' || resp.status === true)) {
+								Swal.fire({
+									title: 'Berhasil!',
+									text: resp.msg || 'Jobdesk berhasil disimpan.',
+									icon: 'success',
+									timer: 1500,
+									timerProgressBar: true,
+									showConfirmButton: false
+								}).then(function() {
+									window.location.href = '<?= base_url("jobdesc/show/list/jobdesc") ?>';
+								});
+								setTimeout(function() {
+									window.location.href = '<?= base_url("jobdesc/show/list/jobdesc") ?>';
+								}, 1600);
+							} else {
+								Swal.fire({
+									title: 'Gagal!',
+									text: (resp && resp.msg) ? resp.msg : 'Gagal menyimpan data.',
+									icon: 'error',
+									confirmButtonText: 'Tutup'
+								});
+							}
 						},
-						error: function() {
+						error: function(xhr, status, error) {
 							$btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Simpan Jobdesk');
-							Swal.fire('Error', 'Terjadi kesalahan saat memproses data pada server', 'error');
+							Swal.fire('Error', 'Terjadi kesalahan saat memproses data pada server (' + (xhr.statusText || error) + ')', 'error');
 						}
 					});
 				}
