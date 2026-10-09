@@ -6545,6 +6545,7 @@ class Surat extends CI_Controller
 				$kode_surat	= '<a href="surat/show/detail_surat/approval/' . $row->id_approval . '">' . $row->kode . '</a>';
 				$cetak		= '<a href="surat/print_page/approval/' . $row->id_approval . '">print</a>';
 				$myObjedit = encrypt($row->id_approval);
+				$parJSONedit = encryptvym($myObjedit);
 				$li_btn   = '
 											<div class="btn-group" role="group" aria-label="First group">
 											<button type="button" class="btn btn-sm btn-primary btn-edit" title="Edit Data" data-id="' . $parJSONedit . '" data-object="surat/editapproval/' . $parJSONedit . '"><i class="bx bx-pencil"></i></button>
@@ -9644,18 +9645,25 @@ class Surat extends CI_Controller
 
 		$par = explode(",", decryptvym($this->input->post('id')));
 		$id = $this->input->post('iddetail');
+		$id_approval_dec = decrypt($par[0]);
 
-		//$query = $this->db->from('surat_list')->where('id_kat_surat',8)->where('id_srt',decrypt($par[0]))->where('status',0);
-		$query = $this->db->from('surat_approval')->where('id_approval', decrypt($par[0]))->where('pengajuan_ttd_1 IS NULL');
+		$query = $this->db->from('surat_approval')
+			->where('id_approval', $id_approval_dec)
+			->group_start()
+				->where('pengajuan_ttd_1 IS NULL')
+				->or_where('pengajuan_ttd_1', 0)
+				->or_where('pengajuan_ttd_1', '')
+			->group_end();
 		$juml = $query->count_all_results();
 
 		if ($juml == 0) {
-			ajaxReturnDie('error', 'Anda tidak bisa mengupdate karena data sudah disetujui');
+			$checkList = $this->db->from('surat_list')->where('id_kat_surat', 8)->where('id_srt', $id_approval_dec)->where('status', 0)->count_all_results();
+			if ($checkList == 0) {
+				ajaxReturnDie('error', 'Anda tidak bisa mengupdate karena data sudah disetujui');
+			}
 		}
 
-
-
-		$data['id_approval'] = decrypt($par[0]);
+		$data['id_approval'] = $id_approval_dec;
 		$data['nama_barang'] = $this->input->post('namabarang');
 		$data['acuan_hrg']  = $this->input->post('acuanharga');
 		$data['hrg_ditawarkan'] = $this->input->post('harga');

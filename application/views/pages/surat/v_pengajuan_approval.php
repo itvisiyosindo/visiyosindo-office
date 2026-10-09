@@ -193,73 +193,110 @@
 		
 
 		$(document).on('click', '.btn-edit', function() {
-					var par = $(this).data("id"); 
-					var url ="surat/editapproval/"+par
-					$('#main-modal-approval #idapproval').val(par)
-					$.ajax({
-							type: "GET",
-							url: url,
-							success: function(response) {     
-								if (response) {
-										//console.log(par);
-									  result = JSON.parse(response);
-										table2.ajax.url('surat/paginationapproval/' + par).load();
-										table2.column(1).visible(false);
-										$('#main-modal-approval').modal();
-								}
-    					},
-							error: function (request, status, error) {
-									alert(request.responseText);
-							}					
-				});				
-			})
+			var par = $(this).data("id"); 
+			if (!par) {
+				Swal.fire('Error', 'ID Approval tidak ditemukan', 'error');
+				return;
+			}
+			var url = "surat/editapproval/" + par;
+			$('#main-modal-approval #idapproval').val(par);
+			$.ajax({
+				type: "GET",
+				url: url,
+				dataType: "JSON",
+				success: function(response) {     
+					if (response && response.status !== 'error') {
+						table2.ajax.url('surat/paginationapproval/' + par).load();
+						table2.column(1).visible(false);
+						$('#main-modal-approval').modal();
+					} else {
+						Swal.fire('Info', (response && response.msg) ? response.msg : 'Gagal memuat data approval', 'info');
+					}
+				},
+				error: function (request, status, error) {
+					Swal.fire('Error', 'Terjadi kesalahan saat memuat data approval', 'error');
+				}					
+			});				
+		});
 
-			$(document).on('click', '.btn-editapproval', function() {
-					 var currentRow = table2.row($(this).parents("tr")).data();  
-		 		 	 var iddetail = currentRow[1];
-					 var namabarang = currentRow[2];
-					 var acuanharga = currentRow[3];
-					 var harga = currentRow[4];
-					 $('#iddetail').val(iddetail);
-					 $('#namabarangsebelum').val(namabarang);
-					 $('#acuanhargasebelum').val(acuanharga);
-					 $('#hargasebelum').val(harga);
-					 $('#namabarang').val(namabarang);
-					 $('#acuanharga').val(acuanharga);
-					 $('#harga').val(harga);
-			})
+		$(document).on('click', '.btn-editapproval', function() {
+			var currentRow = table2.row($(this).parents("tr")).data();  
+			var iddetail = currentRow[1];
+			var namabarang = currentRow[2];
+			var acuanharga = currentRow[3];
+			var harga = currentRow[4];
+			$('#main-modal-approval #iddetail').val(iddetail);
+			$('#main-modal-approval #namabarangsebelum').val(namabarang);
+			$('#main-modal-approval #acuanhargasebelum').val(acuanharga);
+			$('#main-modal-approval #hargasebelum').val(harga);
+			$('#main-modal-approval #namabarang').val(namabarang);
+			$('#main-modal-approval #acuanharga').val(acuanharga);
+			$('#main-modal-approval #harga').val(harga);
+			$('#main-modal-approval #alasan').val('');
+		});
 
 		$('#btn-updateapproval').click(function() {
+			var idApproval = $('#main-modal-approval #idapproval').val();
+			var idDetail = $('#main-modal-approval #iddetail').val();
+			var namaBarang = $('#main-modal-approval #namabarang').val();
+			var acuanHarga = $('#main-modal-approval #acuanharga').val();
+			var harga = $('#main-modal-approval #harga').val();
+			var alasan = $('#main-modal-approval #alasan').val();
+
+			if (!idDetail) {
+				Swal.fire('Perhatian', 'Silakan pilih barang yang ingin diedit dari tabel di bawah terlebih dahulu', 'warning');
+				return;
+			}
+			if (!alasan || alasan.trim() === '') {
+				Swal.fire('Perhatian', 'Alasan Perubahan tidak boleh kosong!', 'warning');
+				return;
+			}
+
+			var $btn = $(this);
+			$btn.prop('disabled', true).text('Menyimpan...');
+
 			$.ajax({
-							type: "POST",
-							url: "surat/updateapproval",
-							cache: false,
-							data: {
-									id: $('#main-modal-approval  #idapproval').val(),
-									iddetail: $('#main-modal-approval #iddetail').val(),
-									namabarang: $('#main-modal-approval #namabarang').val(), 
-									acuanharga: $('#main-modal-approval #acuanharga').val(),
-									harga: $('#main-modal-approval #harga').val(),
-									namabarangsebelum: $('#main-modal-approval #namabarangsebelum').val(), 
-									acuanhargasebelum: $('#main-modal-approval #acuanhargasebelum').val(),
-									hargasebelum: $('#main-modal-approval #hargasebelum').val(),
-									alasan: $('#main-modal-approval #alasan').val(),									
-							},
-							success: function(result) { 
-									 var pesan = $.parseJSON(result)
-									 if(pesan.status!='error'){
-										  $('#main-modal-approval').modal('hide');
-									 }
-									 Swal.fire({
-                                        type: pesan.status,
-                                        icon: pesan.status,
-                                        title: pesan.msg,
-                                        showConfirmButton: false,
-                                        timer: 2000
-                                    });
-    					},				
-				});
-	  })
+				type: "POST",
+				url: "surat/updateapproval",
+				cache: false,
+				dataType: "JSON",
+				data: {
+					csrf_token: token,
+					id: idApproval,
+					iddetail: idDetail,
+					namabarang: namaBarang, 
+					acuanharga: acuanHarga,
+					harga: harga,
+					namabarangsebelum: $('#main-modal-approval #namabarangsebelum').val(), 
+					acuanhargasebelum: $('#main-modal-approval #acuanhargasebelum').val(),
+					hargasebelum: $('#main-modal-approval #hargasebelum').val(),
+					alasan: alasan,									
+				},
+				success: function(pesan) { 
+					$btn.prop('disabled', false).text('Update');
+					if (pesan && (pesan.status === 'success' || pesan.status === 'true')) {
+						$('#main-modal-approval').modal('hide');
+						table.ajax.reload(null, false);
+						Swal.fire({
+							icon: 'success',
+							title: pesan.msg || 'Data berhasil diperbarui',
+							showConfirmButton: false,
+							timer: 2000
+						});
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: (pesan && pesan.msg) ? pesan.msg : 'Gagal memperbarui data',
+							showConfirmButton: true
+						});
+					}
+				},
+				error: function(request, status, error) {
+					$btn.prop('disabled', false).text('Update');
+					Swal.fire('Error', 'Terjadi kesalahan saat memproses data', 'error');
+				}				
+			});
+		});
 	  
 	  $('#btn-laporan-form').click(function() {
 		     $('#main-modal-marketing').modal()	
