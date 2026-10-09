@@ -285,9 +285,13 @@ class Jobdesc extends CI_Controller
         $data_job = $this->md_laporan->getPengguna($idPengguna);
         if (!$data_job) {
             $data_job = $job_info;
+        } else {
+            $data_job->tgl_mulai = $job_info->tgl_mulai;
+            $data_job->tgl_selesai = $job_info->tgl_selesai;
+            $data_job->id_po = $job_info->id_po;
         }
 
-        $data_detail = $this->md_jobdesc->getDetailPOById($idPengguna);
+        $data_detail = $this->md_jobdesc->getDetailPOById($id_jobdesc, $idPengguna);
 
         $dt = [
             'title_pdf' => 'Jobdesk Karyawan - ' . ($data_job ? $data_job->nama : ''),

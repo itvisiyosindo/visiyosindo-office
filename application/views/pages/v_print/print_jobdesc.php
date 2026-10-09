@@ -140,9 +140,15 @@
             <td><strong>Jabatan</strong></td>
             <td>:</td>
             <td><?= isset($data_job->jabatan) ? $data_job->jabatan : '-' ?></td>
-            <td><strong>Status</strong></td>
+            <td><strong>Masa Berlaku</strong></td>
             <td>:</td>
-            <td>Aktif</td>
+            <td>
+                <?php 
+                    $tgl_m = (!empty($data_job->tgl_mulai) && $data_job->tgl_mulai != '0000-00-00') ? date('d/m/Y', strtotime($data_job->tgl_mulai)) : '01/01/2024';
+                    $tgl_s = (!empty($data_job->tgl_selesai) && $data_job->tgl_selesai != '0000-00-00' && $data_job->tgl_selesai != '2099-12-31') ? date('d/m/Y', strtotime($data_job->tgl_selesai)) : 'Seterusnya';
+                    echo $tgl_m . ' s/d ' . $tgl_s;
+                ?>
+            </td>
         </tr>
     </table>
 
