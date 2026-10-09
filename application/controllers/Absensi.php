@@ -2082,7 +2082,9 @@ class Absensi extends CI_Controller
             $data[] = $th;
         }
         $dt['data'] = $data;
-        $dt['recordsFiltered'] = count($data);
+        if (!empty($filter_status)) {
+            $dt['recordsFiltered'] = count($data);
+        }
         echo json_encode($dt);
         die;
     }
