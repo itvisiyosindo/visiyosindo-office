@@ -181,11 +181,34 @@ class Md_jobdesc extends CI_Model
                 }
                 
                 
+                function getNextUrutByJobdesc($id_jobdesc, $idPengguna = null)
+                {
+                    $row = $this->db
+                        ->select_max('id_urut', 'max_urut')
+                        ->where('id_jobdesc', $id_jobdesc)
+                        ->where('status', 1)
+                        ->get('jobdesc_detail')
+                        ->row();
+                
+                    if ($row && !empty($row->max_urut) && $row->max_urut > 0) {
+                        return ((int) $row->max_urut) + 1;
+                    }
+
+                    // Jika belum ada id_urut atau 0, hitung jumlah baris yang ada
+                    $count = $this->db
+                        ->where('id_jobdesc', $id_jobdesc)
+                        ->where('status', 1)
+                        ->count_all_results('jobdesc_detail');
+
+                    return ((int) $count) + 1;
+                }
+
                 function getNextUrutByPengguna($idPengguna)
                 {
                     $row = $this->db
                         ->select_max('id_urut', 'max_urut')
                         ->where('idPengguna', $idPengguna)
+                        ->where('status', 1)
                         ->get('jobdesc_detail')
                         ->row();
                 

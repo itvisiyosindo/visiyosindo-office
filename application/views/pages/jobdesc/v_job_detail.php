@@ -186,6 +186,7 @@
 		$('#btn-show-add-form').click(function() {
 			$('#modal-form')[0].reset();
 			$('#main-modal #id_pelanggan').val('');
+			$('#main-modal #idurut').val('<?= isset($next_urut) ? $next_urut : 1 ?>');
 			$('#main-modal #modal-form').attr('action', 'jobdesc/addDetail');
 			$('#main-modal').modal('show');
 		});

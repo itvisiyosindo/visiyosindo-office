@@ -54,25 +54,19 @@ class Jobdesc extends CI_Controller
     public function show($param = "", $param2 = "", $param3 = "")
     {
         grantAccessFor('all');
-                if($param == 'detail'){  
-          if ($param2 == 'jobdesc'){
+        if ($param == 'detail') {  
+          if ($param2 == 'jobdesc') {
             $id_jobdesc               = decrypt($param3);
-            $page_data['switch']      	= $this->id_navbar();
-            $page_data['data_job']		  = $this->md_jobdesc->getJobById($id_jobdesc);
-            $Detail = $this->md_jobdesc->getJobById($id_jobdesc);
-            $idPengguna = $Detail->id_pengguna;
-                        $id_jobdesc               = decrypt($param3);
             $page_data['switch']      = $this->id_navbar();
             $page_data['data_job']    = $this->md_jobdesc->getJobById($id_jobdesc);
             $Detail                   = $page_data['data_job'];
-            $idPengguna               = $Detail->id_pengguna;
+            $idPengguna               = $Detail ? $Detail->id_pengguna : null;
             // Kirim $id_jobdesc dan $idPengguna
             $page_data['data_detail'] = $this->md_jobdesc->getDetailPOById($id_jobdesc, $idPengguna);
-            $page_data['next_urut']   = $this->md_jobdesc->getNextUrutByPengguna($idPengguna);
-            $page_data['next_urut']   = $this->md_jobdesc->getNextUrutByPengguna($idPengguna);
-            $page_data['page_name']     = 'jobdesc/v_job_detail';
-            $page_data['page_title']    = 'Jobdesk';
-            $page_data['page_desc']     = 'Detail Jobdesk';
+            $page_data['next_urut']   = $this->md_jobdesc->getNextUrutByJobdesc($id_jobdesc, $idPengguna);
+            $page_data['page_name']   = 'jobdesc/v_job_detail';
+            $page_data['page_title']  = 'Jobdesk';
+            $page_data['page_desc']   = 'Detail Jobdesk';
             $this->load->view('index', $page_data);
           }
         }else if($param == 'list'){
@@ -192,11 +186,11 @@ class Jobdesc extends CI_Controller
         $data['point']      = $this->input->post('point', TRUE);
         $id_urut_input      = $this->input->post('idurut', TRUE);
 
-        // Jika nomor urut diisi gunakan input, jika tidak hitung otomatis
+        // Jika nomor urut diisi gunakan input, jika tidak hitung otomatis per jobdesk
         if (!empty($id_urut_input) || $id_urut_input === '0') {
             $data['id_urut'] = $id_urut_input;
         } else {
-            $data['id_urut'] = $this->md_jobdesc->getNextUrutByPengguna($data['idPengguna']);
+            $data['id_urut'] = $this->md_jobdesc->getNextUrutByJobdesc($data['id_jobdesc'], $data['idPengguna']);
         }
     
         $data['nilai']      = $this->input->post('nilai', TRUE);

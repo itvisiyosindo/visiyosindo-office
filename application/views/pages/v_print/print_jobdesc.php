@@ -165,9 +165,13 @@
         </thead>
         <tbody>
             <?php if (!empty($data_detail)): ?>
-                <?php foreach ($data_detail as $row): ?>
+                <?php 
+                $no = 1;
+                foreach ($data_detail as $row): 
+                    $no_urut_display = (!empty($row->id_urut) && $row->id_urut != 0) ? $row->id_urut : $no;
+                ?>
                     <tr>
-                        <td class="text-center"><?= !empty($row->id_urut) ? $row->id_urut : '-' ?></td>
+                        <td class="text-center"><?= $no_urut_display ?></td>
                         <td class="text-center"><strong><?= !empty($row->point) ? '[' . htmlspecialchars($row->point) . ']' : '-' ?></strong></td>
                         <td>
                             <?php if ($row->nilai == 1): ?>
@@ -184,7 +188,10 @@
                             <?php endif; ?>
                         </td>
                     </tr>
-                <?php endforeach; ?>
+                <?php 
+                    $no++;
+                endforeach; 
+                ?>
             <?php else: ?>
                 <tr>
                     <td colspan="4" class="text-center"><em>Belum ada rincian jobdesk untuk karyawan ini.</em></td>
