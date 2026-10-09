@@ -1,242 +1,358 @@
 <header class="page-header">
-    <h2><i class="icons fas fa-user"></i>&nbsp;<?= $page_title ?></h2>
-    <div class="right-wrapper text-left">
-        <ol class="breadcrumbs">
-            <li><span><?= $page_desc ?></span></li>
-        </ol>
-    </div>
-	
+	<h2><i class="icons fas fa-user"></i>&nbsp;<?= $page_title ?></h2>
+	<div class="right-wrapper text-left">
+		<ol class="breadcrumbs">
+			<li><span><?= $page_desc ?></span></li>
+		</ol>
+	</div>
+
 	<style>
-		hr{
-		   display: block;
-		   margin-top: 0em;
-		   margin-bottom: 0em;
-		   margin-left: auto;
-		   margin-right: auto;
-		   border-top: 1px solid black;
+		.jobdesc-table th {
+			background-color: #0056b3;
+			color: #ffffff;
+			vertical-align: middle !important;
+			text-align: center;
+			font-size: 13px;
+			padding: 10px 8px;
 		}
-		
-		input{
-			width:97%;
-			height:auto;
-			border:0px dotted #f30; 
-			border-radius:4px; 
-			-moz-border-radius:8px;			
-			margin-right:0px;
+		.jobdesc-table td {
+			vertical-align: middle !important;
+			padding: 8px;
 		}
-		
-		.myinput{
-			width:97%;
-			height:auto;
-			border:0px solid #000;
-			border-radius:0px; 
-			-moz-border-radius:8px;
-			margin-left:0px;
-			background:#b7d5ac;
+		.drag-handle {
+			cursor: grab;
+			color: #64748b;
+			padding: 6px 10px;
+			border-radius: 4px;
+			background-color: #f1f5f9;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			user-select: none;
 		}
-		
-		.myselect{
-			width:97%;
-			height:auto;
-			border:0px solid #000; 
-			border-radius:4px; 
-			-moz-border-radius:8px;
-			margin:0px;
+		.drag-handle:active {
+			cursor: grabbing;
+			background-color: #cbd5e1;
 		}
-		
-		.mydiv br {
-			display: none;
+		.ui-sortable-helper {
+			display: table;
+			background: #ffffff !important;
+			box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+			border: 2px dashed #0056b3 !important;
 		}
-		
-		.mydiv p {
-			padding: 0;
-			margin: 0;
+		.ui-sortable-placeholder {
+			background-color: #e0f2fe !important;
+			visibility: visible !important;
+			height: 60px !important;
+			border: 2px dashed #0284c7 !important;
+		}
+		.textarea-deskripsi {
+			width: 100%;
+			min-height: 48px;
+			resize: vertical;
+			font-size: 13px;
+			line-height: 1.4;
+			border-radius: 4px;
+		}
+		.no-urut-badge {
+			display: inline-block;
+			min-width: 28px;
+			font-weight: 700;
+			font-size: 13px;
+			color: #003366;
 		}
 	</style>
 </header>
-<div class="col-xl-12 mb-8 mb-xl-0;" style=" margin: auto;">
-	<div class="card-body" style="background-color:#FFFFFF; padding:5%;">
-	    <div class="table-responsive">
-        <div class="text-center mt-0">
-            <h2><font color='#000000' face='Times New Roman'>Lengkapi Data Jobdesk</font></h2>
-        </div>
-		<font color='#000000'>
-			<?= form_open('#', array('id' => 'a-gc-form', 'autocomplete' => 'off')); ?>
-			<table id="tbl_1" style="font-family:Times New Roman; font-size:15px" border="0" width="100%" color="red">
-				<tr>
-					<td colspan="3" style="text-align:left">
-						<font color='#000000'></font>
-					</td>
-				</tr>
-				<tr>											
-		</font>
-					<td rowspan="5" ></td>
-					
-					<tr>
-						<td width="10%">Nama Karyawan</td>
-						<td style="text-align:left; ">
-						:&nbsp;&nbsp;
-                        		<select name="id_pengguna" id="id_pengguna" style="background-color: transparent; border: none;">
-                                    <option value="">Pilih Nama Karyawan</option>
-                                    <?php
-                                    //$nama = $this->db->get('pengguna')->where('pengguna.status=1')->result();
-                                    foreach ($list_nama as $row) {
-                                    ?>
-                                    <option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
-                                    <?php } ?>
-                                </select>
-                        	
-						</td>
-					</tr>
-					
 
-										<tr>
-						<td width="15%">Berlaku Dari Tanggal</td>
-						<td style="text-align:left;">
-							:&nbsp;&nbsp;
-							<input type="date" name="tgl_mulai" id="tgl_mulai" value="<?= date('Y-m-d') ?>" style="width: 200px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" required>
-						</td>
-					</tr>
-					<tr>
-						<td width="15%">Berlaku Sampai Tanggal</td>
-						<td style="text-align:left;">
-							:&nbsp;&nbsp;
-							<input type="date" name="tgl_selesai" id="tgl_selesai" value="2099-12-31" style="width: 200px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" required>
-							<small class="text-muted" style="margin-left: 10px;">*(Biarkan 2099-12-31 jika berlaku seterusnya)</small>
-						</td>
-					</tr>
-				</tr>
-			</table>
-		
-			<table id="kt_table_1" style="font-family:Times New Roman; font-color:black; font-size:15px" border="1" width="100%">
-                        <thead>
-                            <tr>
-                                <th style="text-align:center" width="10%" bgcolor="#d3d3d3"> Nomor Urut </th>
-                                <th style="text-align:center" width="15%" bgcolor="#d3d3d3"> Point (Pengelompokan dengan Sub Jobdesc)</th>
-                                <th style="text-align:center" bgcolor="#d3d3d3"> Deskripsi Pekerjaan </th>
-                                <th style="text-align:center" width="15%"  bgcolor="#d3d3d3"> Penilaian </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-									<?php
-										$itung = 1;
-										for($x=1;$x<=25;$x++){
-										$itung = $x;
-									?>
-								<tr>
-                                    <!--<td style="text-align:center">
-																			<?= $x ?>
-																		</td>-->
-																		<td><input type="text" id="<?= 'idurut_'.$x ?>" Style="width:100%" required></td>
-																		<td><input type="text" id="<?= 'point_'.$x ?>" Style="width:100%" required></td>
-																		<td><input type="text" id="<?= 'deskripsi_'.$x ?>" Style="width:100%" required></td>
-																		<td>
-                                    	<select class="select-transaction input-group-sm form-control" id="<?= 'nilai_'.$x ?>" >
-																				<option value ="2">Tidak Dinilai</option>
-																				<option value ="1">Dinilai</option>
-																			</select>
-                                    </td>
-                                </tr>
-										<?php } ?>
-										<input type="hidden" id="itung" value="<?= $itung ?>">
-                        </tbody>
-                        
-			</table>
-			<br>
-			
-			<button type="button" class="btn btn-success" onclick="myFunction1()">Tambah Baris</button>
-			<button type="button" class="btn btn-danger" onclick="myDeleteFunction1()">	Hapus Baris</button>
-
-
-
-        
+<div class="row">
+	<div class="col-12">
+		<div class="card shadow-sm border-0 mb-4" style="background-color: #ffffff; border-radius: 8px;">
+			<div class="card-header bg-light border-bottom py-3">
+				<h4 class="card-title font-weight-bold mb-0 text-dark">
+					<i class="fas fa-file-signature text-primary mr-2"></i> Form Kelengkapan Data Jobdesk
+				</h4>
 			</div>
-			<?= form_close(); ?>
-			<br><br>
-		<div role="document">
-			<button type="button" class="btn btn-success btn-save float-right btn-ajukan" style="margin-left:12px;"> <i class="fas fa-check"></i> Simpan </button>
-            <button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form float-left" >Kembali</button>
-        </div>
-		<br><br>
+			
+			<div class="card-body p-4">
+				<?= form_open('#', array('id' => 'a-gc-form', 'autocomplete' => 'off')); ?>
+				
+				<!-- Informasi Karyawan & Masa Berlaku -->
+				<div class="row mb-4">
+					<div class="col-md-5 mb-3">
+						<label class="font-weight-bold text-dark">Nama Karyawan <span class="text-danger">*</span> :</label>
+						<select name="id_pengguna" id="id_pengguna" class="form-control select2" style="width: 100%;" required>
+							<option value="">-- Pilih Nama Karyawan --</option>
+							<?php foreach ($list_nama as $row): ?>
+								<option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<div class="col-md-3 mb-3">
+						<label class="font-weight-bold text-dark">Berlaku Dari Tanggal <span class="text-danger">*</span> :</label>
+						<input type="date" name="tgl_mulai" id="tgl_mulai" class="form-control" value="<?= date('Y-m-d') ?>" required>
+					</div>
+
+					<div class="col-md-4 mb-3">
+						<label class="font-weight-bold text-dark">Berlaku Sampai Tanggal :</label>
+						<input type="date" name="tgl_selesai" id="tgl_selesai" class="form-control" value="2099-12-31" required>
+						<small class="text-muted d-block mt-1">* Biarkan 2099-12-31 jika berlaku seterusnya.</small>
+					</div>
+				</div>
+
+				<hr class="mb-4">
+
+				<!-- Tabel Input Poin Jobdesk -->
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h5 class="font-weight-bold text-dark mb-0">
+						<i class="fas fa-list-ol text-primary mr-2"></i> Rincian Poin & Tugas Jobdesk
+					</h5>
+					<div>
+						<button type="button" class="btn btn-sm btn-primary mr-1" id="btn-add-row">
+							<i class="fas fa-plus mr-1"></i> Tambah Baris
+						</button>
+						<button type="button" class="btn btn-sm btn-outline-danger" id="btn-delete-last-row">
+							<i class="fas fa-minus mr-1"></i> Hapus Baris Terakhir
+						</button>
+					</div>
+				</div>
+
+				<div class="table-responsive">
+					<table class="table table-bordered table-hover jobdesc-table" id="kt_table_1" style="width: 100%;">
+						<thead>
+							<tr>
+								<th width="8%">Urutan</th>
+								<th width="12%">Point</th>
+								<th width="56%">Deskripsi Tugas / Pekerjaan <span class="text-danger">*</span></th>
+								<th width="18%">Penilaian</th>
+								<th width="6%">Aksi</th>
+							</tr>
+						</thead>
+						<tbody id="jobdesc_tbody">
+							<!-- Baris default awal (5 baris) -->
+							<?php for ($x = 1; $x <= 5; $x++): ?>
+								<tr class="jobdesc-row">
+									<td class="text-center">
+										<div class="d-flex align-items-center justify-content-center">
+											<span class="drag-handle mr-2" title="Klik dan geser (drag & drop) untuk memindahkan urutan">
+												<i class="fas fa-grip-vertical"></i>
+											</span>
+											<span class="no-urut-badge row-index"><?= $x ?></span>
+											<input type="hidden" class="input-idurut" value="<?= $x ?>">
+										</div>
+									</td>
+									<td>
+										<input type="text" class="form-control form-control-sm text-center input-point" placeholder="e.g. 1" value="1">
+									</td>
+									<td>
+										<textarea class="form-control textarea-deskripsi input-deskripsi" rows="2" placeholder="Tulis rincian tugas / deskripsi pekerjaan..."></textarea>
+									</td>
+									<td>
+										<select class="form-control form-control-sm input-nilai">
+											<option value="1">Dinilai (Jobdesk Utama)</option>
+											<option value="2" selected>Tidak Dinilai</option>
+										</select>
+									</td>
+									<td class="text-center">
+										<button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Hapus baris ini">
+											<i class="fas fa-trash"></i>
+										</button>
+									</td>
+								</tr>
+							<?php endfor; ?>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="d-flex justify-content-between align-items-center mt-3">
+					<button type="button" class="btn btn-sm btn-primary" id="btn-add-row-bottom">
+						<i class="fas fa-plus mr-1"></i> Tambah Baris
+					</button>
+					<span class="text-muted small font-italic">
+						<i class="fas fa-info-circle mr-1"></i> Anda dapat menggeser ikon <i class="fas fa-grip-vertical text-secondary"></i> (drag & drop) untuk mengatur ulang urutan tugas kapan saja.
+					</span>
+				</div>
+
+				<?= form_close(); ?>
+			</div>
+
+			<div class="card-footer bg-light py-3 d-flex justify-content-between">
+				<button type="button" onclick="goBack()" class="btn btn-secondary">
+					<i class="fas fa-arrow-left mr-1"></i> Kembali
+				</button>
+				<button type="button" class="btn btn-success btn-ajukan px-4 font-weight-bold">
+					<i class="fas fa-check mr-1"></i> Simpan Jobdesk
+				</button>
+			</div>
 		</div>
-		
-    </div>	
+	</div>
 </div>
 
 <script>
-	var x = <?= $itung ?>;
-		x = parseInt(x)+2;
-		function myFunction1() {
-		  var urut1 	= x - 1;
-		  var table = document.getElementById("kt_table_1");
-		  var row 	= table.insertRow(x);
-		  x = x + 1;
-		  var cell1 = row.insertCell(0);
-		  var cell2 = row.insertCell(1);
-		  var cell3 = row.insertCell(2);
-		  var cell4 = row.insertCell(3);
-		  
-		  // x = x+1;
-		  //cell1.innerHTML = "<center>"+urut1+"</center>";
-		  cell1.innerHTML = "<input type='text' id='idurut_"+urut1+"' Style='width:100%'>";
-		  cell2.innerHTML = "<input type='text' id='point_"+urut1+"' Style='width:100%'>";
-		  cell3.innerHTML = "<input type='text' id='deskripsi_"+urut1+"' Style='width:100%'>";
-			cell4.innerHTML = `<select class="select-transaction input-group-sm form-control" id="nilai_${urut1}" style="width:100%">
-					<option value="2">Tidak Dinilai</option>
-					<option value="1">Dinilai</option>
-			</select>`;
-		  document.getElementById('itung').value = urut1;
+	document.addEventListener('DOMContentLoaded', function() {
+		// Initialize Select2 jika tersedia
+		if ($.fn.select2) {
+			$('#id_pengguna').select2({
+				placeholder: "-- Pilih Nama Karyawan --",
+				allowClear: true
+			});
 		}
-		
-		function myDeleteFunction1() {
-			x = x-1;		
-			document.getElementById("kt_table_1").deleteRow(x);			
-		}
-	
 
-    document.addEventListener('DOMContentLoaded', function() {
-        
-		$(document).on('click', '.btn-ajukan', function() {
-			var id_pengguna	= $('#id_pengguna').val();
+		// Fungsi Penomoran Ulang Otomatis (1..N)
+		function renumberRows() {
+			$('#jobdesc_tbody tr.jobdesc-row').each(function(index) {
+				var newNum = index + 1;
+				$(this).find('.row-index').text(newNum);
+				$(this).find('.input-idurut').val(newNum);
+			});
+		}
+
+		// Aktifkan Drag & Drop Sortable menggunakan jQuery UI
+		if ($.fn.sortable) {
+			$('#jobdesc_tbody').sortable({
+				handle: '.drag-handle',
+				items: 'tr.jobdesc-row',
+				axis: 'y',
+				opacity: 0.8,
+				cursor: 'grabbing',
+				placeholder: 'ui-sortable-placeholder',
+				helper: function(e, ui) {
+					// Pertahankan lebar kolom saat di-drag
+					ui.children().each(function() {
+						$(this).width($(this).width());
+					});
+					return ui;
+				},
+				stop: function(event, ui) {
+					renumberRows();
+				}
+			}).disableSelection();
+		}
+
+		// Fungsi Template Buat Baris Baru
+		function createNewRow(rowNum, defaultPoint) {
+			var pointVal = defaultPoint || '1';
+			return `
+				<tr class="jobdesc-row">
+					<td class="text-center">
+						<div class="d-flex align-items-center justify-content-center">
+							<span class="drag-handle mr-2" title="Klik dan geser (drag & drop) untuk memindahkan urutan">
+								<i class="fas fa-grip-vertical"></i>
+							</span>
+							<span class="no-urut-badge row-index">${rowNum}</span>
+							<input type="hidden" class="input-idurut" value="${rowNum}">
+						</div>
+					</td>
+					<td>
+						<input type="text" class="form-control form-control-sm text-center input-point" placeholder="e.g. 1" value="${pointVal}">
+					</td>
+					<td>
+						<textarea class="form-control textarea-deskripsi input-deskripsi" rows="2" placeholder="Tulis rincian tugas / deskripsi pekerjaan..."></textarea>
+					</td>
+					<td>
+						<select class="form-control form-control-sm input-nilai">
+							<option value="1">Dinilai (Jobdesk Utama)</option>
+							<option value="2" selected>Tidak Dinilai</option>
+						</select>
+					</td>
+					<td class="text-center">
+						<button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Hapus baris ini">
+							<i class="fas fa-trash"></i>
+						</button>
+					</td>
+				</tr>
+			`;
+		}
+
+		// Tambah Baris Baru
+		function addRow() {
+			var totalRows = $('#jobdesc_tbody tr.jobdesc-row').length;
+			var nextNum = totalRows + 1;
+			
+			// Ambil nilai point terakhir jika ada
+			var lastPoint = '1';
+			var lastRow = $('#jobdesc_tbody tr.jobdesc-row').last();
+			if (lastRow.length > 0) {
+				lastPoint = lastRow.find('.input-point').val() || '1';
+			}
+
+			var newRowHtml = createNewRow(nextNum, lastPoint);
+			$('#jobdesc_tbody').append(newRowHtml);
+			renumberRows();
+
+			// Focus ke textarea baris yang baru ditambah
+			$('#jobdesc_tbody tr.jobdesc-row').last().find('.input-deskripsi').focus();
+		}
+
+		$('#btn-add-row, #btn-add-row-bottom').click(function(e) {
+			e.preventDefault();
+			addRow();
+		});
+
+		// Hapus Baris Terakhir
+		$('#btn-delete-last-row').click(function(e) {
+			e.preventDefault();
+			var rows = $('#jobdesc_tbody tr.jobdesc-row');
+			if (rows.length > 1) {
+				rows.last().remove();
+				renumberRows();
+			} else {
+				Swal.fire('Info', 'Minimal harus ada 1 baris input jobdesk!', 'info');
+			}
+		});
+
+		// Hapus Baris Tertentu
+		$(document).on('click', '.btn-remove-row', function(e) {
+			e.preventDefault();
+			var rows = $('#jobdesc_tbody tr.jobdesc-row');
+			if (rows.length > 1) {
+				$(this).closest('tr.jobdesc-row').remove();
+				renumberRows();
+			} else {
+				Swal.fire('Info', 'Minimal harus ada 1 baris input jobdesk!', 'info');
+			}
+		});
+
+		// Submit Simpan Jobdesk
+		$(document).on('click', '.btn-ajukan', function(e) {
+			e.preventDefault();
+			var id_pengguna = $('#id_pengguna').val();
 			if (!id_pengguna) {
 				Swal.fire('Perhatian', 'Silakan pilih Nama Karyawan terlebih dahulu!', 'warning');
 				return;
 			}
-			
-			let itung_isi = parseInt($('#itung').val()) || 25;
-			let des = [];
-			let idu = [];
-			let poi = [];
-			let nil = [];
 
-			for (let i = 1; i <= itung_isi; i++) {
-				let el = $('#deskripsi_' + i);
-				if (el.length > 0) {
-					let deskripsiVal = el.val();
-					if (deskripsiVal && deskripsiVal.trim() !== "") {
-						des.push(deskripsiVal.trim());
-						idu.push($('#idurut_' + i).val() || i);
-						poi.push($('#point_' + i).val() || '1');
-						nil.push($('#nilai_' + i).val() || '2');
-					}
+			var des = [];
+			var idu = [];
+			var poi = [];
+			var nil = [];
+
+			$('#jobdesc_tbody tr.jobdesc-row').each(function(idx) {
+				var deskripsiVal = $(this).find('.input-deskripsi').val();
+				if (deskripsiVal && deskripsiVal.trim() !== '') {
+					des.push(deskripsiVal.trim());
+					idu.push($(this).find('.input-idurut').val() || (idx + 1));
+					poi.push($(this).find('.input-point').val() || '1');
+					nil.push($(this).find('.input-nilai').val() || '2');
 				}
-			}			
-			
+			});
+
 			if (des.length === 0) {
-				Swal.fire('Perhatian', 'Silakan isi minimal 1 baris deskripsi pekerjaan!', 'warning');
+				Swal.fire('Perhatian', 'Silakan isi minimal 1 baris deskripsi tugas/pekerjaan!', 'warning');
 				return;
 			}
-			
+
 			Swal.fire({
 				title: 'Simpan Jobdesk?',
+				text: 'Pastikan seluruh rincian poin dan urutan tugas sudah sesuai.',
 				icon: 'question',
 				showCancelButton: true,
-				confirmButtonText: 'Ya',
-				cancelButtonText: 'Tidak'
+				confirmButtonText: 'Ya, Simpan',
+				cancelButtonText: 'Batal'
 			}).then(function(result) {
 				if (result.value) {
 					var $btn = $('.btn-ajukan');
-					$btn.prop('disabled', true);
+					$btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
 
 					$.ajax({
 						method: 'POST',
@@ -253,26 +369,20 @@
 							csrf_token  : token
 						},
 						success: function(resp) {
-							$btn.prop('disabled', false);
+							$btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Simpan Jobdesk');
 							handleResponse(resp);
 						},
 						error: function() {
-							$btn.prop('disabled', false);
+							$btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Simpan Jobdesk');
 							Swal.fire('Error', 'Terjadi kesalahan saat memproses data pada server', 'error');
 						}
-					});					
-				}				
+					});
+				}
 			});
 		});
-    });
+	});
 
-	
-
-    function goBack() {
-        window.history.back();
-    }
-
-
-
-	
+	function goBack() {
+		window.history.back();
+	}
 </script>
