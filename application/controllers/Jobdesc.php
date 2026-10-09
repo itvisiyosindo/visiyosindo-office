@@ -108,7 +108,7 @@ class Jobdesc extends CI_Controller
 
 
     //ADD
-        public function add()
+    public function add()
     {
         grantAccessFor('all');
 
@@ -120,42 +120,59 @@ class Jobdesc extends CI_Controller
             ajaxReturnDie('error', 'Silakan pilih Nama Karyawan terlebih dahulu.', TRUE);
         }
 
+        if (empty($tgl_mulai)) {
+            $tgl_mulai = date('Y-m-d');
+        }
+        if (empty($tgl_selesai)) {
+            $tgl_selesai = '2099-12-31';
+        }
+
         // Jika ada jobdesk lama yang tgl_selesai-nya melebihi tgl_mulai baru, update tgl_selesai jobdesk lama
         $prev_date = date('Y-m-d', strtotime($tgl_mulai . ' -1 day'));
         $this->db->where('idPengguna', $id_pengguna)
                  ->where('tgl_selesai >=', $tgl_mulai)
                  ->update('jobdesc_detail', ['tgl_selesai' => $prev_date]);
 
+        $this->db->where('id_pengguna', $id_pengguna)
+                 ->where('tgl_selesai >=', $tgl_mulai)
+                 ->update('jobdesc', ['tgl_selesai' => $prev_date]);
+
         // 1. Tambah Header Jobdesk
         $data['id_pengaju']   = sessPenggunaId();
         $data['id_pengguna']  = $id_pengguna;
         $data['tgl_mulai']    = $tgl_mulai;
         $data['tgl_selesai']  = $tgl_selesai;
+        $data['status']       = 1;
         $this->md_jobdesc->addJob($data);
 
         $lastGcId = $this->md_jobdesc->getLastId();
         $lastGcId = $lastGcId->id;
 
         // 2. Tambah Detail Jobdesk dengan Rentang Tanggal
-        $itung = $this->input->post('itung', TRUE);
-        $dataDetailGc['idPengguna']  = $id_pengguna;
-        $dataDetailGc['id_jobdesc']  = $lastGcId;
-        $dataDetailGc['tgl_mulai']    = $tgl_mulai;
-        $dataDetailGc['tgl_selesai']  = $tgl_selesai;
-        $dataDetailGc['status']      = 1;
+        $deskripsi_arr = $this->input->post('deskripsi');
+        $idurut_arr    = $this->input->post('idurut');
+        $point_arr     = $this->input->post('point');
+        $nilai_arr     = $this->input->post('nilai');
 
-        if ($itung > 0) {
-            for ($x = 1; $x < $itung; $x++) {
-                $id_urut   = $this->input->post('idurut[' . $x . ']', TRUE);
-                $point     = $this->input->post('point[' . $x . ']', TRUE);
-                $nilai     = $this->input->post('nilai[' . $x . ']', TRUE);
-                $deskripsi = $this->input->post('deskripsi[' . $x . ']', TRUE);
+        if (is_array($deskripsi_arr) && count($deskripsi_arr) > 0) {
+            foreach ($deskripsi_arr as $x => $deskripsi) {
+                $deskripsi_clean = trim($deskripsi);
+                if ($deskripsi_clean !== '') {
+                    $id_urut = isset($idurut_arr[$x]) ? trim($idurut_arr[$x]) : '';
+                    $point   = isset($point_arr[$x]) ? trim($point_arr[$x]) : '';
+                    $nilai   = isset($nilai_arr[$x]) ? trim($nilai_arr[$x]) : '2';
 
-                if (!empty(trim($deskripsi))) {
-                    $dataDetailGc['id_urut']   = $id_urut;
-                    $dataDetailGc['point']     = $point;
-                    $dataDetailGc['nilai']     = $nilai;
-                    $dataDetailGc['deskripsi'] = $deskripsi;
+                    $dataDetailGc = [
+                        'idPengguna'  => $id_pengguna,
+                        'id_jobdesc'  => $lastGcId,
+                        'id_urut'     => $id_urut,
+                        'point'       => $point,
+                        'nilai'       => $nilai,
+                        'deskripsi'   => $deskripsi_clean,
+                        'tgl_mulai'   => $tgl_mulai,
+                        'tgl_selesai' => $tgl_selesai,
+                        'status'      => 1
+                    ];
 
                     $this->md_jobdesc->addJobdetail($dataDetailGc);
                 }
@@ -165,28 +182,32 @@ class Jobdesc extends CI_Controller
         addLog('Jobdesk', 'Menambah Jobdesk Berdasarkan Rentang Tanggal');
         ajaxReturnDie('success', 'Jobdesk Berhasil Ditambahkan dengan Masa Berlaku ' . date('d/m/Y', strtotime($tgl_mulai)) . ' - ' . date('d/m/Y', strtotime($tgl_selesai)), TRUE);
     }
+
     public function addDetail()
     {
         grantAccessFor('all');
         
-        //menambah pengajuan PO
-            // $data['id_jobdesc']  = $this->input->post('id_jobdesc', TRUE);
-            // $data['idPengguna']  = $this->input->post('id_pengguna', TRUE);
-            // $data['point']       = $this->input->post('point', TRUE);
-            // $data['id_urut']     = $this->input->post('idurut', TRUE);
-            // $data['nilai']       = $this->input->post('nilai', TRUE);
-            // $data['deskripsi']   = $this->input->post('deskripsi', TRUE);
-            // $this->md_jobdesc->addJobdetail($data);
-        
         $data['id_jobdesc'] = $this->input->post('id_jobdesc', TRUE);
         $data['idPengguna'] = $this->input->post('id_pengguna', TRUE);
         $data['point']      = $this->input->post('point', TRUE);
-    
-        // Nomor urut otomatis
-        $data['id_urut']   = $this->md_jobdesc->getNextUrutByPengguna($data['idPengguna']);
+        $id_urut_input      = $this->input->post('idurut', TRUE);
+
+        // Jika nomor urut diisi gunakan input, jika tidak hitung otomatis
+        if (!empty($id_urut_input) || $id_urut_input === '0') {
+            $data['id_urut'] = $id_urut_input;
+        } else {
+            $data['id_urut'] = $this->md_jobdesc->getNextUrutByPengguna($data['idPengguna']);
+        }
     
         $data['nilai']      = $this->input->post('nilai', TRUE);
         $data['deskripsi']  = $this->input->post('deskripsi', TRUE);
+        $data['status']     = 1;
+
+        $job_hdr = $this->md_jobdesc->getJobById($data['id_jobdesc']);
+        if ($job_hdr) {
+            $data['tgl_mulai']   = $job_hdr->tgl_mulai;
+            $data['tgl_selesai'] = $job_hdr->tgl_selesai;
+        }
     
         $result = $this->md_jobdesc->addJobdetail($data);
     

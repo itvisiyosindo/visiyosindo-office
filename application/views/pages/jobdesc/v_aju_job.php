@@ -198,57 +198,73 @@
         
 		$(document).on('click', '.btn-ajukan', function() {
 			var id_pengguna	= $('#id_pengguna').val();
+			if (!id_pengguna) {
+				Swal.fire('Perhatian', 'Silakan pilih Nama Karyawan terlebih dahulu!', 'warning');
+				return;
+			}
 			
-			let itung_isi	= $('#itung').val();
-			let des			= [];
-			let deskripsi		= [];
-			let idu			= [];
-			let idurut	= [];
-			let poi			= [];
-			let point		= [];
-			let nil			= [];
-			let nilai		= [];
-			for (let i=1; i<=itung_isi; i++) {
-				if($( '#deskripsi_'+i).val() != ""){
-					des[i] = $('#deskripsi_'+i).val();
-					idu[i] = $('#idurut_'+i).val();
-					poi[i] = $('#point_'+i).val();
-					nil[i] = $('#nilai_'+i).val();
-				}				
+			let itung_isi = parseInt($('#itung').val()) || 25;
+			let des = [];
+			let idu = [];
+			let poi = [];
+			let nil = [];
+
+			for (let i = 1; i <= itung_isi; i++) {
+				let el = $('#deskripsi_' + i);
+				if (el.length > 0) {
+					let deskripsiVal = el.val();
+					if (deskripsiVal && deskripsiVal.trim() !== "") {
+						des.push(deskripsiVal.trim());
+						idu.push($('#idurut_' + i).val() || i);
+						poi.push($('#point_' + i).val() || '1');
+						nil.push($('#nilai_' + i).val() || '2');
+					}
+				}
 			}			
-			let itung		= des.length;
+			
+			if (des.length === 0) {
+				Swal.fire('Perhatian', 'Silakan isi minimal 1 baris deskripsi pekerjaan!', 'warning');
+				return;
+			}
 			
 			Swal.fire({
 				title: 'Simpan Jobdesk?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Ya',
-                cancelButtonText: 'Tidak'
-            }).then(function(result) {
-                if (result.value) {
-                    $.ajax({
-                        method: 'POST',
-                        url: 'jobdesc/add',
-                        dataType: 'JSON',
-                                                data: {
+				icon: 'question',
+				showCancelButton: true,
+				confirmButtonText: 'Ya',
+				cancelButtonText: 'Tidak'
+			}).then(function(result) {
+				if (result.value) {
+					var $btn = $('.btn-ajukan');
+					$btn.prop('disabled', true);
+
+					$.ajax({
+						method: 'POST',
+						url: 'jobdesc/add',
+						dataType: 'JSON',
+						data: {
 							id_pengguna : id_pengguna,
 							tgl_mulai   : $('#tgl_mulai').val(),
 							tgl_selesai : $('#tgl_selesai').val(),
-							itung	: itung,
-							deskripsi	: des,
-							idurut	: idu,
-							point	: poi,
-							nilai	: nil,
-							csrf_token	: token
-                        },
-                        success: function(resp) {
-                            handleResponse(resp)
-                        }
-                    })					
-                }				
-            })
-        })		
-    })
+							deskripsi   : des,
+							idurut      : idu,
+							point       : poi,
+							nilai       : nil,
+							csrf_token  : token
+						},
+						success: function(resp) {
+							$btn.prop('disabled', false);
+							handleResponse(resp);
+						},
+						error: function() {
+							$btn.prop('disabled', false);
+							Swal.fire('Error', 'Terjadi kesalahan saat memproses data pada server', 'error');
+						}
+					});					
+				}				
+			});
+		});
+    });
 
 	
 
