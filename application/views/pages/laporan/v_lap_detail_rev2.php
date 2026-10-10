@@ -255,10 +255,60 @@
       border-top: 2px solid #cbd5e1 !important;
       padding: 11px 12px !important;
   }
+
+  /* Page wrapper: keep every section inside the content area so wide tables scroll horizontally */
+  .lap-detail-page,
+  .lap-detail-page > form,
+  .lap-detail-page .card,
+  .lap-detail-page .card-body {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+  }
+  .lap-detail-page .table-responsive {
+      display: block;
+  }
+  .lap-detail-page .table-modern input.form-control {
+      min-width: 60px;
+  }
+
+  /* Laptop (<= 1440px) — slightly more compact */
+  @media (max-width: 1440px) {
+      .lap-detail-page .table-modern tbody td {
+          padding: 8px 10px !important;
+          font-size: 12px !important;
+      }
+      .lap-detail-page .table-modern thead th {
+          font-size: 10.5px !important;
+          padding: 9px 7px !important;
+      }
+  }
+
+  /* Tablet & mobile */
+  @media (max-width: 767px) {
+      .lap-detail-page .week-selector-wrap,
+      .lap-detail-page .custom-week-dropdown,
+      .lap-detail-page .custom-week-dropdown .dropdown-toggle {
+          width: 100%;
+          min-width: 0 !important;
+      }
+      .lap-detail-page .custom-week-dropdown {
+          flex: 1 1 100%;
+      }
+      .lap-detail-page .custom-week-menu {
+          min-width: 0;
+          max-width: 100%;
+          width: 100%;
+      }
+      .lap-detail-page h5 {
+          font-size: 13px !important;
+          line-height: 1.5;
+      }
+  }
 </style>
 
-<div class="row">
-	<div class="col-12">
+<div class="lap-detail-page">
 		<div class="card laporan-card mb-4">
 			<div class="card-body p-3 p-md-4">
 				<!-- User Info Header -->
@@ -295,7 +345,7 @@
 					</div>
 
 					<!-- Right: Week Selector Custom Dropdown -->
-					<div class="d-flex align-items-center" style="gap: 8px;">
+					<div class="d-flex align-items-center week-selector-wrap" style="gap: 8px;">
 						<?php 
 							$curr_m_time = strtotime("monday this week {$week_offset} week");
 							$curr_s_time = strtotime("sunday this week {$week_offset} week");
@@ -403,32 +453,29 @@
 
 				<?php $is_bulk_nilai_hrd_allowed = isHrd(); ?>
 				<?php if ($is_bulk_nilai_hrd_allowed) { ?>
-				<div class="card border-info mb-2">
+				<div class="card laporan-card mb-4" style="border-left: 4px solid #0ea5e9;">
 					<div class="card-body p-3">
 						<form id="bulk-nilai-adm-form" class="row align-items-end">
-							<div class="col-md-4 col-sm-12 mb-2 mb-md-0">
-								<label for="bulk-nilai-adm-input" class="mb-1"><strong>Bulk Action Nilai HRD</strong></label>
-								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control" placeholder="Contoh: 95">
+							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
+								<label for="bulk-nilai-adm-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai HRD</strong></label>
+								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 							</div>
-							<div class="col-md-4 col-sm-12 mb-2 mb-md-0">
-								<button type="submit" class="btn btn-primary" id="btn-bulk-nilai-adm-submit">Terapkan & Simpan Otomatis</button>
+							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
+								<button type="submit" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 							</div>
-							<div class="col-md-4 col-sm-12">
+							<div class="col-lg-6 col-md-4 col-sm-12">
 								<small class="text-muted">Khusus HRD. Mengisi semua input nilai A lalu menyimpan otomatis ke database.</small>
 							</div>
 						</form>
 					</div>
 				</div>
 				<?php } ?>
-		</div>
 
-		<br>
-		
     <?= form_open('laporan/inputNilaiLaporanAdm', array('id' => 'main-form', 'autocomplete' => 'off')); ?>
 		<input type="hidden" name="pengguna_id" value="<?= $data_job->pengguna_id ?>">
 		<input type="hidden" name="wednesday" value="<?= $wednesday ?>">
 
-		
+		<div class="card laporan-card mb-4">
 		<div class="card-body p-3 p-md-4">
 			<div class="d-flex align-items-center justify-content-between mb-3">
 				<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
@@ -638,11 +685,15 @@
 		</div>
     <?= form_close(); ?>
 
-		<br>
-
 		<?= form_open('laporan/inputNilaiPencapaianAdm', array('id' => 'main-form-pencapaian', 'autocomplete' => 'off')); ?>
 		<!-- PENCAPAIAN -->
-		<div class="card-body p-0">
+		<div class="card laporan-card mb-4">
+			<div class="card-body p-3 p-md-4">
+				<div class="d-flex align-items-center justify-content-between mb-3">
+					<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+						<i class="fas fa-trophy text-success mr-1"></i> Pencapaian: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+					</h5>
+				</div>
 			<div class="table-responsive">
                 <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 1100px;">
                     <thead>
@@ -739,8 +790,6 @@
                 </table>
 			</div>
 
-
-						<br>
 		                <div class="mt-3 clearfix">
                     <button type="button" class="btn btn-success btn-save float-right shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 20px;"><i class="fas fa-save mr-1"></i> Simpan Penilaian</button>
                 </div>
@@ -748,8 +797,6 @@
 		</div>
 		<!-- PENCAPAIAN -->
 		<?= form_close(); ?>
-
-		<br>
 
 		<?= form_open('laporan/inputNilaiUmumAdm', array('id' => 'main-form-umum', 'autocomplete' => 'off')); ?>
 		<input type="hidden" name="id_pengg" value="<?= $data_job->pengguna_id ?>">
@@ -956,8 +1003,7 @@
 		</div>
 		<!-- PENILAIAN UMUM -->
 		<?= form_close(); ?>
-	</div>
-</div>
+</div><!-- /.lap-detail-page -->
 
 
 <div id="main-modal-indikatorPenilaian" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
