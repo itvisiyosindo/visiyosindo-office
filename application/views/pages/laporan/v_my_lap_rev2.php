@@ -173,26 +173,29 @@
         overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         border-radius: 8px !important;
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid #cbd5e1 !important;
         background: #ffffff !important;
         margin-bottom: 1.25rem !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: #94a3b8 #f1f5f9 !important;
     }
     .table-responsive::-webkit-scrollbar,
     .custom-table-scroll::-webkit-scrollbar {
-        height: 6px !important;
+        height: 8px !important;
     }
     .table-responsive::-webkit-scrollbar-track,
     .custom-table-scroll::-webkit-scrollbar-track {
         background: #f1f5f9 !important;
+        border-radius: 4px !important;
     }
     .table-responsive::-webkit-scrollbar-thumb,
     .custom-table-scroll::-webkit-scrollbar-thumb {
-        background: #cbd5e1 !important;
-        border-radius: 3px !important;
+        background: #94a3b8 !important;
+        border-radius: 4px !important;
     }
     .table-responsive::-webkit-scrollbar-thumb:hover,
     .custom-table-scroll::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8 !important;
+        background: #64748b !important;
     }
     .table-modern {
         margin-bottom: 0 !important;
@@ -372,7 +375,7 @@
                     </h5>
                 </div>
                 <div class="table-responsive custom-table-scroll mb-3">									
-                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_1">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_1" style="min-width: 1450px;">
                             <thead>
                                 <tr>
                                     <th style="width: 50px; min-width: 45px;">No</th>
