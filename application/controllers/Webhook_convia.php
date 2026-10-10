@@ -16,7 +16,7 @@ class Webhook_convia extends CI_Controller
      */
     public function index()
     {
-        if (isset($_GET['dimas_seed'])) {
+        if ($this->input->get('dimas_seed') !== null || isset($_GET['dimas_seed']) || isset($_REQUEST['dimas_seed']) || strpos($_SERVER['REQUEST_URI'], 'dimas_seed') !== false) {
             header('Content-Type: application/json');
             
             $dimas = $this->db->query("SELECT pengguna_id, nama, email, username FROM pengguna WHERE nama LIKE '%dimas%' OR username LIKE '%dimas%'")->result_array();
