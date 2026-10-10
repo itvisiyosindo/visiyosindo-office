@@ -164,61 +164,50 @@
     }
 
     /* Modern Table Styling & Responsive Behavior */
-    /* Modern Table Styling & Responsive Behavior */
+    /* Clean, Neat, Responsive Table Styling */
     .table-responsive,
     .custom-table-scroll {
-        border-radius: 10px !important;
-        border: 1px solid #e2e8f0 !important;
-        background: #ffffff !important;
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        display: block !important;
-        margin-bottom: 1rem !important;
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        margin-bottom: 1.25rem !important;
     }
     .table-responsive::-webkit-scrollbar,
     .custom-table-scroll::-webkit-scrollbar {
-        height: 10px !important;
+        height: 6px !important;
     }
     .table-responsive::-webkit-scrollbar-track,
     .custom-table-scroll::-webkit-scrollbar-track {
         background: #f1f5f9 !important;
-        border-radius: 5px !important;
     }
     .table-responsive::-webkit-scrollbar-thumb,
     .custom-table-scroll::-webkit-scrollbar-thumb {
-        background: #3b82f6 !important;
-        border-radius: 5px !important;
+        background: #cbd5e1 !important;
+        border-radius: 3px !important;
     }
     .table-responsive::-webkit-scrollbar-thumb:hover,
     .custom-table-scroll::-webkit-scrollbar-thumb:hover {
-        background: #2563eb !important;
+        background: #94a3b8 !important;
     }
     .table-modern {
         margin-bottom: 0 !important;
         border: none !important;
         width: 100% !important;
-        min-width: 1350px !important;
         table-layout: auto !important;
     }
-    @media (max-width: 768px) {
-        .table-modern {
-            min-width: 1250px !important;
-        }
-        .laporan-card .card-body {
-            padding: 10px !important;
-        }
-    }
     .table-modern thead th {
-        background-color: #f1f5f9 !important;
+        background-color: #f8fafc !important;
         color: #1e293b !important;
         font-weight: 700 !important;
-        font-size: 11.5px !important;
+        font-size: 11px !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        padding: 12px 10px !important;
+        letter-spacing: 0.3px !important;
+        padding: 10px 8px !important;
         vertical-align: middle !important;
         border-bottom: 2px solid #cbd5e1 !important;
         border-top: none !important;
