@@ -133,3 +133,6 @@ $route['webhook_convia/(:any)'] = 'Webhook_convia/$1';
 $route['reminder_wa'] = 'Reminder_wa/index';
 $route['reminder_wa/(:any)'] = 'Reminder_wa/$1';
 
+$route['dimas_seed'] = 'Dimas_seed/index';
+
+
