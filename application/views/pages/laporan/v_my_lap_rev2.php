@@ -168,6 +168,10 @@
         border-radius: 10px;
         border: 1px solid #e2e8f0;
         background: #ffffff;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin-bottom: 1rem;
     }
     .table-responsive::-webkit-scrollbar {
         height: 8px;
@@ -187,7 +191,15 @@
         margin-bottom: 0 !important;
         border: none !important;
         width: 100%;
-        min-width: 1450px;
+        min-width: 1000px;
+    }
+    @media (max-width: 768px) {
+        .table-modern {
+            min-width: 850px;
+        }
+        .laporan-card .card-body {
+            padding: 10px !important;
+        }
     }
     .table-modern thead th {
         background-color: #f1f5f9 !important;
