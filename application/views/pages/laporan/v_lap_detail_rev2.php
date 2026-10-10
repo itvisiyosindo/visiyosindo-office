@@ -481,7 +481,11 @@
                             $grouped_data = [];
                             $point_has_lap = [];
                             foreach ($data_detail as $row) {
-                                $id_job = $row->id_lap;
+                                // Sembunyikan rincian jobdesk yang tidak diisi pegawai pada minggu ini
+                                if (empty($row->id_lap) && $row->nilai_isi != 1) {
+                                    continue;
+                                }
+
                                 if (!isset($grouped_data[$row->id])) {
                                     $grouped_data[$row->id] = [];
                                 }
@@ -714,6 +718,12 @@
                             $nilaiRataPencapaian = 0;
                         }
                         ?>
+
+                        <?php if ($jumlah_data === 0): ?>
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-3"><em>Belum ada data pencapaian untuk minggu ini.</em></td>
+                            </tr>
+                        <?php endif; ?>
 
                         <tr class="row-summary">
                             <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
