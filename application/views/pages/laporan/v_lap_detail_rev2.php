@@ -256,6 +256,22 @@
       padding: 11px 12px !important;
   }
 
+  /* Real-time score input validation styles */
+  .score-input {
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.15s ease-in-out;
+  }
+  .score-input.is-invalid {
+      border-color: #ef4444 !important;
+      background-color: #fef2f2 !important;
+      color: #b91c1c !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  }
+  .score-input.is-valid {
+      border-color: #10b981 !important;
+      background-color: #f0fdf4 !important;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15) !important;
+  }
+
   /* Page wrapper: keep every section inside the content area so wide tables scroll horizontally */
   .lap-detail-page,
   .lap-detail-page > form,
@@ -378,10 +394,12 @@
 									</div>
 								</div>
 								<div class="custom-week-scroll">
-									<?php for ($i = 0; $i >= -50; $i--): ?>
-										<?php 
-											$m_time = strtotime("monday this week $i week");
-											$s_time = strtotime("sunday this week $i week");
+									<?php 
+										$base_m_ts = strtotime("monday this week");
+										$base_s_ts = strtotime("sunday this week");
+										for ($i = 0; $i >= -50; $i--): 
+											$m_time = $base_m_ts + ($i * 604800);
+											$s_time = $base_s_ts + ($i * 604800);
 											$start_w = date('d/m/Y', $m_time);
 											$end_w = date('d/m/Y', $s_time);
 											$is_active = ($week_offset == $i);
@@ -641,7 +659,7 @@
                                         ) { 
                                                 $nilai_a = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_a : '';
                                         ?>
-                                                <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia[<?= $row->point ?>]" value="<?= htmlspecialchars($nilai_a) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                                <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia[<?= $row->point ?>]" value="<?= htmlspecialchars($nilai_a) ?>" data-point="<?= $row->point ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                         <?php 
                                         } 
                                         ?>
@@ -669,9 +687,9 @@
 
                             <tr class="row-summary">
                                 <td colspan="9" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>		
-                                <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataLapA, 2) ?></td>
-                                <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataLap, 2) ?></td>
-                                <td style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;"><?= number_format($rataAll, 2) ?></td>
+                                <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;" id="val-rata-lap-a"><?= number_format($nilaiRataLapA, 2) ?></td>
+                                <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;" id="val-rata-lap-b"><?= number_format($nilaiRataLap, 2) ?></td>
+                                <td style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;" id="val-rata-lap-all"><?= number_format($rataAll, 2) ?></td>
                             </tr>
 
                         </tbody>
@@ -750,7 +768,7 @@
                                 <td style="word-break: normal; overflow-wrap: break-word;"><?= $row->detail ?></td>
                                 <td style="text-align:center"><?= $link_download ?></td>
                                 <td style="text-align:center;">
-                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaipa[<?= $id ?>]" value="<?= $row->nilai_a ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaipa[<?= $id ?>]" value="<?= $row->nilai_a ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                 </td>
                                 <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_b ?></td>
                                 <td>
@@ -781,9 +799,9 @@
 
                         <tr class="row-summary">
                             <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
-                            <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataA, 2) ?></td>
-                            <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataB, 2) ?></td>
-                            <td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
+                            <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;" id="val-rata-pa-a"><?= number_format($nilaiRataA, 2) ?></td>
+                            <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;" id="val-rata-pa-b"><?= number_format($nilaiRataB, 2) ?></td>
+                            <td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;" id="val-rata-pa-total">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
                         </tr>
 
                     </tbody>
@@ -833,7 +851,7 @@
 									b. Mampu melaksanakan tindakan awal sesuai kapasitas/kewenangannya untuk mencegah/menyelesaikan permasalahan yang dihadapi pribadi/bersama.				
 								</td>
 								<td style="text-align:center;">
-                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia1" value="<?= htmlspecialchars($penilaian_umum->nilaia1) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia1" value="<?= htmlspecialchars($penilaian_umum->nilaia1) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                 </td>
 								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib1) ?></td>
 								<td>
@@ -852,7 +870,7 @@
 									e. Kepatuhan dalam menjalankan semua Peraturan/Tata Tertib Peraturan.				
 								</td>
 								<td style="text-align:center;">
-                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia2" value="<?= htmlspecialchars($penilaian_umum->nilaia2) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia2" value="<?= htmlspecialchars($penilaian_umum->nilaia2) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                 </td>
 								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib2) ?></td>
 								<td>
@@ -869,7 +887,7 @@
 									c. Mampu melakukan penanganan awal atas trouble/problem yang dihadapi sesuai kewenangan/kapasitasnya.				
 								</td>
 								<td style="text-align:center;">
-                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia3" value="<?= htmlspecialchars($penilaian_umum->nilaia3) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia3" value="<?= htmlspecialchars($penilaian_umum->nilaia3) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                 </td>
 								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib3) ?></td>
 								<td>
@@ -888,7 +906,7 @@
 									e. Kemampuan membuat pelaporan on time.				
 								</td>
 								<td style="text-align:center;">
-                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia4" value="<?= htmlspecialchars($penilaian_umum->nilaia4) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia4" value="<?= htmlspecialchars($penilaian_umum->nilaia4) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                 </td>
 								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib4) ?></td>
 								<td>
@@ -905,7 +923,7 @@
 									c. Pelaksanaan pekerjaan secara efektif dan minim human error.						
 								</td>
 								<td style="text-align:center;">
-                                    <input class="form-control form-control-sm text-center font-weight-bold" type="text" name="nilaia5" value="<?= htmlspecialchars($penilaian_umum->nilaia5) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 75px; margin: 0 auto; background-color: #ffffff;">
+                                    <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia5" value="<?= htmlspecialchars($penilaian_umum->nilaia5) ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
                                 </td>
 								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib5) ?></td>
 								<td>
@@ -920,9 +938,9 @@
 							?>
 							<tr class="row-summary">
                                 <td colspan="3" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
-								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataa, 2) ?></td>
-								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRatab, 2) ?></td>
-								<td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPumum, 2) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;" id="val-rata-umum-a"><?= number_format($nilaiRataa, 2) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;" id="val-rata-umum-b"><?= number_format($nilaiRatab, 2) ?></td>
+								<td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;" id="val-rata-umum-total">Total Rata-rata: <?= number_format($nilaiRataPumum, 2) ?></td>
 							</tr>
 
                         </tbody>
@@ -939,7 +957,7 @@
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small font-weight-500">Laporan Mingguan</div>
-                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($rataAll, 2) ?></div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;" id="card-sum-lap"><?= number_format($rataAll, 2) ?></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-clipboard-list"></i>
@@ -950,7 +968,7 @@
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small font-weight-500">Penilaian Umum</div>
-                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPumum, 2) ?></div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;" id="card-sum-umum"><?= number_format($nilaiRataPumum, 2) ?></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-star"></i>
@@ -961,7 +979,7 @@
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small font-weight-500">Rata-rata Gabungan</div>
-                                    <div class="font-weight-bold text-primary mt-1" style="font-size: 18px;"><?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></div>
+                                    <div class="font-weight-bold text-primary mt-1" style="font-size: 18px;" id="card-sum-gabungan"><?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #e0e7ff; color: #4338ca; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-layer-group"></i>
@@ -972,7 +990,7 @@
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small font-weight-500">Pencapaian</div>
-                                    <div class="font-weight-bold text-success mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPencapaian, 2) ?></div>
+                                    <div class="font-weight-bold text-success mt-1" style="font-size: 18px;" id="card-sum-pencapaian"><?= number_format($nilaiRataPencapaian, 2) ?></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-trophy"></i>
@@ -1186,7 +1204,10 @@
 
 						$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
 							$(this).val(nilaiFinal);
+							$(this).removeClass('is-invalid').addClass('is-valid');
 						});
+
+						recalculateAllScores();
 
 						$submitBtn.prop('disabled', true);
 
@@ -1247,11 +1268,116 @@
             })
         })
 
+				// Real-time recalculation function
+				function recalculateAllScores() {
+					// 1. Laporan Mingguan
+					var sumLapA = 0, countLapA = 0;
+					$('input[name^="nilaia["]').each(function() {
+						var raw = $(this).val();
+						if (typeof raw !== 'undefined' && raw !== null && raw.toString().trim() !== '') {
+							var v = parseFloat(raw);
+							if (!isNaN(v) && v >= 60 && v <= 100) {
+								sumLapA += v;
+								countLapA++;
+							}
+						}
+					});
+					var avgLapB = parseFloat('<?= $nilaiRataLap ?>') || 0;
+					var avgLapA = (countLapA > 0) ? (sumLapA / countLapA) : 0;
+					var avgLapAll = (avgLapA > 0 && avgLapB > 0) ? ((avgLapA + avgLapB) / 2) : (avgLapA > 0 ? avgLapA : avgLapB);
 
-				//$(document).ready(function () {
-					// Panggil modal saat halaman pertama kali dimuat
-				//	$('#main-modal-indikatorPenilaian').modal('show');
-				//});
+					$('#val-rata-lap-a').text(avgLapA.toFixed(2));
+					$('#val-rata-lap-all').text(avgLapAll.toFixed(2));
+					$('#card-sum-lap').text(avgLapAll.toFixed(2));
+
+					// 2. Pencapaian
+					var sumPaA = 0;
+					var totalRowsPa = <?= (int)$jumlah_data ?>;
+					$('input[name^="nilaipa["]').each(function() {
+						var raw = $(this).val();
+						if (typeof raw !== 'undefined' && raw !== null && raw.toString().trim() !== '') {
+							var v = parseFloat(raw);
+							if (!isNaN(v) && v >= 60 && v <= 100) {
+								sumPaA += v;
+							}
+						}
+					});
+					var avgPaB = parseFloat('<?= $nilaiRataB ?>') || 0;
+					var avgPaA = (totalRowsPa > 0) ? (sumPaA / totalRowsPa) : 0;
+					var avgPaTotal = (totalRowsPa > 0) ? ((avgPaA + avgPaB) / 2) : 0;
+
+					$('#val-rata-pa-a').text(avgPaA.toFixed(2));
+					$('#val-rata-pa-total').text('Total Rata-rata: ' + avgPaTotal.toFixed(2));
+					$('#card-sum-pencapaian').text(avgPaTotal.toFixed(2));
+
+					// 3. Penilaian Umum
+					var sumUmumA = 0;
+					for (var i = 1; i <= 5; i++) {
+						var v = parseFloat($('input[name="nilaia' + i + '"]').val()) || 0;
+						sumUmumA += v;
+					}
+					var avgUmumA = sumUmumA / 5;
+					var avgUmumB = parseFloat('<?= $nilaiRatab ?>') || 0;
+					var avgUmumTotal = (avgUmumA + avgUmumB) / 2;
+
+					$('#val-rata-umum-a').text(avgUmumA.toFixed(2));
+					$('#val-rata-umum-total').text('Total Rata-rata: ' + avgUmumTotal.toFixed(2));
+					$('#card-sum-umum').text(avgUmumTotal.toFixed(2));
+
+					// 4. Rata-rata Gabungan
+					var avgGabungan = (avgLapAll + avgUmumTotal) / 2;
+					$('#card-sum-gabungan').text(avgGabungan.toFixed(2));
+				}
+
+				// Real-time input validation on score fields
+				$(document).on('input change keyup', '.score-input', function() {
+					var raw = $(this).val();
+					if (typeof raw === 'undefined' || raw === null || raw.toString().trim() === '') {
+						$(this).removeClass('is-invalid is-valid');
+					} else {
+						var val = parseFloat(raw);
+						if (isNaN(val) || val < 60 || val > 100) {
+							$(this).addClass('is-invalid').removeClass('is-valid');
+						} else {
+							$(this).removeClass('is-invalid').addClass('is-valid');
+						}
+					}
+					recalculateAllScores();
+				});
+
+				// Intercept save button: fast client-side pre-validation
+				$(document).on('click', '.btn-save', function(e) {
+					var $form = $(this).closest('form');
+					var hasInvalid = false;
+					var firstInvalid = null;
+
+					$form.find('.score-input').each(function() {
+						var raw = $(this).val();
+						if (typeof raw !== 'undefined' && raw !== null && raw.toString().trim() !== '') {
+							var val = parseFloat(raw);
+							if (isNaN(val) || val < 60 || val > 100) {
+								hasInvalid = true;
+								$(this).addClass('is-invalid');
+								if (!firstInvalid) firstInvalid = $(this);
+							}
+						}
+					});
+
+					if (hasInvalid) {
+						e.preventDefault();
+						e.stopImmediatePropagation();
+						if (firstInvalid) {
+							firstInvalid.focus();
+						}
+						Swal.fire({
+							icon: 'warning',
+							title: 'Nilai Tidak Valid',
+							text: 'Semua nilai yang diisi harus berada pada rentang 60 sampai 100. Harap periksa kembali input yang ditandai merah.',
+							confirmButtonColor: '#2563eb'
+						});
+						return false;
+					}
+				});
 
 				$(document).ready(function () {
 					$('.btn-petujuk').click(function () {

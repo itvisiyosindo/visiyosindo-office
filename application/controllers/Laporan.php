@@ -268,12 +268,14 @@ class Laporan extends CI_Controller
                 // Cek apakah $param4 valid, jika tidak, set 0
                 $week_offset = (isset($param4) && is_numeric($param4)) ? (int)$param4 : 0;
 
-                // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                // Optimasi kalkulasi tanggal berdasarkan offset minggu
+                $curr_offset_str = "{$week_offset} week";
+                $monday = date('Y-m-d', strtotime("monday this week $curr_offset_str"));
+                $friday = date('Y-m-d', strtotime("sunday this week $curr_offset_str"));
+                $wednesday = date('Y-m-d', strtotime("wednesday this week $curr_offset_str"));
 
-                $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
-                $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
+                $startDate = date('d-m-Y', strtotime($monday));
+                $endDate = date('d-m-Y', strtotime($friday));
 
                 $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
 
@@ -290,18 +292,11 @@ class Laporan extends CI_Controller
                 }
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
 
-                $page_data['switch'] = $this->id_navbar();
-
-
-                //$minggu_lalu = -1; // minggu lalu
-                $wednesday = date('Y-m-d', strtotime("wednesday this week $week_offset week"));
-                $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
+                $penilaian_umum = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
                 $page_data['penilaian_umum'] = $penilaian_umum;
-
 
                 // Navigasi minggu
                 $page_data['week_offset'] = $week_offset;
-                //untuk save ke nilai point
                 $page_data['wednesday'] = $wednesday;
                 $page_data['startDate'] = $startDate;
                 $page_data['endDate'] = $endDate;
@@ -1559,24 +1554,26 @@ class Laporan extends CI_Controller
         $pengguna_id = $this->input->post('pengguna_id');
         $wednesday = $this->input->post('wednesday');
 
-        if (empty($nilai)) {
+        if (empty($nilai) || !is_array($nilai)) {
             ajaxReturnDie('error', 'Tidak ada nilai yang dikirim', FALSE);
         }
 
-        foreach ($nilai as $point => $nilai_b) {
-            $data = [
-                'point' => $point,
-                'nilai_a' => $nilai_b,
-                'id_pengguna' => $pengguna_id,
-                'date' => $wednesday
-            ];
-            //$this->md_laporan->addNilai($data);
-            $this->md_laporan->saveOrUpdateNilaiAdm($data);
+        // Validasi seluruh input nilai (rentang 60 - 100)
+        foreach ($nilai as $point => $val) {
+            $val = trim($val);
+            if ($val !== '') {
+                if (!is_numeric($val) || $val < 60 || $val > 100) {
+                    ajaxReturnDie('error', "Nilai pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                }
+            }
         }
+
+        // Simpan menggunakan batch upsert efisien
+        $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $nilai);
 
         addlog('Laporan Mingguan', 'Mengisi Nilai A');
 
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        ajaxReturnDie('success', 'Data Nilai Laporan Berhasil Disimpan', TRUE);
     }
 
 
@@ -1588,8 +1585,18 @@ class Laporan extends CI_Controller
         $pengguna_id = $this->input->post('pengguna_id');
         $wednesday = $this->input->post('wednesday');
 
-        if (empty($nilai)) {
+        if (empty($nilai) || !is_array($nilai)) {
             ajaxReturnDie('error', 'Tidak ada nilai yang dikirim', FALSE);
+        }
+
+        // Validasi nilai B (rentang 60 - 100)
+        foreach ($nilai as $point => $val) {
+            $val = trim($val);
+            if ($val !== '') {
+                if (!is_numeric($val) || $val < 60 || $val > 100) {
+                    ajaxReturnDie('error', "Nilai pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                }
+            }
         }
 
         foreach ($nilai as $point => $nilai_b) {
@@ -1599,7 +1606,6 @@ class Laporan extends CI_Controller
                 'id_pengguna' => $pengguna_id,
                 'date' => $wednesday
             ];
-            //$this->md_laporan->addNilai($data);
             $this->md_laporan->saveOrUpdateNilai($data);
         }
 
@@ -1616,16 +1622,26 @@ class Laporan extends CI_Controller
         $nilaia   = $this->input->post('nilaipa');     // nilai_a [id_sodetail => nilai]
         $catatana = $this->input->post('catatanpa');   // catatan_a [id_sodetail => catatan]
 
-        foreach ($nilaia as $id_sodetail => $nilai_a) {
-            $data['nilai_a']    = $nilai_a;
-            $data['catatan_a']  = isset($catatana[$id_sodetail]) ? $catatana[$id_sodetail] : null;
+        if (!empty($nilaia) && is_array($nilaia)) {
+            foreach ($nilaia as $id_sodetail => $nilai_a) {
+                $nilai_a = trim($nilai_a);
+                if ($nilai_a !== '') {
+                    if (!is_numeric($nilai_a) || $nilai_a < 60 || $nilai_a > 100) {
+                        ajaxReturnDie('error', "Nilai pencapaian tidak valid ($nilai_a). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                }
+                $data = [
+                    'nilai_a'   => ($nilai_a !== '') ? $nilai_a : null,
+                    'catatan_a' => isset($catatana[$id_sodetail]) ? $catatana[$id_sodetail] : null
+                ];
 
-            $this->md_laporan->updatePencapaian($id_sodetail, $data);
+                $this->md_laporan->updatePencapaian($id_sodetail, $data);
+            }
         }
 
         // Log
         addlog('Laporan Mingguan', 'Mengisi Nilai Pencapaian A');
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        ajaxReturnDie('success', 'Data Nilai Pencapaian Berhasil Disimpan', TRUE);
     }
 
 
@@ -1636,11 +1652,21 @@ class Laporan extends CI_Controller
         $nilaib   = $this->input->post('nilaipb');     // nilai_b [id_sodetail => nilai]
         $catatanb = $this->input->post('catatanpb');   // catatan_b [id_sodetail => catatan]
 
-        foreach ($nilaib as $id_sodetail => $nilai_b) {
-            $data['nilai_b']    = $nilai_b;
-            $data['catatan_b']  = isset($catatanb[$id_sodetail]) ? $catatanb[$id_sodetail] : null;
+        if (!empty($nilaib) && is_array($nilaib)) {
+            foreach ($nilaib as $id_sodetail => $nilai_b) {
+                $nilai_b = trim($nilai_b);
+                if ($nilai_b !== '') {
+                    if (!is_numeric($nilai_b) || $nilai_b < 60 || $nilai_b > 100) {
+                        ajaxReturnDie('error', "Nilai pencapaian tidak valid ($nilai_b). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                }
+                $data = [
+                    'nilai_b'   => ($nilai_b !== '') ? $nilai_b : null,
+                    'catatan_b' => isset($catatanb[$id_sodetail]) ? $catatanb[$id_sodetail] : null
+                ];
 
-            $this->md_laporan->updatePencapaian($id_sodetail, $data);
+                $this->md_laporan->updatePencapaian($id_sodetail, $data);
+            }
         }
 
         // Log
@@ -1671,6 +1697,16 @@ class Laporan extends CI_Controller
             'date' => $this->input->post('hari_rabu')
         ];
 
+        // Validasi nilai umum (rentang 60 - 100)
+        for ($i = 1; $i <= 5; $i++) {
+            $val = trim($data['nilaia' . $i]);
+            if ($val !== '') {
+                if (!is_numeric($val) || $val < 60 || $val > 100) {
+                    ajaxReturnDie('error', "Nilai Indikator ke-$i tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                }
+            }
+        }
+
         // Cek minimal satu nilai diisi
         if (
             empty($data['nilaia1']) &&
@@ -1685,7 +1721,7 @@ class Laporan extends CI_Controller
         $this->md_laporan->saveOrUpdateNilaiUmumAdm($data);
 
         addlog('Laporan Mingguan', 'Mengisi Nilai Umum A');
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        ajaxReturnDie('success', 'Data Nilai Umum Berhasil Disimpan', TRUE);
     }
 
     public function inputNilaiUmum()

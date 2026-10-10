@@ -669,6 +669,36 @@ class Md_laporan extends CI_Model
         }
     }
 
+    public function saveOrUpdateNilaiAdmBatch($pengguna_id, $date, $items)
+    {
+        if (empty($items)) return;
+
+        // Fetch existing points for this user and date in ONE query
+        $this->db->where('id_pengguna', $pengguna_id);
+        $this->db->where('date', $date);
+        $existing = $this->db->get('nilai_point')->result();
+        $existing_points = [];
+        foreach ($existing as $row) {
+            $existing_points[$row->point] = $row->id;
+        }
+
+        foreach ($items as $point => $nilai_a) {
+            if ($nilai_a === '' || $nilai_a === null) continue;
+            if (isset($existing_points[$point])) {
+                $this->db->where('id', $existing_points[$point]);
+                $this->db->update('nilai_point', ['nilai_a' => $nilai_a]);
+            } else {
+                $this->db->insert('nilai_point', [
+                    'point' => $point,
+                    'nilai_a' => $nilai_a,
+                    'id_pengguna' => $pengguna_id,
+                    'date' => $date
+                ]);
+                $existing_points[$point] = $this->db->insert_id();
+            }
+        }
+    }
+
     public function saveOrUpdateNilai($data)
     {
         // Cek apakah data sudah ada berdasarkan kombinasi unik
