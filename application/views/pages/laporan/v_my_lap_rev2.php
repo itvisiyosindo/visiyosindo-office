@@ -164,38 +164,48 @@
     }
 
     /* Modern Table Styling & Responsive Behavior */
-    .table-responsive {
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
+    /* Modern Table Styling & Responsive Behavior */
+    .table-responsive,
+    .custom-table-scroll {
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
         width: 100% !important;
+        max-width: 100% !important;
         overflow-x: auto !important;
+        overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        margin-bottom: 1rem;
+        display: block !important;
+        margin-bottom: 1rem !important;
     }
-    .table-responsive::-webkit-scrollbar {
-        height: 8px;
+    .table-responsive::-webkit-scrollbar,
+    .custom-table-scroll::-webkit-scrollbar {
+        height: 10px !important;
     }
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 4px;
+    .table-responsive::-webkit-scrollbar-track,
+    .custom-table-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9 !important;
+        border-radius: 5px !important;
     }
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
+    .table-responsive::-webkit-scrollbar-thumb,
+    .custom-table-scroll::-webkit-scrollbar-thumb {
+        background: #3b82f6 !important;
+        border-radius: 5px !important;
     }
-    .table-responsive::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+    .table-responsive::-webkit-scrollbar-thumb:hover,
+    .custom-table-scroll::-webkit-scrollbar-thumb:hover {
+        background: #2563eb !important;
     }
     .table-modern {
         margin-bottom: 0 !important;
         border: none !important;
-        width: 100%;
-        min-width: 1000px;
+        width: 100% !important;
+        min-width: 1350px !important;
+        table-layout: auto !important;
     }
     @media (max-width: 768px) {
         .table-modern {
-            min-width: 850px;
+            min-width: 1250px !important;
         }
         .laporan-card .card-body {
             padding: 10px !important;
@@ -367,14 +377,13 @@
     <div class="col-12">
         <div class="card laporan-card mb-4">
             <div class="card-body p-3 p-md-4">
-                <div class="table-responsive">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
-                            <i class="fas fa-calendar-day text-primary mr-1"></i> Laporan Mingguan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
-                        </h5>
-                    </div>
-                    <div class="table-responsive">									
-                        <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_1">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+                        <i class="fas fa-calendar-day text-primary mr-1"></i> Laporan Mingguan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+                    </h5>
+                </div>
+                <div class="table-responsive custom-table-scroll mb-3">									
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_1">
                             <thead>
                                 <tr>
                                     <th style="width: 50px; min-width: 45px;">No</th>
