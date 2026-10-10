@@ -235,6 +235,18 @@
             if (!empty($data_detail)): 
                 $no = 1;
                 foreach ($data_detail as $row):
+                    // Filter: Jangan tampilkan jobdesk yang tidak diisi di minggu ini
+                    $st_raw = !empty($row->status_pekerjaan) ? trim($row->status_pekerjaan) : '';
+                    $st_upper = strtoupper($st_raw);
+                    
+                    $is_unfilled = (empty($row->id_lap) && empty($row->tanggal) && empty($row->ket_hasil) && empty($row->progress)) || 
+                                   ($st_upper === 'BELUM DIISI') || 
+                                   (empty($row->ket_hasil) && empty($row->progress) && empty($row->link));
+                    
+                    if ($is_unfilled) {
+                        continue;
+                    }
+
                     $created_at_raw = !empty($row->created_at) ? $row->created_at : '';
                     $created_at_date = $created_at_raw ? date('Y-m-d', strtotime($created_at_raw)) : '';
                     $tgl_report = !empty($row->tanggal) ? date('Y-m-d', strtotime($row->tanggal)) : '';
@@ -263,9 +275,6 @@
                     $row_class = $info_libur['is_libur'] ? 'row-libur' : '';
 
                     // Logika Status Pekerjaan Sesuai Inputan Karyawan
-                    $st_raw = !empty($row->status_pekerjaan) ? trim($row->status_pekerjaan) : '';
-                    $st_upper = strtoupper($st_raw);
-
                     if ($st_upper === 'SELESAI') {
                         $status_class = 'badge-selesai';
                         $status_text = 'SELESAI';
@@ -357,6 +366,13 @@
                 </tr>
             <?php 
                 endforeach;
+                if ($no === 1):
+            ?>
+                <tr>
+                    <td colspan="8" class="text-center"><em>Belum ada laporan kegiatan untuk minggu ini.</em></td>
+                </tr>
+            <?php
+                endif;
             else: 
             ?>
                 <tr>
