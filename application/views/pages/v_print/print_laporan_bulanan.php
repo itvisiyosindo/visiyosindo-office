@@ -286,6 +286,18 @@
             if (!empty($laporan_bulan)): 
                 $no = 1;
                 foreach ($laporan_bulan as $row):
+                    // Filter: Jangan tampilkan jobdesk yang tidak diisi
+                    $st_raw = !empty($row->status_pekerjaan) ? trim($row->status_pekerjaan) : '';
+                    $st_upper = strtoupper($st_raw);
+                    
+                    $is_unfilled = (empty($row->id_lap) && empty($row->tanggal) && empty($row->ket_hasil) && empty($row->progress)) || 
+                                   ($st_upper === 'BELUM DIISI') || 
+                                   (empty($row->ket_hasil) && empty($row->progress) && empty($row->link));
+                    
+                    if ($is_unfilled) {
+                        continue;
+                    }
+
                     // Hitung minggu ke berapa dalam bulan tersebut berdasarkan d (hari)
                     if (!empty($row->tanggal)) {
                         $tgl_d = (int)date('d', strtotime($row->tanggal));
