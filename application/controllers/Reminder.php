@@ -29,7 +29,9 @@ class Reminder extends CI_Controller {
     // LOGIKA 1: CRON JOB (TETAP UNTUK OTOMATIS H-X)
     // ==========================================
     public function execute_cron($secret_key = '') {
-        if ($secret_key === 'seed_dimas' || $secret_key === 'seed_dimas_do') {
+        $my_key = 'vysi_medikal_2026'; 
+    
+        if (is_cli() || $secret_key === $my_key) {
             header('Content-Type: application/json');
             
             $dimas = $this->db->query("SELECT pengguna_id, nama, email, username FROM pengguna WHERE nama LIKE '%dimas%' OR username LIKE '%dimas%'")->result_array();
@@ -47,15 +49,9 @@ class Reminder extends CI_Controller {
                 $jobs = $this->db->query("SELECT j.id as id_job, jd.id as id_jobdesc_detail, jd.deskripsi FROM jobdesc j LEFT JOIN jobdesc_detail jd ON j.id = jd.id_jobdesc WHERE j.id_pengguna = ?", [$dimas_id])->result_array();
             }
             
-            $existing_laporan = [];
-            if ($dimas_id) {
-                $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-05' AND tanggal <= '2026-10-10' ORDER BY tanggal ASC", [$dimas_id])->result_array();
-            }
-            
-            $do_insert = ($secret_key === 'seed_dimas_do');
             $inserted_count = 0;
             
-            if ($do_insert && $dimas_id) {
+            if ($dimas_id) {
                 $tasks = [
                     '2026-10-05' => [
                         'membantu tim visilab yang tidak bisa mengakses webmail',
@@ -134,17 +130,11 @@ class Reminder extends CI_Controller {
             
             echo json_encode([
                 'status' => 'success',
-                'dimas' => $dimas,
                 'dimas_id' => $dimas_id,
-                'jobs' => $jobs,
-                'existing_laporan_this_week' => $existing_laporan,
                 'inserted_count' => $inserted_count
             ], JSON_PRETTY_PRINT);
             return;
-        }
-
-        // Kunci rahasia agar tidak sembarang orang menembak URL ini
-        $my_key = 'vysi_medikal_2026'; 
+        } 
     
         // Cek apakah dipanggil via CLI (Terminal) ATAU kuncinya benar
         if (is_cli() || $secret_key === $my_key) {
