@@ -115,9 +115,10 @@
                     <div class="mt-3">
                         <a href="<?= base_url('it_maintenance/my_ticket') ?>" class="btn btn-default btn-block"><i class="fas fa-arrow-left"></i> Kembali ke Tiket Saya</a>
                         <?php
-                        $isITStaff = isAdmin() || isCRO() || isGa() || sessPenggunaId() == '755' || sessPenggunaId() == '769' || sessPenggunaId() == '107';
+                        $isITStaff = isAdmin() || isCRO() || isGa() || sessPenggunaId() == '778' || sessPenggunaId() == '755' || sessPenggunaId() == '769' || sessPenggunaId() == '107' || $ticket->id_penerima == sessPenggunaId();
                         if ($isITStaff) {
                         ?>
+                            <a href="<?= base_url('it_maintenance/assigned_ticket') ?>" class="btn btn-primary btn-block mt-2"><i class="fas fa-tasks"></i> Tugas Tiket IT Saya</a>
                             <a href="<?= base_url('it_maintenance/data_ticket') ?>" class="btn btn-dark btn-block mt-2"><i class="fas fa-list"></i> Lihat Semua Tiket (Admin)</a>
                         <?php } ?>
                     </div>

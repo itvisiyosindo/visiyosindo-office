@@ -817,7 +817,8 @@
 
 					<!-- Menu Maintenance Aset IT -->
 					<?php
-					$isITStaff = isAdmin() || isCRO() || isGa() || sessPenggunaId() == '755' || sessPenggunaId() == '769' || sessPenggunaId() == '107';
+					$isITStaff = isAdmin() || isCRO() || isGa() || sessPenggunaId() == '778' || sessPenggunaId() == '755' || sessPenggunaId() == '769' || sessPenggunaId() == '107';
+					$my_assigned_count = $this->db->where(['id_penerima' => sessPenggunaId(), 'status_data' => 1])->where_in('status_tiket', [1, 2])->count_all_results('it_ticket');
 					?>
 					<li class="nav-parent <?= $this->uri->segment(1) == 'it_maintenance' ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
@@ -836,6 +837,14 @@
 								</a>
 							</li>
 							<?php if ($isITStaff) { ?>
+								<li class="<?= $page_name == 'it_maintenance/v_assigned_ticket' ? 'nav-active' : '' ?>">
+									<a class="nav-link" href="<?= base_url('it_maintenance/assigned_ticket') ?>">
+										<span>Tugas Tiket IT</span>
+										<?php if (!empty($my_assigned_count) && $my_assigned_count > 0) { ?>
+											<span class="badge badge-warning float-right font-weight-bold" style="font-size: 10px; margin-top: 2px; padding: 2px 6px;"><?= $my_assigned_count ?></span>
+										<?php } ?>
+									</a>
+								</li>
 								<li class="<?= $page_name == 'it_maintenance/v_data_ticket' ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('it_maintenance/data_ticket') ?>">
 										Data Ticket

@@ -124,6 +124,15 @@ class It_maintenance extends CI_Controller
     // VIEW PAGES
     // ==========================================
 
+    public function index()
+    {
+        if (isAdmin() || isCRO() || isGa() || sessPenggunaId() == '778' || sessPenggunaId() == '755') {
+            redirect('it_maintenance/assigned_ticket');
+        } else {
+            redirect('it_maintenance/my_ticket');
+        }
+    }
+
     public function open_ticket()
     {
         grantAccessFor('all');
@@ -169,6 +178,25 @@ class It_maintenance extends CI_Controller
         $page_data['page_name'] = 'it_maintenance/v_my_ticket';
         $page_data['page_title'] = 'My Ticket IT';
         $page_data['page_desc'] = 'Daftar tiket kendala IT yang anda ajukan';
+
+        $this->load->view('index', $page_data);
+    }
+
+    public function assigned_ticket()
+    {
+        grantAccessFor('all');
+
+        $page_data['switch'] = $this->id_navbar();
+        $page_data['page_name'] = 'it_maintenance/v_assigned_ticket';
+        $page_data['page_title'] = 'Tugas Tiket IT';
+        $page_data['page_desc'] = 'Daftar tiket kendala IT yang ditugaskan kepada Anda untuk ditangani';
+
+        // Hitung statistik tiket yang ditugaskan ke user login
+        $id_me = sessPenggunaId();
+        $page_data['assigned_total'] = $this->db->where(['id_penerima' => $id_me, 'status_data' => 1])->count_all_results('it_ticket');
+        $page_data['assigned_open'] = $this->db->where(['id_penerima' => $id_me, 'status_data' => 1, 'status_tiket' => 1])->count_all_results('it_ticket');
+        $page_data['assigned_progress'] = $this->db->where(['id_penerima' => $id_me, 'status_data' => 1, 'status_tiket' => 2])->count_all_results('it_ticket');
+        $page_data['assigned_solved'] = $this->db->where(['id_penerima' => $id_me, 'status_data' => 1])->where_in('status_tiket', [3, 4])->count_all_results('it_ticket');
 
         $this->load->view('index', $page_data);
     }
@@ -726,6 +754,12 @@ class It_maintenance extends CI_Controller
     {
         grantAccessFor('all');
         echo json_encode($this->md_it_maintenance->getTicketsDatatable(['t.id_pembuat' => sessPenggunaId()]));
+    }
+
+    public function assigned_ticket_pagination()
+    {
+        grantAccessFor('all');
+        echo json_encode($this->md_it_maintenance->getTicketsDatatable(['t.id_penerima' => sessPenggunaId()]));
     }
 
     public function data_ticket_pagination()
