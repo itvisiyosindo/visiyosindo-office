@@ -155,6 +155,9 @@ class It_maintenance extends CI_Controller
         $my_assets = $this->md_it_maintenance->getAssetsByPengguna(sessPenggunaId());
         $page_data['my_asset_id'] = !empty($my_assets) ? $my_assets[0]->id : '';
 
+        // Dapatkan daftar teknisi IT
+        $page_data['technicians'] = $this->md_it_maintenance->getITTechnicians();
+
         $this->load->view('index', $page_data);
     }
 
@@ -403,6 +406,7 @@ class It_maintenance extends CI_Controller
         $id_aset = $this->input->post('id_aset', TRUE);
         $prioritas = $this->input->post('prioritas', TRUE);
         $file_pendukung = $this->input->post('file_pendukung', TRUE);
+        $id_penerima = $this->input->post('id_penerima', TRUE);
 
         // Make all input fields mandatory
         if (empty($subject) || empty($deskripsi) || $id_aset === '' || empty($prioritas) || empty($file_pendukung)) {
@@ -411,15 +415,19 @@ class It_maintenance extends CI_Controller
 
         $kode_tiket = $this->md_it_maintenance->generateKodeTiket();
 
+        $has_technician = !empty($id_penerima) && intval($id_penerima) > 0;
+        $status_tiket = $has_technician ? 2 : 1; // 2: In Progress jika sudah ditugaskan teknisi, 1: Open
+
         $data = [
             'kode_tiket' => $kode_tiket,
             'id_pembuat' => sessPenggunaId(),
+            'id_penerima' => $has_technician ? intval($id_penerima) : NULL,
             'id_aset' => intval($id_aset),
             'prioritas' => $prioritas,
             'subject' => $subject,
             'deskripsi' => $deskripsi,
             'file_pendukung' => $file_pendukung,
-            'status_tiket' => 1, // Open
+            'status_tiket' => $status_tiket,
             'status_data' => 1,
             'created_at' => date('Y-m-d H:i:s')
         ];
@@ -427,14 +435,28 @@ class It_maintenance extends CI_Controller
         $this->db->trans_begin();
         $id_ticket = $this->md_it_maintenance->addTicket($data);
 
+        // Jika teknisi langsung dipilih, catat histori timeline update
+        if ($has_technician) {
+            $tech_user = $this->md_pengguna->getById(intval($id_penerima));
+            $tech_name = !empty($tech_user) ? $tech_user[0]->nama : 'Teknisi IT';
+            $update_data = [
+                'id_ticket' => $id_ticket,
+                'id_pembuat' => sessPenggunaId(),
+                'detail' => 'Tiket langsung ditugaskan kepada teknisi ' . $tech_name . ' (*In Progress*).',
+                'status' => 2,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            $this->md_it_maintenance->addTicketUpdate($update_data);
+        }
+
         if ($this->db->trans_status() === FALSE) {
             $this->db->trans_rollback();
             ajaxReturnDie('error', 'Gagal membuat tiket baru');
         }
         $this->db->trans_commit();
 
-        // Send notifications to IT Numbers and groups
-        $this->sendCreationNotification($id_ticket, $kode_tiket, $subject, $id_aset, $deskripsi, $file_pendukung, $prioritas);
+        // Send notifications to IT Numbers, groups, and assigned technician
+        $this->sendCreationNotification($id_ticket, $kode_tiket, $subject, $id_aset, $deskripsi, $file_pendukung, $prioritas, $has_technician ? intval($id_penerima) : null);
 
         addLog('Open Ticket IT', "Membuat tiket IT {$kode_tiket}");
 
@@ -722,7 +744,7 @@ class It_maintenance extends CI_Controller
     // NOTIFICATION HELPERS
     // ==========================================
 
-    private function sendCreationNotification($id_ticket, $kode_tiket, $subject, $id_aset, $deskripsi = '', $file_pendukung = '', $prioritas = '')
+    private function sendCreationNotification($id_ticket, $kode_tiket, $subject, $id_aset, $deskripsi = '', $file_pendukung = '', $prioritas = '', $id_penerima = null)
     {
         $aset_name = 'Lainnya / Umum';
         if ($id_aset && intval($id_aset) > 0) {
@@ -734,6 +756,15 @@ class It_maintenance extends CI_Controller
 
         $reporter = $this->md_pengguna->getById(sessPenggunaId());
         $nama_reporter = !empty($reporter) ? $reporter[0]->nama : 'Karyawan';
+
+        $tech_user = null;
+        $tech_name = '';
+        if ($id_penerima && intval($id_penerima) > 0) {
+            $tech_user = $this->md_pengguna->getById(intval($id_penerima));
+            if (!empty($tech_user)) {
+                $tech_name = $tech_user[0]->nama;
+            }
+        }
 
         $detail_link = "https://office.visiyosindo.id/it_maintenance/detail_ticket/" . encrypt($id_ticket);
 
@@ -749,8 +780,13 @@ class It_maintenance extends CI_Controller
             "%0A*Kode Tiket* : *{$kode_tiket}*" .
             "%0A*Subjek*     : " . urlencode($subject) .
             "%0A*Perangkat*  : " . urlencode($aset_name) .
-            "%0A*Pelapor*    : " . urlencode($nama_reporter) .
-            "%0A*Prioritas*  : *" . urlencode($prioritas ?: '-') . "*" .
+            "%0A*Pelapor*    : " . urlencode($nama_reporter);
+
+        if (!empty($tech_name)) {
+            $pesan .= "%0A*Teknisi*    : *" . urlencode($tech_name) . "*";
+        }
+
+        $pesan .= "%0A*Prioritas*  : *" . urlencode($prioritas ?: '-') . "*" .
             "%0A*Tanggal*    : " . date('d-m-Y') . " Pukul " . date('H:i') . " WIB" .
             "%0A%0A*Deskripsi Masalah:*" .
             "%0A" . urlencode($deskripsi_clean);
@@ -783,7 +819,19 @@ class It_maintenance extends CI_Controller
             }
         }
 
-        // 2. Send to WA Groups
+        // 2. Send direct WA to assigned technician if available
+        if (!empty($tech_user) && !empty($tech_user[0]->no_hp)) {
+            $clean_tech_num = $this->normalizePhoneNumber($tech_user[0]->no_hp);
+            if ($clean_tech_num) {
+                sendWa([
+                    'devId' => hostWa('1'),
+                    'penerima' => $clean_tech_num,
+                    'pesan' => $pesan
+                ]);
+            }
+        }
+
+        // 3. Send to WA Groups
         $groups_raw = $this->md_it_maintenance->getConfig('wa_groups');
         if (!empty($groups_raw)) {
             $groups = explode(',', $groups_raw);

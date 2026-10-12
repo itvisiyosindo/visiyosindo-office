@@ -34,15 +34,35 @@
                 </small>
             </div>
 
-            <div class="form-group mb-3">
-                <label class="font-weight-bold">Tingkat Indikator Prioritas <span class="text-danger">*</span></label>
-                <select data-plugin-selectTwo class="form-control populate" name="prioritas" required>
-                    <option value="">-- Pilih Tingkat Prioritas --</option>
-                    <option value="Rendah">Rendah (Low)</option>
-                    <option value="Sedang">Sedang (Medium)</option>
-                    <option value="Tinggi">Tinggi (High)</option>
-                </select>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Tingkat Indikator Prioritas <span class="text-danger">*</span></label>
+                        <select data-plugin-selectTwo class="form-control populate" name="prioritas" required>
+                            <option value="">-- Pilih Tingkat Prioritas --</option>
+                            <option value="Rendah">Rendah (Low)</option>
+                            <option value="Sedang">Sedang (Medium)</option>
+                            <option value="Tinggi">Tinggi (High)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Pilih Teknisi IT <span class="text-muted font-weight-normal">(Opsional)</span></label>
+                        <select data-plugin-selectTwo class="form-control populate" name="id_penerima">
+                            <option value="">-- Bebas / Ditugaskan Tim IT --</option>
+                            <?php if (!empty($technicians)) { ?>
+                                <?php foreach ($technicians as $tech) { ?>
+                                    <option value="<?= $tech->pengguna_id ?>"><?= htmlspecialchars($tech->nama) ?><?= !empty($tech->jabatan) ? ' (' . htmlspecialchars($tech->jabatan) . ')' : '' ?></option>
+                                <?php } ?>
+                            <?php } ?>
+                        </select>
+                    </div>
+                </div>
             </div>
+            <small class="text-muted d-block mt-n2 mb-3">
+                <i class="fas fa-info-circle"></i> Anda dapat memilih teknisi IT yang ingin ditugaskan secara langsung, atau biarkan kosong agar ditugaskan oleh Admin/Tim IT.
+            </small>
 
             <div class="form-group mb-3">
                 <label class="font-weight-bold">Subjek Kendala <span class="text-danger">*</span></label>
