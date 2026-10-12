@@ -66,14 +66,67 @@ class Salary extends CI_Controller
 
         $data['pengguna_id'] = decrypt($this->input->post('pengguna_id'));
         $data['gaji_pokok'] = $this->input->post('gaji_pokok') ? delete_currency($this->input->post('gaji_pokok')) : 0;
+        $data['tunjangan_konsumsi'] = $this->input->post('tunjangan_konsumsi') ? delete_currency($this->input->post('tunjangan_konsumsi')) : 0;
+        $data['tunjangan_kinerja'] = $this->input->post('tunjangan_kinerja') ? delete_currency($this->input->post('tunjangan_kinerja')) : 0;
+        $data['tunjangan_komunikasi'] = $this->input->post('tunjangan_komunikasi') ? delete_currency($this->input->post('tunjangan_komunikasi')) : 0;
+        $data['tunjangan_transportasi'] = $this->input->post('tunjangan_transportasi') ? delete_currency($this->input->post('tunjangan_transportasi')) : 0;
+        $data['tunjangan_bbm'] = $this->input->post('tunjangan_bbm') ? delete_currency($this->input->post('tunjangan_bbm')) : 0;
         $data['tunjangan_jabatan'] = $this->input->post('tunjangan_jabatan') ? delete_currency($this->input->post('tunjangan_jabatan')) : 0;
-        $data['dasar_potong_bpjs'] = $this->input->post('dasar_potongan_bpjs') ? delete_currency($this->input->post('dasar_potongan_bpjs')) : 0;
-        $data['dasar_potong_bpjs_tk'] = $this->input->post('dasar_potongan_bpjs_tk') ? delete_currency($this->input->post('dasar_potongan_bpjs_tk')) : 0;
+        $data['bonus_tahunan'] = $this->input->post('bonus_tahunan') ? delete_currency($this->input->post('bonus_tahunan')) : 0;
+        $data['tunjangan_raya'] = $this->input->post('tunjangan_raya') ? delete_currency($this->input->post('tunjangan_raya')) : 0;
+        $data['pendapatan_lain'] = $this->input->post('pendapatan_lain') ? delete_currency($this->input->post('pendapatan_lain')) : 0;
+
+        // BPJS
+        $bpjs_sehat = $this->input->post('dasar_potongan_bpjs') !== null && $this->input->post('dasar_potongan_bpjs') !== '' 
+            ? $this->input->post('dasar_potongan_bpjs') 
+            : $this->input->post('dasar_bpjs_sehat');
+        $bpjs_kerja = $this->input->post('dasar_potongan_bpjs_tk') !== null && $this->input->post('dasar_potongan_bpjs_tk') !== '' 
+            ? $this->input->post('dasar_potongan_bpjs_tk') 
+            : $this->input->post('dasar_bpjs_kerja');
+        $data['dasar_bpjs_sehat'] = $bpjs_sehat ? delete_currency($bpjs_sehat) : 0;
+        $data['dasar_bpjs_kerja'] = $bpjs_kerja ? delete_currency($bpjs_kerja) : 0;
+
+        $data['potongan'] = $this->input->post('potongan') ? delete_currency($this->input->post('potongan')) : 0;
+
         $this->md_salary->addRiwayatSalary($data);
 
-        //update latest riwayat salary
+        //update latest riwayat salary and allowance status flags on pengguna
         $data2['id_latestriwayat_salary'] = $this->db->insert_id();
+        $data2['terima_tunjangan_jabatan'] = ($data['tunjangan_jabatan'] > 0) ? 1 : 0;
+        $data2['terima_tunjangan_konsumsi'] = ($data['tunjangan_konsumsi'] > 0) ? 1 : 0;
+        $data2['terima_tunjangan_kinerja'] = ($data['tunjangan_kinerja'] > 0) ? 1 : 0;
+        $data2['terima_tunjangan_komunikasi'] = ($data['tunjangan_komunikasi'] > 0) ? 1 : 0;
+        $data2['terima_tunjangan_transportasi'] = ($data['tunjangan_transportasi'] > 0) ? 1 : 0;
+        $data2['terima_tunjangan_bbm'] = ($data['tunjangan_bbm'] > 0) ? 1 : 0;
+        $data2['terima_tunjangan_raya'] = ($data['tunjangan_raya'] > 0) ? 1 : 0;
         $this->md_pengguna->updatePengguna($data['pengguna_id'], $data2);
+
+        // Sync with existing salary_history for current month if already generated
+        $curr_month = date('Y-m');
+        $existing_history = $this->md_salary->getSlipByMonth($curr_month, $data['pengguna_id']);
+        if (!empty($existing_history)) {
+            $hist_update = [
+                'gajipokok' => (int)$data['gaji_pokok'],
+                'tunjangankonsumsi' => (int)$data['tunjangan_konsumsi'],
+                'tunjangankinerja' => (int)$data['tunjangan_kinerja'],
+                'tunjangankomunikasi' => (int)$data['tunjangan_komunikasi'],
+                'tunjangantransport' => (int)$data['tunjangan_transportasi'],
+                'tunjanganbbm' => (int)$data['tunjangan_bbm'],
+                'tunjanganjabatan' => (int)$data['tunjangan_jabatan'],
+                'bonus' => (int)$data['bonus_tahunan'],
+                'tunjanganraya' => (int)$data['tunjangan_raya'],
+                'pendapatanlain' => (int)$data['pendapatan_lain'],
+                'potonganlainnya' => (int)$data['potongan'],
+            ];
+            $total_a = $hist_update['gajipokok'] + $hist_update['tunjangankonsumsi'] + $hist_update['tunjangankinerja'] + $hist_update['tunjangankomunikasi'] + $hist_update['tunjangantransport'] + $hist_update['tunjanganbbm'] + $hist_update['tunjanganjabatan'] + $hist_update['bonus'] + $hist_update['tunjanganraya'] + $hist_update['pendapatanlain'] + ($existing_history->pendapatanlain_tidaktetap ?? 0);
+            $total_b = ($existing_history->bpjskesehatan ?? 0) + ($existing_history->bpjstk ?? 0) + ($existing_history->pph21 ?? 0) + $hist_update['potonganlainnya'];
+            $hist_update['totalpendapatan'] = $total_a;
+            $hist_update['totalpotongan'] = $total_b;
+            $hist_update['totalterima'] = $total_a - $total_b;
+
+            $this->db->where('id', $existing_history->id);
+            $this->db->update('salary_history', $hist_update);
+        }
 
         /** LOG */
         $tmp = $this->md_pengguna->getById($data['pengguna_id']);
@@ -199,18 +252,42 @@ class Salary extends CI_Controller
             $new_salary->pengguna_id = encrypt($pengguna_id);
             $new_salary->id_riwayat_salary = '';
             $new_salary->gaji_pokok = '';
+            $new_salary->tunjangan_konsumsi = '';
+            $new_salary->tunjangan_kinerja = '';
+            $new_salary->tunjangan_komunikasi = '';
+            $new_salary->tunjangan_transportasi = '';
+            $new_salary->tunjangan_bbm = '';
             $new_salary->tunjangan_jabatan = '';
+            $new_salary->bonus_tahunan = '';
+            $new_salary->tunjangan_raya = '';
+            $new_salary->pendapatan_lain = '';
             $new_salary->dasar_potong_bpjs = '';
             $new_salary->dasar_potong_bpjs_tk = '';
+            $new_salary->potongan = '';
             echo json_encode([$new_salary]);
             die;
         }
         $dt[0]->pengguna_id = encrypt($dt[0]->pengguna_id);
         $dt[0]->id_riwayat_salary = encrypt($dt[0]->id_riwayat_salary);
-        $dt[0]->gaji_pokok = $dt[0]->gaji_pokok ? rupiah($dt[0]->gaji_pokok) : '';
-        $dt[0]->tunjangan_jabatan = $dt[0]->tunjangan_jabatan ? rupiah($dt[0]->tunjangan_jabatan) : '';
-        $dt[0]->dasar_potong_bpjs = $dt[0]->dasar_potong_bpjs ? rupiah($dt[0]->dasar_potong_bpjs) : '';
-        $dt[0]->dasar_potong_bpjs_tk = $dt[0]->dasar_potong_bpjs_tk ? rupiah($dt[0]->dasar_potong_bpjs_tk) : '';
+        $dt[0]->gaji_pokok = !empty($dt[0]->gaji_pokok) ? rupiah($dt[0]->gaji_pokok) : '';
+        $dt[0]->tunjangan_konsumsi = !empty($dt[0]->tunjangan_konsumsi) ? rupiah($dt[0]->tunjangan_konsumsi) : '';
+        $dt[0]->tunjangan_kinerja = !empty($dt[0]->tunjangan_kinerja) ? rupiah($dt[0]->tunjangan_kinerja) : '';
+        $dt[0]->tunjangan_komunikasi = !empty($dt[0]->tunjangan_komunikasi) ? rupiah($dt[0]->tunjangan_komunikasi) : '';
+        $dt[0]->tunjangan_transportasi = !empty($dt[0]->tunjangan_transportasi) ? rupiah($dt[0]->tunjangan_transportasi) : '';
+        $dt[0]->tunjangan_bbm = !empty($dt[0]->tunjangan_bbm) ? rupiah($dt[0]->tunjangan_bbm) : '';
+        $dt[0]->tunjangan_jabatan = !empty($dt[0]->tunjangan_jabatan) ? rupiah($dt[0]->tunjangan_jabatan) : '';
+        $dt[0]->bonus_tahunan = !empty($dt[0]->bonus_tahunan) ? rupiah($dt[0]->bonus_tahunan) : (!empty($dt[0]->bonus) ? rupiah($dt[0]->bonus) : '');
+        $dt[0]->tunjangan_raya = !empty($dt[0]->tunjangan_raya) ? rupiah($dt[0]->tunjangan_raya) : '';
+        $dt[0]->pendapatan_lain = !empty($dt[0]->pendapatan_lain) ? rupiah($dt[0]->pendapatan_lain) : '';
+
+        // BPJS
+        $bpjs_sehat = !empty($dt[0]->dasar_bpjs_sehat) ? $dt[0]->dasar_bpjs_sehat : (!empty($dt[0]->dasar_potong_bpjs) ? $dt[0]->dasar_potong_bpjs : '');
+        $bpjs_kerja = !empty($dt[0]->dasar_bpjs_kerja) ? $dt[0]->dasar_bpjs_kerja : (!empty($dt[0]->dasar_potong_bpjs_tk) ? $dt[0]->dasar_potong_bpjs_tk : '');
+        $dt[0]->dasar_potong_bpjs = $bpjs_sehat ? rupiah($bpjs_sehat) : '';
+        $dt[0]->dasar_potong_bpjs_tk = $bpjs_kerja ? rupiah($bpjs_kerja) : '';
+
+        $dt[0]->potongan = !empty($dt[0]->potongan) ? rupiah($dt[0]->potongan) : '';
+
         echo json_encode($dt);
         die;
     }
@@ -403,25 +480,23 @@ class Salary extends CI_Controller
             $pengguna_data = $this->md_pengguna->getById($idpengguna);
             if (!empty($pengguna_data) && !empty($pengguna_data[0]->id_latestriwayat_salary)) {
                 $latest = $this->md_salary->getById($pengguna_data[0]->id_latestriwayat_salary);
-                if (!empty($latest)) {
                     $dtsalary = (object)[
                         'gajipokok' => $latest[0]->gaji_pokok ?? 0,
                         'tunjanganjabatan' => $latest[0]->tunjangan_jabatan ?? 0,
-                        'tunjangankonsumsi' => 0,
-                        'tunjangankinerja' => 0,
-                        'tunjangankomunikasi' => 0,
-                        'tunjangantransport' => 0,
-                        'tunjanganraya' => 0,
-                        'bonus' => 0,
-                        'pendapatanlain' => 0,
+                        'tunjangankonsumsi' => $latest[0]->tunjangan_konsumsi ?? 0,
+                        'tunjangankinerja' => $latest[0]->tunjangan_kinerja ?? 0,
+                        'tunjangankomunikasi' => $latest[0]->tunjangan_komunikasi ?? 0,
+                        'tunjangantransport' => $latest[0]->tunjangan_transportasi ?? 0,
+                        'tunjanganraya' => $latest[0]->tunjangan_raya ?? 0,
+                        'bonus' => $latest[0]->bonus_tahunan ?? ($latest[0]->bonus ?? 0),
+                        'pendapatanlain' => $latest[0]->pendapatan_lain ?? 0,
                         'pendapatanlain_tidaktetap' => 0,
-                        'tunjanganbbm' => 0,
+                        'tunjanganbbm' => $latest[0]->tunjangan_bbm ?? 0,
                         'bpjskesehatan' => tunjanganBPJSKesehatan($idpengguna),
                         'bpjstk' => tunjanganBPJStk($idpengguna),
                         'pph21' => 0,
-                        'potonganlainnya' => 0
+                        'potonganlainnya' => $latest[0]->potongan ?? 0
                     ];
-                }
             }
         }
 
@@ -477,19 +552,19 @@ class Salary extends CI_Controller
                     $dtsalary_obj = (object)[
                         'gajipokok' => $latest[0]->gaji_pokok ?? 0,
                         'tunjanganjabatan' => $latest[0]->tunjangan_jabatan ?? 0,
-                        'tunjangankonsumsi' => 0,
-                        'tunjangankinerja' => 0,
-                        'tunjangankomunikasi' => 0,
-                        'tunjangantransport' => 0,
-                        'tunjanganraya' => 0,
-                        'bonus' => 0,
-                        'pendapatanlain' => 0,
+                        'tunjangankonsumsi' => $latest[0]->tunjangan_konsumsi ?? 0,
+                        'tunjangankinerja' => $latest[0]->tunjangan_kinerja ?? 0,
+                        'tunjangankomunikasi' => $latest[0]->tunjangan_komunikasi ?? 0,
+                        'tunjangantransport' => $latest[0]->tunjangan_transportasi ?? 0,
+                        'tunjanganraya' => $latest[0]->tunjangan_raya ?? 0,
+                        'bonus' => $latest[0]->bonus_tahunan ?? ($latest[0]->bonus ?? 0),
+                        'pendapatanlain' => $latest[0]->pendapatan_lain ?? 0,
                         'pendapatanlain_tidaktetap' => 0,
-                        'tunjanganbbm' => 0,
+                        'tunjanganbbm' => $latest[0]->tunjangan_bbm ?? 0,
                         'bpjskesehatan' => tunjanganBPJSKesehatan($idpengguna),
                         'bpjstk' => tunjanganBPJStk($idpengguna),
                         'pph21' => 0,
-                        'potonganlainnya' => 0
+                        'potonganlainnya' => $latest[0]->potongan ?? 0
                     ];
                 }
             }

@@ -85,40 +85,91 @@
 
 <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content ">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
             <div class="modal-header bg-dark text-light">
-                <h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Form Customer</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                <h5 id="modal-label"><i class="fas fa-money-check-alt text-grey-light"></i> Form Edit Salary & Tunjangan</h5>
+                <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">&times;</button>
             </div>
             <?= form_open('#', array('id' => 'modal-form', 'autocomplete' => 'off')); ?>
             <div class="modal-body">
-                <div>
-                    <div class="form-group">
-                        <label class="form-control-label">Gaji Pokok :</label>
-                        <input type="text" class="form-control input_salary" id="gaji_pokok" name="gaji_pokok" required>
+                <div class="row">
+                    <!-- Kolom Kiri: Penghasilan & Tunjangan Pokok -->
+                    <div class="col-md-6 border-right">
+                        <div class="alert alert-secondary py-1 px-2 mb-3 font-weight-bold" style="font-size: 13px;">
+                            <i class="fas fa-hand-holding-usd text-primary"></i> A. PENGHASILAN & TUNJANGAN
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">1. Gaji Pokok :</label>
+                            <input type="text" class="form-control input_salary" id="gaji_pokok" name="gaji_pokok" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">2. Tunjangan Konsumsi :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_konsumsi" name="tunjangan_konsumsi" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">3. Tunjangan Kinerja :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_kinerja" name="tunjangan_kinerja" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">4. Tunjangan Komunikasi :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_komunikasi" name="tunjangan_komunikasi" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">5. Tunjangan Transport :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_transportasi" name="tunjangan_transportasi" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">6. Tunjangan BBM :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_bbm" name="tunjangan_bbm" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">7. Tunjangan Jabatan :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_jabatan" name="tunjangan_jabatan" placeholder="0">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Tunjungan Jabatan :</label>
-                        <input type="text" class="form-control input_salary" id="tunjangan_jabatan"
-                            name="tunjangan_jabatan" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Dasar Potongan BPJS Kesehatan :</label>
-                        <input type="text" class="form-control input_salary" id="dasar_potongan_bpjs"
-                            name="dasar_potongan_bpjs" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Dasar Potongan BPJS Ketenagakerjaan :</label>
-                        <input type="text" class="form-control input_salary" id="dasar_potongan_bpjs_tk"
-                            name="dasar_potongan_bpjs_tk" required>
+
+                    <!-- Kolom Kanan: Tunjangan Lain, Bonus & Potongan -->
+                    <div class="col-md-6">
+                        <div class="alert alert-secondary py-1 px-2 mb-3 font-weight-bold" style="font-size: 13px;">
+                            <i class="fas fa-gift text-success"></i> BONUS & PENDAPATAN LAIN
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">8. Bonus :</label>
+                            <input type="text" class="form-control input_salary" id="bonus_tahunan" name="bonus_tahunan" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">9. Tunjangan Hari Raya :</label>
+                            <input type="text" class="form-control input_salary" id="tunjangan_raya" name="tunjangan_raya" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">10. Pendapatan Lainnya :</label>
+                            <input type="text" class="form-control input_salary" id="pendapatan_lain" name="pendapatan_lain" placeholder="0">
+                        </div>
+
+                        <hr class="my-3">
+                        <div class="alert alert-secondary py-1 px-2 mb-3 font-weight-bold" style="font-size: 13px;">
+                            <i class="fas fa-calculator text-danger"></i> B. POTONGAN & DASAR BPJS
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">Dasar Potongan BPJS Kesehatan :</label>
+                            <input type="text" class="form-control input_salary" id="dasar_potongan_bpjs" name="dasar_potongan_bpjs" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">Dasar Potongan BPJS Ketenagakerjaan :</label>
+                            <input type="text" class="form-control input_salary" id="dasar_potongan_bpjs_tk" name="dasar_potongan_bpjs_tk" placeholder="0">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-control-label font-weight-bold">Potongan Lainnya :</label>
+                            <input type="text" class="form-control input_salary" id="potongan" name="potongan" placeholder="0">
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <input type="hidden" id="pengguna_id" name="pengguna_id" class="form-control">
                 <button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-success btn-save">Simpan</button>
+                <button type="button" class="btn btn-success btn-save"><i class="fas fa-save"></i> Simpan</button>
             </div>
             <?= form_close(); ?>
         </div>
@@ -328,11 +379,22 @@
                     return resp.json()
                 })
                 .then(function (data) {
-                    $('#main-modal #pengguna_id').val(data[0].pengguna_id)
-                    $('#main-modal #gaji_pokok').val(data[0].gaji_pokok)
-                    $('#main-modal #tunjangan_jabatan').val(data[0].tunjangan_jabatan)
-                    $('#main-modal #dasar_potongan_bpjs').val(data[0].dasar_potong_bpjs)
-                    $('#main-modal #dasar_potongan_bpjs_tk').val(data[0].dasar_potong_bpjs_tk)
+                    if (data && data.length > 0) {
+                        $('#main-modal #pengguna_id').val(data[0].pengguna_id)
+                        $('#main-modal #gaji_pokok').val(data[0].gaji_pokok)
+                        $('#main-modal #tunjangan_konsumsi').val(data[0].tunjangan_konsumsi)
+                        $('#main-modal #tunjangan_kinerja').val(data[0].tunjangan_kinerja)
+                        $('#main-modal #tunjangan_komunikasi').val(data[0].tunjangan_komunikasi)
+                        $('#main-modal #tunjangan_transportasi').val(data[0].tunjangan_transportasi)
+                        $('#main-modal #tunjangan_bbm').val(data[0].tunjangan_bbm)
+                        $('#main-modal #tunjangan_jabatan').val(data[0].tunjangan_jabatan)
+                        $('#main-modal #bonus_tahunan').val(data[0].bonus_tahunan)
+                        $('#main-modal #tunjangan_raya').val(data[0].tunjangan_raya)
+                        $('#main-modal #pendapatan_lain').val(data[0].pendapatan_lain)
+                        $('#main-modal #dasar_potongan_bpjs').val(data[0].dasar_potong_bpjs)
+                        $('#main-modal #dasar_potongan_bpjs_tk').val(data[0].dasar_potong_bpjs_tk)
+                        $('#main-modal #potongan').val(data[0].potongan)
+                    }
                 })
         })
 
