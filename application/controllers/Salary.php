@@ -88,6 +88,25 @@ class Salary extends CI_Controller
 
         $data['potongan'] = $this->input->post('potongan') ? delete_currency($this->input->post('potongan')) : 0;
 
+        // Bulan yang sedang diedit (diambil dari Filter Bulan & Tahun di halaman salary)
+        $curr_month = date('Y-m');
+        $edit_month = $this->normalizeMonth($this->input->post('edit_month'));
+        $periode_label = getMonthName(date('m', strtotime($edit_month . '-01'))) . ' ' . date('Y', strtotime($edit_month . '-01'));
+        $tmp = $this->md_pengguna->getById($data['pengguna_id']);
+
+        // Bulan lampau: hanya ubah slip (salary_history) bulan tersebut, master salary & bulan berjalan tidak disentuh
+        if ($edit_month < $curr_month) {
+            $existing_history = $this->md_salary->getSlipByMonth($edit_month, $data['pengguna_id']);
+            if (empty($existing_history)) {
+                ajaxReturnDie('error', 'Slip gaji periode ' . $periode_label . ' belum tersedia (belum tutup buku), sehingga tidak bisa diedit.');
+            }
+            $this->syncSalaryHistory($existing_history, $data, TRUE);
+
+            /** LOG */
+            addLog('Update Salary', 'Mengupdate slip salary "' . $tmp[0]->nama . '" periode ' . $periode_label);
+            ajaxReturnDie('success', 'Salary periode ' . $periode_label . ' Berhasil di Edit', TRUE);
+        }
+
         $this->md_salary->addRiwayatSalary($data);
 
         //update latest riwayat salary and allowance status flags on pengguna
@@ -101,37 +120,73 @@ class Salary extends CI_Controller
         $data2['terima_tunjangan_raya'] = ($data['tunjangan_raya'] > 0) ? 1 : 0;
         $this->md_pengguna->updatePengguna($data['pengguna_id'], $data2);
 
-        // Sync with existing salary_history for current month if already generated
-        $curr_month = date('Y-m');
-        $existing_history = $this->md_salary->getSlipByMonth($curr_month, $data['pengguna_id']);
+        // Sinkronkan slip (salary_history) bulan yang dipilih jika sudah ter-generate
+        $existing_history = $this->md_salary->getSlipByMonth($edit_month, $data['pengguna_id']);
         if (!empty($existing_history)) {
-            $hist_update = [
-                'gajipokok' => (int)$data['gaji_pokok'],
-                'tunjangankonsumsi' => (int)$data['tunjangan_konsumsi'],
-                'tunjangankinerja' => (int)$data['tunjangan_kinerja'],
-                'tunjangankomunikasi' => (int)$data['tunjangan_komunikasi'],
-                'tunjangantransport' => (int)$data['tunjangan_transportasi'],
-                'tunjanganbbm' => (int)$data['tunjangan_bbm'],
-                'tunjanganjabatan' => (int)$data['tunjangan_jabatan'],
-                'bonus' => (int)$data['bonus_tahunan'],
-                'tunjanganraya' => (int)$data['tunjangan_raya'],
-                'pendapatanlain' => (int)$data['pendapatan_lain'],
-                'potonganlainnya' => (int)$data['potongan'],
-            ];
-            $total_a = $hist_update['gajipokok'] + $hist_update['tunjangankonsumsi'] + $hist_update['tunjangankinerja'] + $hist_update['tunjangankomunikasi'] + $hist_update['tunjangantransport'] + $hist_update['tunjanganbbm'] + $hist_update['tunjanganjabatan'] + $hist_update['bonus'] + $hist_update['tunjanganraya'] + $hist_update['pendapatanlain'] + ($existing_history->pendapatanlain_tidaktetap ?? 0);
-            $total_b = ($existing_history->bpjskesehatan ?? 0) + ($existing_history->bpjstk ?? 0) + ($existing_history->pph21 ?? 0) + $hist_update['potonganlainnya'];
-            $hist_update['totalpendapatan'] = $total_a;
-            $hist_update['totalpotongan'] = $total_b;
-            $hist_update['totalterima'] = $total_a - $total_b;
-
-            $this->db->where('id', $existing_history->id);
-            $this->db->update('salary_history', $hist_update);
+            $this->syncSalaryHistory($existing_history, $data, TRUE);
         }
 
         /** LOG */
-        $tmp = $this->md_pengguna->getById($data['pengguna_id']);
-        addLog('Update Salary', 'Mengupdate salary "' . $tmp[0]->nama . '"');
-        ajaxReturnDie('success', 'Salary Berhasil di Edit', TRUE);
+        addLog('Update Salary', 'Mengupdate salary "' . $tmp[0]->nama . '" periode ' . $periode_label);
+        ajaxReturnDie('success', 'Salary periode ' . $periode_label . ' Berhasil di Edit', TRUE);
+    }
+
+    /**
+     * Normalisasi input bulan menjadi format Y-m. Jika kosong / tidak valid, gunakan bulan berjalan.
+     */
+    private function normalizeMonth($month)
+    {
+        $month = trim((string)$month);
+        if (!preg_match('/^\d{4}-\d{1,2}$/', $month)) {
+            return date('Y-m');
+        }
+        return date('Y-m', strtotime($month . '-01'));
+    }
+
+    /**
+     * Update satu baris salary_history (slip bulanan) dengan data salary hasil edit.
+     */
+    private function syncSalaryHistory($existing_history, $data, $recalc_bpjs = FALSE)
+    {
+        $hist_update = [
+            'gajipokok' => (int)$data['gaji_pokok'],
+            'tunjangankonsumsi' => (int)$data['tunjangan_konsumsi'],
+            'tunjangankinerja' => (int)$data['tunjangan_kinerja'],
+            'tunjangankomunikasi' => (int)$data['tunjangan_komunikasi'],
+            'tunjangantransport' => (int)$data['tunjangan_transportasi'],
+            'tunjanganbbm' => (int)$data['tunjangan_bbm'],
+            'tunjanganjabatan' => (int)$data['tunjangan_jabatan'],
+            'bonus' => (int)$data['bonus_tahunan'],
+            'tunjanganraya' => (int)$data['tunjangan_raya'],
+            'pendapatanlain' => (int)$data['pendapatan_lain'],
+            'potonganlainnya' => (int)$data['potongan'],
+        ];
+
+        $bpjs_kes = (float)($existing_history->bpjskesehatan ?? 0);
+        $bpjs_tk = (float)($existing_history->bpjstk ?? 0);
+        if ($recalc_bpjs) {
+            if (property_exists($existing_history, 'dasar_bpjs')) {
+                $hist_update['dasar_bpjs'] = (int)$data['dasar_bpjs_sehat'];
+            }
+            if (property_exists($existing_history, 'dasar_bpjstk')) {
+                $hist_update['dasar_bpjstk'] = (int)$data['dasar_bpjs_kerja'];
+            }
+            $bpjs_kes = $data['dasar_bpjs_sehat'] * 0.01;
+            $bpjs_tk = $data['dasar_bpjs_kerja'] * 0.02;
+            $hist_update['bpjskesehatan'] = $bpjs_kes;
+            $hist_update['bpjstk'] = $bpjs_tk;
+        }
+
+        $pph = $existing_history->pphpasal21 ?? ($existing_history->pph21 ?? 0);
+
+        $total_a = $hist_update['gajipokok'] + $hist_update['tunjangankonsumsi'] + $hist_update['tunjangankinerja'] + $hist_update['tunjangankomunikasi'] + $hist_update['tunjangantransport'] + $hist_update['tunjanganbbm'] + $hist_update['tunjanganjabatan'] + $hist_update['bonus'] + $hist_update['tunjanganraya'] + $hist_update['pendapatanlain'] + ($existing_history->pendapatanlain_tidaktetap ?? 0);
+        $total_b = $bpjs_kes + $bpjs_tk + (float)$pph + $hist_update['potonganlainnya'];
+        $hist_update['totalpendapatan'] = $total_a;
+        $hist_update['totalpotongan'] = $total_b;
+        $hist_update['totalterima'] = $total_a - $total_b;
+
+        $this->db->where('id', $existing_history->id);
+        $this->db->update('salary_history', $hist_update);
     }
 
     public function add_komisi()
@@ -269,6 +324,41 @@ class Salary extends CI_Controller
         }
         $dt[0]->pengguna_id = encrypt($dt[0]->pengguna_id);
         $dt[0]->id_riwayat_salary = encrypt($dt[0]->id_riwayat_salary);
+
+        // Jika bulan yang dipilih sudah punya slip (salary_history), tampilkan nilai slip bulan tersebut
+        $month = $this->input->get('month');
+        if (!empty($month)) {
+            $hist = $this->md_salary->getSlipByMonth($this->normalizeMonth($month), $pengguna_id);
+            if (!empty($hist)) {
+                $map = [
+                    'gaji_pokok' => 'gajipokok',
+                    'tunjangan_konsumsi' => 'tunjangankonsumsi',
+                    'tunjangan_kinerja' => 'tunjangankinerja',
+                    'tunjangan_komunikasi' => 'tunjangankomunikasi',
+                    'tunjangan_transportasi' => 'tunjangantransport',
+                    'tunjangan_bbm' => 'tunjanganbbm',
+                    'tunjangan_jabatan' => 'tunjanganjabatan',
+                    'bonus_tahunan' => 'bonus',
+                    'tunjangan_raya' => 'tunjanganraya',
+                    'pendapatan_lain' => 'pendapatanlain',
+                    'potongan' => 'potonganlainnya',
+                ];
+                foreach ($map as $field => $col) {
+                    if (property_exists($hist, $col)) {
+                        $dt[0]->$field = $hist->$col;
+                    }
+                }
+                if (!empty($hist->dasar_bpjs)) {
+                    $dt[0]->dasar_bpjs_sehat = $hist->dasar_bpjs;
+                    $dt[0]->dasar_potong_bpjs = null;
+                }
+                if (!empty($hist->dasar_bpjstk)) {
+                    $dt[0]->dasar_bpjs_kerja = $hist->dasar_bpjstk;
+                    $dt[0]->dasar_potong_bpjs_tk = null;
+                }
+            }
+        }
+
         $dt[0]->gaji_pokok = !empty($dt[0]->gaji_pokok) ? rupiah($dt[0]->gaji_pokok) : '';
         $dt[0]->tunjangan_konsumsi = !empty($dt[0]->tunjangan_konsumsi) ? rupiah($dt[0]->tunjangan_konsumsi) : '';
         $dt[0]->tunjangan_kinerja = !empty($dt[0]->tunjangan_kinerja) ? rupiah($dt[0]->tunjangan_kinerja) : '';

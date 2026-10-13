@@ -88,7 +88,7 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-dark text-light">
-                <h5 id="modal-label"><i class="fas fa-money-check-alt text-grey-light"></i> Form Edit Salary & Tunjangan</h5>
+                <h5 id="modal-label"><i class="fas fa-money-check-alt text-grey-light"></i> Form Edit Salary &amp; Tunjangan <span class="badge badge-warning ml-2" id="edit_month_label"></span></h5>
                 <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">&times;</button>
             </div>
             <?= form_open('#', array('id' => 'modal-form', 'autocomplete' => 'off')); ?>
@@ -168,6 +168,7 @@
             </div>
             <div class="modal-footer">
                 <input type="hidden" id="pengguna_id" name="pengguna_id" class="form-control">
+                <input type="hidden" id="edit_month" name="edit_month">
                 <button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
                 <button type="button" class="btn btn-success btn-save"><i class="fas fa-save"></i> Simpan</button>
             </div>
@@ -366,15 +367,20 @@
         });
 
         $(document).on('click', '.btn-edit', function () {
-            $('.form-control').val(null)
+            $('.modal .form-control').val(null)
             var object = 'salary'
+            var editMonth = $('#filter_month').val() || '<?= date("Y-m") ?>'
+            var bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+            var parts = editMonth.split('-')
+            $('#main-modal #edit_month').val(editMonth)
+            $('#main-modal #edit_month_label').text('Periode: ' + (bulanNama[parseInt(parts[1], 10) - 1] || '') + ' ' + parts[0])
             $('#main-modal #modal-form').attr('action', 'salary/add')
             $('#main-modal').modal()
 
             var id = $(this).attr("data-id")
             $('#pengguna_id').val(id)
 
-            fetch(object + '/edit/' + id)
+            fetch(object + '/edit/' + id + '?month=' + encodeURIComponent(editMonth))
                 .then(function (resp) {
                     return resp.json()
                 })
@@ -399,7 +405,7 @@
         })
 
         $(document).on('click', '.btn-komisi', function () {
-            $('.form-control').val(null)
+            $('.modal .form-control').val(null)
 
             var object = 'salary'
             $('#main-modal-komisi #modal-form-komisi').attr('action', 'salary/add_komisi')
@@ -480,7 +486,7 @@
         });
 
         $(document).on('click', '.btn-pen_lain', function () {
-            $('.form-control').val(null)
+            $('.modal .form-control').val(null)
 
             var object = 'salary'
             $('#main-modal-pendapatan_lain #modal-form-pendapatan_lain').attr('action', 'salary/add_pendapatan_lain')
@@ -501,7 +507,7 @@
         })
 
         $(document).on('click', '.btn-pph21', function() {
-            $('.form-control').val(null)
+            $('.modal .form-control').val(null)
            
             var object = 'salary'
             $('#main-modal-pph21 #modal-form-pph21').attr('action', 'salary/add_pph21')
