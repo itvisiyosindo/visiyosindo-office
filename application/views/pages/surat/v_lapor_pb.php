@@ -201,7 +201,7 @@
 					<tr>
 						<td style="text-align:center; "><?= $data_pb[0]->nama_ttd ?><hr></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Amtisari DE Putri<hr></hr></td>
+						<td style="text-align:center; ">Dirangga Madali<hr></hr></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; ">Meilina Safitri<hr></hr></td>
 						<td style="text-align:center; "></td>
@@ -210,7 +210,7 @@
 					<tr>
 						<td style="text-align:center; vertical-align:top;"><i><?= $data_pb[0]->jabatan ?></i></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; vertical-align:top;"><i>Finance Staff</i></td>
+						<td style="text-align:center; vertical-align:top;"><i>Head of Accounting and Tax</i></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; vertical-align:top;"><i>Head of Finance & Corporate Planning</i></td>
 						<td style="text-align:center; "></td>
