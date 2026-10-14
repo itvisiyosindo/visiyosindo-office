@@ -7,24 +7,64 @@
     </div>
 	
 	<style>
-		hr{
-		   display: block;
-		   margin-top: 0em;
-		   margin-bottom: 0em;
-		   margin-left: auto;
-		   margin-right: auto;
-		   border-top: 1px solid black;
+		hr {
+			display: block;
+			margin-top: 0em;
+			margin-bottom: 0em;
+			margin-left: auto;
+			margin-right: auto;
+			border-top: 1px solid black;
 		}
-		
-		input{
-			width:97%;
-			height:auto;
-			border:0px dotted #f30; 
-			border-radius:4px; 
-			-moz-border-radius:8px;			
-			margin-right:0px;
-			//font-family:Garamond;
-			//background:#363;
+		.table-input {
+			border-collapse: collapse;
+			width: 100%;
+			font-family: 'Times New Roman', serif;
+			font-size: 15px;
+			color: #000;
+		}
+		.table-input th {
+			background-color: #b7d5ac;
+			color: #000;
+			text-align: center;
+			vertical-align: middle;
+			padding: 8px;
+			font-weight: bold;
+		}
+		.table-input td {
+			padding: 4px;
+			vertical-align: middle;
+		}
+		.form-control-table {
+			width: 100%;
+			height: 34px;
+			padding: 4px 8px;
+			font-size: 14px;
+			border: 1px solid #ced4da;
+			border-radius: 4px;
+			background-color: #fff;
+			transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+			box-sizing: border-box;
+		}
+		.form-control-table:focus {
+			border-color: #5b9bd5;
+			outline: 0;
+			box-shadow: 0 0 0 0.2rem rgba(91, 155, 213, 0.25);
+		}
+		.input-lampiran {
+			width: 85%;
+			max-width: 600px;
+			height: 32px;
+			padding: 4px 10px;
+			font-size: 14px;
+			border: 1px solid #ced4da;
+			border-radius: 4px;
+			background-color: #fff;
+			transition: all .2s;
+		}
+		.input-lampiran:focus {
+			border-color: #5b9bd5;
+			outline: 0;
+			box-shadow: 0 0 0 0.2rem rgba(91, 155, 213, 0.25);
 		}
 	</style>
 </header>
@@ -112,7 +152,7 @@
 					</tr>
 					<tr>
 						<td>Lampiran </td>
-						<td>:&nbsp;&nbsp;<input id='lampiran' type="text" placeholder='Klik Untuk Memasukkan Link Lampiran' required></td></td>
+						<td>:&nbsp;&nbsp;<input id='lampiran' class="input-lampiran" type="text" placeholder="Klik Untuk Memasukkan Link Lampiran" required></td>
 					</tr>
 					<tr>
 						<td><font color="white">i </font></td>
@@ -120,12 +160,12 @@
 				</tr>
 			</table>
 		
-			<table id="kt_table_1" style="font-family:Times New Roman; font-color:black; font-size:15px" border="1" width="100%">
+			<table id="kt_table_1" class="table-input" border="1" width="100%">
                         <thead>
                             <tr>
-                                <th style="text-align:center" bgcolor="#b7d5ac" width="20%"> Tanggal </th>
-                                <th style="text-align:center" bgcolor="#b7d5ac"> Keterangan </th>
-                                <th style="text-align:center" bgcolor="#b7d5ac" width="25%"> Nominal </th>
+                                <th width="20%"> Tanggal </th>
+                                <th> Keterangan </th>
+                                <th width="25%"> Nominal </th>
                             </tr>
                         </thead>
                         <tbody id="bodyt">
@@ -136,10 +176,10 @@
 							?>
 								<tr>
                                     <td style="text-align:center">
-										<input type="text" data-plugin-datepicker data-plugin-options='{"orientation":"bottom", "format":"dd-mm-yyyy"}' id="<?= 'tgl_'.$x ?>" Style="width:100%; text-align:center"  required>										
+										<input type="text" data-plugin-datepicker data-plugin-options='{"orientation":"bottom", "format":"dd-mm-yyyy"}' id="<?= 'tgl_'.$x ?>" class="form-control-table text-center input-tgl" placeholder="dd-mm-yyyy" autocomplete="off">										
 									</td>
-                                    <td><input type="text" id="<?= 'keterangan_'.$x ?>" Style="width:100%" required></td>
-                                    <td><input type="number" id="<?= 'nominal_'.$x ?>" Style="width:100%; text-align:right" required></td>
+                                    <td><input type="text" id="<?= 'keterangan_'.$x ?>" class="form-control-table input-ket" placeholder="Keterangan pengeluaran"></td>
+                                    <td><input type="number" id="<?= 'nominal_'.$x ?>" class="form-control-table text-right input-nominal" placeholder="0" min="0" oninput="hitungTotal()"></td>
                                 </tr>
 							<?php } ?>
 									
@@ -147,16 +187,15 @@
                         <tfoot>
                             <input type="hidden" id="itung" value="<?= $itung ?>">
                             <tr>
-                                <th bgcolor="#b7d5ac" colspan="2" style="text-align:center"> TOTAL </th>
-                                <td bgcolor="#b7d5ac" style="text-align:right"> ,- </td>
+                                <th colspan="2" style="text-align:center; background-color:#b7d5ac; padding:8px;"> TOTAL </th>
+                                <td id="total_display" style="text-align:right; background-color:#b7d5ac; padding:8px; font-weight:bold; font-size:15px;">Rp. 0,-</td>
                             </tr>                            
                         </tfoot>
 			</table>
-			<br>
-			<button type="button" class="btn btn-success" onclick="myFunction1()"><i class="fa-plus-circle"></i>Tambah Baris</button>
-			<!-- <button type="button" class="btn btn-primary" onclick="addRow('tbody2')">Tambah Baris</button> -->
-			<button type="button" class="btn btn-danger" onclick="myDeleteFunction1()">	Hapus Baris</button>
-			<br>
+			<div class="mt-2 mb-3">
+				<button type="button" class="btn btn-sm btn-success shadow-sm" onclick="myFunction1()"><i class="fas fa-plus-circle mr-1"></i> Tambah Baris</button>
+				<button type="button" class="btn btn-sm btn-danger shadow-sm ml-1" onclick="myDeleteFunction1()"><i class="fas fa-minus-circle mr-1"></i> Hapus Baris</button>
+			</div>
 			<table border="0">
 				<tr>
 					<td width="7%">
@@ -174,7 +213,7 @@
 					<tr style="height: 35px;">
 						<td style="width:100%; height:35px; text-align:right; vertical-align:top;" colspan="7">							
 							<span> <?= $data_pb[0]->kota_pengajuan ?>,&nbsp; </span>
-							<input type="text" data-plugin-datepicker data-plugin-options='{"orientation":"top", "format":"dd-mm-yyyy"}' id="pengajuan" Style="width:15%; text-align:left" placeholder="Pengajuan" required>
+							<input type="text" data-plugin-datepicker data-plugin-options='{"orientation":"top", "format":"dd-mm-yyyy"}' id="pengajuan" class="form-control-table d-inline-block text-center" style="width:160px;" placeholder="dd-mm-yyyy" required autocomplete="off">
 						</td>
 					</tr>
 					<tr style="height: 18px;">
@@ -230,38 +269,65 @@
 
 <script>
 
+	// FUNGSI HITUNG TOTAL OTOMATIS
+	function hitungTotal() {
+		let total = 0;
+		$('.input-nominal').each(function() {
+			let val = parseFloat($(this).val());
+			if (!isNaN(val)) {
+				total += val;
+			}
+		});
+		$('#total_display').text('Rp. ' + total.toLocaleString('id-ID') + ',-');
+	}
+
 	// FUNGSI TAMBAH BARIS BARU
 	var x1 = <?= $itung ?>;
-	x1 = parseInt(x1)+1;
 
-		function myFunction1() {
-			
-		  var urut 	= x1 - 0;
-		  var table = document.getElementById("kt_table_1");
-		  // var ambil	= document.getElementById("myTable").rows[10].cells;
-		  var row 	= table.insertRow(x1);
-		  x1 = x1 + 1;
-		  var cell1 = row.insertCell(0);
-		  var cell2 = row.insertCell(1);
-		  var cell3 = row.insertCell(2);
+	function myFunction1() {
+		x1++;
+		var newRow = `<tr>
+			<td style="text-align:center">
+				<input type="text" data-plugin-datepicker data-plugin-options='{"orientation":"bottom", "format":"dd-mm-yyyy"}' id="tgl_${x1}" class="form-control-table text-center input-tgl" placeholder="dd-mm-yyyy" autocomplete="off">
+			</td>
+			<td><input type="text" id="keterangan_${x1}" class="form-control-table input-ket" placeholder="Keterangan pengeluaran"></td>
+			<td><input type="number" id="nominal_${x1}" class="form-control-table text-right input-nominal" placeholder="0" min="0" oninput="hitungTotal()"></td>
+		</tr>`;
+		$('#bodyt').append(newRow);
+		$('#itung').val(x1);
 
-		  
-		  //x1 = x1+1;
-		  // cell2.innerHTML = ""+ambil[1].innerHTML;
-		  //cell1.innerHTML = "<input type='text' data-plugin-datepicker data-plugin-options='{\"orientation\":\"bottom\", \"format\":\"dd-mm-yyyy\"}' id="<?= 'tgl_'.$x ?>" Style='width:100%; text-align:center'  required>'
-		  //cell1.innerHTML = '<input type="date"  id="tgl'+urut+'"   Style="width:100%">';
-		  //"<li><a href='#tabs-" + i + "'>" + tabnames[i] + "</a></li>";
-		  cell1.innerHTML = '<input type="text" data-plugin-datepicker="" data-plugin-options="{&quot;orientation&quot;:&quot;bottom&quot;, &quot;format&quot;:&quot;dd-mm-yyyy&quot;}" id="tgl_'+(urut)+'" style="width:100%; text-align:center" required="">';
-		  cell2.innerHTML = "<input type='text' id='keterangan_"+urut+"' Style='width:100%'>";
-		  cell3.innerHTML = "<input type='number' id='nominal_"+urut+"' Style='width:100%; text-align:right'>";
-		  document.getElementById('itung').value = urut;
+		if ($.fn.datepicker) {
+			$('#tgl_' + x1).datepicker({
+				orientation: "bottom",
+				format: "dd-mm-yyyy",
+				autoclose: true
+			});
 		}
-	
-		function myDeleteFunction1() {
-			x = x-1;		
-			document.getElementById("myTable1").deleteRow(x);			
+	}
+
+	// FUNGSI HAPUS BARIS TERAKHIR
+	function myDeleteFunction1() {
+		var rows = $('#bodyt tr');
+		if (rows.length > 1) {
+			rows.last().remove();
+			x1--;
+			$('#itung').val($('#bodyt tr').length);
+			hitungTotal();
+		} else {
+			if (typeof Swal !== 'undefined') {
+				Swal.fire({
+					icon: 'warning',
+					title: 'Peringatan',
+					text: 'Minimal harus ada 1 baris pengeluaran.'
+				});
+			} else {
+				alert('Minimal harus ada 1 baris pengeluaran.');
+			}
 		}
+	}
+
     document.addEventListener('DOMContentLoaded', function() {             
+		hitungTotal();             
         
 		$(document).on('click', '.btn-laporan', function() {
 			var pengajuan	= $('#pengajuan').val();
