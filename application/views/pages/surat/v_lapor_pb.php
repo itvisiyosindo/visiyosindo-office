@@ -23,12 +23,17 @@
 			color: #000;
 		}
 		.table-input th {
-			background-color: #b7d5ac;
+			background-color: #f4f6f8;
 			color: #000;
 			text-align: center;
 			vertical-align: middle;
 			padding: 8px;
 			font-weight: bold;
+		}
+		.table-input tfoot th,
+		.table-input tfoot td {
+			background-color: #f4f6f8;
+			color: #000;
 		}
 		.table-input td {
 			padding: 4px;
@@ -187,8 +192,8 @@
                         <tfoot>
                             <input type="hidden" id="itung" value="<?= $itung ?>">
                             <tr>
-                                <th colspan="2" style="text-align:center; background-color:#b7d5ac; padding:8px;"> TOTAL </th>
-                                <td id="total_display" style="text-align:right; background-color:#b7d5ac; padding:8px; font-weight:bold; font-size:15px;">Rp. 0,-</td>
+                                <th colspan="2" style="text-align:center; background-color:#f4f6f8; padding:8px; font-weight:bold;"> TOTAL </th>
+                                <td id="total_display" style="text-align:right; background-color:#f4f6f8; padding:8px; font-weight:bold; font-size:15px;">Rp. 0,-</td>
                             </tr>                            
                         </tfoot>
 			</table>
