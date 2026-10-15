@@ -281,6 +281,19 @@ class Md_calonpelanggan extends CI_Model
             ->generate();
     }
 
+    function getPICByListIdCalon($id_list)
+    {
+        if (empty($id_list)) {
+            return [];
+        }
+        return $this->db
+            ->select('id, namapic, jabatanpic, teleponpic, idpic')
+            ->from('calonpelangganpic')
+            ->where_in('idpic', $id_list)
+            ->where('deleted', 0)
+            ->order_by('id', 'asc')
+            ->get()->result();
+    }
 
     function getAllCalonPelangganFunnel()
     {

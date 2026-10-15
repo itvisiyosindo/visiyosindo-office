@@ -388,6 +388,22 @@ class calonpelanggan extends CI_Controller
         $start = $this->input->post('start');
         $data  = array();
         $index = 1;
+
+        // Ambil data kontak PIC untuk semua calon pelanggan pada halaman ini
+        $id_list = array();
+        if (!empty($dt['data'])) {
+            foreach ($dt['data'] as $r) {
+                $id_list[] = $r->id;
+            }
+        }
+        $pic_map = array();
+        if (!empty($id_list)) {
+            $pics = $this->Md_calonpelanggan->getPICByListIdCalon($id_list);
+            foreach ($pics as $p) {
+                $pic_map[$p->idpic][] = $p;
+            }
+        }
+
         foreach ($dt['data'] as $row) {
             $id           = encrypt($row->id);
             $myObj = $row->id . "," . $row->namacaloncustomer;
@@ -399,7 +415,7 @@ class calonpelanggan extends CI_Controller
                 </div>';
             // $li_btnstatus = '
             //     <div class="btn-group" role="group" aria-label="First group">
-
+ 
             //        <button type="button" class="btn btn-sm btn-warning btn-reset" data-id="' . $id . '"><i class="bx bx-home"></i></button>
             //     </div>';    
             //$statuscalon	 = '<button type="button" class="btn btn-sm btn-success btn-status" data-id="status'. $id .'"><i class="icons icon-plus"></i>&nbsp;Pelanggan</button>&nbsp&nbsp';
@@ -408,6 +424,48 @@ class calonpelanggan extends CI_Controller
                                     <a href="javascript:;" id="btnmodality' . $id . '" class="btn btn-sm btn-dark" "><i class="icons icon-plus">Modality</i></a>
                                 </div>';
             $kodecaloncustomer    = '<a href="calonpelanggan/showdetail/' . encrypt($row->id) . '">' . $row->kodecaloncustomer . '</a>';
+
+            // Format Kontak PIC
+            $kontak_pic = '';
+            if (!empty($pic_map[$row->id])) {
+                $pic_items = array();
+                foreach ($pic_map[$row->id] as $pic) {
+                    $nama = trim($pic->namapic);
+                    $jabatan = trim($pic->jabatanpic);
+                    $telp = trim($pic->teleponpic);
+
+                    $item = '';
+                    if ($nama !== '') {
+                        $item .= '<strong>' . htmlspecialchars($nama, ENT_QUOTES) . '</strong>';
+                        if ($jabatan !== '') {
+                            $item .= ' <small class="text-muted">(' . htmlspecialchars($jabatan, ENT_QUOTES) . ')</small>';
+                        }
+                    } elseif ($jabatan !== '') {
+                        $item .= '<strong>' . htmlspecialchars($jabatan, ENT_QUOTES) . '</strong>';
+                    }
+
+                    if ($telp !== '') {
+                        $clean_telp = preg_replace('/[^0-9]/', '', $telp);
+                        if (substr($clean_telp, 0, 1) === '0') {
+                            $wa_num = '62' . substr($clean_telp, 1);
+                        } else {
+                            $wa_num = $clean_telp;
+                        }
+                        $telp_link = '<a href="https://wa.me/' . $wa_num . '" target="_blank" class="text-success small" title="Chat WhatsApp"><i class="fab fa-whatsapp"></i> ' . htmlspecialchars($telp, ENT_QUOTES) . '</a>';
+                        $item .= ($item !== '' ? '<br>' : '') . $telp_link;
+                    }
+
+                    if ($item !== '') {
+                        $pic_items[] = '<div>' . $item . '</div>';
+                    }
+                }
+                $kontak_pic = implode('<hr class="my-1 border-light">', $pic_items);
+            }
+
+            if ($kontak_pic === '') {
+                $kontak_pic = '<span class="text-muted">-</span>';
+            }
+
             $th = array();
             $th[] = $index;
             $th[] = encrypt($row->id);
@@ -415,6 +473,7 @@ class calonpelanggan extends CI_Controller
             $th[] = $kodecaloncustomer;
             $th[] = $row->namamarketing;
             $th[] = $row->namacaloncustomer;
+            $th[] = $kontak_pic;
             $th[] = $row->alamatcaloncustomer;
             $th[] = $row->provinsi;
             $th[] = $row->kota;

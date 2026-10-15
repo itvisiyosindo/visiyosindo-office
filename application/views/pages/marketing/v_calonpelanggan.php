@@ -30,6 +30,7 @@
 							<th> Kode </th>
 							<th> Nama Marketing</th>
 							<th> Nama Calon Customer </th>
+							<th> Kontak PIC </th>
 							<th> Alamat </th>
 							<th> Provinsi </th>
 							<th> Kota </th>
@@ -630,22 +631,19 @@
 							"width": "1%"
 						},
 						{
-							"width": "2%"
-						},
-						{
-							"width": "11%"
-						},
-						{
-							"width": "20%"
-						},
-						{
-							"width": "24%"
+							"width": "3%"
 						},
 						{
 							"width": "10%"
 						},
 						{
-							"width": "10%"
+							"width": "15%"
+						},
+						{
+							"width": "14%"
+						},
+						{
+							"width": "18%"
 						},
 						{
 							"width": "8%"
@@ -657,10 +655,14 @@
 							"width": "7%"
 						},
 						{
-							"width": "7%"
+							"width": "6%"
 						},
-
-
+						{
+							"width": "6%"
+						},
+						{
+							"width": "6%"
+						},
 					],
 
 					columnDefs: [{
@@ -775,7 +777,7 @@
 					var idc = currentRow[1];
 					var kcc = currentRow[2].substr(0, 9) + "<?= sprintf('%03d', $kodecustomer); ?>"; //003/62/B/
 					var namapel = currentRow[5];
-					var dateStr = currentRow[8].trim();
+					var dateStr = currentRow[10] ? currentRow[10].replace(/<[^>]*>?/gm, '').trim() : '';
 
 					$('#main-modal-pelanggan').modal('show')
 					$('#main-modal-pelanggan #modal-form-pelanggan').attr('action', 'calonpelanggan/addpelanggan')
