@@ -2072,6 +2072,9 @@ function waSuratReject($data)
 
 function waSlipGaji($data, $link)
 {
+	// Notifikasi slip gaji dinonaktifkan
+	return true;
+
 	$data['perihal']    = cekPerihal($data['perihal']);
 
 	$dataWa['devId']	= hostWa('2');
@@ -3118,6 +3121,9 @@ if (!function_exists('waPengajuanRejected')) {
 if (!function_exists('waSlipGajiBaru')) {
 	function waSlipGajiBaru($data)
 	{
+		// Notifikasi slip gaji dinonaktifkan
+		return true;
+
 		// $data: noPenerima, namaKaryawan, periodeBulan, linkSlip
 		$dataWa['penerima']      = $data['noPenerima'];
 		$dataWa['template_name'] = 'notifikasi_slip_gaji';

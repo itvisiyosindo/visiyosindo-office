@@ -476,7 +476,7 @@ class Salary extends CI_Controller
                 'perihal'         => '',
                 'kode'             => $row[0]->npp
             ];
-            waSlipGaji($dataWa, 'https://office.visiyosindo.id/salary/print_slip_month/' . $month . '/' . $id_pengguna);
+            // waSlipGaji($dataWa, 'https://office.visiyosindo.id/salary/print_slip_month/' . $month . '/' . $id_pengguna);
         }
 
 
@@ -526,7 +526,7 @@ class Salary extends CI_Controller
                     'perihal'         => '',
                     'kode'             => $row->npp
                 ];
-                waSlipGaji($dataWa, 'https://office.visiyosindo.id/salary/print_slip_month/' . $month . '/' . $id_pengguna);
+                // waSlipGaji($dataWa, 'https://office.visiyosindo.id/salary/print_slip_month/' . $month . '/' . $id_pengguna);
                 //}
             }
             $this->load->view('index', $page_data);
