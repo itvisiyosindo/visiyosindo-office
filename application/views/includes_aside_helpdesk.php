@@ -897,13 +897,13 @@
 					<?php } ?>
 
 					<!-- Menu Sistem PO (Penerimaan & Kroscek PO) -->
-					<li class="nav-parent <?= ($this->uri->segment(1) == 'po_system' && $this->uri->segment(2) != 'notif_config') ? 'nav-active nav-expanded' : ''; ?>">
+					<li class="nav-parent <?= ($this->uri->segment(1) == 'po_system') ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
 							<i class="fas fa-file-signature" aria-hidden="true"></i>
 							<span>Penerimaan & Kroscek PO</span>
 						</a>
 						<ul class="nav nav-children">
-							<li class="<?= (in_array($page_name, ['po/v_po_list']) || ($this->uri->segment(1) == 'po_system' && $this->uri->segment(2) == '')) ? 'nav-active' : '' ?>">
+							<li class="<?= (in_array($page_name, ['po/v_po_list']) || ($this->uri->segment(1) == 'po_system' && empty($this->uri->segment(2)))) ? 'nav-active' : '' ?>">
 								<a class="nav-link" href="<?= base_url('po_system') ?>">
 									Daftar PO Masuk
 								</a>
@@ -916,15 +916,15 @@
 						</ul>
 					</li>
 
-					<!-- Menu Config Notifikasi PO (Admin Only) -->
-					<?php if (isAdmin()) { ?>
+					<?php /* Config Notifikasi PO (Ditunda - Dibahas Nanti)
+					if (isAdmin()) { ?>
 						<li class="<?= ($this->uri->segment(1) == 'po_system' && $this->uri->segment(2) == 'notif_config') ? 'nav-active' : '' ?>">
 							<a class="nav-link" href="<?= base_url('po_system/notif_config') ?>">
 								<i class="fas fa-cogs" aria-hidden="true"></i>
 								<span>Config Notifikasi PO</span>
 							</a>
 						</li>
-					<?php } ?>
+					<?php } */ ?>
 
 					<?php if (isAdmin() || sessPenggunaId() == '759' || sessPenggunaId() == '1') { ?>
 						<li class="<?= $this->uri->segment(1) == 'Tagihan_Config' ? 'nav-active' : '' ?>">
