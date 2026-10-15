@@ -758,4 +758,93 @@ class Md_dashboard extends CI_Model
 
         return 0;
     }
+
+    /**
+     * Rekapitulasi Izin, Cuti, dan Sakit karyawan per bulan terpilih.
+     * Menggabungkan data dari tabel absensi, surat_cuti_tahunan, dan surat_izin_jam_kerja secara DISTINCT per tanggal.
+     *
+     * @param string $month Format 'YYYY-MM'
+     * @return array [pengguna_id => ['izin' => ['total' => int, 'dates' => string], ...]]
+     */
+    public function getRekapIzinCutiSakitMonth($month)
+    {
+        $tgl_awal = date('Y-m-01', strtotime($month));
+        $tgl_akhir = date('Y-m-t', strtotime($month));
+
+        // 1. Dari tabel absensi
+        $sql_absen = "SELECT pengguna_id, 
+            DATE(data_created) as tgl,
+            CASE 
+                WHEN status_absen = 'sakit' OR type_absen = 'sakit' THEN 'sakit'
+                WHEN status_absen = 'cuti' OR type_absen = 'cuti' THEN 'cuti'
+                WHEN status_absen = 'izin' OR (type_absen = 'izin' AND (status_absen IS NULL OR status_absen = '' OR status_absen = 'izin')) THEN 'izin'
+                ELSE NULL 
+            END as kategori
+            FROM absensi
+            WHERE data_created >= ? AND data_created <= ?
+              AND (type_absen IN ('izin', 'cuti', 'sakit') OR status_absen IN ('izin', 'cuti', 'sakit'))";
+
+        $query_absen = $this->db->query($sql_absen, array($tgl_awal . ' 00:00:00', $tgl_akhir . ' 23:59:59'));
+        $user_dates = array();
+        foreach ($query_absen->result() as $r) {
+            if (!empty($r->kategori) && !empty($r->tgl)) {
+                $user_dates[$r->pengguna_id][$r->kategori][$r->tgl] = true;
+            }
+        }
+
+        // 2. Dari tabel surat_cuti_tahunan (yang disetujui / status aktif)
+        $sql_cuti = "SELECT id_pengaju, tgl_awal, tgl_akhir 
+                     FROM surat_cuti_tahunan 
+                     WHERE status IN (1, 2, 3) 
+                       AND tgl_awal <= ? AND tgl_akhir >= ?";
+        $query_cuti = $this->db->query($sql_cuti, array($tgl_akhir, $tgl_awal));
+        foreach ($query_cuti->result() as $r) {
+            $cur = max($tgl_awal, $r->tgl_awal);
+            $end = min($tgl_akhir, $r->tgl_akhir);
+            while (strtotime($cur) <= strtotime($end)) {
+                $user_dates[$r->id_pengaju]['cuti'][$cur] = true;
+                $cur = date('Y-m-d', strtotime('+1 day', strtotime($cur)));
+            }
+        }
+
+        // 3. Dari tabel surat_izin_jam_kerja (yang tidak ditolak)
+        $sql_sijk = "SELECT id_pengaju, jenis_izin, tanggal, tgl_awal, tgl_akhir 
+                     FROM surat_izin_jam_kerja 
+                     WHERE (status NOT IN (4, 5) OR status IS NULL)
+                       AND ((tanggal >= ? AND tanggal <= ?) 
+                            OR (tgl_awal <= ? AND tgl_akhir >= ?))";
+        $query_sijk = $this->db->query($sql_sijk, array($tgl_awal, $tgl_akhir, $tgl_akhir, $tgl_awal));
+        foreach ($query_sijk->result() as $r) {
+            $kat = (strtolower($r->jenis_izin ?? '') == 'sakit') ? 'sakit' : 'izin';
+            if (!empty($r->tanggal)) {
+                $user_dates[$r->id_pengaju][$kat][$r->tanggal] = true;
+            }
+            if (!empty($r->tgl_awal) && !empty($r->tgl_akhir)) {
+                $cur = max($tgl_awal, $r->tgl_awal);
+                $end = min($tgl_akhir, $r->tgl_akhir);
+                while (strtotime($cur) <= strtotime($end)) {
+                    $user_dates[$r->id_pengaju][$kat][$cur] = true;
+                    $cur = date('Y-m-d', strtotime('+1 day', strtotime($cur)));
+                }
+            }
+        }
+
+        // Summary counts and formatted date strings
+        $summary = array();
+        foreach ($user_dates as $pid => $kats) {
+            foreach (array('izin', 'cuti', 'sakit') as $k) {
+                $dates = isset($kats[$k]) ? array_keys($kats[$k]) : array();
+                sort($dates);
+                $formatted_dates = array_map(function ($d) {
+                    return date('d/m', strtotime($d));
+                }, $dates);
+                $summary[$pid][$k] = array(
+                    'total' => count($dates),
+                    'dates' => implode(', ', $formatted_dates)
+                );
+            }
+        }
+
+        return $summary;
+    }
 }

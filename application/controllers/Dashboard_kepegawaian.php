@@ -474,6 +474,9 @@ class Dashboard_kepegawaian extends CI_Controller
 
         $page_data['list_pengguna'] = $list_pengguna;
 
+        // Rekap Izin, Cuti, dan Sakit untuk bulan terpilih ($month)
+        $page_data['rekap_absensi'] = $this->md_dashboard->getRekapIzinCutiSakitMonth($month);
+
 
 
 

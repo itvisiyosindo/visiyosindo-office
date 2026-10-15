@@ -380,11 +380,23 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 					<table class="table table-rekap-modern">
 						<thead>
 							<tr>
-								<th rowspan="3" style="width: 50px;">No</th>
-								<th rowspan="3" style="min-width: 180px; text-align: left !important; padding-left: 14px !important;">Nama Karyawan</th>
+								<th rowspan="3" style="width: 45px;">No</th>
+								<th rowspan="3" style="min-width: 170px; text-align: left !important; padding-left: 14px !important;">Nama Karyawan</th>
+								<th colspan="3" style="background: #f8fafc; color: #334155; border-bottom: 1px solid #cbd5e1 !important;">
+									<i class="fas fa-calendar-check mr-1 text-primary"></i> Rekap Absensi (<?= $bulanIni ?>)
+								</th>
 								<th colspan="<?= count($data_mingguan) * 4 ?>" style="background: #e2e8f0; color: #1e293b;">Periode Penilaian Mingguan</th>
 							</tr>
 							<tr>
+								<th rowspan="2" style="font-size: 11px; background: #faf5ff; color: #7e22ce; width: 65px; border-bottom: 1px solid #cbd5e1 !important;" title="Total Izin pada bulan <?= $bulanIni ?>">
+									<i class="fas fa-calendar-times mr-1"></i> Izin
+								</th>
+								<th rowspan="2" style="font-size: 11px; background: #fffbeb; color: #b45309; width: 65px; border-bottom: 1px solid #cbd5e1 !important;" title="Total Cuti pada bulan <?= $bulanIni ?>">
+									<i class="fas fa-user-clock mr-1"></i> Cuti
+								</th>
+								<th rowspan="2" style="font-size: 11px; background: #fff1f2; color: #be123c; width: 65px; border-bottom: 1px solid #cbd5e1 !important;" title="Total Sakit pada bulan <?= $bulanIni ?>">
+									<i class="fas fa-procedures mr-1"></i> Sakit
+								</th>
 								<?php foreach ($data_mingguan as $minggu): ?>
 									<th colspan="4" style="background: #f1f5f9; color: #0284c7; font-size: 11px;"><?= $minggu['periode'] ?></th>
 								<?php endforeach; ?>
@@ -399,10 +411,45 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 							</tr>
 						</thead>
 						<tbody>
-							<?php $no = 1; foreach ($list_pengguna as $pengguna): ?>
+							<?php $no = 1; foreach ($list_pengguna as $pengguna): 
+								$rekap_user = $rekap_absensi[$pengguna->pengguna_id] ?? [];
+								$jml_izin  = $rekap_user['izin']['total'] ?? 0;
+								$tgl_izin  = $rekap_user['izin']['dates'] ?? '';
+								$jml_cuti  = $rekap_user['cuti']['total'] ?? 0;
+								$tgl_cuti  = $rekap_user['cuti']['dates'] ?? '';
+								$jml_sakit = $rekap_user['sakit']['total'] ?? 0;
+								$tgl_sakit = $rekap_user['sakit']['dates'] ?? '';
+							?>
 								<tr>
 									<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $no++ ?></td>
 									<td style="font-weight: 600; color: #0f172a; padding-left: 14px !important;"><?= $pengguna->nama ?></td>
+									<td style="text-align:center; background-color: rgba(250, 245, 255, 0.4);">
+										<?php if ($jml_izin > 0): ?>
+											<span class="badge badge-pill" style="background: #f3e8ff; color: #7e22ce; font-weight: 700; font-size: 11px; padding: 3px 8px;" title="Tgl: <?= $tgl_izin ?>" data-toggle="tooltip">
+												<?= $jml_izin ?> hr
+											</span>
+										<?php else: ?>
+											<span class="text-muted" style="font-size: 11px;">0</span>
+										<?php endif; ?>
+									</td>
+									<td style="text-align:center; background-color: rgba(255, 251, 235, 0.4);">
+										<?php if ($jml_cuti > 0): ?>
+											<span class="badge badge-pill" style="background: #fef3c7; color: #b45309; font-weight: 700; font-size: 11px; padding: 3px 8px;" title="Tgl: <?= $tgl_cuti ?>" data-toggle="tooltip">
+												<?= $jml_cuti ?> hr
+											</span>
+										<?php else: ?>
+											<span class="text-muted" style="font-size: 11px;">0</span>
+										<?php endif; ?>
+									</td>
+									<td style="text-align:center; background-color: rgba(255, 241, 242, 0.4);">
+										<?php if ($jml_sakit > 0): ?>
+											<span class="badge badge-pill" style="background: #ffe4e6; color: #be123c; font-weight: 700; font-size: 11px; padding: 3px 8px;" title="Tgl: <?= $tgl_sakit ?>" data-toggle="tooltip">
+												<?= $jml_sakit ?> hr
+											</span>
+										<?php else: ?>
+											<span class="text-muted" style="font-size: 11px;">0</span>
+										<?php endif; ?>
+									</td>
 									<?php foreach ($data_mingguan as $minggu): 
 										$v_lap = $minggu['nilai_laporan_adm'][$pengguna->pengguna_id] ?? '-';
 										$v_pen = $minggu['nilai_penilaianumum_adm'][$pengguna->pengguna_id] ?? '-';
@@ -498,7 +545,27 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karya
 						<strong class="fw-bold text-dark">Nama &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;  : <?= $getUser[0]->nama ?></strong>
 						<br><strong class="fw-bold text-dark">NPP &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;    : <?= $getUser[0]->no_pegawai ?></strong>
 						<br><strong class="fw-bold text-dark">Jabatan &nbsp; &nbsp; &nbsp;      : <?= $getUser[0]->jabatan ?></strong>
-						<br><br>
+						<?php 
+							$my_rekap = $rekap_absensi[$getUser[0]->pengguna_id] ?? [];
+							$my_izin  = $my_rekap['izin']['total'] ?? 0;
+							$my_tgl_izin = $my_rekap['izin']['dates'] ?? '';
+							$my_cuti  = $my_rekap['cuti']['total'] ?? 0;
+							$my_tgl_cuti = $my_rekap['cuti']['dates'] ?? '';
+							$my_sakit = $my_rekap['sakit']['total'] ?? 0;
+							$my_tgl_sakit = $my_rekap['sakit']['dates'] ?? '';
+						?>
+						<div class="mt-2 mb-2 d-flex align-items-center gap-2 flex-wrap">
+							<span class="badge badge-pill py-1 px-3" style="background: #f3e8ff; color: #7e22ce; font-size: 11.5px;" title="Tgl: <?= $my_tgl_izin ?>">
+								<i class="fas fa-calendar-times mr-1"></i> Izin: <strong><?= $my_izin ?> hr</strong>
+							</span>
+							<span class="badge badge-pill py-1 px-3" style="background: #fef3c7; color: #b45309; font-size: 11.5px;" title="Tgl: <?= $my_tgl_cuti ?>">
+								<i class="fas fa-user-clock mr-1"></i> Cuti: <strong><?= $my_cuti ?> hr</strong>
+							</span>
+							<span class="badge badge-pill py-1 px-3" style="background: #ffe4e6; color: #be123c; font-size: 11.5px;" title="Tgl: <?= $my_tgl_sakit ?>">
+								<i class="fas fa-procedures mr-1"></i> Sakit: <strong><?= $my_sakit ?> hr</strong>
+							</span>
+						</div>
+						<br>
 						<table class="table table-bordered">
 								<thead class="table-dark text-center">
 										<tr>
