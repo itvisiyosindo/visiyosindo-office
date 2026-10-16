@@ -23,6 +23,7 @@ $tanggalFormatted = $bulanIndonesia[$bulanInggris] . ' ' . $tahun;
 
 // Setup Kurs
 $kurs = 'Rp ' . number_format($data_aprv[0]->kurs, 0, ',', '.');
+$curr_asing = !empty($data_aprv[0]->mata_nilai_inv) ? $data_aprv[0]->mata_nilai_inv : 'USD';
 
 // Setup Berat Dimensi
 $lines = explode("\n", $data_aprv[0]->berat_dimensi);
@@ -497,7 +498,7 @@ $dataDetail = $detail_aprv;
 						<div class="col-md-3">
 							<label for="uang_asal_thc1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_thc1" name="uang_asal_thc1" required>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select>
 						</div>
@@ -510,7 +511,7 @@ $dataDetail = $detail_aprv;
 						<div class="col-md-3">
 							<label for="uang_asal_bl_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_bl_fee1" name="uang_asal_bl_fee1" required>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select>
 						</div>
@@ -521,91 +522,91 @@ $dataDetail = $detail_aprv;
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_vgm1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>VGM Fee :</label><input type="number" class="form-control" id="asal_vgm" name="asal_vgm"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_agaency_fee1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Agency Fee :</label><input type="number" class="form-control" id="asal_agaency_fee" name="asal_agaency_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_handling_fee1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Handling Fee :</label><input type="number" class="form-control" id="asal_handling_fee" name="asal_handling_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_transportasi1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Transportation :</label><input type="number" class="form-control" id="asal_transportasi" name="asal_transportasi"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_loading1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Loading :</label><input type="number" class="form-control" id="asal_loading" name="asal_loading"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_custom1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Custom Clearance :</label><input type="number" class="form-control" id="asal_custom" name="asal_custom"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_pickup1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Pick Up Fee :</label><input type="number" class="form-control" id="asal_pickup" name="asal_pickup"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_seal1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Seal Fee :</label><input type="number" class="form-control" id="asal_seal" name="asal_seal"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_shipping1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Shipping Line :</label><input type="number" class="form-control" id="asal_shipping" name="asal_shipping"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_cfs1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>CFS :</label><input type="number" class="form-control" id="asal_cfs" name="asal_cfs"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_dg1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>DG Surcharges :</label><input type="number" class="form-control" id="asal_dg" name="asal_dg"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_psa1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>PSA Surcharges :</label><input type="number" class="form-control" id="asal_psa" name="asal_psa"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_other1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Other :</label><input type="number" class="form-control" id="asal_other" name="asal_other"></div>
@@ -614,14 +615,14 @@ $dataDetail = $detail_aprv;
 					<br><strong> Freight </strong>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_freight_ocean1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Ocean Freight :</label><input type="number" class="form-control" id="freight_ocean" name="freight_ocean"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_freight_air1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Air Freight :</label><input type="number" class="form-control" id="freight_air" name="freight_air"></div>
@@ -630,70 +631,70 @@ $dataDetail = $detail_aprv;
 					<br><strong> Destination Charges </strong>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_cfs1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>CFS :</label><input type="number" class="form-control" id="tuj_cfs" name="tuj_cfs"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_doc1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>DOC :</label><input type="number" class="form-control" id="tuj_doc" name="tuj_doc"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_agency_fee1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>AGENCY FEE :</label><input type="number" class="form-control" id="tuj_agency_fee" name="tuj_agency_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_handling1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>HANDLING :</label><input type="number" class="form-control" id="tuj_handling" name="tuj_handling"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_do1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>DO Fee:</label><input type="number" class="form-control" id="tuj_do" name="tuj_do"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_admin1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>ADMIN :</label><input type="number" class="form-control" id="tuj_admin" name="tuj_admin"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_devanning1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>DEVANNING :</label><input type="number" class="form-control" id="tuj_devanning" name="tuj_devanning"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_fordwarding_fee1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>FORWARDING FEE :</label><input type="number" class="form-control" id="tuj_fordwarding_fee" name="tuj_fordwarding_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_mechanics1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>MECHANICS :</label><input type="number" class="form-control" id="tuj_mechanics" name="tuj_mechanics"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_other1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>OTHER :</label><input type="number" class="form-control" id="tuj_other" name="tuj_other"></div>
@@ -702,49 +703,49 @@ $dataDetail = $detail_aprv;
 					<br><strong> Custom Clearance </strong>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_clearance1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Custom Clearance :</label><input type="number" class="form-control" id="cust_clearance" name="cust_clearance"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_red_line1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Red Line :</label><input type="number" class="form-control" id="cust_red_line" name="cust_red_line"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_handling1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Handling Charges :</label><input type="number" class="form-control" id="cust_handling" name="cust_handling"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_admin_fee1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Admin Fee :</label><input type="number" class="form-control" id="cust_admin_fee" name="cust_admin_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_pib_fee1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>PIB Fee :</label><input type="number" class="form-control" id="cust_pib_fee" name="cust_pib_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_transfer1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Transfer EDI :</label><input type="number" class="form-control" id="cust_transfer" name="cust_transfer"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_storage1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>STORAGE :</label><input type="number" class="form-control" id="cust_storage" name="cust_storage"></div>
@@ -752,14 +753,14 @@ $dataDetail = $detail_aprv;
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_asu1">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Asuransi Custom :</label><input type="number" class="form-control" id="cust_asu" name="cust_asu"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_other1">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Other :</label><input type="number" class="form-control" id="cust_other" name="cust_other"></div>
 					</div>
@@ -767,42 +768,42 @@ $dataDetail = $detail_aprv;
 					<br><strong>Other Charges </strong>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_storage1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>STORAGE :</label><input type="number" class="form-control" id="oth_storage" name="oth_storage"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_trucking1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>TRUCKING :</label><input type="number" class="form-control" id="oth_trucking" name="oth_trucking"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_handling1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Handling Gudang :</label><input type="number" class="form-control" id="oth_handling" name="oth_handling"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_buruh1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Buruh :</label><input type="number" class="form-control" id="oth_buruh" name="oth_buruh"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_adm1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Admin Gudang :</label><input type="number" class="form-control" id="oth_adm" name="oth_adm"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_other1">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Other :</label><input type="number" class="form-control" id="oth_other" name="oth_other"></div>
@@ -813,7 +814,7 @@ $dataDetail = $detail_aprv;
 						<div class="col-md-3">
 							<label for="uang_ins_nilai1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_ins_nilai1" name="uang_ins_nilai1" required>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select>
 						</div>
@@ -886,7 +887,7 @@ $dataDetail = $detail_aprv;
 							<label for="uang_asal_thc" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_thc" name="uang_asal_thc" required>
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -897,97 +898,97 @@ $dataDetail = $detail_aprv;
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_bl_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>BL Fee :</label><input type="number" class="form-control" id="asal_bl_fee" name="asal_bl_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_vgm">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>VGM Fee :</label><input type="number" class="form-control" id="asal_vgm" name="asal_vgm"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_agaency_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Agency Fee :</label><input type="number" class="form-control" id="asal_agaency_fee" name="asal_agaency_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_handling_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Handling Fee :</label><input type="number" class="form-control" id="asal_handling_fee" name="asal_handling_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_transportasi">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Transportation :</label><input type="number" class="form-control" id="asal_transportasi" name="asal_transportasi"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_loading">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Loading :</label><input type="number" class="form-control" id="asal_loading" name="asal_loading"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_custom">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Custom Clearance :</label><input type="number" class="form-control" id="asal_custom" name="asal_custom"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_pickup">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Pick Up Fee :</label><input type="number" class="form-control" id="asal_pickup" name="asal_pickup"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_seal">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Seal Fee :</label><input type="number" class="form-control" id="asal_seal" name="asal_seal"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_shipping">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Shipping Line :</label><input type="number" class="form-control" id="asal_shipping" name="asal_shipping"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_cfs">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>CFS :</label><input type="number" class="form-control" id="asal_cfs" name="asal_cfs"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_dg">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>DG Surcharges :</label><input type="number" class="form-control" id="asal_dg" name="asal_dg"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_psa">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>PSA Surcharges :</label><input type="number" class="form-control" id="asal_psa" name="asal_psa"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_asal_other">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Other :</label><input type="number" class="form-control" id="asal_other" name="asal_other"></div>
@@ -997,14 +998,14 @@ $dataDetail = $detail_aprv;
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_freight_ocean">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Ocean Freight :</label><input type="number" class="form-control" id="freight_ocean" name="freight_ocean"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_freight_air">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Air Freight :</label><input type="number" class="form-control" id="freight_air" name="freight_air"></div>
 					</div>
@@ -1013,70 +1014,70 @@ $dataDetail = $detail_aprv;
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_cfs">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>CFS :</label><input type="number" class="form-control" id="tuj_cfs" name="tuj_cfs"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_doc">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>DOC :</label><input type="number" class="form-control" id="tuj_doc" name="tuj_doc"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_agency_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>AGENCY FEE :</label><input type="number" class="form-control" id="tuj_agency_fee" name="tuj_agency_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_handling">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>HANDLING :</label><input type="number" class="form-control" id="tuj_handling" name="tuj_handling"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_do">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>DO Fee :</label><input type="number" class="form-control" id="tuj_do" name="tuj_do"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_admin">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>ADMIN :</label><input type="number" class="form-control" id="tuj_admin" name="tuj_admin"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_devanning">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>DEVANNING :</label><input type="number" class="form-control" id="tuj_devanning" name="tuj_devanning"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_fordwarding_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>FORWARDING FEE :</label><input type="number" class="form-control" id="tuj_fordwarding_fee" name="tuj_fordwarding_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_mechanics">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>MECHANICS :</label><input type="number" class="form-control" id="tuj_mechanics" name="tuj_mechanics"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_tuj_other">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>OTHER :</label><input type="number" class="form-control" id="tuj_other" name="tuj_other"></div>
 					</div>
@@ -1085,63 +1086,63 @@ $dataDetail = $detail_aprv;
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_clearance">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Custom Clearance :</label><input type="number" class="form-control" id="cust_clearance" name="cust_clearance"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_red_line">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Red Line :</label><input type="number" class="form-control" id="cust_red_line" name="cust_red_line"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_handling">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Handling Charges :</label><input type="number" class="form-control" id="cust_handling" name="cust_handling"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_admin_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Admin Fee :</label><input type="number" class="form-control" id="cust_admin_fee" name="cust_admin_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_pib_fee">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>PIB Fee :</label><input type="number" class="form-control" id="cust_pib_fee" name="cust_pib_fee"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_transfer">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Transfer EDI :</label><input type="number" class="form-control" id="cust_transfer" name="cust_transfer"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_storage">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>STORAGE :</label><input type="number" class="form-control" id="cust_storage" name="cust_storage"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_asu">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Asuransi Custom :</label><input type="number" class="form-control" id="cust_asu" name="cust_asu"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_cust_other">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Other :</label><input type="number" class="form-control" id="cust_other" name="cust_other"></div>
 					</div>
@@ -1150,41 +1151,41 @@ $dataDetail = $detail_aprv;
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_storage">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>STORAGE :</label><input type="number" class="form-control" id="oth_storage" name="oth_storage"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_trucking">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>TRUCKING :</label><input type="number" class="form-control" id="oth_trucking" name="oth_trucking"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_handling">
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select></div>
 						<div class="col-md-9"><label>Handling Gudang :</label><input type="number" class="form-control" id="oth_handling" name="oth_handling"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_buruh">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Buruh :</label><input type="number" class="form-control" id="oth_buruh" name="oth_buruh"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_adm">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Admin Gudang :</label><input type="number" class="form-control" id="oth_adm" name="oth_adm"></div>
 					</div>
 					<div class="form-group row">
 						<div class="col-md-3"><label>MATA UANG :</label><select class="form-control" name="uang_oth_other">
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 								<option value="2">IDR</option>
 							</select></div>
 						<div class="col-md-9"><label>Other :</label><input type="number" class="form-control" id="oth_other" name="oth_other"></div>
@@ -1196,7 +1197,7 @@ $dataDetail = $detail_aprv;
 							<label for="uang_ins_nilai" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_ins_nilai" name="uang_ins_nilai" required>
 								<option value="2">IDR</option>
-								<option value="1">USD</option>
+								<option value="1"><?= $curr_asing ?></option>
 							</select>
 						</div>
 						<div class="col-md-9">
