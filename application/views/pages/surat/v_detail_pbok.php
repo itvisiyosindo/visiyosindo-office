@@ -44,7 +44,7 @@
 			</h2>
 			<input type="hidden" id="kodesurat" value="<?= $data_pbok[0]->kodePBOK ?>">
 			<h5>
-				<font color='#666666' face='Times New Roman'><?= mata_uang_icon($data_pbok[0]->mata_uang) ?></font>
+				<font color='#666666' face='Times New Roman'><?= mata_uang_icon(!empty($data_pbok[0]->kodeMataUang) ? $data_pbok[0]->kodeMataUang : (isset($data_pbok[0]->mata_uang) ? $data_pbok[0]->mata_uang : 1)) ?></font>
 			</h5>
 		</div>
 		<?php

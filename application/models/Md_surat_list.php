@@ -856,6 +856,7 @@ class md_surat_list extends CI_Model
 				pbok.alamat as alamat,
 				pbokd.qty as qty,
 				pbok.mata_uang as kodeMataUang,
+				pbok.mata_uang as mata_uang,
 				pbokd.total as total,
 				pbok.id_kat_surat as id_kat_surat,
 				pbok.rekening as rekening,
