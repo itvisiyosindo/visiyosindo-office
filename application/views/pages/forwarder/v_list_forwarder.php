@@ -25,7 +25,7 @@
 									<th> Nama Shipment</th>
 									<th> Port of Loading (POL)</th>
 									<th> Port of Discharge (POD)</th>
-									<th> Kurs (USD to IDR)</th>
+									<th> Kurs ke IDR</th>
 									<th> Diajukan Oleh</th>
 									<th> Status</th>
 									<th> Aksi</th>

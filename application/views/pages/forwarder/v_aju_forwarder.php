@@ -253,7 +253,7 @@ $dataDetail = $detail_aprv;
 						<td>:&nbsp;&nbsp; <?= $data_aprv[0]->mata_nilai_inv . ' ' . $data_aprv[0]->nilai_inv ?></td>
 					</tr>
 					<tr>
-						<td>Kurs 1 USD </td>
+						<td>Kurs 1 <?= !empty($data_aprv[0]->mata_nilai_inv) ? $data_aprv[0]->mata_nilai_inv : 'USD' ?> </td>
 						<td>:&nbsp;&nbsp; <?= $kurs ?></td>
 					</tr>
 					<tr>

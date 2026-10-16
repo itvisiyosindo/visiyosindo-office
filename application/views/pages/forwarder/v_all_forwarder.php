@@ -29,7 +29,7 @@
 									<th> Nama Shipment</th>
 									<th> Port of Loading (POL)</th>
 									<th> Port of Discharge (POD)</th>
-									<th> Kurs (USD to IDR)</th>
+									<th> Kurs ke IDR</th>
 									<th> Diajukan Oleh</th>
 									<th> Status</th>
 									<th> Aksi</th>
@@ -92,6 +92,7 @@
 							<label for="uang_nilai_inv" class="form-control-label">Mata Uang :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_nilai_inv" name="uang_nilai_inv" required>
 								<option value="USD">USD</option>
+								<option value="EUR">EUR</option>
 								<option value="IDR">IDR</option>
 							</select>
 						</div>
@@ -102,7 +103,7 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label for="kurs" class="form-control-label">Kurs Dollar AS (USD) ke Rupiah (IDR) :</label>
+						<label for="kurs" id="label_kurs" class="form-control-label">Kurs Dollar AS (USD) ke Rupiah (IDR) :</label>
 						<input type="number" class="form-control" id="kurs" name="kurs" required>
 					</div>
 					
@@ -147,11 +148,29 @@
 		function updateDatatable() {
 		table.ajax.reload(null, false)
 	}
+		function updateKursLabel(mataUang) {
+			if (mataUang === 'EUR') {
+				$('#label_kurs').text('Kurs Euro (EUR) ke Rupiah (IDR) :');
+			} else if (mataUang === 'USD') {
+				$('#label_kurs').text('Kurs Dollar AS (USD) ke Rupiah (IDR) :');
+			} else if (mataUang === 'IDR') {
+				$('#label_kurs').text('Kurs Rupiah (IDR) :');
+			} else {
+				$('#label_kurs').text('Kurs ' + mataUang + ' ke Rupiah (IDR) :');
+			}
+		}
+
+		$('#uang_nilai_inv').on('change', function() {
+			updateKursLabel($(this).val());
+		});
+
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)
 			$('.btn-isactive').remove()
 			var object = 'forwarder'
 			$('#main-modal #modal-form').attr('action', 'forwarder/addForwarder')
+			$('#uang_nilai_inv').val('USD').trigger('change');
+			updateKursLabel('USD');
 			$('#main-modal').modal()
 		})
 
@@ -174,7 +193,9 @@
 					$('#main-modal #pod').val(data[0].pod)
 					$('#main-modal #berat_dimensi').val(data[0].berat_dimensi)
 					$('#main-modal #nilai_inv').val(data[0].nilai_inv)
-					$('#main-modal #mata_nilai_inv').val(data[0].mata_nilai_inv)
+					var curr = data[0].mata_nilai_inv || 'USD';
+					$('#main-modal #uang_nilai_inv').val(curr).trigger('change');
+					updateKursLabel(curr);
 					$('#main-modal #id_pelanggan').val(id)
 				})
 		})
