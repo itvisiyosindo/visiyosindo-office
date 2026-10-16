@@ -158,6 +158,7 @@
 								<option value="3"><i class='fas fa-money-bill'></i> Ringgit (RM)</option>
 								<option value="4"><i class='fas fa-dollar-sign'></i> SGD ($)</option>
 								<option value="5"><i class='fas fa-rupee-sign'></i> Rupee (₹)</option>
+								<option value="6"><i class='fas fa-euro-sign'></i> Euro (€)</option>
 							</select>
 						</td>
 					</tr>

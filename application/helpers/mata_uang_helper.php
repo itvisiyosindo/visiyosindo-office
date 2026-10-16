@@ -14,7 +14,7 @@ function mata_uang($kode)
     } else if ($kode == 5) {
         $mata_uang = "INR";
     } else if ($kode == 6) {
-        $mata_uang = "EUR";
+        $mata_uang = "Euro";
     }
     return $mata_uang;
 }
