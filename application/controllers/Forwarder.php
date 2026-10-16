@@ -60,7 +60,7 @@ class Forwarder extends CI_Controller
 
         $nilai_float = $nilai_input_bersih !== "" ? (float) $nilai_input_bersih : 0;
 
-        if ($uang_pilihan == "1") {
+        if ($uang_pilihan == "1" || $uang_pilihan == "3" || $uang_pilihan == "USD" || $uang_pilihan == "EUR") {
             return $kurs * $nilai_float;
         } else {
             return $nilai_float;

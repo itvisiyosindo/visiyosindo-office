@@ -529,8 +529,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_thc1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_thc1" name="uang_asal_thc1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -542,8 +543,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_bl_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_bl_fee1" name="uang_asal_bl_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -555,8 +557,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_vgm1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_vgm1" name="uang_asal_vgm1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -568,8 +571,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_agaency_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_agaency_fee1" name="uang_asal_agaency_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -581,8 +585,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_handling_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_handling_fee1" name="uang_asal_handling_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -594,8 +599,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_transportasi1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_transportasi1" name="uang_asal_transportasi1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -607,8 +613,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_loading1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_loading1" name="uang_asal_loading1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -620,8 +627,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_custom1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_custom1" name="uang_asal_custom1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -633,8 +641,9 @@
 						<div class="col-md-3">
 							<label for="uang_asal_pickup1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_pickup1" name="uang_asal_pickup1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -648,8 +657,9 @@
 						<div class="col-md-3">
 							<label for="uang_freight_ocean1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_freight_ocean1" name="uang_freight_ocean1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -661,8 +671,9 @@
 						<div class="col-md-3">
 							<label for="uang_freight_air1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_freight_air1" name="uang_freight_air1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -676,8 +687,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_cfs1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_cfs1" name="uang_tuj_cfs1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -689,8 +701,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_doc1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_doc1" name="uang_tuj_doc1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -702,8 +715,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_agency_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_agency_fee1" name="uang_tuj_agency_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -715,8 +729,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_handling1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_handling1" name="uang_tuj_handling1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -728,8 +743,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_do1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_do1" name="uang_tuj_do1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -741,8 +757,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_admin1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_admin1" name="uang_tuj_admin1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -754,8 +771,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_devanning1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_devanning1" name="uang_tuj_devanning1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -767,8 +785,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_fordwarding_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_fordwarding_fee1" name="uang_tuj_fordwarding_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -780,8 +799,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_mechanics1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_mechanics1" name="uang_tuj_mechanics1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -793,8 +813,9 @@
 						<div class="col-md-3">
 							<label for="uang_tuj_other1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_other1" name="uang_tuj_other1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -808,8 +829,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_clearance1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_clearance1" name="uang_cust_clearance1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -821,8 +843,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_red_line1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_red_line1" name="uang_cust_red_line1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -834,8 +857,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_handling1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_handling1" name="uang_cust_handling1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -847,8 +871,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_admin_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_admin_fee1" name="uang_cust_admin_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -860,8 +885,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_pib_fee1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_pib_fee1" name="uang_cust_pib_fee1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -873,8 +899,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_transfer1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_transfer1" name="uang_cust_transfer1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -886,8 +913,9 @@
 						<div class="col-md-3">
 							<label for="uang_cust_storage1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_storage1" name="uang_cust_storage1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -909,8 +937,9 @@
 						<div class="col-md-3">
 							<label for="uang_oth_do1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_do1" name="uang_oth_do1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -922,8 +951,9 @@
 						<div class="col-md-3">
 							<label for="uang_oth_storage1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_storage1" name="uang_oth_storage1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -935,8 +965,9 @@
 						<div class="col-md-3">
 							<label for="uang_oth_trucking1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_trucking1" name="uang_oth_trucking1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -948,8 +979,9 @@
 						<div class="col-md-3">
 							<label for="uang_oth_handling1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_handling1" name="uang_oth_handling1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -963,8 +995,9 @@
 						<div class="col-md-3">
 							<label for="uang_ins_nilai1" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_ins_nilai1" name="uang_ins_nilai1" required>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 								<option value="2">IDR</option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1056,7 +1089,8 @@
 							<label for="uang_asal_thc" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_thc" name="uang_asal_thc" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1069,7 +1103,8 @@
 							<label for="uang_asal_bl_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_bl_fee" name="uang_asal_bl_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1082,7 +1117,8 @@
 							<label for="uang_asal_vgm" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_vgm" name="uang_asal_vgm" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1095,7 +1131,8 @@
 							<label for="uang_asal_agaency_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_agaency_fee" name="uang_asal_agaency_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1108,7 +1145,8 @@
 							<label for="uang_asal_handling_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_handling_fee" name="uang_asal_handling_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1121,7 +1159,8 @@
 							<label for="uang_asal_transportasi" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_transportasi" name="uang_asal_transportasi" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1134,7 +1173,8 @@
 							<label for="uang_asal_loading" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_loading" name="uang_asal_loading" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1147,7 +1187,8 @@
 							<label for="uang_asal_custom" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_custom" name="uang_asal_custom" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1160,7 +1201,8 @@
 							<label for="uang_asal_pickup" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_asal_pickup" name="uang_asal_pickup" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1175,7 +1217,8 @@
 							<label for="uang_freight_ocean" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_freight_ocean" name="uang_freight_ocean" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1188,7 +1231,8 @@
 							<label for="uang_freight_air" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_freight_air" name="uang_freight_air" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1203,7 +1247,8 @@
 							<label for="uang_tuj_cfs" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_cfs" name="uang_tuj_cfs" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1216,7 +1261,8 @@
 							<label for="uang_tuj_doc" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_doc" name="uang_tuj_doc" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1229,7 +1275,8 @@
 							<label for="uang_tuj_agency_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_agency_fee" name="uang_tuj_agency_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1242,7 +1289,8 @@
 							<label for="uang_tuj_handling" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_handling" name="uang_tuj_handling" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1255,7 +1303,8 @@
 							<label for="uang_tuj_do" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_do" name="uang_tuj_do" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1268,7 +1317,8 @@
 							<label for="uang_tuj_admin" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_admin" name="uang_tuj_admin" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1281,7 +1331,8 @@
 							<label for="uang_tuj_devanning" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_devanning" name="uang_tuj_devanning" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1294,7 +1345,8 @@
 							<label for="uang_tuj_fordwarding_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_fordwarding_fee" name="uang_tuj_fordwarding_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1307,7 +1359,8 @@
 							<label for="uang_tuj_mechanics" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_mechanics" name="uang_tuj_mechanics" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1320,7 +1373,8 @@
 							<label for="uang_tuj_other" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_tuj_other" name="uang_tuj_other" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1335,7 +1389,8 @@
 							<label for="uang_cust_clearance" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_clearance" name="uang_cust_clearance" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1348,7 +1403,8 @@
 							<label for="uang_cust_red_line" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_red_line" name="uang_cust_red_line" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1361,7 +1417,8 @@
 							<label for="uang_cust_handling" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_handling" name="uang_cust_handling" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1374,7 +1431,8 @@
 							<label for="uang_cust_admin_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_admin_fee" name="uang_cust_admin_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1387,7 +1445,8 @@
 							<label for="uang_cust_pib_fee" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_pib_fee" name="uang_cust_pib_fee" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1400,7 +1459,8 @@
 							<label for="uang_cust_transfer" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_transfer" name="uang_cust_transfer" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1413,7 +1473,8 @@
 							<label for="uang_cust_storage" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_cust_storage" name="uang_cust_storage" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1436,7 +1497,8 @@
 							<label for="uang_oth_do" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_do" name="uang_oth_do" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1449,7 +1511,8 @@
 							<label for="uang_oth_storage" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_storage" name="uang_oth_storage" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1462,7 +1525,8 @@
 							<label for="uang_oth_trucking" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_trucking" name="uang_oth_trucking" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1475,7 +1539,8 @@
 							<label for="uang_oth_handling" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_oth_handling" name="uang_oth_handling" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
@@ -1490,7 +1555,8 @@
 							<label for="uang_ins_nilai" class="form-control-label">MATA UANG :</label>
 							<select data-plugin-selectTwo class="form-control populate" id="uang_ins_nilai" name="uang_ins_nilai" required>
 								<option value="2">IDR</option>
-								<option value="1"><?= $curr_asing ?></option>
+								<option value="3" <?= (isset($curr_asing) && $curr_asing == "EUR") ? "selected" : "" ?>>EUR</option>
+								<option value="1" <?= (isset($curr_asing) && $curr_asing == "USD") ? "selected" : "" ?>>USD</option>
 							</select>
 						</div>
 						<div class="col-md-9">
