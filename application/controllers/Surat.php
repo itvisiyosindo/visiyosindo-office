@@ -375,6 +375,8 @@ class Surat extends CI_Controller
 					$dataDetailPBOK['estimasi']		= $this->input->post('estimasi[' . $x . ']', TRUE);
 					$dataDetailPBOK['qty']			= $this->input->post('qty[' . $x . ']', TRUE);
 					$dataDetailPBOK['total']		= $this->input->post('total[' . $x . ']', TRUE);
+					$mata_uang_item					= $this->input->post('mata_uang_item[' . $x . ']', TRUE);
+					$dataDetailPBOK['mata_uang']	= !empty($mata_uang_item) ? $mata_uang_item : $data['mata_uang'];
 
 					$this->md_surat_list->addSurat('dpbok', $dataDetailPBOK);
 				}

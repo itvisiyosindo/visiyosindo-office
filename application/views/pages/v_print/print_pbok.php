@@ -319,8 +319,17 @@
 									<td class="nom" style="text-align:right">
 										<?php
 
-										if ($data_pbok[0]->kodeMataUang == 1) {
+										$mata_item = isset($row->mata_uang) && $row->mata_uang ? $row->mata_uang : $data_pbok[0]->kodeMataUang;
+										if ($mata_item == 1) {
 											$mata = 'Rp. ';
+										} else if ($mata_item == 2 || $mata_item == 4) {
+											$mata = '$ ';
+										} else if ($mata_item == 3) {
+											$mata = 'RM ';
+										} else if ($mata_item == 5) {
+											$mata = '₹ ';
+										} else if ($mata_item == 6) {
+											$mata = '€ ';
 										} else {
 											$mata = '$ ';
 										}

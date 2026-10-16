@@ -125,6 +125,20 @@
 					$x = 1;
 					$nom = 0;
 					$xtampil = 0;
+					$kode_mu_global = isset($data_pbok[0]->kodeMataUang) && $data_pbok[0]->kodeMataUang ? $data_pbok[0]->kodeMataUang : (isset($data_pbok[0]->mata_uang) ? $data_pbok[0]->mata_uang : 1);
+					if ($kode_mu_global == 1) {
+						$mata = 'Rp. ';
+					} else if ($kode_mu_global == 2 || $kode_mu_global == 4) {
+						$mata = '$ ';
+					} else if ($kode_mu_global == 3) {
+						$mata = 'RM ';
+					} else if ($kode_mu_global == 5) {
+						$mata = '₹ ';
+					} else if ($kode_mu_global == 6) {
+						$mata = '€ ';
+					} else {
+						$mata = 'Rp. ';
+					}
 					foreach ($detail_pbok as $row) {
 						$x = $x + 1;
 						$x2 = $x - 1;
@@ -155,7 +169,7 @@
 							<td class="nom">
 								<?php
 								// Cek mata uang per item, jika kosong gunakan global
-								$mata_uang_item = isset($row->mata_uang) && $row->mata_uang ? $row->mata_uang : $data_pbok[0]->kodeMataUang;
+								$mata_uang_item = isset($row->mata_uang) && $row->mata_uang ? $row->mata_uang : $kode_mu_global;
 
 								if ($mata_uang_item == 1) {
 									$mata = 'Rp. ';
@@ -165,6 +179,8 @@
 									$mata = 'RM ';
 								} else if ($mata_uang_item == 5) {
 									$mata = '₹ ';
+								} else if ($mata_uang_item == 6) {
+									$mata = '€ ';
 								} else {
 									$mata = 'Rp. '; // default
 								}

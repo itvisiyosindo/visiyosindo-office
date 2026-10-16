@@ -122,6 +122,10 @@
 							<option value="3">: Ringgit (RM)</option>
 							<option value="4">: SGD ($)</option>
 							<option value="5">: Rupee (₹)</option>
+							<option value="6">: Euro (€)</option>
+						</select>
+						</td>
+					</tr>
 					
 					<tr>
 						<td><font color="white">i </font></td>
@@ -161,6 +165,7 @@
                                     		<option value="3">Ringgit (RM)</option>
                                     		<option value="4">SGD ($)</option>
                                     		<option value="5">Rupee (₹)</option>
+                                    		<option value="6">Euro (€)</option>
                                     	</select>
                                     </td>
                                     <td>
