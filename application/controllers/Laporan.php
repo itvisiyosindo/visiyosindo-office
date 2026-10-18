@@ -72,7 +72,7 @@ class Laporan extends CI_Controller
             
             $existing_laporan = [];
             if ($dimas_id) {
-                $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-05' AND tanggal <= '2026-10-10' ORDER BY tanggal ASC", [$dimas_id])->result_array();
+                $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-12' AND tanggal <= '2026-10-16' ORDER BY tanggal ASC", [$dimas_id])->result_array();
             }
             
             $do_insert = $this->input->get('do_insert');
@@ -80,44 +80,22 @@ class Laporan extends CI_Controller
             
             if ($do_insert && $dimas_id) {
                 $tasks = [
-                    '2026-10-05' => [
-                        'membantu tim visilab yang tidak bisa mengakses webmail',
-                        'menghubungi pihak indihome terkait penurunan paket',
-                        'maintenance pc gudang pusat',
-                        'maintenance cctv jogja',
-                        'menambahkan fitur export excel pada menu kalkulator price',
-                        'menambahkan menu uploda dokumen npwp dan passport pada profil'
+                    '2026-10-12' => [
+                        'maintenance server down',
+                        'ke grapari dan my republik koordinasi terkait wifi'
                     ],
-                    '2026-10-06' => [
-                        'membersihkan disk email kantor',
-                        'merubah tampilan login',
-                        'merubah tampilan menu surat lainnya',
-                        'koordinasi dengan pihak convia terkait kuota chat api',
-                        'merubah tampilan table pada menu persetujuan berita acara',
-                        'merubah tampilan tombol pada surat',
-                        'menambahkan kolom nama karyawan yang dinas pada table surat dinas'
+                    '2026-10-13' => [
+                        'memperbaiki tampilan office'
                     ],
-                    '2026-10-07' => [
-                        'menambahkan fitur input absen kosong agar GA bisa mengiput yang tidak sesuai',
-                        'merubah tampilan pilihan nomer halaman',
-                        'merubah font sidebar',
-                        'merubah tampilan halaman dashboard',
-                        'merubah tampilan data karyawan',
-                        'merubah tampilan rekap absensi'
+                    '2026-10-14' => [
+                        'memperbaiki tampilan office dan menambah beberapa fitur'
                     ],
-                    '2026-10-08' => [
-                        'mencari provider dan koordinasi tentang paket wifi indihome',
-                        'merubah tampilan navbar',
-                        'merubah tampilan pada menu tunjangan di profil',
-                        'merubah tampilan dashboard pada home administrator card stats',
-                        'merubah icon sidebar lebih clean'
+                    '2026-10-15' => [
+                        'membantu membuatkan link gmeet',
+                        'penyelesaian memperbaiki tampilan website office'
                     ],
-                    '2026-10-09' => [
-                        'penambahan animasi pada side bar',
-                        'merapikan icon pada kolom aksi menu salary tetap',
-                        'memperbaiki load agar lebih cepat ketika mengakses menu salary tidak tetap',
-                        'merubah tampilan pada tab analitik menu salary tidak tetap',
-                        'merubah tampilan pada halaman laporan mingguan ver 2'
+                    '2026-10-16' => [
+                        'instalasi wifi myrepublic'
                     ]
                 ];
                 
@@ -125,11 +103,21 @@ class Laporan extends CI_Controller
                 
                 foreach ($tasks as $tgl => $list_pekerjaan) {
                     foreach ($list_pekerjaan as $task_desc) {
+                        // Cek apakah sudah pernah diinput untuk mencegah duplikat
+                        $cek = $this->db->get_where('laporan', [
+                            'id_pengaju' => $dimas_id,
+                            'tanggal'    => $tgl,
+                            'ket_hasil'  => $task_desc
+                        ])->row();
+                        if ($cek) {
+                            continue;
+                        }
+
                         $job_id = $default_job_id;
                         
                         foreach ($jobs as $j) {
-                            if (stripos($task_desc, 'email') !== false || stripos($task_desc, 'webmail') !== false || stripos($task_desc, 'wifi') !== false || stripos($task_desc, 'indihome') !== false || stripos($task_desc, 'cctv') !== false || stripos($task_desc, 'pc') !== false) {
-                                if (isset($j['deskripsi']) && (stripos($j['deskripsi'], 'jaringan') !== false || stripos($j['deskripsi'], 'hardware') !== false || stripos($j['deskripsi'], 'maintenance') !== false || stripos($j['deskripsi'], 'it') !== false)) {
+                            if (stripos($task_desc, 'email') !== false || stripos($task_desc, 'webmail') !== false || stripos($task_desc, 'wifi') !== false || stripos($task_desc, 'indihome') !== false || stripos($task_desc, 'myrepublic') !== false || stripos($task_desc, 'cctv') !== false || stripos($task_desc, 'server') !== false || stripos($task_desc, 'grapari') !== false) {
+                                if (isset($j['deskripsi']) && (stripos($j['deskripsi'], 'jaringan') !== false || stripos($j['deskripsi'], 'network') !== false || stripos($j['deskripsi'], 'hardware') !== false || stripos($j['deskripsi'], 'maintenance') !== false || stripos($j['deskripsi'], 'it') !== false)) {
                                     $job_id = $j['id_job'];
                                     break;
                                 }
@@ -144,7 +132,7 @@ class Laporan extends CI_Controller
                             'progress'         => '100%',
                             'status_pekerjaan' => 'SELESAI',
                             'ket_hasil'        => $task_desc,
-                            'pihak'            => '-',
+                            'pihak'            => (stripos($task_desc, 'grapari') !== false || stripos($task_desc, 'myrepublic') !== false) ? 'GraPARI / MyRepublic' : '-',
                             'keterangan'       => 'Telah diselesaikan dengan baik',
                             'pencapaian'       => '1'
                         ];
@@ -153,6 +141,9 @@ class Laporan extends CI_Controller
                         $inserted_count++;
                     }
                 }
+                
+                // Refresh existing laporan after insert
+                $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-12' AND tanggal <= '2026-10-16' ORDER BY tanggal ASC", [$dimas_id])->result_array();
             }
             
             echo json_encode([
