@@ -2638,25 +2638,41 @@ function sendWaFonnte($dataSend)
 		return false;
 	}
 
-	$token = defined('FONNTE_TOKEN') ? FONNTE_TOKEN : (getenv('FONNTE_TOKEN') ?: '');
+	$token = defined('FONNTE_TOKEN') ? FONNTE_TOKEN : (getenv('FONNTE_TOKEN') ?: (isset($_ENV['FONNTE_TOKEN']) ? $_ENV['FONNTE_TOKEN'] : ''));
 	if (empty($token) && function_exists('get_instance')) {
 		$CI = &get_instance();
 		if ($CI && isset($CI->config)) {
 			$token = $CI->config->item('fonnte_token');
 		}
 	}
-
 	if (empty($token)) {
-		return false; // Jika Token belum diisi, langsung fallback
+		$token = 'fBHmpx7vjoVqVzMwawSa';
 	}
 
-	$penerima = preg_replace('/[^0-9]/', '', $dataSend['penerima']);
-	if (substr($penerima, 0, 2) == '08') {
-		$penerima = '0' . substr($penerima, 1);
+	$raw_penerima = trim((string)$dataSend['penerima']);
+	$group_mappings = [
+		'MARKETING PT. VYM'       => '6281261457547-1569293240@g.us',
+		'TEKNISI MEDIKAL PT. VYM' => '6281261457547-1578895457@g.us',
+		'Gudang PT. VYM'          => '6281261457547-1572316215@g.us',
+		'Notifikasi tes'          => '120363429248456823@g.us'
+	];
+
+	if (isset($group_mappings[$raw_penerima])) {
+		$penerima = $group_mappings[$raw_penerima];
+	} elseif (isset($group_mappings[urldecode($raw_penerima)])) {
+		$penerima = $group_mappings[urldecode($raw_penerima)];
+	} elseif (strpos($raw_penerima, '@g.us') !== false) {
+		$penerima = $raw_penerima;
+	} else {
+		$penerima = preg_replace('/[^0-9]/', '', $raw_penerima);
+		if (substr($penerima, 0, 2) == '08') {
+			$penerima = '0' . substr($penerima, 1);
+		}
+		if (empty($penerima)) {
+			$penerima = $raw_penerima;
+		}
 	}
-	if (empty($penerima)) {
-		$penerima = $dataSend['penerima'];
-	}
+
 
 	$pesan = urldecode($dataSend['pesan']);
 	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
@@ -2712,6 +2728,46 @@ function sendWaFonnteGroup($dataSend)
 {
 	return sendWaFonnte($dataSend);
 }
+
+/**
+ * Notifikasi WhatsApp Group (Fonnte) saat PO Masuk lolos kroscek (Status = Sesuai / Di-ACC CRO)
+ */
+function waPoLolosKroscekGroup($data)
+{
+	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	if (!empty($data['groupPenerima'])) {
+		$targetGroup = $data['groupPenerima'];
+	}
+
+	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
+	$nama_customer = !empty($data['nama_customer']) ? $data['nama_customer'] : '-';
+	$nama_sales = !empty($data['nama_sales']) ? $data['nama_sales'] : '-';
+	$nominal_po = (isset($data['nominal_po']) && is_numeric($data['nominal_po'])) ? 'Rp ' . number_format($data['nominal_po'], 0, ',', '.') : (!empty($data['nominal_po']) ? $data['nominal_po'] : '-');
+	$verifier = !empty($data['verifier']) ? $data['verifier'] : 'CRO';
+	$catatan = !empty($data['catatan']) ? $data['catatan'] : '-';
+	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$pesan = "*NOTIFIKASI PO LOLOS KROSCEK (CRO)*\n\n" .
+		"Halo Rekan-Rekan Tim Marketing & Operasional,\n" .
+		"PO Masuk berikut telah *DIVERIFIKASI / DISETUJUI (SESUAI)* oleh CRO:\n\n" .
+		"📄 *No. PO*: " . $no_po . "\n" .
+		"🏢 *Customer*: " . $nama_customer . "\n" .
+		"👤 *Sales*: " . $nama_sales . "\n" .
+		"💰 *Nilai PO*: " . $nominal_po . "\n" .
+		"✅ *Kroscek oleh*: " . $verifier . "\n" .
+		"📝 *Catatan CRO*: " . $catatan . "\n\n" .
+		"Silakan periksa detail PO pada tautan berikut:\n" .
+		$link . "\n\n" .
+		"Terima Kasih.";
+
+	$dataWa = [
+		'penerima' => $targetGroup,
+		'pesan'    => $pesan
+	];
+
+	return sendWaFonnte($dataWa);
+}
+
 
 /**
  * Fungsi Utama Kirim WA (Fonnte API -> Convia API -> Automatic Fallback ke Whacenter)

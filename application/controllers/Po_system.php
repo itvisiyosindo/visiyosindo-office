@@ -293,6 +293,20 @@ class Po_system extends CI_Controller
 
         $this->md_po_system->addLog($id_po, $po->status, $status_baru, $log_catatan, sessPenggunaId(), $nama_verifier);
 
+        // Jika status baru adalah 'sesuai' (di-ACC CRO), kirim notifikasi ke grup WhatsApp MARKETING PT. VYM via Fonnte
+        if ($status_baru == 'sesuai') {
+            $nama_cust = !empty($po->nama_customer) ? $po->nama_customer : ($po->master_nama_customer ?? '-');
+            waPoLolosKroscekGroup([
+                'no_po'         => $po->no_po,
+                'nama_customer' => $nama_cust,
+                'nama_sales'    => $po->nama_sales,
+                'nominal_po'    => $po->nominal_po,
+                'verifier'      => $nama_verifier,
+                'catatan'       => $catatan_kroscek,
+                'link'          => base_url('po_system/detail/' . $id_encrypted)
+            ]);
+        }
+
         $this->session->set_flashdata('success', 'Status Kroscek PO berhasil diperbarui menjadi: ' . $label_status[$status_baru] . '!');
         redirect('po_system/detail/' . $id_encrypted);
     }
