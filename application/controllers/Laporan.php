@@ -53,6 +53,21 @@ class Laporan extends CI_Controller
     public function show($param = "", $param2 = "", $param3 = "", $param4 = "0")
     {
         if ($param == 'dimas_seed') {
+            $update_ba = $this->input->get_post('update_ba');
+            if ($update_ba) {
+                header('Content-Type: application/json');
+                $ba_id = $this->input->get_post('ba_id') ?: 689;
+                $new_lampiran = $this->input->get_post('lampiran') ?: 'https://drive.google.com/file/d/1LM07xs-UNvyybBRH0mKUNC4M4uKHp8WF/view?usp=sharing';
+                $this->db->where('id', $ba_id);
+                $this->db->update('surat_berita_acara', ['lampiran' => $new_lampiran]);
+                $updated_ba = $this->db->get_where('surat_berita_acara', ['id' => $ba_id])->row();
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Link lampiran Berita Acara berhasil diperbarui',
+                    'data' => $updated_ba
+                ], JSON_PRETTY_PRINT);
+                exit;
+            }
             header('Content-Type: application/json');
             
             $dimas = $this->db->query("SELECT pengguna_id, nama, email, username FROM pengguna WHERE nama LIKE '%dimas%' OR username LIKE '%dimas%'")->result_array();
