@@ -407,8 +407,8 @@ if ($status_now == 5 || $status_now == 99) {
                                 <?php endif; ?>
                                 <div class="col-md-2 mb-2">
                                     <span class="text-label">Diskon</span>
-                                    <span class="text-value d-block text-warning font-weight-bold">
-                                        - Rp <?= number_format($spp->diskon ?? 0, 0, ',', '.') ?>
+                                    <span class="text-value d-block <?= (($spp->diskon ?? 0) > 0) ? 'text-warning' : 'text-muted' ?> font-weight-bold">
+                                        <?= (($spp->diskon ?? 0) > 0 ? '- ' : '') ?>Rp <?= number_format($spp->diskon ?? 0, 0, ',', '.') ?>
                                     </span>
                                 </div>
 
@@ -424,8 +424,8 @@ if ($status_now == 5 || $status_now == 99) {
 
                                 <div class="col-md-3 mb-2">
                                     <span class="text-label">Bukti Potong (PPH)</span>
-                                    <span class="text-value d-block text-danger font-weight-bold">
-                                        - Rp <?= number_format($spp->nilai_bukti_potong ?? 0, 0, ',', '.') ?>
+                                    <span class="text-value d-block <?= (($spp->nilai_bukti_potong ?? 0) > 0) ? 'text-danger' : 'text-muted' ?> font-weight-bold">
+                                        <?= (($spp->nilai_bukti_potong ?? 0) > 0 ? '- ' : '') ?>Rp <?= number_format($spp->nilai_bukti_potong ?? 0, 0, ',', '.') ?>
                                     </span>
                                 </div>
 
