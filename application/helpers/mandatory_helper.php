@@ -609,7 +609,8 @@ function getLogTargetUrl($jenis_aksi = '', $keterangan = '', $log_id = null, $pe
 
 /**
  * Helper untuk convert file gambar lokal menjadi Base64 Data URI
- * Mencegah error gambar silang merah [X] pada mPDF akibat masalah network loopback / base href
+ * Untuk PNG dengan alpha/transparansi, otomatis di-flatten ke background putih (JPEG)
+ * agar mPDF tidak gagal saat membuat file temporary alpha-mask di hosting
  */
 function img_to_base64($relativePath)
 {
@@ -622,10 +623,60 @@ function img_to_base64($relativePath)
 	}
 
 	$cleanPath = ltrim($relativePath, '/');
-	$fullPath = defined('FCPATH') ? (FCPATH . $cleanPath) : (dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath));
+	$data = false;
+	$ext = strtolower(pathinfo($cleanPath, PATHINFO_EXTENSION));
 
-	if (file_exists($fullPath) && is_readable($fullPath)) {
-		$ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+	$possiblePaths = [];
+	if (defined('FCPATH')) {
+		$possiblePaths[] = rtrim(FCPATH, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath);
+	}
+	$possiblePaths[] = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath);
+	if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+		$possiblePaths[] = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath);
+	}
+
+	foreach ($possiblePaths as $path) {
+		if (file_exists($path) && is_readable($path)) {
+			$data = @file_get_contents($path);
+			if ($data !== false && strlen($data) > 0) {
+				break;
+			}
+		}
+	}
+
+	// Fallback jika tidak ditemukan di path lokal (misal di remote server atau dev environment)
+	if (($data === false || strlen($data) === 0) && (strpos($cleanPath, 'uploads/') === 0 || strpos($cleanPath, 'assets/') === 0)) {
+		$fallbackUrl = 'https://office.visiyosindo.id/' . $cleanPath;
+		$ctx = stream_context_create([
+			'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+			'http' => ['timeout' => 5]
+		]);
+		$data = @file_get_contents($fallbackUrl, false, $ctx);
+	}
+
+	if ($data !== false && strlen($data) > 0) {
+		// Jika gambar bertipe PNG, flatten ke background putih JPEG agar mPDF tidak error alpha-mask
+		if ($ext === 'png' && function_exists('imagecreatefromstring')) {
+			$im = @imagecreatefromstring($data);
+			if ($im !== false) {
+				$w = imagesx($im);
+				$h = imagesy($im);
+				$bg = imagecreatetruecolor($w, $h);
+				$white = imagecolorallocate($bg, 255, 255, 255);
+				imagefilledrectangle($bg, 0, 0, $w, $h, $white);
+				imagealphablending($bg, true);
+				imagecopy($bg, $im, 0, 0, 0, 0, $w, $h);
+				ob_start();
+				imagejpeg($bg, null, 95);
+				$jpegData = ob_get_clean();
+				imagedestroy($im);
+				imagedestroy($bg);
+				if ($jpegData !== false && strlen($jpegData) > 0) {
+					return 'data:image/jpeg;base64,' . base64_encode($jpegData);
+				}
+			}
+		}
+
 		$mime = 'image/png';
 		if ($ext === 'jpg' || $ext === 'jpeg') {
 			$mime = 'image/jpeg';
@@ -634,10 +685,7 @@ function img_to_base64($relativePath)
 		} elseif ($ext === 'svg') {
 			$mime = 'image/svg+xml';
 		}
-		$data = @file_get_contents($fullPath);
-		if ($data !== false && strlen($data) > 0) {
-			return 'data:' . $mime . ';base64,' . base64_encode($data);
-		}
+		return 'data:' . $mime . ';base64,' . base64_encode($data);
 	}
 
 	return $relativePath;

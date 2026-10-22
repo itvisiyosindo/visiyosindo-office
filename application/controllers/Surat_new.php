@@ -3024,8 +3024,12 @@ class Surat_new extends CI_Controller
         'data_kend'  => $this->md_surat_new->getDetailKendaraanById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3050,8 +3054,12 @@ class Surat_new extends CI_Controller
         'data_po'  => $this->md_surat_new->getDetailPoById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3082,8 +3090,12 @@ class Surat_new extends CI_Controller
         'detail_aprv'  => $this->md_surat_new->getDetailAppById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3114,8 +3126,12 @@ class Surat_new extends CI_Controller
         'detail_serah'  => $this->md_surat_new->getDetailSerahById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3141,8 +3157,12 @@ class Surat_new extends CI_Controller
         'detail_serah'  => $this->md_surat_new->getDetailSerahById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3168,8 +3188,12 @@ class Surat_new extends CI_Controller
         'detail_serah'  => $this->md_surat_new->getDetailSerahById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3194,8 +3218,12 @@ class Surat_new extends CI_Controller
         'data_istirahat'    => $this->md_surat_new->getIstirahatById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3220,8 +3248,12 @@ class Surat_new extends CI_Controller
         'data_pajak'  => $this->md_surat_new->getAppPajakById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirPajak = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirPajak)) {
+        @mkdir($tempDirPajak, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirPajak]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 

@@ -3907,8 +3907,12 @@ class Surat_part_two extends CI_Controller
         'data_sijk'  => $this->md_surat_part_two->getSijkById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3937,8 +3941,12 @@ class Surat_part_two extends CI_Controller
         'data_sijk'  => $this->md_surat_part_two->getSijkById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3968,8 +3976,12 @@ class Surat_part_two extends CI_Controller
         'data_sijk'  => $this->md_surat_part_two->getCutiById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -3998,8 +4010,12 @@ class Surat_part_two extends CI_Controller
         'data_ba'  => $this->md_surat_part_two->getBeritaAcaraById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -4023,8 +4039,12 @@ class Surat_part_two extends CI_Controller
         'data_pk'  => $this->md_surat_part_two->getPaklaringById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -4052,8 +4072,12 @@ class Surat_part_two extends CI_Controller
         'data_meeting'  => $this->md_surat_part_two->getMeetingById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -4077,8 +4101,12 @@ class Surat_part_two extends CI_Controller
         'data_sijk'  => $this->md_surat_part_two->getAllById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -4102,8 +4130,12 @@ class Surat_part_two extends CI_Controller
         'data_sijk'  => $this->md_surat_part_two->getAllById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
@@ -4128,8 +4160,12 @@ class Surat_part_two extends CI_Controller
         'data_sijk'  => $this->md_surat_part_two->getAllById($param2)
       ];
 
-      //load mpdf dan membuat page size 
-      $mpdf = new Mpdf(['format' => 'A4']);
+      // tempDir writable untuk mPDF cache
+      $tempDirBa = APPPATH . 'cache/mpdf';
+      if (!is_dir($tempDirBa)) {
+        @mkdir($tempDirBa, 0755, true);
+      }
+      $mpdf = new Mpdf(['format' => 'A4', 'tempDir' => $tempDirBa]);
 
       // $mpdf->SetMargins(0, 0, 0, true);
 
