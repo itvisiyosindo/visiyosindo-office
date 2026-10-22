@@ -606,3 +606,39 @@ function getLogTargetUrl($jenis_aksi = '', $keterangan = '', $log_id = null, $pe
 	return null;
 }
 
+
+/**
+ * Helper untuk convert file gambar lokal menjadi Base64 Data URI
+ * Mencegah error gambar silang merah [X] pada mPDF akibat masalah network loopback / base href
+ */
+function img_to_base64($relativePath)
+{
+	if (empty($relativePath)) {
+		return '';
+	}
+
+	if (strpos($relativePath, 'data:image') === 0) {
+		return $relativePath;
+	}
+
+	$cleanPath = ltrim($relativePath, '/');
+	$fullPath = defined('FCPATH') ? (FCPATH . $cleanPath) : (dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath));
+
+	if (file_exists($fullPath) && is_readable($fullPath)) {
+		$ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+		$mime = 'image/png';
+		if ($ext === 'jpg' || $ext === 'jpeg') {
+			$mime = 'image/jpeg';
+		} elseif ($ext === 'gif') {
+			$mime = 'image/gif';
+		} elseif ($ext === 'svg') {
+			$mime = 'image/svg+xml';
+		}
+		$data = @file_get_contents($fullPath);
+		if ($data !== false && strlen($data) > 0) {
+			return 'data:' . $mime . ';base64,' . base64_encode($data);
+		}
+	}
+
+	return $relativePath;
+}

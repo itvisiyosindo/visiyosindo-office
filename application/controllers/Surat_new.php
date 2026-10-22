@@ -1408,7 +1408,7 @@ class Surat_new extends CI_Controller
           'namaPengaju'   => $namaPengaju,
           'kode'           => $kode,
           'idpengaju'     => $idpengaju,
-          'penerima'       => 'Senior Tax',
+          'penerima'       => 'Staff Tax',
           'ttd_sebelum1'   => '_General Manager_',
           'ttd_sebelum2'   => '',
           'ttd_sebelum3'   => ''
@@ -1440,7 +1440,7 @@ class Surat_new extends CI_Controller
           'idpengaju'     => $idpengaju,
           'penerima'       => 'Director of Corporate Planning and Business Management',
           'ttd_sebelum1'   => '_General Manager_',
-          'ttd_sebelum2'   => '_Senior Tax_',
+          'ttd_sebelum2'   => '_Staff Tax_',
           'ttd_sebelum3'   => ''
         ];
         $this->notifWaAprovPb(1, 1, $dataWa);
@@ -1470,7 +1470,7 @@ class Surat_new extends CI_Controller
           'idpengaju'     => $idpengaju,
           'penerima'       => 'Director',
           'ttd_sebelum1'   => '_General Manager_',
-          'ttd_sebelum2'   => '_Senior Tax_',
+          'ttd_sebelum2'   => '_Staff Tax_',
           'ttd_sebelum3'   => '_Director of Corporate Planning and Business Management_'
         ];
         $this->notifWaAprovPb(1, 1, $dataWa);
@@ -1500,7 +1500,7 @@ class Surat_new extends CI_Controller
           'idpengaju'     => $idpengaju,
           'penerima'       => $namaPengaju,
           'ttd_sebelum1'   => '_General Manager_',
-          'ttd_sebelum2'   => '_Senior Tax_',
+          'ttd_sebelum2'   => '_Staff Tax_',
           'ttd_sebelum3'   => '_Director of Corporate Planning and Business Management -Director_'
         ];
         $this->notifWaAprovPb(1, 2, $dataWa);
@@ -1976,7 +1976,7 @@ class Surat_new extends CI_Controller
           'namaPengaju'   => $namaPengaju,
           'kode'  => $kode,
           'idpengaju'   => $idpengaju,
-          'namaPenolak'   => '_Senior Tax_'
+          'namaPenolak'   => '_Staff Tax_'
         ];
         $this->notifWaRejectPb($dataWa);
 
@@ -2790,7 +2790,7 @@ class Surat_new extends CI_Controller
         } else if ($row->status == "1") {
           $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh General Manager</span>';
         } else if ($row->status == "2") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Senior Tax</span>';
+          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Staff Tax</span>';
         } else if ($row->status == "3") {
           $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Director of Corporate Planning and Business Management </span>';
         } else if ($row->status == "4") {
@@ -2833,7 +2833,7 @@ class Surat_new extends CI_Controller
         } else if ($row->status == "1") {
           $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh General Manager</span>';
         } else if ($row->status == "2") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Senior Tax</span>';
+          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Staff Tax</span>';
         } else if ($row->status == "3") {
           $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Director of Corporate Planning and Business Management </span>';
         } else if ($row->status == "4") {

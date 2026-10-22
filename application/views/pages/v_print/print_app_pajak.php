@@ -298,11 +298,11 @@
 						<!-- Baris TTD -->
 						<?php
 								$img_path = "uploads/file_karyawan/ttd/";
-								$ttd1 = $img_path."ttd_".$data_pajak[0]->idPengaju.".png";
-								$ttd2 = ($data_pajak[0]->ttd_1 == '1') ? $img_path."ttd_33.png" : (($data_pajak[0]->ttd_1 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png");
-								$ttd3 = ($data_pajak[0]->ttd_2 == '1') ? $img_path."ttd_64.png" : (($data_pajak[0]->ttd_2 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png");
-								$ttd4 = ($data_pajak[0]->ttd_3 == '1') ? $img_path."ttd_23.png" : (($data_pajak[0]->ttd_3 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png");
-								$ttd5 = ($data_pajak[0]->ttd_4 == '1') ? $img_path."ttd_54.png" : (($data_pajak[0]->ttd_4 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png");
+								$ttd1 = img_to_base64($img_path."ttd_".$data_pajak[0]->idPengaju.".png");
+								$ttd2 = img_to_base64(($data_pajak[0]->ttd_1 == '1') ? $img_path."ttd_33.png" : (($data_pajak[0]->ttd_1 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png"));
+								$ttd3 = img_to_base64(($data_pajak[0]->ttd_2 == '1') ? $img_path."ttd_64.png" : (($data_pajak[0]->ttd_2 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png"));
+								$ttd4 = img_to_base64(($data_pajak[0]->ttd_3 == '1') ? $img_path."ttd_23.png" : (($data_pajak[0]->ttd_3 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png"));
+								$ttd5 = img_to_base64(($data_pajak[0]->ttd_4 == '1') ? $img_path."ttd_54.png" : (($data_pajak[0]->ttd_4 == '2') ? $img_path."ttd_not.png" : $img_path."ttd_notyet2.png"));
 						?>
 						<tr style="height:70px;">
 								<td style="text-align:center; width:15%;"><img src="<?= $ttd1 ?>" height="70"></td>
@@ -336,7 +336,7 @@
 							<td></td>
 							<td style="text-align:center; vertical-align:top;"><i>General Manager</i></td>
 							<td></td>
-							<td style="text-align:center; vertical-align:top;"><i>Senior Tax</i></td>
+							<td style="text-align:center; vertical-align:top;"><i>Staff Tax</i></td>
 							<td></td>
 							<td style="text-align:center; vertical-align:top;"><i>Director of Corporate Planning & Business Management</i></td>
 							<td></td>

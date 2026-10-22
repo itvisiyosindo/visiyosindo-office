@@ -250,25 +250,25 @@
 
                         <?php
 							$img_path 	= "uploads/file_karyawan/ttd/";
-							$ttdaju		= $img_path."ttd_".$data_ba[0]->idPengaju.".png";
-							$ttd1 		= $img_path."ttd_notyet2.png";
-							$ttd2 		= $img_path."ttd_notyet2.png";
-							$ttd3 		= $img_path."ttd_notyet2.png";
+							$ttdaju		= img_to_base64($img_path."ttd_".$data_ba[0]->idPengaju.".png");
+							$ttd1 		= img_to_base64($img_path."ttd_notyet2.png");
+							$ttd2 		= img_to_base64($img_path."ttd_notyet2.png");
+							$ttd3 		= img_to_base64($img_path."ttd_notyet2.png");
 							
 							if($data_ba[0]->ttd_diketahui == '1'){
-								$ttd1 = $img_path."ttd_".$data_ba[0]->id_diketahui.".png";
+								$ttd1 = img_to_base64($img_path."ttd_".$data_ba[0]->id_diketahui.".png");
 							}else if($data_ba[0]->ttd_diketahui == '2'){
-								$ttd1 = $img_path."ttd_not.png";
+								$ttd1 = img_to_base64($img_path."ttd_not.png");
 							}
 							if($data_ba[0]->ttd_disetujui == '1'){
-								$ttd2 = $img_path."ttd_".$data_ba[0]->id_disetujui.".png";
+								$ttd2 = img_to_base64($img_path."ttd_".$data_ba[0]->id_disetujui.".png");
 							}else if($data_ba[0]->ttd_disetujui == '2'){
-								$ttd2 = $img_path."ttd_not.png";
+								$ttd2 = img_to_base64($img_path."ttd_not.png");
 							}
                             if($data_ba[0]->ttd_dir == '1'){
-								$ttd3 = $img_path."ttd_".$data_ba[0]->id_dir.".png";
+								$ttd3 = img_to_base64($img_path."ttd_".$data_ba[0]->id_dir.".png");
 							}else if($data_ba[0]->ttd_dir == '2'){
-								$ttd3 = $img_path."ttd_not.png";
+								$ttd3 = img_to_base64($img_path."ttd_not.png");
 							}
 
                             if($data_ba[0]->idPengaju==72){
