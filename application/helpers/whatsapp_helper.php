@@ -2623,11 +2623,75 @@ function sendWaConviaGroup($dataSend)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// INTEGRASI FONNTE WHATSAPP API (md.fonnte.com / fonnte.com)
+// INTEGRASI FONNTE WHATSAPP API (md.fonnte.com / fonnte.com) + ANTI-BAN SEQUENTIAL QUEUE (1-BY-1)
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
+ * Ambil slot waktu pengiriman berikutnya secara berurutan (1 per 1, tidak pernah bersamaan)
+ * Menggunakan atomic file-locking (flock) agar aman meskipun banyak request/loop bersamaan.
+ *
+ * @param bool $isGroup Apakah target adalah grup WA (@g.us)
+ * @param int|null $customMinDelay Minimal jeda detik khusus (opsional)
+ * @return int Unix timestamp jadwal pengiriman berikutnya
+ */
+function getNextFonnteQueueSlot($isGroup = false, $customMinDelay = null)
+{
+	$now = time();
+	$queueDir = (defined('APPPATH') && is_dir(APPPATH . 'cache') && is_writable(APPPATH . 'cache'))
+		? rtrim(APPPATH . 'cache', '/\\') . DIRECTORY_SEPARATOR . 'vym_wa_locks'
+		: sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
+
+	if (!is_dir($queueDir)) {
+		@mkdir($queueDir, 0777, true);
+	}
+
+	$queueFile = $queueDir . DIRECTORY_SEPARATOR . 'fonnte_sequential_queue.lock';
+	$fp = @fopen($queueFile, 'c+');
+
+	// Tentukan jeda acak (random jitter) seperti manusia agar tidak terdeteksi pola robot
+	if ($isGroup) {
+		$minGap = ($customMinDelay !== null && (int)$customMinDelay > 0) ? (int)$customMinDelay : 60;
+		$randomGap = mt_rand($minGap, $minGap + 15); // 60 - 75 detik untuk grup
+		$firstWait = $randomGap;
+	} else {
+		$minGap = ($customMinDelay !== null && (int)$customMinDelay > 0) ? (int)$customMinDelay : 20;
+		$randomGap = mt_rand($minGap, $minGap + 20); // 20 - 40 detik antar pesan personal
+		$firstWait = mt_rand(5, 10); // 5 - 10 detik untuk pesan pertama saat antrean kosong
+	}
+
+	if (!$fp) {
+		return $now + $firstWait;
+	}
+
+	if (@flock($fp, LOCK_EX)) {
+		rewind($fp);
+		$content = trim((string)stream_get_contents($fp));
+		$lastScheduled = is_numeric($content) ? (int)$content : 0;
+
+		if ($lastScheduled < $now) {
+			// Antrean sedang kosong: jadwalkan pesan pertama dengan jeda awal
+			$nextSchedule = $now + $firstWait;
+		} else {
+			// Antrean sedang berjalan: susun pesan ini tepat SETELAH pesan terakhir + jeda acak
+			$nextSchedule = $lastScheduled + $randomGap;
+		}
+
+		ftruncate($fp, 0);
+		rewind($fp);
+		fwrite($fp, (string)$nextSchedule);
+		fflush($fp);
+		@flock($fp, LOCK_UN);
+	} else {
+		$nextSchedule = $now + $randomGap;
+	}
+
+	fclose($fp);
+	return $nextSchedule;
+}
+
+/**
  * Kirim pesan WhatsApp personal/group via Fonnte API (https://fonnte.com)
+ * Dilengkapi proteksi Anti-Ban: Sequential Queue 1-per-1, Random Delay, Typing Indicator, & Unique Message Hash.
  * 
  * @param array $dataSend ['penerima' => '0812...', 'pesan' => '...', 'file' => '...']
  * @return bool
@@ -2673,31 +2737,34 @@ function sendWaFonnte($dataSend)
 		}
 	}
 
+	$isGroup = (strpos($penerima, '@g.us') !== false);
 
 	$pesan = urldecode($dataSend['pesan']);
 	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
 		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo Medikal_";
 	}
+
+	// Tambahkan penanda waktu & kode referensi mikro unik agar hash pesan tidak 100% identik saat kirim beruntun (Anti-Bulk Fingerprint)
+	$uniqueRef = date('H:i') . ' • #' . strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 4));
+	if (strpos($pesan, '• #') === false) {
+		$pesan = rtrim($pesan) . "\n`[" . $uniqueRef . "]`";
+	}
+
 	$apiUrl = defined('FONNTE_API_URL') ? FONNTE_API_URL : 'https://api.fonnte.com/send';
+
+	// Hitung slot antrean 1-per-1 secara berurutan (tidak pernah kirim serentak di detik yang sama)
+	$customMinDelay = (isset($dataSend['delay']) && is_numeric($dataSend['delay'])) ? (int)$dataSend['delay'] : null;
+	$scheduledSlot = getNextFonnteQueueSlot($isGroup, $customMinDelay);
 
 	$payload = [
 		'target'      => $penerima,
 		'message'     => $pesan,
-		'countryCode' => '62'
+		'countryCode' => '62',
+		'delay'       => $isGroup ? '60-75' : '20-40',
+		'schedule'    => (string)$scheduledSlot,
+		'typing'      => true,
+		'duration'    => (string)mt_rand(3, 6)
 	];
-
-	// Jika pengiriman ditujukan ke grup (@g.us) atau memiliki parameter delay/schedule, beri delay 1 menit (60 detik)
-	if (isset($dataSend['delay']) && $dataSend['delay'] !== '') {
-		$payload['delay'] = (string)$dataSend['delay'];
-	} elseif (strpos($penerima, '@g.us') !== false) {
-		$payload['delay'] = '60';
-	}
-
-	if (isset($dataSend['schedule']) && !empty($dataSend['schedule'])) {
-		$payload['schedule'] = (string)$dataSend['schedule'];
-	} elseif (strpos($penerima, '@g.us') !== false) {
-		$payload['schedule'] = (string)(time() + 60);
-	}
 
 	if (isset($dataSend['file']) && !empty($dataSend['file'])) {
 		$payload['url'] = $dataSend['file'];
@@ -2874,13 +2941,13 @@ function sendWa($dataSend)
 	}
 	@file_put_contents($lockFile, (string)time());
 
-	// 1. Coba kirim via Convia API lebih dulu
-	if (sendWaConvia($dataSend)) {
+	// 1. Utamakan kirim via Fonnte API (dengan sistem antrean 1-per-1 Anti-Ban) selama Convia bermasalah
+	if (sendWaFonnte($dataSend)) {
 		return true;
 	}
 
-	// 2. Fallback ke Fonnte jika Convia belum dikonfigurasi / gagal
-	if (sendWaFonnte($dataSend)) {
+	// 2. Fallback ke Convia API jika Fonnte gagal
+	if (sendWaConvia($dataSend)) {
 		return true;
 	}
 
@@ -2987,13 +3054,13 @@ function sendWaGroup($dataSend)
 	}
 	@file_put_contents($lockFile, (string)time());
 
-	// 1. Coba Convia API Group
-	if (sendWaConviaGroup($dataSend)) {
+	// 1. Utamakan Fonnte API Group (dengan antrean 1-per-1 & jeda 60 detik)
+	if (sendWaFonnteGroup($dataSend)) {
 		return true;
 	}
 
-	// 2. Coba Fonnte API Group
-	if (sendWaFonnteGroup($dataSend)) {
+	// 2. Fallback Convia API Group
+	if (sendWaConviaGroup($dataSend)) {
 		return true;
 	}
 
