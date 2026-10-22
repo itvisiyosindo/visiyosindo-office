@@ -2686,6 +2686,19 @@ function sendWaFonnte($dataSend)
 		'countryCode' => '62'
 	];
 
+	// Jika pengiriman ditujukan ke grup (@g.us) atau memiliki parameter delay/schedule, beri delay 1 menit (60 detik)
+	if (isset($dataSend['delay']) && $dataSend['delay'] !== '') {
+		$payload['delay'] = (string)$dataSend['delay'];
+	} elseif (strpos($penerima, '@g.us') !== false) {
+		$payload['delay'] = '60';
+	}
+
+	if (isset($dataSend['schedule']) && !empty($dataSend['schedule'])) {
+		$payload['schedule'] = (string)$dataSend['schedule'];
+	} elseif (strpos($penerima, '@g.us') !== false) {
+		$payload['schedule'] = (string)(time() + 60);
+	}
+
 	if (isset($dataSend['file']) && !empty($dataSend['file'])) {
 		$payload['url'] = $dataSend['file'];
 	}
@@ -2726,6 +2739,12 @@ function sendWaFonnte($dataSend)
 
 function sendWaFonnteGroup($dataSend)
 {
+	if (!isset($dataSend['delay'])) {
+		$dataSend['delay'] = '60';
+	}
+	if (!isset($dataSend['schedule'])) {
+		$dataSend['schedule'] = time() + 60;
+	}
 	return sendWaFonnte($dataSend);
 }
 
@@ -2762,7 +2781,9 @@ function waPoLolosKroscekGroup($data)
 
 	$dataWa = [
 		'penerima' => $targetGroup,
-		'pesan'    => $pesan
+		'pesan'    => $pesan,
+		'delay'    => '60',
+		'schedule' => time() + 60
 	];
 
 	return sendWaFonnte($dataWa);
