@@ -179,7 +179,7 @@
 									echo '<a class="nav-link" href="' .
 										base_url(
 											"dokumen/index/visilab/" .
-												encrypt($row->id),
+												encrypt($row->id)
 										) .
 										'">';
 									echo "<span>" .
