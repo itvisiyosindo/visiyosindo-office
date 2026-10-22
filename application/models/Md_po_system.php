@@ -9,27 +9,54 @@ class Md_po_system extends CI_Model
     }
 
     /**
-     * Ambil semua PO masuk dengan filter status
+     * Ambil semua PO masuk dengan filter status, status proses, sales/marketing, dan tanggal
      */
-    public function getAllPo($filter_status = null)
+    public function getAllPo($filter_status = null, $filter_status_proses = null, $filter_sales = null, $tgl_awal = null, $tgl_akhir = null)
     {
         $this->db->select('
             p.*,
             c.nama_customer as master_nama_customer,
             c.contact as master_contact,
             c.alamat_customer as master_alamat,
+            pl.identitas_pelanggan as master_pelanggan_nama,
+            pl.alamat as master_pelanggan_alamat,
+            pl.npwp as master_pelanggan_npwp,
             u.nama as nama_pembuat,
+            u.jabatan as jabatan_pembuat,
             cro.nama as nama_kroscek,
+            acc.nama as nama_acc,
+            pjk.nama as nama_pajak,
+            gm.nama as nama_gm,
             (SELECT COUNT(*) FROM po_masuk_item WHERE id_po = p.id_po) as total_item
         ');
         $this->db->from('po_masuk p');
         $this->db->join('customer c', 'p.id_customer = c.id_customer', 'left');
+        $this->db->join('pelanggan pl', 'p.id_pelanggan = pl.id_pelanggan', 'left');
         $this->db->join('pengguna u', 'p.created_by = u.pengguna_id', 'left');
-        $this->db->join('pengguna cro', 'p.dikroscek_oleh = cro.pengguna_id', 'left');
+        $this->db->join('pengguna cro', 'p.cro_user_id = cro.pengguna_id', 'left');
+        $this->db->join('pengguna acc', 'p.acc_user_id = acc.pengguna_id', 'left');
+        $this->db->join('pengguna pjk', 'p.pajak_user_id = pjk.pengguna_id', 'left');
+        $this->db->join('pengguna gm', 'p.gm_user_id = gm.pengguna_id', 'left');
         $this->db->where('p.deleted', 0);
 
         if (!empty($filter_status)) {
             $this->db->where('p.status', $filter_status);
+        }
+
+        if (!empty($filter_status_proses)) {
+            $this->db->where('p.status_proses', $filter_status_proses);
+        }
+
+        if (!empty($filter_sales)) {
+            $this->db->group_start();
+            $this->db->where('p.id_sales', $filter_sales);
+            $this->db->or_where('p.created_by', $filter_sales);
+            $this->db->group_end();
+        }
+
+        if (!empty($tgl_awal) && !empty($tgl_akhir)) {
+            $this->db->where('p.tanggal_po >=', $tgl_awal);
+            $this->db->where('p.tanggal_po <=', $tgl_akhir);
         }
 
         $this->db->order_by('p.id_po', 'DESC');
@@ -46,15 +73,28 @@ class Md_po_system extends CI_Model
             c.nama_customer as master_nama_customer,
             c.contact as master_contact,
             c.alamat_customer as master_alamat,
+            pl.identitas_pelanggan as master_pelanggan_nama,
+            pl.alamat as master_pelanggan_alamat,
+            pl.npwp as master_pelanggan_npwp,
             u.nama as nama_pembuat,
             u.jabatan as jabatan_pembuat,
             cro.nama as nama_kroscek,
-            cro.jabatan as jabatan_kroscek
+            cro.jabatan as jabatan_kroscek,
+            acc.nama as nama_acc,
+            acc.jabatan as jabatan_acc,
+            pjk.nama as nama_pajak,
+            pjk.jabatan as jabatan_pajak,
+            gm.nama as nama_gm,
+            gm.jabatan as jabatan_gm
         ');
         $this->db->from('po_masuk p');
         $this->db->join('customer c', 'p.id_customer = c.id_customer', 'left');
+        $this->db->join('pelanggan pl', 'p.id_pelanggan = pl.id_pelanggan', 'left');
         $this->db->join('pengguna u', 'p.created_by = u.pengguna_id', 'left');
-        $this->db->join('pengguna cro', 'p.dikroscek_oleh = cro.pengguna_id', 'left');
+        $this->db->join('pengguna cro', 'p.cro_user_id = cro.pengguna_id', 'left');
+        $this->db->join('pengguna acc', 'p.acc_user_id = acc.pengguna_id', 'left');
+        $this->db->join('pengguna pjk', 'p.pajak_user_id = pjk.pengguna_id', 'left');
+        $this->db->join('pengguna gm', 'p.gm_user_id = gm.pengguna_id', 'left');
         $this->db->where('p.id_po', $id_po);
         $this->db->where('p.deleted', 0);
         return $this->db->get()->row();
@@ -149,7 +189,11 @@ class Md_po_system extends CI_Model
             SUM(CASE WHEN status = 'menunggu_kroscek' THEN 1 ELSE 0 END) as total_menunggu,
             SUM(CASE WHEN status = 'sesuai' THEN 1 ELSE 0 END) as total_sesuai,
             SUM(CASE WHEN status = 'revisi' THEN 1 ELSE 0 END) as total_revisi,
-            SUM(CASE WHEN status = 'ditolak' THEN 1 ELSE 0 END) as total_ditolak
+            SUM(CASE WHEN status = 'ditolak' THEN 1 ELSE 0 END) as total_ditolak,
+            SUM(CASE WHEN status_proses = 'BELUM DI PROSES' THEN 1 ELSE 0 END) as total_belum,
+            SUM(CASE WHEN status_proses = 'PROSES SEBAGIAN' THEN 1 ELSE 0 END) as total_sebagian,
+            SUM(CASE WHEN status_proses = 'SUDAH DI PROSES' THEN 1 ELSE 0 END) as total_sudah,
+            SUM(CASE WHEN status_proses = 'HOLD / INDENT' THEN 1 ELSE 0 END) as total_hold
         FROM po_masuk 
         WHERE deleted = 0";
         return $this->db->query($sql)->row();

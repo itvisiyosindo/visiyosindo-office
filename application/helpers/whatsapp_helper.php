@@ -2816,8 +2816,167 @@ function sendWaFonnteGroup($dataSend)
 }
 
 /**
+ * Notifikasi Pengajuan PO Baru dari Marketing ke Grup Marketing / Visilab & PIC (CRO, GM)
+ */
+function waPoPengajuanBaruGroup($data)
+{
+	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	if (!empty($data['groupPenerima'])) {
+		$targetGroup = $data['groupPenerima'];
+	}
+
+	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
+	$kode_masuk = !empty($data['kode_masuk']) ? $data['kode_masuk'] : '-';
+	$nama_customer = !empty($data['nama_customer']) ? $data['nama_customer'] : '-';
+	$nama_sales = !empty($data['nama_sales']) ? $data['nama_sales'] : '-';
+	$nominal_po = (isset($data['nominal_po']) && is_numeric($data['nominal_po'])) ? 'Rp ' . number_format($data['nominal_po'], 0, ',', '.') : (!empty($data['nominal_po']) ? $data['nominal_po'] : '-');
+	$sistem_bayar = !empty($data['sistem_pembayaran']) ? $data['sistem_pembayaran'] : '-';
+	$sistem_pajak = !empty($data['sistem_perpajakan']) ? $data['sistem_perpajakan'] : '-';
+	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$pesan = "*NOTIFIKASI PENGAJUAN PO BARU*\n\n" .
+		"Halo Tim Marketing, CRO, & Management,\n" .
+		"Marketing telah menginput pengajuan *PO Customer Baru* ke dalam sistem:\n\n" .
+		"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+		"📄 *No. PO*: " . $no_po . "\n" .
+		"🏢 *Customer*: " . $nama_customer . "\n" .
+		"👤 *Marketing/Sales*: " . $nama_sales . "\n" .
+		"💳 *Sistem Bayar*: " . $sistem_bayar . "\n" .
+		"🏛 *Perpajakan*: " . $sistem_pajak . "\n" .
+		"💰 *Nilai Total*: " . $nominal_po . "\n\n" .
+		"Mohon kepada PIC terkait (*CRO & Management*) untuk memeriksa dan mengkroscek data pada tautan berikut:\n" .
+		$link . "\n\n" .
+		"Terima Kasih.";
+
+	$dataWa = [
+		'penerima' => $targetGroup,
+		'pesan'    => $pesan,
+		'delay'    => '60',
+		'schedule' => time() + 60
+	];
+
+	return sendWaFonnte($dataWa);
+}
+
+/**
  * Notifikasi WhatsApp Group (Fonnte) saat PO Masuk lolos kroscek (Status = Sesuai / Di-ACC CRO)
  */
+
+/**
+ * Notifikasi WhatsApp Group saat Stok PO Tidak Ready (Status = HOLD / INDENT)
+ */
+function waPoIndentGroup($data)
+{
+	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	if (!empty($data['groupPenerima'])) {
+		$targetGroup = $data['groupPenerima'];
+	}
+
+	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
+	$kode_masuk = !empty($data['kode_masuk']) ? $data['kode_masuk'] : '-';
+	$nama_customer = !empty($data['nama_customer']) ? $data['nama_customer'] : '-';
+	$nama_sales = !empty($data['nama_sales']) ? $data['nama_sales'] : '-';
+	$catatan = !empty($data['catatan']) ? $data['catatan'] : 'Stok barang tidak ready di gudang (Indent).';
+	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$pesan = "⚠️ *NOTIFIKASI PO STATUS: HOLD / INDENT*\n\n" .
+		"Halo Tim Gudang, Marketing, & Visilab,\n" .
+		"PO Masuk berikut saat ini berstatus *HOLD / INDENT* karena stok barang belum tersedia di gudang:\n\n" .
+		"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+		"📄 *No. PO*: " . $no_po . "\n" .
+		"🏢 *Customer*: " . $nama_customer . "\n" .
+		"👤 *Sales*: " . $nama_sales . "\n" .
+		"📝 *Catatan CRO*: " . $catatan . "\n\n" .
+		"PO akan dilanjutkan ke tahap berikutnya setelah stok fisik barang tiba dan ready di gudang.\n" .
+		"Cek detail PO:\n" . $link . "\n\n" .
+		"Terima Kasih.";
+
+	$dataWa = [
+		'penerima' => $targetGroup,
+		'pesan'    => $pesan,
+		'delay'    => '60',
+		'schedule' => time() + 60
+	];
+
+	return sendWaFonnte($dataWa);
+}
+
+/**
+ * Notifikasi WhatsApp Group saat PO Disetujui GM (Siap Diproses Semua Divisi)
+ */
+function waPoSiapDiprosesGroup($data)
+{
+	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	if (!empty($data['groupPenerima'])) {
+		$targetGroup = $data['groupPenerima'];
+	}
+
+	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
+	$kode_masuk = !empty($data['kode_masuk']) ? $data['kode_masuk'] : '-';
+	$nama_customer = !empty($data['nama_customer']) ? $data['nama_customer'] : '-';
+	$nama_sales = !empty($data['nama_sales']) ? $data['nama_sales'] : '-';
+	$nominal_po = (isset($data['nominal_po']) && is_numeric($data['nominal_po'])) ? 'Rp ' . number_format($data['nominal_po'], 0, ',', '.') : (!empty($data['nominal_po']) ? $data['nominal_po'] : '-');
+	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$pesan = "🚀 *NOTIFIKASI PO DISETUJUI GM (SIAP DIPROSES)*\n\n" .
+		"Halo Tim Marketing, Visilab, Gudang, Accounting, & Pajak,\n" .
+		"PO berikut telah *DISETUJUI OLEH GENERAL MANAGER (GM)* dan resmi berstatus *SIAP DIPROSES*:\n\n" .
+		"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+		"📄 *No. PO*: " . $no_po . "\n" .
+		"🏢 *Customer*: " . $nama_customer . "\n" .
+		"👤 *Sales*: " . $nama_sales . "\n" .
+		"💰 *Nilai Total*: " . $nominal_po . "\n\n" .
+		"📋 *MOHON MASUKKAN DOKUMEN KELENGKAPAN PO PADA LINK SISTEM:*\n" .
+		"1. *ACCOUNTING (ACC)*: Masukkan Link Invoice, Kwitansi, berkas pembayaran lainnya.\n" .
+		"2. *GUDANG*: Masukkan Link Surat Jalan (SJ), Resi Pengiriman, Packing List, SSTB/BAST.\n" .
+		"3. *PAJAK*: Masukkan Link Faktur Pajak, Bukti Potong, Link PPBJ dan Endorsement jika ada.\n" .
+		"4. *CRO*: Masukkan bukti link pengiriman dokumen digital ke customer jika ada.\n\n" .
+		"Tautan Sistem PO:\n" . $link . "\n\n" .
+		"Terima Kasih atas kerja sama seluruh divisi!";
+
+	$dataWa = [
+		'penerima' => $targetGroup,
+		'pesan'    => $pesan,
+		'delay'    => '60',
+		'schedule' => time() + 60
+	];
+
+	return sendWaFonnte($dataWa);
+}
+
+/**
+ * Notifikasi WhatsApp Group saat Kelengkapan Dokumen Diperbarui oleh Suatu Divisi
+ */
+function waPoUpdateDokumenGroup($data)
+{
+	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	if (!empty($data['groupPenerima'])) {
+		$targetGroup = $data['groupPenerima'];
+	}
+
+	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
+	$divisi = !empty($data['divisi']) ? $data['divisi'] : 'Operasional';
+	$user_nama = !empty($data['user_nama']) ? $data['user_nama'] : 'Staf';
+	$detail_doc = !empty($data['detail_doc']) ? $data['detail_doc'] : 'Dokumen kelengkapan';
+	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$pesan = "📂 *UPDATE DOKUMEN KELENGKAPAN PO (" . strtoupper($divisi) . ")*\n\n" .
+		"Tim *" . strtoupper($divisi) . "* (" . $user_nama . ") telah memperbarui dokumen pemenuhan untuk:\n\n" .
+		"📄 *No. PO*: " . $no_po . "\n" .
+		"📑 *Dokumen Diperbarui*: " . $detail_doc . "\n\n" .
+		"Silakan cek tautan berikut:\n" . $link . "\n\n" .
+		"Terima Kasih.";
+
+	$dataWa = [
+		'penerima' => $targetGroup,
+		'pesan'    => $pesan,
+		'delay'    => '60',
+		'schedule' => time() + 60
+	];
+
+	return sendWaFonnte($dataWa);
+}
+
 function waPoLolosKroscekGroup($data)
 {
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
