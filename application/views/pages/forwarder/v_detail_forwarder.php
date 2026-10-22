@@ -227,7 +227,7 @@
 						<th style="text-align:center" bgcolor="#d3d3d3"> Nama Forwarder </th>
 						<?php foreach ($forwarderNames as $name): ?>
 							<th style="text-align:center" bgcolor="#d3d3d3"><?= htmlspecialchars(
-																				$name,
+																				$name
 																			) ?></th>
 						<?php endforeach; ?>
 					</tr>
@@ -566,10 +566,10 @@
 				sessPenggunaId() == "54"
 			) { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px;" id-Sijk="<?= encrypt(
-																																$data_aprv[0]->idGc,
+																																$data_aprv[0]->idGc
 																															) ?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px;" id-Sijk="<?= encrypt(
-																																$data_aprv[0]->idGc,
+																																$data_aprv[0]->idGc
 																															) ?>"> <i class="fas fa-times"></i> Tolak </button>
 			<?php } ?>
 

@@ -122,7 +122,7 @@ class Forwarder extends CI_Controller
         /** LOG */
         addLog(
             "Forwarder",
-            'Memperbarui data Forwarder "' . $data["nama"] . '"',
+            'Memperbarui data Forwarder "' . $data["nama"] . '"'
         );
         ajaxReturnDie("success", "Data berhasil diperbarui", "reload_table");
     }
@@ -197,18 +197,18 @@ class Forwarder extends CI_Controller
             $page_data["switch"] = $this->id_navbar();
             $page_data["data_aprv"] = $this->md_forwarder->getAppByID($param2);
             $page_data["detail_aprv"] = $this->md_forwarder->getDetailAppById(
-                $param2,
+                $param2
             );
             $page_data["forwarderNames"] = array_unique(
                 array_map(function ($item) {
                     return $item->nama_forwarder;
-                }, $page_data["detail_aprv"]),
+                }, $page_data["detail_aprv"])
             );
             $page_data["list_for"] = $this->md_forwarder->getForByWhere([
                 "g.status" => 1,
             ]);
             $page_data["pengguna"] = $this->md_pengguna->getById(
-                sessPenggunaId(),
+                sessPenggunaId()
             );
             $page_data["list_kota"] = $this->md_prov_kota->getAllKota();
             $page_data["page_name"] = "forwarder/v_aju_forwarder";
@@ -220,18 +220,18 @@ class Forwarder extends CI_Controller
             $page_data["switch"] = $this->id_navbar();
             $page_data["data_aprv"] = $this->md_forwarder->getAppByID($param2);
             $page_data["detail_aprv"] = $this->md_forwarder->getDetailAppById(
-                $param2,
+                $param2
             );
             $page_data["forwarderNames"] = array_unique(
                 array_map(function ($item) {
                     return $item->nama_forwarder;
-                }, $page_data["detail_aprv"]),
+                }, $page_data["detail_aprv"])
             );
             $page_data["list_for"] = $this->md_forwarder->getForByWhere([
                 "g.status" => 1,
             ]);
             $page_data["pengguna"] = $this->md_pengguna->getById(
-                sessPenggunaId(),
+                sessPenggunaId()
             );
             $page_data["list_kota"] = $this->md_prov_kota->getAllKota();
             $page_data["page_name"] = "forwarder/v_detail_forwarder";
@@ -530,7 +530,7 @@ class Forwarder extends CI_Controller
             "Menduplikasi Approval Forwarder dari ID Lama " .
                 $id .
                 " menjadi ID Baru " .
-                $idBaru,
+                $idBaru
         );
         redirect("forwarder/show/detail/" . $idBaru);
     }
@@ -567,7 +567,7 @@ class Forwarder extends CI_Controller
 
         $data["sistem_pengiriman"] = $this->input->post(
             "sistem_pengiriman",
-            true,
+            true
         );
         $data["pol"] = $this->input->post("pol", true);
         $data["pod"] = $this->input->post("pod", true);
@@ -582,7 +582,7 @@ class Forwarder extends CI_Controller
         /** LOG */
         addLog(
             "Approval Forwarder",
-            "Permintaan Approval Forwarder Kode: " . $kodeFpp,
+            "Permintaan Approval Forwarder Kode: " . $kodeFpp
         );
         ajaxReturnDie("success", "Berhasil Diajukan", true);
     }
@@ -606,7 +606,7 @@ class Forwarder extends CI_Controller
         $data["nama"] = $this->input->post("nama", true);
         $data["sistem_pengiriman"] = $this->input->post(
             "sistem_pengiriman",
-            true,
+            true
         );
         $data["pol"] = $this->input->post("pol", true);
         $data["pod"] = $this->input->post("pod", true);
@@ -620,7 +620,7 @@ class Forwarder extends CI_Controller
         /** LOG */
         addLog(
             "Approval Forwarder",
-            'Memperbarui data Forwarder "' . $id . '"',
+            'Memperbarui data Forwarder "' . $id . '"'
         );
         ajaxReturnDie("success", "Data berhasil diperbarui", "reload_table");
     }
@@ -653,190 +653,190 @@ class Forwarder extends CI_Controller
         $data["asal_thc"] = $this->_process_detail_price(
             "asal_thc",
             $kurs,
-            true,
+            true
         );
         $data["asal_bl_fee"] = $this->_process_detail_price(
             "asal_bl_fee",
             $kurs,
-            true,
+            true
         );
         $data["asal_vgm"] = $this->_process_detail_price(
             "asal_vgm",
             $kurs,
-            true,
+            true
         );
         $data["asal_agaency_fee"] = $this->_process_detail_price(
             "asal_agaency_fee",
             $kurs,
-            true,
+            true
         );
         $data["asal_handling_fee"] = $this->_process_detail_price(
             "asal_handling_fee",
             $kurs,
-            true,
+            true
         );
         $data["asal_transportasi"] = $this->_process_detail_price(
             "asal_transportasi",
             $kurs,
-            true,
+            true
         );
         $data["asal_loading"] = $this->_process_detail_price(
             "asal_loading",
             $kurs,
-            true,
+            true
         );
         $data["asal_pickup"] = $this->_process_detail_price(
             "asal_pickup",
             $kurs,
-            true,
+            true
         );
         $data["asal_seal"] = $this->_process_detail_price(
             "asal_seal",
             $kurs,
-            true,
+            true
         );
         $data["asal_custom"] = $this->_process_detail_price(
             "asal_custom",
             $kurs,
-            true,
+            true
         );
         $data["asal_shipping"] = $this->_process_detail_price(
             "asal_shipping",
             $kurs,
-            true,
+            true
         );
         $data["asal_cfs"] = $this->_process_detail_price(
             "asal_cfs",
             $kurs,
-            true,
+            true
         );
         $data["asal_dg"] = $this->_process_detail_price(
             "asal_dg",
             $kurs,
-            true,
+            true
         );
         $data["asal_psa"] = $this->_process_detail_price(
             "asal_psa",
             $kurs,
-            true,
+            true
         );
         $data["asal_other"] = $this->_process_detail_price(
             "asal_other",
             $kurs,
-            true,
+            true
         );
         $data["freight_ocean"] = $this->_process_detail_price(
             "freight_ocean",
             $kurs,
-            true,
+            true
         );
         $data["freight_air"] = $this->_process_detail_price(
             "freight_air",
             $kurs,
-            true,
+            true
         );
         $data["tuj_cfs"] = $this->_process_detail_price("tuj_cfs", $kurs, true);
         $data["tuj_doc"] = $this->_process_detail_price("tuj_doc", $kurs, true);
         $data["tuj_agency_fee"] = $this->_process_detail_price(
             "tuj_agency_fee",
             $kurs,
-            true,
+            true
         );
         $data["tuj_handling"] = $this->_process_detail_price(
             "tuj_handling",
             $kurs,
-            true,
+            true
         );
         $data["tuj_do"] = $this->_process_detail_price("tuj_do", $kurs, true);
         $data["tuj_admin"] = $this->_process_detail_price(
             "tuj_admin",
             $kurs,
-            true,
+            true
         );
         $data["tuj_devanning"] = $this->_process_detail_price(
             "tuj_devanning",
             $kurs,
-            true,
+            true
         );
         $data["tuj_fordwarding_fee"] = $this->_process_detail_price(
             "tuj_fordwarding_fee",
             $kurs,
-            true,
+            true
         );
         $data["tuj_mechanics"] = $this->_process_detail_price(
             "tuj_mechanics",
             $kurs,
-            true,
+            true
         );
         $data["tuj_other"] = $this->_process_detail_price(
             "tuj_other",
             $kurs,
-            true,
+            true
         );
         $data["cust_clearance"] = $this->_process_detail_price(
             "cust_clearance",
             $kurs,
-            true,
+            true
         );
         $data["cust_red_line"] = $this->_process_detail_price(
             "cust_red_line",
             $kurs,
-            true,
+            true
         );
         $data["cust_handling"] = $this->_process_detail_price(
             "cust_handling",
             $kurs,
-            true,
+            true
         );
         $data["cust_admin_fee"] = $this->_process_detail_price(
             "cust_admin_fee",
             $kurs,
-            true,
+            true
         );
         $data["cust_pib_fee"] = $this->_process_detail_price(
             "cust_pib_fee",
             $kurs,
-            true,
+            true
         );
         $data["cust_transfer"] = $this->_process_detail_price(
             "cust_transfer",
             $kurs,
-            true,
+            true
         );
         $data["cust_storage"] = $this->_process_detail_price(
             "cust_storage",
             $kurs,
-            true,
+            true
         );
         $data["oth_trucking"] = $this->_process_detail_price(
             "oth_trucking",
             $kurs,
-            true,
+            true
         );
         $data["oth_handling"] = $this->_process_detail_price(
             "oth_handling",
             $kurs,
-            true,
+            true
         );
         $data["oth_buruh"] = $this->_process_detail_price(
             "oth_buruh",
             $kurs,
-            true,
+            true
         );
         $data["oth_adm"] = $this->_process_detail_price(
             "oth_adm",
             $kurs,
-            true,
+            true
         );
         $data["oth_other"] = $this->_process_detail_price(
             "oth_other",
             $kurs,
-            true,
+            true
         );
         $data["ins_nilai"] = $this->_process_detail_price(
             "ins_nilai",
             $kurs,
-            true,
+            true
         );
 
         $this->md_forwarder->addDetailForwarder($data);
@@ -844,7 +844,7 @@ class Forwarder extends CI_Controller
         /** LOG */
         addLog(
             "Approval Forwarder",
-            "Penambahan Detail Harga Forwarder untuk ID: " . $data["id_app"],
+            "Penambahan Detail Harga Forwarder untuk ID: " . $data["id_app"]
         );
         ajaxReturnDie("success", "Berhasil Diajukan", true);
     }
@@ -907,198 +907,198 @@ class Forwarder extends CI_Controller
         $data["asal_thc"] = $this->_process_detail_price(
             "asal_thc",
             $kurs,
-            false,
+            false
         );
         $data["asal_bl_fee"] = $this->_process_detail_price(
             "asal_bl_fee",
             $kurs,
-            false,
+            false
         );
         $data["asal_vgm"] = $this->_process_detail_price(
             "asal_vgm",
             $kurs,
-            false,
+            false
         );
         $data["asal_agaency_fee"] = $this->_process_detail_price(
             "asal_agaency_fee",
             $kurs,
-            false,
+            false
         );
         $data["asal_handling_fee"] = $this->_process_detail_price(
             "asal_handling_fee",
             $kurs,
-            false,
+            false
         );
         $data["asal_transportasi"] = $this->_process_detail_price(
             "asal_transportasi",
             $kurs,
-            false,
+            false
         );
         $data["asal_loading"] = $this->_process_detail_price(
             "asal_loading",
             $kurs,
-            false,
+            false
         );
         $data["asal_pickup"] = $this->_process_detail_price(
             "asal_pickup",
             $kurs,
-            false,
+            false
         );
         $data["asal_seal"] = $this->_process_detail_price(
             "asal_seal",
             $kurs,
-            false,
+            false
         );
         $data["asal_custom"] = $this->_process_detail_price(
             "asal_custom",
             $kurs,
-            false,
+            false
         );
         $data["asal_shipping"] = $this->_process_detail_price(
             "asal_shipping",
             $kurs,
-            false,
+            false
         );
         $data["asal_cfs"] = $this->_process_detail_price(
             "asal_cfs",
             $kurs,
-            false,
+            false
         );
         $data["asal_dg"] = $this->_process_detail_price(
             "asal_dg",
             $kurs,
-            false,
+            false
         );
         $data["asal_psa"] = $this->_process_detail_price(
             "asal_psa",
             $kurs,
-            false,
+            false
         );
         $data["asal_other"] = $this->_process_detail_price(
             "asal_other",
             $kurs,
-            false,
+            false
         );
         $data["freight_ocean"] = $this->_process_detail_price(
             "freight_ocean",
             $kurs,
-            false,
+            false
         );
         $data["freight_air"] = $this->_process_detail_price(
             "freight_air",
             $kurs,
-            false,
+            false
         );
         $data["tuj_cfs"] = $this->_process_detail_price(
             "tuj_cfs",
             $kurs,
-            false,
+            false
         );
         $data["tuj_doc"] = $this->_process_detail_price(
             "tuj_doc",
             $kurs,
-            false,
+            false
         );
         $data["tuj_agency_fee"] = $this->_process_detail_price(
             "tuj_agency_fee",
             $kurs,
-            false,
+            false
         );
         $data["tuj_handling"] = $this->_process_detail_price(
             "tuj_handling",
             $kurs,
-            false,
+            false
         );
         $data["tuj_do"] = $this->_process_detail_price("tuj_do", $kurs, false);
         $data["tuj_admin"] = $this->_process_detail_price(
             "tuj_admin",
             $kurs,
-            false,
+            false
         );
         $data["tuj_devanning"] = $this->_process_detail_price(
             "tuj_devanning",
             $kurs,
-            false,
+            false
         );
         $data["tuj_fordwarding_fee"] = $this->_process_detail_price(
             "tuj_fordwarding_fee",
             $kurs,
-            false,
+            false
         );
         $data["tuj_mechanics"] = $this->_process_detail_price(
             "tuj_mechanics",
             $kurs,
-            false,
+            false
         );
         $data["tuj_other"] = $this->_process_detail_price(
             "tuj_other",
             $kurs,
-            false,
+            false
         );
         $data["cust_clearance"] = $this->_process_detail_price(
             "cust_clearance",
             $kurs,
-            false,
+            false
         );
         $data["cust_red_line"] = $this->_process_detail_price(
             "cust_red_line",
             $kurs,
-            false,
+            false
         );
         $data["cust_handling"] = $this->_process_detail_price(
             "cust_handling",
             $kurs,
-            false,
+            false
         );
         $data["cust_admin_fee"] = $this->_process_detail_price(
             "cust_admin_fee",
             $kurs,
-            false,
+            false
         );
         $data["cust_pib_fee"] = $this->_process_detail_price(
             "cust_pib_fee",
             $kurs,
-            false,
+            false
         );
         $data["cust_transfer"] = $this->_process_detail_price(
             "cust_transfer",
             $kurs,
-            false,
+            false
         );
         $data["cust_storage"] = $this->_process_detail_price(
             "cust_storage",
             $kurs,
-            false,
+            false
         );
         $data["oth_trucking"] = $this->_process_detail_price(
             "oth_trucking",
             $kurs,
-            false,
+            false
         );
         $data["oth_handling"] = $this->_process_detail_price(
             "oth_handling",
             $kurs,
-            false,
+            false
         );
         $data["oth_buruh"] = $this->_process_detail_price(
             "oth_buruh",
             $kurs,
-            false,
+            false
         );
         $data["oth_adm"] = $this->_process_detail_price(
             "oth_adm",
             $kurs,
-            false,
+            false
         );
         $data["oth_other"] = $this->_process_detail_price(
             "oth_other",
             $kurs,
-            false,
+            false
         );
         $data["ins_nilai"] = $this->_process_detail_price(
             "ins_nilai",
             $kurs,
-            false,
+            false
         );
 
         // Update data dengan error handling
@@ -1230,7 +1230,7 @@ class Forwarder extends CI_Controller
 
             addLog(
                 "Approval Forwarder",
-                "Permintaan Approval Forwarder Disetujui",
+                "Permintaan Approval Forwarder Disetujui"
             );
             ajaxReturnDie("success", "Data Berhasil Ditambahkan", true);
         } elseif ($param1 == "ttd_2") {
@@ -1258,7 +1258,7 @@ class Forwarder extends CI_Controller
 
             addLog(
                 "Approval Forwarder",
-                "Permintaan Approval Forwarder Disetujui",
+                "Permintaan Approval Forwarder Disetujui"
             );
             ajaxReturnDie("success", "Data Berhasil Ditambahkan", true);
         }
@@ -1332,7 +1332,7 @@ class Forwarder extends CI_Controller
             /** LOG */
             addLog(
                 "Approval Forwarder",
-                "Permintaan Approval Forwarder Ditolak",
+                "Permintaan Approval Forwarder Ditolak"
             );
             ajaxReturnDie("success", "Data Berhasil Ditambahkan", true);
         } elseif ($param1 == "ttd_2") {
@@ -1352,7 +1352,7 @@ class Forwarder extends CI_Controller
             /** LOG */
             addLog(
                 "Approval Forwarder",
-                "Permintaan Approval Forwarder Ditolak",
+                "Permintaan Approval Forwarder Ditolak"
             );
             ajaxReturnDie("success", "Data Berhasil Ditambahkan", true);
         }
@@ -1403,7 +1403,7 @@ class Forwarder extends CI_Controller
                 "forwarderNames" => array_unique(
                     array_map(function ($item) {
                         return $item->nama_forwarder;
-                    }, $detailApp),
+                    }, $detailApp)
                 ),
             ];
 

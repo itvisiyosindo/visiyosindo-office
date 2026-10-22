@@ -41,7 +41,7 @@ class Md_forwarder extends CI_Model
                 website,
                 keterangan,
                 created_at
-            ',
+            '
             )
             ->from("forwarder")
             ->where("status", 1)
@@ -70,7 +70,7 @@ class Md_forwarder extends CI_Model
                 f.id_pengguna,
                 p.nama as pengaju,
                 p.jabatan as jabatan
-            ',
+            '
             )
             ->from("approval_forwarder f")
             ->join("pengguna p", "f.id_pengguna=p.pengguna_id")
@@ -100,7 +100,7 @@ class Md_forwarder extends CI_Model
                 f.id_pengguna,
                 p.nama as pengaju,
                 p.jabatan as jabatan
-            ',
+            '
             )
             ->from("approval_forwarder f")
             ->join("pengguna p", "f.id_pengguna=p.pengguna_id")
@@ -177,7 +177,7 @@ class Md_forwarder extends CI_Model
                 f.tgl_aju,
                 p.nama as pengaju,
                 p.jabatan as jabatan
-                ',
+                '
             )
             ->from("approval_forwarder f")
             ->join("pengguna p", "f.id_pengguna=p.pengguna_id")
@@ -309,7 +309,7 @@ class Md_forwarder extends CI_Model
                 df.link_packing,
                 df.link_sph_for,
                 df.link_sph_ins
-            ',
+            '
             )
             ->from("approval_forwarder_detail df")
             ->join("forwarder f", "f.id = df.id_forwarder", "left")
