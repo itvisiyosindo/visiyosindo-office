@@ -80,19 +80,20 @@ class Po_system extends CI_Controller
      */
     public function tambah()
     {
-        // 1. Ambil data master pelanggan (pelanggan)
+        // 1. Ambil data master customer dari Inventory -> Master Data -> Customer
+        $this->db->select('id_customer, nama_customer, alamat_customer, contact');
+        $this->db->from('customer');
+        $this->db->where('status', 1);
+        $this->db->order_by('nama_customer', 'ASC');
+        $page_data['customer_list'] = $this->db->get()->result();
+        $page_data['customers']     = $page_data['customer_list'];
+
+        // Backup master pelanggan (pelanggan) jika sewaktu-waktu dibutuhkan
         $this->db->select('id_pelanggan, identitas_pelanggan, alamat, npwp, pengiriman_dokumen, alamat_pengiriman_dokumen, kontak');
         $this->db->from('pelanggan');
         $this->db->where('status', '1');
         $this->db->order_by('identitas_pelanggan', 'ASC');
         $page_data['pelanggan_list'] = $this->db->get()->result();
-
-        // Backup master customer (customer)
-        $this->db->select('id_customer, nama_customer, alamat_customer, contact');
-        $this->db->from('customer');
-        $this->db->where('status', 1);
-        $this->db->order_by('nama_customer', 'ASC');
-        $page_data['customers'] = $this->db->get()->result();
 
         // 2. Ambil master barang (barang) dari inventory
         $this->db->select('id_barang, nama_barang, tipe, kode_barang');

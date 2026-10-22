@@ -212,23 +212,21 @@
                     </div>
 
                     <div class="row">
-                        <!-- Pilih Customer dari Master Pelanggan -->
+                        <!-- Pilih Customer dari Inventory -> Master Data -> Customer -->
                         <div class="col-md-12 mb-3">
                             <label class="form-label-custom">
-                                Nama Customer / Pelanggan <span class="text-danger">*</span>
-                                <span class="text-muted font-weight-normal">(Ambil dari Data Master Customer)</span>
+                                Nama Customer <span class="text-danger">*</span>
+                                <span class="text-muted font-weight-normal">(Inventory &rarr; Master Data &rarr; Customer)</span>
                             </label>
-                            <select name="id_pelanggan" id="selectCustomer" class="form-control form-control-custom select2" style="width: 100%;">
-                                <option value="">-- Pilih Customer / Pelanggan --</option>
-                                <?php if (!empty($pelanggan_list)): ?>
-                                    <?php foreach ($pelanggan_list as $pel): ?>
-                                        <option value="<?= $pel->id_pelanggan ?>" 
-                                                data-nama="<?= htmlspecialchars($pel->identitas_pelanggan) ?>"
-                                                data-alamat="<?= htmlspecialchars($pel->alamat ?? '') ?>"
-                                                data-npwp="<?= htmlspecialchars($pel->npwp ?? '') ?>"
-                                                data-doc="<?= htmlspecialchars($pel->pengiriman_dokumen ?? 'Hardfile') ?>"
-                                                data-docaddr="<?= htmlspecialchars($pel->alamat_pengiriman_dokumen ?? '') ?>">
-                                            <?= $pel->identitas_pelanggan ?> <?= !empty($pel->npwp) ? ' (NPWP: ' . $pel->npwp . ')' : '' ?>
+                            <select name="id_customer" id="selectCustomer" class="form-control form-control-custom select2" style="width: 100%;" required>
+                                <option value="">-- Pilih Customer --</option>
+                                <?php if (!empty($customer_list)): ?>
+                                    <?php foreach ($customer_list as $cust): ?>
+                                        <option value="<?= $cust->id_customer ?>" 
+                                                data-nama="<?= htmlspecialchars($cust->nama_customer) ?>"
+                                                data-alamat="<?= htmlspecialchars($cust->alamat_customer ?? '') ?>"
+                                                data-contact="<?= htmlspecialchars($cust->contact ?? '') ?>">
+                                            <?= htmlspecialchars($cust->nama_customer) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -236,7 +234,7 @@
                             <input type="hidden" name="nama_customer" id="namaCustomerInput">
                             <div class="mt-1">
                                 <small class="text-warning font-italic">
-                                    <i class="fas fa-info-circle mr-1"></i>Jika customer belum terdaftar, Marketing input data pelanggan dan konfirmasi ke CRO untuk registrasi master.
+                                    <i class="fas fa-info-circle mr-1"></i>Jika customer belum terdaftar, silakan tambahkan data melalui menu <strong>Inventory &rarr; Master Data &rarr; Customer</strong>.
                                 </small>
                             </div>
                         </div>
@@ -632,36 +630,36 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Auto-fill Data Customer saat dipilih
-    var selectCust = document.getElementById('selectCustomer');
-    if (selectCust) {
-        selectCust.addEventListener('change', function () {
-            var opt = this.options[this.selectedIndex];
-            if (opt && opt.value) {
-                var nama = opt.getAttribute('data-nama') || opt.text;
-                var alamat = opt.getAttribute('data-alamat') || '';
-                var npwp = opt.getAttribute('data-npwp') || '';
-                var docType = opt.getAttribute('data-doc') || 'Hardfile';
-                var docAddr = opt.getAttribute('data-docaddr') || '';
+    // 1. Auto-fill Data Customer saat dipilih (Support Vanilla & Select2)
+    function onCustomerChange() {
+        var $select = $('#selectCustomer');
+        var opt = $select.find('option:selected');
+        if (opt.length && opt.val()) {
+            var nama = opt.attr('data-nama') || opt.text().trim();
+            var alamat = opt.attr('data-alamat') || '';
+            var contact = opt.attr('data-contact') || '';
 
-                document.getElementById('namaCustomerInput').value = nama;
-                document.getElementById('alamatCustomer').value = alamat;
-                document.getElementById('npwpCustomer').value = npwp;
-                document.getElementById('alamatPengirimanDokumen').value = docAddr || alamat;
+            $('#namaCustomerInput').val(nama);
+            $('#alamatCustomer').val(alamat);
 
-                // Sync radio doc
-                var radioDocs = document.querySelectorAll('input[name="dokumen_pembayaran_tipe"]');
-                radioDocs.forEach(function (r) {
-                    if (r.value.toLowerCase() === docType.toLowerCase()) {
-                        r.checked = true;
-                    }
-                });
-            } else {
-                document.getElementById('namaCustomerInput').value = '';
-                document.getElementById('alamatCustomer').value = '';
-                document.getElementById('npwpCustomer').value = '';
+            // Jika PIC penerima HP masih kosong, bantu prefill dari kontak master customer
+            var $picHp = $('input[name="pic_penerima_nohp"]');
+            if ($picHp.length && !$picHp.val() && contact) {
+                $picHp.val(contact);
             }
-        });
+        } else {
+            $('#namaCustomerInput').val('');
+            $('#alamatCustomer').val('');
+        }
+    }
+
+    if (window.jQuery) {
+        $('#selectCustomer').on('change select2:select', onCustomerChange);
+    } else {
+        var selectCust = document.getElementById('selectCustomer');
+        if (selectCust) {
+            selectCust.addEventListener('change', onCustomerChange);
+        }
     }
 
     // 2. Tombol Salin Alamat Customer ke Alamat Pengiriman
