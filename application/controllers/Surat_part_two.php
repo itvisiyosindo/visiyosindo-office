@@ -736,7 +736,8 @@ class Surat_part_two extends CI_Controller
         'linkDetail'       => 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $lastBaId
       ]);
       if (!$res) {
-          ajaxReturnDie('error', 'DEBUG FAIL: Panggilan API Convia GAGAL dikirim ke nomor ' . $noHpAtasan . ' (' . $atasan->nama . '). Cek koneksi Convia / API Key!', FALSE);
+          // Abaikan jika notifikasi WA gagal/dilewati agar pengajuan BA tetap berhasil
+          log_message('info', 'Notifikasi WA BA dilewati ke ' . $noHpAtasan);
       }
       // =========================================================================
       // =========================================================================
