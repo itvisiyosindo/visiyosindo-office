@@ -3033,7 +3033,7 @@ function waPoLolosKroscekGroup($data)
  */
 function sendWa($dataSend)
 {
-	// 0. Hanya alihkan pengiriman ke nomor kantor (no_hp_kantor) jika penerima adalah Mulia
+	// 0. Alihkan seluruh notifikasi untuk Mulia / Staff Accounting ke nomor resmi: 6281378941122
 	// Untuk karyawan lainnya, notifikasi selalu dikirim ke nomor HP pribadi mereka
 	if (!empty($dataSend['penerima'])) {
 		$cleanPenerima = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
@@ -3043,7 +3043,11 @@ function sendWa($dataSend)
 			$localPenerima = $cleanPenerima;
 		}
 
-		if (function_exists('get_instance')) {
+		if (in_array($cleanPenerima, ['6285668033598', '085668033598', '85668033598', '62895629410710', '0895629410710', '895629410710'])) {
+			$dataSend['penerima'] = '6281378941122';
+		} elseif (isset($dataSend['idPenerima1']) && in_array($dataSend['idPenerima1'], ['777', 777, '714', 714])) {
+			$dataSend['penerima'] = '6281378941122';
+		} elseif (function_exists('get_instance')) {
 			$ci = &get_instance();
 			if (isset($ci->db)) {
 				$checkKantor = $ci->db->select('no_hp_kantor')
@@ -3051,10 +3055,14 @@ function sendWa($dataSend)
 					->group_start()
 						->where('no_hp', $localPenerima)
 						->or_where('no_hp', $cleanPenerima)
+						->or_where('nohp', $localPenerima)
+						->or_where('nohp', $cleanPenerima)
 					->group_end()
 					->group_start()
 						->where('pengguna_id', 777)
+						->or_where('pengguna_id', 714)
 						->or_like('nama', 'Mulia', 'both')
+						->or_like('nama', 'Staff Accounting', 'both')
 					->group_end()
 					->where('no_hp_kantor IS NOT NULL')
 					->where('no_hp_kantor !=', '')
