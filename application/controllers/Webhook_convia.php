@@ -230,35 +230,12 @@ class Webhook_convia extends CI_Controller
             // 1. Simpan / perbarui sesi di database
             $result = $this->Md_whatsapp_session->record_incoming($phone, (string)$message);
 
-            // 2. Kirim balasan otomatis konfirmasi sesi aktif
-            $nama = !empty($result['nama']) ? $result['nama'] : 'Bapak/Ibu';
-            $msgTrim = strtolower(trim((string)$message));
-
-            if ($msgTrim === 'ok' || $msgTrim === 'oke' || $msgTrim === 'siap') {
-                $balasan = "✅ *Sesi Berhasil Diperpanjang*\n\n"
-                    . "Halo *" . $nama . "*,\n"
-                    . "Terima kasih! Sesi WhatsApp Anda dengan sistem Office telah diperpanjang 24 jam ke depan.\n"
-                    . "Anda akan tetap menerima notifikasi Approval & Pekerjaan seperti biasa. 👍\n\n"
-                    . "_Sistem Office PT Visi Yosindo Medikal_";
-            } else {
-                $balasan = "✅ *Sesi Notifikasi Office Aktif*\n\n"
-                    . "Halo *" . $nama . "*,\n"
-                    . "Pesan Anda telah diterima oleh sistem. Sesi notifikasi WhatsApp Anda telah aktif selama 24 jam ke depan.\n\n"
-                    . "_Sistem Office PT Visi Yosindo Medikal_";
-            }
-
-            // Kirim balasan via helper WhatsApp (Convia session window saat ini aktif karena user baru saja mengirim pesan)
-            sendWa([
-                'penerima'   => $result['phone'],
-                'bypass_24h' => true,
-                'pesan'    => $balasan
-            ]);
-
+            // Sesi diperbarui secara senyap (tanpa mengirim balasan konfirmasi)
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
                     'status'  => 'success',
-                    'message' => 'Session updated and confirmation sent',
+                    'message' => 'Session updated silently',
                     'data'    => $result
                 ]));
             return;
