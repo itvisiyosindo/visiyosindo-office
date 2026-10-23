@@ -196,6 +196,12 @@
 								<span>WhatsApp API Config</span>
 							</a>
 						</li>
+						<li class="<?= $page_name == 'v_whatsapp_sessions' ? 'nav-active' : '' ?>">
+							<a class="nav-link" href="<?= base_url('reminder_wa') ?>">
+								<i class="fas fa-user-clock text-info" aria-hidden="true"></i>
+								<span>Sesi WhatsApp 24 Jam</span>
+							</a>
+						</li>
 						<li class="<?= $page_name == 'v_db_backup' ? 'nav-active' : '' ?>">
 							<a class="nav-link" href="<?= base_url('db_backup') ?>">
 								<i class="fas fa-database text-warning" aria-hidden="true"></i>

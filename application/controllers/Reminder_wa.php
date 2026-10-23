@@ -10,6 +10,44 @@ class Reminder_wa extends CI_Controller
         $this->load->helper('whatsapp');
     }
 
+    public function id_navbar()
+    {
+        return "home";
+    }
+
+    /**
+     * Halaman Utama: Monitoring Sesi WhatsApp 24 Jam
+     */
+    public function index()
+    {
+        grantAccessFor(['Administrator']);
+
+        $page_data['sessions']   = $this->Md_whatsapp_session->get_all_sessions();
+        $page_data['switch']     = $this->id_navbar();
+        $page_data['page_name']  = 'v_whatsapp_sessions';
+        $page_data['page_title'] = 'Sesi WhatsApp (24 Jam)';
+        $page_data['page_desc']  = 'Monitoring Sesi 24-Hour Messaging Window Nomor Pribadi';
+
+        $this->load->view('index', $page_data);
+    }
+
+    /**
+     * Aktivasi sesi secara manual oleh Admin
+     */
+    public function activate_session()
+    {
+        grantAccessFor(['Administrator']);
+
+        $phone = trim($this->input->post('phone') ?? '');
+        if (!empty($phone)) {
+            $this->Md_whatsapp_session->record_incoming($phone, 'Aktivasi manual oleh Admin');
+            $this->session->set_flashdata('success', 'Sesi 24 jam untuk nomor ' . htmlspecialchars($phone) . ' berhasil diaktifkan.');
+        } else {
+            $this->session->set_flashdata('error', 'Nomor HP wajib diisi.');
+        }
+        redirect('reminder_wa');
+    }
+
     /**
      * Endpoint Cron Job untuk memeriksa sesi yang mendekati masa habis (sisa 1 jam / jam ke-23)
      * URL: https://office.visiyosindo.id/reminder_wa/check_sessions
