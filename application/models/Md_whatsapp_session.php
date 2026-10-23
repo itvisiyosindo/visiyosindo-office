@@ -31,6 +31,28 @@ class Md_whatsapp_session extends CI_Model
     }
 
     /**
+     * Cek apakah nomor pribadi memiliki sesi chat aktif dalam 24 jam terakhir
+     *
+     * @param string $phone
+     * @return bool
+     */
+    public function is_session_active($phone)
+    {
+        $normalizedPhone = $this->normalize_phone($phone);
+        if (empty($normalizedPhone)) {
+            return false;
+        }
+
+        $sql = "SELECT id FROM {$this->table}
+                WHERE phone_number = ?
+                  AND last_incoming_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                LIMIT 1";
+
+        $query = $this->db->query($sql, [$normalizedPhone]);
+        return ($query->num_rows() > 0);
+    }
+
+    /**
      * Catat atau perbarui sesi pesan masuk dari WhatsApp
      *
      * @param string $phone

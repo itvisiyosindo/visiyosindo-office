@@ -129,6 +129,10 @@ $route['preventif-maintenance/show/(:any)/(:any)'] = 'Preventif_maintenance/show
 
 // WhatsApp Convia Webhook & Session Reminder Routes
 $route['webhook_convia'] = 'Webhook_convia/index';
+$route['webhook_fonnte'] = 'Webhook_convia/index';
+$route['webhook'] = 'Webhook_convia/index';
+$route['webhook_fonnte/(:any)'] = 'Webhook_convia/$1';
+$route['webhook/(:any)'] = 'Webhook_convia/$1';
 $route['webhook_convia/(:any)'] = 'Webhook_convia/$1';
 $route['reminder_wa'] = 'Reminder_wa/index';
 $route['reminder_wa/(:any)'] = 'Reminder_wa/$1';

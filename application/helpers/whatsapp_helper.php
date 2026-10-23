@@ -3058,6 +3058,37 @@ function sendWa($dataSend)
 		}
 	}
 
+	// 0.1 Aturan 24-Hour Messaging Window (Khusus Nomor Pribadi):
+	// Pesan ke GRUP WhatsApp (@g.us / nama grup) bebas dikirim 24/7 tanpa batas.
+	// Pesan ke NOMOR PRIBADI hanya diizinkan jika nomor tujuan ada chat masuk dalam 24 jam terakhir.
+	$rawPenerimaTarget = trim((string)($dataSend['penerima'] ?? ''));
+	$isGroupTarget = (
+		strpos($rawPenerimaTarget, '@g.us') !== false ||
+		in_array($rawPenerimaTarget, [
+			'MARKETING PT. VYM',
+			'TEKNISI MEDIKAL PT. VYM',
+			'Gudang PT. VYM',
+			'Notifikasi tes',
+			'Visilab',
+			'VISILAB'
+		])
+	);
+
+	if (!$isGroupTarget && empty($dataSend['bypass_24h'])) {
+		if (function_exists('get_instance')) {
+			$ci = &get_instance();
+			if (!isset($ci->Md_whatsapp_session)) {
+				$ci->load->model('Md_whatsapp_session');
+			}
+			if (isset($ci->Md_whatsapp_session)) {
+				if (!$ci->Md_whatsapp_session->is_session_active($rawPenerimaTarget)) {
+					// Abaikan pengiriman pesan pribadi karena di luar jendela 24 jam
+					return false;
+				}
+			}
+		}
+	}
+
 	// Pastikan link dalam pesan selalu mengarah ke domain publik yang bisa dibuka dari HP
 	if (isset($dataSend['pesan'])) {
 		$dataSend['pesan'] = preg_replace(

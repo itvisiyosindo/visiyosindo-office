@@ -210,7 +210,7 @@ class Webhook_convia extends CI_Controller
         }
 
         // Jika nomor HP berhasil ditemukan
-        if (!empty($phone)) {
+        if (!empty($phone) && strpos($phone, '@g.us') === false) {
             // 1. Simpan / perbarui sesi di database
             $result = $this->Md_whatsapp_session->record_incoming($phone, (string)$message);
 
