@@ -323,6 +323,147 @@ class Reminder extends CI_Controller {
         }
     }
 
+    // ==========================================
+    // LOGIKA 6: UCAPAN SEMANGAT SENIN OTOMATIS (SENIN 09:00)
+    // ==========================================
+    public function cron_monday_greeting($secret_key = '')
+    {
+        $my_key = 'vysi_medikal_2026';
+        if (!is_cli() && $secret_key !== $my_key && !isAdmin() && !isHrd()) {
+            show_404();
+            return;
+        }
+
+        // Cek hari Senin (N = 1). Jika bukan Senin dan tanpa force, jangan kirim
+        $isMonday = (date('N') == 1);
+        $force = $this->input->get_post('force');
+        if (!$isMonday && empty($force)) {
+            $msg = 'Ucapan semangat Senin otomatis hanya dijadwalkan setiap hari Senin (Hari ini: ' . date('l') . ').';
+            if (is_cli()) {
+                echo $msg . "\n";
+            } else {
+                echo json_encode(['status' => false, 'msg' => $msg]);
+            }
+            return;
+        }
+
+        // Ambil daftar karyawan yang sudah dikirim ucapan hari Senin ini agar tidak dobel
+        $today = date('Y-m-d');
+        $alreadySentIds = [];
+        $sentRows = $this->db->query("SELECT pengguna_id FROM tbl_monday_greetings_log WHERE tanggal_senin = ?", [$today])->result_array();
+        foreach ($sentRows as $s) {
+            $alreadySentIds[] = (int)$s['pengguna_id'];
+        }
+
+        // Ambil seluruh karyawan aktif yang memiliki nomor HP
+        $employees = $this->db->query("
+            SELECT pengguna_id, nama, short_name, no_hp, nohp 
+            FROM pengguna 
+            WHERE status = 1 
+              AND is_active = 1 
+              AND (
+                  (no_hp IS NOT NULL AND no_hp != '') 
+                  OR (nohp IS NOT NULL AND nohp != '')
+              )
+            ORDER BY nama ASC
+        ")->result_array();
+
+        if (empty($employees)) {
+            $msg = 'Tidak ada data karyawan aktif yang ditemukan.';
+            if (is_cli()) {
+                echo $msg . "\n";
+            } else {
+                echo json_encode(['status' => false, 'msg' => $msg]);
+            }
+            return;
+        }
+
+        $terkirim = 0;
+        $skipped  = 0;
+        $skippedSess = 0;
+        $gagal    = 0;
+        $sentNames = [];
+
+        // Load model chat & session
+        $this->load->model('Md_whatsapp_session');
+        $this->load->model('Md_whatsapp_chat');
+
+        foreach ($employees as $karyawan) {
+            $empId = (int)$karyawan['pengguna_id'];
+
+            // Lewati jika sudah pernah dikirim di hari Senin ini
+            if (in_array($empId, $alreadySentIds) && empty($force)) {
+                $skipped++;
+                continue;
+            }
+
+            $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
+
+            // Pastikan nomor HP ada dan sesi 24 jam masih aktif
+            if (empty($phone) || !$this->Md_whatsapp_session->is_session_active($phone)) {
+                $skippedSess++;
+                continue;
+            }
+
+            $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
+
+            $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
+                ? "Semangat Pagi Rekan Tim PT Visi Yosindo Medikal! ☀️💼"
+                : "Semangat Pagi Kak " . $friendly . "! ☀️💼";
+
+            $pesan = $greeting . "\n\n" .
+                "Selamat menyambut hari Senin dan mengawali aktivitas di minggu yang baru! 🚀\n" .
+                "Semoga pekan ini berjalan lancar, penuh energi positif, serta membawa banyak kemudahan dan pencapaian terbaik untuk kita semua di PT Visi Yosindo Medikal.\n\n" .
+                "Tetap jaga kesehatan, fokus pada target, dan selamat beraktivitas! 💪✨\n\n" .
+                "_Sistem Office PT Visi Yosindo Medikal_";
+
+            $dataSend = [
+                'devId'      => hostWa('1'),
+                'penerima'   => $phone,
+                'pesan'      => urlencode($pesan),
+                'bypass_24h' => false,
+                'raw_chat'   => true
+            ];
+
+            if (sendWa($dataSend)) {
+                $terkirim++;
+                $sentNames[] = $karyawan['nama'];
+
+                // Catat ke log khusus ucapan hari Senin
+                $this->db->replace('tbl_monday_greetings_log', [
+                    'pengguna_id'   => $empId,
+                    'nama'          => $karyawan['nama'],
+                    'phone_number'  => $phone,
+                    'tanggal_senin' => $today,
+                    'status'        => 'sent',
+                    'created_at'    => date('Y-m-d H:i:s')
+                ]);
+
+                // Catat ke riwayat chat panel jika model tersedia
+                if (isset($this->Md_whatsapp_chat)) {
+                    $this->Md_whatsapp_chat->record_outgoing_message($phone, $pesan, null, null, null, 'sent');
+                }
+            } else {
+                $gagal++;
+            }
+        }
+
+        $msg = "Pengiriman ucapan semangat Senin selesai. Terkirim: $terkirim, Skip (Sudah dikirim): $skipped, Skip (Sesi 24j Mati): $skippedSess, Gagal: $gagal.";
+        if (is_cli()) {
+            echo $msg . "\n";
+        } else {
+            echo json_encode([
+                'status'          => true,
+                'terkirim'        => $terkirim,
+                'skipped'         => $skipped,
+                'skipped_session' => $skippedSess,
+                'gagal'           => $gagal,
+                'msg'             => $msg,
+                'sent_to'         => $sentNames
+            ]);
+        }
+    }
+
     /**
      * Helper nama panggilan personal untuk sapaan
      */
