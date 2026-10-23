@@ -233,7 +233,8 @@ class Webhook_convia extends CI_Controller
 
             // Kirim balasan via helper WhatsApp (Convia session window saat ini aktif karena user baru saja mengirim pesan)
             sendWa([
-                'penerima' => $result['phone'],
+                'penerima'   => $result['phone'],
+                'bypass_24h' => true,
                 'pesan'    => $balasan
             ]);
 

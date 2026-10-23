@@ -134,12 +134,15 @@ class Md_whatsapp_session extends CI_Model
         $phone0 = '0' . substr($normalizedPhone, 2); // 08xxx
         $phone8 = substr($normalizedPhone, 2);       // 8xxx
 
-        $this->db->select('pengguna_id, nama, nohp, status');
+        $this->db->select('pengguna_id, nama, no_hp, no_hp_kantor, status');
         $this->db->group_start();
-        $this->db->where('nohp', $normalizedPhone);
-        $this->db->or_where('nohp', $phone0);
-        $this->db->or_where('nohp', $phone8);
-        $this->db->or_where('nohp', '+' . $normalizedPhone);
+        $this->db->where('no_hp', $normalizedPhone);
+        $this->db->or_where('no_hp', $phone0);
+        $this->db->or_where('no_hp', $phone8);
+        $this->db->or_where('no_hp', '+' . $normalizedPhone);
+        $this->db->or_where('no_hp_kantor', $normalizedPhone);
+        $this->db->or_where('no_hp_kantor', $phone0);
+        $this->db->or_where('no_hp_kantor', $phone8);
         $this->db->group_end();
         $this->db->where('status !=', '2'); // Bukan yang dihapus jika ada
         $this->db->order_by('pengguna_id', 'DESC');
