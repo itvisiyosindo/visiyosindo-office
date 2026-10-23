@@ -50,6 +50,19 @@ class Reminder_wa extends CI_Controller
     }
 
     /**
+     * Matikan/Nonaktifkan sesi WhatsApp untuk karyawan yang sudah tidak aktif
+     */
+    public function deactivate_inactive_sessions()
+    {
+        grantAccessFor(['Administrator']);
+
+        $affected = $this->Md_whatsapp_session->deactivate_inactive_employee_sessions();
+
+        $this->session->set_flashdata('success', "Berhasil menonaktifkan $affected sesi WhatsApp milik karyawan yang sudah tidak aktif.");
+        redirect('reminder_wa');
+    }
+
+    /**
      * Endpoint Cron Job untuk memeriksa sesi yang mendekati masa habis (sisa 1 jam / jam ke-23)
      * URL: https://office.visiyosindo.id/reminder_wa/check_sessions
      * Cron schedule rekomendasi: Setiap 10 - 15 menit

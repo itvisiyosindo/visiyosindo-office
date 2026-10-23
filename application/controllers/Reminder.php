@@ -238,10 +238,12 @@ class Reminder extends CI_Controller {
 
         $terkirim = 0;
         $skipped  = 0;
+        $skippedSess = 0;
         $gagal    = 0;
         $sentNames = [];
 
-        // Load model chat jika ada untuk mencatat di panel obrolan
+        // Load model chat & session
+        $this->load->model('Md_whatsapp_session');
         $this->load->model('Md_whatsapp_chat');
 
         foreach ($employees as $karyawan) {
@@ -254,6 +256,13 @@ class Reminder extends CI_Controller {
             }
 
             $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
+
+            // Pastikan nomor HP ada dan sesi 24 jam masih aktif
+            if (empty($phone) || !$this->Md_whatsapp_session->is_session_active($phone)) {
+                $skippedSess++;
+                continue;
+            }
+
             $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
 
             $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
@@ -271,7 +280,7 @@ class Reminder extends CI_Controller {
                 'devId'      => hostWa('1'),
                 'penerima'   => $phone,
                 'pesan'      => urlencode($pesan),
-                'bypass_24h' => true,
+                'bypass_24h' => false,
                 'raw_chat'   => true
             ];
 
@@ -298,7 +307,7 @@ class Reminder extends CI_Controller {
             }
         }
 
-        $msg = "Pengiriman ucapan weekend selesai. Terkirim: $terkirim, Sudah pernah dikirim (skip): $skipped, Gagal: $gagal.";
+        $msg = "Pengiriman ucapan weekend selesai. Terkirim: $terkirim, Skip (Sudah dikirim): $skipped, Skip (Sesi 24j Mati): $skippedSess, Gagal: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {
@@ -306,6 +315,7 @@ class Reminder extends CI_Controller {
                 'status'    => true,
                 'terkirim'  => $terkirim,
                 'skipped'   => $skipped,
+                'skipped_session' => $skippedSess,
                 'gagal'     => $gagal,
                 'msg'       => $msg,
                 'sent_to'   => $sentNames

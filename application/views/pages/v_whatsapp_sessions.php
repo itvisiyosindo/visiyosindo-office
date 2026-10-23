@@ -152,6 +152,9 @@ if (!empty($sessions)) {
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid #edf2f7; border-top-left-radius: 12px; border-top-right-radius: 12px;">
                 <h5 class="mb-0 font-weight-bold text-dark"><i class="fas fa-history text-primary mr-2"></i>Daftar Sesi WhatsApp Nomor Pribadi</h5>
                 <div>
+                    <a href="<?= base_url('reminder_wa/deactivate_inactive_sessions') ?>" class="btn btn-outline-danger btn-sm font-weight-bold mr-1" onclick="return confirm('Apakah Anda yakin ingin menonaktifkan seluruh sesi WhatsApp milik karyawan yang sudah tidak aktif?')">
+                        <i class="fas fa-user-slash mr-1"></i> Matikan Sesi Karyawan Non-Aktif
+                    </a>
                     <button type="button" class="btn btn-success btn-sm font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalAktivasiManual">
                         <i class="fas fa-plus-circle mr-1"></i> Buka Sesi Manual (24 Jam)
                     </button>
@@ -181,6 +184,11 @@ if (!empty($sessions)) {
                                         <td class="text-center text-muted small"><?= $no++ ?></td>
                                         <td>
                                             <strong class="text-dark"><?= htmlspecialchars($row->nama ?? 'Tamu / Customer') ?></strong>
+                                            <?php if (isset($row->is_karyawan_active) && $row->is_karyawan_active === '0'): ?>
+                                                <span class="badge badge-secondary ml-1" style="font-size: 10px;"><i class="fas fa-user-times mr-1"></i>Non-Aktif</span>
+                                            <?php elseif (isset($row->is_karyawan_active) && $row->is_karyawan_active === '1'): ?>
+                                                <span class="badge badge-light border text-success ml-1" style="font-size: 9px;"><i class="fas fa-check-circle mr-1"></i>Karyawan</span>
+                                            <?php endif; ?>
                                             <?php if (!empty($row->last_message_text)): ?>
                                                 <small class="text-muted d-block font-italic">"<?= htmlspecialchars(substr($row->last_message_text, 0, 40)) ?><?= strlen($row->last_message_text) > 40 ? '...' : '' ?>"</small>
                                             <?php endif; ?>

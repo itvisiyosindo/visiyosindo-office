@@ -189,19 +189,49 @@ class Md_whatsapp_session extends CI_Model
      */
     public function get_all_sessions()
     {
-        $sql = "SELECT id, phone_number, pengguna_id, nama, last_incoming_at, last_message_text,
-                       reminder_sent, last_reminder_at,
-                       TIMESTAMPDIFF(HOUR, last_incoming_at, NOW()) AS elapsed_hours,
-                       TIMESTAMPDIFF(MINUTE, last_incoming_at, NOW()) AS elapsed_minutes,
-                       (1440 - TIMESTAMPDIFF(MINUTE, last_incoming_at, NOW())) AS remaining_minutes,
+        $sql = "SELECT s.id, s.phone_number, s.pengguna_id, s.nama, s.last_incoming_at, s.last_message_text,
+                       s.reminder_sent, s.last_reminder_at,
+                       p.nama AS nama_karyawan, p.jabatan, p.status AS status_karyawan, p.is_active AS is_karyawan_active,
+                       TIMESTAMPDIFF(HOUR, s.last_incoming_at, NOW()) AS elapsed_hours,
+                       TIMESTAMPDIFF(MINUTE, s.last_incoming_at, NOW()) AS elapsed_minutes,
+                       (1440 - TIMESTAMPDIFF(MINUTE, s.last_incoming_at, NOW())) AS remaining_minutes,
                        CASE
-                           WHEN TIMESTAMPDIFF(HOUR, last_incoming_at, NOW()) < 23 THEN 'ACTIVE'
-                           WHEN TIMESTAMPDIFF(HOUR, last_incoming_at, NOW()) < 24 THEN 'EXPIRING_SOON'
+                           WHEN TIMESTAMPDIFF(HOUR, s.last_incoming_at, NOW()) < 23 THEN 'ACTIVE'
+                           WHEN TIMESTAMPDIFF(HOUR, s.last_incoming_at, NOW()) < 24 THEN 'EXPIRING_SOON'
                            ELSE 'EXPIRED'
                        END AS session_status
-                FROM {$this->table}
-                ORDER BY last_incoming_at DESC";
+                FROM {$this->table} s
+                LEFT JOIN pengguna p ON (
+                    s.pengguna_id = p.pengguna_id 
+                    OR s.phone_number = REPLACE(p.no_hp, '08', '628')
+                    OR s.phone_number = p.no_hp
+                    OR s.phone_number = p.no_hp_kantor
+                )
+                GROUP BY s.id
+                ORDER BY s.last_incoming_at DESC";
 
         return $this->db->query($sql)->result();
+    }
+
+    /**
+     * Nonaktifkan sesi WhatsApp untuk karyawan yang statusnya sudah tidak aktif (is_active = 0 atau status != 1)
+     */
+    public function deactivate_inactive_employee_sessions()
+    {
+        $sql = "UPDATE {$this->table} s
+                JOIN pengguna p ON (
+                    s.pengguna_id = p.pengguna_id 
+                    OR s.phone_number = REPLACE(p.no_hp, '08', '628')
+                    OR s.phone_number = p.no_hp
+                    OR s.phone_number = p.no_hp_kantor
+                )
+                SET s.last_incoming_at = '2026-01-01 00:00:00',
+                    s.last_message_text = 'Sesi Dinonaktifkan (Karyawan Tidak Aktif)',
+                    s.reminder_sent = 1,
+                    s.updated_at = NOW()
+                WHERE p.status != 1 OR p.is_active != 1";
+
+        $this->db->query($sql);
+        return $this->db->affected_rows();
     }
 }
