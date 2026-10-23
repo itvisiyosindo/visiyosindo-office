@@ -196,6 +196,10 @@
     document.addEventListener('DOMContentLoaded', function() {
         
         $(document).on('click', '.btn-ajukan', function(e) {
+            var $btn = $(this);
+            if ($btn.prop('disabled')) {
+                return false;
+            }
             e.preventDefault();
             var tanggal       = $('#tanggal').val();
             var analisis      = $('#analisis').val();
@@ -221,6 +225,17 @@
                 cancelButtonText: 'Tidak'
             }).then(function(result) {
                 if (result.value) {
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
+
+                    Swal.fire({
+                        title: 'Memproses Pengajuan...',
+                        text: 'Mohon tunggu sebentar, surat sedang disimpan...',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: function() {
+                            Swal.showLoading();
+                        }
+                    });
                     $.ajax({
                         method: 'POST',
                         url: 'surat_part_two/addSrt/addBeritaAcara',
@@ -243,10 +258,12 @@
                                     window.location.href = 'surat_part_two/show/list/berita_acara';
                                 });
                             } else {
-                                Swal.fire('Perhatian / Debug', resp.message || 'Gagal mengajukan Berita Acara', 'error');
+                                $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
+                                Swal.fire('Perhatian', resp.message || 'Gagal mengajukan Berita Acara', 'error');
                             }
                         },
                         error: function(err) {
+                            $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
                             Swal.fire('Error Server', 'Terjadi kesalahan pada respon server.', 'error');
                         }
                     });                    
