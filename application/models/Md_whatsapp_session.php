@@ -8,6 +8,7 @@ class Md_whatsapp_session extends CI_Model
     public function __construct()
     {
         parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
         $this->load->database();
     }
 

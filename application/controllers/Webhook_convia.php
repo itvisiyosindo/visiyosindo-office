@@ -6,6 +6,7 @@ class Webhook_convia extends CI_Controller
     public function __construct()
     {
         parent::__construct();
+        date_default_timezone_set('Asia/Jakarta');
         $this->load->model('Md_whatsapp_session');
         $this->load->helper('whatsapp');
     }
