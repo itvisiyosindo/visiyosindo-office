@@ -4,7 +4,10 @@
 
 <div class="row">
     <div class="col-md-12 text-right mb-3">
-        <?php if(isAdmin()): ?>
+        <?php if(isAdmin() || isHrd()): ?>
+            <button type="button" class="btn btn-sm btn-info mr-2" id="btn-ucapan-weekend">
+                <i class="fas fa-coffee mr-1"></i> Kirim Ucapan Weekend (Jumat 17:30)
+            </button>
             <button type="button" class="btn btn-sm btn-success" id="btn-cek-massal">
                 <i class="fab fa-whatsapp"></i> Cek & Kirim Reminder H-3 (Massal)
             </button>
@@ -142,6 +145,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire('Gagal', 'Pesan gagal dikirim.', 'error');
                             }
                         }, 'json');
+                    }
+                });
+            });
+
+            // Handler Ucapan Weekend
+            $("#btn-ucapan-weekend").on("click", function() {
+                Swal.fire({
+                    title: "Kirim Ucapan Weekend?",
+                    html: "Kirim pesan ucapan selamat berakhir pekan ke seluruh karyawan aktif sekarang?<br><small class='text-muted'>Pesan bertanda tangan: <b>_Sistem Office PT Visi Yosindo Medikal_</b></small>",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, Kirim Sekarang",
+                    cancelButtonText: "Batal",
+                    confirmButtonColor: "#0284c7"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({title: "Sedang Mengirim Ucapan...", allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+                        
+                        $.get("<?= base_url('reminder/cron_weekend_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
+                            if(res.status) {
+                                Swal.fire("Selesai!", res.msg, "success");
+                            } else {
+                                Swal.fire("Info", res.msg || "Gagal mengirim ucapan.", "warning");
+                            }
+                        }, "json").fail(function() {
+                            Swal.fire("Error", "Terjadi kesalahan jaringan.", "error");
+                        });
                     }
                 });
             });

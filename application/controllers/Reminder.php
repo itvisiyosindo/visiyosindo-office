@@ -180,4 +180,163 @@ class Reminder extends CI_Controller {
             echo json_encode(['status' => true, 'terkirim' => $terkirim, 'gagal' => $gagal, 'msg' => $msg]);
         }
     }
-}
+
+    // ==========================================
+    // LOGIKA 5: UCAPAN WEEKEND OTOMATIS (JUMAT 17:30)
+    // ==========================================
+    public function cron_weekend_greeting($secret_key = '')
+    {
+        $my_key = 'vysi_medikal_2026';
+        if (!is_cli() && $secret_key !== $my_key && !isAdmin() && !isHrd()) {
+            show_404();
+            return;
+        }
+
+        // Cek hari Jumat (N = 5). Jika bukan Jumat dan tanpa force, jangan kirim
+        $isFriday = (date('N') == 5);
+        $force = $this->input->get_post('force');
+        if (!$isFriday && empty($force)) {
+            $msg = 'Ucapan weekend otomatis hanya dijadwalkan setiap hari Jumat (Hari ini: ' . date('l') . ').';
+            if (is_cli()) {
+                echo $msg . "\n";
+            } else {
+                echo json_encode(['status' => false, 'msg' => $msg]);
+            }
+            return;
+        }
+
+        // Ambil daftar karyawan yang sudah dikirim ucapan hari Jumat ini agar tidak dobel
+        $today = date('Y-m-d');
+        $alreadySentIds = [];
+        $sentRows = $this->db->query("SELECT pengguna_id FROM tbl_weekend_greetings_log WHERE tanggal_jumat = ?", [$today])->result_array();
+        foreach ($sentRows as $s) {
+            $alreadySentIds[] = (int)$s['pengguna_id'];
+        }
+
+        // Ambil seluruh karyawan aktif yang memiliki nomor HP
+        $employees = $this->db->query("
+            SELECT pengguna_id, nama, short_name, no_hp, nohp 
+            FROM pengguna 
+            WHERE status = 1 
+              AND is_active = 1 
+              AND (
+                  (no_hp IS NOT NULL AND no_hp != '') 
+                  OR (nohp IS NOT NULL AND nohp != '')
+              )
+            ORDER BY nama ASC
+        ")->result_array();
+
+        if (empty($employees)) {
+            $msg = 'Tidak ada data karyawan aktif yang ditemukan.';
+            if (is_cli()) {
+                echo $msg . "\n";
+            } else {
+                echo json_encode(['status' => false, 'msg' => $msg]);
+            }
+            return;
+        }
+
+        $terkirim = 0;
+        $skipped  = 0;
+        $gagal    = 0;
+        $sentNames = [];
+
+        // Load model chat jika ada untuk mencatat di panel obrolan
+        $this->load->model('Md_whatsapp_chat');
+
+        foreach ($employees as $karyawan) {
+            $empId = (int)$karyawan['pengguna_id'];
+
+            // Lewati jika sudah pernah dikirim di hari Jumat ini
+            if (in_array($empId, $alreadySentIds) && empty($force)) {
+                $skipped++;
+                continue;
+            }
+
+            $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
+            $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
+
+            $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
+                ? "Halo Rekan Tim PT Visi Yosindo Medikal! 👋✨"
+                : "Halo Kak " . $friendly . "! 👋✨";
+
+            $pesan = $greeting . "\n\n" .
+                "Selamat menyelesaikan pekerjaan minggu ini! 🌿\n" .
+                "Terima kasih banyak atas dedikasi, kerja keras, dan kontribusi terbaiknya selama sepekan ini di PT Visi Yosindo Medikal.\n\n" .
+                "Selamat menikmati waktu istirahat dan berkumpul bersama keluarga serta orang-orang terkasih. Semoga akhir pekan ini menyenangkan dan kembali dengan energi baru di minggu depan!\n\n" .
+                "Selamat beristirahat & Happy Weekend! ☕🎉\n\n" .
+                "_Sistem Office PT Visi Yosindo Medikal_";
+
+            $dataSend = [
+                'devId'      => hostWa('1'),
+                'penerima'   => $phone,
+                'pesan'      => urlencode($pesan),
+                'bypass_24h' => true,
+                'raw_chat'   => true
+            ];
+
+            if (sendWa($dataSend)) {
+                $terkirim++;
+                $sentNames[] = $karyawan['nama'];
+
+                // Catat ke log khusus ucapan weekend
+                $this->db->replace('tbl_weekend_greetings_log', [
+                    'pengguna_id'   => $empId,
+                    'nama'          => $karyawan['nama'],
+                    'phone_number'  => $phone,
+                    'tanggal_jumat' => $today,
+                    'status'        => 'sent',
+                    'created_at'    => date('Y-m-d H:i:s')
+                ]);
+
+                // Catat ke riwayat chat panel jika model tersedia
+                if (isset($this->Md_whatsapp_chat)) {
+                    $this->Md_whatsapp_chat->record_outgoing_message($phone, $pesan, null, null, null, 'sent');
+                }
+            } else {
+                $gagal++;
+            }
+        }
+
+        $msg = "Pengiriman ucapan weekend selesai. Terkirim: $terkirim, Sudah pernah dikirim (skip): $skipped, Gagal: $gagal.";
+        if (is_cli()) {
+            echo $msg . "\n";
+        } else {
+            echo json_encode([
+                'status'    => true,
+                'terkirim'  => $terkirim,
+                'skipped'   => $skipped,
+                'gagal'     => $gagal,
+                'msg'       => $msg,
+                'sent_to'   => $sentNames
+            ]);
+        }
+    }
+
+    /**
+     * Helper nama panggilan personal untuk sapaan
+     */
+    private function _get_friendly_name($nama, $short_name)
+    {
+        if (!empty($nama) && preg_match('/\(([^)]+)\)/', $nama, $m)) {
+            $parts = preg_split('/\s+/', trim($m[1]));
+            return $parts[0];
+        }
+        if (!empty($short_name) && preg_match('/\(([^)]+)\)/', $short_name, $m)) {
+            $parts = preg_split('/\s+/', trim($m[1]));
+            return $parts[0];
+        }
+
+        $titleKeywords = ['admin', 'staff', 'head', 'general', 'customer', 'finance', 'hr', 'penanggung'];
+        $firstWord = strtolower(explode(' ', trim((string)$nama))[0]);
+        if (in_array($firstWord, $titleKeywords) && !empty($short_name)) {
+            $parts = preg_split('/\s+/', trim((string)$short_name));
+            return $parts[0];
+        }
+
+        $clean = trim((string)$nama);
+        $clean = preg_replace('/^(dr\.|drg\.|ir\.|drs\.|apt\.|ns\.)\s+/i', '', $clean);
+        $parts = preg_split('/\s+/', $clean);
+        return !empty($parts[0]) ? $parts[0] : 'Rekan';
+    }
+}
