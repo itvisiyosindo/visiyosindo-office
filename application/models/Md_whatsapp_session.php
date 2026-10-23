@@ -75,23 +75,19 @@ class Md_whatsapp_session extends CI_Model
         // Cek apakah nomor sudah terdaftar di tbl_whatsapp_sessions
         $existing = $this->db->get_where($this->table, ['phone_number' => $normalizedPhone])->row();
 
-        $now = date('Y-m-d H:i:s');
         if ($existing) {
-            $updateData = [
-                'last_incoming_at'      => $now,
-                'last_message_text' => $message,
-                'reminder_sent'         => 0,
-                'updated_at'            => $now
-            ];
+            $this->db->set('last_incoming_at', 'NOW()', FALSE);
+            $this->db->set('updated_at', 'NOW()', FALSE);
+            $this->db->set('last_message_text', $message);
+            $this->db->set('reminder_sent', 0);
             if ($penggunaId && empty($existing->pengguna_id)) {
-                $updateData['pengguna_id'] = $penggunaId;
+                $this->db->set('pengguna_id', $penggunaId);
             }
             if ($namaPengguna && empty($existing->nama)) {
-                $updateData['nama'] = $namaPengguna;
+                $this->db->set('nama', $namaPengguna);
             }
-
             $this->db->where('id', $existing->id);
-            $this->db->update($this->table, $updateData);
+            $this->db->update($this->table);
 
             return [
                 'status'     => true,
@@ -101,17 +97,15 @@ class Md_whatsapp_session extends CI_Model
                 'nama'       => !empty($existing->nama) ? $existing->nama : $namaPengguna
             ];
         } else {
-            $insertData = [
-                'phone_number'          => $normalizedPhone,
-                'pengguna_id'           => $penggunaId,
-                'nama'                  => $namaPengguna,
-                'last_incoming_at'      => $now,
-                'last_message_text' => $message,
-                'reminder_sent'         => 0,
-                'created_at'            => $now,
-                'updated_at'            => $now
-            ];
-            $this->db->insert($this->table, $insertData);
+            $this->db->set('phone_number', $normalizedPhone);
+            $this->db->set('pengguna_id', $penggunaId);
+            $this->db->set('nama', $namaPengguna);
+            $this->db->set('last_incoming_at', 'NOW()', FALSE);
+            $this->db->set('updated_at', 'NOW()', FALSE);
+            $this->db->set('created_at', 'NOW()', FALSE);
+            $this->db->set('last_message_text', $message);
+            $this->db->set('reminder_sent', 0);
+            $this->db->insert($this->table);
             $insertId = $this->db->insert_id();
 
             return [
