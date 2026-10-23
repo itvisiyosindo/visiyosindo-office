@@ -8,6 +8,7 @@ class Webhook_convia extends CI_Controller
         parent::__construct();
         date_default_timezone_set('Asia/Jakarta');
         $this->load->model('Md_whatsapp_session');
+        $this->load->model('Md_whatsapp_chat');
         $this->load->helper('whatsapp');
     }
 
@@ -227,16 +228,21 @@ class Webhook_convia extends CI_Controller
 
         // Jika nomor HP berhasil ditemukan
         if (!empty($phone) && strpos($phone, '@g.us') === false) {
-            // 1. Simpan / perbarui sesi di database
-            $result = $this->Md_whatsapp_session->record_incoming($phone, (string)$message);
+            // 1. Ekstraksi data pelengkap pesan
+            $senderName = !empty($data['name']) ? $data['name'] : (!empty($data['pushname']) ? $data['pushname'] : null);
+            $mediaUrl = !empty($data['url']) ? $data['url'] : (!empty($data['file']) ? $data['file'] : null);
+            $fonnteId = !empty($data['id']) ? $data['id'] : null;
 
-            // Sesi diperbarui secara senyap (tanpa mengirim balasan konfirmasi)
+            // 2. Catat pesan ke tabel riwayat chat & perbarui sesi 24 jam
+            $msgId = $this->Md_whatsapp_chat->record_incoming_message($phone, (string)$message, $senderName, $mediaUrl, $fonnteId, $data);
+
+            // Sesi dan pesan diperbarui secara senyap (tanpa mengirim balasan konfirmasi)
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'status'  => 'success',
-                    'message' => 'Session updated silently',
-                    'data'    => $result
+                    'status'     => 'success',
+                    'message'    => 'Message recorded and session updated silently',
+                    'message_id' => $msgId
                 ]));
             return;
         }

@@ -33,6 +33,13 @@
 						</span>
 					</li>
 
+					<li class="<?= ($page_name == 'chat/v_chat_panel') ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('chat?nav=marketing') ?>">
+							<i class="fab fa-whatsapp text-success" aria-hidden="true"></i>
+							<span>WhatsApp Live Chat</span>
+						</a>
+					</li>
+
 					<?php if (isAdmin() || isHrd() || isTeamMarketing() || isCRO() || isGa() || sessPenggunaId() == '755') { ?>
 						<li class="nav-parent <?= in_array($page_name, ['marketing/v_calonpelanggan', 'marketing/v_pelangganan']) ? 'nav-active nav-expanded' : ''; ?>">
 							<a class="nav-link" href="#">

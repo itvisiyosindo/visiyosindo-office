@@ -137,6 +137,9 @@ $route['webhook_convia/(:any)'] = 'Webhook_convia/$1';
 $route['reminder_wa'] = 'Reminder_wa/index';
 $route['reminder_wa/(:any)'] = 'Reminder_wa/$1';
 
+$route['chat'] = 'Wa_chat/index';
+$route['chat/(:any)'] = 'Wa_chat/$1';
+
 $route['reminder'] = 'Reminder/index';
 $route['reminder/(:any)'] = 'Reminder/$1';
 $route['reminder/(:any)/(:any)'] = 'Reminder/$1/$2';

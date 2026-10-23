@@ -196,6 +196,12 @@
 								<span>WhatsApp API Config</span>
 							</a>
 						</li>
+						<li class="<?= $page_name == 'chat/v_chat_panel' ? 'nav-active' : '' ?>">
+							<a class="nav-link" href="<?= base_url('chat?nav=home') ?>">
+								<i class="fas fa-comments text-success" aria-hidden="true"></i>
+								<span>Panel WhatsApp Chat</span>
+							</a>
+						</li>
 						<li class="<?= $page_name == 'v_whatsapp_sessions' ? 'nav-active' : '' ?>">
 							<a class="nav-link" href="<?= base_url('reminder_wa') ?>">
 								<i class="fas fa-user-clock text-info" aria-hidden="true"></i>

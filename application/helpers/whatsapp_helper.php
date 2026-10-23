@@ -2740,31 +2740,43 @@ function sendWaFonnte($dataSend)
 	$isGroup = (strpos($penerima, '@g.us') !== false);
 
 	$pesan = urldecode($dataSend['pesan']);
-	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
-		$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo Medikal_";
-	}
+	if (empty($dataSend['raw_chat'])) {
+		if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesan)) {
+			$pesan = rtrim($pesan) . "\n_Sistem Office PT Visi Yosindo Medikal_";
+		}
 
-	// Tambahkan penanda waktu & kode referensi mikro unik agar hash pesan tidak 100% identik saat kirim beruntun (Anti-Bulk Fingerprint)
-	$uniqueRef = date('H:i') . ' • #' . strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 4));
-	if (strpos($pesan, '• #') === false) {
-		$pesan = rtrim($pesan) . "\n`[" . $uniqueRef . "]`";
+		// Tambahkan penanda waktu & kode referensi mikro unik agar hash pesan tidak 100% identik saat kirim beruntun (Anti-Bulk Fingerprint)
+		$uniqueRef = date('H:i') . ' • #' . strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 4));
+		if (strpos($pesan, '• #') === false) {
+			$pesan = rtrim($pesan) . "\n`[" . $uniqueRef . "]`";
+		}
 	}
 
 	$apiUrl = defined('FONNTE_API_URL') ? FONNTE_API_URL : 'https://api.fonnte.com/send';
 
-	// Hitung slot antrean 1-per-1 secara berurutan (tidak pernah kirim serentak di detik yang sama)
-	$customMinDelay = (isset($dataSend['delay']) && is_numeric($dataSend['delay'])) ? (int)$dataSend['delay'] : null;
-	$scheduledSlot = getNextFonnteQueueSlot($isGroup, $customMinDelay);
+	if (!empty($dataSend['immediate'])) {
+		$payload = [
+			'target'      => $penerima,
+			'message'     => $pesan,
+			'countryCode' => '62',
+			'delay'       => '0',
+			'typing'      => false
+		];
+	} else {
+		// Hitung slot antrean 1-per-1 secara berurutan (tidak pernah kirim serentak di detik yang sama)
+		$customMinDelay = (isset($dataSend['delay']) && is_numeric($dataSend['delay'])) ? (int)$dataSend['delay'] : null;
+		$scheduledSlot = getNextFonnteQueueSlot($isGroup, $customMinDelay);
 
-	$payload = [
-		'target'      => $penerima,
-		'message'     => $pesan,
-		'countryCode' => '62',
-		'delay'       => $isGroup ? '60-75' : '20-40',
-		'schedule'    => (string)$scheduledSlot,
-		'typing'      => true,
-		'duration'    => (string)mt_rand(3, 6)
-	];
+		$payload = [
+			'target'      => $penerima,
+			'message'     => $pesan,
+			'countryCode' => '62',
+			'delay'       => $isGroup ? '60-75' : '20-40',
+			'schedule'    => (string)$scheduledSlot,
+			'typing'      => true,
+			'duration'    => (string)mt_rand(3, 6)
+		];
+	}
 
 	if (isset($dataSend['file']) && !empty($dataSend['file'])) {
 		$payload['url'] = $dataSend['file'];
@@ -3097,13 +3109,15 @@ function sendWa($dataSend)
 			$dataSend['pesan']
 		);
 
-		// Pastikan footer resmi selalu ada di setiap pesan
-		$pesanDecoded = urldecode($dataSend['pesan']);
-		if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanDecoded)) {
-			if (strpos($dataSend['pesan'], '%0A') !== false || strpos($dataSend['pesan'], '%0a') !== false) {
-				$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo Medikal_';
-			} else {
-				$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo Medikal_";
+		// Pastikan footer resmi selalu ada di setiap pesan (hanya untuk notifikasi otomatis)
+		if (empty($dataSend['raw_chat'])) {
+			$pesanDecoded = urldecode($dataSend['pesan']);
+			if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanDecoded)) {
+				if (strpos($dataSend['pesan'], '%0A') !== false || strpos($dataSend['pesan'], '%0a') !== false) {
+					$dataSend['pesan'] .= '%0A_Sistem Office PT Visi Yosindo Medikal_';
+				} else {
+					$dataSend['pesan'] .= "\n_Sistem Office PT Visi Yosindo Medikal_";
+				}
 			}
 		}
 	}
