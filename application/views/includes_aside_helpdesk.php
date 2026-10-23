@@ -904,12 +904,12 @@
 						</a>
 						<ul class="nav nav-children">
 							<li class="<?= (in_array($page_name, ['po/v_po_list']) || ($this->uri->segment(1) == 'po_system' && empty($this->uri->segment(2)))) ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('po_system') ?>">
+								<a class="nav-link" href="<?= base_url('po_system?from=helpdesk') ?>">
 									Daftar PO Masuk
 								</a>
 							</li>
 							<li class="<?= (in_array($page_name, ['po/v_po_form']) && $this->uri->segment(2) == 'tambah') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('po_system/tambah') ?>">
+								<a class="nav-link" href="<?= base_url('po_system/tambah?from=helpdesk') ?>">
 									Input PO Baru
 								</a>
 							</li>

@@ -20,6 +20,33 @@ class Po_system extends CI_Controller
 
     public function id_navbar()
     {
+        $from = $this->input->get('from');
+        if ($from === 'marketing' || $from === 'helpdesk') {
+            $this->session->set_userdata('po_from_nav', $from);
+            return $from;
+        }
+
+        $session_nav = $this->session->userdata('po_from_nav');
+        if (!empty($session_nav)) {
+            return $session_nav;
+        }
+
+        $referer = $this->input->server('HTTP_REFERER');
+        if (!empty($referer)) {
+            if (strpos($referer, 'marketing') !== false) {
+                $this->session->set_userdata('po_from_nav', 'marketing');
+                return 'marketing';
+            } elseif (strpos($referer, 'helpdesk') !== false) {
+                $this->session->set_userdata('po_from_nav', 'helpdesk');
+                return 'helpdesk';
+            }
+        }
+
+        // Jika pengguna divisi marketing, default ke marketing
+        if (isTeamMarketing() && !isAdmin() && !isCRO()) {
+            return 'marketing';
+        }
+
         return 'helpdesk';
     }
 

@@ -2,7 +2,7 @@
     <h2><i class="fas fa-file-signature text-primary mr-2"></i><?= $page_title ?></h2>
     <div class="right-wrapper text-left">
         <ol class="breadcrumbs">
-            <li><a href="<?= base_url('dashboard_helpdesk') ?>"><i class="fas fa-home"></i></a></li>
+            <li><a href="<?= base_url(($switch ?? '') == 'marketing' ? 'dashboard_marketing' : 'dashboard_helpdesk') ?>"><i class="fas fa-home"></i></a></li>
             <li><span><?= $page_desc ?></span></li>
         </ol>
     </div>

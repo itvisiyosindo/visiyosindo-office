@@ -2,7 +2,7 @@
     <h2><i class="fas fa-file-invoice text-primary mr-2"></i><?= $page_title ?></h2>
     <div class="right-wrapper text-left">
         <ol class="breadcrumbs">
-            <li><a href="<?= base_url('dashboard_helpdesk') ?>"><i class="fas fa-home"></i></a></li>
+            <li><a href="<?= base_url(($switch ?? '') == 'marketing' ? 'dashboard_marketing' : 'dashboard_helpdesk') ?>"><i class="fas fa-home"></i></a></li>
             <li><a href="<?= base_url('po_system') ?>">Daftar PO Masuk</a></li>
             <li><span>Detail PO: <?= htmlspecialchars($po->no_po) ?></span></li>
         </ol>
