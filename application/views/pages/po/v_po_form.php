@@ -222,11 +222,21 @@
                                 <option value="">-- Pilih Customer --</option>
                                 <?php if (!empty($customer_list)): ?>
                                     <?php foreach ($customer_list as $cust): ?>
+                                        <?php
+                                            $contact_preview = '';
+                                            if (!empty($cust->contact) && trim($cust->contact) !== '-') {
+                                                $clean_c = preg_replace('/\s+/', ' ', trim($cust->contact));
+                                                if (mb_strlen($clean_c) > 40) {
+                                                    $clean_c = mb_substr($clean_c, 0, 37) . '...';
+                                                }
+                                                $contact_preview = ' — [' . $clean_c . ']';
+                                            }
+                                        ?>
                                         <option value="<?= $cust->id_customer ?>" 
                                                 data-nama="<?= htmlspecialchars($cust->nama_customer) ?>"
                                                 data-alamat="<?= htmlspecialchars($cust->alamat_customer ?? '') ?>"
                                                 data-contact="<?= htmlspecialchars($cust->contact ?? '') ?>">
-                                            <?= htmlspecialchars($cust->nama_customer) ?>
+                                            <?= htmlspecialchars($cust->nama_customer . $contact_preview) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -642,10 +652,36 @@ document.addEventListener('DOMContentLoaded', function () {
             $('#namaCustomerInput').val(nama);
             $('#alamatCustomer').val(alamat);
 
-            // Jika PIC penerima HP masih kosong, bantu prefill dari kontak master customer
+            // Auto pre-fill PIC Penerima Nama & No HP jika tersedia di master customer
+            var namaPic = '';
+            var hpPic = '';
+            if (contact) {
+                var phoneMatch = contact.match(/(?:(?:\+62|62|0)[0-9\s\-]{8,16})/);
+                if (phoneMatch) {
+                    hpPic = phoneMatch[0].trim();
+                    namaPic = contact.replace(phoneMatch[0], '').replace(/(?:Up\.?|Hp\.?|Telp\.?|PIC\s*:?|[\(\)\:\-\n\r])/gi, ' ').trim();
+                } else {
+                    namaPic = contact.replace(/(?:Up\.?|PIC\s*:?|[\:\-\n\r])/gi, ' ').trim();
+                }
+                namaPic = namaPic.replace(/\s+/g, ' ');
+            }
+            var $picNama = $('input[name="pic_penerima_nama"]');
+            if ($picNama.length && (!$picNama.val() || $picNama.data('autofilled'))) {
+                if (namaPic) {
+                    $picNama.val(namaPic).data('autofilled', true);
+                } else {
+                    $picNama.val('').data('autofilled', false);
+                }
+            }
             var $picHp = $('input[name="pic_penerima_nohp"]');
-            if ($picHp.length && !$picHp.val() && contact) {
-                $picHp.val(contact);
+            if ($picHp.length && (!$picHp.val() || $picHp.data('autofilled'))) {
+                if (hpPic) {
+                    $picHp.val(hpPic).data('autofilled', true);
+                } else if (contact && !namaPic) {
+                    $picHp.val(contact).data('autofilled', true);
+                } else {
+                    $picHp.val('').data('autofilled', false);
+                }
             }
         } else {
             $('#namaCustomerInput').val('');
