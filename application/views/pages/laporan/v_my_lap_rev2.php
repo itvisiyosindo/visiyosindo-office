@@ -497,6 +497,8 @@ foreach ($data_detail as $row) {
                                         <td style="text-align:center">
                                             <?php if (!empty($row->id_lap)): ?>
                                                 <span class="badge badge-light border text-dark font-weight-bold" style="font-size: 11px; padding: 4px 7px; border-radius: 6px;"><?= $row->jenis ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
                                         <td style="text-align:center; white-space: nowrap;">
@@ -505,10 +507,12 @@ foreach ($data_detail as $row) {
                                                 <?php if ($is_outside_range): ?>
                                                     <span class="badge badge-danger mt-1" style="font-size: 10px; border-radius: 4px;" title="Diisi terlambat / di luar minggu berjalan"><i class="fas fa-exclamation-triangle mr-1"></i> Terlambat</span>
                                                 <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
                                         <td style="min-width: 200px; max-width: 300px;">
-                                            <?= !empty($row->id_lap) ? $row->progress : '' ?> 
+                                            <?= !empty($row->id_lap) ? $row->progress : '<span class="text-muted small">-</span>' ?> 
                                             <input type="hidden" name="id_sodetail[]" value="<?= $row->id_lap ?>">
                                         </td>
                                         <?php if($row->jenis == 'TIDAK ADA PEKERJAAN DI MINGGU INI'){ ?>
@@ -526,13 +530,15 @@ foreach ($data_detail as $row) {
                                                         } elseif (!empty($st)) {
                                                             echo '<span class="badge badge-secondary px-2 py-1 font-weight-bold" style="font-size: 11px; border-radius: 6px;">' . htmlspecialchars($row->status_pekerjaan) . '</span>';
                                                         }
+                                                    } else {
+                                                        echo '<span class="text-muted small">-</span>';
                                                     }
                                                 ?>
                                             </td>
-                                            <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $link_download : '' ?></td>
+                                            <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $link_download : '<span class="text-muted small">-</span>' ?></td>
                                         <?php } ?>
-                                        <td><?= !empty($row->id_lap) ? $row->pihak : '' ?></td>
-                                        <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $row->keterangan : '' ?></td>
+                                        <td><?= !empty($row->id_lap) ? $row->pihak : '<span class="text-muted small">-</span>' ?></td>
+                                        <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $row->keterangan : '<span class="text-muted small">-</span>' ?></td>
                                         <td style="text-align:center">
                                             <?php 
                                             $nilai_a = '';
@@ -541,7 +547,9 @@ foreach ($data_detail as $row) {
                                             ?>
                                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_a) ?></span>
                                             <?php 
-                                            } 
+                                            } else {
+                                                echo '<span class="text-muted small">-</span>';
+                                            }
                                             ?>
                                         </td>
                                         <td style="text-align:center">
@@ -552,7 +560,9 @@ foreach ($data_detail as $row) {
                                             ?>
                                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_b) ?></span>
                                             <?php 
-                                            } 
+                                            } else {
+                                                echo '<span class="text-muted small">-</span>';
+                                            }
                                             ?>
                                         </td>
                                         <td style="text-align:center">
@@ -563,6 +573,8 @@ foreach ($data_detail as $row) {
                                                         <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Data" data-id="<?= $row->id_lap ?>" data-object="laporan/delete/<?= $row->id_lap ?>"><i class="fas fa-trash-alt"></i></button>
                                                     </div>
                                                 <?php }?>		 
+                                            <?php } else { ?>
+                                                <span class="text-muted small">-</span>
                                             <?php }?>
                                         </td>
                                     </tr>
@@ -582,20 +594,10 @@ foreach ($data_detail as $row) {
                             </tbody>
                         </table>
                     </div>
-
-
-						<br>
-						<div>
-								<!--<a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset - 1)) ?>" class="btn btn-outline-secondary">< Minggu Sebelumnya</a>
-								<a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset + 1)) ?>" class="btn btn-outline-secondary">Minggu Berikutnya ></a>-->
-						</div>
-				</div>
-
-			</div>
-		</div>
-
-		</div>
-</div>
+                </div>
+            </div>
+        </div>
+    </div>
 <div class="row">
 	<div class="col-12">
 
@@ -612,18 +614,18 @@ foreach ($data_detail as $row) {
 				</div>
 				
 				<div class="table-responsive">
-                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 1200px;">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 980px; width: 100%;">
                         <thead>
                             <tr>
-                                <th style="width: 50px; min-width: 45px;">No</th>
-                                <th style="width: 140px; min-width: 130px;">Tanggal</th>
-                                <th style="min-width: 250px; text-align: left;">Deskripsi</th>
-                                <th style="min-width: 160px; text-align: left;">Hasil Kerja</th>
-                                <th style="width: 80px; min-width: 75px;">Nilai A</th>
-                                <th style="width: 80px; min-width: 75px;">Nilai B</th>
-                                <th style="min-width: 160px; text-align: left;">Catatan A</th>
-                                <th style="min-width: 160px; text-align: left;">Catatan B</th>
-                                <th style="width: 90px; min-width: 85px;">Aksi</th>
+                                <th style="width: 50px; min-width: 45px; text-align: center;">No</th>
+                                <th style="width: 130px; min-width: 120px; text-align: center;">Tanggal</th>
+                                <th style="min-width: 220px; text-align: left;">Deskripsi</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Hasil Kerja</th>
+                                <th style="width: 75px; min-width: 70px; text-align: center;">Nilai A</th>
+                                <th style="width: 75px; min-width: 70px; text-align: center;">Nilai B</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Catatan A</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Catatan B</th>
+                                <th style="width: 80px; min-width: 75px; text-align: center;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -690,6 +692,14 @@ foreach ($data_detail as $row) {
                             }
                             ?>
 
+                            <?php if ($jumlah_data === 0): ?>
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-3" style="background: #fafbfc;">
+                                        <i class="fas fa-info-circle mr-1 text-muted"></i> <em>Belum ada data pencapaian untuk minggu ini. Klik tombol <strong>+ Tambah Pencapaian</strong> untuk menambahkan.</em>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+
                             <tr class="row-summary">
                                 <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
                                 <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataA, 2) ?></td>
@@ -721,16 +731,16 @@ foreach ($data_detail as $row) {
 				</div>
 
 				<div class="table-responsive">
-                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_umum" style="min-width: 1200px;">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_umum" style="min-width: 900px; width: 100%;">
                         <thead>
                             <tr>
-                                <th style="width: 50px; min-width: 45px;">No</th>
-                                <th style="width: 200px; min-width: 180px; text-align: left;">Indikator</th>
-                                <th style="min-width: 320px; text-align: left;">Keterangan</th>
-                                <th style="width: 80px; min-width: 75px;">Nilai A</th>
-                                <th style="width: 80px; min-width: 75px;">Nilai B</th>
-                                <th style="min-width: 160px; text-align: left;">Catatan A</th>
-                                <th style="min-width: 160px; text-align: left;">Catatan B</th>
+                                <th style="width: 50px; min-width: 45px; text-align: center;">No</th>
+                                <th style="width: 180px; min-width: 160px; text-align: left;">Indikator</th>
+                                <th style="min-width: 300px; text-align: left;">Keterangan</th>
+                                <th style="width: 75px; min-width: 70px; text-align: center;">Nilai A</th>
+                                <th style="width: 75px; min-width: 70px; text-align: center;">Nilai B</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Catatan A</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Catatan B</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -887,12 +897,6 @@ foreach ($data_detail as $row) {
 
 	</div>
 </div>
-
-
-	</div>
-</div>
-
-
 
 <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog" role="document">

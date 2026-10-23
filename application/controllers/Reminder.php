@@ -267,7 +267,7 @@ class Reminder extends CI_Controller {
 
             $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
                 ? "Halo Rekan Tim PT Visi Yosindo Medikal! 👋✨"
-                : "Halo Kak " . $friendly . "! 👋✨";
+                : "Halo " . $friendly . "! 👋✨";
 
             $pesan = $greeting . "\n\n" .
                 "Selamat menyelesaikan pekerjaan minggu ini! 🌿\n" .
@@ -409,7 +409,7 @@ class Reminder extends CI_Controller {
 
             $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
                 ? "Semangat Pagi Rekan Tim PT Visi Yosindo Medikal! ☀️💼"
-                : "Semangat Pagi Kak " . $friendly . "! ☀️💼";
+                : "Semangat Pagi " . $friendly . "! ☀️💼";
 
             $pesan = $greeting . "\n\n" .
                 "Selamat menyambut hari Senin dan mengawali aktivitas di minggu yang baru! 🚀\n" .
