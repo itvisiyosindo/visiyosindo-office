@@ -170,8 +170,21 @@ class Webhook_convia extends CI_Controller
 
         // Fallback jika dikirim via form POST standar
         if (empty($data)) {
-            $data = $this->input->post();
+            $data = !empty($_POST) ? $_POST : $this->input->post();
         }
+        if (empty($data)) {
+            $data = $_REQUEST;
+        }
+
+        // Catat incoming request untuk audit & live debug
+        $logDir = APPPATH . 'logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0777, true);
+        }
+        $logLine = date('Y-m-d H:i:s') . ' | IP: ' . $this->input->ip_address()
+            . ' | RAW: ' . substr((string)$rawPayload, 0, 500)
+            . ' | POST: ' . json_encode($_POST) . PHP_EOL;
+        @file_put_contents($logDir . '/webhook_incoming.log', $logLine, FILE_APPEND);
 
         // Ekstraksi data pengirim dan pesan dari berbagai format payload Convia / Webhook
         $phone = '';
@@ -185,6 +198,8 @@ class Webhook_convia extends CI_Controller
                 $phone = $data['from'];
             } elseif (!empty($data['sender'])) {
                 $phone = $data['sender'];
+            } elseif (!empty($data['phone'])) {
+                $phone = $data['phone'];
             } elseif (!empty($data['wa_id'])) {
                 $phone = $data['wa_id'];
             } elseif (isset($data['data']['phone_number'])) {
