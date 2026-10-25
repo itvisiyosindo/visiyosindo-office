@@ -144,7 +144,6 @@ $route['reminder'] = 'Reminder/index';
 $route['reminder/(:any)'] = 'Reminder/$1';
 $route['reminder/(:any)/(:any)'] = 'Reminder/$1/$2';
 
-$route['dimas_seed'] = 'Dimas_seed/index';
 
 
 

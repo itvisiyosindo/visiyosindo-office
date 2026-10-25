@@ -52,126 +52,6 @@ class Laporan extends CI_Controller
 
     public function show($param = "", $param2 = "", $param3 = "", $param4 = "0")
     {
-        if ($param == 'dimas_seed') {
-            $update_ba = $this->input->get_post('update_ba');
-            if ($update_ba) {
-                header('Content-Type: application/json');
-                $ba_id = $this->input->get_post('ba_id') ?: 689;
-                $new_lampiran = $this->input->get_post('lampiran') ?: 'https://drive.google.com/file/d/1LM07xs-UNvyybBRH0mKUNC4M4uKHp8WF/view?usp=sharing';
-                $this->db->where('id', $ba_id);
-                $this->db->update('surat_berita_acara', ['lampiran' => $new_lampiran]);
-                $updated_ba = $this->db->get_where('surat_berita_acara', ['id' => $ba_id])->row();
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Link lampiran Berita Acara berhasil diperbarui',
-                    'data' => $updated_ba
-                ], JSON_PRETTY_PRINT);
-                exit;
-            }
-            header('Content-Type: application/json');
-            
-            $dimas = $this->db->query("SELECT pengguna_id, nama, email, username FROM pengguna WHERE nama LIKE '%dimas%' OR username LIKE '%dimas%'")->result_array();
-            
-            $dimas_id = null;
-            foreach ($dimas as $u) {
-                if (stripos($u['nama'], 'dimas') !== false) {
-                    $dimas_id = $u['pengguna_id'];
-                    break;
-                }
-            }
-            
-            $jobs = [];
-            if ($dimas_id) {
-                $jobs = $this->db->query("SELECT j.id as id_job, jd.id as id_jobdesc_detail, jd.deskripsi FROM jobdesc j LEFT JOIN jobdesc_detail jd ON j.id = jd.id_jobdesc WHERE j.id_pengguna = ?", [$dimas_id])->result_array();
-            }
-            
-            $existing_laporan = [];
-            if ($dimas_id) {
-                $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-12' AND tanggal <= '2026-10-16' ORDER BY tanggal ASC", [$dimas_id])->result_array();
-            }
-            
-            $do_insert = $this->input->get('do_insert');
-            $inserted_count = 0;
-            
-            if ($do_insert && $dimas_id) {
-                $tasks = [
-                    '2026-10-12' => [
-                        'maintenance server down',
-                        'ke grapari dan my republik koordinasi terkait wifi'
-                    ],
-                    '2026-10-13' => [
-                        'memperbaiki tampilan office'
-                    ],
-                    '2026-10-14' => [
-                        'memperbaiki tampilan office dan menambah beberapa fitur'
-                    ],
-                    '2026-10-15' => [
-                        'membantu membuatkan link gmeet',
-                        'penyelesaian memperbaiki tampilan website office'
-                    ],
-                    '2026-10-16' => [
-                        'instalasi wifi myrepublic'
-                    ]
-                ];
-                
-                $default_job_id = !empty($jobs) ? $jobs[0]['id_job'] : 0;
-                
-                foreach ($tasks as $tgl => $list_pekerjaan) {
-                    foreach ($list_pekerjaan as $task_desc) {
-                        // Cek apakah sudah pernah diinput untuk mencegah duplikat
-                        $cek = $this->db->get_where('laporan', [
-                            'id_pengaju' => $dimas_id,
-                            'tanggal'    => $tgl,
-                            'ket_hasil'  => $task_desc
-                        ])->row();
-                        if ($cek) {
-                            continue;
-                        }
-
-                        $job_id = $default_job_id;
-                        
-                        foreach ($jobs as $j) {
-                            if (stripos($task_desc, 'email') !== false || stripos($task_desc, 'webmail') !== false || stripos($task_desc, 'wifi') !== false || stripos($task_desc, 'indihome') !== false || stripos($task_desc, 'myrepublic') !== false || stripos($task_desc, 'cctv') !== false || stripos($task_desc, 'server') !== false || stripos($task_desc, 'grapari') !== false) {
-                                if (isset($j['deskripsi']) && (stripos($j['deskripsi'], 'jaringan') !== false || stripos($j['deskripsi'], 'network') !== false || stripos($j['deskripsi'], 'hardware') !== false || stripos($j['deskripsi'], 'maintenance') !== false || stripos($j['deskripsi'], 'it') !== false)) {
-                                    $job_id = $j['id_job'];
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        $data_insert = [
-                            'id_pengaju'       => $dimas_id,
-                            'tanggal'          => $tgl,
-                            'id_job'           => $job_id,
-                            'jenis'            => 'JOBDESK RUTIN',
-                            'progress'         => '100%',
-                            'status_pekerjaan' => 'SELESAI',
-                            'ket_hasil'        => $task_desc,
-                            'pihak'            => (stripos($task_desc, 'grapari') !== false || stripos($task_desc, 'myrepublic') !== false) ? 'GraPARI / MyRepublic' : '-',
-                            'keterangan'       => 'Telah diselesaikan dengan baik',
-                            'pencapaian'       => '1'
-                        ];
-                        
-                        $this->db->insert('laporan', $data_insert);
-                        $inserted_count++;
-                    }
-                }
-                
-                // Refresh existing laporan after insert
-                $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-12' AND tanggal <= '2026-10-16' ORDER BY tanggal ASC", [$dimas_id])->result_array();
-            }
-            
-            echo json_encode([
-                'status' => 'success',
-                'dimas' => $dimas,
-                'dimas_id' => $dimas_id,
-                'jobs' => $jobs,
-                'existing_laporan_this_week' => $existing_laporan,
-                'inserted_count' => $inserted_count
-            ], JSON_PRETTY_PRINT);
-            exit;
-        }
-
         grantAccessFor('all');
 
         if ($param == 'detail') {
@@ -2237,9 +2117,25 @@ class Laporan extends CI_Controller
         $nama_bulan = $this->convertBulan($bulan_en);
 
         $data_job = $this->md_laporan->getPengguna($id_pengaju);
-        $laporan_bulan = $this->md_laporan->getLaporanPerBulan($startDate, $endDate, $id_pengaju);
+        // Sumber data disamakan dengan print mingguan (getLaporanMingguanRev2 per minggu)
+        $laporan_bulan = $this->md_laporan->getLaporanPerBulanRev2($startDate, $endDate, $id_pengaju);
         $pencapaian_bulan = $this->md_laporan->getPencapaianPerBulan($startDate, $endDate, $id_pengaju);
-        $rekap_status = $this->md_laporan->getRekapStatusBulan($startDate, $endDate, $id_pengaju);
+        // Rekap status dihitung dari baris yang sama dengan yang dicetak
+        $rekap_status = (object)['total_pekerjaan' => 0, 'total_selesai' => 0, 'total_proses' => 0, 'total_kendala' => 0];
+        foreach ($laporan_bulan as $r) {
+            $st = strtoupper(trim((string)$r->status_pekerjaan));
+            if ($st === 'BELUM DIISI' || (empty($r->ket_hasil) && empty($r->progress) && empty($r->link))) {
+                continue;
+            }
+            $rekap_status->total_pekerjaan++;
+            if (strpos($st, 'SELESAI') !== false && strpos($st, 'TIDAK') === false) {
+                $rekap_status->total_selesai++;
+            } elseif (strpos($st, 'PROSES') !== false) {
+                $rekap_status->total_proses++;
+            } elseif (strpos($st, 'KENDALA') !== false || strpos($st, 'PENDING') !== false || strpos($st, 'TIDAK') !== false) {
+                $rekap_status->total_kendala++;
+            }
+        }
 
         $dt = [
             'title_pdf' => 'Rangkuman Laporan Bulanan - ' . ($data_job ? $data_job->nama : ''),
@@ -2259,120 +2155,6 @@ class Laporan extends CI_Controller
         $mpdf->AddPage('P', '', '', '', '', 10, 10, 10, 10);
         $mpdf->WriteHTML($html);
         $mpdf->Output('Rangkuman_Laporan_Bulanan_' . ($data_job ? str_replace(' ', '_', $data_job->nama) : 'Karyawan') . '_' . $month . '.pdf', 'I');
-    }
-
-    public function dimas_seed()
-    {
-        header('Content-Type: application/json');
-        
-        $dimas = $this->db->query("SELECT pengguna_id, nama, email, username FROM pengguna WHERE nama LIKE '%dimas%' OR username LIKE '%dimas%'")->result_array();
-        
-        $dimas_id = null;
-        foreach ($dimas as $u) {
-            if (stripos($u['nama'], 'dimas') !== false) {
-                $dimas_id = $u['pengguna_id'];
-                break;
-            }
-        }
-        
-        $jobs = [];
-        if ($dimas_id) {
-            $jobs = $this->db->query("SELECT j.id as id_job, jd.id as id_jobdesc_detail, jd.deskripsi FROM jobdesc j LEFT JOIN jobdesc_detail jd ON j.id = jd.id_jobdesc WHERE j.id_pengguna = ?", [$dimas_id])->result_array();
-        }
-        
-        $existing_laporan = [];
-        if ($dimas_id) {
-            $existing_laporan = $this->db->query("SELECT * FROM laporan WHERE id_pengaju = ? AND tanggal >= '2026-10-05' AND tanggal <= '2026-10-10' ORDER BY tanggal ASC", [$dimas_id])->result_array();
-        }
-        
-        $do_insert = $this->input->get('do_insert');
-        $inserted_count = 0;
-        
-        if ($do_insert && $dimas_id) {
-            $tasks = [
-                '2026-10-05' => [
-                    'membantu tim visilab yang tidak bisa mengakses webmail',
-                    'menghubungi pihak indihome terkait penurunan paket',
-                    'maintenance pc gudang pusat',
-                    'maintenance cctv jogja',
-                    'menambahkan fitur export excel pada menu kalkulator price',
-                    'menambahkan menu uploda dokumen npwp dan passport pada profil'
-                ],
-                '2026-10-06' => [
-                    'membersihkan disk email kantor',
-                    'merubah tampilan login',
-                    'merubah tampilan menu surat lainnya',
-                    'koordinasi dengan pihak convia terkait kuota chat api',
-                    'merubah tampilan table pada menu persetujuan berita acara',
-                    'merubah tampilan tombol pada surat',
-                    'menambahkan kolom nama karyawan yang dinas pada table surat dinas'
-                ],
-                '2026-10-07' => [
-                    'menambahkan fitur input absen kosong agar GA bisa mengiput yang tidak sesuai',
-                    'merubah tampilan pilihan nomer halaman',
-                    'merubah font sidebar',
-                    'merubah tampilan halaman dashboard',
-                    'merubah tampilan data karyawan',
-                    'merubah tampilan rekap absensi'
-                ],
-                '2026-10-08' => [
-                    'mencari provider dan koordinasi tentang paket wifi indihome',
-                    'merubah tampilan navbar',
-                    'merubah tampilan pada menu tunjangan di profil',
-                    'merubah tampilan dashboard pada home administrator card stats',
-                    'merubah icon sidebar lebih clean'
-                ],
-                '2026-10-09' => [
-                    'penambahan animasi pada side bar',
-                    'merapikan icon pada kolom aksi menu salary tetap',
-                    'memperbaiki load agar lebih cepat ketika mengakses menu salary tidak tetap',
-                    'merubah tampilan pada tab analitik menu salary tidak tetap',
-                    'merubah tampilan pada halaman laporan mingguan ver 2'
-                ]
-            ];
-            
-            $default_job_id = !empty($jobs) ? $jobs[0]['id_job'] : 0;
-            
-            foreach ($tasks as $tgl => $list_pekerjaan) {
-                foreach ($list_pekerjaan as $task_desc) {
-                    $job_id = $default_job_id;
-                    
-                    foreach ($jobs as $j) {
-                        if (stripos($task_desc, 'email') !== false || stripos($task_desc, 'webmail') !== false || stripos($task_desc, 'wifi') !== false || stripos($task_desc, 'indihome') !== false || stripos($task_desc, 'cctv') !== false || stripos($task_desc, 'pc') !== false) {
-                            if (isset($j['deskripsi']) && (stripos($j['deskripsi'], 'jaringan') !== false || stripos($j['deskripsi'], 'hardware') !== false || stripos($j['deskripsi'], 'maintenance') !== false || stripos($j['deskripsi'], 'it') !== false)) {
-                                $job_id = $j['id_job'];
-                                break;
-                            }
-                        }
-                    }
-                    
-                    $data_insert = [
-                        'id_pengaju'       => $dimas_id,
-                        'tanggal'          => $tgl,
-                        'id_job'           => $job_id,
-                        'jenis'            => 'JOBDESK RUTIN',
-                        'progress'         => '100%',
-                        'status_pekerjaan' => 'SELESAI',
-                        'ket_hasil'        => $task_desc,
-                        'pihak'            => '-',
-                        'keterangan'       => 'Telah diselesaikan dengan baik',
-                        'pencapaian'       => '1'
-                    ];
-                    
-                    $this->db->insert('laporan', $data_insert);
-                    $inserted_count++;
-                }
-            }
-        }
-        
-        echo json_encode([
-            'status' => 'success',
-            'dimas' => $dimas,
-            'dimas_id' => $dimas_id,
-            'jobs' => $jobs,
-            'existing_laporan_this_week' => $existing_laporan,
-            'inserted_count' => $inserted_count
-        ], JSON_PRETTY_PRINT);
     }
 }
 

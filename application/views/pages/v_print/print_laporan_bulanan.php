@@ -301,7 +301,7 @@
                     // Hitung minggu ke berapa dalam bulan tersebut berdasarkan d (hari)
                     if (!empty($row->tanggal)) {
                         $tgl_d = (int)date('d', strtotime($row->tanggal));
-                        $m_ke = 'Minggu ' . ceil($tgl_d / 7);
+                        $m_ke = ceil($tgl_d / 7);
                     } else {
                         $m_ke = '-';
                     }

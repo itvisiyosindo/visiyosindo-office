@@ -959,6 +959,80 @@ class Md_laporan extends CI_Model
         return $result;
     }
 
+    /**
+     * Rangkuman bulanan yang sumber datanya SAMA dengan print mingguan.
+     * Mengambil data per minggu (Senin - Minggu) menggunakan getLaporanMingguanRev2
+     * lalu digabung & disaring hanya tanggal di dalam bulan yang dipilih.
+     * Tujuannya agar laporan yatim (id_job tidak terhubung ke jobdesk aktif)
+     * tidak ikut tercetak dan status "Terlambat" konsisten dengan print mingguan.
+     */
+    public function getLaporanPerBulanRev2($start_date, $end_date, $id_pengguna)
+    {
+        $start_ts = strtotime($start_date);
+        $end_ts   = strtotime($end_date);
+        if (!$start_ts || !$end_ts || $start_ts > $end_ts) {
+            return [];
+        }
+
+        $result = [];
+        $seen   = [];
+        $cur    = strtotime('monday this week', $start_ts);
+
+        while ($cur <= $end_ts) {
+            $mon = date('Y-m-d', $cur);
+            $sun = date('Y-m-d', strtotime('sunday this week', $cur));
+
+            // Sama persis dengan Laporan::print_mingguan
+            $weekly = $this->getLaporanMingguanRev2($mon, $sun, $id_pengguna);
+            $is_fallback = false;
+            if (empty($weekly)) {
+                $weekly = $this->getLaporanPerMinggu($mon, $sun, $id_pengguna);
+                $is_fallback = true;
+            }
+
+            foreach ($weekly as $r) {
+                if (empty($r->tanggal)) {
+                    continue; // jobdesk yang belum diisi
+                }
+                $tgl = date('Y-m-d', strtotime($r->tanggal));
+                if ($tgl < $start_date || $tgl > $end_date) {
+                    continue; // minggu yang terpotong awal/akhir bulan
+                }
+
+                $key = $is_fallback ? 'f' . $r->id : 'l' . (isset($r->id_lap) ? $r->id_lap : '');
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+
+                if (!$is_fallback) {
+                    $r->jobdesc_master = $r->deskripsi;
+                }
+                $result[] = $r;
+            }
+
+            $cur = strtotime('+1 week', $cur);
+        }
+
+        usort($result, function ($a, $b) {
+            $ta = date('Y-m-d', strtotime($a->tanggal));
+            $tb = date('Y-m-d', strtotime($b->tanggal));
+            if ($ta !== $tb) {
+                return strcmp($ta, $tb);
+            }
+            $pa = isset($a->point) ? (int)$a->point : 0;
+            $pb = isset($b->point) ? (int)$b->point : 0;
+            if ($pa !== $pb) {
+                return $pa - $pb;
+            }
+            $ua = isset($a->id_urut) ? (int)$a->id_urut : 0;
+            $ub = isset($b->id_urut) ? (int)$b->id_urut : 0;
+            return $ua - $ub;
+        });
+
+        return $result;
+    }
+
 
     public function getPencapaianPerBulan($start_date, $end_date, $id_pengguna)
     {
