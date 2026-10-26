@@ -183,7 +183,7 @@
 			<p class="text-danger font-weight-bold font-italic">* Note: Silakan pilih "Administrator" jika Berita Acara tanpa approval mengetahui / Diketahui Oleh.</p>
 			
 		<div role="document">
-			<button type="button" class="btn btn-success btn-save float-right btn-ajukan" style="margin-left:12px;"> <i class="fas fa-check"></i> Ajukan </button>
+			<button type="button" class="btn btn-success float-right btn-ajukan" style="margin-left:12px;"> <i class="fas fa-check"></i> Ajukan </button>
             <button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form float-left" >Kembali</button>
         </div>
 		<br><br>
@@ -238,7 +238,7 @@
                     });
                     $.ajax({
                         method: 'POST',
-                        url: 'surat_part_two/addSrt/addBeritaAcara',
+                        url: '<?= base_url("surat_part_two/addSrt/addBeritaAcara") ?>',
                         dataType: 'JSON',
                         data: {
                             tanggal      : tanggal,
@@ -262,9 +262,18 @@
                                 Swal.fire('Perhatian', resp.message || 'Gagal mengajukan Berita Acara', 'error');
                             }
                         },
-                        error: function(err) {
+                        error: function(xhr, status, error) {
                             $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
-                            Swal.fire('Error Server', 'Terjadi kesalahan pada respon server.', 'error');
+                            try {
+                                var resp = JSON.parse(xhr.responseText);
+                                if (resp && (resp.status == 'success' || resp.status == true)) {
+                                    Swal.fire('Berhasil!', resp.message || 'Berita Acara Berhasil Diajukan', 'success').then(function() {
+                                        window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
+                                    });
+                                    return;
+                                }
+                            } catch (e) {}
+                            Swal.fire('Perhatian', 'Gagal memproses respon server. Silakan cek menu Daftar Berita Acara untuk memastikan apakah pengajuan sudah tersimpan.', 'warning');
                         }
                     });                    
                 }                

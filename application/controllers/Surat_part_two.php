@@ -728,43 +728,48 @@ class Surat_part_two extends CI_Controller
             $this->md_surat_part_two->addBeritaAcara($data);
 
       // =========================================================================
-      // 💬 KODE NOTIFIKASI WA BERITA ACARA + DEBUG OTOMATIS
+      // 💬 KODE NOTIFIKASI WA BERITA ACARA + ERROR ISOLATION & CLEAN BUFFER
       // =========================================================================
-      $this->load->helper('whatsapp_helper');
-      $lastBaId = $this->db->insert_id();
-      if (empty($lastBaId)) {
-          $lastRow = $this->db->select('id')->from('surat_berita_acara')->where('kode_ba', $kodeFpp)->get()->row();
-          $lastBaId = $lastRow ? $lastRow->id : '';
-      }
-      $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : ($data['status_dir'] == 1 ? $data['id_dir'] : ''));
-      if (!empty($idPenerima)) {
-          $dataPenerima = $this->md_pengguna->getById($idPenerima);
-          if (!empty($dataPenerima) && isset($dataPenerima[0])) {
-              $atasan     = $dataPenerima[0];
-              $noHpAtasan = !empty($atasan->no_hp) ? $atasan->no_hp : (!empty($atasan->hp) ? $atasan->hp : '');
-              if (!empty($noHpAtasan)) {
-                  $pemohon     = $this->md_pengguna->getById(sessPenggunaId());
-                  $namaPemohon = (!empty($pemohon) && isset($pemohon[0])) ? $pemohon[0]->nama : 'Karyawan';
-                  $res = waPengajuanBaru([
-                    'noPenerima'       => $noHpAtasan,
-                    'namaApprover'     => $atasan->nama,
-                    'jenisPengajuan'   => 'Berita Acara (Kode: ' . $kodeFpp . ')',
-                    'namaPemohon'      => $namaPemohon,
-                    'tanggalPengajuan' => date('d-m-Y'),
-                    'keterangan'       => 'Membutuhkan Tanda Tangan / Persetujuan Berita Acara',
-                    'linkDetail'       => 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $lastBaId
-                  ]);
-                  if (!$res) {
-                      log_message('info', 'Notifikasi WA BA dilewati ke ' . $noHpAtasan);
+      try {
+          $this->load->helper('whatsapp_helper');
+          $lastBaId = $this->db->insert_id();
+          if (empty($lastBaId)) {
+              $lastRow = $this->db->select('id')->from('surat_berita_acara')->where('kode_ba', $kodeFpp)->get()->row();
+              $lastBaId = $lastRow ? $lastRow->id : '';
+          }
+          $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : ($data['status_dir'] == 1 ? $data['id_dir'] : ''));
+          if (!empty($idPenerima)) {
+              $dataPenerima = $this->md_pengguna->getById($idPenerima);
+              if (!empty($dataPenerima) && isset($dataPenerima[0])) {
+                  $atasan     = $dataPenerima[0];
+                  $noHpAtasan = !empty($atasan->no_hp) ? $atasan->no_hp : (!empty($atasan->hp) ? $atasan->hp : '');
+                  if (!empty($noHpAtasan)) {
+                      $pemohon     = $this->md_pengguna->getById(sessPenggunaId());
+                      $namaPemohon = (!empty($pemohon) && isset($pemohon[0])) ? $pemohon[0]->nama : 'Karyawan';
+                      waPengajuanBaru([
+                        'noPenerima'       => $noHpAtasan,
+                        'namaApprover'     => $atasan->nama,
+                        'jenisPengajuan'   => 'Berita Acara (Kode: ' . $kodeFpp . ')',
+                        'namaPemohon'      => $namaPemohon,
+                        'tanggalPengajuan' => date('d-m-Y'),
+                        'keterangan'       => 'Membutuhkan Tanda Tangan / Persetujuan Berita Acara',
+                        'linkDetail'       => 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $lastBaId
+                      ]);
                   }
               }
           }
+      } catch (\Throwable $e) {
+          log_message('error', 'Error sending WA notification for BA: ' . $e->getMessage());
       }
-      // =========================================================================
       // =========================================================================
       
       /** LOG */
       addLog('Pengajuan Berita Acara', 'Permintaan Berita Acara');
+
+      // Pastikan output buffer bersih dari notice / warning apapun agar JSON 100% valid
+      while (ob_get_level() > 0) {
+          ob_end_clean();
+      }
       ajaxReturnDie('success', 'Berita Acara Berhasil Diajukan', TRUE);
     } else if ($param == "paklaring") {
       //menambah pengajuan Pengalaman Kerja
