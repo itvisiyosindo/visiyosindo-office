@@ -334,16 +334,14 @@ class Po_system extends CI_Controller
         // Catat log
         $this->md_po_system->addLog($id_po, null, 'menunggu_kroscek', 'PO baru diinput oleh ' . $nama_pembuat, sessPenggunaId(), $nama_pembuat);
 
-        // Notifikasi WA Pengajuan Baru ke Grup Marketing / Visilab & PIC (CRO, GM)
-        waPoPengajuanBaruGroup([
-            'no_po'             => $no_po,
-            'kode_masuk'        => $kode_masuk,
-            'nama_customer'     => $nama_customer,
-            'nama_sales'        => !empty($nama_sales) ? $nama_sales : $nama_pembuat,
-            'nominal_po'        => $nominal_total_akhir ?: $nominal_subtotal,
-            'sistem_pembayaran' => $sistem_pembayaran,
-            'sistem_perpajakan' => $sistem_perpajakan,
-            'link'              => base_url('po_system/detail/' . encrypt($id_po))
+        // Notifikasi WA Progres Approval ke Grup Marketing
+        $po_new = $this->md_po_system->getPoById($id_po);
+        waPoProgressGroup([
+            'po'            => $po_new,
+            'stage'         => 'baru',
+            'action_by'     => !empty($nama_sales) ? $nama_sales : $nama_pembuat,
+            'action_status' => 'baru',
+            'link'          => base_url('po_system/detail/' . encrypt($id_po))
         ]);
 
         $this->session->set_flashdata('success', 'Data PO No. ' . $no_po . ' (' . $kode_masuk . ') berhasil diinput dan sedang menunggu kroscek CRO!');
@@ -429,15 +427,6 @@ class Po_system extends CI_Controller
             $status_po_baru = 'revisi';
             $status_proses_baru = 'HOLD / INDENT';
             $cro_status = 'hold_indent';
-            // Kirim notifikasi WA stok indent
-            waPoIndentGroup([
-                'no_po'         => $po->no_po,
-                'kode_masuk'    => $po->kode_masuk,
-                'nama_customer' => $po->nama_customer,
-                'nama_sales'    => $po->nama_sales,
-                'catatan'       => !empty($cro_catatan) ? $cro_catatan : 'Stok barang tidak ready (Indent).',
-                'link'          => base_url('po_system/detail/' . $id_encrypted)
-            ]);
         } elseif ($cro_status === 'sesuai') {
             if ($cro_cek_stok === 'PROSES SEBAGIAN') {
                 $status_proses_baru = 'PROSES SEBAGIAN';
@@ -472,6 +461,16 @@ class Po_system extends CI_Controller
         $logMsg = "Approval CRO oleh " . $nama_user . " (" . strtoupper($cro_status) . ") - Stok: " . $cro_cek_stok;
         if (!empty($cro_catatan)) $logMsg .= " | Catatan: " . $cro_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
+
+        // Notifikasi WA Progres Approval ke Grup Marketing
+        $po_updated = $this->md_po_system->getPoById($id_po);
+        waPoProgressGroup([
+            'po'            => $po_updated,
+            'stage'         => 'cro',
+            'action_by'     => $nama_user,
+            'action_status' => $cro_status,
+            'link'          => base_url('po_system/detail/' . $id_encrypted)
+        ]);
 
         $this->session->set_flashdata('success', 'Verifikasi tahap CRO berhasil disimpan!');
         redirect('po_system/detail/' . $id_encrypted);
@@ -532,6 +531,16 @@ class Po_system extends CI_Controller
         if (!empty($acc_catatan)) $logMsg .= " | Catatan: " . $acc_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $data_update['status'] ?? $po->status, $logMsg, sessPenggunaId(), $nama_user);
 
+        // Notifikasi WA Progres Approval ke Grup Marketing
+        $po_updated = $this->md_po_system->getPoById($id_po);
+        waPoProgressGroup([
+            'po'            => $po_updated,
+            'stage'         => 'acc',
+            'action_by'     => $nama_user,
+            'action_status' => $acc_status,
+            'link'          => base_url('po_system/detail/' . $id_encrypted)
+        ]);
+
         $this->session->set_flashdata('success', 'Verifikasi tahap Accounting berhasil disimpan!');
         redirect('po_system/detail/' . $id_encrypted);
     }
@@ -591,6 +600,16 @@ class Po_system extends CI_Controller
         if (!empty($pajak_catatan)) $logMsg .= " | Catatan: " . $pajak_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $data_update['status'] ?? $po->status, $logMsg, sessPenggunaId(), $nama_user);
 
+        // Notifikasi WA Progres Approval ke Grup Marketing
+        $po_updated = $this->md_po_system->getPoById($id_po);
+        waPoProgressGroup([
+            'po'            => $po_updated,
+            'stage'         => 'pajak',
+            'action_by'     => $nama_user,
+            'action_status' => $pajak_status,
+            'link'          => base_url('po_system/detail/' . $id_encrypted)
+        ]);
+
         $this->session->set_flashdata('success', 'Verifikasi tahap Pajak berhasil disimpan!');
         redirect('po_system/detail/' . $id_encrypted);
     }
@@ -648,17 +667,15 @@ class Po_system extends CI_Controller
         if (!empty($gm_catatan)) $logMsg .= " | Catatan: " . $gm_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
 
-        // Jika disetujui GM, picu notifikasi instruksi pengisian dokumen ke Grup Marketing / Visilab & Gudang
-        if ($gm_status === 'disetujui') {
-            waPoSiapDiprosesGroup([
-                'no_po'         => $po->no_po,
-                'kode_masuk'    => $po->kode_masuk,
-                'nama_customer' => $po->nama_customer,
-                'nama_sales'    => $po->nama_sales,
-                'nominal_po'    => $po->nominal_total_akhir ?: $po->nominal_po,
-                'link'          => base_url('po_system/detail/' . $id_encrypted)
-            ]);
-        }
+        // Notifikasi WA Progres Approval ke Grup Marketing
+        $po_updated = $this->md_po_system->getPoById($id_po);
+        waPoProgressGroup([
+            'po'            => $po_updated,
+            'stage'         => 'gm',
+            'action_by'     => $nama_user,
+            'action_status' => $gm_status,
+            'link'          => base_url('po_system/detail/' . $id_encrypted)
+        ]);
 
         $this->session->set_flashdata('success', 'Approval General Manager berhasil disimpan!');
         redirect('po_system/detail/' . $id_encrypted);

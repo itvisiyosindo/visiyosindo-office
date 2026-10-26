@@ -3029,6 +3029,176 @@ function waPoLolosKroscekGroup($data)
 
 
 /**
+ * Notifikasi Tracking Progres Approval PO Customer ke Grup WhatsApp Marketing
+ */
+function waPoProgressGroup($data)
+{
+	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	if (!empty($data['groupPenerima'])) {
+		$targetGroup = $data['groupPenerima'];
+	}
+
+	$po = $data['po'] ?? null;
+
+	$no_po         = !empty($data['no_po']) ? $data['no_po'] : (!empty($po->no_po) ? $po->no_po : '-');
+	$kode_masuk    = !empty($data['kode_masuk']) ? $data['kode_masuk'] : (!empty($po->kode_masuk) ? $po->kode_masuk : '-');
+	$nama_customer = !empty($data['nama_customer']) ? $data['nama_customer'] : (!empty($po->nama_customer) ? $po->nama_customer : (!empty($po->master_nama_customer) ? $po->master_nama_customer : '-'));
+	$nama_sales    = !empty($data['nama_sales']) ? $data['nama_sales'] : (!empty($po->nama_sales) ? $po->nama_sales : (!empty($po->nama_pembuat) ? $po->nama_pembuat : '-'));
+
+	$raw_nominal   = $data['nominal_po'] ?? ($po->nominal_total_akhir ?? ($po->nominal_po ?? 0));
+	$nominal       = (is_numeric($raw_nominal) && $raw_nominal > 0) ? 'Rp ' . number_format($raw_nominal, 0, ',', '.') : (!empty($raw_nominal) ? $raw_nominal : '-');
+	$link          = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$stage         = strtolower($data['stage'] ?? '');
+	$action_by     = $data['action_by'] ?? '';
+	$action_status = strtolower($data['action_status'] ?? '');
+
+	$headerText = "*📋 UPDATE PROGRES APPROVAL PO CUSTOMER*";
+	$statusHighlight = "";
+
+	if ($stage === 'baru') {
+		$headerText = "*📥 PENGAJUAN PO CUSTOMER BARU*";
+		$statusHighlight = "🆕 *Status*: Menunggu Kroscek CRO\n";
+	} elseif ($action_status === 'revisi') {
+		$statusHighlight = "🔄 *Status Terkini*: PERLU REVISI (oleh " . $action_by . ")\n";
+	} elseif ($action_status === 'ditolak') {
+		$statusHighlight = "❌ *Status Terkini*: PO DITOLAK (oleh " . $action_by . ")\n";
+	} elseif ($action_status === 'hold_indent') {
+		$statusHighlight = "⚠️ *Status Terkini*: HOLD / INDENT - Stok Belum Ready (oleh " . $action_by . ")\n";
+	} elseif ($stage === 'cro' && $action_status === 'sesuai') {
+		$statusHighlight = "✅ *Status Terkini*: Lolos Kroscek CRO ➡️ Lanjut Verifikasi Accounting\n";
+	} elseif ($stage === 'acc' && $action_status === 'sesuai') {
+		$statusHighlight = "✅ *Status Terkini*: Disetujui Accounting ➡️ Lanjut Verifikasi Pajak\n";
+	} elseif ($stage === 'pajak' && $action_status === 'sesuai') {
+		$statusHighlight = "✅ *Status Terkini*: Disetujui Pajak ➡️ Menunggu Persetujuan Final GM\n";
+	} elseif ($stage === 'gm' && $action_status === 'disetujui') {
+		$statusHighlight = "🎉 *Status Terkini*: RESMI DISETUJUI GM (SIAP DIPROSES)\n";
+	}
+
+	// 1. Marketing
+	$p_mkt = "✅ Selesai (" . $nama_sales . ")";
+
+	// 2. CRO
+	$cro_st = strtolower($data['cro_status'] ?? ($po->cro_status ?? ''));
+	$cro_by = $data['nama_kroscek'] ?? ($po->nama_kroscek ?? 'CRO');
+	if ($cro_st === 'sesuai') {
+		$p_cro = "✅ Sesuai (" . $cro_by . ")";
+	} elseif ($cro_st === 'hold_indent') {
+		$p_cro = "⚠️ Hold / Indent (" . $cro_by . ")";
+	} elseif ($cro_st === 'revisi') {
+		$p_cro = "🔄 Revisi (" . $cro_by . ")";
+	} elseif ($cro_st === 'ditolak') {
+		$p_cro = "❌ Ditolak (" . $cro_by . ")";
+	} else {
+		$p_cro = "⏳ Menunggu Kroscek";
+	}
+
+	// 3. Accounting
+	$acc_st = strtolower($data['acc_status'] ?? ($po->acc_status ?? ''));
+	$acc_by = $data['nama_acc'] ?? ($po->nama_acc ?? 'Accounting');
+	if ($acc_st === 'sesuai') {
+		$p_acc = "✅ Disetujui (" . $acc_by . ")";
+	} elseif ($acc_st === 'revisi') {
+		$p_acc = "🔄 Revisi (" . $acc_by . ")";
+	} elseif ($acc_st === 'ditolak') {
+		$p_acc = "❌ Ditolak (" . $acc_by . ")";
+	} elseif ($cro_st === 'sesuai') {
+		$p_acc = "⏳ Menunggu Verifikasi";
+	} else {
+		$p_acc = "⏸️ Menunggu Tahap CRO";
+	}
+
+	// 4. Pajak
+	$pjk_st = strtolower($data['pajak_status'] ?? ($po->pajak_status ?? ''));
+	$pjk_by = $data['nama_pajak'] ?? ($po->nama_pajak ?? 'Pajak');
+	if ($pjk_st === 'sesuai') {
+		$p_pjk = "✅ Disetujui (" . $pjk_by . ")";
+	} elseif ($pjk_st === 'revisi') {
+		$p_pjk = "🔄 Revisi (" . $pjk_by . ")";
+	} elseif ($pjk_st === 'ditolak') {
+		$p_pjk = "❌ Ditolak (" . $pjk_by . ")";
+	} elseif ($acc_st === 'sesuai') {
+		$p_pjk = "⏳ Menunggu Verifikasi";
+	} else {
+		$p_pjk = "⏸️ Menunggu Tahap ACC";
+	}
+
+	// 5. GM
+	$gm_st = strtolower($data['gm_status'] ?? ($po->gm_status ?? ''));
+	$gm_by = $data['nama_gm'] ?? ($po->nama_gm ?? 'GM');
+	if ($gm_st === 'disetujui') {
+		$p_gm = "✅ Disetujui GM (" . $gm_by . ")";
+	} elseif ($gm_st === 'ditolak') {
+		$p_gm = "❌ Ditolak GM (" . $gm_by . ")";
+	} elseif ($pjk_st === 'sesuai') {
+		$p_gm = "⏳ Menunggu Persetujuan Final";
+	} else {
+		$p_gm = "⏸️ Menunggu Tahap Pajak";
+	}
+
+	// Kumpulkan seluruh catatan verifikator yang ada (Catatan CRO, Accounting, Pajak, GM)
+	$cro_catatan = trim($data['cro_catatan'] ?? ($po->cro_catatan ?? ''));
+	$acc_catatan = trim($data['acc_catatan'] ?? ($po->acc_catatan ?? ''));
+	$pjk_catatan = trim($data['pajak_catatan'] ?? ($po->pajak_catatan ?? ''));
+	$gm_catatan  = trim($data['gm_catatan'] ?? ($po->gm_catatan ?? ''));
+
+	$catatanList = [];
+	if (!empty($cro_catatan)) {
+		$catatanList[] = "• *CRO* (" . $cro_by . "): \"" . $cro_catatan . "\"";
+	}
+	if (!empty($acc_catatan)) {
+		$catatanList[] = "• *Accounting* (" . $acc_by . "): \"" . $acc_catatan . "\"";
+	}
+	if (!empty($pjk_catatan)) {
+		$catatanList[] = "• *Pajak* (" . $pjk_by . "): \"" . $pjk_catatan . "\"";
+	}
+	if (!empty($gm_catatan)) {
+		$catatanList[] = "• *General Manager* (" . $gm_by . "): \"" . $gm_catatan . "\"";
+	}
+
+	$catatanSection = "";
+	if (!empty($catatanList)) {
+		$catatanSection = "\n📝 *Catatan Verifikator:*\n" . implode("\n", $catatanList) . "\n";
+	}
+
+	// Instruksi pengisian dokumen jika disetujui GM
+	$fulfillmentSection = "";
+	if ($gm_st === 'disetujui') {
+		$fulfillmentSection = "\n📦 *Instruksi Dokumen Pemenuhan:*\n" .
+			"1. *Gudang*: Surat Jalan (SJ) / Resi / Packing List / BAST\n" .
+			"2. *Accounting*: Invoice & Kwitansi Penjualan\n" .
+			"3. *Pajak*: Faktur Pajak & Bukti Potong / Dokumen Terkait\n";
+	}
+
+	$pesan = $headerText . "\n\n" .
+		$statusHighlight .
+		"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+		"📄 *No. PO*: " . $no_po . "\n" .
+		"🏢 *Customer*: " . $nama_customer . "\n" .
+		"👤 *Sales*: " . $nama_sales . "\n" .
+		"💰 *Nilai Total*: " . $nominal . "\n\n" .
+		"📊 *Tracking Tahapan Approval:*\n" .
+		"1️⃣ Input Marketing : " . $p_mkt . "\n" .
+		"2️⃣ Kroscek CRO : " . $p_cro . "\n" .
+		"3️⃣ Verifikasi Accounting : " . $p_acc . "\n" .
+		"4️⃣ Verifikasi Pajak : " . $p_pjk . "\n" .
+		"5️⃣ Persetujuan GM : " . $p_gm . "\n" .
+		$catatanSection .
+		$fulfillmentSection . "\n" .
+		"🔗 *Detail & Tindak Lanjut PO*:\n" . $link . "\n\n" .
+		"_Sistem Office PT Visi Yosindo Medikal_";
+
+	$dataWa = [
+		'penerima' => $targetGroup,
+		'pesan'    => $pesan,
+		'delay'    => '2',
+		'schedule' => time() + 2
+	];
+
+	return sendWaFonnte($dataWa);
+}
+
+/**
  * Fungsi Utama Kirim WA (Fonnte API -> Convia API -> Automatic Fallback ke Whacenter)
  */
 function sendWa($dataSend)
