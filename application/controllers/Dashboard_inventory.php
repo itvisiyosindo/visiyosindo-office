@@ -87,30 +87,75 @@ class Dashboard_inventory extends CI_Controller
             ->get()
             ->result();
 
+                // 7. Total Stok Berdasarkan Gudang Penyimpanan
+        $page_data['gudang_stok'] = $this->db->query("
+            SELECT 
+                g.id_gudang,
+                g.nama_gudang,
+                g.lokasi,
+                g.jenis,
+                COUNT(DISTINCT db.id_barang) as total_sku,
+                COALESCE(SUM(db.current_stock), 0) as total_stok
+            FROM gudang g
+            LEFT JOIN penerimaan_barang pb ON pb.id_gudang = g.id_gudang AND pb.status = 1
+            LEFT JOIN detail_barang db ON db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1 AND db.current_stock > 0
+            WHERE g.status = 1
+            GROUP BY g.id_gudang, g.nama_gudang, g.lokasi, g.jenis
+            HAVING total_stok > 0
+            ORDER BY total_stok DESC
+        ")->result();
+
+        // 8. Total Stok Berdasarkan Kategori Barang (Unit Qty Stok Fisik)
+        $page_data['kategori_stok'] = $this->db->query("
+            SELECT 
+                kb.id_kategori,
+                kb.nama_kategori,
+                COUNT(DISTINCT b.id_barang) as total_sku,
+                COALESCE(SUM(db.current_stock), 0) as total_stok
+            FROM kategori_barang kb
+            JOIN barang b ON b.id_kategori = kb.id_kategori AND b.status = 1
+            JOIN detail_barang db ON db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0
+            JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1
+            GROUP BY kb.id_kategori, kb.nama_kategori
+            HAVING total_stok > 0
+            ORDER BY total_stok DESC
+        ")->result();
+
+        // 9. Total Stok Fisik Ready
+        $stokFisikRow = $this->db->query("
+            SELECT COALESCE(SUM(db.current_stock), 0) as total_stok
+            FROM detail_barang db
+            JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1
+            WHERE db.status = 1 AND db.current_stock > 0
+        ")->row();
+        $page_data['total_stok_fisik'] = $stokFisikRow ? (int)$stokFisikRow->total_stok : 0;
+
         $this->load->view('index', $page_data);
     }
 
     public function chart_data_transaksi()
     {
-        $tahun = $this->input->get('tahun') ?: date('Y');
+        $tahun = (int)($this->input->get('tahun') ?: date('Y'));
 
-        // Query Penerimaan per bulan
+        // Query Penerimaan per bulan (Trx & Qty)
         $penerimaan = $this->db
-            ->select('MONTH(data_created) as bulan, COUNT(id_penerimaan_barang) as total')
-            ->from('penerimaan_barang')
-            ->where('status', 1)
-            ->where('YEAR(data_created)', $tahun)
-            ->group_by('MONTH(data_created)')
+            ->select('MONTH(pb.tgl_masuk) as bulan, COUNT(DISTINCT pb.id_penerimaan_barang) as total, COALESCE(SUM(db.qty), 0) as total_qty')
+            ->from('penerimaan_barang pb')
+            ->join('detail_barang db', 'db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1', 'left')
+            ->where('pb.status', 1)
+            ->where('YEAR(pb.tgl_masuk)', $tahun)
+            ->group_by('MONTH(pb.tgl_masuk)')
             ->get()
             ->result();
 
-        // Query Pengeluaran per bulan
+        // Query Pengeluaran per bulan (Trx & Qty)
         $pengeluaran = $this->db
-            ->select('MONTH(data_created) as bulan, COUNT(id_pengeluaran_barang) as total')
-            ->from('pengeluaran_barang')
-            ->where('status', 1)
-            ->where('YEAR(data_created)', $tahun)
-            ->group_by('MONTH(data_created)')
+            ->select('MONTH(pb.tgl_keluar) as bulan, COUNT(DISTINCT pb.id_pengeluaran_barang) as total, COALESCE(SUM(dbk.qty), 0) as total_qty')
+            ->from('pengeluaran_barang pb')
+            ->join('detail_barang_keluar dbk', 'dbk.id_pengeluaran_barang = pb.id_pengeluaran_barang AND dbk.status = 1', 'left')
+            ->where('pb.status', 1)
+            ->where('YEAR(pb.tgl_keluar)', $tahun)
+            ->group_by('MONTH(pb.tgl_keluar)')
             ->get()
             ->result();
 
@@ -119,19 +164,25 @@ class Dashboard_inventory extends CI_Controller
             $result[$b] = [
                 'month'       => $b,
                 'penerimaan'  => 0,
-                'pengeluaran' => 0
+                'pengeluaran' => 0,
+                'qty_masuk'   => 0,
+                'qty_keluar'  => 0
             ];
         }
 
         foreach ($penerimaan as $row) {
-            $result[$row->bulan]['penerimaan'] = (int)$row->total;
+            $result[(int)$row->bulan]['penerimaan'] = (int)$row->total;
+            $result[(int)$row->bulan]['qty_masuk']   = (int)$row->total_qty;
         }
 
         foreach ($pengeluaran as $row) {
-            $result[$row->bulan]['pengeluaran'] = (int)$row->total;
+            $result[(int)$row->bulan]['pengeluaran'] = (int)$row->total;
+            $result[(int)$row->bulan]['qty_keluar']  = (int)$row->total_qty;
         }
 
+        header('Content-Type: application/json');
         echo json_encode(array_values($result));
+        exit;
     }
 
     public function pagination_log()

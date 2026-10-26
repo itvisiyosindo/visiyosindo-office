@@ -258,9 +258,15 @@
 				<h5 class="inv-panel-title">
 					<i class="fas fa-chart-line text-primary"></i> Trend Transaksi Penerimaan vs Pengeluaran (<span id="inv-span-tahun"><?= date('Y') ?></span>)
 				</h5>
-				<span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 11px;">
-					Inbound vs Outbound
-				</span>
+				<div class="d-flex align-items-center" style="gap: 6px;">
+					<div class="btn-group btn-group-sm" role="group">
+						<button type="button" class="btn btn-sm btn-primary active" id="btn_inv_mode_qty" style="font-size: 11px; padding: 2px 8px;">Unit (Qty)</button>
+						<button type="button" class="btn btn-sm btn-outline-primary" id="btn_inv_mode_trx" style="font-size: 11px; padding: 2px 8px;">Transaksi</button>
+					</div>
+					<span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 11px;">
+						Inbound vs Outbound
+					</span>
+				</div>
 			</div>
 			<div class="card-body p-3">
 				<div style="height: 260px; position: relative;">
@@ -298,6 +304,25 @@
 						}
 						?>
 					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+		<!-- 3b. Total Stok per Gudang Penyimpanan -->
+	<div class="col-12 mb-4">
+		<div class="inv-panel-card">
+			<div class="inv-panel-header">
+				<h5 class="inv-panel-title">
+					<i class="fas fa-warehouse text-success"></i> Total Stok per Gudang Penyimpanan
+				</h5>
+				<a href="<?= base_url('stock_gudang/show/default') ?>" class="btn btn-sm btn-outline-success" style="font-size: 12px; font-weight: 600;">
+					<i class="fas fa-boxes mr-1"></i> Buka Manajemen Stok Gudang <i class="fas fa-arrow-right ml-1"></i>
+				</a>
+			</div>
+			<div class="card-body p-3">
+				<div style="height: 260px; position: relative;">
+					<canvas id="chartInvGudang"></canvas>
 				</div>
 			</div>
 		</div>
@@ -411,7 +436,109 @@
 			"Jul", "Agu", "Sep", "Okt", "Nov", "Des"
 		];
 
-		let chartTransaksiInstance = null;
+				let chartTransaksiInstance = null;
+		let cachedTransaksiData = [];
+		let currentInvMode = 'qty'; // 'qty' | 'trx'
+
+		$('#btn_inv_mode_qty').on('click', function() {
+			if (currentInvMode === 'qty') return;
+			currentInvMode = 'qty';
+			$(this).addClass('btn-primary active').removeClass('btn-outline-primary');
+			$('#btn_inv_mode_trx').addClass('btn-outline-primary').removeClass('btn-primary active');
+			renderTransaksiChart(cachedTransaksiData);
+		});
+
+		$('#btn_inv_mode_trx').on('click', function() {
+			if (currentInvMode === 'trx') return;
+			currentInvMode = 'trx';
+			$(this).addClass('btn-primary active').removeClass('btn-outline-primary');
+			$('#btn_inv_mode_qty').addClass('btn-outline-primary').removeClass('btn-primary active');
+			renderTransaksiChart(cachedTransaksiData);
+		});
+
+		function renderTransaksiChart(data) {
+			let labels = [];
+			let dataMasuk = [];
+			let dataKeluar = [];
+			const isQty = currentInvMode === 'qty';
+
+			data.forEach(function(item) {
+				labels.push(bulanNames[item.month - 1]);
+				dataMasuk.push(isQty ? (item.qty_masuk || 0) : item.penerimaan);
+				dataKeluar.push(isQty ? (item.qty_keluar || 0) : item.pengeluaran);
+			});
+
+			const chartData = {
+				labels: labels,
+				datasets: [
+					{
+						label: isQty ? 'Penerimaan (Unit Masuk)' : 'Penerimaan (Surat Masuk)',
+						data: dataMasuk,
+						backgroundColor: 'rgba(16, 185, 129, 0.85)',
+						borderColor: '#10b981',
+						borderWidth: 1.5,
+						borderRadius: 6,
+						maxBarThickness: 18
+					},
+					{
+						label: isQty ? 'Pengeluaran (Unit Keluar)' : 'Pengeluaran (Surat Keluar)',
+						data: dataKeluar,
+						backgroundColor: 'rgba(245, 158, 11, 0.85)',
+						borderColor: '#f59e0b',
+						borderWidth: 1.5,
+						borderRadius: 6,
+						maxBarThickness: 18
+					}
+				]
+			};
+
+			const canvas = document.getElementById('chartInvTransaksi');
+			if (!canvas) return;
+
+			if (chartTransaksiInstance) {
+				chartTransaksiInstance.destroy();
+			}
+
+			const ctx = canvas.getContext('2d');
+			chartTransaksiInstance = new Chart(ctx, {
+				type: 'bar',
+				data: chartData,
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					scales: {
+						y: {
+							beginAtZero: true,
+							grid: { color: '#f1f5f9' },
+							ticks: {
+								precision: 0,
+								font: { family: 'Plus Jakarta Sans', size: 11 }
+							}
+						},
+						x: {
+							grid: { display: false },
+							ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+						}
+					},
+					plugins: {
+						legend: {
+							position: 'top',
+							labels: {
+								boxWidth: 12,
+								font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' }
+							}
+						},
+						tooltip: {
+							backgroundColor: '#1e293b',
+							titleFont: { size: 12, weight: 'bold' },
+							bodyFont: { size: 11.5 },
+							padding: 10,
+							cornerRadius: 8
+						}
+					}
+				}
+			});
+		}
 		let currentYear = $('#filter_year').val() || new Date().getFullYear();
 
 		function loadTransaksiChart(year) {
@@ -422,86 +549,8 @@
 				data: { tahun: year },
 				dataType: 'json',
 				success: function(data) {
-					let labels = [];
-					let dataMasuk = [];
-					let dataKeluar = [];
-
-					data.forEach(function(item) {
-						labels.push(bulanNames[item.month - 1]);
-						dataMasuk.push(item.penerimaan);
-						dataKeluar.push(item.pengeluaran);
-					});
-
-					const chartData = {
-						labels: labels,
-						datasets: [
-							{
-								label: 'Penerimaan (Barang Masuk)',
-								data: dataMasuk,
-								backgroundColor: 'rgba(16, 185, 129, 0.85)',
-								borderColor: '#10b981',
-								borderWidth: 1.5,
-								borderRadius: 6,
-								maxBarThickness: 18
-							},
-							{
-								label: 'Pengeluaran (Barang Keluar)',
-								data: dataKeluar,
-								backgroundColor: 'rgba(245, 158, 11, 0.85)',
-								borderColor: '#f59e0b',
-								borderWidth: 1.5,
-								borderRadius: 6,
-								maxBarThickness: 18
-							}
-						]
-					};
-
-					const canvas = document.getElementById('chartInvTransaksi');
-					if (!canvas) return;
-
-					if (chartTransaksiInstance) {
-						chartTransaksiInstance.destroy();
-					}
-
-					const ctx = canvas.getContext('2d');
-					chartTransaksiInstance = new Chart(ctx, {
-						type: 'bar',
-						data: chartData,
-						options: {
-							responsive: true,
-							maintainAspectRatio: false,
-							scales: {
-								y: {
-									beginAtZero: true,
-									grid: { color: '#f1f5f9' },
-									ticks: {
-										precision: 0,
-										font: { family: 'Plus Jakarta Sans', size: 11 }
-									}
-								},
-								x: {
-									grid: { display: false },
-									ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
-								}
-							},
-							plugins: {
-								legend: {
-									position: 'top',
-									labels: {
-										boxWidth: 12,
-										font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' }
-									}
-								},
-								tooltip: {
-									backgroundColor: '#1e293b',
-									titleFont: { size: 12, weight: 'bold' },
-									bodyFont: { size: 11.5 },
-									padding: 10,
-									cornerRadius: 8
-								}
-							}
-						}
-					});
+					cachedTransaksiData = data || [];
+					renderTransaksiChart(cachedTransaksiData);
 				}
 			});
 		}
@@ -513,6 +562,59 @@
 			currentYear = $(this).val() || new Date().getFullYear();
 			loadTransaksiChart(currentYear);
 		});
+
+				// Bar Chart Gudang
+		const gudangCanvas = document.getElementById('chartInvGudang');
+		if (gudangCanvas) {
+			const gudangLabels = <?= json_encode(!empty($gudang_stok) ? array_map(function($g) { return $g->nama_gudang; }, $gudang_stok) : ['Gudang']) ?>;
+			const gudangData   = <?= json_encode(!empty($gudang_stok) ? array_map(function($g) { return (int)$g->total_stok; }, $gudang_stok) : [0]) ?>;
+			const gudangSku    = <?= json_encode(!empty($gudang_stok) ? array_map(function($g) { return (int)$g->total_sku; }, $gudang_stok) : [0]) ?>;
+
+			const ctxGudang = gudangCanvas.getContext('2d');
+			new Chart(ctxGudang, {
+				type: 'bar',
+				data: {
+					labels: gudangLabels,
+					datasets: [{
+						label: 'Total Stok Fisik (Unit)',
+						data: gudangData,
+						backgroundColor: '#10b981',
+						borderRadius: 6,
+						maxBarThickness: 28
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							callbacks: {
+								label: function(ctx) {
+									const idx = ctx.dataIndex;
+									return ` Stok: ${ctx.raw} unit (${gudangSku[idx]} SKU ready)`;
+								}
+							}
+						}
+					},
+					scales: {
+						y: {
+							beginAtZero: true,
+							grid: { color: '#f1f5f9' },
+							ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+						},
+						x: {
+							grid: { display: false },
+							ticks: {
+								font: { family: 'Plus Jakarta Sans', size: 10.5 },
+								maxRotation: 40,
+								minRotation: 20
+							}
+						}
+					}
+				}
+			});
+		}
 
 		// Donut Chart Kategori
 		const kategoriCanvas = document.getElementById('chartInvKategori');

@@ -553,4 +553,179 @@ class Stock_gudang extends CI_Controller
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
     }
+
+    /**
+     * AJAX Endpoint: Visual Dashboard Data untuk Stok Gudang, Kategori, & Pergerakan In/Out
+     */
+    public function get_dashboard_stats()
+    {
+        grantAccessFor('all');
+
+        $tahun = (int)($this->input->get('tahun') ?: date('Y'));
+        if ($tahun < 2000 || $tahun > 2100) {
+            $tahun = (int)date('Y');
+        }
+
+        $id_gudang_raw = $this->input->get('id_gudang');
+        $id_gudang = 0;
+        if (!empty($id_gudang_raw) && $id_gudang_raw !== 'all' && $id_gudang_raw !== '0') {
+            $decrypted = decrypt($id_gudang_raw);
+            if (is_numeric($decrypted) && (int)$decrypted > 0) {
+                $id_gudang = (int)$decrypted;
+            } elseif (is_numeric($id_gudang_raw) && (int)$id_gudang_raw > 0) {
+                $id_gudang = (int)$id_gudang_raw;
+            }
+        }
+
+        // 1. KPI Stok Tersedia & Total SKU
+        $this->db->select('COALESCE(SUM(db.current_stock), 0) as total_stok, COUNT(DISTINCT db.id_barang) as total_sku')
+            ->from('detail_barang db')
+            ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1')
+            ->where('db.status', 1)
+            ->where('db.current_stock >', 0);
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $kpi_stok = $this->db->get()->row();
+
+        // Total Inbound (Stok Masuk Tahun Ini)
+        $this->db->select('COALESCE(SUM(db.qty), 0) as total_qty, COUNT(DISTINCT pb.id_penerimaan_barang) as total_trx')
+            ->from('penerimaan_barang pb')
+            ->join('detail_barang db', 'db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1')
+            ->where('pb.status', 1)
+            ->where('YEAR(pb.tgl_masuk)', $tahun);
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $inbound_year = $this->db->get()->row();
+
+        // Total Outbound (Stok Keluar Tahun Ini)
+        $this->db->select('COALESCE(SUM(dbk.qty), 0) as total_qty, COUNT(DISTINCT pb.id_pengeluaran_barang) as total_trx')
+            ->from('pengeluaran_barang pb')
+            ->join('detail_barang_keluar dbk', 'dbk.id_pengeluaran_barang = pb.id_pengeluaran_barang AND dbk.status = 1')
+            ->where('pb.status', 1)
+            ->where('YEAR(pb.tgl_keluar)', $tahun);
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $outbound_year = $this->db->get()->row();
+
+        // 2. Stok Berdasarkan Kategori Barang
+        $this->db->select('kb.id_kategori, kb.nama_kategori, COUNT(DISTINCT b.id_barang) as total_sku, COALESCE(SUM(db.current_stock), 0) as total_stok')
+            ->from('kategori_barang kb')
+            ->join('barang b', 'b.id_kategori = kb.id_kategori AND b.status = 1')
+            ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0')
+            ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1');
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $this->db->group_by(['kb.id_kategori', 'kb.nama_kategori'])
+            ->having('total_stok >', 0)
+            ->order_by('total_stok', 'DESC');
+        $kategori_stok = $this->db->get()->result();
+
+        // 3. Stok Berdasarkan Gudang Penyimpanan (Semua gudang aktif)
+        $gudang_stok = $this->db->query("
+            SELECT 
+                g.id_gudang,
+                g.nama_gudang,
+                g.lokasi,
+                g.jenis,
+                COUNT(DISTINCT db.id_barang) as total_sku,
+                COALESCE(SUM(db.current_stock), 0) as total_stok
+            FROM gudang g
+            LEFT JOIN penerimaan_barang pb ON pb.id_gudang = g.id_gudang AND pb.status = 1
+            LEFT JOIN detail_barang db ON db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1 AND db.current_stock > 0
+            WHERE g.status = 1
+            GROUP BY g.id_gudang, g.nama_gudang, g.lokasi, g.jenis
+            ORDER BY total_stok DESC, g.nama_gudang ASC
+        ")->result();
+
+        // 4. Pergerakan Stok Masuk vs Keluar Bulanan (Tahun Terpilih)
+        $this->db->select('MONTH(pb.tgl_masuk) as bulan, COUNT(DISTINCT pb.id_penerimaan_barang) as total_trx, COALESCE(SUM(db.qty), 0) as total_qty')
+            ->from('penerimaan_barang pb')
+            ->join('detail_barang db', 'db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1')
+            ->where('pb.status', 1)
+            ->where('YEAR(pb.tgl_masuk)', $tahun);
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $inbound_monthly = $this->db->group_by('MONTH(pb.tgl_masuk)')->get()->result();
+
+        $this->db->select('MONTH(pb.tgl_keluar) as bulan, COUNT(DISTINCT pb.id_pengeluaran_barang) as total_trx, COALESCE(SUM(dbk.qty), 0) as total_qty')
+            ->from('pengeluaran_barang pb')
+            ->join('detail_barang_keluar dbk', 'dbk.id_pengeluaran_barang = pb.id_pengeluaran_barang AND dbk.status = 1')
+            ->where('pb.status', 1)
+            ->where('YEAR(pb.tgl_keluar)', $tahun);
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $outbound_monthly = $this->db->group_by('MONTH(pb.tgl_keluar)')->get()->result();
+
+        $bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $movement = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $movement[$m] = [
+                'bulan'       => $m,
+                'nama_bulan'  => $bulanNames[$m - 1],
+                'masuk_qty'   => 0,
+                'masuk_trx'   => 0,
+                'keluar_qty'  => 0,
+                'keluar_trx'  => 0
+            ];
+        }
+        foreach ($inbound_monthly as $row) {
+            $b = (int)$row->bulan;
+            if (isset($movement[$b])) {
+                $movement[$b]['masuk_qty'] = (int)$row->total_qty;
+                $movement[$b]['masuk_trx'] = (int)$row->total_trx;
+            }
+        }
+        foreach ($outbound_monthly as $row) {
+            $b = (int)$row->bulan;
+            if (isset($movement[$b])) {
+                $movement[$b]['keluar_qty'] = (int)$row->total_qty;
+                $movement[$b]['keluar_trx'] = (int)$row->total_trx;
+            }
+        }
+
+        // 5. Top 10 Barang Terbanyak Berdasarkan Stok
+        $this->db->select('b.id_barang, b.kode_barang, b.nama_barang, kb.nama_kategori, COALESCE(SUM(db.current_stock), 0) as stok')
+            ->from('barang b')
+            ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0')
+            ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1')
+            ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
+            ->where('b.status', 1);
+        if ($id_gudang > 0) {
+            $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        $top_barang = $this->db->group_by(['b.id_barang', 'b.kode_barang', 'b.nama_barang', 'kb.nama_kategori'])
+            ->having('stok >', 0)
+            ->order_by('stok', 'DESC')
+            ->limit(10)
+            ->get()
+            ->result();
+
+        $response = [
+            'status' => 'success',
+            'tahun' => $tahun,
+            'id_gudang' => $id_gudang,
+            'kpi' => [
+                'total_stok' => (int)($kpi_stok->total_stok ?? 0),
+                'total_sku' => (int)($kpi_stok->total_sku ?? 0),
+                'masuk_qty' => (int)($inbound_year->total_qty ?? 0),
+                'masuk_trx' => (int)($inbound_year->total_trx ?? 0),
+                'keluar_qty' => (int)($outbound_year->total_qty ?? 0),
+                'keluar_trx' => (int)($outbound_year->total_trx ?? 0),
+            ],
+            'kategori_stok' => $kategori_stok,
+            'gudang_stok' => $gudang_stok,
+            'movement' => array_values($movement),
+            'top_barang' => $top_barang
+        ];
+
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        exit;
+    }
 }

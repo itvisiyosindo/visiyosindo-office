@@ -10,7 +10,9 @@
 	<div class="col">
 		<br>
 		<div class="card-body">
-			<div class="row">
+			
+			<?php $this->load->view('pages/part_dashboard_stock_gudang'); ?>
+<div class="row">
 				<div class="col-md-2">
 					<small>Filter By Kategori:</small>
 					<select class="form-control " name="filter_kategori" id="filter_kategori">
