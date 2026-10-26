@@ -256,7 +256,12 @@ class Tagihan extends CI_Controller
     }
 
     $id_tracking = decrypt($id_tracking_encrypted);
-    $reset = $this->input->get('reset'); // Untuk ajukan ulang setelah ditolak
+
+    // Jika ada parameter hapus=1 atau reset=1, hapus tagihan existing terlebih dahulu
+    if ($this->input->get('hapus') == '1' || $this->input->get('reset') == '1') {
+      $this->hapus_by_tracking($id_tracking_encrypted);
+      return;
+    }
 
     // Cek Existing
     $exists = $this->md_tagihan->checkExisting($id_tracking);
@@ -1081,7 +1086,12 @@ class Tagihan extends CI_Controller
     }
 
     $id_kirim = decrypt($id_kirim_encrypted);
-    $reset = $this->input->get('reset'); // Untuk ajukan ulang setelah ditolak
+
+    // Jika ada parameter hapus=1 atau reset=1, hapus tagihan existing terlebih dahulu
+    if ($this->input->get('hapus') == '1' || $this->input->get('reset') == '1') {
+      $this->hapus_by_kirim($id_kirim_encrypted);
+      return;
+    }
 
     // 1. Cek Data di tabel tagihan_ekspedisi (apakah sudah pernah diajukan)
     $exists = $this->md_tagihan->checkExistingKirim($id_kirim);
@@ -1345,5 +1355,120 @@ class Tagihan extends CI_Controller
     $this->md_tagihan->update($id_tagihan, $data_tagihan);
 
     echo json_encode(['success' => true, 'message' => 'Bukti pembayaran berhasil diupdate!']);
+  }
+
+  /**
+   * Hapus / Reset Tagihan Berdasarkan ID Tracking
+   * Contoh: /tagihan/hapus_by_tracking/251d12
+   */
+  public function hapus_by_tracking($id_tracking_encrypted = null)
+  {
+    grantAccessFor('all');
+    if (!$id_tracking_encrypted) {
+      $this->session->set_flashdata('error_message', 'ID Tracking tidak valid.');
+      redirect('tracking');
+      return;
+    }
+
+    $id_tracking = is_numeric($id_tracking_encrypted) ? $id_tracking_encrypted : decrypt($id_tracking_encrypted);
+    $tagihan = $this->md_tagihan->checkExisting($id_tracking);
+
+    if (!$tagihan) {
+      $this->session->set_flashdata('error_message', 'Data tagihan untuk tracking ini tidak ditemukan atau sudah dihapus.');
+      redirect('tagihan/ajukan/' . (is_numeric($id_tracking_encrypted) ? encrypt($id_tracking) : $id_tracking_encrypted));
+      return;
+    }
+
+    // Hapus dari spp_detail jika ada
+    $this->db->delete('spp_detail', ['id_tagihan' => $tagihan->id_tagihan]);
+
+    // Hapus dari tagihan_ekspedisi
+    $this->db->delete('tagihan_ekspedisi', ['id_tagihan' => $tagihan->id_tagihan]);
+
+    // Reset biaya di tracking_barang menjadi 0
+    $this->db->where('id_tracking', $id_tracking)->update('tracking_barang', ['biaya' => 0]);
+
+    addLog('Tagihan Ekspedisi', 'Hapus Tagihan ID ' . $tagihan->id_tagihan . ' (Tracking #' . $id_tracking . ')');
+
+    $this->session->set_flashdata('success_message', 'Tagihan untuk tracking #' . $id_tracking . ' berhasil dihapus.');
+    redirect('tagihan/ajukan/' . (is_numeric($id_tracking_encrypted) ? encrypt($id_tracking) : $id_tracking_encrypted));
+  }
+
+  /**
+   * Hapus Tagihan Berdasarkan ID Tagihan
+   */
+  public function hapus($id_tagihan_encrypted = null)
+  {
+    grantAccessFor('all');
+    if (!$id_tagihan_encrypted) {
+      $this->session->set_flashdata('error_message', 'ID Tagihan tidak valid.');
+      redirect('tagihan/my_submission');
+      return;
+    }
+
+    $id_tagihan = is_numeric($id_tagihan_encrypted) ? $id_tagihan_encrypted : decrypt($id_tagihan_encrypted);
+    $tagihan = $this->db->get_where('tagihan_ekspedisi', ['id_tagihan' => $id_tagihan])->row();
+
+    if (!$tagihan) {
+      $this->session->set_flashdata('error_message', 'Data tagihan tidak ditemukan atau sudah dihapus.');
+      redirect('tagihan/my_submission');
+      return;
+    }
+
+    // Hapus dari spp_detail jika ada
+    $this->db->delete('spp_detail', ['id_tagihan' => $tagihan->id_tagihan]);
+
+    // Hapus dari tagihan_ekspedisi
+    $this->db->delete('tagihan_ekspedisi', ['id_tagihan' => $tagihan->id_tagihan]);
+
+    // Reset biaya di tracking_barang atau kirim_dokumen jika ada
+    if (!empty($tagihan->id_tracking)) {
+      $this->db->where('id_tracking', $tagihan->id_tracking)->update('tracking_barang', ['biaya' => 0]);
+    }
+    if (!empty($tagihan->id_kirim)) {
+      $this->db->where('id', $tagihan->id_kirim)->update('kirim_dokumen', ['biaya' => 0]);
+    }
+
+    addLog('Tagihan Ekspedisi', 'Hapus Tagihan ID ' . $id_tagihan);
+
+    $this->session->set_flashdata('success_message', 'Tagihan berhasil dihapus.');
+    redirect('tagihan/my_submission');
+  }
+
+  /**
+   * Hapus / Reset Tagihan Berdasarkan ID Kirim Dokumen
+   * Contoh: /tagihan/hapus_by_kirim/{encrypted_id}
+   */
+  public function hapus_by_kirim($id_kirim_encrypted = null)
+  {
+    grantAccessFor('all');
+    if (!$id_kirim_encrypted) {
+      $this->session->set_flashdata('error_message', 'ID Kirim Dokumen tidak valid.');
+      redirect('kirim/show/list');
+      return;
+    }
+
+    $id_kirim = is_numeric($id_kirim_encrypted) ? $id_kirim_encrypted : decrypt($id_kirim_encrypted);
+    $tagihan = $this->md_tagihan->checkExistingKirim($id_kirim);
+
+    if (!$tagihan) {
+      $this->session->set_flashdata('error_message', 'Data tagihan untuk kirim dokumen ini tidak ditemukan atau sudah dihapus.');
+      redirect('tagihan/ajukan_kirim/' . (is_numeric($id_kirim_encrypted) ? encrypt($id_kirim) : $id_kirim_encrypted));
+      return;
+    }
+
+    // Hapus dari spp_detail jika ada
+    $this->db->delete('spp_detail', ['id_tagihan' => $tagihan->id_tagihan]);
+
+    // Hapus dari tagihan_ekspedisi
+    $this->db->delete('tagihan_ekspedisi', ['id_tagihan' => $tagihan->id_tagihan]);
+
+    // Reset biaya di kirim_dokumen menjadi 0
+    $this->db->where('id', $id_kirim)->update('kirim_dokumen', ['biaya' => 0]);
+
+    addLog('Tagihan Ekspedisi', 'Hapus Tagihan ID ' . $tagihan->id_tagihan . ' (Kirim Dokumen #' . $id_kirim . ')');
+
+    $this->session->set_flashdata('success_message', 'Tagihan untuk kirim dokumen #' . $id_kirim . ' berhasil dihapus.');
+    redirect('tagihan/ajukan_kirim/' . (is_numeric($id_kirim_encrypted) ? encrypt($id_kirim) : $id_kirim_encrypted));
   }
 }
