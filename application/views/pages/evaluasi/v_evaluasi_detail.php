@@ -315,20 +315,20 @@
 						<button type="button" class="btn btn-success btn-save float-right">Simpan</button>
 					<?php endif; ?>
 
-					<?php if (in_array($data_job->status, [2, 3])): ?>
+					<?php if (in_array($data_job->status, [1, 2, 3, 4])): ?>
 						<button type="button"
 							class="btn btn-success float-right btn-approval"
 							style="margin-right: 10px;"
-							id-Sijk="<?= encrypt($stock_opname[0]->id_so) ?>">
-							<i class="fas fa-check"></i> Kirim Notif
+							data-id="<?= $data_job->id_po ?>">
+							<i class="fas fa-paper-plane"></i> Kirim Notif
 						</button>
 					<?php endif; ?>
 
-					<?php if ($data_job->status == 4): ?>
+					<?php if (in_array($data_job->status, [4, 5])): ?>
 						<button type="button"
 							class="btn btn-success float-right btn-selesai"
 							style="margin-right: 10px;"
-							id-Sijk="<?= encrypt($stock_opname[0]->id_so) ?>">
+							data-id="<?= $data_job->id_po ?>">
 							<i class="fas fa-check"></i> Selesai
 						</button>
 					<?php endif; ?>
@@ -945,36 +945,45 @@
 		var level_ttd = $('#level_ttd').val();
 
 		$(document).on('click', '.btn-approval', function() {
-			var id = $('#id').val();
+			var id = $(this).data('id') || $('#id').val();
 
 			Swal.fire({
 				title: 'Kirim Notifikasi Evaluasi Pegawai?',
+				text: 'Notifikasi WhatsApp akan dikirimkan kepada seluruh penilai yang ditugaskan.',
 				icon: 'question',
 				showCancelButton: true,
-				confirmButtonText: 'Ya',
-				cancelButtonText: 'Tidak'
+				confirmButtonText: 'Ya, Kirim',
+				cancelButtonText: 'Batal'
 			}).then(function(result) {
 				if (result.value) {
+					var csrfToken = (typeof token !== 'undefined') ? token : ($('input[name="csrf_token"]').val() || '');
 					$.ajax({
 						method: 'POST',
-						url: 'evaluasi/sendNotif',
+						url: '<?= base_url("evaluasi/sendNotif") ?>',
 						dataType: 'JSON',
 						data: {
 							id: id,
-							csrf_token: token
+							csrf_token: csrfToken
+						},
+						beforeSend: function() {
+							$('.btn-approval').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Mengirim...');
 						},
 						success: function(resp) {
-							handleResponse(resp)
+							$('.btn-approval').prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Kirim Notif');
+							handleResponse(resp);
+						},
+						error: function(xhr, status, error) {
+							$('.btn-approval').prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Kirim Notif');
+							var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : error;
+							Swal.fire('Error!', 'Gagal menghubungi server: ' + errMsg, 'error');
 						}
-					})
-
+					});
 				}
-
-			})
-		})
+			});
+		});
 
 		$(document).on('click', '.btn-selesai', function() {
-			var id = $('#id').val();
+			var id = $(this).data('id') || $('#id').val();
 
 			Swal.fire({
 				title: 'Selesaikan Penilaian Evaluasi Pegawai?',
@@ -984,23 +993,30 @@
 				cancelButtonText: 'Tidak'
 			}).then(function(result) {
 				if (result.value) {
+					var csrfToken = (typeof token !== 'undefined') ? token : ($('input[name="csrf_token"]').val() || '');
 					$.ajax({
 						method: 'POST',
-						url: 'evaluasi/endPenilaian',
+						url: '<?= base_url("evaluasi/endPenilaian") ?>',
 						dataType: 'JSON',
 						data: {
 							id: id,
-							csrf_token: token
+							csrf_token: csrfToken
+						},
+						beforeSend: function() {
+							$('.btn-selesai').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
 						},
 						success: function(resp) {
-							handleResponse(resp)
+							$('.btn-selesai').prop('disabled', false).html('<i class="fas fa-check"></i> Selesai');
+							handleResponse(resp);
+						},
+						error: function(xhr, status, error) {
+							$('.btn-selesai').prop('disabled', false).html('<i class="fas fa-check"></i> Selesai');
+							Swal.fire('Error!', 'Gagal menghubungi server: ' + error, 'error');
 						}
-					})
-
+					});
 				}
-
-			})
-		})
+			});
+		});
 
 		$(document).on('click', '.btn-petujuk', function() {
 			$('#main-modal-indikatorPenilaian').modal('show');

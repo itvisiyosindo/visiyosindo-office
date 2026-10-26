@@ -512,20 +512,30 @@ function waSuratAprovAllSkors($data)
 
 function waEvaluasi($data)
 {
-
-	$dataWa['devId'] = hostWa('2');
+	$dataWa['devId']    = hostWa('2');
 	$dataWa['penerima'] = $data['noPenerima'];
-	$dataWa['pesan']	=   '*Notifikasi ' . $data['namaSurat'] . '*' .
-		'%0A%0ADear ' . $data['namaPenerima'] .
-		',%0A%0A' . $data['namaPengaju'] . ' meminta anda untuk mengisi ' . $data['namaSurat'] .
-		' :%0ANama Pegawai    : ' . $data['namaPegawai'] .
-		'%0APeriode : Semester ' . $data['smt'] . '  Tahun ' . $data['tahun'] .
+	if (!empty($data['idPenerima1'])) {
+		$dataWa['idPenerima1'] = $data['idPenerima1'];
+	}
 
-		'%0A%0AMohon segera periksa detail ' . $data['namaSurat'] . ' pada https://office.visiyosindo.id/evaluasi/show/detail/penilaian/' . $data['link'] .
-		'%0A%0ATerima Kasih';
+	$namaSurat    = urldecode($data['namaSurat'] ?? 'Evaluasi Pegawai');
+	$namaPenerima = urldecode($data['namaPenerima'] ?? '');
+	$namaPengaju  = urldecode($data['namaPengaju'] ?? 'HRD');
+	$namaPegawai  = urldecode($data['namaPegawai'] ?? '');
+	$smt          = urldecode($data['smt'] ?? '');
+	$tahun        = urldecode($data['tahun'] ?? '');
+	$link         = urldecode($data['link'] ?? '');
 
-	sendWa($dataWa);
-	return true;
+	$dataWa['pesan'] = "*Notifikasi " . $namaSurat . "*\n\n" .
+		"Dear " . $namaPenerima . ",\n\n" .
+		$namaPengaju . " meminta Anda untuk mengisi penilaian " . $namaSurat . " :\n" .
+		"• Nama Pegawai : " . $namaPegawai . "\n" .
+		"• Periode      : Semester " . $smt . " Tahun " . $tahun . "\n\n" .
+		"Mohon segera periksa detail " . $namaSurat . " pada link berikut:\n" .
+		"https://office.visiyosindo.id/evaluasi/show/detail/penilaian/" . $link . "\n\n" .
+		"Terima Kasih.\n_Sistem Office PT Visi Yosindo Medikal_";
+
+	return sendWa($dataWa);
 }
 
 function waEvaluasiSimpan($data)

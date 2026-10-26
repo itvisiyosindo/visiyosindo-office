@@ -239,49 +239,71 @@ class Evaluasi extends CI_Controller
         grantAccessFor('all');
 
         $id = $this->input->post('id');
-        $data['status'] = 3;
-        $this->md_evaluasi->update(['id' => $id], $data);
-
-
-
+        if (empty($id)) {
+            ajaxReturnDie('error', 'ID Evaluasi tidak ditemukan!', FALSE);
+        }
+        if (!is_numeric($id)) {
+            $id = decrypt($id);
+        }
 
         // Ambil semua id_penilai berdasarkan id_evaluasi
         $penilaiList = $this->md_evaluasi->getPenilaiByEvaluasiId($id);
 
+        // Jika belum ada di tabel evaluasi_notif, sinkronisasi otomatis dari detail evaluasi
+        if (empty($penilaiList)) {
+            $details = $this->md_evaluasi->getDetailBywhereID(['f.id_evaluasi' => $id]);
+            $id_penilai_list = [];
+            $fields = ['penilaia', 'penilaib', 'penilaic', 'penilaid', 'penilaie', 'penilaif'];
+            if (!empty($details)) {
+                foreach ($details as $d) {
+                    foreach ($fields as $field) {
+                        $p_id = $d->$field ?? null;
+                        if (!empty($p_id) && !in_array($p_id, $id_penilai_list)) {
+                            $id_penilai_list[] = $p_id;
+                            $this->md_evaluasi->addEvNotif([
+                                'id_evaluasi' => $id,
+                                'id_penilai'  => $p_id
+                            ]);
+                        }
+                    }
+                }
+            }
+            $penilaiList = $this->md_evaluasi->getPenilaiByEvaluasiId($id);
+        }
+
+        if (empty($penilaiList)) {
+            ajaxReturnDie('error', 'Belum ada penilai yang dipilih pada evaluasi ini. Silakan simpan penilai terlebih dahulu!', FALSE);
+        }
+
+        $sentCount = 0;
         foreach ($penilaiList as $penilai) {
             $id_penilai = $penilai->id_penilai;
             $ambilData  = $this->md_pengguna->getById($id_penilai);
 
             if (!empty($ambilData)) {
-                $namaTerima = $ambilData[0]->nama;
-                $idPenerima = $ambilData[0]->pengguna_id;
-
-                //$id_po       	= encrypt($id);
-                //$ambilDataEv   = $this->md_evaluasi->getEvById($id);
-                //$namaPegawai   = $ambilDataEv[0]->pegawai;
-                // $smt           = $ambilDataEv[0]->smt;
-                //$tahun         = $ambilDataEv[0]->tahun;
-
+                $namaTerima = is_array($ambilData) ? $ambilData[0]->nama : ($ambilData->nama ?? '');
+                $idPenerima = is_array($ambilData) ? $ambilData[0]->pengguna_id : ($ambilData->pengguna_id ?? $id_penilai);
 
                 // Kirim notifikasi WA
                 $dataWa = [
-                    'id'           => $id,
+                    'id'          => $id,
                     'idPenerima1' => $idPenerima,
                     'idPenerima2' => '',
                     'namaSurat'   => 'Evaluasi Pegawai',
-                    'penerima'    => $namaTerima //,
-                    //'namaPegawai' => $namaPegawai,
-                    //'smt'         => 'Evaluasi Pegawai',
-                    //'tahun'       => 'Evaluasi Pegawai'
+                    'penerima'    => $namaTerima
                 ];
 
                 $this->notifWaAddSurat(1, $dataWa);
+                $sentCount++;
             }
         }
 
+        $data['status'] = 3;
+        $this->md_evaluasi->update(['id' => $id], $data);
+
         /** LOG */
-        addLog('Evaluasi', 'Send Notif : ' . $id);
-        ajaxReturnDie('success', 'Berhasil', TRUE);
+        addLog('Evaluasi', 'Send Notif ID ' . $id . ' ke ' . $sentCount . ' penilai');
+        ajaxReturnDie('success', 'Notifikasi berhasil dikirim ke ' . $sentCount . ' penilai!', TRUE);
     }
 
 
@@ -633,15 +655,14 @@ class Evaluasi extends CI_Controller
     public function notifWaAddSurat($ulang, $detail)
     {
         //ambil data pengaju
-        $ambilDataPengaju     = $this->md_pengguna->getById(sessPenggunaId());
-        $namaPengaju        = $ambilDataPengaju[0]->nama;
+        $ambilDataPengaju = $this->md_pengguna->getById(sessPenggunaId());
+        $namaPengaju      = is_array($ambilDataPengaju) ? ($ambilDataPengaju[0]->nama ?? 'HRD') : ($ambilDataPengaju->nama ?? 'HRD');
 
-
-        $id_po         = encrypt($detail['id']);
-        $ambilDataEv   = $this->md_evaluasi->getEvById($detail['id']);
-        $namaPegawai   = $ambilDataEv->pegawai;
-        $smt           = $ambilDataEv->smt;
-        $tahun         = $ambilDataEv->tahun;
+        $id_po       = encrypt($detail['id']);
+        $ambilDataEv = $this->md_evaluasi->getEvById($detail['id']);
+        $namaPegawai = is_array($ambilDataEv) ? ($ambilDataEv[0]->pegawai ?? '') : ($ambilDataEv->pegawai ?? '');
+        $smt         = is_array($ambilDataEv) ? ($ambilDataEv[0]->smt ?? '') : ($ambilDataEv->smt ?? '');
+        $tahun       = is_array($ambilDataEv) ? ($ambilDataEv[0]->tahun ?? '') : ($ambilDataEv->tahun ?? '');
 
         for ($i = 1; $i <= $ulang; $i++) {
             if ($i == 1) {
@@ -650,22 +671,24 @@ class Evaluasi extends CI_Controller
                 $idpenerima = $detail['idPenerima2'];
             }
 
-            $dataPenerima     = $this->md_pengguna->getById($idpenerima);
-            //abaikan error
+            $dataPenerima = $this->md_pengguna->getById($idpenerima);
             error_reporting(E_ALL & ~E_NOTICE);
             ini_set('display_errors', 0);
-            //
 
-            $nope           = $dataPenerima[0]->no_hp;
+            $penerimaObj  = is_array($dataPenerima) ? ($dataPenerima[0] ?? null) : $dataPenerima;
+            $nope         = !empty($penerimaObj->no_hp) ? $penerimaObj->no_hp : (!empty($penerimaObj->nohp) ? $penerimaObj->nohp : '');
+            $namaPenerima = !empty($penerimaObj->nama) ? $penerimaObj->nama : ($detail['penerima'] ?? '');
+
             $dataWa = [
-                'namaSurat'     => urlencode($detail['namaSurat']),
-                'noPenerima'     => $nope,
-                'namaPegawai'     => urlencode($namaPegawai),
-                'namaPengaju'   => urlencode($namaPengaju),
-                'link'             => urlencode($id_po),
-                'smt'             => urlencode($smt),
-                'tahun'         => urlencode($tahun),
-                'namaPenerima'     => urlencode($detail['penerima'])
+                'namaSurat'    => $detail['namaSurat'],
+                'noPenerima'   => $nope,
+                'idPenerima1'  => $idpenerima,
+                'namaPegawai'  => $namaPegawai,
+                'namaPengaju'  => $namaPengaju,
+                'link'         => $id_po,
+                'smt'          => $smt,
+                'tahun'        => $tahun,
+                'namaPenerima' => $namaPenerima
             ];
             waEvaluasi($dataWa);
         }
