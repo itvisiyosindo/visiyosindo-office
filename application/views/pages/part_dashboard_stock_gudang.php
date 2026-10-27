@@ -785,11 +785,6 @@
             loadDashboardData();
         });
 
-        $('#dash_select_kategori').on('change', function() {
-            syncTableFilterKategoriFromDash();
-            loadDashboardData();
-        });
-
         // Sinkronisasi apabila user memilih "Filter By Kategori" di atas tabel bawah
         $(document).on('change', '#filter_kategori', function() {
             if (isSyncingKategori) return;
@@ -812,14 +807,10 @@
         });
 
         $('#btn_back_all_kategori').on('click', function() {
-            $('#dash_select_kategori').val('0').trigger('change');
-        });
-
-        $('#dash_search_nama').on('input change', function() {
-            clearTimeout(searchNamaTimer);
-            searchNamaTimer = setTimeout(function() {
-                loadDashboardData();
-            }, 350);
+            $('.chk-kategori-item').prop('checked', false);
+            updateKategoriFilterLabel();
+            syncTableFilterKategoriFromDash();
+            loadDashboardData();
         });
 
         $('#btn_reset_dash_filter').on('click', function() {
@@ -899,6 +890,9 @@
             $('#kpi_gudang_label').text(contextText);
             $('#badge_top_barang_context').text(contextText);
 
+            const singleKatId = (selectedKatIds.length === 1) ? parseInt(selectedKatIds[0], 10) : 0;
+            const singleKatName = (selectedKatIds.length === 1) ? (selectedKatNames[0] || 'Kategori Terpilih') : '';
+
             $.ajax({
                 url: '<?= base_url("stock_gudang/get_dashboard_stats") ?>',
                 type: 'GET',
@@ -951,11 +945,11 @@
                         $('#kpi_keluar_qty').text(formatNumber(res.kpi.keluar_qty) + ' Unit');
                         $('#kpi_keluar_trx').text(formatNumber(res.kpi.keluar_trx) + ' Trx Pengiriman');
 
-                        // 2. Render Kategori Chart (atau Rincian Barang Kategori saat kategori dipilih)
-                        renderKategoriChart(res.kategori_stok, res.top_barang, parseInt(idKategori, 10));
+                        // 2. Render Kategori Chart (atau Rincian Barang Kategori saat tepat 1 kategori dipilih)
+                        renderKategoriChart(res.kategori_stok, res.top_barang, singleKatId, singleKatName);
 
                         // 3. Render Gudang Chart
-                        renderGudangChart(res.gudang_stok, idGudang);
+                        renderGudangChart(res.gudang_stok, selectedGudangIds);
 
                         // 4. Render Movement Chart
                         cachedMovementData = res.movement || [];
@@ -973,7 +967,7 @@
         }
 
         // Render Kategori Chart (Horizontal Bar) - mendukung drill-down per Barang saat Kategori dipilih
-        function renderKategoriChart(kategoriData, topBarangData, selectedKategoriId) {
+        function renderKategoriChart(kategoriData, topBarangData, selectedKategoriId, selectedKatName) {
             const canvas = document.getElementById('chartStokKategori');
             if (!canvas) return;
 
@@ -983,10 +977,10 @@
 
             // Mode Drill-Down: Jika Kategori tertentu dipilih (misal Iatome / Uniray), tampilkan grafik stok per barang di kategori tsb
             if (selectedKategoriId && selectedKategoriId > 0) {
-                const katName = ($('#dash_select_kategori option:selected').text() || 'Kategori Terpilih').trim();
+                const katName = (selectedKatName || 'Kategori Terpilih').trim();
                 $('#title_chart_kategori').html(`<i class="fas fa-boxes text-primary"></i> Grafik Stok Kategori: <span class="text-primary">${katName}</span>`);
                 $('#btn_back_all_kategori').show();
-                $('#hint_chart_kategori').html('<i class="fas fa-mouse-pointer mr-1"></i> Klik bar barang untuk fokus ke item tersebut, atau klik <b>Semua Kategori</b> untuk kembali.');
+                $('#hint_chart_kategori').html('<i class="fas fa-mouse-pointer mr-1"></i> Klik bar barang untuk memfilter item tersebut, atau klik <b>Semua Kategori</b> untuk kembali.');
 
                 const items = (topBarangData || []).slice(0, 8);
                 $('#badge_total_kategori').text(items.length + ' Item Teratas');
@@ -1005,6 +999,7 @@
                 const fullNames = items.map(it => it.nama_barang || '');
                 const dataVals  = items.map(it => parseInt(it.stok, 10));
                 const satuans   = items.map(it => it.nama_satuan || 'Unit');
+                const bIds      = items.map(it => String(it.id_barang || ''));
 
                 const ctx = canvas.getContext('2d');
                 chartKategoriInstance = new ChartLib(ctx, {
@@ -1026,10 +1021,15 @@
                         onClick: function(e, elements) {
                             if (elements && elements.length > 0) {
                                 const idx = elements[0].index;
-                                const targetItemName = fullNames[idx] || '';
-                                if (targetItemName) {
-                                    const currentSearch = ($('#dash_search_nama').val() || '').trim();
-                                    $('#dash_search_nama').val(currentSearch === targetItemName ? '' : targetItemName);
+                                const targetItemId = bIds[idx];
+                                if (targetItemId) {
+                                    const $chk = $('.chk-barang-item[value="' + targetItemId + '"]');
+                                    const isCurrentlyChecked = $chk.is(':checked') && $('.chk-barang-item:checked').length === 1;
+                                    $('.chk-barang-item').prop('checked', false);
+                                    if (!isCurrentlyChecked) {
+                                        $chk.prop('checked', true);
+                                    }
+                                    updateBarangFilterLabel();
                                     loadDashboardData();
                                 }
                             }
@@ -1157,13 +1157,17 @@
         }
 
         // Render Gudang Chart (Vertical Bar)
-        function renderGudangChart(gudangData, selectedGudangId) {
+        function renderGudangChart(gudangData, selectedGudangIds) {
             const canvas = document.getElementById('chartStokGudang');
             if (!canvas) return;
 
             if (chartGudangInstance) {
                 chartGudangInstance.destroy();
             }
+
+            const selGudangArr = Array.isArray(selectedGudangIds) 
+                ? selectedGudangIds.map(String) 
+                : (selectedGudangIds ? [String(selectedGudangIds)] : []);
 
             // Filter hanya gudang dengan stok > 0
             const activeGudang = (gudangData || []).filter(g => parseInt(g.total_stok, 10) > 0);
@@ -1187,11 +1191,12 @@
             const fullNames = activeGudang.map(g => g.nama_gudang);
             const dataVals  = activeGudang.map(g => parseInt(g.total_stok, 10));
             const skuVals   = activeGudang.map(g => parseInt(g.total_sku, 10));
-            const gudangIds = activeGudang.map(g => g.id_gudang);
+            const gudangIds = activeGudang.map(g => String(g.id_gudang));
 
             // Warna bar: highlight gudang yang sedang terpilih
             const bgColors = activeGudang.map(g => {
-                if (selectedGudangId && selectedGudangId == g.id_gudang) {
+                const gid = String(g.id_gudang);
+                if (selGudangArr.length > 0 && selGudangArr.includes(gid)) {
                     return '#2563eb'; // active blue
                 }
                 return '#10b981'; // emerald green
@@ -1217,9 +1222,13 @@
                         if (elements && elements.length > 0) {
                             const idx = elements[0].index;
                             const targetGudangId = gudangIds[idx];
-                            // Fokuskan filter hanya ke gudang yang diklik
+                            // Toggle fokuskan filter ke gudang yang diklik
+                            const $chk = $('.chk-gudang-item[value="' + targetGudangId + '"]');
+                            const isCurrentlyChecked = $chk.is(':checked') && $('.chk-gudang-item:checked').length === 1;
                             $('.chk-gudang-item').prop('checked', false);
-                            $('.chk-gudang-item[value="' + targetGudangId + '"]').prop('checked', true);
+                            if (!isCurrentlyChecked) {
+                                $chk.prop('checked', true);
+                            }
                             updateGudangFilterLabel();
                             loadDashboardData();
                         }
@@ -1373,9 +1382,17 @@
 
                 const tr = $('<tr style="cursor: pointer;" title="Klik untuk memfilter barang ini"></tr>');
                 tr.on('click', function() {
-                    const currentSearch = ($('#dash_search_nama').val() || '').trim();
-                    $('#dash_search_nama').val(currentSearch === item.nama_barang ? '' : item.nama_barang);
-                    loadDashboardData();
+                    const bId = String(item.id_barang || '');
+                    if (bId) {
+                        const $chk = $('.chk-barang-item[value="' + bId + '"]');
+                        const isCurrentlyChecked = $chk.is(':checked') && $('.chk-barang-item:checked').length === 1;
+                        $('.chk-barang-item').prop('checked', false);
+                        if (!isCurrentlyChecked) {
+                            $chk.prop('checked', true);
+                        }
+                        updateBarangFilterLabel();
+                        loadDashboardData();
+                    }
                 });
                 tr.append(`<td class="text-center"><span class="badge-rank ${rankClass}">${rank}</span></td>`);
                 tr.append(`

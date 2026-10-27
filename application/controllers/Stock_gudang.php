@@ -737,7 +737,9 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_kategori > 0) {
             $this->db->where('kb.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
