@@ -262,17 +262,20 @@ $namaBulanList = [
             <h2 class="card-title"><i class="fas fa-project-diagram mr-1"></i> Workspace Penugasan Proyek & Evaluasi Bintang 5</h2>
         </header>
         <div class="card-body">
+            <?php
+            $openTabAtasan = ($this->input->get('tab', TRUE) === 'atasan') || (empty($tugas_saya) && !empty($tugas_atasan));
+            ?>
             <ul class="nav nav-tabs nav-tabs-tp" role="tablist">
-                <li class="nav-item active">
-                    <a class="nav-link active" href="#tab_tugas_saya" data-toggle="tab" role="tab">
+                <li class="nav-item <?= !$openTabAtasan ? 'active' : '' ?>">
+                    <a class="nav-link <?= !$openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_saya" data-toggle="tab" role="tab">
                         <i class="fas fa-inbox text-primary mr-1"></i> Tugas Saya (Bawahan)
                         <?php if ($kpi['my_active'] > 0): ?>
                             <span class="badge badge-primary ml-1"><?= (int)$kpi['my_active'] ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
+                <li class="nav-item <?= $openTabAtasan ? 'active' : '' ?>">
+                    <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
                         <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Bawahan (Atasan)
                         <?php if ($kpi['need_review'] > 0): ?>
                             <span class="badge badge-warning ml-1"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
@@ -290,7 +293,7 @@ $namaBulanList = [
 
             <div class="tab-content pt-3">
                 <!-- ================= TAB 1: TUGAS SAYA (SEBAGAI BAWAHAN) ================= -->
-                <div id="tab_tugas_saya" class="tab-pane active" role="tabpanel">
+                <div id="tab_tugas_saya" class="tab-pane <?= !$openTabAtasan ? 'active' : '' ?>" role="tabpanel">
                     <div class="alert alert-info py-2 mb-3">
                         <i class="fas fa-info-circle mr-1"></i>
                         <strong>Daftar Tugas Anda:</strong> Klik tombol <strong>Update Progres / Detail</strong> untuk mencentang checklist pekerjaan, dan klik <strong>Submit Selesai</strong> jika pekerjaan sudah 100% tuntas agar Atasan dapat memberikan penilaian <strong>Rating Bintang (1–5 ⭐)</strong>.
@@ -385,7 +388,7 @@ $namaBulanList = [
                 </div>
 
                 <!-- ================= TAB 2: PENUGASAN KE BAWAHAN (SEBAGAI ATASAN) ================= -->
-                <div id="tab_tugas_atasan" class="tab-pane" role="tabpanel">
+                <div id="tab_tugas_atasan" class="tab-pane <?= $openTabAtasan ? 'active' : '' ?>" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
                         <div>
                             <span class="text-muted">Memantau progres tugas yang diberikan kepada bawahan dan memberikan penilaian <strong>Rating Bintang 5</strong>.</span>
@@ -986,11 +989,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 $btn.prop('disabled', false).html(origHtml);
                 if (res && res.status === 'success') {
                     $('#modalBuatTask').modal('hide');
+                    var nextUrl = baseUrl + 'task_proyek?tab=atasan<?= $switch === "kepegawaian" ? "&nav=kepegawaian" : "" ?>';
                     if (window.swal) {
-                        swal('Berhasil!', res.msg, 'success').then(function() { window.location.reload(); });
+                        swal('Berhasil!', res.msg, 'success').then(function() { window.location.href = nextUrl; });
                     } else {
                         alert(res.msg);
-                        window.location.reload();
+                        window.location.href = nextUrl;
                     }
                 } else {
                     alert((res && res.msg) ? res.msg : 'Gagal membuat task.');
