@@ -226,10 +226,10 @@
             <!-- Pilihan Gudang Penyimpanan -->
             <div class="d-flex align-items-center" style="gap: 5px;">
                 <label for="dash_select_gudang" class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
-                    <i class="fas fa-warehouse text-primary mr-1"></i> Pilihan Gudang:
+                    <i class="fas fa-warehouse text-primary mr-1"></i> Gudang:
                 </label>
-                <select id="dash_select_gudang" class="form-control dash-filter-select" style="min-width: 220px;">
-                    <option value="0">-- Semua Gudang Penyimpanan --</option>
+                <select id="dash_select_gudang" class="form-control dash-filter-select" style="min-width: 195px;">
+                    <option value="0">-- Semua Gudang --</option>
                     <?php if (!empty($gudang)) {
                         foreach ($gudang as $rowG) {
                             $gid = decrypt($rowG->id_gudang);
@@ -239,12 +239,37 @@
                 </select>
             </div>
 
+            <!-- Filter Kategori Barang -->
+            <div class="d-flex align-items-center" style="gap: 5px;">
+                <label for="dash_select_kategori" class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
+                    <i class="fas fa-tags text-info mr-1"></i> Kategori:
+                </label>
+                <select id="dash_select_kategori" class="form-control dash-filter-select" style="min-width: 175px;">
+                    <option value="0">-- Semua Kategori --</option>
+                    <?php if (!empty($kategori_barang)) {
+                        foreach ($kategori_barang as $rowK) {
+                            $kid = is_numeric($rowK->id_kategori) ? (int)$rowK->id_kategori : (int)decrypt($rowK->id_kategori);
+                            echo '<option value="' . $kid . '">' . htmlspecialchars($rowK->nama_kategori) . '</option>';
+                        }
+                    } ?>
+                </select>
+            </div>
+
+            <!-- Filter Nama / Kode Barang -->
+            <div class="d-flex align-items-center" style="gap: 5px;">
+                <label for="dash_search_nama" class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
+                    <i class="fas fa-box-open text-warning mr-1"></i> Nama Barang:
+                </label>
+                <input type="text" id="dash_search_nama" list="dash_datalist_barang" class="form-control dash-filter-select" style="min-width: 200px;" placeholder="Ketik / pilih nama barang...">
+                <datalist id="dash_datalist_barang"></datalist>
+            </div>
+
             <!-- Filter Tahun -->
             <div class="d-flex align-items-center" style="gap: 5px;">
                 <label for="dash_select_tahun" class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569;">
                     <i class="fas fa-calendar-alt text-success mr-1"></i> Tahun:
                 </label>
-                <select id="dash_select_tahun" class="form-control dash-filter-select" style="width: 90px;">
+                <select id="dash_select_tahun" class="form-control dash-filter-select" style="width: 85px;">
                     <?php
                     $curYear = (int)date('Y');
                     for ($y = $curYear; $y >= $curYear - 4; $y--) {
@@ -253,6 +278,12 @@
                     ?>
                 </select>
             </div>
+
+            <!-- Tombol Reset Filter Kombinasi -->
+            <button type="button" class="btn btn-light btn-dash-toggle border text-danger" id="btn_reset_dash_filter" title="Reset Semua Filter" style="display:none;">
+                <i class="fas fa-undo"></i>
+                <span>Reset</span>
+            </button>
 
             <!-- Toggle Tombol Sembunyikan / Tampilkan -->
             <button type="button" class="btn btn-light btn-dash-toggle border" id="btn_toggle_dash_body" title="Tampilkan/Sembunyikan Visual">
@@ -346,7 +377,7 @@
                         <canvas id="chartStokKategori"></canvas>
                     </div>
                     <div class="mt-2 text-center text-muted" style="font-size: 11px;">
-                        <i class="fas fa-info-circle mr-1"></i> Menampilkan kategori dengan stok barang fisik ready.
+                        <i class="fas fa-mouse-pointer mr-1"></i> Klik pada bar kategori untuk memfilter dashboard ke kategori tersebut.
                     </div>
                 </div>
             </div>
@@ -490,38 +521,74 @@
             renderMovementChart(cachedMovementData);
         });
 
-        // Change Filter Gudang / Tahun
-        $('#dash_select_gudang, #dash_select_tahun').on('change', function() {
+        // Change Filter Gudang / Kategori / Tahun / Nama Barang
+        let searchNamaTimer = null;
+        $('#dash_select_gudang, #dash_select_kategori, #dash_select_tahun').on('change', function() {
+            loadDashboardData();
+        });
+
+        $('#dash_search_nama').on('input change', function() {
+            clearTimeout(searchNamaTimer);
+            searchNamaTimer = setTimeout(function() {
+                loadDashboardData();
+            }, 350);
+        });
+
+        $('#btn_reset_dash_filter').on('click', function() {
+            $('#dash_select_gudang').val('0');
+            $('#dash_select_kategori').val('0');
+            $('#dash_search_nama').val('');
             loadDashboardData();
         });
 
         function loadDashboardData() {
-            const idGudang = $('#dash_select_gudang').val() || 0;
-            const tahun    = $('#dash_select_tahun').val() || new Date().getFullYear();
+            const idGudang   = $('#dash_select_gudang').val() || 0;
+            const idKategori = $('#dash_select_kategori').val() || 0;
+            const namaBarang = ($('#dash_search_nama').val() || '').trim();
+            const tahun      = $('#dash_select_tahun').val() || new Date().getFullYear();
+
+            if (idGudang != 0 || idKategori != 0 || namaBarang !== '') {
+                $('#btn_reset_dash_filter').show();
+            } else {
+                $('#btn_reset_dash_filter').hide();
+            }
 
             $('.dash-span-tahun').text(tahun);
             showLoading();
 
-            const namaGudangSelected = $('#dash_select_gudang option:selected').text();
-            if (idGudang == 0) {
-                $('#kpi_gudang_label').text('Semua Gudang Penyimpanan');
-                $('#badge_top_barang_context').text('Semua Gudang');
-            } else {
-                $('#kpi_gudang_label').text(namaGudangSelected);
-                $('#badge_top_barang_context').text(namaGudangSelected);
-            }
+            const activeFilters = [];
+            if (idGudang != 0) activeFilters.push($('#dash_select_gudang option:selected').text());
+            if (idKategori != 0) activeFilters.push($('#dash_select_kategori option:selected').text());
+            if (namaBarang !== '') activeFilters.push('"' + namaBarang + '"');
+
+            const contextText = activeFilters.length > 0 ? activeFilters.join(' • ') : 'Semua Gudang & Kategori';
+            $('#kpi_gudang_label').text(contextText);
+            $('#badge_top_barang_context').text(contextText);
 
             $.ajax({
                 url: '<?= base_url("stock_gudang/get_dashboard_stats") ?>',
                 type: 'GET',
                 data: {
                     tahun: tahun,
-                    id_gudang: idGudang
+                    id_gudang: idGudang,
+                    id_kategori: idKategori,
+                    nama_barang: namaBarang
                 },
                 dataType: 'json',
                 success: function(res) {
                     hideLoading();
                     if (res && res.status === 'success') {
+                        // Update datalist saran nama barang
+                        if (res.barang_options && Array.isArray(res.barang_options)) {
+                            const $dl = $('#dash_datalist_barang');
+                            $dl.empty();
+                            res.barang_options.forEach(function(item) {
+                                if (item.nama_barang) {
+                                    $dl.append($('<option></option>').attr('value', item.nama_barang));
+                                }
+                            });
+                        }
+
                         // 1. Update KPI
                         $('#kpi_total_stok').text(formatNumber(res.kpi.total_stok) + ' Unit');
                         $('#kpi_total_sku').text(formatNumber(res.kpi.total_sku) + ' Item');
@@ -578,6 +645,7 @@
             const labels = topKat.map(k => k.nama_kategori || 'Tanpa Kategori');
             const dataVals = topKat.map(k => parseInt(k.total_stok, 10));
             const skuVals  = topKat.map(k => parseInt(k.total_sku, 10));
+            const katIds   = topKat.map(k => parseInt(k.id_kategori || 0, 10));
 
             const ctx = canvas.getContext('2d');
             chartKategoriInstance = new ChartLib(ctx, {
@@ -596,6 +664,16 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    onClick: function(e, elements) {
+                        if (elements && elements.length > 0) {
+                            const idx = elements[0].index;
+                            const targetKatId = katIds[idx] || 0;
+                            if (targetKatId > 0) {
+                                const currentKat = parseInt($('#dash_select_kategori').val() || 0, 10);
+                                $('#dash_select_kategori').val(currentKat === targetKatId ? '0' : targetKatId).trigger('change');
+                            }
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -840,7 +918,12 @@
                 else if (rank === 2) rankClass = 'badge-rank-2';
                 else if (rank === 3) rankClass = 'badge-rank-3';
 
-                const tr = $('<tr></tr>');
+                const tr = $('<tr style="cursor: pointer;" title="Klik untuk memfilter barang ini"></tr>');
+                tr.on('click', function() {
+                    const currentSearch = ($('#dash_search_nama').val() || '').trim();
+                    $('#dash_search_nama').val(currentSearch === item.nama_barang ? '' : item.nama_barang);
+                    loadDashboardData();
+                });
                 tr.append(`<td class="text-center"><span class="badge-rank ${rankClass}">${rank}</span></td>`);
                 tr.append(`
                     <td>

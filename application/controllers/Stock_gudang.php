@@ -581,14 +581,37 @@ class Stock_gudang extends CI_Controller
             }
         }
 
+        $id_kategori_raw = $this->input->get('id_kategori');
+        $id_kategori = 0;
+        if (!empty($id_kategori_raw) && $id_kategori_raw !== 'all' && $id_kategori_raw !== '0') {
+            $decryptedKat = decrypt($id_kategori_raw);
+            if (is_numeric($decryptedKat) && (int)$decryptedKat > 0) {
+                $id_kategori = (int)$decryptedKat;
+            } elseif (is_numeric($id_kategori_raw) && (int)$id_kategori_raw > 0) {
+                $id_kategori = (int)$id_kategori_raw;
+            }
+        }
+
+        $nama_barang = trim((string)$this->input->get('nama_barang', TRUE));
+
         // 1. KPI Stok Tersedia & Total SKU
         $this->db->select('COALESCE(SUM(db.current_stock), 0) as total_stok, COUNT(DISTINCT db.id_barang) as total_sku')
             ->from('detail_barang db')
             ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1')
+            ->join('barang b', 'b.id_barang = db.id_barang AND b.status = 1')
             ->where('db.status', 1)
             ->where('db.current_stock >', 0);
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
         }
         $kpi_stok = $this->db->get()->row();
 
@@ -596,10 +619,20 @@ class Stock_gudang extends CI_Controller
         $this->db->select('COALESCE(SUM(db.qty), 0) as total_qty, COUNT(DISTINCT pb.id_penerimaan_barang) as total_trx')
             ->from('penerimaan_barang pb')
             ->join('detail_barang db', 'db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1')
+            ->join('barang b', 'b.id_barang = db.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_masuk)', $tahun);
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
         }
         $inbound_year = $this->db->get()->row();
 
@@ -607,10 +640,20 @@ class Stock_gudang extends CI_Controller
         $this->db->select('COALESCE(SUM(dbk.qty), 0) as total_qty, COUNT(DISTINCT pb.id_pengeluaran_barang) as total_trx')
             ->from('pengeluaran_barang pb')
             ->join('detail_barang_keluar dbk', 'dbk.id_pengeluaran_barang = pb.id_pengeluaran_barang AND dbk.status = 1')
+            ->join('barang b', 'b.id_barang = dbk.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_keluar)', $tahun);
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
         }
         $outbound_year = $this->db->get()->row();
 
@@ -623,23 +666,42 @@ class Stock_gudang extends CI_Controller
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
+        if ($id_kategori > 0) {
+            $this->db->where('kb.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
+        }
         $this->db->group_by(['kb.id_kategori', 'kb.nama_kategori'])
             ->having('total_stok >', 0)
             ->order_by('total_stok', 'DESC');
         $kategori_stok = $this->db->get()->result();
 
-        // 3. Stok Berdasarkan Gudang Penyimpanan (Semua gudang aktif)
+        // 3. Stok Berdasarkan Gudang Penyimpanan (Semua gudang aktif, difilter sesuai Kategori & Nama Barang)
+        $extraGudangJoinFilter = "";
+        if ($id_kategori > 0) {
+            $extraGudangJoinFilter .= " AND b.id_kategori = " . (int)$id_kategori;
+        }
+        if ($nama_barang !== '') {
+            $escLike = $this->db->escape_like_str($nama_barang);
+            $extraGudangJoinFilter .= " AND (b.nama_barang LIKE '%{$escLike}%' OR b.kode_barang LIKE '%{$escLike}%')";
+        }
+
         $gudang_stok = $this->db->query("
             SELECT 
                 g.id_gudang,
                 g.nama_gudang,
                 g.lokasi,
                 g.jenis,
-                COUNT(DISTINCT db.id_barang) as total_sku,
-                COALESCE(SUM(db.current_stock), 0) as total_stok
+                COUNT(DISTINCT CASE WHEN b.id_barang IS NOT NULL THEN db.id_barang ELSE NULL END) as total_sku,
+                COALESCE(SUM(CASE WHEN b.id_barang IS NOT NULL THEN db.current_stock ELSE 0 END), 0) as total_stok
             FROM gudang g
             LEFT JOIN penerimaan_barang pb ON pb.id_gudang = g.id_gudang AND pb.status = 1
             LEFT JOIN detail_barang db ON db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1 AND db.current_stock > 0
+            LEFT JOIN barang b ON b.id_barang = db.id_barang AND b.status = 1 {$extraGudangJoinFilter}
             WHERE g.status = 1
             GROUP BY g.id_gudang, g.nama_gudang, g.lokasi, g.jenis
             ORDER BY total_stok DESC, g.nama_gudang ASC
@@ -649,20 +711,40 @@ class Stock_gudang extends CI_Controller
         $this->db->select('MONTH(pb.tgl_masuk) as bulan, COUNT(DISTINCT pb.id_penerimaan_barang) as total_trx, COALESCE(SUM(db.qty), 0) as total_qty')
             ->from('penerimaan_barang pb')
             ->join('detail_barang db', 'db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1')
+            ->join('barang b', 'b.id_barang = db.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_masuk)', $tahun);
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
         }
         $inbound_monthly = $this->db->group_by('MONTH(pb.tgl_masuk)')->get()->result();
 
         $this->db->select('MONTH(pb.tgl_keluar) as bulan, COUNT(DISTINCT pb.id_pengeluaran_barang) as total_trx, COALESCE(SUM(dbk.qty), 0) as total_qty')
             ->from('pengeluaran_barang pb')
             ->join('detail_barang_keluar dbk', 'dbk.id_pengeluaran_barang = pb.id_pengeluaran_barang AND dbk.status = 1')
+            ->join('barang b', 'b.id_barang = dbk.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_keluar)', $tahun);
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
+        }
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
         }
         $outbound_monthly = $this->db->group_by('MONTH(pb.tgl_keluar)')->get()->result();
 
@@ -704,6 +786,15 @@ class Stock_gudang extends CI_Controller
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        if ($nama_barang !== '') {
+            $this->db->group_start()
+                ->like('b.nama_barang', $nama_barang)
+                ->or_like('b.kode_barang', $nama_barang)
+                ->group_end();
+        }
         $top_barang = $this->db->group_by(['b.id_barang', 'b.kode_barang', 'b.nama_barang', 'kb.nama_kategori', 'sb.nama_satuan'])
             ->having('stok >', 0)
             ->order_by('stok', 'DESC')
@@ -711,10 +802,27 @@ class Stock_gudang extends CI_Controller
             ->get()
             ->result();
 
+        // 6. Daftar saran Nama Barang untuk autocomplete filter (diurutkan stok > 0 di atas)
+        $this->db->select('b.nama_barang, COALESCE(SUM(db.current_stock), 0) as stok')
+            ->from('barang b')
+            ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0', 'left')
+            ->where('b.status', 1);
+        if ($id_kategori > 0) {
+            $this->db->where('b.id_kategori', $id_kategori);
+        }
+        $barang_options = $this->db->group_by('b.nama_barang')
+            ->order_by('stok', 'DESC')
+            ->order_by('b.nama_barang', 'ASC')
+            ->limit(250)
+            ->get()
+            ->result();
+
         $response = [
             'status' => 'success',
             'tahun' => $tahun,
             'id_gudang' => $id_gudang,
+            'id_kategori' => $id_kategori,
+            'nama_barang' => $nama_barang,
             'kpi' => [
                 'total_stok' => (int)($kpi_stok->total_stok ?? 0),
                 'total_sku' => (int)($kpi_stok->total_sku ?? 0),
@@ -726,7 +834,8 @@ class Stock_gudang extends CI_Controller
             'kategori_stok' => $kategori_stok,
             'gudang_stok' => $gudang_stok,
             'movement' => array_values($movement),
-            'top_barang' => $top_barang
+            'top_barang' => $top_barang,
+            'barang_options' => $barang_options
         ];
 
         header('Content-Type: application/json');
