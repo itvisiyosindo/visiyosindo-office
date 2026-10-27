@@ -245,11 +245,12 @@
                     <i class="fas fa-tags text-info mr-1"></i> Kategori:
                 </label>
                 <select id="dash_select_kategori" class="form-control dash-filter-select" style="min-width: 175px;">
-                    <option value="0">-- Semua Kategori --</option>
+                    <option value="0" data-enc="">-- Semua Kategori --</option>
                     <?php if (!empty($kategori_barang)) {
                         foreach ($kategori_barang as $rowK) {
                             $kid = is_numeric($rowK->id_kategori) ? (int)$rowK->id_kategori : (int)decrypt($rowK->id_kategori);
-                            echo '<option value="' . $kid . '">' . htmlspecialchars($rowK->nama_kategori) . '</option>';
+                            $kenc = is_numeric($rowK->id_kategori) ? encrypt($rowK->id_kategori) : $rowK->id_kategori;
+                            echo '<option value="' . $kid . '" data-enc="' . htmlspecialchars($kenc) . '">' . htmlspecialchars($rowK->nama_kategori) . '</option>';
                         }
                     } ?>
                 </select>
@@ -368,16 +369,21 @@
             <div class="col-lg-6">
                 <div class="stock-chart-panel">
                     <div class="stock-chart-header">
-                        <h5 class="stock-chart-title">
+                        <h5 class="stock-chart-title" id="title_chart_kategori">
                             <i class="fas fa-tags text-primary"></i> Total Stok Berdasarkan Kategori
                         </h5>
-                        <span class="badge badge-light border text-primary" id="badge_total_kategori" style="font-size: 11px;">0 Kategori</span>
+                        <div class="d-flex align-items-center" style="gap: 6px;">
+                            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn_back_all_kategori" style="font-size: 11px; display: none;" title="Kembali ke Semua Kategori">
+                                <i class="fas fa-arrow-left mr-1"></i>Semua Kategori
+                            </button>
+                            <span class="badge badge-light border text-primary" id="badge_total_kategori" style="font-size: 11px;">0 Kategori</span>
+                        </div>
                     </div>
                     <div style="position: relative; height: 280px; width: 100%;">
                         <canvas id="chartStokKategori"></canvas>
                     </div>
-                    <div class="mt-2 text-center text-muted" style="font-size: 11px;">
-                        <i class="fas fa-mouse-pointer mr-1"></i> Klik pada bar kategori untuk memfilter dashboard ke kategori tersebut.
+                    <div class="mt-2 text-center text-muted" style="font-size: 11px;" id="hint_chart_kategori">
+                        <i class="fas fa-mouse-pointer mr-1"></i> Klik pada bar kategori untuk memfilter grafik & tabel ke kategori tersebut.
                     </div>
                 </div>
             </div>
@@ -523,8 +529,60 @@
 
         // Change Filter Gudang / Kategori / Tahun / Nama Barang
         let searchNamaTimer = null;
-        $('#dash_select_gudang, #dash_select_kategori, #dash_select_tahun').on('change', function() {
+        let isSyncingKategori = false;
+
+        function syncTableFilterKategoriFromDash() {
+            if (isSyncingKategori) return;
+            const $tableKat = $('#filter_kategori');
+            if (!$tableKat.length) return;
+            const encVal = $('#dash_select_kategori option:selected').attr('data-enc') || '';
+            if (($tableKat.val() || '') !== encVal) {
+                isSyncingKategori = true;
+                $tableKat.val(encVal);
+                if (typeof updateDatatable === 'function') {
+                    updateDatatable();
+                } else {
+                    $tableKat.trigger('change');
+                }
+                isSyncingKategori = false;
+            }
+        }
+
+        $('#dash_select_gudang, #dash_select_tahun').on('change', function() {
             loadDashboardData();
+        });
+
+        $('#dash_select_kategori').on('change', function() {
+            syncTableFilterKategoriFromDash();
+            loadDashboardData();
+        });
+
+        // Sinkronisasi apabila user memilih "Filter By Kategori" di atas tabel bawah
+        $(document).on('change', '#filter_kategori', function() {
+            if (isSyncingKategori) return;
+            const encVal = $(this).val() || '';
+            const selectedText = ($(this).find('option:selected').text() || '').trim().toLowerCase();
+            let matchedId = '0';
+            if (encVal !== '') {
+                $('#dash_select_kategori option').each(function() {
+                    const optEnc = $(this).attr('data-enc') || '';
+                    const optText = ($(this).text() || '').trim().toLowerCase();
+                    if (optEnc === encVal || (selectedText && optText === selectedText)) {
+                        matchedId = $(this).val();
+                        return false;
+                    }
+                });
+            }
+            if (($('#dash_select_kategori').val() || '0') !== matchedId) {
+                isSyncingKategori = true;
+                $('#dash_select_kategori').val(matchedId);
+                isSyncingKategori = false;
+                loadDashboardData();
+            }
+        });
+
+        $('#btn_back_all_kategori').on('click', function() {
+            $('#dash_select_kategori').val('0').trigger('change');
         });
 
         $('#dash_search_nama').on('input change', function() {
@@ -538,6 +596,7 @@
             $('#dash_select_gudang').val('0');
             $('#dash_select_kategori').val('0');
             $('#dash_search_nama').val('');
+            syncTableFilterKategoriFromDash();
             loadDashboardData();
         });
 
@@ -597,8 +656,8 @@
                         $('#kpi_keluar_qty').text(formatNumber(res.kpi.keluar_qty) + ' Unit');
                         $('#kpi_keluar_trx').text(formatNumber(res.kpi.keluar_trx) + ' Trx Pengiriman');
 
-                        // 2. Render Kategori Chart
-                        renderKategoriChart(res.kategori_stok);
+                        // 2. Render Kategori Chart (atau Rincian Barang Kategori saat kategori dipilih)
+                        renderKategoriChart(res.kategori_stok, res.top_barang, parseInt(idKategori, 10));
 
                         // 3. Render Gudang Chart
                         renderGudangChart(res.gudang_stok, idGudang);
@@ -618,14 +677,105 @@
             });
         }
 
-        // Render Kategori Chart (Horizontal Bar)
-        function renderKategoriChart(kategoriData) {
+        // Render Kategori Chart (Horizontal Bar) - mendukung drill-down per Barang saat Kategori dipilih
+        function renderKategoriChart(kategoriData, topBarangData, selectedKategoriId) {
             const canvas = document.getElementById('chartStokKategori');
             if (!canvas) return;
 
             if (chartKategoriInstance) {
                 chartKategoriInstance.destroy();
             }
+
+            // Mode Drill-Down: Jika Kategori tertentu dipilih (misal Iatome / Uniray), tampilkan grafik stok per barang di kategori tsb
+            if (selectedKategoriId && selectedKategoriId > 0) {
+                const katName = ($('#dash_select_kategori option:selected').text() || 'Kategori Terpilih').trim();
+                $('#title_chart_kategori').html(`<i class="fas fa-boxes text-primary"></i> Grafik Stok Kategori: <span class="text-primary">${katName}</span>`);
+                $('#btn_back_all_kategori').show();
+                $('#hint_chart_kategori').html('<i class="fas fa-mouse-pointer mr-1"></i> Klik bar barang untuk fokus ke item tersebut, atau klik <b>Semua Kategori</b> untuk kembali.');
+
+                const items = (topBarangData || []).slice(0, 8);
+                $('#badge_total_kategori').text(items.length + ' Item Teratas');
+
+                if (items.length === 0) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.font = '13px Plus Jakarta Sans';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Tidak ada stok barang ready pada kategori ' + katName, canvas.width / 2, canvas.height / 2);
+                    return;
+                }
+
+                const labels    = items.map(it => (it.nama_barang || '').length > 26 ? it.nama_barang.substring(0, 24) + '...' : it.nama_barang);
+                const fullNames = items.map(it => it.nama_barang || '');
+                const dataVals  = items.map(it => parseInt(it.stok, 10));
+                const satuans   = items.map(it => it.nama_satuan || 'Unit');
+
+                const ctx = canvas.getContext('2d');
+                chartKategoriInstance = new ChartLib(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Stok Ready',
+                            data: dataVals,
+                            backgroundColor: colorPalette.slice(0, items.length),
+                            borderRadius: 6,
+                            maxBarThickness: 18
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        onClick: function(e, elements) {
+                            if (elements && elements.length > 0) {
+                                const idx = elements[0].index;
+                                const targetItemName = fullNames[idx] || '';
+                                if (targetItemName) {
+                                    const currentSearch = ($('#dash_search_nama').val() || '').trim();
+                                    $('#dash_search_nama').val(currentSearch === targetItemName ? '' : targetItemName);
+                                    loadDashboardData();
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return tooltipItems.length > 0 ? fullNames[tooltipItems[0].dataIndex] : '';
+                                    },
+                                    label: function(context) {
+                                        const idx = context.dataIndex;
+                                        return ` Stok Ready: ${formatNumber(context.raw)} ${satuans[idx]}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: function(val) { return formatNumber(val); }
+                                }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { font: { size: 11, weight: '600' } }
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+
+            // Mode Default: Semua Kategori
+            $('#title_chart_kategori').html('<i class="fas fa-tags text-primary"></i> Total Stok Berdasarkan Kategori');
+            $('#btn_back_all_kategori').hide();
+            $('#hint_chart_kategori').html('<i class="fas fa-mouse-pointer mr-1"></i> Klik pada bar kategori (misal Uniray / Iatome) untuk fokus ke grafik kategori tersebut.');
 
             if (!kategoriData || kategoriData.length === 0) {
                 $('#badge_total_kategori').text('0 Kategori');
