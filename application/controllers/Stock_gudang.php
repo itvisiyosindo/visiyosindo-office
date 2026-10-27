@@ -67,8 +67,9 @@ class Stock_gudang extends CI_Controller
             $id = $row->id_barang;
             $encIdBarang = encrypt($id);
             $safeNamaBarang = htmlspecialchars($row->nama_barang, ENT_QUOTES, 'UTF-8');
+            $satuan = !empty($row->nama_satuan) ? htmlspecialchars($row->nama_satuan, ENT_QUOTES, 'UTF-8') : 'Unit';
             $th = array();
-            $th[] = '<span class="font-weight-semibold">' . $safeNamaBarang . '</span>';
+            $th[] = '<span class="font-weight-semibold">' . $safeNamaBarang . '</span> <span class="badge badge-secondary ml-1" style="font-size:10px; font-weight:normal;">' . $satuan . '</span>';
 
             // Stock per gudang dari lookup
             foreach ($dt_gudang as $row3) {
@@ -77,9 +78,9 @@ class Stock_gudang extends CI_Controller
                 $encIdGudang = encrypt($row3->id_gudang);
 
                 if ($valStok > 0) {
-                    $th[] = '<a href="javascript:;" class="badge badge-success px-2 py-1 btn-quick-stok" style="font-size:12px; cursor:pointer;" title="Klik untuk ubah/sesuaikan stok di ' . $safeNamaGudang . '" data-id-barang="' . $encIdBarang . '" data-nama-barang="' . $safeNamaBarang . '" data-id-gudang="' . $encIdGudang . '" data-nama-gudang="' . $safeNamaGudang . '" data-stok="' . $valStok . '">' . $valStok . ' <i class="fas fa-pen ml-1" style="font-size:9px; opacity:0.8;"></i></a>';
+                    $th[] = '<a href="javascript:;" class="badge badge-success px-2 py-1 btn-quick-stok" style="font-size:12px; cursor:pointer;" title="Klik untuk ubah/sesuaikan stok (' . $satuan . ') di ' . $safeNamaGudang . '" data-id-barang="' . $encIdBarang . '" data-nama-barang="' . $safeNamaBarang . '" data-satuan="' . $satuan . '" data-id-gudang="' . $encIdGudang . '" data-nama-gudang="' . $safeNamaGudang . '" data-stok="' . $valStok . '">' . $valStok . ' <i class="fas fa-pen ml-1" style="font-size:9px; opacity:0.8;"></i></a>';
                 } else {
-                    $th[] = '<a href="javascript:;" class="badge badge-light text-muted border px-2 py-1 btn-quick-stok" style="font-size:12px; cursor:pointer;" title="Klik untuk isi stok di ' . $safeNamaGudang . '" data-id-barang="' . $encIdBarang . '" data-nama-barang="' . $safeNamaBarang . '" data-id-gudang="' . $encIdGudang . '" data-nama-gudang="' . $safeNamaGudang . '" data-stok="0">0 <i class="fas fa-plus ml-1" style="font-size:9px; opacity:0.55;"></i></a>';
+                    $th[] = '<a href="javascript:;" class="badge badge-light text-muted border px-2 py-1 btn-quick-stok" style="font-size:12px; cursor:pointer;" title="Klik untuk isi stok (' . $satuan . ') di ' . $safeNamaGudang . '" data-id-barang="' . $encIdBarang . '" data-nama-barang="' . $safeNamaBarang . '" data-satuan="' . $satuan . '" data-id-gudang="' . $encIdGudang . '" data-nama-gudang="' . $safeNamaGudang . '" data-stok="0">0 <i class="fas fa-plus ml-1" style="font-size:9px; opacity:0.55;"></i></a>';
                 }
             }
 

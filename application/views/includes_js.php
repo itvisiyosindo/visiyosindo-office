@@ -84,6 +84,7 @@
         var $el = $(this);
         var idBarang = $el.data('id-barang');
         var namaBarang = $el.data('nama-barang');
+        var satuanBarang = $el.data('satuan') || 'Unit';
         var idGudang = $el.data('id-gudang');
         var namaGudang = $el.data('nama-gudang');
         var stokSaatIni = parseInt($el.data('stok'), 10) || 0;
@@ -94,11 +95,12 @@
                 '<div style="text-align:left; font-size:13px; margin-top:8px;">' +
                     '<div class="mb-2 p-2" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">' +
                         '<div><strong>Barang:</strong> ' + $('<div/>').text(namaBarang).html() + '</div>' +
+                        '<div><strong>Satuan:</strong> <span class="badge badge-secondary">' + $('<div/>').text(satuanBarang).html() + '</span></div>' +
                         '<div><strong>Gudang:</strong> ' + $('<div/>').text(namaGudang).html() + '</div>' +
-                        '<div><strong>Stok Saat Ini:</strong> <span class="badge badge-info">' + stokSaatIni + ' Unit</span></div>' +
+                        '<div><strong>Stok Saat Ini:</strong> <span class="badge badge-info">' + stokSaatIni + ' ' + $('<div/>').text(satuanBarang).html() + '</span></div>' +
                     '</div>' +
                     '<div class="form-group mb-2">' +
-                        '<label class="font-weight-bold mb-1">Jumlah Stok Aktual Baru <span class="text-danger">*</span></label>' +
+                        '<label class="font-weight-bold mb-1">Jumlah Stok Aktual Baru (' + $('<div/>').text(satuanBarang).html() + ') <span class="text-danger">*</span></label>' +
                         '<input type="number" id="swal_stok_baru" class="form-control" min="0" value="' + stokSaatIni + '" style="width:100%; border:1px solid #cbd5e1; padding:6px 10px;">' +
                     '</div>' +
                     '<div class="form-group mb-2">' +
@@ -111,6 +113,7 @@
                     '</div>' +
                 '</div>',
             showCancelButton: true,
+            showDenyButton: false,
             confirmButtonColor: '#10b981',
             cancelButtonColor: '#64748b',
             confirmButtonText: '<i class="fas fa-save mr-1"></i> Simpan Stok',
