@@ -101,15 +101,22 @@ class Task_proyek extends CI_Controller
         $myDivisi = ($me && !empty($me->id_divisi)) ? (int)$me->id_divisi : 0;
         $canViewAll = $this->_canViewAllTasks($myId);
 
-        // Daftar karyawan aktif (diurutkan: yang dibawahi langsung oleh user ini paling atas, lalu satu divisi, lalu alfabetis)
-        $orderPrioritySql = "(CASE WHEN p.id_atasan = {$myId} THEN 0 " . ($myDivisi > 0 ? "WHEN p.id_divisi = {$myDivisi} THEN 1 " : "") . "ELSE 2 END) ASC, ";
-        $list_bawahan = $this->db->query("
-            SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, p.hirarki, p.id_atasan, d.nama AS nama_divisi, pa.nama AS nama_atasan
+        // 1. Daftar semua karyawan aktif (untuk pilihan Atasan Saya di modal & opsi Admin)
+        $list_semua_karyawan = $this->db->query("
+            SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, d.nama AS nama_divisi
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
-            LEFT JOIN pengguna pa ON pa.pengguna_id = p.id_atasan
             WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != 1
-            ORDER BY {$orderPrioritySql} p.nama ASC
+            ORDER BY p.nama ASC
+        ")->result();
+
+        // 2. Daftar karyawan yang HANYA dibawahi langsung oleh user saat ini (id_atasan = $myId)
+        $list_bawahan = $this->db->query("
+            SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, p.hirarki, p.id_atasan, d.nama AS nama_divisi
+            FROM pengguna p
+            LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
+            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != 1 AND p.id_atasan = {$myId}
+            ORDER BY p.nama ASC
         ")->result();
 
         // 1. Tugas Saya (Sebagai Penerima / Bawahan)
@@ -215,9 +222,10 @@ class Task_proyek extends CI_Controller
         $page_data['myId']            = $myId;
         $page_data['canViewAll']      = $canViewAll;
         $page_data['viewMode']        = $viewMode;
-        $page_data['filterBulan']     = $filterBulan;
-        $page_data['filterTahun']     = $filterTahun;
-        $page_data['list_bawahan']    = $list_bawahan;
+        $page_data['filterBulan']         = $filterBulan;
+        $page_data['filterTahun']         = $filterTahun;
+        $page_data['list_bawahan']        = $list_bawahan;
+        $page_data['list_semua_karyawan'] = $list_semua_karyawan;
         $page_data['tugas_saya']      = $tugas_saya;
         $page_data['tugas_atasan']    = $tugas_atasan;
         $page_data['leaderboard']     = $leaderboard;

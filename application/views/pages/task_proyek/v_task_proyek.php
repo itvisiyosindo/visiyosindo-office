@@ -198,12 +198,7 @@ $namaBulanList = [
 
     <!-- INFO ATASAN LANGSUNG SAYA & KARYAWAN DI BAWAH SUPERVISI SAYA -->
     <?php
-    $jmlSupervisiSaya = 0;
-    foreach ($list_bawahan as $empItem) {
-        if ((int)($empItem->id_atasan ?? 0) === (int)$myId) {
-            $jmlSupervisiSaya++;
-        }
-    }
+    $jmlSupervisiSaya = count($list_bawahan);
     ?>
     <div class="alert alert-light border d-flex justify-content-between align-items-center flex-wrap py-2 px-3 mb-3 shadow-sm" style="border-left: 4px solid #2563eb !important;">
         <div class="small">
@@ -631,35 +626,38 @@ $namaBulanList = [
 
                 <div class="modal-body">
                     <div class="form-group">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap">
-                            <label class="font-weight-bold mb-0">Pilih Karyawan / Penerima Tugas <span class="text-danger">*</span></label>
-                            <?php if ($jmlSupervisiSaya > 0): ?>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-1">
+                            <label class="font-weight-bold mb-0">Pilih Karyawan Penerima Tugas <span class="text-danger">*</span></label>
+                            <?php if (!empty($list_bawahan)): ?>
                                 <button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnSelectSupervisedEmployees">
-                                    <i class="fas fa-user-check"></i> Pilih Semua Karyawan yang Saya Bawahi (<?= $jmlSupervisiSaya ?>)
+                                    <i class="fas fa-user-check"></i> Pilih Semua Bawahan (<?= count($list_bawahan) ?>)
                                 </button>
                             <?php endif; ?>
                         </div>
-                        <small class="text-muted d-block mb-1">Anda dapat memilih 1 atau beberapa karyawan sekaligus (karyawan yang Anda bawahi langsung & satu divisi ditampilkan paling atas).</small>
+                        <small class="text-muted d-block mb-1">Hanya menampilkan karyawan yang berada di bawah supervisi / atasan langsung Anda.</small>
                         <select name="id_penerima[]" id="select_penerima_task" class="form-control" multiple="multiple" required style="width: 100%;">
-                            <?php
-                            $myDivId = ($me && !empty($me->id_divisi)) ? (int)$me->id_divisi : 0;
-                            foreach ($list_bawahan as $bw):
-                                $isDirectSub = ((int)($bw->id_atasan ?? 0) === (int)$myId);
-                                $isSameDiv   = ($myDivId > 0 && (int)$bw->id_divisi === $myDivId);
-                                $divLabel    = !empty($bw->nama_divisi) ? $bw->nama_divisi : 'Lintas Divisi';
-                                if ($isDirectSub) {
-                                    $prefixLabel = '👑 [Dibawahi Langsung - ' . htmlspecialchars($divLabel) . '] ';
-                                } elseif ($isSameDiv) {
-                                    $prefixLabel = '⭐ [Satu Divisi - ' . htmlspecialchars($divLabel) . '] ';
-                                } else {
-                                    $prefixLabel = '[' . htmlspecialchars($divLabel) . '] ';
-                                }
+                            <?php foreach ($list_bawahan as $bw):
+                                $divLabel = !empty($bw->nama_divisi) ? $bw->nama_divisi : 'Umum';
                             ?>
-                                <option value="<?= (int)$bw->pengguna_id ?>" data-supervised="<?= $isDirectSub ? '1' : '0' ?>">
-                                    <?= $prefixLabel ?><?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?>
+                                <option value="<?= (int)$bw->pengguna_id ?>">
+                                    <?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?> — [<?= htmlspecialchars($divLabel) ?>]
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (empty($list_bawahan)): ?>
+                            <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <strong>Belum ada bawahan yang terdaftar:</strong> Belum ada karyawan yang memilih Anda sebagai <em>Atasan Langsung</em>. Karyawan dapat memilih Anda di halaman Profil mereka, atau Admin/HRD dapat mengaturnya di menu <strong>Data Karyawan</strong>.
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($canViewAll)): ?>
+                            <div class="mt-2 text-right">
+                                <label class="small text-muted font-weight-normal mb-0" style="cursor:pointer;" title="Fitur khusus Admin / Direksi">
+                                    <input type="checkbox" id="chkShowAllEmployeesForAdmin"> <i class="fas fa-user-shield text-primary"></i> Tampilkan seluruh karyawan perusahaan (Khusus Admin/Direksi)
+                                </label>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="row">
@@ -977,7 +975,7 @@ $namaBulanList = [
                         <label class="font-weight-bold">Pilih Atasan Langsung</label>
                         <select id="select_atasan_saya_tp" name="id_atasan" class="form-control">
                             <option value="">-- Belum Ditentukan / Tidak Ada --</option>
-                            <?php foreach ($list_bawahan as $atOpt):
+                            <?php foreach ($list_semua_karyawan as $atOpt):
                                 if ((int)$atOpt->pengguna_id === (int)$myId) continue;
                             ?>
                                 <option value="<?= (int)$atOpt->pengguna_id ?>" <?= ((int)($me->id_atasan ?? 0) === (int)$atOpt->pengguna_id) ? 'selected' : '' ?>>
@@ -1021,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if ($.fn.select2) {
         $('#select_penerima_task').select2({
             dropdownParent: $('#modalBuatTask'),
-            placeholder: 'Ketik nama karyawan penerima tugas (bisa pilih lebih dari 1)...',
+            placeholder: 'Pilih bawahan penerima tugas (bisa lebih dari 1)...',
             allowClear: true,
             width: '100%'
         });
@@ -1029,12 +1027,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tombol Pilih Semua Karyawan yang Dibawahi Langsung
     $('#btnSelectSupervisedEmployees').on('click', function() {
-        var supervisedIds = [];
-        $('#select_penerima_task option[data-supervised="1"]').each(function() {
-            supervisedIds.push($(this).val());
+        var allIds = [];
+        $('#select_penerima_task option').each(function() {
+            allIds.push($(this).val());
         });
-        $('#select_penerima_task').val(supervisedIds).trigger('change');
+        $('#select_penerima_task').val(allIds).trigger('change');
     });
+
+    <?php if (!empty($canViewAll)): ?>
+    var defaultBawahanHtml = $('#select_penerima_task').html();
+    var allKaryawanOptions = <?= json_encode(array_map(function($k) {
+        return [
+            'id' => (int)$k->pengguna_id,
+            'text' => $k->nama . (!empty($k->jabatan) ? ' (' . $k->jabatan . ')' : '') . (!empty($k->nama_divisi) ? ' — [' . $k->nama_divisi . ']' : '')
+        ];
+    }, $list_semua_karyawan)) ?>;
+
+    $('#chkShowAllEmployeesForAdmin').on('change', function() {
+        var isChecked = $(this).is(':checked');
+        $('#select_penerima_task').empty();
+        if (isChecked) {
+            $.each(allKaryawanOptions, function(idx, item) {
+                var newOpt = new Option(item.text, item.id, false, false);
+                $('#select_penerima_task').append(newOpt);
+            });
+        } else {
+            $('#select_penerima_task').html(defaultBawahanHtml);
+        }
+        $('#select_penerima_task').val(null).trigger('change');
+    });
+    <?php endif; ?>
 
     // Simpan Atasan Langsung Saya dari halaman Task Proyek
     $('#formAturAtasanSaya').on('submit', function(e) {
