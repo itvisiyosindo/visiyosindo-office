@@ -147,13 +147,6 @@
 						</a>
 					</li>
 
-					<li class="<?= $page_name == 'task_proyek/v_task_proyek' ? 'nav-active' : '' ?>">
-						<a class="nav-link" href="<?= base_url('task_proyek') ?>">
-							<i class="fas fa-tasks text-warning" aria-hidden="true"></i>
-							<span>Task & Proyek Kerja <span class="badge badge-warning ml-1" style="font-size:10px;">★5</span></span>
-						</a>
-					</li>
-
 					<li class="<?= $page_name == 'voting/v_voting' ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('voting') ?>">
 							<i class="icons fas fa-poll" aria-hidden="true"></i>

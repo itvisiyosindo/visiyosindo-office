@@ -192,7 +192,6 @@
 
 
 					<li class="nav-parent <?= in_array($page_name, [
-												'task_proyek/v_task_proyek',
 												'jobdesc/v_job',
 												'jobdesc/v_aju_job',
 												'jobdesc/v_job_detail',
@@ -222,7 +221,8 @@
 												'laporan/v_my_detail_nilai_rev2',
 												'laporan/v_lap_rev2',
 												'laporan/v_lap_detail_rev2',
-												'evaluasi/v_evaluasi_smt'
+												'evaluasi/v_evaluasi_smt',
+												'task_proyek/v_task_proyek'
 											]) ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
 							<i class="fa fa-chart-bar" aria-hidden="true"></i>
@@ -230,14 +230,13 @@
 						</a>
 						<ul class="nav nav-children">
 							<li class="<?= $page_name == 'task_proyek/v_task_proyek' ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('task_proyek?nav=kepegawaian') ?>">
+								<a class="nav-link" href="<?= base_url('task_proyek') ?>">
 									<i class="fas fa-star text-warning mr-1"></i> Task & Proyek Kerja <strong>(★5)</strong>
 								</a>
 							</li>
 
 							<?php if (in_array((string)sessPenggunaId(), ['1', '58', '69', '744', '54', '33', '23', '107'])) { ?>
-								<li class="<?= in_array($page_name, ['task_proyek/v_task_proyek',
-												'jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
+								<li class="<?= in_array($page_name, ['jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('jobdesc') ?>">
 										Jobdesk
 									</a>
@@ -285,8 +284,7 @@
 										Jobdesk 
 									</a>
 								</li>-->
-								<li class="<?= in_array($page_name, ['task_proyek/v_task_proyek',
-												'jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
+								<li class="<?= in_array($page_name, ['jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('jobdesc') ?>">
 										Jobdesk
 									</a>

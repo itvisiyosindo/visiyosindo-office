@@ -75,7 +75,7 @@ class Task_proyek extends CI_Controller
         grantAccessFor('all');
 
         $myId = (int)sessPenggunaId();
-        $nav  = $this->input->get('nav', TRUE) === 'kepegawaian' ? 'kepegawaian' : 'home';
+        $nav  = 'kepegawaian';
 
         $filterBulan = $this->input->get('bulan', TRUE);
         $filterTahun = $this->input->get('tahun', TRUE);
