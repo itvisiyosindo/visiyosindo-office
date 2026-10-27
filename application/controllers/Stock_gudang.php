@@ -571,13 +571,27 @@ class Stock_gudang extends CI_Controller
         }
 
         $id_gudang_raw = $this->input->get('id_gudang');
+        $gudang_ids = [];
         $id_gudang = 0;
         if (!empty($id_gudang_raw) && $id_gudang_raw !== 'all' && $id_gudang_raw !== '0') {
-            $decrypted = decrypt($id_gudang_raw);
-            if (is_numeric($decrypted) && (int)$decrypted > 0) {
-                $id_gudang = (int)$decrypted;
-            } elseif (is_numeric($id_gudang_raw) && (int)$id_gudang_raw > 0) {
-                $id_gudang = (int)$id_gudang_raw;
+            if (is_array($id_gudang_raw)) {
+                $rawList = $id_gudang_raw;
+            } else {
+                $rawList = explode(',', (string)$id_gudang_raw);
+            }
+            foreach ($rawList as $item) {
+                $item = trim((string)$item);
+                if ($item === '' || $item === '0' || $item === 'all') continue;
+                $decrypted = decrypt($item);
+                if (is_numeric($decrypted) && (int)$decrypted > 0) {
+                    $gudang_ids[] = (int)$decrypted;
+                } elseif (is_numeric($item) && (int)$item > 0) {
+                    $gudang_ids[] = (int)$item;
+                }
+            }
+            $gudang_ids = array_values(array_unique($gudang_ids));
+            if (count($gudang_ids) === 1) {
+                $id_gudang = $gudang_ids[0];
             }
         }
 
@@ -601,7 +615,9 @@ class Stock_gudang extends CI_Controller
             ->join('barang b', 'b.id_barang = db.id_barang AND b.status = 1')
             ->where('db.status', 1)
             ->where('db.current_stock >', 0);
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -622,7 +638,9 @@ class Stock_gudang extends CI_Controller
             ->join('barang b', 'b.id_barang = db.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_masuk)', $tahun);
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -643,7 +661,9 @@ class Stock_gudang extends CI_Controller
             ->join('barang b', 'b.id_barang = dbk.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_keluar)', $tahun);
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -663,7 +683,9 @@ class Stock_gudang extends CI_Controller
             ->join('barang b', 'b.id_kategori = kb.id_kategori AND b.status = 1')
             ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0')
             ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1');
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -680,7 +702,7 @@ class Stock_gudang extends CI_Controller
             ->order_by('total_stok', 'DESC');
         $kategori_stok = $this->db->get()->result();
 
-        // 3. Stok Berdasarkan Gudang Penyimpanan (Semua gudang aktif, difilter sesuai Kategori & Nama Barang)
+        // 3. Stok Berdasarkan Gudang Penyimpanan (Hanya gudang yang dicentang / semua jika tidak ada filter)
         $extraGudangJoinFilter = "";
         if ($id_kategori > 0) {
             $extraGudangJoinFilter .= " AND b.id_kategori = " . (int)$id_kategori;
@@ -688,6 +710,14 @@ class Stock_gudang extends CI_Controller
         if ($nama_barang !== '') {
             $escLike = $this->db->escape_like_str($nama_barang);
             $extraGudangJoinFilter .= " AND (b.nama_barang LIKE '%{$escLike}%' OR b.kode_barang LIKE '%{$escLike}%')";
+        }
+
+        $extraGudangWhere = "";
+        if (!empty($gudang_ids)) {
+            $idListStr = implode(',', array_map('intval', $gudang_ids));
+            $extraGudangWhere = " AND g.id_gudang IN ({$idListStr})";
+        } elseif ($id_gudang > 0) {
+            $extraGudangWhere = " AND g.id_gudang = " . (int)$id_gudang;
         }
 
         $gudang_stok = $this->db->query("
@@ -702,7 +732,7 @@ class Stock_gudang extends CI_Controller
             LEFT JOIN penerimaan_barang pb ON pb.id_gudang = g.id_gudang AND pb.status = 1
             LEFT JOIN detail_barang db ON db.id_penerimaan_barang = pb.id_penerimaan_barang AND db.status = 1 AND db.current_stock > 0
             LEFT JOIN barang b ON b.id_barang = db.id_barang AND b.status = 1 {$extraGudangJoinFilter}
-            WHERE g.status = 1
+            WHERE g.status = 1 {$extraGudangWhere}
             GROUP BY g.id_gudang, g.nama_gudang, g.lokasi, g.jenis
             ORDER BY total_stok DESC, g.nama_gudang ASC
         ")->result();
@@ -714,7 +744,9 @@ class Stock_gudang extends CI_Controller
             ->join('barang b', 'b.id_barang = db.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_masuk)', $tahun);
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -734,7 +766,9 @@ class Stock_gudang extends CI_Controller
             ->join('barang b', 'b.id_barang = dbk.id_barang', 'left')
             ->where('pb.status', 1)
             ->where('YEAR(pb.tgl_keluar)', $tahun);
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -783,7 +817,9 @@ class Stock_gudang extends CI_Controller
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->where('b.status', 1);
-        if ($id_gudang > 0) {
+        if (!empty($gudang_ids)) {
+            $this->db->where_in('pb.id_gudang', $gudang_ids);
+        } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
         if ($id_kategori > 0) {
@@ -820,7 +856,8 @@ class Stock_gudang extends CI_Controller
         $response = [
             'status' => 'success',
             'tahun' => $tahun,
-            'id_gudang' => $id_gudang,
+            'id_gudang' => !empty($gudang_ids) ? implode(',', $gudang_ids) : ($id_gudang > 0 ? (string)$id_gudang : '0'),
+            'gudang_ids' => $gudang_ids,
             'id_kategori' => $id_kategori,
             'nama_barang' => $nama_barang,
             'kpi' => [
