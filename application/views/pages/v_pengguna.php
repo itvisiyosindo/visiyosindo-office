@@ -881,6 +881,15 @@
                             <option value="4">PIC</option>
                         </select>
                     </div>
+                    <div class="form-group-modern">
+                        <label><i class="fas fa-user-shield text-primary"></i> Atasan Langsung (Supervisor)</label>
+                        <select class="form-control" id="id_atasan" name="id_atasan">
+                            <option value="">- Belum Ditentukan / Tidak Ada -</option>
+                            <?php if(isset($list_atasan)): foreach($list_atasan as $at): ?>
+                            <option value="<?= (int)$at->pengguna_id ?>"><?= htmlspecialchars($at->nama) ?><?= !empty($at->jabatan) ? ' (' . htmlspecialchars($at->jabatan) . ')' : '' ?></option>
+                            <?php endforeach; endif; ?>
+                        </select>
+                    </div>
                     <div class="form-group-modern password-form">
                         <label>Password <span class="text-danger">*</span></label>
                         <div class="row">
@@ -1046,6 +1055,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#main-modal #username').val(data[0].email);
                 $('#main-modal #level option[value="' + data[0].level + '"]').prop("selected", true).trigger('change');
                 $('#main-modal #hirarki option[value="' + data[0].hirarki + '"]').prop("selected", true).trigger('change');
+                $('#main-modal #id_atasan').val(data[0].id_atasan ? data[0].id_atasan : '').trigger('change');
 
                 let text_isaktif = data[0].is_active == 1 ? "Nonaktifkan" : "Aktifkan";
                 let color = data[0].is_active == 1 ? "danger" : "success";

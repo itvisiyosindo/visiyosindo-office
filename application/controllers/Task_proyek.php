@@ -83,10 +83,17 @@ class Task_proyek extends CI_Controller
             $filterTahun = date('Y');
         }
 
-        // Info user login saat ini
-        $me = $this->db->select('p.*, d.nama as nama_divisi')
+        // Pastikan kolom id_atasan tersedia di tabel pengguna
+        $chkAtasan = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'id_atasan'");
+        if ($chkAtasan && $chkAtasan->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `id_atasan` INT(11) DEFAULT NULL AFTER `hirarki`, ADD INDEX `idx_id_atasan` (`id_atasan`)");
+        }
+
+        // Info user login saat ini beserta nama atasan langsungnya
+        $me = $this->db->select('p.*, d.nama as nama_divisi, pa.nama as nama_atasan, pa.jabatan as jabatan_atasan')
             ->from('pengguna p')
             ->join('divisi d', 'd.id_divisi = p.id_divisi', 'left')
+            ->join('pengguna pa', 'pa.pengguna_id = p.id_atasan', 'left')
             ->where('p.pengguna_id', $myId)
             ->get()
             ->row();
@@ -94,14 +101,15 @@ class Task_proyek extends CI_Controller
         $myDivisi = ($me && !empty($me->id_divisi)) ? (int)$me->id_divisi : 0;
         $canViewAll = $this->_canViewAllTasks($myId);
 
-        // Daftar karyawan aktif untuk pilihan Bawahan (diurutkan: satu divisi di atas, lalu alfabetis)
-        $orderDivSql = $myDivisi > 0 ? "(CASE WHEN p.id_divisi = {$myDivisi} THEN 0 ELSE 1 END) ASC, " : "";
+        // Daftar karyawan aktif (diurutkan: yang dibawahi langsung oleh user ini paling atas, lalu satu divisi, lalu alfabetis)
+        $orderPrioritySql = "(CASE WHEN p.id_atasan = {$myId} THEN 0 " . ($myDivisi > 0 ? "WHEN p.id_divisi = {$myDivisi} THEN 1 " : "") . "ELSE 2 END) ASC, ";
         $list_bawahan = $this->db->query("
-            SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, p.hirarki, d.nama AS nama_divisi
+            SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, p.hirarki, p.id_atasan, d.nama AS nama_divisi, pa.nama AS nama_atasan
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
+            LEFT JOIN pengguna pa ON pa.pengguna_id = p.id_atasan
             WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != 1
-            ORDER BY {$orderDivSql} p.nama ASC
+            ORDER BY {$orderPrioritySql} p.nama ASC
         ")->result();
 
         // 1. Tugas Saya (Sebagai Penerima / Bawahan)
@@ -202,7 +210,7 @@ class Task_proyek extends CI_Controller
         $page_data['switch']          = $nav;
         $page_data['page_name']       = 'task_proyek/v_task_proyek';
         $page_data['page_title']      = 'Manajemen Task & Proyek Kerja';
-        $page_data['page_desc']       = 'Penugasan Atasan ke Bawahan, Monitoring Progres & Penilaian Rating Bintang 5';
+        $page_data['page_desc']       = 'Penugasan Atasan ke Karyawan, Monitoring Progres & Penilaian Rating Bintang 5';
         $page_data['me']              = $me;
         $page_data['myId']            = $myId;
         $page_data['canViewAll']      = $canViewAll;
@@ -248,7 +256,7 @@ class Task_proyek extends CI_Controller
         $checklist_raw   = $this->input->post('checklist_items', FALSE);
 
         if ($judul === '' || empty($penerima_list)) {
-            ajaxReturnDie('error', 'Judul Task dan Penerima Tugas (Bawahan) wajib diisi!', FALSE);
+            ajaxReturnDie('error', 'Judul Task dan Penerima Tugas (Karyawan) wajib diisi!', FALSE);
             return;
         }
 
@@ -511,7 +519,7 @@ class Task_proyek extends CI_Controller
             if (!empty($noHpAtasan) && function_exists('sendWa')) {
                 $pesanWa = "*✅ LAPORAN PENYELESAIAN TASK (MENUNGGU RATING ⭐)*" .
                     "%0A%0AHalo *" . $atasan->nama . "*," .
-                    "%0ABawahan Anda (*" . ($bawahan ? $bawahan->nama : 'Karyawan') . "*) telah menyelesaikan Task:" .
+                    "%0AKaryawan (*" . ($bawahan ? $bawahan->nama : 'Karyawan') . "*) telah menyelesaikan Task:" .
                     "%0A%0A🔹 *Kode*: " . $task->kode_task .
                     "%0A📌 *Judul*: " . $task->judul .
                     "%0A📝 *Hasil*: " . $catatan_bawahan .
@@ -560,7 +568,7 @@ class Task_proyek extends CI_Controller
 
         if ($keputusan === 'revisi') {
             if ($ulasan_atasan === '') {
-                ajaxReturnDie('error', 'Harap tuliskan catatan bagian mana yang perlu direvisi oleh bawahan!', FALSE);
+                ajaxReturnDie('error', 'Harap tuliskan catatan bagian mana yang perlu direvisi oleh karyawan!', FALSE);
                 return;
             }
 
@@ -595,7 +603,7 @@ class Task_proyek extends CI_Controller
             } catch (\Throwable $e) {
             }
 
-            ajaxReturnDie('success', 'Permintaan revisi telah dikirimkan kepada bawahan.', TRUE);
+            ajaxReturnDie('success', 'Permintaan revisi telah dikirimkan kepada karyawan.', TRUE);
             return;
         }
 

@@ -191,8 +191,37 @@ $namaBulanList = [
         </div>
         <div class="col-md-4 text-right mt-2 mt-md-0">
             <button type="button" class="btn btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask">
-                <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek ke Bawahan
+                <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek ke Karyawan
             </button>
+        </div>
+    </div>
+
+    <!-- INFO ATASAN LANGSUNG SAYA & KARYAWAN DI BAWAH SUPERVISI SAYA -->
+    <?php
+    $jmlSupervisiSaya = 0;
+    foreach ($list_bawahan as $empItem) {
+        if ((int)($empItem->id_atasan ?? 0) === (int)$myId) {
+            $jmlSupervisiSaya++;
+        }
+    }
+    ?>
+    <div class="alert alert-light border d-flex justify-content-between align-items-center flex-wrap py-2 px-3 mb-3 shadow-sm" style="border-left: 4px solid #2563eb !important;">
+        <div class="small">
+            <i class="fas fa-user-shield text-primary mr-1"></i>
+            <strong>Atasan Langsung Anda:</strong>
+            <?php if (!empty($me->nama_atasan)): ?>
+                <span class="badge badge-primary px-2 py-1 ml-1"><?= htmlspecialchars($me->nama_atasan) ?><?= !empty($me->jabatan_atasan) ? ' (' . htmlspecialchars($me->jabatan_atasan) . ')' : '' ?></span>
+            <?php else: ?>
+                <span class="badge badge-warning px-2 py-1 ml-1">Belum Diatur</span>
+            <?php endif; ?>
+            <button type="button" class="btn btn-xs btn-outline-primary ml-2" data-toggle="modal" data-target="#modalAturAtasanSaya">
+                <i class="fas fa-user-edit"></i> <?= !empty($me->nama_atasan) ? 'Ubah Atasan' : 'Pilih Atasan Saya' ?>
+            </button>
+        </div>
+        <div class="small mt-1 mt-md-0">
+            <i class="fas fa-users text-success mr-1"></i>
+            <strong>Karyawan yang Anda Bawahi Langsung:</strong>
+            <span class="badge badge-success px-2 py-1"><?= $jmlSupervisiSaya ?> Karyawan</span>
         </div>
     </div>
 
@@ -203,7 +232,7 @@ $namaBulanList = [
                 <div>
                     <div class="text-muted small font-weight-bold text-uppercase">Tugas Aktif Saya</div>
                     <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)$kpi['my_active'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
-                    <div class="small text-primary">Sebagai Pelaksana / Bawahan</div>
+                    <div class="small text-primary">Sebagai Pelaksana / Karyawan</div>
                 </div>
                 <div class="tp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
                     <i class="fas fa-tasks"></i>
@@ -268,7 +297,7 @@ $namaBulanList = [
             <ul class="nav nav-tabs nav-tabs-tp" role="tablist">
                 <li class="nav-item <?= !$openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= !$openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_saya" data-toggle="tab" role="tab">
-                        <i class="fas fa-inbox text-primary mr-1"></i> Tugas Saya (Bawahan)
+                        <i class="fas fa-inbox text-primary mr-1"></i> Tugas Saya (Karyawan)
                         <?php if ($kpi['my_active'] > 0): ?>
                             <span class="badge badge-primary ml-1"><?= (int)$kpi['my_active'] ?></span>
                         <?php endif; ?>
@@ -276,7 +305,7 @@ $namaBulanList = [
                 </li>
                 <li class="nav-item <?= $openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
-                        <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Bawahan (Atasan)
+                        <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Karyawan (Atasan)
                         <?php if ($kpi['need_review'] > 0): ?>
                             <span class="badge badge-warning ml-1"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
                         <?php else: ?>
@@ -292,7 +321,7 @@ $namaBulanList = [
             </ul>
 
             <div class="tab-content pt-3">
-                <!-- ================= TAB 1: TUGAS SAYA (SEBAGAI BAWAHAN) ================= -->
+                <!-- ================= TAB 1: TUGAS SAYA (SEBAGAI KARYAWAN) ================= -->
                 <div id="tab_tugas_saya" class="tab-pane <?= !$openTabAtasan ? 'active' : '' ?>" role="tabpanel">
                     <div class="alert alert-info py-2 mb-3">
                         <i class="fas fa-info-circle mr-1"></i>
@@ -387,11 +416,11 @@ $namaBulanList = [
                     </div>
                 </div>
 
-                <!-- ================= TAB 2: PENUGASAN KE BAWAHAN (SEBAGAI ATASAN) ================= -->
+                <!-- ================= TAB 2: PENUGASAN KE KARYAWAN (SEBAGAI ATASAN) ================= -->
                 <div id="tab_tugas_atasan" class="tab-pane <?= $openTabAtasan ? 'active' : '' ?>" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
                         <div>
-                            <span class="text-muted">Memantau progres tugas yang diberikan kepada bawahan dan memberikan penilaian <strong>Rating Bintang 5</strong>.</span>
+                            <span class="text-muted">Memantau progres tugas yang diberikan kepada karyawan dan memberikan penilaian <strong>Rating Bintang 5</strong>.</span>
                         </div>
                         <?php if ($canViewAll): ?>
                             <div class="btn-group btn-group-sm mt-2 mt-md-0">
@@ -411,8 +440,8 @@ $namaBulanList = [
                                 <tr>
                                     <th width="45">No</th>
                                     <th>Kode & Proyek</th>
-                                    <th>Penerima Tugas (Bawahan)</th>
-                                    <th>Judul Task & Hasil Bawahan</th>
+                                    <th>Penerima Tugas (Karyawan)</th>
+                                    <th>Judul Task & Hasil Karyawan</th>
                                     <th>Pemberi Tugas</th>
                                     <th>Prioritas & Deadline</th>
                                     <th width="120">Progres</th>
@@ -442,7 +471,7 @@ $namaBulanList = [
                                             <div style="font-weight: 700; color: #1e293b;"><?= htmlspecialchars($row->judul) ?></div>
                                             <?php if (!empty($row->catatan_bawahan)): ?>
                                                 <div class="mt-1 p-1 rounded" style="background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 11.5px;">
-                                                    <strong>Laporan Bawahan:</strong> <?= htmlspecialchars(mb_strimwidth($row->catatan_bawahan, 0, 110, '...')) ?>
+                                                    <strong>Laporan Karyawan:</strong> <?= htmlspecialchars(mb_strimwidth($row->catatan_bawahan, 0, 110, '...')) ?>
                                                     <?php if (!empty($row->bukti_selesai)): ?>
                                                         <br><a href="<?= htmlspecialchars($row->bukti_selesai) ?>" target="_blank" class="text-primary font-weight-bold"><i class="fas fa-external-link-alt"></i> Buka Bukti / Lampiran</a>
                                                     <?php endif; ?>
@@ -585,7 +614,7 @@ $namaBulanList = [
 </section>
 
 <!-- =========================================================================
-     MODAL 1: BUAT TASK / PROYEK BARU (ATASAN -> BAWAHAN)
+     MODAL 1: BUAT TASK / PROYEK BARU (ATASAN -> KARYAWAN)
      ========================================================================= -->
 <div class="modal fade" id="modalBuatTask" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -593,7 +622,7 @@ $namaBulanList = [
             <form id="formBuatTask">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title font-weight-bold">
-                        <i class="fas fa-plus-circle mr-1"></i> Buat Penugasan Task / Proyek ke Bawahan
+                        <i class="fas fa-plus-circle mr-1"></i> Buat Penugasan Task / Proyek ke Karyawan
                     </h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -602,18 +631,32 @@ $namaBulanList = [
 
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="font-weight-bold">Pilih Bawahan / Penerima Tugas <span class="text-danger">*</span></label>
-                        <small class="text-muted d-block mb-1">Anda dapat memilih 1 atau beberapa karyawan sekaligus (rekan satu divisi ditampilkan paling atas).</small>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <label class="font-weight-bold mb-0">Pilih Karyawan / Penerima Tugas <span class="text-danger">*</span></label>
+                            <?php if ($jmlSupervisiSaya > 0): ?>
+                                <button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnSelectSupervisedEmployees">
+                                    <i class="fas fa-user-check"></i> Pilih Semua Karyawan yang Saya Bawahi (<?= $jmlSupervisiSaya ?>)
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                        <small class="text-muted d-block mb-1">Anda dapat memilih 1 atau beberapa karyawan sekaligus (karyawan yang Anda bawahi langsung & satu divisi ditampilkan paling atas).</small>
                         <select name="id_penerima[]" id="select_penerima_task" class="form-control" multiple="multiple" required style="width: 100%;">
                             <?php
                             $myDivId = ($me && !empty($me->id_divisi)) ? (int)$me->id_divisi : 0;
                             foreach ($list_bawahan as $bw):
-                                $isSameDiv = ($myDivId > 0 && (int)$bw->id_divisi === $myDivId);
-                                $divLabel = !empty($bw->nama_divisi) ? $bw->nama_divisi : 'Lintas Divisi';
+                                $isDirectSub = ((int)($bw->id_atasan ?? 0) === (int)$myId);
+                                $isSameDiv   = ($myDivId > 0 && (int)$bw->id_divisi === $myDivId);
+                                $divLabel    = !empty($bw->nama_divisi) ? $bw->nama_divisi : 'Lintas Divisi';
+                                if ($isDirectSub) {
+                                    $prefixLabel = '👑 [Dibawahi Langsung - ' . htmlspecialchars($divLabel) . '] ';
+                                } elseif ($isSameDiv) {
+                                    $prefixLabel = '⭐ [Satu Divisi - ' . htmlspecialchars($divLabel) . '] ';
+                                } else {
+                                    $prefixLabel = '[' . htmlspecialchars($divLabel) . '] ';
+                                }
                             ?>
-                                <option value="<?= (int)$bw->pengguna_id ?>">
-                                    <?= $isSameDiv ? '⭐ [Satu Divisi - ' . htmlspecialchars($divLabel) . '] ' : '[' . htmlspecialchars($divLabel) . '] ' ?>
-                                    <?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?>
+                                <option value="<?= (int)$bw->pengguna_id ?>" data-supervised="<?= $isDirectSub ? '1' : '0' ?>">
+                                    <?= $prefixLabel ?><?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -701,7 +744,7 @@ $namaBulanList = [
                     <div class="checkbox-custom checkbox-success mt-2">
                         <input type="checkbox" id="chk_kirim_wa" name="kirim_wa" value="1" checked>
                         <label for="chk_kirim_wa" class="font-weight-bold text-success">
-                            <i class="fab fa-whatsapp"></i> Kirim Notifikasi WhatsApp Otomatis ke Bawahan
+                            <i class="fab fa-whatsapp"></i> Kirim Notifikasi WhatsApp Otomatis ke Karyawan
                         </label>
                     </div>
                 </div>
@@ -753,7 +796,7 @@ $namaBulanList = [
                             <strong>Pemberi Tugas (Atasan):</strong> <span id="dt_pemberi">-</span>
                         </div>
                         <div class="col-md-6">
-                            <strong>Pelaksana (Bawahan):</strong> <span id="dt_penerima">-</span>
+                            <strong>Pelaksana (Karyawan):</strong> <span id="dt_penerima">-</span>
                         </div>
                     </div>
                     <div class="mt-2">
@@ -783,7 +826,7 @@ $namaBulanList = [
                     </div>
                 </div>
 
-                <!-- PANEL 1: CHECKLIST & UPDATE PROGRES (UNTUK PELAKSANA / BAWAHAN) -->
+                <!-- PANEL 1: CHECKLIST & UPDATE PROGRES (UNTUK PELAKSANA / KARYAWAN) -->
                 <div id="panelBawahanProgres" class="card mb-3 border-primary">
                     <div class="card-header bg-light py-2">
                         <strong class="text-primary"><i class="fas fa-tasks mr-1"></i> Checklist Sub-Task & Update Progres Pengerjaan</strong>
@@ -867,7 +910,7 @@ $namaBulanList = [
 
                             <!-- PILIH BINTANG 1 - 5 INTERAKTIF -->
                             <div id="wrapStarPicker" class="p-3 mb-3 rounded text-center" style="background:#fffbeb; border:1px dashed #f59e0b;">
-                                <div class="small font-weight-bold text-uppercase mb-1" style="color:#b45309;">Klik Bintang untuk Memberikan Nilai Kualitas Kerja Bawahan:</div>
+                                <div class="small font-weight-bold text-uppercase mb-1" style="color:#b45309;">Klik Bintang untuk Memberikan Nilai Kualitas Kerja Karyawan:</div>
                                 <div class="star-rating-picker my-1" id="starPickerWidget">
                                     <i class="fas fa-star star-btn active" data-val="1" title="1 Bintang - Kurang Memuaskan"></i>
                                     <i class="fas fa-star star-btn active" data-val="2" title="2 Bintang - Perlu Banyak Perbaikan"></i>
@@ -887,12 +930,12 @@ $namaBulanList = [
                                     <button type="button" class="btn btn-xs btn-outline-secondary btn-quick-ulasan" data-text="Eksekusi sangat cepat, komunikasi dan laporan sangat jelas. Pertahankan!">🌟 Eksekusi cepat & jelas</button>
                                     <button type="button" class="btn btn-xs btn-outline-secondary btn-quick-ulasan" data-text="Pekerjaan sudah selesai sesuai instruksi, namun ke depannya mohon lebih teliti.">📝 Sesuai standar, tingkatkan ketelitian</button>
                                 </div>
-                                <textarea name="ulasan_atasan" id="rev_ulasan_atasan" rows="2" class="form-control" placeholder="Tulis komentar penilaian atau catatan revisi untuk bawahan..."></textarea>
+                                <textarea name="ulasan_atasan" id="rev_ulasan_atasan" rows="2" class="form-control" placeholder="Tulis komentar penilaian atau catatan revisi untuk karyawan..."></textarea>
                             </div>
 
                             <div class="text-right">
                                 <button type="submit" class="btn btn-warning font-weight-bold" id="btnSubmitReviewAtasan">
-                                    <i class="fas fa-award mr-1"></i> Simpan Penilaian & Kirim WA ke Bawahan
+                                    <i class="fas fa-award mr-1"></i> Simpan Penilaian & Kirim WA ke Karyawan
                                 </button>
                             </div>
                         </form>
@@ -909,6 +952,48 @@ $namaBulanList = [
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 3: ATUR ATASAN LANGSUNG SAYA -->
+<div class="modal fade" id="modalAturAtasanSaya" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formAturAtasanSaya">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-user-shield mr-1"></i> Pilih Atasan Langsung Anda
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">
+                        Tentukan siapa <strong>Atasan Langsung / Supervisor</strong> yang membawahi Anda:
+                    </p>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Pilih Atasan Langsung</label>
+                        <select id="select_atasan_saya_tp" name="id_atasan" class="form-control">
+                            <option value="">-- Belum Ditentukan / Tidak Ada --</option>
+                            <?php foreach ($list_bawahan as $atOpt):
+                                if ((int)$atOpt->pengguna_id === (int)$myId) continue;
+                            ?>
+                                <option value="<?= (int)$atOpt->pengguna_id ?>" <?= ((int)($me->id_atasan ?? 0) === (int)$atOpt->pengguna_id) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($atOpt->nama) ?><?= !empty($atOpt->jabatan) ? ' (' . htmlspecialchars($atOpt->jabatan) . ')' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold" id="btnSimpanAtasanSaya">
+                        <i class="fas fa-save mr-1"></i> Simpan Atasan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -932,15 +1017,54 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [] });
     }
 
-    // Inisialisasi Select2 pada pilihan bawahan
+    // Inisialisasi Select2 pada pilihan karyawan
     if ($.fn.select2) {
         $('#select_penerima_task').select2({
             dropdownParent: $('#modalBuatTask'),
-            placeholder: 'Ketik nama karyawan / bawahan (bisa pilih lebih dari 1)...',
+            placeholder: 'Ketik nama karyawan penerima tugas (bisa pilih lebih dari 1)...',
             allowClear: true,
             width: '100%'
         });
     }
+
+    // Tombol Pilih Semua Karyawan yang Dibawahi Langsung
+    $('#btnSelectSupervisedEmployees').on('click', function() {
+        var supervisedIds = [];
+        $('#select_penerima_task option[data-supervised="1"]').each(function() {
+            supervisedIds.push($(this).val());
+        });
+        $('#select_penerima_task').val(supervisedIds).trigger('change');
+    });
+
+    // Simpan Atasan Langsung Saya dari halaman Task Proyek
+    $('#formAturAtasanSaya').on('submit', function(e) {
+        e.preventDefault();
+        var $btn = $('#btnSimpanAtasanSaya');
+        var orig = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+        $.ajax({
+            url: baseUrl + 'pengguna/update/atasan',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                pengguna_id: '<?= (int)$myId ?>',
+                id_atasan: $('#select_atasan_saya_tp').val(),
+                [csrfName]: getCsrfHash()
+            },
+            success: function(res) {
+                $btn.prop('disabled', false).html(orig);
+                if (res && res.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert((res && res.msg) ? res.msg : 'Gagal menyimpan atasan.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(orig);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+    });
 
     // Buka Modal Buat Task
     $('#btnOpenModalBuatTask').on('click', function() {

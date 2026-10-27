@@ -451,6 +451,8 @@ class Md_pengguna extends CI_Model
                 pg.status_approval,
                 pg.is_active,
                 pg.id_divisi,
+                pg.id_atasan,
+                (SELECT pa.nama FROM pengguna pa WHERE pa.pengguna_id = pg.id_atasan LIMIT 1) as nama_atasan,
                 (SELECT COUNT(*) FROM log where pengguna_id = pg.pengguna_id) as dependency
             ')
             ->from('pengguna pg')

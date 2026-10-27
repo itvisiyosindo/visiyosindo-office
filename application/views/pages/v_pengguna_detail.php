@@ -872,6 +872,34 @@
                             <div class="quick-info-value"><?= $data_pengguna[0]->no_hp_kantor ?></div>
                         </div>
                         <?php } ?>
+                        <?php
+                        $pilihanAtasan = isset($list_atasan) && !empty($list_atasan) ? $list_atasan : (isset($pengguna) ? $pengguna : []);
+                        $curIdAtasan   = isset($data_pengguna[0]->id_atasan) ? (int)$data_pengguna[0]->id_atasan : 0;
+                        $namaAtasanProfil = '';
+                        $jabatanAtasanProfil = '';
+                        foreach ($pilihanAtasan as $rowAt) {
+                            if ((int)$rowAt->pengguna_id === $curIdAtasan) {
+                                $namaAtasanProfil = $rowAt->nama;
+                                $jabatanAtasanProfil = $rowAt->jabatan;
+                                break;
+                            }
+                        }
+                        $canEditAtasanProfil = ((int)sessPenggunaId() === (int)$data_pengguna[0]->pengguna_id) || isAdmin() || isHrd() || isGa();
+                        ?>
+                        <div class="quick-info-item" style="border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.18);">
+                            <i class="fas fa-user-shield"></i>
+                            <div class="quick-info-label">Atasan Langsung</div>
+                            <div class="quick-info-value">
+                                <?= !empty($namaAtasanProfil) ? htmlspecialchars($namaAtasanProfil) : '<span style="opacity:0.8;font-weight:400;">Belum diatur</span>' ?>
+                                <?php if ($canEditAtasanProfil): ?>
+                                    <div style="margin-top:4px;">
+                                        <a href="javascript:;" data-toggle="modal" data-target="#modalPilihAtasanProfil" class="badge badge-light" style="color:#1e40af; font-weight:700; font-size:10.5px; padding:3px 8px;">
+                                            <i class="fas fa-user-edit"></i> <?= !empty($namaAtasanProfil) ? 'Ubah Atasan' : 'Pilih Atasan' ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1113,6 +1141,24 @@
                                 <div class="form-group-modern">
                                     <label><i class="fas fa-flask"></i> Jabatan VISILAB</label>
                                     <input class="form-control" type="text" name="jabatan_visilab" value="<?= $data_pengguna[0]->jabatan_visilab ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group-modern">
+                                    <label><i class="fas fa-user-shield text-primary"></i> Atasan Langsung (Membawahi Karyawan Ini)</label>
+                                    <select data-plugin-selectTwo class="form-control" name="id_atasan">
+                                        <option value="">-- Belum Ditentukan / Tidak Ada Atasan --</option>
+                                        <?php foreach ($pilihanAtasan as $atRow):
+                                            if ((int)$atRow->pengguna_id === (int)$data_pengguna[0]->pengguna_id) continue;
+                                        ?>
+                                            <option value="<?= (int)$atRow->pengguna_id ?>" <?= ($curIdAtasan === (int)$atRow->pengguna_id) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($atRow->nama) ?><?= !empty($atRow->jabatan) ? ' — ' . htmlspecialchars($atRow->jabatan) : '' ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="text-muted">Pilih siapa atasan/supervisor langsung dari karyawan ini untuk alur penugasan & evaluasi kinerja.</small>
                                 </div>
                             </div>
                         </div>
@@ -2345,4 +2391,83 @@ document.addEventListener('DOMContentLoaded', function() {
 function goBack() {
     window.history.back();
 }
+
+$(document).on('submit', '#formPilihAtasanProfil', function(e) {
+    e.preventDefault();
+    var $btn = $('#btnSimpanAtasanProfil');
+    var orig = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+    $.ajax({
+        url: '<?= base_url("pengguna/update/atasan") ?>',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            pengguna_id: '<?= encrypt($data_pengguna[0]->pengguna_id) ?>',
+            id_atasan: $('#select_id_atasan_profil').val(),
+            csrf_token: token
+        },
+        success: function(res) {
+            $btn.prop('disabled', false).html(orig);
+            if (res && res.status === 'success') {
+                $('#modalPilihAtasanProfil').modal('hide');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Berhasil!', res.msg || 'Atasan Langsung berhasil diperbarui!', 'success').then(function() {
+                        location.reload();
+                    });
+                } else {
+                    alert(res.msg || 'Atasan Langsung berhasil diperbarui!');
+                    location.reload();
+                }
+            } else {
+                alert((res && res.msg) ? res.msg : 'Gagal menyimpan data atasan.');
+            }
+        },
+        error: function() {
+            $btn.prop('disabled', false).html(orig);
+            alert('Terjadi kesalahan jaringan.');
+        }
+    });
+});
 </script>
+
+<!-- Modal Pilih / Ubah Atasan Langsung di Profil -->
+<div class="modal fade" id="modalPilihAtasanProfil" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formPilihAtasanProfil">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" style="color:#fff;">
+                        <i class="fas fa-user-shield mr-1"></i> Atur Atasan Langsung (Supervisor)
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">
+                        Pilih atasan langsung untuk karyawan <strong><?= htmlspecialchars($data_pengguna[0]->nama) ?></strong>:
+                    </p>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Nama Atasan Langsung</label>
+                        <select id="select_id_atasan_profil" name="id_atasan" class="form-control">
+                            <option value="">-- Belum Ditentukan / Tidak Ada Atasan --</option>
+                            <?php foreach ($pilihanAtasan as $atRow):
+                                if ((int)$atRow->pengguna_id === (int)$data_pengguna[0]->pengguna_id) continue;
+                            ?>
+                                <option value="<?= (int)$atRow->pengguna_id ?>" <?= ($curIdAtasan === (int)$atRow->pengguna_id) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($atRow->nama) ?><?= !empty($atRow->jabatan) ? ' (' . htmlspecialchars($atRow->jabatan) . ')' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold" id="btnSimpanAtasanProfil">
+                        <i class="fas fa-save mr-1"></i> Simpan Atasan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
