@@ -192,6 +192,7 @@
 
 
 					<li class="nav-parent <?= in_array($page_name, [
+												'task_proyek/v_task_proyek',
 												'jobdesc/v_job',
 												'jobdesc/v_aju_job',
 												'jobdesc/v_job_detail',
@@ -228,9 +229,15 @@
 							<span>Kinerja Pegawai</span>
 						</a>
 						<ul class="nav nav-children">
+							<li class="<?= $page_name == 'task_proyek/v_task_proyek' ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('task_proyek?nav=kepegawaian') ?>">
+									<i class="fas fa-star text-warning mr-1"></i> Task & Proyek Kerja <strong>(★5)</strong>
+								</a>
+							</li>
 
 							<?php if (in_array((string)sessPenggunaId(), ['1', '58', '69', '744', '54', '33', '23', '107'])) { ?>
-								<li class="<?= in_array($page_name, ['jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
+								<li class="<?= in_array($page_name, ['task_proyek/v_task_proyek',
+												'jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('jobdesc') ?>">
 										Jobdesk
 									</a>
@@ -278,7 +285,8 @@
 										Jobdesk 
 									</a>
 								</li>-->
-								<li class="<?= in_array($page_name, ['jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
+								<li class="<?= in_array($page_name, ['task_proyek/v_task_proyek',
+												'jobdesc/v_job', 'jobdesc/v_aju_job', 'jobdesc/v_job_detail']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('jobdesc') ?>">
 										Jobdesk
 									</a>
