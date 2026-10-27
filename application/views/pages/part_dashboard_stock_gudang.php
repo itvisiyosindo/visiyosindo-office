@@ -1,9 +1,13 @@
 <!-- Visual Dashboard Stok Gudang & Pergerakan In/Out -->
 <style>
-    #menu_gudang_filter .dropdown-item:hover {
+    #menu_gudang_filter .dropdown-item:hover,
+    #menu_kategori_filter .dropdown-item:hover,
+    #menu_barang_filter .dropdown-item:hover {
         background-color: #f1f5f9;
     }
-    #menu_gudang_filter input[type="checkbox"] {
+    #menu_gudang_filter input[type="checkbox"],
+    #menu_kategori_filter input[type="checkbox"],
+    #menu_barang_filter input[type="checkbox"] {
         accent-color: #2563eb;
     }
     .stock-dash-wrapper {
@@ -265,30 +269,74 @@
                 </div>
             </div>
 
-            <!-- Filter Kategori Barang -->
+            <!-- Filter Kategori Barang (Multi-select Checkbox) -->
             <div class="d-flex align-items-center" style="gap: 5px;">
-                <label for="dash_select_kategori" class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
+                <label class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
                     <i class="fas fa-tags text-info mr-1"></i> Kategori:
                 </label>
-                <select id="dash_select_kategori" class="form-control dash-filter-select" style="min-width: 175px;">
-                    <option value="0" data-enc="">-- Semua Kategori --</option>
-                    <?php if (!empty($kategori_barang)) {
-                        foreach ($kategori_barang as $rowK) {
-                            $kid = is_numeric($rowK->id_kategori) ? (int)$rowK->id_kategori : (int)decrypt($rowK->id_kategori);
-                            $kenc = is_numeric($rowK->id_kategori) ? encrypt($rowK->id_kategori) : $rowK->id_kategori;
-                            echo '<option value="' . $kid . '" data-enc="' . htmlspecialchars($kenc) . '">' . htmlspecialchars($rowK->nama_kategori) . '</option>';
-                        }
-                    } ?>
-                </select>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-default btn-sm dropdown-toggle dash-filter-btn" type="button" id="dropdownKategoriFilter" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="background: #ffffff; border: 1px solid #cbd5e1; font-weight: 600; font-size: 12px; color: #1e293b; padding: 6px 12px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 180px; text-align: left; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="text-truncate mr-2"><span id="label_filter_kategori">Semua Kategori</span></span>
+                        <span class="d-flex align-items-center">
+                            <span class="badge badge-info mr-1" id="badge_filter_kategori_count" style="display:none; font-size:10px; padding: 2px 6px; border-radius: 6px;">0</span>
+                            <i class="fas fa-chevron-down text-muted" style="font-size: 10px;"></i>
+                        </span>
+                    </button>
+                    <div class="dropdown-menu p-2 shadow-lg" aria-labelledby="dropdownKategoriFilter" id="menu_kategori_filter" style="min-width: 270px; max-height: 320px; overflow-y: auto; border-radius: 10px; border: 1px solid #e2e8f0; z-index: 1050;">
+                        <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
+                            <span class="small font-weight-bold text-muted text-uppercase" style="font-size: 10.5px; letter-spacing: 0.5px;">Bisa Centang &gt; 1 Kategori</span>
+                            <div>
+                                <a href="javascript:;" id="btn_check_all_kategori" class="small text-primary font-weight-bold mr-2" style="font-size: 11px;">Pilih Semua</a>
+                                <a href="javascript:;" id="btn_clear_kategori" class="small text-danger" style="font-size: 11px;">Reset</a>
+                            </div>
+                        </div>
+                        <div class="kategori-checkbox-list">
+                            <?php if (!empty($kategori_barang)) {
+                                foreach ($kategori_barang as $rowK) {
+                                    $kid = is_numeric($rowK->id_kategori) ? (int)$rowK->id_kategori : (int)decrypt($rowK->id_kategori);
+                                    $kenc = is_numeric($rowK->id_kategori) ? encrypt($rowK->id_kategori) : $rowK->id_kategori;
+                                    echo '<label class="dropdown-item px-2 py-1 mb-1 rounded d-flex align-items-center" style="cursor: pointer; font-size: 12px; font-weight: 500; color: #334155; margin-bottom: 2px;">';
+                                    echo '<input type="checkbox" class="chk-kategori-item mr-2" value="' . $kid . '" data-enc="' . htmlspecialchars($kenc) . '" data-nama="' . htmlspecialchars($rowK->nama_kategori) . '" style="cursor: pointer; width: 15px; height: 15px;"> ';
+                                    echo '<span class="text-truncate">' . htmlspecialchars($rowK->nama_kategori) . '</span>';
+                                    echo '</label>';
+                                }
+                            } ?>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Filter Nama / Kode Barang -->
+            <!-- Filter Nama Barang (Multi-select Checkbox dengan Live Search) -->
             <div class="d-flex align-items-center" style="gap: 5px;">
-                <label for="dash_search_nama" class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
+                <label class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
                     <i class="fas fa-box-open text-warning mr-1"></i> Nama Barang:
                 </label>
-                <input type="text" id="dash_search_nama" list="dash_datalist_barang" class="form-control dash-filter-select" style="min-width: 200px;" placeholder="Ketik / pilih nama barang...">
-                <datalist id="dash_datalist_barang"></datalist>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-default btn-sm dropdown-toggle dash-filter-btn" type="button" id="dropdownBarangFilter" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="background: #ffffff; border: 1px solid #cbd5e1; font-weight: 600; font-size: 12px; color: #1e293b; padding: 6px 12px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 195px; text-align: left; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="text-truncate mr-2"><span id="label_filter_barang">Semua Barang</span></span>
+                        <span class="d-flex align-items-center">
+                            <span class="badge badge-warning mr-1" id="badge_filter_barang_count" style="display:none; font-size:10px; padding: 2px 6px; border-radius: 6px;">0</span>
+                            <i class="fas fa-chevron-down text-muted" style="font-size: 10px;"></i>
+                        </span>
+                    </button>
+                    <div class="dropdown-menu p-2 shadow-lg" aria-labelledby="dropdownBarangFilter" id="menu_barang_filter" style="min-width: 320px; max-height: 380px; overflow-y: hidden; border-radius: 10px; border: 1px solid #e2e8f0; z-index: 1050;">
+                        <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
+                            <span class="small font-weight-bold text-muted text-uppercase" style="font-size: 10.5px; letter-spacing: 0.5px;">Bisa Centang &gt; 1 Barang</span>
+                            <a href="javascript:;" id="btn_clear_barang" class="small text-danger font-weight-bold" style="font-size: 11px;">Reset</a>
+                        </div>
+                        <div class="px-1 mb-2">
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted" style="font-size: 11px;"></i></span>
+                                </div>
+                                <input type="text" id="input_search_barang_item" class="form-control form-control-sm border-left-0" placeholder="Ketik cari nama / kode barang...">
+                            </div>
+                        </div>
+                        <div id="container_barang_checkboxes" style="max-height: 240px; overflow-y: auto;">
+                            <div class="p-2 text-center text-muted small"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat daftar barang...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Filter Tahun -->
@@ -561,7 +609,11 @@
             if (isSyncingKategori) return;
             const $tableKat = $('#filter_kategori');
             if (!$tableKat.length) return;
-            const encVal = $('#dash_select_kategori option:selected').attr('data-enc') || '';
+            const checkedKats = $('.chk-kategori-item:checked');
+            let encVal = '';
+            if (checkedKats.length === 1) {
+                encVal = checkedKats.first().attr('data-enc') || '';
+            }
             if (($tableKat.val() || '') !== encVal) {
                 isSyncingKategori = true;
                 $tableKat.val(encVal);
@@ -573,6 +625,113 @@
                 isSyncingKategori = false;
             }
         }
+
+        // Multi-select Kategori Event Handlers
+        $('#menu_kategori_filter').on('click', function(e) {
+            e.stopPropagation();
+        });
+
+        function updateKategoriFilterLabel() {
+            const totalKat = $('.chk-kategori-item').length;
+            const checkedCount = $('.chk-kategori-item:checked').length;
+            const $label = $('#label_filter_kategori');
+            const $badge = $('#badge_filter_kategori_count');
+
+            if (checkedCount === 0 || checkedCount === totalKat) {
+                $label.text('Semua Kategori');
+                $badge.hide();
+            } else if (checkedCount === 1) {
+                const name = $('.chk-kategori-item:checked').first().data('nama') || '1 Kategori';
+                $label.text(name);
+                $badge.text('1').show();
+            } else if (checkedCount === 2) {
+                const names = [];
+                $('.chk-kategori-item:checked').each(function() { names.push($(this).data('nama')); });
+                $label.text(names.join(', '));
+                $badge.text('2').show();
+            } else {
+                $label.text(checkedCount + ' Kategori Terpilih');
+                $badge.text(checkedCount).show();
+            }
+        }
+
+        $(document).on('change', '.chk-kategori-item', function() {
+            updateKategoriFilterLabel();
+            syncTableFilterKategoriFromDash();
+            loadDashboardData();
+        });
+
+        $('#btn_check_all_kategori').on('click', function(e) {
+            e.preventDefault();
+            $('.chk-kategori-item').prop('checked', true);
+            updateKategoriFilterLabel();
+            syncTableFilterKategoriFromDash();
+            loadDashboardData();
+        });
+
+        $('#btn_clear_kategori').on('click', function(e) {
+            e.preventDefault();
+            $('.chk-kategori-item').prop('checked', false);
+            updateKategoriFilterLabel();
+            syncTableFilterKategoriFromDash();
+            loadDashboardData();
+        });
+
+        // Multi-select Barang Event Handlers
+        $('#menu_barang_filter').on('click', function(e) {
+            e.stopPropagation();
+        });
+
+        function updateBarangFilterLabel() {
+            const checkedCount = $('.chk-barang-item:checked').length;
+            const $label = $('#label_filter_barang');
+            const $badge = $('#badge_filter_barang_count');
+
+            if (checkedCount === 0) {
+                $label.text('Semua Barang');
+                $badge.hide();
+            } else if (checkedCount === 1) {
+                const name = $('.chk-barang-item:checked').first().data('nama') || '1 Barang';
+                $label.text(name.length > 20 ? name.substring(0, 18) + '...' : name);
+                $badge.text('1').show();
+            } else if (checkedCount === 2) {
+                const names = [];
+                $('.chk-barang-item:checked').each(function() { names.push($(this).data('nama')); });
+                $label.text(names.join(', '));
+                $badge.text('2').show();
+            } else {
+                $label.text(checkedCount + ' Barang Terpilih');
+                $badge.text(checkedCount).show();
+            }
+        }
+
+        $(document).on('change', '.chk-barang-item', function() {
+            updateBarangFilterLabel();
+            loadDashboardData();
+        });
+
+        $('#btn_clear_barang').on('click', function(e) {
+            e.preventDefault();
+            $('.chk-barang-item').prop('checked', false);
+            updateBarangFilterLabel();
+            loadDashboardData();
+        });
+
+        $('#input_search_barang_item').on('input', function() {
+            const q = $(this).val().toLowerCase().trim();
+            if (!q) {
+                $('.barang-item-row').show();
+            } else {
+                $('.barang-item-row').each(function() {
+                    const txt = ($(this).attr('data-search') || $(this).text()).toLowerCase();
+                    if (txt.indexOf(q) !== -1) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+        });
 
         // Multi-select Gudang Event Handlers
         $('#menu_gudang_filter').on('click', function(e) {
@@ -637,22 +796,19 @@
             const encVal = $(this).val() || '';
             const selectedText = ($(this).find('option:selected').text() || '').trim().toLowerCase();
             let matchedId = '0';
+            $('.chk-kategori-item').prop('checked', false);
             if (encVal !== '') {
-                $('#dash_select_kategori option').each(function() {
+                $('.chk-kategori-item').each(function() {
                     const optEnc = $(this).attr('data-enc') || '';
-                    const optText = ($(this).text() || '').trim().toLowerCase();
+                    const optText = ($(this).attr('data-nama') || '').trim().toLowerCase();
                     if (optEnc === encVal || (selectedText && optText === selectedText)) {
-                        matchedId = $(this).val();
+                        $(this).prop('checked', true);
                         return false;
                     }
                 });
             }
-            if (($('#dash_select_kategori').val() || '0') !== matchedId) {
-                isSyncingKategori = true;
-                $('#dash_select_kategori').val(matchedId);
-                isSyncingKategori = false;
-                loadDashboardData();
-            }
+            updateKategoriFilterLabel();
+            loadDashboardData();
         });
 
         $('#btn_back_all_kategori').on('click', function() {
@@ -669,8 +825,11 @@
         $('#btn_reset_dash_filter').on('click', function() {
             $('.chk-gudang-item').prop('checked', false);
             updateGudangFilterLabel();
-            $('#dash_select_kategori').val('0');
-            $('#dash_search_nama').val('');
+            $('.chk-kategori-item').prop('checked', false);
+            updateKategoriFilterLabel();
+            $('.chk-barang-item').prop('checked', false);
+            updateBarangFilterLabel();
+            $('#input_search_barang_item').val('').trigger('input');
             syncTableFilterKategoriFromDash();
             loadDashboardData();
         });
@@ -685,11 +844,26 @@
             const totalGudang = $('.chk-gudang-item').length;
             const isGudangFiltered = (selectedGudangIds.length > 0 && selectedGudangIds.length < totalGudang);
 
-            const idKategori = $('#dash_select_kategori').val() || 0;
-            const namaBarang = ($('#dash_search_nama').val() || '').trim();
-            const tahun      = $('#dash_select_tahun').val() || new Date().getFullYear();
+            const selectedKatIds = [];
+            const selectedKatNames = [];
+            $('.chk-kategori-item:checked').each(function() {
+                selectedKatIds.push($(this).val());
+                selectedKatNames.push($(this).data('nama'));
+            });
+            const totalKat = $('.chk-kategori-item').length;
+            const isKatFiltered = (selectedKatIds.length > 0 && selectedKatIds.length < totalKat);
 
-            if (isGudangFiltered || idKategori != 0 || namaBarang !== '') {
+            const selectedBarangIds = [];
+            const selectedBarangNames = [];
+            $('.chk-barang-item:checked').each(function() {
+                selectedBarangIds.push($(this).val());
+                selectedBarangNames.push($(this).data('nama'));
+            });
+            const isBarangFiltered = (selectedBarangIds.length > 0);
+
+            const tahun = $('#dash_select_tahun').val() || new Date().getFullYear();
+
+            if (isGudangFiltered || isKatFiltered || isBarangFiltered) {
                 $('#btn_reset_dash_filter').show();
             } else {
                 $('#btn_reset_dash_filter').hide();
@@ -706,10 +880,22 @@
                     activeFilters.push(selectedGudangNames.length + ' Gudang Terpilih');
                 }
             }
-            if (idKategori != 0) activeFilters.push($('#dash_select_kategori option:selected').text());
-            if (namaBarang !== '') activeFilters.push('"' + namaBarang + '"');
+            if (isKatFiltered) {
+                if (selectedKatNames.length <= 2) {
+                    activeFilters.push(selectedKatNames.join(', '));
+                } else {
+                    activeFilters.push(selectedKatNames.length + ' Kategori Terpilih');
+                }
+            }
+            if (isBarangFiltered) {
+                if (selectedBarangNames.length <= 2) {
+                    activeFilters.push(selectedBarangNames.join(', '));
+                } else {
+                    activeFilters.push(selectedBarangNames.length + ' Barang Terpilih');
+                }
+            }
 
-            const contextText = activeFilters.length > 0 ? activeFilters.join(' • ') : 'Semua Gudang & Kategori';
+            const contextText = activeFilters.length > 0 ? activeFilters.join(' • ') : 'Semua Gudang, Kategori & Barang';
             $('#kpi_gudang_label').text(contextText);
             $('#badge_top_barang_context').text(contextText);
 
@@ -719,22 +905,42 @@
                 data: {
                     tahun: tahun,
                     id_gudang: isGudangFiltered ? selectedGudangIds.join(',') : '',
-                    id_kategori: idKategori,
-                    nama_barang: namaBarang
+                    id_kategori: isKatFiltered ? selectedKatIds.join(',') : '',
+                    id_barang: isBarangFiltered ? selectedBarangIds.join(',') : ''
                 },
                 dataType: 'json',
                 success: function(res) {
                     hideLoading();
                     if (res && res.status === 'success') {
-                        // Update datalist saran nama barang
+                        // Render daftar checkbox barang dinamis (mempertahankan pilihan yang dicentang)
                         if (res.barang_options && Array.isArray(res.barang_options)) {
-                            const $dl = $('#dash_datalist_barang');
-                            $dl.empty();
-                            res.barang_options.forEach(function(item) {
-                                if (item.nama_barang) {
-                                    $dl.append($('<option></option>').attr('value', item.nama_barang));
-                                }
+                            const prevCheckedIds = [];
+                            $('.chk-barang-item:checked').each(function() {
+                                prevCheckedIds.push(String($(this).val()));
                             });
+
+                            const $container = $('#container_barang_checkboxes');
+                            $container.empty();
+
+                            if (res.barang_options.length === 0) {
+                                $container.html('<div class="p-2 text-center text-muted small">Tidak ada barang yang cocok</div>');
+                            } else {
+                                res.barang_options.forEach(function(item) {
+                                    const bId = String(item.id_barang || '');
+                                    const bNama = item.nama_barang || '';
+                                    const bKode = item.kode_barang || '';
+                                    const bStok = parseInt(item.stok || 0, 10);
+                                    const isChecked = prevCheckedIds.includes(bId);
+
+                                    const rowHtml = '<label class="dropdown-item px-2 py-1 mb-1 rounded d-flex align-items-center barang-item-row" data-search="' + $('<div>').text(bNama + ' ' + bKode).html() + '" style="cursor: pointer; font-size: 12px; font-weight: 500; color: #334155; margin-bottom: 2px;">' +
+                                        '<input type="checkbox" class="chk-barang-item mr-2" value="' + bId + '" data-nama="' + $('<div>').text(bNama).html() + '" ' + (isChecked ? 'checked' : '') + ' style="cursor: pointer; width: 15px; height: 15px;"> ' +
+                                        '<span class="text-truncate flex-grow-1 mr-1" title="' + $('<div>').text(bNama).html() + '">' + $('<div>').text(bNama).html() + '</span>' +
+                                        '<span class="badge badge-light border" style="font-size: 10px; flex-shrink: 0;">' + formatNumber(bStok) + '</span>' +
+                                        '</label>';
+                                    $container.append(rowHtml);
+                                });
+                            }
+                            updateBarangFilterLabel();
                         }
 
                         // 1. Update KPI
@@ -908,8 +1114,12 @@
                             const idx = elements[0].index;
                             const targetKatId = katIds[idx] || 0;
                             if (targetKatId > 0) {
-                                const currentKat = parseInt($('#dash_select_kategori').val() || 0, 10);
-                                $('#dash_select_kategori').val(currentKat === targetKatId ? '0' : targetKatId).trigger('change');
+                                // Fokuskan filter hanya ke kategori yang diklik
+                                $('.chk-kategori-item').prop('checked', false);
+                                $('.chk-kategori-item[value="' + targetKatId + '"]').prop('checked', true);
+                                updateKategoriFilterLabel();
+                                syncTableFilterKategoriFromDash();
+                                loadDashboardData();
                             }
                         }
                     },

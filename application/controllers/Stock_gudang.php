@@ -596,14 +596,46 @@ class Stock_gudang extends CI_Controller
         }
 
         $id_kategori_raw = $this->input->get('id_kategori');
+        $kategori_ids = [];
         $id_kategori = 0;
         if (!empty($id_kategori_raw) && $id_kategori_raw !== 'all' && $id_kategori_raw !== '0') {
-            $decryptedKat = decrypt($id_kategori_raw);
-            if (is_numeric($decryptedKat) && (int)$decryptedKat > 0) {
-                $id_kategori = (int)$decryptedKat;
-            } elseif (is_numeric($id_kategori_raw) && (int)$id_kategori_raw > 0) {
-                $id_kategori = (int)$id_kategori_raw;
+            if (is_array($id_kategori_raw)) {
+                $rawKatList = $id_kategori_raw;
+            } else {
+                $rawKatList = explode(',', (string)$id_kategori_raw);
             }
+            foreach ($rawKatList as $item) {
+                $item = trim((string)$item);
+                if ($item === '' || $item === '0' || $item === 'all') continue;
+                $decryptedKat = decrypt($item);
+                if (is_numeric($decryptedKat) && (int)$decryptedKat > 0) {
+                    $kategori_ids[] = (int)$decryptedKat;
+                } elseif (is_numeric($item) && (int)$item > 0) {
+                    $kategori_ids[] = (int)$item;
+                }
+            }
+            $kategori_ids = array_values(array_unique($kategori_ids));
+            if (count($kategori_ids) === 1) {
+                $id_kategori = $kategori_ids[0];
+            }
+        }
+
+        $id_barang_raw = $this->input->get('id_barang');
+        $barang_ids = [];
+        if (!empty($id_barang_raw) && $id_barang_raw !== 'all' && $id_barang_raw !== '0') {
+            if (is_array($id_barang_raw)) {
+                $rawBList = $id_barang_raw;
+            } else {
+                $rawBList = explode(',', (string)$id_barang_raw);
+            }
+            foreach ($rawBList as $item) {
+                $item = trim((string)$item);
+                if ($item === '' || $item === '0' || $item === 'all') continue;
+                if (is_numeric($item) && (int)$item > 0) {
+                    $barang_ids[] = (int)$item;
+                }
+            }
+            $barang_ids = array_values(array_unique($barang_ids));
         }
 
         $nama_barang = trim((string)$this->input->get('nama_barang', TRUE));
@@ -620,10 +652,14 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
@@ -643,10 +679,14 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
@@ -666,10 +706,14 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
@@ -688,7 +732,9 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('kb.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('kb.id_kategori', $id_kategori);
         }
         if ($nama_barang !== '') {
@@ -704,10 +750,16 @@ class Stock_gudang extends CI_Controller
 
         // 3. Stok Berdasarkan Gudang Penyimpanan (Hanya gudang yang dicentang / semua jika tidak ada filter)
         $extraGudangJoinFilter = "";
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $katIdListStr = implode(',', array_map('intval', $kategori_ids));
+            $extraGudangJoinFilter .= " AND b.id_kategori IN ({$katIdListStr})";
+        } elseif ($id_kategori > 0) {
             $extraGudangJoinFilter .= " AND b.id_kategori = " . (int)$id_kategori;
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $bIdListStr = implode(',', array_map('intval', $barang_ids));
+            $extraGudangJoinFilter .= " AND b.id_barang IN ({$bIdListStr})";
+        } elseif ($nama_barang !== '') {
             $escLike = $this->db->escape_like_str($nama_barang);
             $extraGudangJoinFilter .= " AND (b.nama_barang LIKE '%{$escLike}%' OR b.kode_barang LIKE '%{$escLike}%')";
         }
@@ -749,10 +801,14 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
@@ -771,10 +827,14 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
@@ -822,10 +882,14 @@ class Stock_gudang extends CI_Controller
         } elseif ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        if ($nama_barang !== '') {
+        if (!empty($barang_ids)) {
+            $this->db->where_in('b.id_barang', $barang_ids);
+        } elseif ($nama_barang !== '') {
             $this->db->group_start()
                 ->like('b.nama_barang', $nama_barang)
                 ->or_like('b.kode_barang', $nama_barang)
@@ -838,15 +902,17 @@ class Stock_gudang extends CI_Controller
             ->get()
             ->result();
 
-        // 6. Daftar saran Nama Barang untuk autocomplete filter (diurutkan stok > 0 di atas)
-        $this->db->select('b.nama_barang, COALESCE(SUM(db.current_stock), 0) as stok')
+        // 6. Daftar saran Nama Barang untuk autocomplete & multi-filter (diurutkan stok > 0 di atas)
+        $this->db->select('b.id_barang, b.nama_barang, b.kode_barang, COALESCE(SUM(db.current_stock), 0) as stok')
             ->from('barang b')
             ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0', 'left')
             ->where('b.status', 1);
-        if ($id_kategori > 0) {
+        if (!empty($kategori_ids)) {
+            $this->db->where_in('b.id_kategori', $kategori_ids);
+        } elseif ($id_kategori > 0) {
             $this->db->where('b.id_kategori', $id_kategori);
         }
-        $barang_options = $this->db->group_by('b.nama_barang')
+        $barang_options = $this->db->group_by(['b.id_barang', 'b.nama_barang', 'b.kode_barang'])
             ->order_by('stok', 'DESC')
             ->order_by('b.nama_barang', 'ASC')
             ->limit(250)
@@ -858,7 +924,10 @@ class Stock_gudang extends CI_Controller
             'tahun' => $tahun,
             'id_gudang' => !empty($gudang_ids) ? implode(',', $gudang_ids) : ($id_gudang > 0 ? (string)$id_gudang : '0'),
             'gudang_ids' => $gudang_ids,
-            'id_kategori' => $id_kategori,
+            'id_kategori' => !empty($kategori_ids) ? implode(',', $kategori_ids) : ($id_kategori > 0 ? (string)$id_kategori : '0'),
+            'kategori_ids' => $kategori_ids,
+            'id_barang' => !empty($barang_ids) ? implode(',', $barang_ids) : '',
+            'barang_ids' => $barang_ids,
             'nama_barang' => $nama_barang,
             'kpi' => [
                 'total_stok' => (int)($kpi_stok->total_stok ?? 0),
