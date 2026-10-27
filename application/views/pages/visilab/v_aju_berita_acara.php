@@ -241,7 +241,7 @@
 						if (result.value) {
 								$.ajax({
 										method: 'POST',
-										url: 'visilab/add/berita_acara',
+										url: '<?= base_url("visilab/add/berita_acara") ?>',
 										dataType: 'JSON',
 										data: {
 												tanggal: tanggal,
