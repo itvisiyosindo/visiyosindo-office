@@ -23,10 +23,9 @@
 
     .stock-dash-header {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
         padding-bottom: 16px;
         margin-bottom: 18px;
         border-bottom: 1px solid #e2e8f0;
@@ -36,6 +35,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        width: 100%;
     }
 
     .stock-dash-icon {
@@ -232,7 +232,7 @@
                 <p class="stock-dash-desc">Analitik visual stok per kategori, per gudang penyimpanan, serta tren pergerakan stok keluar & masuk.</p>
             </div>
         </div>
-        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+        <div class="d-flex align-items-center flex-wrap" style="gap: 8px; width: 100%;">
             <!-- Pilihan Gudang Penyimpanan (Multi-select Checkbox) -->
             <div class="d-flex align-items-center" style="gap: 5px;">
                 <label class="mb-0" style="font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap;">
