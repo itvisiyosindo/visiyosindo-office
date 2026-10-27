@@ -16,6 +16,14 @@ function ajaxReturnDie($status, $text, $reload = FALSE)
 		$response['data'] = $reload;
 	}
 
+	while (ob_get_level() > 0) {
+		@ob_end_clean();
+	}
+
+	if (!headers_sent()) {
+		header('Content-Type: application/json; charset=utf-8');
+	}
+
 	echo json_encode($response);
 	die;
 }

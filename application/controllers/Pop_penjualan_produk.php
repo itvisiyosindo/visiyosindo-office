@@ -1,4 +1,4 @@
- <?php
+<?php
 
 use FontLib\Table\Type\post;
 

@@ -254,12 +254,22 @@
                         },
                         success: function(resp) {
                             if (resp.status == 'success' || resp.status == true) {
-                                Swal.fire('Berhasil!', resp.message || 'Berita Acara Berhasil Diajukan', 'success').then(function() {
-                                    window.location.href = 'surat_part_two/show/list/berita_acara';
+                                Swal.fire({
+                                    title: 'Berhasil!',
+                                    text: resp.message || 'Berita Acara Berhasil Diajukan',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK'
+                                }).then(function() {
+                                    window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
                                 });
                             } else {
                                 $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
-                                Swal.fire('Perhatian', resp.message || 'Gagal mengajukan Berita Acara', 'error');
+                                Swal.fire({
+                                    title: 'Perhatian',
+                                    text: resp.message || 'Gagal mengajukan Berita Acara',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
                             }
                         },
                         error: function(xhr, status, error) {
@@ -267,13 +277,29 @@
                             try {
                                 var resp = JSON.parse(xhr.responseText);
                                 if (resp && (resp.status == 'success' || resp.status == true)) {
-                                    Swal.fire('Berhasil!', resp.message || 'Berita Acara Berhasil Diajukan', 'success').then(function() {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: resp.message || 'Berita Acara Berhasil Diajukan',
+                                        icon: 'success',
+                                        confirmButtonText: 'OK'
+                                    }).then(function() {
                                         window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
                                     });
                                     return;
                                 }
                             } catch (e) {}
-                            Swal.fire('Perhatian', 'Gagal memproses respon server. Silakan cek menu Daftar Berita Acara untuk memastikan apakah pengajuan sudah tersimpan.', 'warning');
+                            Swal.fire({
+                                title: 'Perhatian',
+                                text: 'Respon server tidak dapat diproses otomatis. Pengajuan kemungkinan sudah tersimpan. Silakan periksa menu Daftar Berita Acara.',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                cancelButtonText: 'Tetap di Form',
+                                confirmButtonText: 'Buka Daftar Berita Acara'
+                            }).then(function(result) {
+                                if (result.value) {
+                                    window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
+                                }
+                            });
                         }
                     });                    
                 }                

@@ -122,4 +122,3 @@ function decryptvym($string) {
     return $output;
     //return $output;
 }
-?> 
