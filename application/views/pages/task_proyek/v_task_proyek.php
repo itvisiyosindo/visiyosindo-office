@@ -1,4 +1,12 @@
 <style>
+    .tp-control-card {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        padding: 16px 20px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        margin-bottom: 16px;
+    }
     .tp-kpi-card {
         border-radius: 12px;
         border: 1px solid #e2e8f0;
@@ -166,9 +174,10 @@ $namaBulanList = [
     $penerimaList     = $isAdminUser ? $list_semua_karyawan : $list_bawahan;
     ?>
 
-    <!-- BARIS FILTER & TOMBOL BUAT TASK -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap: 12px;">
-        <div>
+    <!-- KARTU KONTROL FILTER & STATUS SUPERVISI -->
+    <div class="tp-control-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px;">
+            <!-- Filter Periode -->
             <form method="GET" action="<?= base_url('task_proyek') ?>" class="form-inline" style="gap: 8px; display: flex; flex-wrap: wrap; align-items: center;">
                 <?php if (!empty($switch) && $switch === 'kepegawaian'): ?>
                     <input type="hidden" name="nav" value="kepegawaian">
@@ -177,57 +186,83 @@ $namaBulanList = [
                     <input type="hidden" name="mode" value="<?= htmlspecialchars($viewMode) ?>">
                 <?php endif; ?>
 
-                <label class="font-weight-bold mr-1"><i class="far fa-calendar-alt text-primary"></i> Periode:</label>
-                <select name="bulan" class="form-control form-control-sm" style="min-width: 140px;">
+                <label class="font-weight-bold text-dark mr-1 mb-0" style="font-size: 13px;">
+                    <i class="far fa-calendar-alt text-primary mr-1"></i> Periode:
+                </label>
+                <select name="bulan" class="form-control form-control-sm" style="min-width: 140px; border-radius: 6px;">
                     <option value="">-- Semua Bulan --</option>
                     <?php foreach ($namaBulanList as $num => $nm): ?>
                         <option value="<?= $num ?>" <?= ((int)$filterBulan === $num) ? 'selected' : '' ?>><?= $nm ?></option>
                     <?php endforeach; ?>
                 </select>
 
-                <select name="tahun" class="form-control form-control-sm" style="min-width: 110px;">
+                <select name="tahun" class="form-control form-control-sm" style="min-width: 105px; border-radius: 6px;">
                     <option value="all" <?= ($filterTahun === 'all') ? 'selected' : '' ?>>Semua Tahun</option>
                     <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
                         <option value="<?= $y ?>" <?= ((string)$filterTahun === (string)$y) ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
 
-                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-filter"></i> Terapkan</button>
-                <a href="<?= base_url('task_proyek' . ($switch === 'kepegawaian' ? '?nav=kepegawaian' : '')) ?>" class="btn btn-sm btn-default">Reset</a>
+                <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 6px; font-weight: 600; padding: 4px 12px;">
+                    <i class="fas fa-filter"></i> Terapkan
+                </button>
+                <a href="<?= base_url('task_proyek' . ($switch === 'kepegawaian' ? '?nav=kepegawaian' : '')) ?>" class="btn btn-sm btn-default" style="border-radius: 6px; padding: 4px 12px; border: 1px solid #cbd5e1;">
+                    Reset
+                </a>
             </form>
-        </div>
-        <?php if ($canGiveTask): ?>
-            <div>
-                <button type="button" class="btn btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask">
-                    <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek <?= $isAdminUser ? 'ke Pegawai' : 'ke Karyawan' ?>
-                </button>
-            </div>
-        <?php endif; ?>
-    </div>
 
-    <!-- INFO ATASAN LANGSUNG SAYA & KARYAWAN DI BAWAH SUPERVISI SAYA -->
-    <div class="alert alert-light border py-2 px-3 mb-3 shadow-sm" style="border-left: 4px solid #2563eb !important;">
-        <div class="d-flex align-items-center flex-wrap" style="gap: 12px 20px;">
-            <div class="small">
-                <i class="fas fa-user-shield text-primary mr-1"></i>
-                <strong>Atasan Langsung Anda:</strong>
-                <?php if (!empty($me->nama_atasan)): ?>
-                    <span class="badge badge-primary px-2 py-1 ml-1"><?= htmlspecialchars($me->nama_atasan) ?><?= !empty($me->jabatan_atasan) ? ' (' . htmlspecialchars($me->jabatan_atasan) . ')' : '' ?></span>
-                <?php else: ?>
-                    <span class="badge badge-warning px-2 py-1 ml-1">Belum Diatur</span>
-                <?php endif; ?>
-                <button type="button" class="btn btn-xs btn-outline-primary ml-2" data-toggle="modal" data-target="#modalAturAtasanSaya">
-                    <i class="fas fa-user-edit"></i> <?= !empty($me->nama_atasan) ? 'Ubah Atasan' : 'Pilih Atasan Saya' ?>
-                </button>
+            <!-- Tombol Beri Task (Jika punya bawahan atau Administrator) -->
+            <?php if ($canGiveTask): ?>
+                <div>
+                    <button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask" style="border-radius: 6px; padding: 6px 14px;">
+                        <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek <?= $isAdminUser ? 'ke Pegawai' : 'ke Karyawan' ?>
+                    </button>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <hr style="margin: 12px 0 10px 0; border: 0; border-top: 1px solid #f1f5f9;">
+
+        <!-- Status Hirarki (Atasan Langsung & Karyawan Dibawahi) -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 12px;">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 14px 20px;">
+                <!-- Atasan Langsung -->
+                <div class="d-flex align-items-center" style="font-size: 13px;">
+                    <span class="text-muted mr-1">
+                        <i class="fas fa-user-shield text-primary mr-1"></i> <strong>Atasan Langsung:</strong>
+                    </span>
+                    <?php if (!empty($me->nama_atasan)): ?>
+                        <span class="badge badge-light border font-weight-bold px-2 py-1 text-primary" style="font-size: 12px; background: #eff6ff; border-color: #bfdbfe !important; border-radius: 6px;">
+                            <?= htmlspecialchars($me->nama_atasan) ?><?= !empty($me->jabatan_atasan) ? ' (' . htmlspecialchars($me->jabatan_atasan) . ')' : '' ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="badge badge-warning px-2 py-1" style="font-size: 11px; border-radius: 6px;">Belum Diatur</span>
+                    <?php endif; ?>
+                    <button type="button" class="btn btn-xs btn-outline-primary ml-2 font-weight-bold" data-toggle="modal" data-target="#modalAturAtasanSaya" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;">
+                        <i class="fas fa-user-edit mr-1"></i> <?= !empty($me->nama_atasan) ? 'Ubah' : 'Pilih Atasan' ?>
+                    </button>
+                </div>
+
+                <div class="d-none d-md-block" style="width: 1px; height: 16px; background: #cbd5e1;"></div>
+
+                <!-- Karyawan Dibawahi -->
+                <div class="d-flex align-items-center" style="font-size: 13px;">
+                    <span class="text-muted mr-1">
+                        <i class="fas fa-users text-success mr-1"></i> <strong>Karyawan Dibawahi:</strong>
+                    </span>
+                    <span class="badge <?= $jmlSupervisiSaya > 0 ? 'badge-success' : 'badge-secondary' ?> px-2 py-1" style="font-size: 12px; font-weight: 600; border-radius: 6px;">
+                        <?= $jmlSupervisiSaya ?> Karyawan
+                    </span>
+                    <?php if ($isAdminUser): ?>
+                        <span class="badge badge-info px-2 py-1 ml-2" title="Sebagai Administrator Anda dapat menugaskan task ke pegawai manapun" style="font-size: 11px; border-radius: 6px;">
+                            <i class="fas fa-shield-alt mr-1"></i> Akses Administrator (Bisa Beri Task ke Pegawai Manapun)
+                        </span>
+                    <?php endif; ?>
+                </div>
             </div>
-            <div class="d-none d-md-block" style="width: 1px; height: 18px; background: #cbd5e1;"></div>
-            <div class="small">
-                <i class="fas fa-users text-success mr-1"></i>
-                <strong>Karyawan yang Anda Bawahi Langsung:</strong>
-                <span class="badge badge-success px-2 py-1"><?= $jmlSupervisiSaya ?> Karyawan</span>
-                <?php if ($isAdminUser): ?>
-                    <span class="badge badge-info px-2 py-1 ml-1" title="Sebagai Administrator Anda dapat menugaskan task ke pegawai manapun"><i class="fas fa-shield-alt"></i> Akses Administrator (Bisa Beri Task ke Pegawai Manapun)</span>
-                <?php endif; ?>
+
+            <div class="text-muted small d-none d-lg-block" style="font-size: 12px;">
+                <i class="fas fa-star text-warning mr-1"></i> Evaluasi Kinerja dengan <strong>Rating Bintang 1–5 ⭐</strong>
             </div>
         </div>
     </div>
