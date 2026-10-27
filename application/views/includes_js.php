@@ -172,6 +172,9 @@
                             } else if (typeof table !== 'undefined' && table.ajax) {
                                 table.ajax.reload(null, false);
                             }
+                            if (typeof window.refreshStockDashboard === 'function') {
+                                window.refreshStockDashboard();
+                            }
                         } else {
                             Swal.fire('Gagal', (resp && resp.message) ? resp.message : 'Gagal memperbarui stok.', 'error');
                         }

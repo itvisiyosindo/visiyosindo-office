@@ -430,7 +430,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
 
 <script>
-    (function() {
+    window._ChartV3StockDash = window.Chart;
+    document.addEventListener('DOMContentLoaded', function() {
+        const ChartLib = window._ChartV3StockDash || window.Chart;
         let chartKategoriInstance = null;
         let chartGudangInstance   = null;
         let chartMovementInstance = null;
@@ -578,7 +580,7 @@
             const skuVals  = topKat.map(k => parseInt(k.total_sku, 10));
 
             const ctx = canvas.getContext('2d');
-            chartKategoriInstance = new Chart(ctx, {
+            chartKategoriInstance = new ChartLib(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -669,7 +671,7 @@
             });
 
             const ctx = canvas.getContext('2d');
-            chartGudangInstance = new Chart(ctx, {
+            chartGudangInstance = new ChartLib(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -757,7 +759,7 @@
             $('#sum_net_mode').text((netFlow >= 0 ? '+' : '') + formatNumber(netFlow) + unitSuffix);
 
             const ctx = canvas.getContext('2d');
-            chartMovementInstance = new Chart(ctx, {
+            chartMovementInstance = new ChartLib(ctx, {
                 type: 'bar',
                 data: {
                     labels: months,
@@ -849,7 +851,7 @@
                 tr.append(`
                     <td class="text-right">
                         <span class="badge badge-primary font-weight-bold" style="font-size: 12px; padding: 5px 8px; border-radius: 6px;">
-                            ${formatNumber(item.stok)} Unit
+                            ${formatNumber(item.stok)} ${item.nama_satuan || 'Unit'}
                         </span>
                     </td>
                 `);
@@ -857,9 +859,7 @@
             });
         }
 
-        // Initial Load on DOM Ready
-        $(document).ready(function() {
-            loadDashboardData();
-        });
-    })();
+        window.refreshStockDashboard = loadDashboardData;
+        loadDashboardData();
+    });
 </script>

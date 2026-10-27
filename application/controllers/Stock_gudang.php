@@ -702,16 +702,17 @@ class Stock_gudang extends CI_Controller
         }
 
         // 5. Top 10 Barang Terbanyak Berdasarkan Stok
-        $this->db->select('b.id_barang, b.kode_barang, b.nama_barang, kb.nama_kategori, COALESCE(SUM(db.current_stock), 0) as stok')
+        $this->db->select('b.id_barang, b.kode_barang, b.nama_barang, kb.nama_kategori, sb.nama_satuan, COALESCE(SUM(db.current_stock), 0) as stok')
             ->from('barang b')
             ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0')
             ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
+            ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->where('b.status', 1);
         if ($id_gudang > 0) {
             $this->db->where('pb.id_gudang', $id_gudang);
         }
-        $top_barang = $this->db->group_by(['b.id_barang', 'b.kode_barang', 'b.nama_barang', 'kb.nama_kategori'])
+        $top_barang = $this->db->group_by(['b.id_barang', 'b.kode_barang', 'b.nama_barang', 'kb.nama_kategori', 'sb.nama_satuan'])
             ->having('stok >', 0)
             ->order_by('stok', 'DESC')
             ->limit(10)
