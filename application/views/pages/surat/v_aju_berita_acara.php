@@ -128,7 +128,7 @@
 						<td style="text-align:center;"></td>
 					</tr>
 					<tr>
-						<td style="text-align:center; "><?= $pengguna[0]->short_name ?><hr></hr></td>
+						<td style="text-align:center; "><?= !empty($pengguna[0]->short_name) ? $pengguna[0]->short_name : $pengguna[0]->nama ?><hr></hr></td>
 						<td style="text-align:center; ">
 						
                         		<select name="id_diketahui" id="id_diketahui" style="background-color: transparent; border: none;">

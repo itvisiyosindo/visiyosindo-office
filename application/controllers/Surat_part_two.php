@@ -152,7 +152,7 @@ class Surat_part_two extends CI_Controller
         $page_data['page_title']    = 'Surat Cuti';
         $page_data['page_desc']     = 'Daftar Pengajuan Surat Cuti Tahunan yang anda Ajukan';
         $this->load->view('index', $page_data);
-      } else if ($param2 == 'ba') {
+      } else if ($param2 == 'ba' || $param2 == 'berita_acara') {
         $page_data['switch']        = $this->id_navbar();
         $page_data['page_name']     = 'surat/v_pengajuan_berita_acara';
         $page_data['page_title']    = 'Berita Acara';
@@ -202,7 +202,7 @@ class Surat_part_two extends CI_Controller
         $page_data['page_title']    = 'Surat Cuti';
         $page_data['page_desc']     = 'Daftar Pengajuan Surat Cuti Tahunan yang Diajukan';
         $this->load->view('index', $page_data);
-      } else if ($param2 == 'berita_acara') {
+      } else if ($param2 == 'berita_acara' || $param2 == 'ba') {
         $page_data['switch']        = $this->id_navbar();
         $page_data['page_name']     = 'surat/v_surat_list_berita_acara';
         $page_data['page_title']    = 'Berita Acara';
@@ -239,7 +239,7 @@ class Surat_part_two extends CI_Controller
         $page_data['page_desc']     = 'Daftar Pengajuan Surat Cuti Tahunan yang Diajukan';
         $this->load->view('index', $page_data);
       }
-    } else if ($param == 'pengajuan') {
+    } else if ($param == 'pengajuan' || $param == 'aju') {
       if ($param2 == 'izin_jam_kerja') {
         $page_data['switch']        = $this->id_navbar();
         $page_data['pengguna']      = $this->md_pengguna->getById(sessPenggunaId());
@@ -264,7 +264,7 @@ class Surat_part_two extends CI_Controller
         $page_data['page_title']    = 'Surat Cuti';
         $page_data['page_desc']     = 'Form Cuti Tahunan';
         $this->load->view('index', $page_data);
-      } else if ($param2 == 'ba') {
+      } else if ($param2 == 'ba' || $param2 == 'berita_acara') {
         $page_data['switch']        = $this->id_navbar();
         $page_data['pengguna']      = $this->md_pengguna->getById(sessPenggunaId());
         $page_data['list_nama']     = $this->md_surat_part_two->getBywhereActive();
