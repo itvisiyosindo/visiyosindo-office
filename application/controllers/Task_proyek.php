@@ -272,6 +272,26 @@ class Task_proyek extends CI_Controller
             $penerima_list = [$penerima_list];
         }
 
+        // Validasi ketat: Hanya boleh memberikan task kepada karyawan yang dibawahi langsung (id_atasan == $myId)
+        foreach ($penerima_list as $id_penerima_raw) {
+            $id_penerima = (int)$id_penerima_raw;
+            if ($id_penerima <= 0) continue;
+
+            $chkSub = $this->db->select('pengguna_id, nama, id_atasan')
+                ->from('pengguna')
+                ->where('pengguna_id', $id_penerima)
+                ->where('status', 1)
+                ->where('is_active', 1)
+                ->get()
+                ->row();
+
+            if (!$chkSub || (int)$chkSub->id_atasan !== $myId) {
+                $namaBawahan = $chkSub ? $chkSub->nama : 'Karyawan ID ' . $id_penerima;
+                ajaxReturnDie('error', 'Anda tidak dapat memberikan task kepada ' . $namaBawahan . ' karena bukan merupakan bawahan langsung Anda!', FALSE);
+                return;
+            }
+        }
+
         // Susun JSON checklist sub-task
         $checklist = [];
         if (is_array($checklist_raw)) {

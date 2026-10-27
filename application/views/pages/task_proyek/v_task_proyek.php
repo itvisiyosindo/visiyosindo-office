@@ -647,15 +647,7 @@ $namaBulanList = [
                         <?php if (empty($list_bawahan)): ?>
                             <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
                                 <i class="fas fa-exclamation-triangle mr-1"></i>
-                                <strong>Belum ada bawahan yang terdaftar:</strong> Belum ada karyawan yang memilih Anda sebagai <em>Atasan Langsung</em>. Karyawan dapat memilih Anda di halaman Profil mereka, atau Admin/HRD dapat mengaturnya di menu <strong>Data Karyawan</strong>.
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($canViewAll)): ?>
-                            <div class="mt-2 text-right">
-                                <label class="small text-muted font-weight-normal mb-0" style="cursor:pointer;" title="Fitur khusus Admin / Direksi">
-                                    <input type="checkbox" id="chkShowAllEmployeesForAdmin"> <i class="fas fa-user-shield text-primary"></i> Tampilkan seluruh karyawan perusahaan (Khusus Admin/Direksi)
-                                </label>
+                                <strong>Belum ada karyawan yang dibawahi:</strong> Anda hanya dapat memberikan tugas kepada karyawan yang dibawahi langsung oleh Anda. Belum ada karyawan yang memilih Anda sebagai <em>Atasan Langsung</em>. Karyawan dapat memilih Anda di menu <strong>Profil Karyawan</strong> mereka, atau Admin/HRD dapat mengaturnya di menu <strong>Data Karyawan</strong>.
                             </div>
                         <?php endif; ?>
                     </div>
@@ -749,7 +741,7 @@ $namaBulanList = [
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-success font-weight-bold" id="btnSubmitBuatTask">
+                    <button type="submit" class="btn btn-success font-weight-bold" id="btnSubmitBuatTask" <?= empty($list_bawahan) ? 'disabled title="Anda belum memiliki bawahan langsung"' : '' ?>>
                         <i class="fas fa-paper-plane mr-1"></i> Simpan & Tugaskan Sekarang
                     </button>
                 </div>
@@ -1034,29 +1026,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#select_penerima_task').val(allIds).trigger('change');
     });
 
-    <?php if (!empty($canViewAll)): ?>
-    var defaultBawahanHtml = $('#select_penerima_task').html();
-    var allKaryawanOptions = <?= json_encode(array_map(function($k) {
-        return [
-            'id' => (int)$k->pengguna_id,
-            'text' => $k->nama . (!empty($k->jabatan) ? ' (' . $k->jabatan . ')' : '') . (!empty($k->nama_divisi) ? ' — [' . $k->nama_divisi . ']' : '')
-        ];
-    }, $list_semua_karyawan)) ?>;
 
-    $('#chkShowAllEmployeesForAdmin').on('change', function() {
-        var isChecked = $(this).is(':checked');
-        $('#select_penerima_task').empty();
-        if (isChecked) {
-            $.each(allKaryawanOptions, function(idx, item) {
-                var newOpt = new Option(item.text, item.id, false, false);
-                $('#select_penerima_task').append(newOpt);
-            });
-        } else {
-            $('#select_penerima_task').html(defaultBawahanHtml);
-        }
-        $('#select_penerima_task').val(null).trigger('change');
-    });
-    <?php endif; ?>
 
     // Simpan Atasan Langsung Saya dari halaman Task Proyek
     $('#formAturAtasanSaya').on('submit', function(e) {
@@ -1090,6 +1060,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Buka Modal Buat Task
     $('#btnOpenModalBuatTask').on('click', function() {
+        <?php if (empty($list_bawahan)): ?>
+            if (window.swal) {
+                swal('Perhatian', 'Anda belum memiliki karyawan yang dibawahi langsung, sehingga belum dapat memberikan tugas. Karyawan harus memilih Anda sebagai Atasan Langsung terlebih dahulu.', 'warning');
+            } else {
+                alert('Anda belum memiliki karyawan yang dibawahi langsung, sehingga belum dapat memberikan tugas. Karyawan harus memilih Anda sebagai Atasan Langsung terlebih dahulu.');
+            }
+            return;
+        <?php endif; ?>
         $('#formBuatTask')[0].reset();
         if ($.fn.select2) {
             $('#select_penerima_task').val(null).trigger('change');
