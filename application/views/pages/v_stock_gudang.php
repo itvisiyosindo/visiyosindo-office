@@ -25,8 +25,9 @@
 				<div class="col-md-2">
 						<small>Filter Stok:</small>
 						<select class="form-control " name="filter_stok" id="filter_stok">
-								<option value="">Semua</option>
-								<option value="1">STOCK READY</option>
+								<option value="">Semua (Stok Ready Di Atas)</option>
+								<option value="1">Hanya Stock Ready (&gt; 0)</option>
+								<option value="2">Hanya Stok Kosong (0)</option>
 						</select>
 				</div>
                 <div class="col-md-2">

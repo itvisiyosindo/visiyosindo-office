@@ -33,8 +33,7 @@ class Md_gudang extends CI_Model {
         if (!empty($where)) {
             $this->db->where($where);
         }
-        // Menambahkan kondisi id_gudang dalam daftar (1, 2, 3)
-        $this->db->where_in('id_gudang', [1, 2, 5, 3, 7, 10, 6, 11, 4]);
+        $this->db->where_in('id_gudang', [1, 2, 3, 10, 6, 11, 23, 26, 30, 5, 27, 31, 4, 7]);
         $this->db->order_by('data_created', 'ASC');
         return $this->db->get('gudang g')->result();
     }
@@ -45,8 +44,7 @@ class Md_gudang extends CI_Model {
         if (!empty($where)) {
             $this->db->where($where);
         }
-        // Menambahkan kondisi id_gudang dalam daftar (1, 2, 3)
-        $this->db->where_in('id_gudang', [1, 2, 3, 10, 6, 11, 23, 26, 30]);
+        $this->db->where_in('id_gudang', [1, 2, 3, 10, 6, 11, 23, 26, 30, 5, 27, 31, 4]);
         $this->db->order_by('data_created', 'ASC');
         return $this->db->get('gudang g')->result();
     }
@@ -56,7 +54,6 @@ class Md_gudang extends CI_Model {
         if (!empty($where)) {
             $this->db->where($where);
         }
-        // Menambahkan kondisi id_gudang dalam daftar (1, 2, 3)
         $this->db->where_in('id_gudang', [1, 2, 3]);
         $this->db->order_by('data_created', 'ASC');
         return $this->db->get('gudang g')->result();

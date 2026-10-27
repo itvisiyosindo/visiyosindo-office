@@ -224,6 +224,24 @@ class Md_barang extends CI_Model
 
 
 
+    private function _applyStockFilterAndOrder($gudangCondition = "")
+    {
+        $gudangSql = $gudangCondition ? " AND {$gudangCondition}" : "";
+        $stockSubquery = "(SELECT COALESCE(SUM(db.current_stock), 0) FROM detail_barang db LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang WHERE db.id_barang = b.id_barang AND db.status = 1{$gudangSql})";
+        $transitSubquery = "(SELECT COALESCE(SUM(dbps.current_qty), 0) FROM detail_barang_pengiriman_stok dbps LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok WHERE dbps.id_barang = b.id_barang AND dbps.status = 1)";
+
+        $filterStok = $this->input->post('filter_stok');
+        if ($filterStok == '1') {
+            $this->datatables->where("({$stockSubquery} > 0 OR {$transitSubquery} > 0)");
+        } else if ($filterStok == '2') {
+            $this->datatables->where("({$stockSubquery} <= 0 AND {$transitSubquery} <= 0)");
+        }
+
+        // Utamakan barang yang memiliki stok (> 0) tampil di urutan paling atas
+        $this->db->order_by("({$stockSubquery} > 0 OR {$transitSubquery} > 0)", "DESC", FALSE);
+        $this->db->order_by($stockSubquery, "DESC", FALSE);
+    }
+
     function getAll()
     {
         if ($this->input->post('filter_kategori'))
@@ -233,18 +251,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (SELECT sum(db.current_stock) as total_stock FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang) > 0
-            OR
-            (SELECT sum(dbps.current_qty) as total_transit FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang AND dbps.status = 1) > 0
-        )");
-        }
+        $this->_applyStockFilterAndOrder("");
 
         return $this->datatables
             ->select('  
@@ -268,9 +275,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -283,27 +288,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (1, 2, 3)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (1, 2, 3)");
 
         return $this->datatables
             ->select('  
@@ -323,9 +308,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -338,27 +321,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (6, 10, 11)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (6, 10, 11)");
 
         return $this->datatables
             ->select('  
@@ -378,9 +341,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -394,27 +355,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (7, 25, 29)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (7, 25, 29)");
 
         return $this->datatables
             ->select('  
@@ -434,9 +375,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -450,27 +389,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (23, 26, 30)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (23, 26, 30)");
 
         return $this->datatables
             ->select('  
@@ -490,9 +409,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -506,27 +423,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (5, 27, 31)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (5, 27, 31)");
 
         return $this->datatables
             ->select('  
@@ -546,9 +443,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -562,27 +457,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (24, 28, 32)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (24, 28, 32)");
 
         return $this->datatables
             ->select('  
@@ -602,9 +477,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -618,27 +491,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.id_gudang IN (1, 2, 3, 10, 6, 11, 23, 26, 30)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.id_gudang IN (1, 2, 3, 10, 6, 11, 23, 26, 30, 5, 27, 31, 4)");
 
         return $this->datatables
             ->select('  
@@ -658,9 +511,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -674,27 +525,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.lokasi IN (1)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.lokasi IN (1)");
 
         return $this->datatables
             ->select('  
@@ -714,9 +545,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -729,27 +558,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.lokasi IN (2)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.lokasi IN (2)");
 
         return $this->datatables
             ->select('  
@@ -769,9 +578,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
@@ -784,27 +591,7 @@ class Md_barang extends CI_Model
             $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
         }
 
-        if ($this->input->post('filter_stok') == '1') {
-            $this->datatables->where("(
-            (
-                SELECT SUM(db.current_stock) AS total_stock 
-                FROM detail_barang db
-                LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
-                LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
-                WHERE db.id_barang = b.id_barang 
-                AND g.lokasi IN (3)
-            ) > 0
-            OR
-            (
-                SELECT SUM(dbps.current_qty) AS total_transit 
-                FROM detail_barang_pengiriman_stok dbps
-                LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
-                WHERE dbps.id_barang = b.id_barang 
-                AND dbps.status = 1
-            ) > 0
-
-        )");
-        }
+        $this->_applyStockFilterAndOrder("g.lokasi IN (3)");
 
         return $this->datatables
             ->select('  
@@ -824,9 +611,7 @@ class Md_barang extends CI_Model
             ->from('barang b')
             ->join('satuan_barang sb', 'sb.id_satuan = b.id_satuan_barang', 'left')
             ->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left')
-            // ->join('kode_barang kob', 'kob.id_barang = b.id_barang', 'left')
             ->where('b.status = 1')
-            //->group_by('b.nama_barang')
             ->generate();
     }
 
