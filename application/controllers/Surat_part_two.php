@@ -732,75 +732,41 @@ class Surat_part_two extends CI_Controller
           $lastBaId = $lastRow ? $lastRow->id : '';
       }
 
+      // =========================================================================
+      // 💬 KODE NOTIFIKASI WA BERITA ACARA
+      // =========================================================================
+      try {
+          $this->load->helper('whatsapp_helper');
+          $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : ($data['status_dir'] == 1 ? $data['id_dir'] : ''));
+          if (!empty($idPenerima)) {
+              $dataPenerima = $this->md_pengguna->getById($idPenerima);
+              if (!empty($dataPenerima) && isset($dataPenerima[0])) {
+                  $atasan     = $dataPenerima[0];
+                  $noHpAtasan = !empty($atasan->no_hp) ? $atasan->no_hp : (!empty($atasan->hp) ? $atasan->hp : '');
+                  if (!empty($noHpAtasan)) {
+                      $pemohon     = $this->md_pengguna->getById(sessPenggunaId());
+                      $namaPemohon = (!empty($pemohon) && isset($pemohon[0])) ? $pemohon[0]->nama : 'Karyawan';
+                      waPengajuanBaru([
+                        'noPenerima'       => $noHpAtasan,
+                        'namaApprover'     => $atasan->nama,
+                        'jenisPengajuan'   => 'Berita Acara (Kode: ' . $kodeFpp . ')',
+                        'namaPemohon'      => $namaPemohon,
+                        'tanggalPengajuan' => date('d-m-Y'),
+                        'keterangan'       => 'Membutuhkan Tanda Tangan / Persetujuan Berita Acara',
+                        'linkDetail'       => 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $lastBaId
+                      ]);
+                  }
+              }
+          }
+      } catch (\Throwable $e) {
+          log_message('error', 'Error sending WA notification for BA: ' . $e->getMessage());
+      }
+      // =========================================================================
+
       /** LOG */
       addLog('Pengajuan Berita Acara', 'Permintaan Berita Acara');
 
-      // Siapkan data notifikasi WhatsApp sebelum merespon client
-      $waParams = null;
-      $idPenerima = (!empty($data['id_diketahui'])) ? $data['id_diketahui'] : (!empty($data['id_disetujui']) ? $data['id_disetujui'] : ($data['status_dir'] == 1 ? $data['id_dir'] : ''));
-      if (!empty($idPenerima)) {
-          $dataPenerima = $this->md_pengguna->getById($idPenerima);
-          if (!empty($dataPenerima) && isset($dataPenerima[0])) {
-              $atasan     = $dataPenerima[0];
-              $noHpAtasan = !empty($atasan->no_hp) ? $atasan->no_hp : (!empty($atasan->hp) ? $atasan->hp : '');
-              if (!empty($noHpAtasan)) {
-                  $pemohon     = $this->md_pengguna->getById(sessPenggunaId());
-                  $namaPemohon = (!empty($pemohon) && isset($pemohon[0])) ? $pemohon[0]->nama : 'Karyawan';
-                  $waParams = [
-                    'noPenerima'       => $noHpAtasan,
-                    'namaApprover'     => $atasan->nama,
-                    'jenisPengajuan'   => 'Berita Acara (Kode: ' . $kodeFpp . ')',
-                    'namaPemohon'      => $namaPemohon,
-                    'tanggalPengajuan' => date('d-m-Y'),
-                    'keterangan'       => 'Membutuhkan Tanda Tangan / Persetujuan Berita Acara',
-                    'linkDetail'       => 'https://office.visiyosindo.id/surat_part_two/show/detail/ba/' . $lastBaId
-                  ];
-              }
-          }
-      }
-
-      // Kirim respon JSON ke browser terlebih dahulu agar proses di client instan tanpa terhambat pengiriman WA
-      $jsonResp = json_encode([
-          'status'  => 'success',
-          'msg'     => 'Berita Acara Berhasil Diajukan',
-          'message' => 'Berita Acara Berhasil Diajukan',
-          'reload'  => true
-      ]);
-
-      while (ob_get_level() > 0) {
-          @ob_end_clean();
-      }
-
-      if (!headers_sent()) {
-          header('Content-Type: application/json; charset=utf-8');
-          header('Content-Length: ' . strlen($jsonResp));
-          header('Connection: close');
-      }
-      echo $jsonResp;
-
-      if (function_exists('fastcgi_finish_request')) {
-          fastcgi_finish_request();
-      } elseif (function_exists('litespeed_finish_request')) {
-          litespeed_finish_request();
-      } else {
-          flush();
-          if (function_exists('ob_flush')) {
-              @ob_flush();
-          }
-      }
-
-      // =========================================================================
-      // 💬 KODE NOTIFIKASI WA BERITA ACARA DI BACKGROUND
-      // =========================================================================
-      if (!empty($waParams)) {
-          try {
-              $this->load->helper('whatsapp_helper');
-              waPengajuanBaru($waParams);
-          } catch (\Throwable $e) {
-              log_message('error', 'Error sending WA notification for BA: ' . $e->getMessage());
-          }
-      }
-      die;
+      ajaxReturnDie('success', 'Berita Acara Berhasil Diajukan', TRUE);
     } else if ($param == "paklaring") {
       //menambah pengajuan Pengalaman Kerja
       $this->md_surat_part_two->reset_increment("surat_paklaring");

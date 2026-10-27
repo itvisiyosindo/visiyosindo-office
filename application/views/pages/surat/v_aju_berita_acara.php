@@ -274,8 +274,10 @@
                         },
                         error: function(xhr, status, error) {
                             $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
+                            console.error('AJAX Error:', status, error, xhr.status, xhr.responseText);
                             try {
-                                var resp = JSON.parse(xhr.responseText);
+                                var rawText = (xhr.responseText || '').trim();
+                                var resp = JSON.parse(rawText);
                                 if (resp && (resp.status == 'success' || resp.status == true)) {
                                     Swal.fire({
                                         title: 'Berhasil!',
