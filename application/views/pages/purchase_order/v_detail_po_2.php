@@ -173,7 +173,7 @@
 							<td class="supplier" style="text-align:center">&nbsp;<?= $row->supplier ?>&nbsp;</td>
 							<td class="detail" style="text-align:center">&nbsp;<?= $row->detail ?>&nbsp;</td>
 
-							<?php if (sessPenggunaId() == '23') { ?>
+							<?php if (sessPenggunaId() == '23' && $data_po[0]->ttd_4 != '1') { ?>
 								<td class="keterangan2" style="text-align:center">&nbsp;<?= $row->keterangan2 ?>&nbsp;<button
 										type="button" class="btn btn-sm btn-primary btn-edit" data-id="<?= $id ?>"><i
 											class="bx bx-pencil"></i></button>&nbsp;</td>
@@ -182,9 +182,9 @@
 							<?php } ?>
 
 							<?php if (sessPenggunaId() == '1' || sessPenggunaId() == $data_po[0]->idPengaju) { ?>
-								<td class="aksi" style="text-align:center">&nbsp;<button type="button"
+								<td class="aksi" style="text-align:center">&nbsp;<?php if ($data_po[0]->ttd_4 != '1') { ?><button type="button"
 										class="btn btn-sm btn-primary btn-edit" data-id="<?= $id ?>"><i
-											class="bx bx-pencil"></i></button>&nbsp;</td>
+											class="bx bx-pencil"></i></button><?php } ?>&nbsp;</td>
 							<?php } ?>
 						</tr>
 					<?php } ?>
