@@ -106,7 +106,7 @@ class Task_proyek extends CI_Controller
             SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, d.nama AS nama_divisi
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
-            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != 1
+            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != {$myId}
             ORDER BY p.nama ASC
         ")->result();
 
@@ -221,6 +221,7 @@ class Task_proyek extends CI_Controller
         $page_data['me']              = $me;
         $page_data['myId']            = $myId;
         $page_data['canViewAll']      = $canViewAll;
+        $page_data['isAdmin']         = (isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
         $page_data['viewMode']        = $viewMode;
         $page_data['filterBulan']         = $filterBulan;
         $page_data['filterTahun']         = $filterTahun;
@@ -272,7 +273,9 @@ class Task_proyek extends CI_Controller
             $penerima_list = [$penerima_list];
         }
 
-        // Validasi ketat: Hanya boleh memberikan task kepada karyawan yang dibawahi langsung (id_atasan == $myId)
+        $isAdmin = (isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
+
+        // Validasi: Jika bukan Administrator, hanya boleh memberikan task kepada karyawan yang dibawahi langsung (id_atasan == $myId)
         foreach ($penerima_list as $id_penerima_raw) {
             $id_penerima = (int)$id_penerima_raw;
             if ($id_penerima <= 0) continue;
@@ -285,8 +288,13 @@ class Task_proyek extends CI_Controller
                 ->get()
                 ->row();
 
-            if (!$chkSub || (int)$chkSub->id_atasan !== $myId) {
-                $namaBawahan = $chkSub ? $chkSub->nama : 'Karyawan ID ' . $id_penerima;
+            if (!$chkSub) {
+                ajaxReturnDie('error', 'Karyawan penerima tugas (ID: ' . $id_penerima . ') tidak ditemukan atau tidak aktif!', FALSE);
+                return;
+            }
+
+            if (!$isAdmin && (int)$chkSub->id_atasan !== $myId) {
+                $namaBawahan = $chkSub->nama;
                 ajaxReturnDie('error', 'Anda tidak dapat memberikan task kepada ' . $namaBawahan . ' karena bukan merupakan bawahan langsung Anda!', FALSE);
                 return;
             }

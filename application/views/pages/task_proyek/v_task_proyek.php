@@ -159,9 +159,16 @@ $namaBulanList = [
         </div>
     </header>
 
+    <?php
+    $isAdminUser      = (!empty($isAdmin) || isAdmin() || (int)$myId === 1);
+    $jmlSupervisiSaya = count($list_bawahan);
+    $canGiveTask      = ($isAdminUser || $jmlSupervisiSaya > 0);
+    $penerimaList     = $isAdminUser ? $list_semua_karyawan : $list_bawahan;
+    ?>
+
     <!-- BARIS FILTER & TOMBOL BUAT TASK -->
-    <div class="row mb-3">
-        <div class="col-md-8">
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap: 12px;">
+        <div>
             <form method="GET" action="<?= base_url('task_proyek') ?>" class="form-inline" style="gap: 8px; display: flex; flex-wrap: wrap; align-items: center;">
                 <?php if (!empty($switch) && $switch === 'kepegawaian'): ?>
                     <input type="hidden" name="nav" value="kepegawaian">
@@ -189,34 +196,39 @@ $namaBulanList = [
                 <a href="<?= base_url('task_proyek' . ($switch === 'kepegawaian' ? '?nav=kepegawaian' : '')) ?>" class="btn btn-sm btn-default">Reset</a>
             </form>
         </div>
-        <div class="col-md-4 text-right mt-2 mt-md-0">
-            <button type="button" class="btn btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask">
-                <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek ke Karyawan
-            </button>
-        </div>
+        <?php if ($canGiveTask): ?>
+            <div>
+                <button type="button" class="btn btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask">
+                    <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek <?= $isAdminUser ? 'ke Pegawai' : 'ke Karyawan' ?>
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- INFO ATASAN LANGSUNG SAYA & KARYAWAN DI BAWAH SUPERVISI SAYA -->
-    <?php
-    $jmlSupervisiSaya = count($list_bawahan);
-    ?>
-    <div class="alert alert-light border d-flex justify-content-between align-items-center flex-wrap py-2 px-3 mb-3 shadow-sm" style="border-left: 4px solid #2563eb !important;">
-        <div class="small">
-            <i class="fas fa-user-shield text-primary mr-1"></i>
-            <strong>Atasan Langsung Anda:</strong>
-            <?php if (!empty($me->nama_atasan)): ?>
-                <span class="badge badge-primary px-2 py-1 ml-1"><?= htmlspecialchars($me->nama_atasan) ?><?= !empty($me->jabatan_atasan) ? ' (' . htmlspecialchars($me->jabatan_atasan) . ')' : '' ?></span>
-            <?php else: ?>
-                <span class="badge badge-warning px-2 py-1 ml-1">Belum Diatur</span>
-            <?php endif; ?>
-            <button type="button" class="btn btn-xs btn-outline-primary ml-2" data-toggle="modal" data-target="#modalAturAtasanSaya">
-                <i class="fas fa-user-edit"></i> <?= !empty($me->nama_atasan) ? 'Ubah Atasan' : 'Pilih Atasan Saya' ?>
-            </button>
-        </div>
-        <div class="small mt-1 mt-md-0">
-            <i class="fas fa-users text-success mr-1"></i>
-            <strong>Karyawan yang Anda Bawahi Langsung:</strong>
-            <span class="badge badge-success px-2 py-1"><?= $jmlSupervisiSaya ?> Karyawan</span>
+    <div class="alert alert-light border py-2 px-3 mb-3 shadow-sm" style="border-left: 4px solid #2563eb !important;">
+        <div class="d-flex align-items-center flex-wrap" style="gap: 12px 20px;">
+            <div class="small">
+                <i class="fas fa-user-shield text-primary mr-1"></i>
+                <strong>Atasan Langsung Anda:</strong>
+                <?php if (!empty($me->nama_atasan)): ?>
+                    <span class="badge badge-primary px-2 py-1 ml-1"><?= htmlspecialchars($me->nama_atasan) ?><?= !empty($me->jabatan_atasan) ? ' (' . htmlspecialchars($me->jabatan_atasan) . ')' : '' ?></span>
+                <?php else: ?>
+                    <span class="badge badge-warning px-2 py-1 ml-1">Belum Diatur</span>
+                <?php endif; ?>
+                <button type="button" class="btn btn-xs btn-outline-primary ml-2" data-toggle="modal" data-target="#modalAturAtasanSaya">
+                    <i class="fas fa-user-edit"></i> <?= !empty($me->nama_atasan) ? 'Ubah Atasan' : 'Pilih Atasan Saya' ?>
+                </button>
+            </div>
+            <div class="d-none d-md-block" style="width: 1px; height: 18px; background: #cbd5e1;"></div>
+            <div class="small">
+                <i class="fas fa-users text-success mr-1"></i>
+                <strong>Karyawan yang Anda Bawahi Langsung:</strong>
+                <span class="badge badge-success px-2 py-1"><?= $jmlSupervisiSaya ?> Karyawan</span>
+                <?php if ($isAdminUser): ?>
+                    <span class="badge badge-info px-2 py-1 ml-1" title="Sebagai Administrator Anda dapat menugaskan task ke pegawai manapun"><i class="fas fa-shield-alt"></i> Akses Administrator (Bisa Beri Task ke Pegawai Manapun)</span>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -300,7 +312,7 @@ $namaBulanList = [
                 </li>
                 <li class="nav-item <?= $openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
-                        <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Karyawan (Atasan)
+                        <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Karyawan
                         <?php if ($kpi['need_review'] > 0): ?>
                             <span class="badge badge-warning ml-1"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
                         <?php else: ?>
@@ -628,15 +640,19 @@ $namaBulanList = [
                     <div class="form-group">
                         <div class="d-flex justify-content-between align-items-center flex-wrap mb-1">
                             <label class="font-weight-bold mb-0">Pilih Karyawan Penerima Tugas <span class="text-danger">*</span></label>
-                            <?php if (!empty($list_bawahan)): ?>
+                            <?php if (!empty($penerimaList)): ?>
                                 <button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnSelectSupervisedEmployees">
-                                    <i class="fas fa-user-check"></i> Pilih Semua Bawahan (<?= count($list_bawahan) ?>)
+                                    <i class="fas fa-user-check"></i> <?= $isAdminUser ? 'Pilih Semua Pegawai' : 'Pilih Semua Bawahan' ?> (<?= count($penerimaList) ?>)
                                 </button>
                             <?php endif; ?>
                         </div>
-                        <small class="text-muted d-block mb-1">Hanya menampilkan karyawan yang berada di bawah supervisi / atasan langsung Anda.</small>
+                        <?php if ($isAdminUser): ?>
+                            <small class="text-primary d-block mb-1"><i class="fas fa-shield-alt mr-1"></i> Sebagai <strong>Administrator</strong>, Anda dapat memberikan task / proyek kepada seluruh pegawai perusahaan.</small>
+                        <?php else: ?>
+                            <small class="text-muted d-block mb-1">Hanya menampilkan karyawan yang berada di bawah supervisi / atasan langsung Anda.</small>
+                        <?php endif; ?>
                         <select name="id_penerima[]" id="select_penerima_task" class="form-control" multiple="multiple" required style="width: 100%;">
-                            <?php foreach ($list_bawahan as $bw):
+                            <?php foreach ($penerimaList as $bw):
                                 $divLabel = !empty($bw->nama_divisi) ? $bw->nama_divisi : 'Umum';
                             ?>
                                 <option value="<?= (int)$bw->pengguna_id ?>">
@@ -644,7 +660,7 @@ $namaBulanList = [
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <?php if (empty($list_bawahan)): ?>
+                        <?php if (empty($penerimaList)): ?>
                             <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
                                 <i class="fas fa-exclamation-triangle mr-1"></i>
                                 <strong>Belum ada karyawan yang dibawahi:</strong> Anda hanya dapat memberikan tugas kepada karyawan yang dibawahi langsung oleh Anda. Belum ada karyawan yang memilih Anda sebagai <em>Atasan Langsung</em>. Karyawan dapat memilih Anda di menu <strong>Profil Karyawan</strong> mereka, atau Admin/HRD dapat mengaturnya di menu <strong>Data Karyawan</strong>.
@@ -741,7 +757,7 @@ $namaBulanList = [
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-success font-weight-bold" id="btnSubmitBuatTask" <?= empty($list_bawahan) ? 'disabled title="Anda belum memiliki bawahan langsung"' : '' ?>>
+                    <button type="submit" class="btn btn-success font-weight-bold" id="btnSubmitBuatTask" <?= empty($penerimaList) ? 'disabled title="Tidak ada karyawan yang dapat dipilih"' : '' ?>>
                         <i class="fas fa-paper-plane mr-1"></i> Simpan & Tugaskan Sekarang
                     </button>
                 </div>
@@ -1011,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if ($.fn.select2) {
         $('#select_penerima_task').select2({
             dropdownParent: $('#modalBuatTask'),
-            placeholder: 'Pilih bawahan penerima tugas (bisa lebih dari 1)...',
+            placeholder: 'Pilih karyawan penerima tugas (bisa lebih dari 1)...',
             allowClear: true,
             width: '100%'
         });
@@ -1060,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Buka Modal Buat Task
     $('#btnOpenModalBuatTask').on('click', function() {
-        <?php if (empty($list_bawahan)): ?>
+        <?php if (!$isAdminUser && empty($list_bawahan)): ?>
             if (window.swal) {
                 swal('Perhatian', 'Anda belum memiliki karyawan yang dibawahi langsung, sehingga belum dapat memberikan tugas. Karyawan harus memilih Anda sebagai Atasan Langsung terlebih dahulu.', 'warning');
             } else {
