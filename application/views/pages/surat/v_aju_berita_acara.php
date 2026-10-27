@@ -216,6 +216,10 @@
                 Swal.fire('Perhatian', 'Harap lengkapi tanggal, analisis, hasil, dan penanganan terlebih dahulu!', 'warning');
                 return false;
             }
+            if (!id_disetujui) {
+                Swal.fire('Perhatian', 'Harap pilih nama yang Menyetujui terlebih dahulu!', 'warning');
+                return false;
+            }
 
             Swal.fire({
                 title: 'Ajukan Berita Acara?',
@@ -275,8 +279,9 @@
                         error: function(xhr, status, error) {
                             $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
                             console.error('AJAX Error:', status, error, xhr.status, xhr.responseText);
+                            var rawText = (xhr.responseText || '').trim();
+                            var errorMsg = '';
                             try {
-                                var rawText = (xhr.responseText || '').trim();
                                 var resp = JSON.parse(rawText);
                                 if (resp && (resp.status == 'success' || resp.status == true)) {
                                     Swal.fire({
@@ -289,7 +294,28 @@
                                     });
                                     return;
                                 }
-                            } catch (e) {}
+                                if (resp && resp.message) {
+                                    errorMsg = resp.message;
+                                }
+                            } catch (e) {
+                                var dbMatch = rawText.match(/<div id="container">([\s\S]*?)<\/div>/i);
+                                if (dbMatch && dbMatch[1]) {
+                                    var tmpDiv = document.createElement('div');
+                                    tmpDiv.innerHTML = dbMatch[1];
+                                    errorMsg = tmpDiv.textContent.replace(/\s+/g, ' ').trim();
+                                }
+                            }
+
+                            if (errorMsg) {
+                                Swal.fire({
+                                    title: 'Gagal Menyimpan',
+                                    html: '<div style="text-align:left; font-size:13px; max-height:220px; overflow-y:auto; background:#f8f9fa; padding:10px; border-radius:5px; border:1px solid #ddd; white-space:pre-wrap;">' + $('<div/>').text(errorMsg).html() + '</div>',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                                return;
+                            }
+
                             Swal.fire({
                                 title: 'Perhatian',
                                 text: 'Respon server tidak dapat diproses otomatis. Pengajuan kemungkinan sudah tersimpan. Silakan periksa menu Daftar Berita Acara.',

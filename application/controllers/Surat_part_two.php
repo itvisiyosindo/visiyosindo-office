@@ -714,17 +714,21 @@ class Surat_part_two extends CI_Controller
       $kodeFpp = $kodeFpp . "/BA/HRGA/VYM/" . $bulan . "/" . $tahun;
       $data['kode_ba']      = $kodeFpp;
 
-      $data['id_pengaju']     = sessPenggunaId();
-      $data['tanggal']        = date_db_format($this->input->post('tanggal', TRUE));
-      $data['analisis']       = $this->input->post('analisis', TRUE);
-      $data['hasil']          = $this->input->post('hasil', TRUE);
-      $data['penanganan']     = $this->input->post('penanganan', TRUE);
-      $data['id_diketahui']    = $this->input->post('id_diketahui', TRUE);
-      $data['id_disetujui']    = $this->input->post('id_disetujui', TRUE);
+      $id_diketahui = $this->input->post('id_diketahui', TRUE);
+      $id_disetujui = $this->input->post('id_disetujui', TRUE);
+      $id_dir       = $this->input->post('id_dir', TRUE);
+
+      $data['id_pengaju']      = sessPenggunaId();
+      $data['tanggal']         = date_db_format($this->input->post('tanggal', TRUE));
+      $data['analisis']        = $this->input->post('analisis', TRUE);
+      $data['hasil']           = $this->input->post('hasil', TRUE);
+      $data['penanganan']      = $this->input->post('penanganan', TRUE);
+      $data['id_diketahui']    = (!empty($id_diketahui) && is_numeric($id_diketahui)) ? (int)$id_diketahui : null;
+      $data['id_disetujui']    = (!empty($id_disetujui) && is_numeric($id_disetujui)) ? (int)$id_disetujui : null;
       $data['status_dir']      = ($this->input->post('direktor', TRUE) == 1) ? 1 : 0;
-      $data['id_dir']          = ($data['status_dir'] == 1) ? $this->input->post('id_dir', TRUE) : null;
+      $data['id_dir']          = ($data['status_dir'] == 1 && !empty($id_dir) && is_numeric($id_dir)) ? (int)$id_dir : null;
       $data['lampiran']        = $this->input->post('lampiran', TRUE);
-      $data['status']         = 0;
+      $data['status']          = 0;
       $insertId = $this->md_surat_part_two->addBeritaAcara($data);
       $lastBaId = !empty($insertId) ? $insertId : $this->db->insert_id();
       if (empty($lastBaId)) {

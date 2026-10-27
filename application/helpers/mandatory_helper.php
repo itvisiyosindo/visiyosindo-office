@@ -78,8 +78,10 @@ function addlog($aksi = '', $ket = '')
 	$log['jenis_aksi']  = $aksi;
 	$log['keterangan']  = $ket;
 	// $log['pengguna_id'] = isAdmin() || isAdminCluster() ? decrypt($CI->session->userdata('pengguna_id')) : null;
-	$log['pengguna_id'] = decrypt($CI->session->userdata('pengguna_id'));
-	$log['ip_addr']     = $_SERVER['REMOTE_ADDR'];
+	$penggunaId         = decrypt($CI->session->userdata('pengguna_id'));
+	$log['pengguna_id'] = (!empty($penggunaId) && is_numeric($penggunaId)) ? (int)$penggunaId : null;
+	$ip                 = !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+	$log['ip_addr']     = substr($ip, 0, 17);
 	$CI->md_log->addlog($log);
 	return true;
 }

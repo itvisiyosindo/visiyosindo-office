@@ -1,5 +1,25 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+
+$isAjax = (
+	(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+	(isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+);
+
+if ($isAjax) {
+	if (!headers_sent()) {
+		header('Content-Type: application/json; charset=utf-8');
+		http_response_code(500);
+	}
+	$cleanMessage = is_array($message) ? implode("\n", $message) : $message;
+	$cleanMessage = strip_tags(str_replace(['</p>', '<br>', '<br/>'], ["\n", "\n", "\n"], $cleanMessage));
+	echo json_encode([
+		'status'  => 'error',
+		'heading' => $heading,
+		'message' => 'Database Error: ' . trim($cleanMessage)
+	]);
+	exit(8);
+}
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
