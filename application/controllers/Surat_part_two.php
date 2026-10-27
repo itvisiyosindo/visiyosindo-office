@@ -674,16 +674,13 @@ class Surat_part_two extends CI_Controller
       $hasil      = $this->input->post('hasil', TRUE);
       $penanganan = $this->input->post('penanganan', TRUE);
 
-      // Proteksi Anti-Double Submit / Anti-Spam:
-      // Cek apakah ada pengajuan identik dari pengaju yang sama dalam 2 menit terakhir
+      // Proteksi Anti-Double Submit / Spam Klik Beruntun:
+      // Cek apakah ada pengajuan dari pengaju yang sama dalam 15 detik terakhir
       $cekDuplikat = $this->db->select('id, kode_ba')
           ->from('surat_berita_acara')
           ->where('id_pengaju', $id_pengaju)
           ->where('tanggal', $tgl_db)
-          ->where('analisis', $analisis)
-          ->where('hasil', $hasil)
-          ->where('penanganan', $penanganan)
-          ->where('created_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)')
+          ->where('created_at >= DATE_SUB(NOW(), INTERVAL 15 SECOND)')
           ->order_by('id', 'DESC')
           ->limit(1)
           ->get()
