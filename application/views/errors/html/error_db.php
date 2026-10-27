@@ -9,16 +9,20 @@ $isAjax = (
 if ($isAjax) {
 	if (!headers_sent()) {
 		header('Content-Type: application/json; charset=utf-8');
-		http_response_code(500);
 	}
 	$cleanMessage = is_array($message) ? implode("\n", $message) : $message;
 	$cleanMessage = strip_tags(str_replace(['</p>', '<br>', '<br/>'], ["\n", "\n", "\n"], $cleanMessage));
-	echo json_encode([
+	if (function_exists('mb_convert_encoding')) {
+		$cleanMessage = mb_convert_encoding($cleanMessage, 'UTF-8', 'UTF-8');
+	}
+	$jsonFlags = defined('JSON_INVALID_UTF8_SUBSTITUTE') ? JSON_INVALID_UTF8_SUBSTITUTE : 0;
+	$jsonOut = json_encode([
 		'status'  => 'error',
 		'heading' => $heading,
 		'message' => 'Database Error: ' . trim($cleanMessage)
-	]);
-	exit(8);
+	], $jsonFlags);
+	echo ($jsonOut !== false) ? $jsonOut : '{"status":"error","message":"Database Error Occurred"}';
+	return;
 }
 ?><!DOCTYPE html>
 <html lang="en">

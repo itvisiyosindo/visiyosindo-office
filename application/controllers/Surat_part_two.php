@@ -665,14 +665,38 @@ class Surat_part_two extends CI_Controller
 
   public function addSrt($param = "")
   {
-    grantAccessFor('all');
-
     if ($param == "addBeritaAcara") {
+      $this->db->db_debug = FALSE;
+      @$this->db->query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'");
+      @$this->db->query("SET SESSION sql_mode = ''");
+
       $id_pengaju = sessPenggunaId();
-      $tgl_db     = date_db_format($this->input->post('tanggal', TRUE));
-      $analisis   = $this->input->post('analisis', TRUE);
-      $hasil      = $this->input->post('hasil', TRUE);
-      $penanganan = $this->input->post('penanganan', TRUE);
+      if (empty($id_pengaju)) {
+        $pengaju_token = $this->input->post('pengaju_token', FALSE);
+        if (!empty($pengaju_token)) {
+          $dec_id = decrypt($pengaju_token);
+          if (!empty($dec_id) && is_numeric($dec_id)) {
+            $id_pengaju = (int)$dec_id;
+          }
+        }
+      }
+      if (empty($id_pengaju)) {
+        grantAccessFor('all');
+        $id_pengaju = sessPenggunaId();
+      }
+
+      $tgl_raw = $this->input->post('tanggal', TRUE);
+      $tgl_db  = !empty($tgl_raw) ? date_db_format($tgl_raw) : date('Y-m-d');
+
+      $analisis_b64   = $this->input->post('analisis_b64', FALSE);
+      $hasil_b64      = $this->input->post('hasil_b64', FALSE);
+      $penanganan_b64 = $this->input->post('penanganan_b64', FALSE);
+      $lampiran_b64   = $this->input->post('lampiran_b64', FALSE);
+
+      $analisis   = ($analisis_b64 !== null && $analisis_b64 !== '') ? base64_decode($analisis_b64) : (string)$this->input->post('analisis', FALSE);
+      $hasil      = ($hasil_b64 !== null && $hasil_b64 !== '') ? base64_decode($hasil_b64) : (string)$this->input->post('hasil', FALSE);
+      $penanganan = ($penanganan_b64 !== null && $penanganan_b64 !== '') ? base64_decode($penanganan_b64) : (string)$this->input->post('penanganan', FALSE);
+      $lampiran   = ($lampiran_b64 !== null && $lampiran_b64 !== '') ? base64_decode($lampiran_b64) : (string)$this->input->post('lampiran', FALSE);
 
       // Proteksi Anti-Double Submit / Spam Klik Beruntun:
       // Cek apakah ada pengajuan dari pengaju yang sama dalam 15 detik terakhir
@@ -690,12 +714,12 @@ class Surat_part_two extends CI_Controller
           ajaxReturnDie('success', 'Berita Acara ini sudah berhasil diajukan sebelumnya (No: ' . $cekDuplikat->kode_ba . '). Pengajuan duplikat dicegah agar tidak spam.', TRUE);
           return;
       }
-      //menambah pengajuan Berita Acara
-      $this->md_surat_part_two->reset_increment("surat_berita_acara");
+
+      // Menambah pengajuan Berita Acara
       $idFpp = $this->md_surat_part_two->getBaKodeId();
-      $ambilId = $idFpp->id;
+      $ambilId = (!empty($idFpp) && isset($idFpp->id)) ? (int)$idFpp->id : 0;
       $ambilId = ($ambilId + 1);
-      $panjangId = strlen($ambilId);
+      $panjangId = strlen((string)$ambilId);
 
       if ($panjangId == 1) {
         $kodeFpp = "00" . $ambilId;
@@ -709,25 +733,33 @@ class Surat_part_two extends CI_Controller
       $tahun = ambil_tahun();
 
       $kodeFpp = $kodeFpp . "/BA/HRGA/VYM/" . $bulan . "/" . $tahun;
+      $data = [];
       $data['kode_ba']      = $kodeFpp;
 
       $id_diketahui = $this->input->post('id_diketahui', TRUE);
       $id_disetujui = $this->input->post('id_disetujui', TRUE);
       $id_dir       = $this->input->post('id_dir', TRUE);
 
-      $data['id_pengaju']      = sessPenggunaId();
-      $data['tanggal']         = date_db_format($this->input->post('tanggal', TRUE));
-      $data['analisis']        = $this->input->post('analisis', TRUE);
-      $data['hasil']           = $this->input->post('hasil', TRUE);
-      $data['penanganan']      = $this->input->post('penanganan', TRUE);
+      $data['id_pengaju']      = (int)$id_pengaju;
+      $data['tanggal']         = $tgl_db;
+      $data['analisis']        = $analisis;
+      $data['hasil']           = $hasil;
+      $data['penanganan']      = $penanganan;
       $data['id_diketahui']    = (!empty($id_diketahui) && is_numeric($id_diketahui)) ? (int)$id_diketahui : null;
       $data['id_disetujui']    = (!empty($id_disetujui) && is_numeric($id_disetujui)) ? (int)$id_disetujui : null;
       $data['status_dir']      = ($this->input->post('direktor', TRUE) == 1) ? 1 : 0;
       $data['id_dir']          = ($data['status_dir'] == 1 && !empty($id_dir) && is_numeric($id_dir)) ? (int)$id_dir : null;
-      $data['lampiran']        = $this->input->post('lampiran', TRUE);
+      $data['lampiran']        = $lampiran;
       $data['status']          = 0;
-      $insertId = $this->md_surat_part_two->addBeritaAcara($data);
-      $lastBaId = !empty($insertId) ? $insertId : $this->db->insert_id();
+
+      $insertRes = $this->db->insert('surat_berita_acara', $data);
+      if (!$insertRes) {
+          $dbErr = $this->db->error();
+          $errMsg = !empty($dbErr['message']) ? $dbErr['message'] : 'Gagal menyimpan data Berita Acara ke database.';
+          ajaxReturnDie('error', 'Database Error: ' . $errMsg, FALSE);
+          return;
+      }
+      $lastBaId = $this->db->insert_id();
       if (empty($lastBaId)) {
           $lastRow = $this->db->select('id')->from('surat_berita_acara')->where('kode_ba', $kodeFpp)->get()->row();
           $lastBaId = $lastRow ? $lastRow->id : '';
@@ -745,7 +777,7 @@ class Surat_part_two extends CI_Controller
                   $atasan     = $dataPenerima[0];
                   $noHpAtasan = !empty($atasan->no_hp) ? $atasan->no_hp : (!empty($atasan->hp) ? $atasan->hp : '');
                   if (!empty($noHpAtasan)) {
-                      $pemohon     = $this->md_pengguna->getById(sessPenggunaId());
+                      $pemohon     = $this->md_pengguna->getById($id_pengaju);
                       $namaPemohon = (!empty($pemohon) && isset($pemohon[0])) ? $pemohon[0]->nama : 'Karyawan';
                       waPengajuanBaru([
                         'noPenerima'       => $noHpAtasan,
@@ -765,10 +797,20 @@ class Surat_part_two extends CI_Controller
       // =========================================================================
 
       /** LOG */
-      addLog('Pengajuan Berita Acara', 'Permintaan Berita Acara');
+      try {
+          if (!empty(sessPenggunaId())) {
+              addLog('Pengajuan Berita Acara', 'Permintaan Berita Acara');
+          }
+      } catch (\Throwable $e) {
+      }
 
       ajaxReturnDie('success', 'Berita Acara Berhasil Diajukan', TRUE);
-    } else if ($param == "paklaring") {
+      return;
+    }
+
+    grantAccessFor('all');
+
+    if ($param == "paklaring") {
       //menambah pengajuan Pengalaman Kerja
       $this->md_surat_part_two->reset_increment("surat_paklaring");
       $idFpp = $this->md_surat_part_two->getPaklaringKodeId();

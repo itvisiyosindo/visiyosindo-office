@@ -193,6 +193,14 @@
 </div>
 
 <script>
+    function b64EncodeUnicode(str) {
+        try {
+            return window.btoa(unescape(encodeURIComponent(str || '')));
+        } catch (e) {
+            return '';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         
         $(document).on('click', '.btn-ajukan', function(e) {
@@ -240,50 +248,29 @@
                             Swal.showLoading();
                         }
                     });
-                    $.ajax({
-                        method: 'POST',
-                        url: '<?= base_url("surat_part_two/addSrt/addBeritaAcara") ?>',
-                        dataType: 'JSON',
-                        data: {
-                            tanggal      : tanggal,
-                            analisis     : analisis,
-                            hasil        : hasil,
-                            penanganan   : penanganan,
-                            id_diketahui : id_diketahui,
-                            id_disetujui : id_disetujui,
-                            id_dir       : id_dir,
-                            lampiran     : lampiran,
-                            direktor     : direktor,
-                            csrf_token   : token_val
-                        },
-                        success: function(resp) {
-                            if (resp.status == 'success' || resp.status == true) {
-                                Swal.fire({
-                                    title: 'Berhasil!',
-                                    text: resp.message || 'Berita Acara Berhasil Diajukan',
-                                    icon: 'success',
-                                    confirmButtonText: 'OK'
-                                }).then(function() {
-                                    window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
-                                });
-                            } else {
-                                $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
-                                Swal.fire({
-                                    title: 'Perhatian',
-                                    text: resp.message || 'Gagal mengajukan Berita Acara',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
-                            console.error('AJAX Error:', status, error, xhr.status, xhr.responseText);
-                            var rawText = (xhr.responseText || '').trim();
-                            var errorMsg = '';
-                            try {
-                                var resp = JSON.parse(rawText);
-                                if (resp && (resp.status == 'success' || resp.status == true)) {
+
+                    var postPayload = {
+                        tanggal        : tanggal,
+                        analisis_b64   : b64EncodeUnicode(analisis),
+                        hasil_b64      : b64EncodeUnicode(hasil),
+                        penanganan_b64 : b64EncodeUnicode(penanganan),
+                        lampiran_b64   : b64EncodeUnicode(lampiran),
+                        id_diketahui   : id_diketahui,
+                        id_disetujui   : id_disetujui,
+                        id_dir         : id_dir,
+                        direktor       : direktor,
+                        pengaju_token  : '<?= !empty($pengguna[0]->pengguna_id) ? encrypt($pengguna[0]->pengguna_id) : "" ?>',
+                        csrf_token     : token_val
+                    };
+
+                    var sendRequest = function(retryCount) {
+                        $.ajax({
+                            method: 'POST',
+                            url: '<?= base_url("surat_part_two/addSrt/addBeritaAcara") ?>?_r=' + Date.now(),
+                            dataType: 'JSON',
+                            data: postPayload,
+                            success: function(resp) {
+                                if (resp.status == 'success' || resp.status == true) {
                                     Swal.fire({
                                         title: 'Berhasil!',
                                         text: resp.message || 'Berita Acara Berhasil Diajukan',
@@ -292,44 +279,80 @@
                                     }).then(function() {
                                         window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
                                     });
+                                } else {
+                                    $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
+                                    Swal.fire({
+                                        title: 'Perhatian',
+                                        text: resp.message || 'Gagal mengajukan Berita Acara',
+                                        icon: 'error',
+                                        confirmButtonText: 'OK'
+                                    });
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                if (xhr.status === 0 && retryCount < 2) {
+                                    setTimeout(function() {
+                                        sendRequest(retryCount + 1);
+                                    }, 600);
                                     return;
                                 }
-                                if (resp && resp.message) {
-                                    errorMsg = resp.message;
-                                }
-                            } catch (e) {
-                                var dbMatch = rawText.match(/<div id="container">([\s\S]*?)<\/div>/i);
-                                if (dbMatch && dbMatch[1]) {
-                                    var tmpDiv = document.createElement('div');
-                                    tmpDiv.innerHTML = dbMatch[1];
-                                    errorMsg = tmpDiv.textContent.replace(/\s+/g, ' ').trim();
-                                }
-                            }
 
-                            if (errorMsg) {
+                                $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Ajukan');
+                                console.error('AJAX Error:', status, error, xhr.status, xhr.responseText);
+                                var rawText = (xhr.responseText || '').trim();
+                                var errorMsg = '';
+                                try {
+                                    var resp = JSON.parse(rawText);
+                                    if (resp && (resp.status == 'success' || resp.status == true)) {
+                                        Swal.fire({
+                                            title: 'Berhasil!',
+                                            text: resp.message || 'Berita Acara Berhasil Diajukan',
+                                            icon: 'success',
+                                            confirmButtonText: 'OK'
+                                        }).then(function() {
+                                            window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
+                                        });
+                                        return;
+                                    }
+                                    if (resp && resp.message) {
+                                        errorMsg = resp.message;
+                                    }
+                                } catch (e) {
+                                    var dbMatch = rawText.match(/<div id="container">([\s\S]*?)<\/div>/i);
+                                    if (dbMatch && dbMatch[1]) {
+                                        var tmpDiv = document.createElement('div');
+                                        tmpDiv.innerHTML = dbMatch[1];
+                                        errorMsg = tmpDiv.textContent.replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+
+                                if (errorMsg) {
+                                    Swal.fire({
+                                        title: 'Gagal Menyimpan',
+                                        html: '<div style="text-align:left; font-size:13px; max-height:220px; overflow-y:auto; background:#f8f9fa; padding:10px; border-radius:5px; border:1px solid #ddd; white-space:pre-wrap;">' + $('<div/>').text(errorMsg).html() + '</div>',
+                                        icon: 'error',
+                                        confirmButtonText: 'OK'
+                                    });
+                                    return;
+                                }
+
                                 Swal.fire({
-                                    title: 'Gagal Menyimpan',
-                                    html: '<div style="text-align:left; font-size:13px; max-height:220px; overflow-y:auto; background:#f8f9fa; padding:10px; border-radius:5px; border:1px solid #ddd; white-space:pre-wrap;">' + $('<div/>').text(errorMsg).html() + '</div>',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
+                                    title: 'Perhatian',
+                                    text: 'Respon server tidak dapat diproses otomatis. Pengajuan kemungkinan sudah tersimpan. Silakan periksa menu Daftar Berita Acara.',
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    cancelButtonText: 'Tetap di Form',
+                                    confirmButtonText: 'Buka Daftar Berita Acara'
+                                }).then(function(result) {
+                                    if (result.value) {
+                                        window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
+                                    }
                                 });
-                                return;
                             }
+                        });
+                    };
 
-                            Swal.fire({
-                                title: 'Perhatian',
-                                text: 'Respon server tidak dapat diproses otomatis. Pengajuan kemungkinan sudah tersimpan. Silakan periksa menu Daftar Berita Acara.',
-                                icon: 'warning',
-                                showCancelButton: true,
-                                cancelButtonText: 'Tetap di Form',
-                                confirmButtonText: 'Buka Daftar Berita Acara'
-                            }).then(function(result) {
-                                if (result.value) {
-                                    window.location.href = '<?= base_url("surat_part_two/show/list/berita_acara") ?>';
-                                }
-                            });
-                        }
-                    });                    
+                    sendRequest(0);
                 }                
             });
         });       
