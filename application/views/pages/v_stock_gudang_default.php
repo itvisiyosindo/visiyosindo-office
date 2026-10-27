@@ -71,10 +71,6 @@
                 </div>
 			</div>
 			<br>
-			
-			<div class="alert alert-info py-2 px-3 mb-2" style="font-size: 13px;">
-				<i class="fas fa-info-circle mr-1"></i> <strong>Tips:</strong> Barang yang memiliki stok ditampilkan paling atas. Klik pada angka stok (misal <span class="badge badge-light border">0 +</span> atau <span class="badge badge-success">5 <i class="fas fa-pen" style="font-size:9px;"></i></span>) di kolom gudang mana saja untuk langsung mengisi atau menyesuaikan jumlah stok.
-			</div>
 			<div class="table-responsive">
 				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
 					<thead>

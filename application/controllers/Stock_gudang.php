@@ -65,7 +65,6 @@ class Stock_gudang extends CI_Controller
         // Build data rows menggunakan lookup arrays (tanpa query tambahan)
         foreach ($dt['data'] as $row) {
             $id = $row->id_barang;
-            $encIdBarang = encrypt($id);
             $safeNamaBarang = htmlspecialchars($row->nama_barang, ENT_QUOTES, 'UTF-8');
             $satuan = !empty($row->nama_satuan) ? htmlspecialchars($row->nama_satuan, ENT_QUOTES, 'UTF-8') : 'Unit';
             $th = array();
@@ -74,14 +73,7 @@ class Stock_gudang extends CI_Controller
             // Stock per gudang dari lookup
             foreach ($dt_gudang as $row3) {
                 $valStok = isset($stock_lookup[$id][$row3->id_gudang]) ? (int)$stock_lookup[$id][$row3->id_gudang] : 0;
-                $safeNamaGudang = htmlspecialchars($row3->nama_gudang, ENT_QUOTES, 'UTF-8');
-                $encIdGudang = encrypt($row3->id_gudang);
-
-                if ($valStok > 0) {
-                    $th[] = '<a href="javascript:;" class="badge badge-success px-2 py-1 btn-quick-stok" style="font-size:12px; cursor:pointer;" title="Klik untuk ubah/sesuaikan stok (' . $satuan . ') di ' . $safeNamaGudang . '" data-id-barang="' . $encIdBarang . '" data-nama-barang="' . $safeNamaBarang . '" data-satuan="' . $satuan . '" data-id-gudang="' . $encIdGudang . '" data-nama-gudang="' . $safeNamaGudang . '" data-stok="' . $valStok . '">' . $valStok . ' <i class="fas fa-pen ml-1" style="font-size:9px; opacity:0.8;"></i></a>';
-                } else {
-                    $th[] = '<a href="javascript:;" class="badge badge-light text-muted border px-2 py-1 btn-quick-stok" style="font-size:12px; cursor:pointer;" title="Klik untuk isi stok (' . $satuan . ') di ' . $safeNamaGudang . '" data-id-barang="' . $encIdBarang . '" data-nama-barang="' . $safeNamaBarang . '" data-satuan="' . $satuan . '" data-id-gudang="' . $encIdGudang . '" data-nama-gudang="' . $safeNamaGudang . '" data-stok="0">0 <i class="fas fa-plus ml-1" style="font-size:9px; opacity:0.55;"></i></a>';
-                }
+                $th[] = $valStok > 0 ? '<span class="badge badge-success px-2 py-1" style="font-size:12px;">' . $valStok . '</span>' : '0';
             }
 
             // Transit dari lookup (1 kolom saja)
@@ -740,127 +732,5 @@ class Stock_gudang extends CI_Controller
         header('Content-Type: application/json');
         echo json_encode($response);
         exit;
-    }
-
-    /**
-     * Quick Update / Penyesuaian Stok langsung dari tabel Stock Gudang
-     */
-    public function quickUpdateStok()
-    {
-        grantAccessFor('all');
-
-        $raw_barang = $this->input->post('id_barang', TRUE);
-        $raw_gudang = $this->input->post('id_gudang', TRUE);
-        $stok_baru  = $this->input->post('stok_baru', TRUE);
-        $no_batch   = trim((string)$this->input->post('no_batch', TRUE));
-        $keterangan = trim((string)$this->input->post('keterangan', TRUE));
-
-        $id_barang = is_numeric($raw_barang) ? (int)$raw_barang : (int)decrypt($raw_barang);
-        $id_gudang = is_numeric($raw_gudang) ? (int)$raw_gudang : (int)decrypt($raw_gudang);
-
-        if ($id_barang <= 0 || $id_gudang <= 0 || $stok_baru === null || $stok_baru === '' || !is_numeric($stok_baru) || (int)$stok_baru < 0) {
-            ajaxReturnDie('error', 'Data barang, gudang, atau jumlah stok tidak valid.', FALSE);
-            return;
-        }
-
-        $stok_baru = (int)$stok_baru;
-        if ($no_batch === '') {
-            $no_batch = 'ADJ-' . date('Ymd');
-        }
-        if ($keterangan === '') {
-            $keterangan = 'Penyesuaian Stok Gudang via Quick Update';
-        }
-
-        // Hitung stok saat ini di gudang tersebut
-        $rowStok = $this->db->select('COALESCE(SUM(db.current_stock), 0) AS total_stok')
-            ->from('detail_barang db')
-            ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang')
-            ->where('db.id_barang', $id_barang)
-            ->where('pb.id_gudang', $id_gudang)
-            ->where('db.status', 1)
-            ->get()
-            ->row();
-
-        $stok_lama = $rowStok ? (int)$rowStok->total_stok : 0;
-
-        if ($stok_baru === $stok_lama) {
-            ajaxReturnDie('success', 'Jumlah stok tidak berubah (' . $stok_baru . ' unit).', TRUE);
-            return;
-        }
-
-        $this->db->trans_begin();
-
-        if ($stok_baru > $stok_lama) {
-            // Penambahan stok: Buat dokumen Penerimaan Barang (Adjustment) & Detail Barang
-            $selisih = $stok_baru - $stok_lama;
-            $no_terima = 'ADJ/' . date('YmdHis') . '/' . rand(10, 99);
-
-            $dataPb = [
-                'id_pemasok' => null,
-                'tgl_masuk'  => date('Y-m-d'),
-                'no_terima'  => $no_terima,
-                'no_po'      => '-',
-                'id_gudang'  => $id_gudang,
-                'keterangan' => $keterangan . ' (+' . $selisih . ' unit)',
-                'status'     => 1
-            ];
-            $this->db->insert('penerimaan_barang', $dataPb);
-            $id_pb = $this->db->insert_id();
-
-            $dataDb = [
-                'id_penerimaan_barang' => $id_pb,
-                'id_barang'            => $id_barang,
-                'qty'                  => $selisih,
-                'current_stock'        => $selisih,
-                'no_batch'             => $no_batch,
-                'nie'                  => '-',
-                'fisik'                => 1,
-                'exp_date'             => '0000-00-00',
-                'status'               => 1
-            ];
-            $this->db->insert('detail_barang', $dataDb);
-        } else {
-            // Pengurangan stok: Kurangi current_stock dari batch aktif secara FIFO
-            $kurang = $stok_lama - $stok_baru;
-            $batches = $this->db->select('db.id_detail_barang, db.current_stock')
-                ->from('detail_barang db')
-                ->join('penerimaan_barang pb', 'pb.id_penerimaan_barang = db.id_penerimaan_barang')
-                ->where('db.id_barang', $id_barang)
-                ->where('pb.id_gudang', $id_gudang)
-                ->where('db.status', 1)
-                ->where('db.current_stock >', 0)
-                ->order_by('db.id_detail_barang', 'ASC')
-                ->get()
-                ->result();
-
-            foreach ($batches as $b) {
-                if ($kurang <= 0) break;
-                $avail = (int)$b->current_stock;
-                if ($avail <= $kurang) {
-                    $this->db->where('id_detail_barang', $b->id_detail_barang)
-                        ->update('detail_barang', ['current_stock' => 0]);
-                    $kurang -= $avail;
-                } else {
-                    $this->db->where('id_detail_barang', $b->id_detail_barang)
-                        ->update('detail_barang', ['current_stock' => ($avail - $kurang)]);
-                    $kurang = 0;
-                }
-            }
-        }
-
-        if ($this->db->trans_status() === FALSE) {
-            $this->db->trans_rollback();
-            ajaxReturnDie('error', 'Gagal menyimpan perubahan stok ke database.', FALSE);
-            return;
-        }
-
-        $this->db->trans_commit();
-
-        try {
-            addLog('Update Stok Gudang', 'Penyesuaian stok ID Barang ' . $id_barang . ' di Gudang ID ' . $id_gudang . ' dari ' . $stok_lama . ' menjadi ' . $stok_baru);
-        } catch (\Throwable $e) {
-        }
-
-        ajaxReturnDie('success', 'Stok berhasil diperbarui dari ' . $stok_lama . ' menjadi ' . $stok_baru . ' unit.', TRUE);
     }
 }
