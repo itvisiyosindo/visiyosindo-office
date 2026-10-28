@@ -185,34 +185,195 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Bintang Karyawan
-        $wherePeriodeSql = "";
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (70% Task Proyek : 30% Laporan Mingguan)
+        $wherePeriodeTask = "";
         if (!empty($filterBulan)) {
-            $wherePeriodeSql .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
+            $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
         }
         if (!empty($filterTahun) && $filterTahun !== 'all') {
-            $wherePeriodeSql .= " AND YEAR(t.created_at) = " . (int)$filterTahun;
+            $wherePeriodeTask .= " AND YEAR(t.created_at) = " . (int)$filterTahun;
         }
 
-        $leaderboard = $this->db->query("
+        // Tentukan rentang tanggal untuk filter laporan mingguan
+        $wherePeriodeNp = "";
+        $wherePeriodeLap = "";
+        if (!empty($filterBulan) && !empty($filterTahun) && $filterTahun !== 'all') {
+            $m = str_pad((int)$filterBulan, 2, '0', STR_PAD_LEFT);
+            $startDate = "{$filterTahun}-{$m}-01";
+            $endDate = date('Y-m-t', strtotime($startDate));
+            $wherePeriodeNp  = " AND date >= '{$startDate}' AND date <= '{$endDate}'";
+            $wherePeriodeLap = " AND tanggal >= '{$startDate}' AND tanggal <= '{$endDate}'";
+        } elseif (!empty($filterTahun) && $filterTahun !== 'all') {
+            $wherePeriodeNp  = " AND YEAR(date) = " . (int)$filterTahun;
+            $wherePeriodeLap = " AND YEAR(tanggal) = " . (int)$filterTahun;
+        } elseif (!empty($filterBulan)) {
+            $wherePeriodeNp  = " AND MONTH(date) = " . (int)$filterBulan;
+            $wherePeriodeLap = " AND MONTH(tanggal) = " . (int)$filterBulan;
+        }
+
+        $raw_leaderboard = $this->db->query("
             SELECT 
                 p.pengguna_id,
                 p.nama,
                 p.jabatan,
                 d.nama AS nama_divisi,
-                COUNT(t.id_task) AS total_task,
-                SUM(CASE WHEN t.status_task = 4 THEN 1 ELSE 0 END) AS task_selesai,
-                SUM(CASE WHEN t.status_task < 4 THEN 1 ELSE 0 END) AS task_aktif,
-                SUM(CASE WHEN t.status_task = 4 AND (t.tgl_deadline IS NULL OR DATE(COALESCE(t.tgl_submit, t.tgl_dinilai)) <= t.tgl_deadline) THEN 1 ELSE 0 END) AS task_ontime,
-                ROUND(AVG(CASE WHEN t.status_task = 4 AND t.rating_bintang IS NOT NULL THEN t.rating_bintang ELSE NULL END), 2) AS avg_bintang,
-                SUM(CASE WHEN t.status_task = 4 AND t.rating_bintang = 5 THEN 1 ELSE 0 END) AS bintang_5
+                COALESCE(tsk.total_task, 0) AS total_task,
+                COALESCE(tsk.task_selesai, 0) AS task_selesai,
+                COALESCE(tsk.task_aktif, 0) AS task_aktif,
+                COALESCE(tsk.task_ontime, 0) AS task_ontime,
+                tsk.avg_bintang,
+                COALESCE(tsk.bintang_5, 0) AS bintang_5,
+                COALESCE(np.avg_nilai_point, lap.avg_nilai_lap) AS avg_nilai_laporan,
+                COALESCE(np.total_poin_laporan, lap.total_poin_lap, 0) AS total_poin_laporan
             FROM pengguna p
-            INNER JOIN task_proyek t ON t.id_penerima = p.pengguna_id AND t.is_deleted = 0 {$wherePeriodeSql}
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
-            WHERE p.status = 1
-            GROUP BY p.pengguna_id, p.nama, p.jabatan, d.nama
-            ORDER BY avg_bintang DESC, task_selesai DESC, total_task DESC
+            LEFT JOIN (
+                SELECT 
+                    t.id_penerima,
+                    COUNT(t.id_task) AS total_task,
+                    SUM(CASE WHEN t.status_task = 4 THEN 1 ELSE 0 END) AS task_selesai,
+                    SUM(CASE WHEN t.status_task < 4 THEN 1 ELSE 0 END) AS task_aktif,
+                    SUM(CASE WHEN t.status_task = 4 AND (t.tgl_deadline IS NULL OR DATE(COALESCE(t.tgl_submit, t.tgl_dinilai)) <= t.tgl_deadline) THEN 1 ELSE 0 END) AS task_ontime,
+                    ROUND(AVG(CASE WHEN t.status_task = 4 AND t.rating_bintang IS NOT NULL THEN t.rating_bintang ELSE NULL END), 2) AS avg_bintang,
+                    SUM(CASE WHEN t.status_task = 4 AND t.rating_bintang = 5 THEN 1 ELSE 0 END) AS bintang_5
+                FROM task_proyek t
+                WHERE t.is_deleted = 0 {$wherePeriodeTask}
+                GROUP BY t.id_penerima
+            ) tsk ON tsk.id_penerima = p.pengguna_id
+            LEFT JOIN (
+                SELECT 
+                    id_pengguna,
+                    COUNT(*) AS total_poin_laporan,
+                    ROUND(AVG(
+                        CASE 
+                            WHEN (nilai_a IS NOT NULL AND nilai_a > 0 AND nilai_a <= 100) 
+                                 AND (nilai_b IS NOT NULL AND nilai_b > 0 AND nilai_b <= 100) 
+                            THEN (CAST(nilai_a AS DECIMAL(5,2)) + CAST(nilai_b AS DECIMAL(5,2))) / 2
+                            WHEN (nilai_b IS NOT NULL AND nilai_b > 0 AND nilai_b <= 100) 
+                            THEN CAST(nilai_b AS DECIMAL(5,2))
+                            WHEN (nilai_a IS NOT NULL AND nilai_a > 0 AND nilai_a <= 100) 
+                            THEN CAST(nilai_a AS DECIMAL(5,2))
+                            ELSE NULL 
+                        END
+                    ), 1) AS avg_nilai_point
+                FROM nilai_point
+                WHERE 1=1 {$wherePeriodeNp}
+                GROUP BY id_pengguna
+            ) np ON np.id_pengguna = p.pengguna_id
+            LEFT JOIN (
+                SELECT 
+                    id_pengaju,
+                    COUNT(*) AS total_poin_lap,
+                    ROUND(AVG(
+                        CASE 
+                            WHEN (nilai > 0 AND nilai <= 100) AND (nilai_b > 0 AND nilai_b <= 100) 
+                            THEN (CAST(nilai AS DECIMAL(5,2)) + CAST(nilai_b AS DECIMAL(5,2))) / 2
+                            WHEN (nilai_b > 0 AND nilai_b <= 100) 
+                            THEN CAST(nilai_b AS DECIMAL(5,2))
+                            WHEN (nilai > 0 AND nilai <= 100) 
+                            THEN CAST(nilai AS DECIMAL(5,2))
+                            ELSE NULL 
+                        END
+                    ), 1) AS avg_nilai_lap
+                FROM laporan
+                WHERE status != 3 {$wherePeriodeLap}
+                GROUP BY id_pengaju
+            ) lap ON lap.id_pengaju = p.pengguna_id
+            WHERE p.status = 1 AND (tsk.total_task > 0 OR np.avg_nilai_point IS NOT NULL OR lap.avg_nilai_lap IS NOT NULL)
         ")->result();
+
+        $leaderboard = [];
+        $myCombinedKpi = null;
+
+        foreach ($raw_leaderboard as $lb) {
+            $hasTask = ($lb->avg_bintang !== null && (int)$lb->task_selesai > 0);
+            $hasLap  = ($lb->avg_nilai_laporan !== null);
+
+            $skorTask = $hasTask ? round(((float)$lb->avg_bintang / 5) * 100, 1) : null;
+            $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
+
+            if ($hasTask && $hasLap) {
+                $skorAkhir = round(($skorTask * 0.70) + ($skorLap * 0.30), 1);
+                $komposisi = '70% Task + 30% Laporan';
+                $statusNilai = 'lengkap';
+            } elseif ($hasTask && !$hasLap) {
+                $skorAkhir = $skorTask;
+                $komposisi = '100% Task Proyek';
+                $statusNilai = 'task_only';
+            } elseif (!$hasTask && $hasLap) {
+                $skorAkhir = $skorLap;
+                $komposisi = '100% Laporan Mingguan';
+                $statusNilai = 'laporan_only';
+            } else {
+                $skorAkhir = null;
+                $komposisi = 'Belum Ada Nilai';
+                $statusNilai = 'belum_dinilai';
+            }
+
+            $ratingAgregat = $skorAkhir !== null ? round(($skorAkhir / 100) * 5, 2) : 0;
+
+            if ($skorAkhir >= 85) {
+                $grade = 'A';
+                $gradeLabel = 'Sangat Baik';
+                $gradeBadge = 'badge-success';
+                $gradeColor = '#16a34a';
+            } elseif ($skorAkhir >= 75) {
+                $grade = 'B';
+                $gradeLabel = 'Baik';
+                $gradeBadge = 'badge-primary';
+                $gradeColor = '#2563eb';
+            } elseif ($skorAkhir >= 65) {
+                $grade = 'C';
+                $gradeLabel = 'Cukup';
+                $gradeBadge = 'badge-warning';
+                $gradeColor = '#d97706';
+            } elseif ($skorAkhir !== null) {
+                $grade = 'D';
+                $gradeLabel = 'Kurang (PIP)';
+                $gradeBadge = 'badge-danger';
+                $gradeColor = '#dc2626';
+            } else {
+                $grade = '-';
+                $gradeLabel = 'Belum Dinilai';
+                $gradeBadge = 'badge-secondary';
+                $gradeColor = '#64748b';
+            }
+
+            $lb->skor_task      = $skorTask;
+            $lb->skor_lap       = $skorLap;
+            $lb->skor_akhir     = $skorAkhir;
+            $lb->rating_agregat = $ratingAgregat;
+            $lb->grade          = $grade;
+            $lb->grade_label    = $gradeLabel;
+            $lb->grade_badge    = $gradeBadge;
+            $lb->grade_color    = $gradeColor;
+            $lb->komposisi      = $komposisi;
+            $lb->status_nilai   = $statusNilai;
+
+            if ((int)$lb->pengguna_id === (int)$myId) {
+                $myCombinedKpi = $lb;
+            }
+
+            $leaderboard[] = $lb;
+        }
+
+        // Urutkan Leaderboard berdasarkan:
+        // 1. Skor Akhir tertinggi (NULL paling bawah)
+        // 2. Task selesai terbanyak
+        // 3. Total task terbanyak
+        usort($leaderboard, function($a, $b) {
+            if ($a->skor_akhir === null && $b->skor_akhir === null) return 0;
+            if ($a->skor_akhir === null) return 1;
+            if ($b->skor_akhir === null) return -1;
+
+            if ($a->skor_akhir == $b->skor_akhir) {
+                if ($a->task_selesai == $b->task_selesai) {
+                    return (int)$b->total_task <=> (int)$a->total_task;
+                }
+                return (int)$b->task_selesai <=> (int)$a->task_selesai;
+            }
+            return ($b->skor_akhir < $a->skor_akhir) ? -1 : 1;
+        });
 
         $page_data['switch']          = $nav;
         $page_data['page_name']       = 'task_proyek/v_task_proyek';
@@ -231,12 +392,13 @@ class Task_proyek extends CI_Controller
         $page_data['tugas_atasan']    = $tugas_atasan;
         $page_data['leaderboard']     = $leaderboard;
         $page_data['kpi'] = [
-            'my_active'   => $kpi_my_active,
-            'my_done'     => $kpi_my_done,
-            'my_avg_star' => $kpi_my_avg_star,
-            'my_star_cnt' => $kpi_my_stars_cnt,
-            'need_review' => $kpi_need_review,
-            'total_given' => count($tugas_atasan)
+            'my_active'     => $kpi_my_active,
+            'my_done'       => $kpi_my_done,
+            'my_avg_star'   => $kpi_my_avg_star,
+            'my_star_cnt'   => $kpi_my_stars_cnt,
+            'need_review'   => $kpi_need_review,
+            'total_given'   => count($tugas_atasan),
+            'my_combined'   => $myCombinedKpi
         ];
 
         $this->load->view('index', $page_data);
