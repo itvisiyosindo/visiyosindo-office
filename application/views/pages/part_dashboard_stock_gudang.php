@@ -10,6 +10,9 @@
     #menu_barang_filter input[type="checkbox"] {
         accent-color: #2563eb;
     }
+    .barang-item-row.d-none {
+        display: none !important;
+    }
     .stock-dash-wrapper {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -734,16 +737,32 @@
         $('#input_search_barang_item').on('input', function() {
             const q = $(this).val().toLowerCase().trim();
             if (!q) {
-                $('.barang-item-row').show();
+                $('.barang-item-row').removeClass('d-none').addClass('d-flex');
+                $('#barang_no_match').remove();
             } else {
                 $('.barang-item-row').each(function() {
                     const txt = ($(this).attr('data-search') || $(this).text()).toLowerCase();
                     if (txt.indexOf(q) !== -1) {
-                        $(this).show();
+                        $(this).removeClass('d-none').addClass('d-flex');
                     } else {
-                        $(this).hide();
+                        $(this).addClass('d-none').removeClass('d-flex');
                     }
                 });
+
+                const visibleCount = $('.barang-item-row:not(.d-none)').length;
+                if (visibleCount === 0) {
+                    if (!$('#barang_no_match').length) {
+                        $('#container_barang_checkboxes').append('<div id="barang_no_match" class="p-2 text-center text-muted small">Tidak ada barang yang cocok</div>');
+                    }
+                } else {
+                    $('#barang_no_match').remove();
+                }
+            }
+        });
+
+        $('#input_search_barang_item').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
             }
         });
 
@@ -952,6 +971,10 @@
                                 });
                             }
                             updateBarangFilterLabel();
+                            const currentSearchQ = $('#input_search_barang_item').val();
+                            if (currentSearchQ) {
+                                $('#input_search_barang_item').trigger('input');
+                            }
                         }
 
                         // 1. Update KPI
