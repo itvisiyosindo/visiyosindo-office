@@ -163,11 +163,15 @@ class Task_proyek extends CI_Controller
         // 3. KPI Ringkasan Personal & Atasan
         $kpi_my_active = 0;
         $kpi_my_done   = 0;
+        $kpi_my_waiting_review = 0;
         $kpi_my_stars_sum = 0;
         $kpi_my_stars_cnt = 0;
         foreach ($tugas_saya as $ts) {
             if ((int)$ts->status_task < 4) {
                 $kpi_my_active++;
+                if ((int)$ts->status_task === 2) {
+                    $kpi_my_waiting_review++;
+                }
             } else {
                 $kpi_my_done++;
                 if (!empty($ts->rating_bintang)) {
@@ -178,10 +182,17 @@ class Task_proyek extends CI_Controller
         }
         $kpi_my_avg_star = $kpi_my_stars_cnt > 0 ? round($kpi_my_stars_sum / $kpi_my_stars_cnt, 2) : 0;
 
-        $kpi_need_review = 0;
+        $kpi_need_review  = 0;
+        $kpi_given_active = 0;
+        $kpi_given_done   = 0;
         foreach ($tugas_atasan as $ta) {
             if ((int)$ta->status_task === 2) {
                 $kpi_need_review++;
+            }
+            if ((int)$ta->status_task < 4) {
+                $kpi_given_active++;
+            } else {
+                $kpi_given_done++;
             }
         }
 
@@ -392,13 +403,16 @@ class Task_proyek extends CI_Controller
         $page_data['tugas_atasan']    = $tugas_atasan;
         $page_data['leaderboard']     = $leaderboard;
         $page_data['kpi'] = [
-            'my_active'     => $kpi_my_active,
-            'my_done'       => $kpi_my_done,
-            'my_avg_star'   => $kpi_my_avg_star,
-            'my_star_cnt'   => $kpi_my_stars_cnt,
-            'need_review'   => $kpi_need_review,
-            'total_given'   => count($tugas_atasan),
-            'my_combined'   => $myCombinedKpi
+            'my_active'         => $kpi_my_active,
+            'my_done'           => $kpi_my_done,
+            'my_waiting_review' => $kpi_my_waiting_review,
+            'my_avg_star'       => $kpi_my_avg_star,
+            'my_star_cnt'       => $kpi_my_stars_cnt,
+            'need_review'       => $kpi_need_review,
+            'given_active'      => $kpi_given_active,
+            'given_done'        => $kpi_given_done,
+            'total_given'       => count($tugas_atasan),
+            'my_combined'       => $myCombinedKpi
         ];
 
         $this->load->view('index', $page_data);

@@ -237,12 +237,22 @@ $namaBulanList = [
                         <span class="badge badge-light border font-weight-bold px-2 py-1 text-primary" style="font-size: 12px; background: #eff6ff; border-color: #bfdbfe !important; border-radius: 6px;">
                             <?= htmlspecialchars($me->nama_atasan) ?><?= !empty($me->jabatan_atasan) ? ' (' . htmlspecialchars($me->jabatan_atasan) . ')' : '' ?>
                         </span>
+                        <button type="button" class="btn btn-xs btn-outline-primary ml-2 font-weight-bold" data-toggle="modal" data-target="#modalAturAtasanSaya" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;">
+                            <i class="fas fa-user-edit mr-1"></i> Ubah
+                        </button>
+                    <?php elseif ($isAdminUser || (int)$myId === 1 || $jmlSupervisiSaya > 0): ?>
+                        <span class="badge badge-success px-2 py-1" style="font-size: 11px; border-radius: 6px;">
+                            <i class="fas fa-crown text-warning mr-1"></i> Pimpinan / Struktur Tertinggi
+                        </span>
+                        <button type="button" class="btn btn-xs btn-outline-secondary ml-2 font-weight-bold" data-toggle="modal" data-target="#modalAturAtasanSaya" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;" title="Atur jika memiliki atasan langsung tertentu">
+                            <i class="fas fa-cog mr-1"></i> Atur
+                        </button>
                     <?php else: ?>
                         <span class="badge badge-warning px-2 py-1" style="font-size: 11px; border-radius: 6px;">Belum Diatur</span>
+                        <button type="button" class="btn btn-xs btn-outline-primary ml-2 font-weight-bold" data-toggle="modal" data-target="#modalAturAtasanSaya" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;">
+                            <i class="fas fa-user-edit mr-1"></i> Pilih Atasan
+                        </button>
                     <?php endif; ?>
-                    <button type="button" class="btn btn-xs btn-outline-primary ml-2 font-weight-bold" data-toggle="modal" data-target="#modalAturAtasanSaya" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;">
-                        <i class="fas fa-user-edit mr-1"></i> <?= !empty($me->nama_atasan) ? 'Ubah' : 'Pilih Atasan' ?>
-                    </button>
                 </div>
 
                 <div class="d-none d-md-block" style="width: 1px; height: 16px; background: #cbd5e1;"></div>
@@ -269,72 +279,201 @@ $namaBulanList = [
         </div>
     </div>
 
+    <?php
+    $isTopLeaderOnly = ($isAdminUser || (empty($me->nama_atasan) && $jmlSupervisiSaya > 0)) && (count($tugas_saya) === 0);
+    $isStaffOnly     = !$canGiveTask && (count($tugas_atasan) === 0);
+    ?>
+
     <!-- 4 KARTU KPI RINGKASAN -->
     <div class="row">
-        <div class="col-md-3 col-sm-6">
-            <div class="tp-kpi-card">
-                <div>
-                    <div class="text-muted small font-weight-bold text-uppercase">Tugas Aktif Saya</div>
-                    <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)$kpi['my_active'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
-                    <div class="small text-primary">Sebagai Pelaksana / Karyawan</div>
-                </div>
-                <div class="tp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
-                    <i class="fas fa-tasks"></i>
+        <?php if ($isTopLeaderOnly): ?>
+            <!-- Mode Pimpinan Tertinggi / Direksi (Fokus Supervisi Tim) -->
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Penugasan Berjalan Tim</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)($kpi['given_active'] ?? 0) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div class="small text-primary">Sedang Dikerjakan Karyawan</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3 col-sm-6">
-            <div class="tp-kpi-card">
-                <div>
-                    <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
-                    <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
-                    <div class="small text-warning">Siap Diberi Rating Bintang ⭐</div>
-                </div>
-                <div class="tp-kpi-icon" style="background: #fef3c7; color: #d97706;">
-                    <i class="fas fa-user-check"></i>
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div class="small text-warning">Siap Diberi Rating Bintang ⭐</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #fef3c7; color: #d97706;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3 col-sm-6">
-            <div class="tp-kpi-card">
-                <div>
-                    <div class="text-muted small font-weight-bold text-uppercase">Tugas Selesai Saya</div>
-                    <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)$kpi['my_done'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
-                    <div class="small text-success">Sudah Disetujui Atasan</div>
-                </div>
-                <div class="tp-kpi-icon" style="background: #dcfce7; color: #16a34a;">
-                    <i class="fas fa-check-double"></i>
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Penugasan Selesai Tim</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)($kpi['given_done'] ?? 0) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
+                        <div class="small text-success">Sudah Tuntas & Dinilai</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                        <i class="fas fa-check-double"></i>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3 col-sm-6">
-            <div class="tp-kpi-card">
-                <div>
-                    <div class="text-muted small font-weight-bold text-uppercase">KPI Gabungan Saya</div>
-                    <?php if (!empty($kpi['my_combined']) && $kpi['my_combined']->skor_akhir !== null): ?>
-                        <div style="font-size: 24px; font-weight: 800; color: <?= $kpi['my_combined']->grade_color ?>;">
-                            <?= number_format($kpi['my_combined']->skor_akhir, 1) ?> <small style="font-size: 13px; color:#64748b;">(Grade <?= $kpi['my_combined']->grade ?>)</small>
-                        </div>
-                        <div class="small">
-                            <?= renderStarsHtml($kpi['my_combined']->rating_agregat) ?>
-                            <span class="badge <?= $kpi['my_combined']->grade_badge ?> ml-1"><?= $kpi['my_combined']->grade_label ?></span>
-                        </div>
-                        <div class="text-muted" style="font-size: 10.5px;">Bobot: <?= htmlspecialchars($kpi['my_combined']->komposisi) ?></div>
-                    <?php else: ?>
-                        <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
-                            <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
-                        </div>
-                        <div><?= renderStarsHtml($kpi['my_avg_star']) ?> <small class="text-muted">(<?= (int)$kpi['my_star_cnt'] ?> dinilai)</small></div>
-                    <?php endif; ?>
-                </div>
-                <div class="tp-kpi-icon" style="background: #fffbeb; color: #f59e0b;">
-                    <i class="fas fa-medal"></i>
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Karyawan Dibawahi</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #7c3aed;"><?= $jmlSupervisiSaya ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Pegawai</small></div>
+                        <div class="small" style="color: #7c3aed;">Tim Supervisi Langsung</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #f3e8ff; color: #7c3aed;">
+                        <i class="fas fa-users"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+
+        <?php elseif ($isStaffOnly): ?>
+            <!-- Mode Karyawan / Staf Pelaksana Murni -->
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tugas Aktif Saya</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)$kpi['my_active'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div class="small text-primary">Sebagai Pelaksana</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Menunggu Rating Atasan</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)($kpi['my_waiting_review'] ?? 0) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div class="small text-warning">Sudah Disubmit Selesai</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #fef3c7; color: #d97706;">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tugas Selesai Saya</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)$kpi['my_done'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
+                        <div class="small text-success">Sudah Disetujui Atasan</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">KPI Gabungan Saya</div>
+                        <?php if (!empty($kpi['my_combined']) && $kpi['my_combined']->skor_akhir !== null): ?>
+                            <div style="font-size: 24px; font-weight: 800; color: <?= $kpi['my_combined']->grade_color ?>;">
+                                <?= number_format($kpi['my_combined']->skor_akhir, 1) ?> <small style="font-size: 13px; color:#64748b;">(Grade <?= $kpi['my_combined']->grade ?>)</small>
+                            </div>
+                            <div class="small">
+                                <?= renderStarsHtml($kpi['my_combined']->rating_agregat) ?>
+                                <span class="badge <?= $kpi['my_combined']->grade_badge ?> ml-1"><?= $kpi['my_combined']->grade_label ?></span>
+                            </div>
+                            <div class="text-muted" style="font-size: 10.5px;">Bobot: <?= htmlspecialchars($kpi['my_combined']->komposisi) ?></div>
+                        <?php else: ?>
+                            <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
+                                <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
+                            </div>
+                            <div><?= renderStarsHtml($kpi['my_avg_star']) ?> <small class="text-muted">(<?= (int)$kpi['my_star_cnt'] ?> dinilai)</small></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #fffbeb; color: #f59e0b;">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                </div>
+            </div>
+
+        <?php else: ?>
+            <!-- Mode Manajer / Supervisor (Memiliki Atasan & Memiliki Bawahan) -->
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tugas Aktif Saya</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)$kpi['my_active'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div class="small text-primary">Sebagai Pelaksana</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div class="small text-warning">Siap Diberi Rating Bintang ⭐</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #fef3c7; color: #d97706;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tugas Selesai Saya</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)$kpi['my_done'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
+                        <div class="small text-success">Sudah Disetujui Atasan</div>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="tp-kpi-card">
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">KPI Gabungan Saya</div>
+                        <?php if (!empty($kpi['my_combined']) && $kpi['my_combined']->skor_akhir !== null): ?>
+                            <div style="font-size: 24px; font-weight: 800; color: <?= $kpi['my_combined']->grade_color ?>;">
+                                <?= number_format($kpi['my_combined']->skor_akhir, 1) ?> <small style="font-size: 13px; color:#64748b;">(Grade <?= $kpi['my_combined']->grade ?>)</small>
+                            </div>
+                            <div class="small">
+                                <?= renderStarsHtml($kpi['my_combined']->rating_agregat) ?>
+                                <span class="badge <?= $kpi['my_combined']->grade_badge ?> ml-1"><?= $kpi['my_combined']->grade_label ?></span>
+                            </div>
+                            <div class="text-muted" style="font-size: 10.5px;">Bobot: <?= htmlspecialchars($kpi['my_combined']->komposisi) ?></div>
+                        <?php else: ?>
+                            <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
+                                <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
+                            </div>
+                            <div><?= renderStarsHtml($kpi['my_avg_star']) ?> <small class="text-muted">(<?= (int)$kpi['my_star_cnt'] ?> dinilai)</small></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="tp-kpi-icon" style="background: #fffbeb; color: #f59e0b;">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- PANEL UTAMA BERBASIS TAB -->
@@ -358,6 +497,7 @@ $namaBulanList = [
                         <?php endif; ?>
                     </a>
                 </li>
+                <?php if ($canGiveTask || count($tugas_atasan) > 0): ?>
                 <li class="nav-item <?= $openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
                         <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Karyawan
@@ -368,6 +508,7 @@ $namaBulanList = [
                         <?php endif; ?>
                     </a>
                 </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link" href="#tab_leaderboard" data-toggle="tab" role="tab">
                         <i class="fas fa-trophy text-warning mr-1"></i> Leaderboard KPI & Evaluasi Karyawan
@@ -472,6 +613,7 @@ $namaBulanList = [
                 </div>
 
                 <!-- ================= TAB 2: PENUGASAN KE KARYAWAN (SEBAGAI ATASAN) ================= -->
+                <?php if ($canGiveTask || count($tugas_atasan) > 0): ?>
                 <div id="tab_tugas_atasan" class="tab-pane <?= $openTabAtasan ? 'active' : '' ?>" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
                         <div>
@@ -587,6 +729,7 @@ $namaBulanList = [
                         </table>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- ================= TAB 3: LEADERBOARD KPI & EVALUASI KARYAWAN ================= -->
                 <div id="tab_leaderboard" class="tab-pane" role="tabpanel">
@@ -1317,15 +1460,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sub_catatan_bawahan').val(t.catatan_bawahan || '');
                 $('#sub_bukti_selesai').val(t.bukti_selesai || '');
 
+                var isPenerima = (parseInt(t.id_penerima, 10) === myId);
+
                 // Render Checklist Interaktif
                 var chkHtml = '';
                 if (t.checklist && t.checklist.length > 0) {
-                    chkHtml += '<label class="font-weight-bold small">Checklist Sub-Task (Centang yang sudah selesai):</label>';
+                    chkHtml += '<label class="font-weight-bold small">Checklist Sub-Task ' + (isPenerima ? '(Centang yang sudah selesai):' : '(Daftar Sub-Task):') + '</label>';
                     for (var i = 0; i < t.checklist.length; i++) {
                         var item = t.checklist[i];
                         var isChecked = parseInt(item.done, 10) === 1;
+                        var disabledAttr = isPenerima ? '' : 'disabled';
                         chkHtml += '<div class="tp-checklist-row ' + (isChecked ? 'done' : '') + '">' +
-                            '<input type="checkbox" class="chk-subtask-item" name="checklist_done[]" value="' + i + '" ' + (isChecked ? 'checked' : '') + '>' +
+                            '<input type="checkbox" class="chk-subtask-item" name="checklist_done[]" value="' + i + '" ' + (isChecked ? 'checked' : '') + ' ' + disabledAttr + '>' +
                             '<span>' + $('<div>').text(item.item).html() + '</span>' +
                             '</div>';
                     }
@@ -1333,15 +1479,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#dt_checklist_container').html(chkHtml);
 
                 // Tampilkan / sembunyikan panel sesuai status & role
-                if (parseInt(t.status_task, 10) === 4) {
-                    $('#panelBawahanProgres').hide();
-                    $('#panelBawahanSubmit').hide();
-                } else {
+                // Form Update Progres & Submit Selesai HANYA untuk Karyawan Penerima Tugas (Pelaksana) jika belum tuntas
+                if (isPenerima && parseInt(t.status_task, 10) < 4) {
                     $('#panelBawahanProgres').show();
                     $('#panelBawahanSubmit').show();
+                } else {
+                    $('#panelBawahanProgres').hide();
+                    $('#panelBawahanSubmit').hide();
                 }
 
-                if (canReview) {
+                // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya siap dinilai (2) atau sudah dinilai (4)
+                if (canReview && (parseInt(t.status_task, 10) === 2 || parseInt(t.status_task, 10) === 4)) {
                     $('#panelAtasanReview').show();
                     var initStar = parseInt(t.rating_bintang, 10) || 5;
                     setStarPickerValue(initStar);
