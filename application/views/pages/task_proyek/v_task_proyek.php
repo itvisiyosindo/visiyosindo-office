@@ -155,17 +155,19 @@ $namaBulanList = [
 ];
 ?>
 
-<section role="main" class="content-body">
-    <header class="page-header">
-        <h2><?= htmlspecialchars($page_title) ?></h2>
-        <div class="right-wrapper text-right">
-            <ol class="breadcrumbs">
-                <li><a href="<?= base_url('dashboard') ?>"><i class="fas fa-home"></i></a></li>
-                <li><span>Task & Proyek Kerja</span></li>
-            </ol>
-            <a class="sidebar-right-toggle"><i class="fas fa-chevron-left"></i></a>
-        </div>
-    </header>
+<header class="page-header">
+    <h2><i class="fas fa-tasks text-primary mr-2"></i><?= htmlspecialchars($page_title) ?></h2>
+    <div class="right-wrapper text-right">
+        <ol class="breadcrumbs">
+            <li><a href="<?= base_url('dashboard') ?>"><i class="fas fa-home"></i></a></li>
+            <li><span>Task & Proyek Kerja</span></li>
+        </ol>
+        <a class="sidebar-right-toggle"><i class="fas fa-chevron-left"></i></a>
+    </div>
+</header>
+
+<div class="row">
+    <div class="col">
 
     <?php
     $isAdminUser      = (!empty($isAdmin) || isAdmin() || (int)$myId === 1);
@@ -708,7 +710,8 @@ $namaBulanList = [
             </div>
         </div>
     </section>
-</section>
+    </div>
+</div>
 
 <!-- =========================================================================
      MODAL 1: BUAT TASK / PROYEK BARU (ATASAN -> KARYAWAN)
