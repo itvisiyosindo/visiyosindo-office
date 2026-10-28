@@ -311,14 +311,25 @@ $namaBulanList = [
         <div class="col-md-3 col-sm-6">
             <div class="tp-kpi-card">
                 <div>
-                    <div class="text-muted small font-weight-bold text-uppercase">Skor Bintang Saya</div>
-                    <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
-                        <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
-                    </div>
-                    <div><?= renderStarsHtml($kpi['my_avg_star']) ?> <small class="text-muted">(<?= (int)$kpi['my_star_cnt'] ?> dinilai)</small></div>
+                    <div class="text-muted small font-weight-bold text-uppercase">KPI Gabungan Saya</div>
+                    <?php if (!empty($kpi['my_combined']) && $kpi['my_combined']->skor_akhir !== null): ?>
+                        <div style="font-size: 24px; font-weight: 800; color: <?= $kpi['my_combined']->grade_color ?>;">
+                            <?= number_format($kpi['my_combined']->skor_akhir, 1) ?> <small style="font-size: 13px; color:#64748b;">(Grade <?= $kpi['my_combined']->grade ?>)</small>
+                        </div>
+                        <div class="small">
+                            <?= renderStarsHtml($kpi['my_combined']->rating_agregat) ?>
+                            <span class="badge <?= $kpi['my_combined']->grade_badge ?> ml-1"><?= $kpi['my_combined']->grade_label ?></span>
+                        </div>
+                        <div class="text-muted" style="font-size: 10.5px;">Bobot: <?= htmlspecialchars($kpi['my_combined']->komposisi) ?></div>
+                    <?php else: ?>
+                        <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
+                            <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
+                        </div>
+                        <div><?= renderStarsHtml($kpi['my_avg_star']) ?> <small class="text-muted">(<?= (int)$kpi['my_star_cnt'] ?> dinilai)</small></div>
+                    <?php endif; ?>
                 </div>
                 <div class="tp-kpi-icon" style="background: #fffbeb; color: #f59e0b;">
-                    <i class="fas fa-star"></i>
+                    <i class="fas fa-medal"></i>
                 </div>
             </div>
         </div>
@@ -357,7 +368,7 @@ $namaBulanList = [
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#tab_leaderboard" data-toggle="tab" role="tab">
-                        <i class="fas fa-trophy text-warning mr-1"></i> Rekap & Leaderboard Bintang 5
+                        <i class="fas fa-trophy text-warning mr-1"></i> Leaderboard KPI & Evaluasi Karyawan
                     </a>
                 </li>
             </ul>
@@ -575,73 +586,117 @@ $namaBulanList = [
                     </div>
                 </div>
 
-                <!-- ================= TAB 3: LEADERBOARD RATING BINTANG KARYAWAN ================= -->
+                <!-- ================= TAB 3: LEADERBOARD KPI & EVALUASI KARYAWAN ================= -->
                 <div id="tab_leaderboard" class="tab-pane" role="tabpanel">
-                    <div class="alert alert-warning py-2 mb-3">
-                        <i class="fas fa-trophy mr-1"></i>
-                        <strong>Rekapitulasi Kinerja & Rating Bintang Karyawan:</strong> Peringkat dihitung otomatis berdasarkan rata-rata perolehan <strong>Rating Bintang (1–5 ⭐)</strong> dari Atasan, jumlah task selesai, dan persentase penyelesaian tepat waktu (<em>On-Time Delivery</em>).
+                    <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
+                        <div>
+                            <i class="fas fa-medal text-warning mr-1"></i>
+                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu):</strong> Integrasi bobot <strong>70% Penugasan Task Proyek</strong> (konversi rating bintang 1–5 ⭐) + <strong>30% Nilai Laporan Mingguan</strong>.
+                        </div>
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
+                            <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
+                            <span class="badge badge-primary px-2 py-1">Grade B: 75–84 (Baik)</span>
+                            <span class="badge badge-warning px-2 py-1">Grade C: 65–74 (Cukup)</span>
+                            <span class="badge badge-danger px-2 py-1">Grade D &lt; 65 (Kurang / PIP)</span>
+                        </div>
                     </div>
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped table-hover mb-0" id="datatable_leaderboard">
                             <thead>
-                                <tr>
-                                    <th width="60" class="text-center">Rank</th>
-                                    <th>Nama Karyawan</th>
-                                    <th>Divisi & Jabatan</th>
-                                    <th class="text-center">Total Task</th>
-                                    <th class="text-center">Task Aktif</th>
-                                    <th class="text-center">Selesai & Dinilai</th>
-                                    <th class="text-center">Ketepatan Waktu (On-Time)</th>
-                                    <th class="text-center">Raihan ⭐ 5 Sempurna</th>
-                                    <th class="text-center">Rata-rata Rating Bintang</th>
+                                <tr style="background: #f8fafc;">
+                                    <th width="50" class="text-center align-middle">Rank</th>
+                                    <th class="align-middle">Nama Karyawan</th>
+                                    <th class="align-middle">Divisi & Jabatan</th>
+                                    <th class="text-center align-middle" style="min-width: 130px;">
+                                        <div>Task Proyek</div>
+                                        <small class="badge badge-primary" style="font-size: 10px;">Bobot 70%</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 130px;">
+                                        <div>Laporan Mingguan</div>
+                                        <small class="badge badge-info" style="font-size: 10px;">Bobot 30%</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 110px; background: #f0fdf4;">
+                                        <div class="text-success font-weight-bold">Skor Akhir</div>
+                                        <small class="text-muted" style="font-size: 10px;">Skala 100</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 140px;">Rating Agregat</th>
+                                    <th class="text-center align-middle" width="125">Grade Kinerja</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php $rank = 1; foreach ($leaderboard as $lb):
                                     $selesai = (int)$lb->task_selesai;
-                                    $ontime  = (int)$lb->task_ontime;
-                                    $ontimePct = $selesai > 0 ? round(($ontime / $selesai) * 100) : 0;
-                                    $avgStar = $lb->avg_bintang !== null ? (float)$lb->avg_bintang : 0;
+                                    $isMe    = ((int)$lb->pengguna_id === (int)$myId);
                                 ?>
-                                    <tr>
-                                        <td class="text-center font-weight-bold">
-                                            <?php if ($rank === 1 && $avgStar > 0): ?>
+                                    <tr <?= $isMe ? 'style="background-color: #f0f9ff;"' : '' ?>>
+                                        <td class="text-center font-weight-bold align-middle">
+                                            <?php if ($rank === 1 && $lb->skor_akhir !== null): ?>
                                                 <span class="badge badge-warning" style="font-size:13px;">🥇 #1</span>
-                                            <?php elseif ($rank === 2 && $avgStar > 0): ?>
+                                            <?php elseif ($rank === 2 && $lb->skor_akhir !== null): ?>
                                                 <span class="badge badge-secondary" style="font-size:13px;">🥈 #2</span>
-                                            <?php elseif ($rank === 3 && $avgStar > 0): ?>
+                                            <?php elseif ($rank === 3 && $lb->skor_akhir !== null): ?>
                                                 <span class="badge badge-info" style="font-size:13px;">🥉 #3</span>
                                             <?php else: ?>
                                                 #<?= $rank ?>
                                             <?php endif; ?>
                                         </td>
-                                        <td><strong><?= htmlspecialchars($lb->nama) ?></strong></td>
-                                        <td>
+                                        <td class="align-middle">
+                                            <strong><?= htmlspecialchars($lb->nama) ?></strong>
+                                            <?php if ($isMe): ?>
+                                                <span class="badge badge-primary ml-1" style="font-size: 10px;">Saya</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="align-middle">
                                             <span class="badge badge-light border"><?= htmlspecialchars($lb->nama_divisi ?: '-') ?></span>
                                             <div class="small text-muted"><?= htmlspecialchars($lb->jabatan ?: '') ?></div>
                                         </td>
-                                        <td class="text-center font-weight-bold"><?= (int)$lb->total_task ?></td>
-                                        <td class="text-center"><?= (int)$lb->task_aktif ?></td>
-                                        <td class="text-center text-success font-weight-bold"><?= $selesai ?></td>
-                                        <td class="text-center">
-                                            <?php if ($selesai > 0): ?>
-                                                <span class="badge <?= $ontimePct >= 80 ? 'badge-success' : ($ontimePct >= 50 ? 'badge-warning' : 'badge-danger') ?>">
-                                                    <?= $ontimePct ?>% (<?= $ontime ?>/<?= $selesai ?>)
-                                                </span>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->skor_task !== null): ?>
+                                                <div class="font-weight-bold" style="font-size: 14px; color: #1e293b;"><?= number_format($lb->skor_task, 1) ?></div>
+                                                <div class="small text-muted" style="font-size: 11px;">
+                                                    <i class="fas fa-star text-warning"></i> <?= number_format($lb->avg_bintang, 2) ?> <span class="text-muted">(<?= $selesai ?> task)</span>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Belum ada task</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->skor_lap !== null): ?>
+                                                <div class="font-weight-bold" style="font-size: 14px; color: #0284c7;"><?= number_format($lb->skor_lap, 1) ?></div>
+                                                <div class="small text-muted" style="font-size: 11px;">
+                                                    Poin: <?= number_format($lb->total_poin_laporan, 0) ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Belum dinilai</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center align-middle" style="background: #f0fdf4;">
+                                            <?php if ($lb->skor_akhir !== null): ?>
+                                                <div class="font-weight-bold" style="font-size: 17px; color: <?= $lb->grade_color ?>;"><?= number_format($lb->skor_akhir, 1) ?></div>
+                                                <div class="small text-muted" style="font-size: 10px;"><?= htmlspecialchars($lb->komposisi) ?></div>
                                             <?php else: ?>
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
-                                            <span class="badge badge-warning"><i class="fas fa-star"></i> <?= (int)$lb->bintang_5 ?>x Bintang 5</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <?php if ($avgStar > 0): ?>
-                                                <?= renderStarsHtml($avgStar) ?>
-                                                <span class="font-weight-bold ml-1" style="font-size:14px; color:#d97706;"><?= number_format($avgStar, 2) ?> / 5.0</span>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->skor_akhir !== null): ?>
+                                                <div><?= renderStarsHtml($lb->rating_agregat) ?></div>
+                                                <span class="font-weight-bold ml-1" style="font-size:12px; color:#d97706;"><?= number_format($lb->rating_agregat, 2) ?> / 5.0</span>
                                             <?php else: ?>
-                                                <span class="text-muted small">Belum ada nilai</span>
+                                                <span class="text-muted small">Belum dinilai</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->grade !== '-'): ?>
+                                                <span class="badge <?= $lb->grade_badge ?> px-2 py-1" style="font-size: 12px; font-weight: 700; border-radius: 6px;">
+                                                    Grade <?= $lb->grade ?>
+                                                </span>
+                                                <div class="small font-weight-bold mt-1" style="font-size: 11px; color: <?= $lb->grade_color ?>;">
+                                                    <?= htmlspecialchars($lb->grade_label) ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="badge badge-secondary px-2 py-1" style="font-size: 11px;">Belum Dinilai</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
