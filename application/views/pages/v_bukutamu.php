@@ -813,7 +813,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 				},
 				error: function(xhr, status, error) {
 					$submitBtn.prop('disabled', false).html(originalBtnHtml);
-					Swal.fire('Gagal!', 'Terjadi kesalahan sistem: ' + (xhr.responseJSON?.message || error || 'Gagal terhubung ke server'), 'error');
+					var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.msg)) ? (xhr.responseJSON.message || xhr.responseJSON.msg) : (error || 'Gagal terhubung ke server');
+					Swal.fire('Gagal!', 'Terjadi kesalahan sistem: ' + msg, 'error');
 				}
 			});
 		});
@@ -966,7 +967,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 				},
 				error: function(xhr, status, error) {
 					$submitBtn.prop('disabled', false).html(originalBtnHtml);
-					Swal.fire('Gagal!', 'Terjadi kesalahan sistem: ' + (xhr.responseJSON?.message || error || 'Gagal terhubung ke server'), 'error');
+					var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.msg)) ? (xhr.responseJSON.message || xhr.responseJSON.msg) : (error || 'Gagal terhubung ke server');
+					Swal.fire('Gagal!', 'Terjadi kesalahan sistem: ' + msg, 'error');
 				}
 			});
 		});

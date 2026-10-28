@@ -14,6 +14,7 @@ class BukuTamu extends CI_Controller
   {
     parent::__construct();
     date_default_timezone_set('Asia/Jakarta');
+    $this->load->library('form_validation');
     $this->load->model('md_prov_kota');
     $this->load->model('md_bukutamu');
     $this->load->model('md_kategori_tiket');
@@ -622,6 +623,8 @@ class BukuTamu extends CI_Controller
   {
     grantAccessFor('all');
 
+    $this->load->library('form_validation');
+
     $this->form_validation->set_rules('kegiatan_id', 'Kegiatan / Event', 'trim|integer');
     $this->form_validation->set_rules('nama', 'Nama Lengkap', 'trim');
     $this->form_validation->set_rules('nomorwa', 'Nomor WhatsApp', 'required|trim');
@@ -708,7 +711,7 @@ class BukuTamu extends CI_Controller
     }
 
     if (($saveResult['status'] ?? '') !== 'inserted') {
-      ajaxReturnDie('error', 'Data gagal disimpan. Silakan coba lagi.');
+      ajaxReturnDie('error', $saveResult['message'] ?? 'Data gagal disimpan. Silakan coba lagi.');
       return;
     }
 

@@ -253,12 +253,29 @@ class Md_bukutamu extends CI_Model
         $ipAddress = $this->normalizeIpAddress($ipAddress);
         $userAgent = $this->normalizeUserAgent($userAgent);
 
-        if ($namaKey === '' || $noWaKey === '' || empty($kegiatan_id)) {
+        if ($noWaKey === '') {
             $this->logSubmitAttempt($kegiatan_id, $nama, $nomorwa, $namaKey, $noWaKey, $ipAddress, $userAgent, 0, 'invalid-input');
 
             return [
                 'status' => 'invalid',
-                'message' => 'Nama, nomor WhatsApp, atau event tidak valid.',
+                'message' => 'Nomor WhatsApp tidak valid.',
+            ];
+        }
+
+        if (empty($kegiatan_id)) {
+            $lastEvent = $this->getLastId();
+            if (!empty($lastEvent->id)) {
+                $kegiatan_id = (int) $lastEvent->id;
+                $data['kegiatan'] = $kegiatan_id;
+            }
+        }
+
+        if (empty($kegiatan_id)) {
+            $this->logSubmitAttempt($kegiatan_id, $nama, $nomorwa, $namaKey, $noWaKey, $ipAddress, $userAgent, 0, 'invalid-event');
+
+            return [
+                'status' => 'invalid',
+                'message' => 'Event/Kegiatan belum tersedia atau tidak valid.',
             ];
         }
 
