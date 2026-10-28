@@ -386,7 +386,7 @@
                                 </label>
                                 <label class="custom-radio-card flex-fill" id="cardPajakEndorsement">
                                     <input type="radio" name="sistem_perpajakan" value="ENDORSEMENT">
-                                    <span class="font-weight-bold">ENDORSEMENT</span>
+                                    <span class="font-weight-bold">ENDORSEMENT (PPh 11%)</span>
                                 </label>
                             </div>
                         </div>
@@ -541,7 +541,7 @@
                                         <input type="hidden" name="nominal_subtotal" id="inputSubtotal" value="0">
                                     </div>
                                     <div class="summary-row" id="rowPpn">
-                                        <span class="text-muted font-weight-bold">PPN (11%):</span>
+                                        <span class="text-muted font-weight-bold" id="labelPpn">PPN (11%):</span>
                                         <span class="font-weight-bold text-dark" id="displayPpn">Rp 0</span>
                                         <input type="hidden" name="nominal_ppn" id="inputPpn" value="0">
                                     </div>
@@ -756,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function () {
             subtotal += total;
         });
 
-        // Cek PPN
+        // Cek PPN / Endorsement (PPh 11%)
         var sistemPajak = 'PPN';
         var radioPajak = document.querySelector('input[name="sistem_perpajakan"]:checked');
         if (radioPajak) {
@@ -764,11 +764,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var ppn = 0;
+        var rowPpn = document.getElementById('rowPpn');
+        var labelPpn = document.getElementById('labelPpn');
+
         if (sistemPajak === 'PPN') {
             ppn = Math.round(subtotal * 0.11);
-            document.getElementById('rowPpn').style.display = 'flex';
+            if (labelPpn) labelPpn.innerText = 'PPN (11%):';
+            rowPpn.style.display = 'flex';
+        } else if (sistemPajak === 'ENDORSEMENT') {
+            ppn = Math.round(subtotal * 0.11);
+            if (labelPpn) labelPpn.innerText = 'Pajak PPh (11%):';
+            rowPpn.style.display = 'flex';
         } else {
-            document.getElementById('rowPpn').style.display = 'none';
+            rowPpn.style.display = 'none';
         }
 
         var ongkir = parseRupiah(document.getElementById('inputOngkir').value);

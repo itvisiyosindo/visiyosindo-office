@@ -367,9 +367,9 @@
                                 <span class="text-muted">Subtotal Barang:</span>
                                 <span class="font-weight-bold">Rp <?= number_format($po->nominal_subtotal ?? $po->nominal_po, 0, ',', '.') ?></span>
                             </div>
-                            <?php if (($po->sistem_perpajakan ?? 'PPN') === 'PPN'): ?>
+                            <?php if (in_array(($po->sistem_perpajakan ?? 'PPN'), ['PPN', 'ENDORSEMENT'])): ?>
                                 <div class="d-flex justify-content-between py-1">
-                                    <span class="text-muted">PPN (11%):</span>
+                                    <span class="text-muted"><?= ($po->sistem_perpajakan === 'ENDORSEMENT') ? 'Pajak PPh (11%):' : 'PPN (11%):' ?></span>
                                     <span class="font-weight-bold">Rp <?= number_format($po->nominal_ppn ?? 0, 0, ',', '.') ?></span>
                                 </div>
                             <?php endif; ?>

@@ -264,13 +264,13 @@ class Po_system extends CI_Controller
             $nominal_subtotal = $nominal_manual;
         }
 
-        // Hitung PPN jika sistem perpajakan PPN
+        // Hitung PPN / Pajak jika sistem perpajakan PPN atau ENDORSEMENT (PPh 11%)
         $nominal_ppn = 0;
-        if ($sistem_perpajakan === 'PPN') {
+        if (in_array($sistem_perpajakan, ['PPN', 'ENDORSEMENT'])) {
             $nominal_ppn = round($nominal_subtotal * 0.11, 2);
         }
 
-        // Hitung Total Akhir = Subtotal + PPN + Ongkir
+        // Hitung Total Akhir = Subtotal + Pajak + Ongkir
         $nominal_total_akhir = $nominal_subtotal + $nominal_ppn + $nominal_ongkir;
 
         $user = $this->md_pengguna->getById(sessPenggunaId());
