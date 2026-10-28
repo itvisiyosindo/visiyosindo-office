@@ -325,18 +325,37 @@
       }
 
       if($sSearch != ''){
-        if($drop_filter)
-          $sWhere .=' AND (';
-          for($i = 0; $i < count($mColArray); $i++){
-            // if ($mColArray[$i]['searchable'] == 'true' && !array_key_exists($mColArray[$i]['data'], $this->add_columns))
-                $sWhere .= $this->select[$this->columns[$i]] . " LIKE '%" . $sSearch . "%' OR ";
+        $searchWhereArr = [];
+        for($i = 0; $i < ($mColArray ? count($mColArray) : 0); $i++){
+          if (isset($mColArray[$i]['searchable']) && ($mColArray[$i]['searchable'] === 'false' || $mColArray[$i]['searchable'] === false)) {
+            continue;
           }
+          if (isset($this->columns[$i]) && isset($this->select[$this->columns[$i]])) {
+            $colName = trim($this->select[$this->columns[$i]]);
+            if ($colName !== '') {
+              $searchWhereArr[] = $colName . " LIKE '%" . $sSearch . "%'";
+            }
+          }
+        }
 
-        $sWhere = substr_replace($sWhere, '', -3);
+        if (empty($searchWhereArr) && !empty($this->select)) {
+          foreach ($this->select as $colName) {
+            $colName = trim($colName);
+            if ($colName !== '') {
+              $searchWhereArr[] = $colName . " LIKE '%" . $sSearch . "%'";
+            }
+          }
+        }
+
+        if (!empty($searchWhereArr)) {
+          $searchCondition = '(' . implode(' OR ', $searchWhereArr) . ')';
+          if ($drop_filter) {
+            $sWhere .= ' AND ' . $searchCondition;
+          } else {
+            $sWhere .= $searchCondition;
+          }
+        }
       }
-
-      if($drop_filter && $sSearch)
-          $sWhere .=' )';
 
       if($sWhere != '')
         $this->ci->db->where('(' . $sWhere . ')');

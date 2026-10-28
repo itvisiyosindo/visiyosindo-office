@@ -155,13 +155,8 @@ class Md_barang extends CI_Model
 
     function getAll88()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
 
         return $this->datatables
@@ -224,6 +219,31 @@ class Md_barang extends CI_Model
 
 
 
+    private function _applyCommonBarangFilters()
+    {
+        if ($this->input->post('filter_kategori')) {
+            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        }
+
+        if ($this->input->post('filter_barang')) {
+            $rawB = $this->input->post('filter_barang');
+            $bList = is_array($rawB) ? $rawB : explode(',', (string)$rawB);
+            $cleanBList = [];
+            foreach ($bList as $b) {
+                $b = trim((string)$b);
+                if (is_numeric($b) && (int)$b > 0) {
+                    $cleanBList[] = (int)$b;
+                }
+            }
+            if (!empty($cleanBList)) {
+                $this->datatables->where_in('b.id_barang', $cleanBList);
+            }
+        }
+
+        if ($this->input->post('scan_barcode')) {
+            $this->datatables->where('b.kode_barang', trim($this->input->post('scan_barcode', TRUE)));
+        }
+    }
     private function _applyStockFilterAndOrder($gudangCondition = "")
     {
         $gudangSql = $gudangCondition ? " AND {$gudangCondition}" : "";
@@ -244,12 +264,8 @@ class Md_barang extends CI_Model
 
     function getAll()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("");
 
@@ -281,12 +297,8 @@ class Md_barang extends CI_Model
 
     function getAllJual()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (1, 2, 3)");
 
@@ -314,12 +326,8 @@ class Md_barang extends CI_Model
 
     function getAllDemo()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (6, 10, 11)");
 
@@ -348,12 +356,8 @@ class Md_barang extends CI_Model
 
     function getAllRusak()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (7, 25, 29)");
 
@@ -382,12 +386,8 @@ class Md_barang extends CI_Model
 
     function getAllMarketing()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (23, 26, 30)");
 
@@ -416,12 +416,8 @@ class Md_barang extends CI_Model
 
     function getAllSparepart()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (5, 27, 31)");
 
@@ -450,12 +446,8 @@ class Md_barang extends CI_Model
 
     function getAllCustomer()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (24, 28, 32)");
 
@@ -484,12 +476,8 @@ class Md_barang extends CI_Model
 
     function getAllDefault()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.id_gudang IN (1, 2, 3, 10, 6, 11, 23, 26, 30, 5, 27, 31, 4)");
 
@@ -518,12 +506,8 @@ class Md_barang extends CI_Model
 
     function getAllPusat()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.lokasi IN (1)");
 
@@ -551,12 +535,8 @@ class Md_barang extends CI_Model
 
     function getAllJakarta()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.lokasi IN (2)");
 
@@ -584,12 +564,8 @@ class Md_barang extends CI_Model
 
     function getAllYogyakarta()
     {
-        if ($this->input->post('filter_kategori'))
-            $this->datatables->where('b.id_kategori', decrypt($this->input->post('filter_kategori', TRUE)));
+        $this->_applyCommonBarangFilters();
 
-        if ($this->input->post('scan_barcode')) {
-            $this->datatables->where('b.kode_barang', $this->input->post('scan_barcode', TRUE));
-        }
 
         $this->_applyStockFilterAndOrder("g.lokasi IN (3)");
 

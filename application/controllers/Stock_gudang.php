@@ -917,7 +917,6 @@ class Stock_gudang extends CI_Controller
         $barang_options = $this->db->group_by(['b.id_barang', 'b.nama_barang', 'b.kode_barang'])
             ->order_by('stok', 'DESC')
             ->order_by('b.nama_barang', 'ASC')
-            ->limit(250)
             ->get()
             ->result();
 

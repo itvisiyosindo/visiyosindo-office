@@ -705,9 +705,20 @@
             }
         }
 
+        window.getSelectedBarangIdsFromDash = function() {
+            const selected = [];
+            $('.chk-barang-item:checked').each(function() {
+                selected.push($(this).val());
+            });
+            return selected.join(',');
+        };
+
         $(document).on('change', '.chk-barang-item', function() {
             updateBarangFilterLabel();
             loadDashboardData();
+            if (typeof updateDatatable === 'function') {
+                updateDatatable();
+            }
         });
 
         $('#btn_clear_barang').on('click', function(e) {
@@ -715,6 +726,9 @@
             $('.chk-barang-item').prop('checked', false);
             updateBarangFilterLabel();
             loadDashboardData();
+            if (typeof updateDatatable === 'function') {
+                updateDatatable();
+            }
         });
 
         $('#input_search_barang_item').on('input', function() {
@@ -823,6 +837,9 @@
             $('#input_search_barang_item').val('').trigger('input');
             syncTableFilterKategoriFromDash();
             loadDashboardData();
+            if (typeof updateDatatable === 'function') {
+                updateDatatable();
+            }
         });
 
         function loadDashboardData() {
@@ -1392,6 +1409,9 @@
                         }
                         updateBarangFilterLabel();
                         loadDashboardData();
+                        if (typeof updateDatatable === 'function') {
+                            updateDatatable();
+                        }
                     }
                 });
                 tr.append(`<td class="text-center"><span class="badge-rank ${rankClass}">${rank}</span></td>`);

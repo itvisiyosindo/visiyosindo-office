@@ -183,17 +183,20 @@
 					e.filter_kategori = $('#filter_kategori').val()
 					e.filter_stok = $('#filter_stok').val()
 					e.scan_barcode = $('#scan_barcode').val()
+					e.filter_barang = (typeof getSelectedBarangIdsFromDash === 'function') ? getSelectedBarangIdsFromDash() : ''
 					e.csrf_token = token
 				}
 			},
 						columnDefs: [
 				{
 					targets: 0,
-					className: 'text-left'
+					className: 'text-left',
+					searchable: true
 				},
 				{
 					targets: '_all',
-					className: 'text-center'
+					className: 'text-center',
+					searchable: false
 				}
 			]
 		})
