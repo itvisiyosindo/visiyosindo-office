@@ -85,6 +85,64 @@
         color: #64748b;
     }
 
+    /* Proteksi alignment & styling dropdown select & select2 */
+    select.form-control-custom,
+    select.form-control-custom option {
+        text-align: left !important;
+        direction: ltr !important;
+        white-space: normal !important;
+    }
+
+    .select2-container--bootstrap .select2-selection--single {
+        height: 42px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 8px 12px !important;
+        font-size: 0.88rem !important;
+        color: #0f172a !important;
+        background-color: #fff !important;
+    }
+
+    .select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+        padding-left: 0 !important;
+        padding-right: 24px !important;
+        color: #0f172a !important;
+        line-height: 24px !important;
+        text-align: left !important;
+    }
+
+    .select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+        right: 8px !important;
+    }
+
+    .select2-container--bootstrap.select2-container--focus .select2-selection,
+    .select2-container--bootstrap.select2-container--open .select2-selection {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        z-index: 1060 !important;
+    }
+
+    .select2-results__option {
+        padding: 8px 12px !important;
+        font-size: 0.88rem !important;
+        line-height: 1.4 !important;
+        text-align: left !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    .select2-container--bootstrap .select2-results__option--highlighted[aria-selected] {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+    }
+
     .custom-radio-card {
         border: 1.5px solid #e2e8f0;
         border-radius: 10px;
@@ -218,26 +276,23 @@
                                 Nama Customer <span class="text-danger">*</span>
                                 <span class="text-muted font-weight-normal">(Inventory &rarr; Master Data &rarr; Customer)</span>
                             </label>
-                            <select name="id_customer" id="selectCustomer" class="form-control form-control-custom select2" style="width: 100%;" required>
-                                <option value="">-- Pilih Customer --</option>
+                            <select name="id_customer" id="selectCustomer" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Ketik / Pilih Customer --" required>
+                                <option value="">-- Ketik / Pilih Customer --</option>
                                 <?php if (!empty($customer_list)): ?>
                                     <?php foreach ($customer_list as $cust): ?>
                                         <?php
+                                            $nama_c = trim($cust->nama_customer ?? '');
                                             $contact_preview = '';
                                             if (!empty($cust->contact) && trim($cust->contact) !== '-') {
                                                 $clean_c = preg_replace('/\s+/', ' ', trim($cust->contact));
-                                                if (mb_strlen($clean_c) > 40) {
-                                                    $clean_c = mb_substr($clean_c, 0, 37) . '...';
+                                                if (mb_strlen($clean_c) > 35) {
+                                                    $clean_c = mb_substr($clean_c, 0, 32) . '...';
                                                 }
                                                 $contact_preview = ' — [' . $clean_c . ']';
                                             }
+                                            $display_label = $nama_c . $contact_preview;
                                         ?>
-                                        <option value="<?= $cust->id_customer ?>" 
-                                                data-nama="<?= htmlspecialchars($cust->nama_customer) ?>"
-                                                data-alamat="<?= htmlspecialchars($cust->alamat_customer ?? '') ?>"
-                                                data-contact="<?= htmlspecialchars($cust->contact ?? '') ?>">
-                                            <?= htmlspecialchars($cust->nama_customer . $contact_preview) ?>
-                                        </option>
+                                        <option value="<?= $cust->id_customer ?>" data-nama="<?= htmlspecialchars($nama_c) ?>" data-alamat="<?= htmlspecialchars(trim($cust->alamat_customer ?? '')) ?>" data-contact="<?= htmlspecialchars(trim($cust->contact ?? '')) ?>"><?= htmlspecialchars($display_label) ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
@@ -604,12 +659,10 @@
                         <!-- Diajukan Oleh (Marketing/Sales) -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Diajukan Oleh (Marketing / Sales) <span class="text-danger">*</span></label>
-                            <select name="id_sales" id="id_sales" class="form-control form-control-custom select2" required>
+                            <select name="id_sales" id="id_sales" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Pilih Sales / Marketing --" required>
                                 <?php if (!empty($sales_list)): ?>
                                     <?php foreach ($sales_list as $s): ?>
-                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= ($s->pengguna_id == sessPenggunaId()) ? 'selected' : '' ?>>
-                                            <?= $s->nama ?> (<?= $s->jabatan ?>)
-                                        </option>
+                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= ($s->pengguna_id == sessPenggunaId()) ? 'selected' : '' ?>><?= htmlspecialchars($s->nama . ' (' . $s->jabatan . ')') ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
@@ -689,8 +742,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    if (window.jQuery) {
-        $('#selectCustomer').on('change select2:select', onCustomerChange);
+    // Inisialisasi Select2 dengan pencarian cepat dan styling rapi
+    if (window.jQuery && $.fn.select2) {
+        $('.select2').each(function () {
+            var $this = $(this);
+            if (!$this.hasClass('select2-hidden-accessible')) {
+                var ph = $this.data('placeholder') || '-- Pilih Data --';
+                $this.select2({
+                    theme: 'bootstrap',
+                    width: '100%',
+                    placeholder: ph,
+                    allowClear: true
+                });
+            }
+        });
+
+        $('#selectCustomer').on('change select2:select select2:clear', onCustomerChange);
+    } else if (window.jQuery) {
+        $('#selectCustomer').on('change', onCustomerChange);
     } else {
         var selectCust = document.getElementById('selectCustomer');
         if (selectCust) {
