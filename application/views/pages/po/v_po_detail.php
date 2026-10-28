@@ -459,9 +459,19 @@
                             </div>
 
                             <?php if ($can_acc): ?>
-                                <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalAcc">
-                                    <i class="fas fa-edit mr-1"></i> Verifikasi ACC
-                                </button>
+                                <?php if ($po->cro_status === 'sesuai'): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalAcc">
+                                        <i class="fas fa-edit mr-1"></i> Verifikasi ACC
+                                    </button>
+                                <?php elseif ($po->cro_status === 'hold_indent'): ?>
+                                    <button type="button" class="btn btn-sm btn-secondary btn-block text-white" disabled title="Menunggu stok gudang ready (Status: HOLD / INDENT)">
+                                        <i class="fas fa-pause-circle mr-1"></i> Menunggu Stok Ready
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-muted" disabled title="Menunggu persetujuan tahap CRO">
+                                        <i class="fas fa-lock mr-1"></i> Menunggu Tahap CRO
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -494,9 +504,15 @@
                             </div>
 
                             <?php if ($can_pajak): ?>
-                                <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalPajak">
-                                    <i class="fas fa-edit mr-1"></i> Verifikasi Pajak
-                                </button>
+                                <?php if ($po->acc_status === 'sesuai'): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalPajak">
+                                        <i class="fas fa-edit mr-1"></i> Verifikasi Pajak
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-muted" disabled title="Menunggu persetujuan tahap Accounting">
+                                        <i class="fas fa-lock mr-1"></i> Menunggu Tahap ACC
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -525,9 +541,15 @@
                             </div>
 
                             <?php if ($can_gm): ?>
-                                <button type="button" class="btn btn-sm btn-success btn-block" data-toggle="modal" data-target="#modalGm">
-                                    <i class="fas fa-signature mr-1"></i> Approval GM
-                                </button>
+                                <?php if ($po->pajak_status === 'sesuai'): ?>
+                                    <button type="button" class="btn btn-sm btn-success btn-block" data-toggle="modal" data-target="#modalGm">
+                                        <i class="fas fa-signature mr-1"></i> Approval GM
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-muted" disabled title="Menunggu persetujuan tahap Pajak">
+                                        <i class="fas fa-lock mr-1"></i> Menunggu Tahap Pajak
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -676,7 +698,7 @@
 <div class="modal fade" id="modalCro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <form action="<?= base_url('po_system/verifikasi_cro') ?>" method="post">
+            <form action="<?= base_url('po_system/verifikasi_cro') ?>" method="post" id="formModalCro">
                 <input type="hidden" name="id_po" value="<?= $id_encrypt ?>">
                 <div class="modal-header">
                     <h5 class="modal-title font-weight-bold"><i class="fas fa-check-circle text-primary mr-2"></i>Verifikasi Tahap 1: Approval CRO</h5>
@@ -704,7 +726,7 @@
 
                     <div class="form-group">
                         <label class="font-weight-bold">3. Cek Stok Gudang</label>
-                        <select name="cro_cek_stok" class="form-control" required>
+                        <select name="cro_cek_stok" id="cro_cek_stok" class="form-control" required>
                             <option value="STOK READY WAREHOUSE" <?= ($po->cro_cek_stok === 'STOK READY WAREHOUSE') ? 'selected' : '' ?>>STOK READY WAREHOUSE (Proses Seluruhnya ➔ Lanjut Accounting)</option>
                             <option value="PROSES SEBAGIAN" <?= ($po->cro_cek_stok === 'PROSES SEBAGIAN') ? 'selected' : '' ?>>PROSES SEBAGIAN (Stok Ready Sebagian ➔ Lanjut Accounting)</option>
                             <option value="STOK TIDAK READY" <?= ($po->cro_cek_stok === 'STOK TIDAK READY') ? 'selected' : '' ?>>STOK TIDAK READY (HOLD / INDENT ➔ Notif Grup Gudang)</option>
@@ -728,12 +750,16 @@
 
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Approval CRO</label>
-                        <select name="cro_status" class="form-control" required>
-                            <option value="sesuai">Disetujui / Sesuai (Lanjut ke Accounting)</option>
+                        <select name="cro_status" id="cro_status" class="form-control" required>
+                            <option value="sesuai" id="opt_cro_sesuai">Disetujui / Sesuai (Lanjut ke Accounting)</option>
                             <option value="revisi">Perlu Revisi (Kembalikan ke Marketing)</option>
-                            <option value="hold_indent">HOLD / INDENT (Stok Belum Tersedia)</option>
+                            <option value="hold_indent" id="opt_cro_hold">HOLD / INDENT (Stok Belum Tersedia)</option>
                             <option value="ditolak">Ditolak</option>
                         </select>
+                        <div id="alertCroStok" class="alert alert-warning py-2 px-3 small mt-2" style="display: none; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e;">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <span id="alertCroStokText"></span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1016,3 +1042,98 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var selCekStok = document.getElementById('cro_cek_stok');
+    var selStatus  = document.getElementById('cro_status');
+    var optSesuai  = document.getElementById('opt_cro_sesuai');
+    var optHold    = document.getElementById('opt_cro_hold');
+    var alertBox   = document.getElementById('alertCroStok');
+    var alertText  = document.getElementById('alertCroStokText');
+    var formCro    = document.getElementById('formModalCro');
+
+    function syncCroStok() {
+        if (!selCekStok || !selStatus) return;
+
+        var valStok = selCekStok.value;
+
+        if (valStok === 'STOK TIDAK READY') {
+            // Stok Kosong -> Wajib HOLD / INDENT, kunci opsi Disetujui
+            if (optSesuai) optSesuai.disabled = true;
+            if (optHold) optHold.disabled = false;
+            selStatus.value = 'hold_indent';
+
+            if (alertBox && alertText) {
+                alertText.innerHTML = '<strong>Perhatian:</strong> Karena stok barang di gudang berstatus <u>STOK TIDAK READY</u>, keputusan otomatis dialihkan ke <strong>HOLD / INDENT</strong> dan tidak dapat disetujui ke tahap Accounting.';
+                alertBox.style.display = 'block';
+            }
+        } else if (valStok === 'STOK READY WAREHOUSE') {
+            // Stok Ready -> Tidak boleh hold_indent, aktifkan Disetujui
+            if (optSesuai) optSesuai.disabled = false;
+            if (optHold) optHold.disabled = true;
+
+            if (selStatus.value === 'hold_indent') {
+                selStatus.value = 'sesuai';
+            }
+
+            if (alertBox) {
+                alertBox.style.display = 'none';
+            }
+        } else if (valStok === 'PROSES SEBAGIAN') {
+            // Stok Sebagian -> Boleh Disetujui (sebagian) atau HOLD
+            if (optSesuai) optSesuai.disabled = false;
+            if (optHold) optHold.disabled = false;
+
+            if (alertBox && alertText) {
+                alertText.innerHTML = '<strong>Catatan:</strong> Stok barang ready sebagian. Anda dapat memilih <strong>Disetujui</strong> (proses sebagian) atau <strong>HOLD / INDENT</strong> jika menunggu seluruh barang ready.';
+                alertBox.style.display = 'block';
+            }
+        }
+    }
+
+    if (selCekStok) {
+        selCekStok.addEventListener('change', syncCroStok);
+        syncCroStok();
+        $('#modalCro').on('shown.bs.modal', function() {
+            syncCroStok();
+        });
+    }
+
+    if (selStatus) {
+        selStatus.addEventListener('change', function() {
+            if (selCekStok && selCekStok.value === 'STOK TIDAK READY' && this.value === 'sesuai') {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Kontradiksi Approval!',
+                        text: 'Stok gudang berstatus STOK TIDAK READY. PO ini tidak dapat disetujui ke tahap Accounting. Status dialihkan ke HOLD / INDENT.'
+                    });
+                } else {
+                    alert('Stok gudang berstatus STOK TIDAK READY. PO ini tidak dapat disetujui ke tahap Accounting!');
+                }
+                this.value = 'hold_indent';
+                syncCroStok();
+            }
+        });
+    }
+
+    if (formCro) {
+        formCro.addEventListener('submit', function(e) {
+            if (selCekStok && selStatus && selCekStok.value === 'STOK TIDAK READY' && selStatus.value === 'sesuai') {
+                e.preventDefault();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tidak Dapat Disimpan!',
+                        text: 'Terdapat kontradiksi: Stok gudang TIDAK READY, sehingga keputusan approval tidak boleh Disetujui/Lanjut ke Accounting. Silakan pilih HOLD / INDENT.'
+                    });
+                } else {
+                    alert('Kontradiksi: Stok tidak ready tidak dapat disetujui ke Accounting.');
+                }
+                return false;
+            }
+        });
+    }
+});
+</script>

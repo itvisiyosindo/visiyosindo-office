@@ -501,6 +501,13 @@ class Po_system extends CI_Controller
             return;
         }
 
+        if ($po->cro_status !== 'sesuai') {
+            $statusLabel = ($po->cro_status === 'hold_indent') ? 'HOLD / INDENT (Stok Belum Ready)' : strtoupper($po->cro_status ?: 'Menunggu Kroscek');
+            $this->session->set_flashdata('error', 'Tahap CRO belum disetujui (Status CRO: ' . $statusLabel . '). Verifikasi Accounting belum dapat dilakukan!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
         $acc_cek_harga         = $this->input->post('acc_cek_harga');
         $acc_sistem_harga      = $this->input->post('acc_sistem_harga');
         $acc_sistem_pembayaran = $this->input->post('acc_sistem_pembayaran');
@@ -566,6 +573,12 @@ class Po_system extends CI_Controller
 
         if (!$can_pajak) {
             $this->session->set_flashdata('error', 'Hanya Tim Pajak atau Administrator yang berhak melakukan verifikasi ini!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
+        if ($po->acc_status !== 'sesuai') {
+            $this->session->set_flashdata('error', 'Tahap Accounting belum disetujui (Status ACC: ' . strtoupper($po->acc_status ?: 'Menunggu') . '). Verifikasi Pajak belum dapat dilakukan!');
             redirect('po_system/detail/' . $id_encrypted);
             return;
         }
@@ -636,6 +649,12 @@ class Po_system extends CI_Controller
 
         if (!$can_gm) {
             $this->session->set_flashdata('error', 'Hanya General Manager atau Administrator yang berhak memberikan approval persetujuan final!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
+        if ($po->pajak_status !== 'sesuai') {
+            $this->session->set_flashdata('error', 'Tahap Pajak belum disetujui (Status Pajak: ' . strtoupper($po->pajak_status ?: 'Menunggu') . '). Persetujuan Final GM belum dapat dilakukan!');
             redirect('po_system/detail/' . $id_encrypted);
             return;
         }
