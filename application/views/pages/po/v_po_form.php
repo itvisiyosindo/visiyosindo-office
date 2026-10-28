@@ -441,7 +441,7 @@
                                 </label>
                                 <label class="custom-radio-card flex-fill" id="cardPajakEndorsement">
                                     <input type="radio" name="sistem_perpajakan" value="ENDORSEMENT">
-                                    <span class="font-weight-bold">ENDORSEMENT (PPh 11%)</span>
+                                    <span class="font-weight-bold">ENDORSEMENT</span>
                                 </label>
                             </div>
                         </div>
@@ -842,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function () {
             rowPpn.style.display = 'flex';
         } else if (sistemPajak === 'ENDORSEMENT') {
             ppn = Math.round(subtotal * 0.11);
-            if (labelPpn) labelPpn.innerText = 'Pajak PPh (11%):';
+            if (labelPpn) labelPpn.innerText = 'Pajak (11%):';
             rowPpn.style.display = 'flex';
         } else {
             rowPpn.style.display = 'none';
