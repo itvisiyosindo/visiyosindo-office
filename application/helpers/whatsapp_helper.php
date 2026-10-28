@@ -1468,10 +1468,10 @@ function waAllGroupVisilab($data)
 
 
 // =========================================================================
-// TOGGLE NOTIFIKASI PO (Set FALSE untuk mematikan sementara)
+// TOGGLE NOTIFIKASI PO (Set TRUE untuk mengaktifkan notifikasi)
 // =========================================================================
 if (!defined('ENABLE_WA_PO_NOTIF')) {
-    define('ENABLE_WA_PO_NOTIF', false);
+    define('ENABLE_WA_PO_NOTIF', true);
 }
 
 function waPoVisilabOpen($data)
