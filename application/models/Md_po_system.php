@@ -145,6 +145,31 @@ class Md_po_system extends CI_Model
     }
 
     /**
+     * Update data 1 item PO
+     */
+    public function updateItem($id_item, $data)
+    {
+        $this->db->where('id_item', $id_item);
+        return $this->db->update('po_masuk_item', $data);
+    }
+
+    /**
+     * Hitung sisa barang inden dalam 1 PO
+     */
+    public function countIndentItems($id_po)
+    {
+        return $this->db->where('id_po', $id_po)->where('status_item', 'indent')->count_all_results('po_masuk_item');
+    }
+
+    /**
+     * Ambil item yang masih inden dalam 1 PO
+     */
+    public function getIndentItemsByPoId($id_po)
+    {
+        return $this->db->get_where('po_masuk_item', ['id_po' => $id_po, 'status_item' => 'indent'])->result();
+    }
+
+    /**
      * Update PO
      */
     public function updatePo($id_po, $data)

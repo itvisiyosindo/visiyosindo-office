@@ -377,6 +377,9 @@ class Po_system extends CI_Controller
         $page_data['can_pajak'] = (isAdmin() || stripos($my_jabatan, 'Tax') !== false || stripos($my_jabatan, 'Pajak') !== false);
         $page_data['can_gm']    = (isAdmin() || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
         $page_data['can_upload_doc'] = ($page_data['can_cro'] || $page_data['can_acc'] || $page_data['can_pajak'] || $page_data['can_gm'] || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false);
+        $page_data['can_update_inden'] = ($page_data['can_cro'] || $page_data['can_gm'] || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false || stripos($my_jabatan, 'Accounting') !== false);
+        $page_data['count_indent']     = $this->md_po_system->countIndentItems($id_po);
+        $page_data['indent_items']     = $this->md_po_system->getIndentItemsByPoId($id_po);
 
         $page_data['page_name']  = 'po/v_po_detail';
         $page_data['page_title'] = 'Detail & Kroscek PO';
@@ -422,14 +425,49 @@ class Po_system extends CI_Controller
 
         $status_po_baru = $po->status;
         $status_proses_baru = $po->status_proses;
+        $ready_count = 0;
+        $indent_count = 0;
 
         if ($cro_cek_stok === 'STOK TIDAK READY' || $cro_status === 'hold_indent') {
             $status_po_baru = 'revisi';
             $status_proses_baru = 'HOLD / INDENT';
             $cro_status = 'hold_indent';
+
+            // Seluruh item ditandai inden
+            $this->db->where('id_po', $id_po)->update('po_masuk_item', [
+                'status_item'   => 'indent',
+                'tanggal_ready' => null
+            ]);
         } elseif ($cro_status === 'sesuai') {
             if ($cro_cek_stok === 'PROSES SEBAGIAN') {
                 $status_proses_baru = 'PROSES SEBAGIAN';
+
+                $item_statuses = $this->input->post('item_status');
+                $item_tanggals = $this->input->post('item_tanggal');
+                $item_catatans = $this->input->post('item_catatan');
+
+                if (is_array($item_statuses)) {
+                    foreach ($item_statuses as $id_item => $st) {
+                        $st_clean = ($st === 'indent') ? 'indent' : 'ready';
+                        $tgl = !empty($item_tanggals[$id_item]) ? $item_tanggals[$id_item] : ($st_clean === 'ready' ? date('Y-m-d') : null);
+                        $cat = !empty($item_catatans[$id_item]) ? trim($item_catatans[$id_item]) : null;
+
+                        $this->md_po_system->updateItem(intval($id_item), [
+                            'status_item'   => $st_clean,
+                            'tanggal_ready' => $tgl,
+                            'catatan_item'  => $cat
+                        ]);
+
+                        if ($st_clean === 'ready') $ready_count++;
+                        else $indent_count++;
+                    }
+                }
+            } else {
+                // STOK READY WAREHOUSE (Seluruh item siap kirim)
+                $this->db->where('id_po', $id_po)->update('po_masuk_item', [
+                    'status_item'   => 'ready',
+                    'tanggal_ready' => date('Y-m-d')
+                ]);
             }
             // Tetap status sesuai untuk tahap CRO
             $status_po_baru = 'sesuai';
@@ -459,6 +497,9 @@ class Po_system extends CI_Controller
         $this->md_po_system->updatePo($id_po, $data_update);
 
         $logMsg = "Approval CRO oleh " . $nama_user . " (" . strtoupper($cro_status) . ") - Stok: " . $cro_cek_stok;
+        if ($cro_cek_stok === 'PROSES SEBAGIAN') {
+            $logMsg .= " (" . $ready_count . " Barang Ready, " . $indent_count . " Barang Inden)";
+        }
         if (!empty($cro_catatan)) $logMsg .= " | Catatan: " . $cro_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
 
@@ -662,7 +703,8 @@ class Po_system extends CI_Controller
         $gm_catatan = trim($this->input->post('gm_catatan'));
         $gm_status  = $this->input->post('gm_status');
 
-        $status_proses_baru = ($po->cro_cek_stok === 'PROSES SEBAGIAN') ? 'PROSES SEBAGIAN' : 'SUDAH DI PROSES';
+        $sisa_inden = $this->md_po_system->countIndentItems($id_po);
+        $status_proses_baru = ($po->cro_cek_stok === 'PROSES SEBAGIAN' && $sisa_inden > 0) ? 'PROSES SEBAGIAN' : 'SUDAH DI PROSES';
         $status_po_baru = 'sesuai';
 
         if ($gm_status === 'ditolak') {
@@ -760,6 +802,86 @@ class Po_system extends CI_Controller
         ]);
 
         $this->session->set_flashdata('success', 'Dokumen kelengkapan ' . strtoupper($divisi) . ' berhasil diperbarui!');
+        redirect('po_system/detail/' . $id_encrypted);
+    }
+
+    /**
+     * Update Status Pemenuhan Barang Inden menjadi Ready (Bertanggal)
+     */
+    public function update_barang_inden()
+    {
+        $id_encrypted = $this->input->post('id_po');
+        $id_po        = decrypt($id_encrypted);
+        $po           = $this->md_po_system->getPoById($id_po);
+
+        if (!$po) {
+            show_404();
+            return;
+        }
+
+        $user = $this->md_pengguna->getById(sessPenggunaId());
+        $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Staf');
+        $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
+        $my_level   = is_array($user) ? $user[0]->level : ($user->level ?? '');
+        $can_update = (isAdmin() || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'General Manager') !== false || $my_level == 'Hrd');
+
+        if (!$can_update) {
+            $this->session->set_flashdata('error', 'Anda tidak memiliki hak akses untuk memperbarui status pemenuhan barang!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
+        $items_ready   = $this->input->post('items_ready'); // Array of id_item
+        $tanggal_ready = $this->input->post('tanggal_ready') ?: date('Y-m-d');
+        $catatan_inden = trim($this->input->post('catatan_inden'));
+
+        if (empty($items_ready) || !is_array($items_ready)) {
+            $this->session->set_flashdata('error', 'Silakan pilih setidaknya satu barang inden yang telah ready/tiba di gudang!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
+        $updated_names = [];
+        foreach ($items_ready as $id_item) {
+            $id_item = intval($id_item);
+            $item = $this->db->get_where('po_masuk_item', ['id_item' => $id_item, 'id_po' => $id_po])->row();
+            if ($item) {
+                $this->md_po_system->updateItem($id_item, [
+                    'status_item'   => 'ready',
+                    'tanggal_ready' => $tanggal_ready,
+                    'catatan_item'  => !empty($catatan_inden) ? $catatan_inden : $item->catatan_item
+                ]);
+                $updated_names[] = $item->nama_barang . ' (' . (float)$item->qty . ' ' . $item->satuan . ')';
+            }
+        }
+
+        // Cek sisa barang inden yang belum ready
+        $sisa_inden = $this->md_po_system->countIndentItems($id_po);
+        $status_proses_baru = $po->status_proses;
+
+        // Jika semua barang sudah ready, otomatis selesaikan status_proses jika GM sudah approve atau PO sedang proses sebagian/hold
+        if ($sisa_inden === 0) {
+            if ($po->gm_status === 'sesuai' || in_array($po->status_proses, ['PROSES SEBAGIAN', 'HOLD / INDENT'])) {
+                $status_proses_baru = 'SUDAH DI PROSES';
+                $this->md_po_system->updatePo($id_po, [
+                    'status_proses' => 'SUDAH DI PROSES',
+                    'updated_at'    => date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+
+        $tgl_formatted = date('d/m/Y', strtotime($tanggal_ready));
+        $logMsg = "Update Pemenuhan Barang Inden ➔ READY (Tgl: " . $tgl_formatted . ") oleh " . $nama_user . ". Barang: " . implode(', ', $updated_names);
+        if (!empty($catatan_inden)) $logMsg .= " | Catatan: " . $catatan_inden;
+        if ($sisa_inden === 0) {
+            $logMsg .= " [SEMUA BARANG SUDAH READY ➔ Status Proses: " . $status_proses_baru . "]";
+        } else {
+            $logMsg .= " [Sisa " . $sisa_inden . " barang inden masih menunggu]";
+        }
+
+        $this->md_po_system->addLog($id_po, $po->status, $po->status, $logMsg, sessPenggunaId(), $nama_user);
+
+        $this->session->set_flashdata('success', 'Berhasil memperbarui ' . count($updated_names) . ' barang inden menjadi READY (Tgl: ' . $tgl_formatted . ')!');
         redirect('po_system/detail/' . $id_encrypted);
     }
 

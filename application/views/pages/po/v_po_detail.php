@@ -317,20 +317,26 @@
 
         <!-- CARD 2: RINCIAN BARANG & KALKULASI TOTAL -->
         <div class="card-modern">
-            <div class="card-header-modern">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
                 <h6><i class="fas fa-boxes"></i> 2. Rincian Barang / Modalitas (Integrasi Stok Inventory)</h6>
+                <?php if (!empty($count_indent) && $count_indent > 0 && !empty($can_update_inden)): ?>
+                    <button type="button" class="btn btn-sm btn-warning text-dark font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalUpdateBarangInden">
+                        <i class="fas fa-truck-loading mr-1"></i> Update Status Barang Inden (<?= $count_indent ?> Item)
+                    </button>
+                <?php endif; ?>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-items mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 5%; text-align: center;">No</th>
+                                <th style="width: 4%; text-align: center;">No</th>
                                 <th>Nama Barang (Type, Ukuran, Warna)</th>
-                                <th style="width: 15%; text-align: right;">Harga Satuan</th>
-                                <th style="width: 10%; text-align: center;">Qty</th>
-                                <th style="width: 10%;">Satuan</th>
-                                <th style="width: 18%; text-align: right;">Total Harga</th>
+                                <th style="width: 14%; text-align: right;">Harga Satuan</th>
+                                <th style="width: 8%; text-align: center;">Qty</th>
+                                <th style="width: 8%;">Satuan</th>
+                                <th style="width: 15%; text-align: right;">Total Harga</th>
+                                <th style="width: 18%; text-align: center;">Status Pemenuhan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -348,11 +354,31 @@
                                         <td class="text-center font-weight-bold"><?= (float)$it->qty ?></td>
                                         <td><?= htmlspecialchars($it->satuan) ?></td>
                                         <td class="text-right font-weight-bold text-primary">Rp <?= number_format($it->total_harga, 0, ',', '.') ?></td>
+                                        <td class="text-center">
+                                            <?php if (($it->status_item ?? 'ready') === 'indent'): ?>
+                                                <span class="badge badge-warning text-dark px-2 py-1">
+                                                    <i class="fas fa-hourglass-half mr-1"></i> Inden / Menunggu
+                                                </span>
+                                                <?php if (!empty($it->tanggal_ready)): ?>
+                                                    <small class="d-block text-muted mt-1"><i class="fas fa-calendar-alt mr-1"></i> Est: <?= date('d/m/Y', strtotime($it->tanggal_ready)) ?></small>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="badge badge-success px-2 py-1">
+                                                    <i class="fas fa-check-circle mr-1"></i> Ready (Diproses)
+                                                </span>
+                                                <?php if (!empty($it->tanggal_ready)): ?>
+                                                    <small class="d-block text-muted mt-1"><i class="fas fa-calendar-check mr-1"></i> Tgl: <?= date('d/m/Y', strtotime($it->tanggal_ready)) ?></small>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                            <?php if (!empty($it->catatan_item)): ?>
+                                                <small class="d-block text-muted font-italic mt-1"><i class="fas fa-info-circle mr-1"></i> <?= htmlspecialchars($it->catatan_item) ?></small>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-3">Tidak ada rincian item (Nominal global tercatat).</td>
+                                    <td colspan="7" class="text-center text-muted py-3">Tidak ada rincian item (Nominal global tercatat).</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -696,7 +722,7 @@
 
 <!-- ==================== MODAL APPROVAL CRO ==================== -->
 <div class="modal fade" id="modalCro" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
             <form action="<?= base_url('po_system/verifikasi_cro') ?>" method="post" id="formModalCro">
                 <input type="hidden" name="id_po" value="<?= $id_encrypt ?>">
@@ -724,13 +750,66 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group mb-2">
                         <label class="font-weight-bold">3. Cek Stok Gudang</label>
                         <select name="cro_cek_stok" id="cro_cek_stok" class="form-control" required>
                             <option value="STOK READY WAREHOUSE" <?= ($po->cro_cek_stok === 'STOK READY WAREHOUSE') ? 'selected' : '' ?>>STOK READY WAREHOUSE (Proses Seluruhnya ➔ Lanjut Accounting)</option>
                             <option value="PROSES SEBAGIAN" <?= ($po->cro_cek_stok === 'PROSES SEBAGIAN') ? 'selected' : '' ?>>PROSES SEBAGIAN (Stok Ready Sebagian ➔ Lanjut Accounting)</option>
                             <option value="STOK TIDAK READY" <?= ($po->cro_cek_stok === 'STOK TIDAK READY') ? 'selected' : '' ?>>STOK TIDAK READY (HOLD / INDENT ➔ Notif Grup Gudang)</option>
                         </select>
+                    </div>
+
+                    <!-- Detail Pemilihan Barang Ready vs Inden Saat PROSES SEBAGIAN -->
+                    <div id="boxPartialItems" class="p-3 mb-3 border rounded bg-light" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="font-weight-bold text-dark mb-0">
+                                <i class="fas fa-boxes mr-1 text-primary"></i> Pembagian Barang (Ready vs Inden)
+                            </label>
+                            <small class="text-muted">Tentukan barang yang siap dikirim & yang inden</small>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered bg-white mb-1" style="font-size: 0.88rem;">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 35%;">Nama Barang & Qty</th>
+                                        <th style="width: 25%;">Status</th>
+                                        <th style="width: 20%;">Tanggal (Ready / Est)</th>
+                                        <th style="width: 20%;">Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($items)): ?>
+                                        <?php foreach ($items as $it): ?>
+                                            <tr>
+                                                <td class="align-middle">
+                                                    <b><?= htmlspecialchars($it->nama_barang) ?></b><br>
+                                                    <span class="badge badge-light border">Qty: <?= (float)$it->qty ?> <?= htmlspecialchars($it->satuan) ?></span>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <select name="item_status[<?= $it->id_item ?>]" class="form-control form-control-sm select-item-status">
+                                                        <option value="ready" <?= (($it->status_item ?? 'ready') === 'ready') ? 'selected' : '' ?>>Ready (Diproses)</option>
+                                                        <option value="indent" <?= (($it->status_item ?? '') === 'indent') ? 'selected' : '' ?>>Inden (Menunggu)</option>
+                                                    </select>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <input type="date" name="item_tanggal[<?= $it->id_item ?>]" class="form-control form-control-sm" value="<?= !empty($it->tanggal_ready) ? $it->tanggal_ready : date('Y-m-d') ?>">
+                                                </td>
+                                                <td class="align-middle">
+                                                    <input type="text" name="item_catatan[<?= $it->id_item ?>]" class="form-control form-control-sm" placeholder="Catatan..." value="<?= htmlspecialchars($it->catatan_item ?? '') ?>">
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">Tidak ada rincian item dalam PO ini.</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle mr-1 text-primary"></i> <b>Ready:</b> Barang akan langsung diproses/dikirim terlebih dahulu. <b>Inden:</b> Barang dapat diperbarui statusnya kemudian saat sudah tiba di gudang.
+                        </small>
                     </div>
 
                     <div class="form-group">
@@ -1043,6 +1122,104 @@
     </div>
 </div>
 
+<!-- ==================== MODAL UPDATE PEMENUHAN BARANG INDEN ==================== -->
+<div class="modal fade" id="modalUpdateBarangInden" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="<?= base_url('po_system/update_barang_inden') ?>" method="post" id="formUpdateInden">
+                <input type="hidden" name="id_po" value="<?= $id_encrypt ?>">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title font-weight-bold text-dark"><i class="fas fa-boxes mr-2"></i>Update Pemenuhan Status Barang Inden</h5>
+                    <button type="button" class="close text-dark" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 px-3 small mb-3">
+                        <i class="fas fa-info-circle mr-1"></i> Centang barang inden yang <b>telah siap/tiba di gudang</b> dan tentukan tanggal siap kirimnya.
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Daftar Barang Inden yang Menunggu Pemenuhan:</label>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm bg-white mb-0" style="font-size: 0.9rem;">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 5%; text-align: center;">
+                                            <input type="checkbox" id="checkAllInden" title="Pilih Semua">
+                                        </th>
+                                        <th>Nama Barang</th>
+                                        <th style="width: 15%; text-align: center;">Qty</th>
+                                        <th style="width: 25%;">Est. Tgl Sebelumnya</th>
+                                        <th style="width: 25%;">Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                        $hasInden = false;
+                                        if (!empty($items)): 
+                                            foreach ($items as $it): 
+                                                if (($it->status_item ?? '') === 'indent'):
+                                                    $hasInden = true;
+                                    ?>
+                                        <tr>
+                                            <td class="text-center align-middle">
+                                                <input type="checkbox" name="items_ready[]" value="<?= $it->id_item ?>" class="check-inden-item">
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="font-weight-bold text-dark"><?= htmlspecialchars($it->nama_barang) ?></span>
+                                                <?php if (!empty($it->catatan)): ?>
+                                                    <small class="d-block text-muted"><?= htmlspecialchars($it->catatan) ?></small>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle font-weight-bold">
+                                                <?= (float)$it->qty ?> <?= htmlspecialchars($it->satuan) ?>
+                                            </td>
+                                            <td class="align-middle text-muted small">
+                                                <?= !empty($it->tanggal_ready) ? date('d/m/Y', strtotime($it->tanggal_ready)) : '-' ?>
+                                            </td>
+                                            <td class="align-middle small">
+                                                <?= htmlspecialchars($it->catatan_item ?: '-') ?>
+                                            </td>
+                                        </tr>
+                                    <?php 
+                                                endif;
+                                            endforeach; 
+                                        endif; 
+                                        if (!$hasInden):
+                                    ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-2">Tidak ada barang yang berstatus Inden dalam PO ini.</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="font-weight-bold">Tanggal Pemenuhan / Tiba (Ready) <span class="text-danger">*</span></label>
+                            <input type="date" name="tanggal_ready" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                            <small class="text-muted">Tanggal fisik barang siap diproses/dikirim.</small>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="font-weight-bold">Catatan Pemenuhan</label>
+                            <input type="text" name="catatan_inden" class="form-control" placeholder="Contoh: Barang batch 2 tiba, nomor resi supplier...">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted mb-0">
+                        <i class="fas fa-check-double mr-1 text-success"></i> Jika semua barang inden telah terpenuhi (menjadi Ready), status proses PO akan otomatis bertransisi menjadi <b>SUDAH DI PROSES</b>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning text-dark font-weight-bold"><i class="fas fa-save mr-1"></i> Simpan Status Barang Ready</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var selCekStok = document.getElementById('cro_cek_stok');
@@ -1052,11 +1229,17 @@ document.addEventListener('DOMContentLoaded', function() {
     var alertBox   = document.getElementById('alertCroStok');
     var alertText  = document.getElementById('alertCroStokText');
     var formCro    = document.getElementById('formModalCro');
+    var boxPartial = document.getElementById('boxPartialItems');
+    var checkAllInden = document.getElementById('checkAllInden');
 
     function syncCroStok() {
         if (!selCekStok || !selStatus) return;
 
         var valStok = selCekStok.value;
+
+        if (boxPartial) {
+            boxPartial.style.display = (valStok === 'PROSES SEBAGIAN') ? 'block' : 'none';
+        }
 
         if (valStok === 'STOK TIDAK READY') {
             // Stok Kosong -> Wajib HOLD / INDENT, kunci opsi Disetujui
@@ -1086,10 +1269,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (optHold) optHold.disabled = false;
 
             if (alertBox && alertText) {
-                alertText.innerHTML = '<strong>Catatan:</strong> Stok barang ready sebagian. Anda dapat memilih <strong>Disetujui</strong> (proses sebagian) atau <strong>HOLD / INDENT</strong> jika menunggu seluruh barang ready.';
+                alertText.innerHTML = '<strong>Catatan:</strong> Stok barang ready sebagian. Barang bertanda <strong>Ready</strong> akan langsung diproses hari ini, dan barang bertanda <strong>Inden</strong> dapat diperbarui saat barang tiba.';
                 alertBox.style.display = 'block';
             }
         }
+    }
+
+    if (checkAllInden) {
+        checkAllInden.addEventListener('change', function() {
+            var checkboxes = document.querySelectorAll('.check-inden-item');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = checkAllInden.checked;
+            }
+        });
     }
 
     if (selCekStok) {
