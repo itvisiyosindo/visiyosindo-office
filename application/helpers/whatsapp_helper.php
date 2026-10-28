@@ -1467,8 +1467,18 @@ function waAllGroupVisilab($data)
 //======================================================
 
 
+// =========================================================================
+// TOGGLE NOTIFIKASI PO (Set FALSE untuk mematikan sementara)
+// =========================================================================
+if (!defined('ENABLE_WA_PO_NOTIF')) {
+    define('ENABLE_WA_PO_NOTIF', false);
+}
+
 function waPoVisilabOpen($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$linkUrl = "https://office.visiyosindo.id/po_visilab/show/permintaan/purchase_order";
 	if (isset($data['id']) && !empty($data['id'])) {
 		$linkUrl = "https://office.visiyosindo.id/po_visilab/show/detail/purchase_order/" . $data['id'];
@@ -1515,6 +1525,9 @@ function waPermintaanPoVisilabGroup($data)
 
 function waPoVisilabAprovOnProg($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	for ($i = 1; $i <= 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
@@ -1547,12 +1560,18 @@ function waPoVisilabAprovOnProg($data)
 
 function waPoVisilabAprovAll($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
 	return TRUE;
 }
 
 function waPoVisilabAprovAllGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	for ($i = 1; $i <= 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
@@ -1580,6 +1599,9 @@ function waPoVisilabAprovAllGroup($data)
 
 function waPoVisilabAprovAllGroupAdm($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
@@ -1614,6 +1636,9 @@ function waPoVisilabAprovAllGroupAdm($data)
 
 function waPoOpen($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$linkUrl = "https://office.visiyosindo.id/purchase_order/show/permintaan/purchase_order";
 	if (isset($data['id']) && !empty($data['id'])) {
 		$linkUrl = "https://office.visiyosindo.id/purchase_order/show/detail/purchase_order/" . $data['id'];
@@ -1659,6 +1684,9 @@ function waPermintaanPoGroup($data)
 
 function waPoAprovOnProg($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
@@ -1690,6 +1718,9 @@ function waPoAprovOnProg($data)
 
 function waPoAprovAll($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	// Dinonaktifkan untuk menghemat kuota chat jika di-ACC semua
 	return TRUE;
 }
@@ -1697,6 +1728,9 @@ function waPoAprovAll($data)
 
 function waPoAprovAllGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
 	}
@@ -1753,6 +1787,9 @@ function waForecastGroup($data)
 
 function waPoAprovAllGroupAdm($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 
 	for ($i = 1; $i < 5; $i++) {
 		$data['ttd_sebelum' . $i] = cekTtd($data['ttd_sebelum' . $i]);
@@ -2842,6 +2879,9 @@ function sendWaFonnteGroup($dataSend)
  */
 function waPoPengajuanBaruGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
@@ -2889,6 +2929,9 @@ function waPoPengajuanBaruGroup($data)
  */
 function waPoIndentGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
@@ -2928,6 +2971,9 @@ function waPoIndentGroup($data)
  */
 function waPoSiapDiprosesGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
@@ -2971,6 +3017,9 @@ function waPoSiapDiprosesGroup($data)
  */
 function waPoUpdateDokumenGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
@@ -3001,6 +3050,9 @@ function waPoUpdateDokumenGroup($data)
 
 function waPoLolosKroscekGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
@@ -3043,6 +3095,9 @@ function waPoLolosKroscekGroup($data)
  */
 function waPoProgressGroup($data)
 {
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false; // Notifikasi PO dimatikan sementara
+	}
 	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
