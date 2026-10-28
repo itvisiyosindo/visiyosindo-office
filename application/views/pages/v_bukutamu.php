@@ -310,8 +310,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			<?= form_open('#', array('id' => 'form-tamu-manual', 'autocomplete' => 'off')); ?>
 			<div class="modal-body">
 				<div class="form-group">
-					<label for="manual_kegiatan_id" class="form-control-label font-weight-bold">Pilih Event / Kegiatan <span class="text-danger">*</span> :</label>
-					<select class="form-control" id="manual_kegiatan_id" name="kegiatan_id" required>
+					<label for="manual_kegiatan_id" class="form-control-label font-weight-bold">Pilih Event / Kegiatan :</label>
+					<select class="form-control" id="manual_kegiatan_id" name="kegiatan_id">
 						<option value="">- Pilih Kegiatan -</option>
 						<?php if (!empty($nama_kegiatan)): ?>
 							<?php foreach ($nama_kegiatan as $value): ?>
@@ -321,8 +321,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					</select>
 				</div>
 				<div class="form-group">
-					<label for="manual_nama" class="form-control-label font-weight-bold">Nama Lengkap <span class="text-danger">*</span> :</label>
-					<input type="text" class="form-control" id="manual_nama" name="nama" placeholder="Contoh: Budi Santoso" required>
+					<label for="manual_nama" class="form-control-label font-weight-bold">Nama Lengkap :</label>
+					<input type="text" class="form-control" id="manual_nama" name="nama" placeholder="Contoh: Budi Santoso">
 				</div>
 				<div class="form-group">
 					<label for="manual_nomorwa" class="form-control-label font-weight-bold">Nomor WhatsApp <span class="text-danger">*</span> :</label>
@@ -338,12 +338,12 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					<input type="email" class="form-control" id="manual_email" name="email" placeholder="Contoh: budi@gmail.com">
 				</div>
 				<div class="form-group">
-					<label for="manual_jabatan" class="form-control-label font-weight-bold">Jabatan <span class="text-danger">*</span> :</label>
-					<input type="text" class="form-control" id="manual_jabatan" name="jabatan" placeholder="Contoh: Kepala IT / Staf" required>
+					<label for="manual_jabatan" class="form-control-label font-weight-bold">Jabatan :</label>
+					<input type="text" class="form-control" id="manual_jabatan" name="jabatan" placeholder="Contoh: Kepala IT / Staf">
 				</div>
 				<div class="form-group">
-					<label for="manual_instansi" class="form-control-label font-weight-bold">Instansi <span class="text-danger">*</span> :</label>
-					<input type="text" class="form-control" id="manual_instansi" name="instansi" placeholder="Contoh: RSUD Pasar Minggu" required>
+					<label for="manual_instansi" class="form-control-label font-weight-bold">Instansi :</label>
+					<input type="text" class="form-control" id="manual_instansi" name="instansi" placeholder="Contoh: RSUD Pasar Minggu">
 				</div>
 				<div class="form-group">
 					<label for="manual_tipe_rs" class="form-control-label font-weight-bold">Tipe RS :</label>
@@ -357,8 +357,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					</select>
 				</div>
 				<div class="form-group">
-					<label for="manual_provinsi" class="form-control-label font-weight-bold">Provinsi <span class="text-danger">*</span> :</label>
-					<select class="form-control" id="manual_provinsi" name="provinsi" required>
+					<label for="manual_provinsi" class="form-control-label font-weight-bold">Provinsi :</label>
+					<select class="form-control" id="manual_provinsi" name="provinsi">
 						<option value="">— Pilih Provinsi —</option>
 						<?php foreach ($provinsi as $value): ?>
 							<option value="<?= $value->id ?>"><?= htmlspecialchars($value->nama) ?></option>
@@ -366,8 +366,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					</select>
 				</div>
 				<div class="form-group">
-					<label for="manual_kota" class="form-control-label font-weight-bold">Kabupaten / Kota <span class="text-danger">*</span> :</label>
-					<select class="form-control" id="manual_kota" name="kota" required>
+					<label for="manual_kota" class="form-control-label font-weight-bold">Kabupaten / Kota :</label>
+					<select class="form-control" id="manual_kota" name="kota">
 						<option value="">- Pilih Kabupaten/Kota -</option>
 					</select>
 				</div>
@@ -396,8 +396,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			<input type="hidden" id="edit_id_bukutamu" name="id_bukutamu">
 			<div class="modal-body">
 				<div class="form-group">
-					<label for="edit_kegiatan_id" class="form-control-label font-weight-bold">Pilih Event / Kegiatan <span class="text-danger">*</span> :</label>
-					<select class="form-control" id="edit_kegiatan_id" name="kegiatan_id" required>
+					<label for="edit_kegiatan_id" class="form-control-label font-weight-bold">Pilih Event / Kegiatan :</label>
+					<select class="form-control" id="edit_kegiatan_id" name="kegiatan_id">
 						<option value="">- Pilih Kegiatan -</option>
 						<?php if (!empty($nama_kegiatan)): ?>
 							<?php foreach ($nama_kegiatan as $value): ?>
@@ -407,8 +407,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					</select>
 				</div>
 				<div class="form-group">
-					<label for="edit_nama" class="form-control-label font-weight-bold">Nama Lengkap <span class="text-danger">*</span> :</label>
-					<input type="text" class="form-control" id="edit_nama" name="nama" required>
+					<label for="edit_nama" class="form-control-label font-weight-bold">Nama Lengkap :</label>
+					<input type="text" class="form-control" id="edit_nama" name="nama">
 				</div>
 				<div class="form-group">
 					<label for="edit_nomorwa" class="form-control-label font-weight-bold">Nomor WhatsApp <span class="text-danger">*</span> :</label>
@@ -424,12 +424,12 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					<input type="email" class="form-control" id="edit_email" name="email">
 				</div>
 				<div class="form-group">
-					<label for="edit_jabatan" class="form-control-label font-weight-bold">Jabatan <span class="text-danger">*</span> :</label>
-					<input type="text" class="form-control" id="edit_jabatan" name="jabatan" required>
+					<label for="edit_jabatan" class="form-control-label font-weight-bold">Jabatan :</label>
+					<input type="text" class="form-control" id="edit_jabatan" name="jabatan">
 				</div>
 				<div class="form-group">
-					<label for="edit_instansi" class="form-control-label font-weight-bold">Instansi <span class="text-danger">*</span> :</label>
-					<input type="text" class="form-control" id="edit_instansi" name="instansi" required>
+					<label for="edit_instansi" class="form-control-label font-weight-bold">Instansi :</label>
+					<input type="text" class="form-control" id="edit_instansi" name="instansi">
 				</div>
 				<div class="form-group">
 					<label for="edit_tipe_rs" class="form-control-label font-weight-bold">Tipe RS :</label>
@@ -443,8 +443,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					</select>
 				</div>
 				<div class="form-group">
-					<label for="edit_provinsi" class="form-control-label font-weight-bold">Provinsi <span class="text-danger">*</span> :</label>
-					<select class="form-control" id="edit_provinsi" name="provinsi" required>
+					<label for="edit_provinsi" class="form-control-label font-weight-bold">Provinsi :</label>
+					<select class="form-control" id="edit_provinsi" name="provinsi">
 						<option value="">— Pilih Provinsi —</option>
 						<?php foreach ($provinsi as $value): ?>
 							<option value="<?= $value->id ?>"><?= htmlspecialchars($value->nama) ?></option>
@@ -452,8 +452,8 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 					</select>
 				</div>
 				<div class="form-group">
-					<label for="edit_kota" class="form-control-label font-weight-bold">Kabupaten / Kota <span class="text-danger">*</span> :</label>
-					<select class="form-control" id="edit_kota" name="kota" required>
+					<label for="edit_kota" class="form-control-label font-weight-bold">Kabupaten / Kota :</label>
+					<select class="form-control" id="edit_kota" name="kota">
 						<option value="">- Pilih Kabupaten/Kota -</option>
 					</select>
 				</div>

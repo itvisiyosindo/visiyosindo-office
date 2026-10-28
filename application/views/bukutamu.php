@@ -418,18 +418,18 @@
                     <input name="kegiatan_id" id="kegiatan_id" type="hidden" value="<?= $kegiatan_id ?>" />
 
                     <div class="form-group-modern">
-                        <label class="field-label" for="nama">Nama Lengkap <span class="text-warning">*</span></label>
+                        <label class="field-label" for="nama">Nama Lengkap</label>
                         <div class="input-shell">
                             <i class="icon-user form-icon"></i>
-                            <input id="nama" name="nama" type="text" class="form-control-glass" placeholder="Nama Lengkap" value="<?= html_escape($old_input['nama'] ?? '') ?>" maxlength="120" required />
+                            <input id="nama" name="nama" type="text" class="form-control-glass" placeholder="Nama Lengkap" value="<?= html_escape($old_input['nama'] ?? '') ?>" maxlength="120" />
                         </div>
                     </div>
 
                     <div class="form-group-modern">
-                        <label class="field-label" for="jabatan">Jabatan <span class="text-warning">*</span></label>
+                        <label class="field-label" for="jabatan">Jabatan</label>
                         <div class="input-shell">
                             <i class="icon-briefcase form-icon"></i>
-                            <input id="jabatan" name="jabatan" type="text" class="form-control-glass" placeholder="Jabatan" value="<?= html_escape($old_input['jabatan'] ?? '') ?>" maxlength="120" required />
+                            <input id="jabatan" name="jabatan" type="text" class="form-control-glass" placeholder="Jabatan" value="<?= html_escape($old_input['jabatan'] ?? '') ?>" maxlength="120" />
                         </div>
                     </div>
 
@@ -452,10 +452,10 @@
                     </div>
 
                     <div class="form-group-modern">
-                        <label class="field-label" for="instansi">Instansi / Perusahaan <span class="text-warning">*</span></label>
+                        <label class="field-label" for="instansi">Instansi / Perusahaan</label>
                         <div class="input-shell">
                             <i class="icon-organization form-icon"></i>
-                            <input id="instansi" name="instansi" type="text" class="form-control-glass" placeholder="Instansi / Perusahaan" value="<?= html_escape($old_input['instansi'] ?? '') ?>" maxlength="160" required />
+                            <input id="instansi" name="instansi" type="text" class="form-control-glass" placeholder="Instansi / Perusahaan" value="<?= html_escape($old_input['instansi'] ?? '') ?>" maxlength="160" />
                         </div>
                     </div>
 
@@ -475,10 +475,10 @@
                     </div>
 
                     <div class="form-group-modern">
-                        <label class="field-label" for="provinsi">Provinsi <span class="text-warning">*</span></label>
+                        <label class="field-label" for="provinsi">Provinsi</label>
                         <div class="input-shell">
                             <i class="icon-map form-icon"></i>
-                            <select class="form-control-glass" name="provinsi" id="provinsi" required style="color: #fff; background-color: rgba(255,255,255,0.15);">
+                            <select class="form-control-glass" name="provinsi" id="provinsi" style="color: #fff; background-color: rgba(255,255,255,0.15);">
                                 <option value="" style="color:#000;">— Pilih Provinsi —</option>
                                 <?php foreach ($provinsi as $value): ?>
                                     <option value="<?= $value->id ?>" style="color:#000;"><?= htmlspecialchars($value->nama) ?></option>
@@ -488,10 +488,10 @@
                     </div>
 
                     <div class="form-group-modern">
-                        <label class="field-label" for="kota">Kabupaten / Kota <span class="text-warning">*</span></label>
+                        <label class="field-label" for="kota">Kabupaten / Kota</label>
                         <div class="input-shell">
                             <i class="icon-location-pin form-icon"></i>
-                            <select class="form-control-glass" name="kota" id="kota" required style="color: #fff; background-color: rgba(255,255,255,0.15);">
+                            <select class="form-control-glass" name="kota" id="kota" style="color: #fff; background-color: rgba(255,255,255,0.15);">
                                 <option value="" style="color:#000;">- Pilih Kabupaten/Kota -</option>
                             </select>
                         </div>

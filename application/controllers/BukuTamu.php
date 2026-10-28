@@ -241,14 +241,14 @@ class BukuTamu extends CI_Controller
     // Tangani proses submit form
     $this->load->library('form_validation');
     // Atur aturan validasi untuk setiap field
-    $this->form_validation->set_rules('nama', 'Nama', 'required|trim');
-    $this->form_validation->set_rules('jabatan', 'Jabatan', 'required|trim');
+    $this->form_validation->set_rules('nama', 'Nama', 'trim');
+    $this->form_validation->set_rules('jabatan', 'Jabatan', 'trim');
     $this->form_validation->set_rules('nomorwa', 'Nomor WA', 'required|trim');
     $this->form_validation->set_rules('email', 'Email', 'trim|valid_email');
-    $this->form_validation->set_rules('instansi', 'Instansi', 'required|trim');
+    $this->form_validation->set_rules('instansi', 'Instansi', 'trim');
     $this->form_validation->set_rules('tipe_rs', 'Tipe Rumah Sakit', 'trim');
-    $this->form_validation->set_rules('provinsi', 'Provinsi', 'required|trim');
-    $this->form_validation->set_rules('kota', 'Kota', 'required|trim');
+    $this->form_validation->set_rules('provinsi', 'Provinsi', 'trim');
+    $this->form_validation->set_rules('kota', 'Kota', 'trim');
     $this->form_validation->set_rules('kebutuhan', 'Kebutuhan', 'trim');
 
     $oldInput = [
@@ -622,15 +622,15 @@ class BukuTamu extends CI_Controller
   {
     grantAccessFor('all');
 
-    $this->form_validation->set_rules('kegiatan_id', 'Kegiatan / Event', 'required|integer');
-    $this->form_validation->set_rules('nama', 'Nama Lengkap', 'required|trim');
+    $this->form_validation->set_rules('kegiatan_id', 'Kegiatan / Event', 'trim|integer');
+    $this->form_validation->set_rules('nama', 'Nama Lengkap', 'trim');
     $this->form_validation->set_rules('nomorwa', 'Nomor WhatsApp', 'required|trim');
     $this->form_validation->set_rules('email', 'Email', 'trim|valid_email');
-    $this->form_validation->set_rules('jabatan', 'Jabatan', 'required|trim');
-    $this->form_validation->set_rules('instansi', 'Instansi', 'required|trim');
+    $this->form_validation->set_rules('jabatan', 'Jabatan', 'trim');
+    $this->form_validation->set_rules('instansi', 'Instansi', 'trim');
     $this->form_validation->set_rules('tipe_rs', 'Tipe Rumah Sakit', 'trim');
-    $this->form_validation->set_rules('provinsi', 'Provinsi', 'required|trim');
-    $this->form_validation->set_rules('kota', 'Kota', 'required|trim');
+    $this->form_validation->set_rules('provinsi', 'Provinsi', 'trim');
+    $this->form_validation->set_rules('kota', 'Kota', 'trim');
     $this->form_validation->set_rules('kebutuhan', 'Kebutuhan', 'trim');
 
     if ($this->form_validation->run() === false) {
@@ -639,7 +639,12 @@ class BukuTamu extends CI_Controller
     }
 
     $kegiatanId = (int) $this->input->post('kegiatan_id');
-    if (!$this->md_bukutamu->isKegiatanExists($kegiatanId)) {
+    if ($kegiatanId <= 0) {
+      $lastId = $this->md_bukutamu->getLastId();
+      $kegiatanId = !empty($lastId->id) ? (int) $lastId->id : 0;
+    }
+
+    if ($kegiatanId > 0 && !$this->md_bukutamu->isKegiatanExists($kegiatanId)) {
       ajaxReturnDie('error', 'Event tidak valid atau belum dibuat.');
       return;
     }
@@ -737,15 +742,15 @@ class BukuTamu extends CI_Controller
 
     $this->load->library('form_validation');
     $this->form_validation->set_rules('id_bukutamu', 'ID', 'required');
-    $this->form_validation->set_rules('kegiatan_id', 'Kegiatan / Event', 'required|integer');
-    $this->form_validation->set_rules('nama', 'Nama Lengkap', 'required|trim');
+    $this->form_validation->set_rules('kegiatan_id', 'Kegiatan / Event', 'trim|integer');
+    $this->form_validation->set_rules('nama', 'Nama Lengkap', 'trim');
     $this->form_validation->set_rules('nomorwa', 'Nomor WhatsApp', 'required|trim');
     $this->form_validation->set_rules('email', 'Email', 'trim|valid_email');
-    $this->form_validation->set_rules('jabatan', 'Jabatan', 'required|trim');
-    $this->form_validation->set_rules('instansi', 'Instansi', 'required|trim');
+    $this->form_validation->set_rules('jabatan', 'Jabatan', 'trim');
+    $this->form_validation->set_rules('instansi', 'Instansi', 'trim');
     $this->form_validation->set_rules('tipe_rs', 'Tipe Rumah Sakit', 'trim');
-    $this->form_validation->set_rules('provinsi', 'Provinsi', 'required|trim');
-    $this->form_validation->set_rules('kota', 'Kota', 'required|trim');
+    $this->form_validation->set_rules('provinsi', 'Provinsi', 'trim');
+    $this->form_validation->set_rules('kota', 'Kota', 'trim');
     $this->form_validation->set_rules('kebutuhan', 'Kebutuhan', 'trim');
 
     if ($this->form_validation->run() === false) {
@@ -754,8 +759,18 @@ class BukuTamu extends CI_Controller
     }
 
     $id = decrypt($this->input->post('id_bukutamu'));
+    $currentRow = $this->md_bukutamu->getBukuTamuById($id);
+    if (!$currentRow) {
+      ajaxReturnDie('error', 'Data tidak ditemukan.');
+      return;
+    }
+
     $kegiatanId = (int) $this->input->post('kegiatan_id');
-    if (!$this->md_bukutamu->isKegiatanExists($kegiatanId)) {
+    if ($kegiatanId <= 0 && !empty($currentRow->kegiatan)) {
+      $kegiatanId = (int) $currentRow->kegiatan;
+    }
+
+    if ($kegiatanId > 0 && !$this->md_bukutamu->isKegiatanExists($kegiatanId)) {
       ajaxReturnDie('error', 'Event tidak valid.');
       return;
     }
@@ -770,10 +785,12 @@ class BukuTamu extends CI_Controller
     }
 
     // Check duplicate except for this ID
-    $existing = $this->md_bukutamu->findDuplicateByNoWaInEvent($kegiatanId, $normalizedNoWa);
-    if ($existing && $existing->id_bukutamu != $id) {
-      ajaxReturnDie('error', 'Nomor WhatsApp ini sudah terdaftar pada event yang sama.');
-      return;
+    if ($kegiatanId > 0) {
+      $existing = $this->md_bukutamu->findDuplicateByNoWaInEvent($kegiatanId, $normalizedNoWa);
+      if ($existing && $existing->id_bukutamu != $id) {
+        ajaxReturnDie('error', 'Nomor WhatsApp ini sudah terdaftar pada event yang sama.');
+        return;
+      }
     }
 
     $provinsi_id = $this->input->post('provinsi', true);
