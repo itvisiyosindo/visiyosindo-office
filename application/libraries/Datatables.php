@@ -326,23 +326,36 @@
 
       if($sSearch != ''){
         $searchWhereArr = [];
-        for($i = 0; $i < ($mColArray ? count($mColArray) : 0); $i++){
-          if (isset($mColArray[$i]['searchable']) && ($mColArray[$i]['searchable'] === 'false' || $mColArray[$i]['searchable'] === false)) {
-            continue;
-          }
-          if (isset($this->columns[$i]) && isset($this->select[$this->columns[$i]])) {
-            $colName = trim($this->select[$this->columns[$i]]);
-            if ($colName !== '') {
-              $searchWhereArr[] = $colName . " LIKE '%" . $sSearch . "%'";
+        
+        // 1. Cek apakah ada kolom spesifik dari client yang mengirimkan nama field (bukan numeric index)
+        $hasMatchedSpecific = false;
+        if (!empty($mColArray)) {
+          foreach ($mColArray as $colItem) {
+            if (isset($colItem['searchable']) && ($colItem['searchable'] === 'false' || $colItem['searchable'] === false)) {
+              continue;
+            }
+            $colData = isset($colItem['data']) ? trim($colItem['data']) : '';
+            if ($colData !== '' && !is_numeric($colData) && isset($this->select[$colData])) {
+              $colExpr = trim($this->select[$colData]);
+              if ($colExpr !== '') {
+                $searchWhereArr[] = $colExpr . " LIKE '%" . $sSearch . "%'";
+                $hasMatchedSpecific = true;
+              }
             }
           }
         }
 
-        if (empty($searchWhereArr) && !empty($this->select)) {
-          foreach ($this->select as $colName) {
-            $colName = trim($colName);
-            if ($colName !== '') {
-              $searchWhereArr[] = $colName . " LIKE '%" . $sSearch . "%'";
+        // 2. Jika client kolom menggunakan index numerik (0, 1, 2...) atau tidak ada field spesifik yang match:
+        // Lakukan pencarian global ke seluruh field text yang relevan dalam query (melewati kolom ID/primary key)
+        if (!$hasMatchedSpecific && !empty($this->select)) {
+          foreach ($this->select as $colKey => $colExpr) {
+            // Lewati kolom id_* atau *_id atau numeric id dari pencarian teks global
+            if (preg_match('/(^id_|_id$|^id$)/i', $colKey)) {
+              continue;
+            }
+            $colExpr = trim($colExpr);
+            if ($colExpr !== '') {
+              $searchWhereArr[] = $colExpr . " LIKE '%" . $sSearch . "%'";
             }
           }
         }

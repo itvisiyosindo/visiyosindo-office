@@ -185,13 +185,11 @@
 						columnDefs: [
 				{
 					targets: 0,
-					className: 'text-left',
-					searchable: true
+					className: 'text-left'
 				},
 				{
 					targets: '_all',
-					className: 'text-center',
-					searchable: false
+					className: 'text-center'
 				}
 			]
 		})
