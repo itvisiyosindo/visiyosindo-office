@@ -359,7 +359,10 @@ class Stock_opname extends CI_Controller
                 'idSo'             => $idSo,
                 'gudang'             => $namaGudang
             ];
-            $this->notifWaAppGudangGroup(1, $dataWa);
+            // Notifikasi hanya untuk gudang jenis stok jual (jenis == 1)
+            if (isset($dt_so[0]->jenis) && $dt_so[0]->jenis == 1) {
+                $this->notifWaAppGudangGroup(1, $dataWa);
+            }
 
             /** LOG */
             addLog('Persetujuan Stock Opname', 'Persetujuan Stock Opname dengan Kode : ' . $kodeFpp);
@@ -407,11 +410,10 @@ class Stock_opname extends CI_Controller
                 'idSo'             => $idSo,
                 'gudang'             => $namaGudang
             ];
-            $this->notifWaAppGudangGroup(1, $dataWa);
-
-
-
-
+            // Notifikasi hanya untuk gudang jenis stok jual (jenis == 1)
+            if (isset($dt_so[0]->jenis) && $dt_so[0]->jenis == 1) {
+                $this->notifWaAppGudangGroup(1, $dataWa);
+            }
 
             /** LOG */
             addLog('Penolakan Stock Opname', 'Penolakan Stock Opname dengan Kode : ' . $kodeFpp);
@@ -449,11 +451,10 @@ class Stock_opname extends CI_Controller
                 'idSo'             => $idSo,
                 'gudang'             => $namaGudang
             ];
-            $this->notifWaAppGudangGroup(1, $dataWa);
-
-
-
-
+            // Notifikasi hanya untuk gudang jenis stok jual (jenis == 1)
+            if (isset($dt_so[0]->jenis) && $dt_so[0]->jenis == 1) {
+                $this->notifWaAppGudangGroup(1, $dataWa);
+            }
 
             /** LOG */
             addLog('Penolakan Stock Opname', 'Penolakan Stock Opname dengan Kode : ' . $kodeFpp);
@@ -509,9 +510,10 @@ class Stock_opname extends CI_Controller
             'idSo'             => $idSo,
             'gudang'             => $namaGudang
         ];
-        $this->notifWaAppGudangGroup(1, $dataWa);
-
-
+        // Notifikasi hanya untuk gudang jenis stok jual (jenis == 1)
+        if (isset($dt_so[0]->jenis) && $dt_so[0]->jenis == 1) {
+            $this->notifWaAppGudangGroup(1, $dataWa);
+        }
 
         // Debugging
         addLog('Update Stock Opname', 'Submit Stock Opname ' . $catatan);

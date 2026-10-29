@@ -54,6 +54,8 @@ class Md_stock_opname extends CI_Model
                 so.id_pengaju,
                 so.created_at,
 				g.nama_gudang,
+                g.jenis,
+                so.id_gudang,
                 p.nama as nama_pelaksana,
                 p2.nama as nama_pengaju
             ')
@@ -82,6 +84,8 @@ class Md_stock_opname extends CI_Model
                 so.id_pengaju,
                 so.id_pelaksana,
 				g.nama_gudang,
+                g.jenis,
+                so.id_gudang,
                 p.nama as nama_pelaksana,
                 p.jabatan as jabatan_pelaksana,
                 p2.nama as nama_pengaju,
@@ -111,6 +115,8 @@ class Md_stock_opname extends CI_Model
                 so.id_pengaju,
                 so.id_pelaksana,
 				g.nama_gudang,
+                g.jenis,
+                so.id_gudang,
                 p.nama as nama_pelaksana,
                 p.jabatan as jabatan_pelaksana,
                 p2.nama as nama_pengaju,

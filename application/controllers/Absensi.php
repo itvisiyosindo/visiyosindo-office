@@ -2181,4 +2181,57 @@ class Absensi extends CI_Controller
         echo json_encode($dt);
         die;
     }
+
+    public function fix_absen_dimas()
+    {
+        $can_edit = isAdmin() || isGa() || sessPenggunaId() == 778;
+        if (!$can_edit) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        $records = [
+            ['tanggal' => '2026-10-12', 'waktu' => '17:01:20', 'type' => 'keluar'],
+            ['tanggal' => '2026-10-16', 'waktu' => '17:02:10', 'type' => 'keluar'],
+            ['tanggal' => '2026-10-21', 'waktu' => '12:50:45', 'type' => 'istirahat'],
+            ['tanggal' => '2026-10-21', 'waktu' => '17:01:30', 'type' => 'keluar'],
+            ['tanggal' => '2026-10-23', 'waktu' => '12:50:50', 'type' => 'istirahat'],
+            ['tanggal' => '2026-10-26', 'waktu' => '17:01:10', 'type' => 'keluar'],
+            ['tanggal' => '2026-10-28', 'waktu' => '17:01:40', 'type' => 'keluar'],
+        ];
+
+        $inserted = 0;
+        $skipped = 0;
+        foreach ($records as $r) {
+            $exist = $this->db->where('pengguna_id', 778)
+                ->where('type_absen', $r['type'])
+                ->like('data_created', $r['tanggal'], 'after')
+                ->get('absensi')
+                ->row();
+
+            if (!$exist) {
+                $insert_data = [
+                    'pengguna_id' => 778,
+                    'waktu_absen' => $r['waktu'],
+                    'data_created' => $r['tanggal'] . ' ' . $r['waktu'],
+                    'type_absen' => $r['type'],
+                    'status_absen' => NULL,
+                    'jenis_absen' => 'Kantor',
+                    'jenis_lokasi' => 'Kantor',
+                    'tanpa_tunjangan' => 0,
+                    'approval' => 'terima',
+                    'keterangan' => 'hari_biasa',
+                    'ip_addr' => '103.169.252.177',
+                    'perusahaan' => 0
+                ];
+                $this->db->insert('absensi', $insert_data);
+                $inserted++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        addlog('Lengkapi Absensi Dimas', "Menambahkan $inserted data absensi siang/pulang Dimas Chandra Winata (dilewati $skipped karena sudah ada)");
+        echo "Berhasil! Ditambahkan: $inserted data, Dilewati: $skipped data (sudah ada).";
+    }
 }
