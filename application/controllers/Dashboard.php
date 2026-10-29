@@ -57,6 +57,9 @@ class Dashboard extends CI_Controller
         $pengguna_id = sessPenggunaId();
         $page_data['is_dinas'] = $this->md_absensi->is_dinas_today($pengguna_id);
 
+        //Statistik Presensi Karyawan (Sakit, Izin, Cuti, Terlambat)
+        $page_data['stat_karyawan']   = $this->md_dashboard->getPersonalAttendanceStats($pengguna_id);
+
         //Dashboard Home New
         $page_data['izin_jam']         = $this->md_dashboard->countIzinJamKerja($pengguna_id);
         $page_data['izin_meinggalkan']     = $this->md_dashboard->countIzinMeninggalkan($pengguna_id);

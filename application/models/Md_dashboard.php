@@ -847,4 +847,191 @@ class Md_dashboard extends CI_Model
 
         return $summary;
     }
+
+    /**
+     * Ambil statistik presensi pribadi karyawan (Sakit, Izin, Cuti, Terlambat)
+     * untuk Bulan Berjalan dan Tahun Berjalan beserta detail tanggalnya.
+     * 
+     * @param int $pengguna_id
+     * @return array
+     */
+    public function getPersonalAttendanceStats($pengguna_id)
+    {
+        $bulan_ini = date('Y-m');
+        $tahun_ini = date('Y');
+
+        $tgl_awal_bulan = date('Y-m-01');
+        $tgl_akhir_bulan = date('Y-m-t');
+
+        $tgl_awal_tahun = date('Y-01-01');
+        $tgl_akhir_tahun = date('Y-12-31');
+
+        // --- 1. TERLAMBAT ---
+        // Bulan Ini
+        $this->db->select('id_absensi, waktu_absen, DATE(data_created) as tanggal, data_created');
+        $this->db->from('absensi');
+        $this->db->where('pengguna_id', $pengguna_id);
+        $this->db->where('type_absen', 'masuk');
+        $this->db->where('status_absen', 'terlambat');
+        $this->db->where('data_created >=', $tgl_awal_bulan . ' 00:00:00');
+        $this->db->where('data_created <=', $tgl_akhir_bulan . ' 23:59:59');
+        $this->db->order_by('data_created', 'DESC');
+        $terlambat_list_bulan = $this->db->get()->result();
+        $terlambat_count_bulan = count($terlambat_list_bulan);
+
+        // Tahun Ini
+        $this->db->select('COUNT(*) as total');
+        $this->db->from('absensi');
+        $this->db->where('pengguna_id', $pengguna_id);
+        $this->db->where('type_absen', 'masuk');
+        $this->db->where('status_absen', 'terlambat');
+        $this->db->where('data_created >=', $tgl_awal_tahun . ' 00:00:00');
+        $this->db->where('data_created <=', $tgl_akhir_tahun . ' 23:59:59');
+        $row_terlambat_tahun = $this->db->get()->row();
+        $terlambat_count_tahun = $row_terlambat_tahun ? (int)$row_terlambat_tahun->total : 0;
+
+        // --- 2. SAKIT, IZIN, CUTI (BULAN INI) ---
+        $stats_bulan = $this->_calcIzinCutiSakitRange($pengguna_id, $tgl_awal_bulan, $tgl_akhir_bulan);
+
+        // --- 3. SAKIT, IZIN, CUTI (TAHUN INI) ---
+        $stats_tahun = $this->_calcIzinCutiSakitRange($pengguna_id, $tgl_awal_tahun, $tgl_akhir_tahun);
+
+        return array(
+            'bulan' => array(
+                'label'      => date('F Y'),
+                'label_id'   => $this->_namaBulanIndo(date('m')) . ' ' . date('Y'),
+                'terlambat'  => array('total' => $terlambat_count_bulan, 'list' => $terlambat_list_bulan),
+                'sakit'      => $stats_bulan['sakit'],
+                'izin'       => $stats_bulan['izin'],
+                'cuti'       => $stats_bulan['cuti'],
+            ),
+            'tahun' => array(
+                'label'      => $tahun_ini,
+                'terlambat'  => $terlambat_count_tahun,
+                'sakit'      => $stats_tahun['sakit']['total'],
+                'izin'       => $stats_tahun['izin']['total'],
+                'cuti'       => $stats_tahun['cuti']['total'],
+            )
+        );
+    }
+
+    private function _calcIzinCutiSakitRange($pengguna_id, $tgl_awal, $tgl_akhir)
+    {
+        $dates_map = array(
+            'sakit' => array(),
+            'izin'  => array(),
+            'cuti'  => array()
+        );
+
+        // 1. Dari tabel absensi
+        $sql_absen = "SELECT DATE(data_created) as tgl, waktu_absen, keterangan,
+            CASE 
+                WHEN status_absen = 'sakit' OR type_absen = 'sakit' THEN 'sakit'
+                WHEN status_absen = 'cuti' OR type_absen = 'cuti' THEN 'cuti'
+                WHEN status_absen = 'izin' OR (type_absen = 'izin' AND (status_absen IS NULL OR status_absen = '' OR status_absen = 'izin')) THEN 'izin'
+                ELSE NULL 
+            END as kategori
+            FROM absensi
+            WHERE pengguna_id = ?
+              AND data_created >= ? AND data_created <= ?
+              AND (type_absen IN ('izin', 'cuti', 'sakit') OR status_absen IN ('izin', 'cuti', 'sakit'))
+            ORDER BY data_created DESC";
+        $q_absen = $this->db->query($sql_absen, array($pengguna_id, $tgl_awal . ' 00:00:00', $tgl_akhir . ' 23:59:59'));
+        foreach ($q_absen->result() as $r) {
+            if (!empty($r->kategori) && !empty($r->tgl)) {
+                $dates_map[$r->kategori][$r->tgl] = array(
+                    'tgl' => $r->tgl,
+                    'tgl_formatted' => date('d M Y', strtotime($r->tgl)),
+                    'sumber' => 'Absensi',
+                    'keterangan' => !empty($r->keterangan) ? $r->keterangan : '-'
+                );
+            }
+        }
+
+        // 2. Dari tabel surat_cuti_tahunan (yang disetujui / status aktif 1, 2, 3)
+        $sql_cuti = "SELECT kode_cuti, alasan, tgl_awal, tgl_akhir 
+                     FROM surat_cuti_tahunan 
+                     WHERE id_pengaju = ? 
+                       AND status IN (1, 2, 3) 
+                       AND tgl_awal <= ? AND tgl_akhir >= ?";
+        $q_cuti = $this->db->query($sql_cuti, array($pengguna_id, $tgl_akhir, $tgl_awal));
+        foreach ($q_cuti->result() as $r) {
+            $cur = max($tgl_awal, $r->tgl_awal);
+            $end = min($tgl_akhir, $r->tgl_akhir);
+            while (strtotime($cur) <= strtotime($end)) {
+                if (!isset($dates_map['cuti'][$cur])) {
+                    $dates_map['cuti'][$cur] = array(
+                        'tgl' => $cur,
+                        'tgl_formatted' => date('d M Y', strtotime($cur)),
+                        'sumber' => 'Surat Cuti (' . ($r->kode_cuti ?: 'Cuti') . ')',
+                        'keterangan' => !empty($r->alasan) ? $r->alasan : 'Cuti Tahunan'
+                    );
+                }
+                $cur = date('Y-m-d', strtotime('+1 day', strtotime($cur)));
+            }
+        }
+
+        // 3. Dari tabel surat_izin_jam_kerja (yang tidak ditolak status != 4, 5)
+        $sql_sijk = "SELECT kode_ijk, alasan, jenis_izin, tanggal, tgl_awal, tgl_akhir 
+                     FROM surat_izin_jam_kerja 
+                     WHERE id_pengaju = ? 
+                       AND (status NOT IN (4, 5) OR status IS NULL)
+                       AND ((tanggal >= ? AND tanggal <= ?) 
+                            OR (tgl_awal <= ? AND tgl_akhir >= ?))";
+        $q_sijk = $this->db->query($sql_sijk, array($pengguna_id, $tgl_awal, $tgl_akhir, $tgl_akhir, $tgl_awal));
+        foreach ($q_sijk->result() as $r) {
+            $kat = (strtolower($r->jenis_izin ?? '') == 'sakit') ? 'sakit' : 'izin';
+            $ket = !empty($r->alasan) ? $r->alasan : (!empty($r->jenis_izin) ? $r->jenis_izin : 'Izin Kerja');
+            $sumber = 'Surat Izin (' . ($r->kode_ijk ?: 'Izin') . ')';
+
+            if (!empty($r->tanggal) && $r->tanggal >= $tgl_awal && $r->tanggal <= $tgl_akhir) {
+                if (!isset($dates_map[$kat][$r->tanggal])) {
+                    $dates_map[$kat][$r->tanggal] = array(
+                        'tgl' => $r->tanggal,
+                        'tgl_formatted' => date('d M Y', strtotime($r->tanggal)),
+                        'sumber' => $sumber,
+                        'keterangan' => $ket
+                    );
+                }
+            }
+            if (!empty($r->tgl_awal) && !empty($r->tgl_akhir)) {
+                $cur = max($tgl_awal, $r->tgl_awal);
+                $end = min($tgl_akhir, $r->tgl_akhir);
+                while (strtotime($cur) <= strtotime($end)) {
+                    if (!isset($dates_map[$kat][$cur])) {
+                        $dates_map[$kat][$cur] = array(
+                            'tgl' => $cur,
+                            'tgl_formatted' => date('d M Y', strtotime($cur)),
+                            'sumber' => $sumber,
+                            'keterangan' => $ket
+                        );
+                    }
+                    $cur = date('Y-m-d', strtotime('+1 day', strtotime($cur)));
+                }
+            }
+        }
+
+        $res = array();
+        foreach (array('sakit', 'izin', 'cuti') as $k) {
+            krsort($dates_map[$k]);
+            $list = array_values($dates_map[$k]);
+            $res[$k] = array(
+                'total' => count($list),
+                'list'  => $list
+            );
+        }
+
+        return $res;
+    }
+
+    private function _namaBulanIndo($m)
+    {
+        $bulan = array(
+            '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
+            '04' => 'April',   '05' => 'Mei',      '06' => 'Juni',
+            '07' => 'Juli',    '08' => 'Agustus',  '09' => 'September',
+            '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+        );
+        return isset($bulan[$m]) ? $bulan[$m] : date('F');
+    }
 }

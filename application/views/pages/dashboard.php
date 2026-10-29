@@ -904,6 +904,8 @@
 			.stat-card-rose:hover::before { background: linear-gradient(90deg, #f43f5e, #fb7185); }
 			.stat-card-purple:hover::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
 			.stat-card-teal:hover::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+			.stat-card-amber:hover::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+			.stat-card-orange:hover::before { background: linear-gradient(90deg, #f97316, #fb923c); }
 
 			.stat-icon-wrapper {
 				width: 54px;
@@ -939,6 +941,16 @@
 			.stat-icon-teal {
 				background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
 				color: #0284c7;
+			}
+
+			.stat-icon-amber {
+				background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+				color: #d97706;
+			}
+
+			.stat-icon-orange {
+				background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+				color: #ea580c;
 			}
 
 			.stat-card-label {
@@ -993,9 +1005,136 @@
 				background: #7c3aed;
 				color: #ffffff;
 			}
+
+			.stat-detail-pill.amber {
+				background: #fffbeb;
+				color: #d97706;
+			}
+			.modern-stat-card:hover .stat-detail-pill.amber {
+				background: #d97706;
+				color: #ffffff;
+			}
+
+			.stat-detail-pill.orange {
+				background: #fff7ed;
+				color: #ea580c;
+			}
+			.modern-stat-card:hover .stat-detail-pill.orange {
+				background: #ea580c;
+				color: #ffffff;
+			}
 		</style>
 
-		<div class="container-fluid mt-3 mb-2 px-0">
+		<!-- 1. Rekap Presensi Saya (Sakit, Izin, Cuti, Terlambat) -->
+		<div class="container-fluid mt-3 mb-1 px-0">
+			<div class="d-flex align-items-center justify-content-between mb-2">
+				<h5 class="font-weight-bold text-dark m-0" style="font-size: 15px;">
+					<i class="fas fa-user-clock text-primary mr-2"></i>Rekap Presensi Saya
+					<span class="badge badge-light text-primary border ml-2" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;">
+						Bulan <?= isset($stat_karyawan['bulan']['label_id']) ? $stat_karyawan['bulan']['label_id'] : date('F Y') ?>
+					</span>
+				</h5>
+				<small class="text-muted d-none d-sm-inline"><i class="fas fa-info-circle mr-1"></i>Klik kartu untuk melihat rincian tanggal</small>
+			</div>
+
+			<div class="row">
+				<!-- Sakit -->
+				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+					<a href="javascript:;" id="btn-show-my-sakit" class="text-decoration-none">
+						<div class="modern-stat-card stat-card-rose">
+							<div class="d-flex justify-content-between align-items-center">
+								<div>
+									<div class="stat-card-label" style="color: #e11d48;"><i class="fas fa-heartbeat mr-1"></i> Sakit</div>
+									<div class="d-flex align-items-baseline gap-2 mt-1">
+										<span class="stat-card-value"><?= isset($stat_karyawan['bulan']['sakit']['total']) ? $stat_karyawan['bulan']['sakit']['total'] : 0 ?></span>
+										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
+										<span class="stat-detail-pill rose ml-2">Detail <i class="bx bx-chevron-right"></i></span>
+									</div>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Total Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['sakit']) ? $stat_karyawan['tahun']['sakit'] : 0 ?></b> Hari</small>
+								</div>
+								<div class="stat-icon-wrapper stat-icon-rose">
+									<i class="fas fa-procedures"></i>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+
+				<!-- Izin -->
+				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+					<a href="javascript:;" id="btn-show-my-izin" class="text-decoration-none">
+						<div class="modern-stat-card stat-card-amber">
+							<div class="d-flex justify-content-between align-items-center">
+								<div>
+									<div class="stat-card-label" style="color: #d97706;"><i class="fas fa-calendar-times mr-1"></i> Izin</div>
+									<div class="d-flex align-items-baseline gap-2 mt-1">
+										<span class="stat-card-value"><?= isset($stat_karyawan['bulan']['izin']['total']) ? $stat_karyawan['bulan']['izin']['total'] : 0 ?></span>
+										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
+										<span class="stat-detail-pill amber ml-2">Detail <i class="bx bx-chevron-right"></i></span>
+									</div>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Total Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['izin']) ? $stat_karyawan['tahun']['izin'] : 0 ?></b> Hari</small>
+								</div>
+								<div class="stat-icon-wrapper stat-icon-amber">
+									<i class="fas fa-envelope-open-text"></i>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+
+				<!-- Cuti -->
+				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+					<a href="javascript:;" id="btn-show-my-cuti" class="text-decoration-none">
+						<div class="modern-stat-card stat-card-purple">
+							<div class="d-flex justify-content-between align-items-center">
+								<div>
+									<div class="stat-card-label" style="color: #7c3aed;"><i class="fas fa-umbrella-beach mr-1"></i> Cuti</div>
+									<div class="d-flex align-items-baseline gap-2 mt-1">
+										<span class="stat-card-value"><?= isset($stat_karyawan['bulan']['cuti']['total']) ? $stat_karyawan['bulan']['cuti']['total'] : 0 ?></span>
+										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
+										<span class="stat-detail-pill purple ml-2">Detail <i class="bx bx-chevron-right"></i></span>
+									</div>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Sisa Cuti Tahunan: <b><?= $cuti_tahunan ?></b> Hari</small>
+								</div>
+								<div class="stat-icon-wrapper stat-icon-purple">
+									<i class="fas fa-calendar-check"></i>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+
+				<!-- Terlambat -->
+				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+					<a href="javascript:;" id="btn-show-my-terlambat" class="text-decoration-none">
+						<div class="modern-stat-card stat-card-orange">
+							<div class="d-flex justify-content-between align-items-center">
+								<div>
+									<div class="stat-card-label" style="color: #ea580c;"><i class="fas fa-user-clock mr-1"></i> Terlambat</div>
+									<div class="d-flex align-items-baseline gap-2 mt-1">
+										<span class="stat-card-value"><?= isset($stat_karyawan['bulan']['terlambat']['total']) ? $stat_karyawan['bulan']['terlambat']['total'] : 0 ?></span>
+										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Kali</span>
+										<span class="stat-detail-pill orange ml-2">Detail <i class="bx bx-chevron-right"></i></span>
+									</div>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Total Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['terlambat']) ? $stat_karyawan['tahun']['terlambat'] : 0 ?></b> Kali</small>
+								</div>
+								<div class="stat-icon-wrapper stat-icon-orange">
+									<i class="fas fa-history"></i>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<!-- 2. Layanan Surat & Cuti -->
+		<div class="container-fluid mt-2 mb-2 px-0">
+			<div class="d-flex align-items-center justify-content-between mb-2">
+				<h5 class="font-weight-bold text-dark m-0" style="font-size: 15px;">
+					<i class="fas fa-folder-open text-primary mr-2"></i>Layanan Surat & Pengumuman
+				</h5>
+			</div>
 			<div class="row">
 				<!-- Sisa Cuti Tahunan -->
 				<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
@@ -1059,19 +1198,22 @@
 
 				<!-- Pengumuman -->
 				<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-					<div class="modern-stat-card stat-card-teal">
-						<div class="d-flex justify-content-between align-items-center">
-							<div>
-								<div class="stat-card-label" style="color: #0284c7;">Pengumuman</div>
-								<div class="d-flex align-items-center gap-2 mt-1">
-									<span class="stat-card-value"><?= $pengumuman[0]->total ?></span>
+					<a href="<?= base_url('announcement') ?>" class="text-decoration-none">
+						<div class="modern-stat-card stat-card-teal">
+							<div class="d-flex justify-content-between align-items-center">
+								<div>
+									<div class="stat-card-label" style="color: #0284c7;">Pengumuman</div>
+									<div class="d-flex align-items-center gap-2 mt-1">
+										<span class="stat-card-value"><?= $pengumuman[0]->total ?></span>
+										<span class="stat-detail-pill blue ml-2">Lihat <i class="bx bx-chevron-right"></i></span>
+									</div>
+								</div>
+								<div class="stat-icon-wrapper stat-icon-teal">
+									<i class="bx bx-bell"></i>
 								</div>
 							</div>
-							<div class="stat-icon-wrapper stat-icon-teal">
-								<i class="bx bx-bell"></i>
-							</div>
 						</div>
-					</div>
+					</a>
 				</div>
 			</div>
 		</div>
@@ -1785,6 +1927,210 @@
 				]
 			});
 		}
+
+<!-- Modal Detail Sakit Pribadi -->
+<div id="modal-my-sakit" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-danger text-white">
+				<h5 class="modal-title font-weight-bold"><i class="fas fa-procedures mr-2"></i> Rincian Hari Sakit - <?= isset($stat_karyawan['bulan']['label_id']) ? $stat_karyawan['bulan']['label_id'] : date('F Y') ?></h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<div class="modal-body">
+				<?php if (!empty($stat_karyawan['bulan']['sakit']['list'])) { ?>
+					<div class="table-responsive">
+						<table class="table table-bordered table-striped table-sm mb-0">
+							<thead class="bg-light">
+								<tr>
+									<th style="width: 5%;">#</th>
+									<th style="width: 25%;">Tanggal</th>
+									<th style="width: 30%;">Sumber</th>
+									<th>Keterangan</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php $no = 1; foreach ($stat_karyawan['bulan']['sakit']['list'] as $item) { ?>
+									<tr>
+										<td><?= $no++ ?></td>
+										<td><span class="font-weight-bold text-dark"><?= $item['tgl_formatted'] ?></span></td>
+										<td><span class="badge badge-light border text-danger"><?= $item['sumber'] ?></span></td>
+										<td><?= htmlspecialchars($item['keterangan']) ?></td>
+									</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				<?php } else { ?>
+					<div class="text-center py-4 text-muted">
+						<i class="fas fa-shield-alt fa-3x text-success mb-2"></i>
+						<h6 class="font-weight-bold text-dark">Tidak Ada Catatan Sakit</h6>
+						<p class="mb-0 text-muted" style="font-size: 13px;">Alhamdulillah, Anda tidak memiliki riwayat izin sakit pada bulan ini.</p>
+					</div>
+				<?php } ?>
+			</div>
+			<div class="modal-footer bg-light">
+				<button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Detail Izin Pribadi -->
+<div id="modal-my-izin" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header text-white" style="background: #d97706;">
+				<h5 class="modal-title font-weight-bold"><i class="fas fa-envelope-open-text mr-2"></i> Rincian Hari Izin - <?= isset($stat_karyawan['bulan']['label_id']) ? $stat_karyawan['bulan']['label_id'] : date('F Y') ?></h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<div class="modal-body">
+				<?php if (!empty($stat_karyawan['bulan']['izin']['list'])) { ?>
+					<div class="table-responsive">
+						<table class="table table-bordered table-striped table-sm mb-0">
+							<thead class="bg-light">
+								<tr>
+									<th style="width: 5%;">#</th>
+									<th style="width: 25%;">Tanggal</th>
+									<th style="width: 30%;">Sumber</th>
+									<th>Alasan / Keterangan</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php $no = 1; foreach ($stat_karyawan['bulan']['izin']['list'] as $item) { ?>
+									<tr>
+										<td><?= $no++ ?></td>
+										<td><span class="font-weight-bold text-dark"><?= $item['tgl_formatted'] ?></span></td>
+										<td><span class="badge badge-light border text-warning"><?= $item['sumber'] ?></span></td>
+										<td><?= htmlspecialchars($item['keterangan']) ?></td>
+									</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				<?php } else { ?>
+					<div class="text-center py-4 text-muted">
+						<i class="fas fa-calendar-check fa-3x text-success mb-2"></i>
+						<h6 class="font-weight-bold text-dark">Tidak Ada Catatan Izin</h6>
+						<p class="mb-0 text-muted" style="font-size: 13px;">Anda tidak memiliki riwayat izin pada bulan ini.</p>
+					</div>
+				<?php } ?>
+			</div>
+			<div class="modal-footer bg-light">
+				<button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Detail Cuti Pribadi -->
+<div id="modal-my-cuti" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header text-white" style="background: #7c3aed;">
+				<h5 class="modal-title font-weight-bold"><i class="fas fa-umbrella-beach mr-2"></i> Rincian Hari Cuti - <?= isset($stat_karyawan['bulan']['label_id']) ? $stat_karyawan['bulan']['label_id'] : date('F Y') ?></h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<div class="modal-body">
+				<?php if (!empty($stat_karyawan['bulan']['cuti']['list'])) { ?>
+					<div class="table-responsive">
+						<table class="table table-bordered table-striped table-sm mb-0">
+							<thead class="bg-light">
+								<tr>
+									<th style="width: 5%;">#</th>
+									<th style="width: 25%;">Tanggal</th>
+									<th style="width: 30%;">Sumber</th>
+									<th>Keterangan</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php $no = 1; foreach ($stat_karyawan['bulan']['cuti']['list'] as $item) { ?>
+									<tr>
+										<td><?= $no++ ?></td>
+										<td><span class="font-weight-bold text-dark"><?= $item['tgl_formatted'] ?></span></td>
+										<td><span class="badge badge-light border text-purple"><?= $item['sumber'] ?></span></td>
+										<td><?= htmlspecialchars($item['keterangan']) ?></td>
+									</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				<?php } else { ?>
+					<div class="text-center py-4 text-muted">
+						<i class="fas fa-calendar-check fa-3x text-info mb-2"></i>
+						<h6 class="font-weight-bold text-dark">Tidak Ada Pengambilan Cuti</h6>
+						<p class="mb-0 text-muted" style="font-size: 13px;">Anda belum mengambil cuti pada bulan ini. Sisa cuti tahunan Anda: <b><?= $cuti_tahunan ?> Hari</b>.</p>
+					</div>
+				<?php } ?>
+			</div>
+			<div class="modal-footer bg-light">
+				<button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Detail Terlambat Pribadi -->
+<div id="modal-my-terlambat" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header text-white" style="background: #ea580c;">
+				<h5 class="modal-title font-weight-bold"><i class="fas fa-user-clock mr-2"></i> Rincian Terlambat - <?= isset($stat_karyawan['bulan']['label_id']) ? $stat_karyawan['bulan']['label_id'] : date('F Y') ?></h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<div class="modal-body">
+				<?php if (!empty($stat_karyawan['bulan']['terlambat']['list'])) { ?>
+					<div class="table-responsive">
+						<table class="table table-bordered table-striped table-sm mb-0">
+							<thead class="bg-light">
+								<tr>
+									<th style="width: 5%;">#</th>
+									<th style="width: 30%;">Tanggal</th>
+									<th style="width: 25%;">Waktu Masuk</th>
+									<th>Keterangan</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php $no = 1; foreach ($stat_karyawan['bulan']['terlambat']['list'] as $item) { ?>
+									<tr>
+										<td><?= $no++ ?></td>
+										<td><span class="font-weight-bold text-dark"><?= date('d M Y', strtotime($item->tanggal)) ?></span></td>
+										<td><span class="badge badge-danger" style="font-size: 12px;"><i class="far fa-clock mr-1"></i> <?= $item->waktu_absen ?></span></td>
+										<td><span class="text-danger font-weight-bold">Terlambat Masuk</span></td>
+									</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				<?php } else { ?>
+					<div class="text-center py-4 text-muted">
+						<i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+						<h6 class="font-weight-bold text-dark">Hebat! Tepat Waktu</h6>
+						<p class="mb-0 text-muted" style="font-size: 13px;">Anda selalu tepat waktu dan tidak pernah terlambat pada bulan ini.</p>
+					</div>
+				<?php } ?>
+			</div>
+			<div class="modal-footer bg-light">
+				<button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+		$('#btn-show-my-sakit').click(function() {
+			$('#modal-my-sakit').modal('show');
+		});
+
+		$('#btn-show-my-izin').click(function() {
+			$('#modal-my-izin').modal('show');
+		});
+
+		$('#btn-show-my-cuti').click(function() {
+			$('#modal-my-cuti').modal('show');
+		});
+
+		$('#btn-show-my-terlambat').click(function() {
+			$('#modal-my-terlambat').modal('show');
+		});
 
 		$('#btn-show-open').click(function() {
 			$('.btn-isactive').remove()
