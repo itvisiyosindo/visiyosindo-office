@@ -1068,89 +1068,81 @@ class Md_dashboard extends CI_Model
      */
     public function getActiveSP($pengguna_id)
     {
-        if (!$this->db->table_exists('surat_peringatan')) {
-            return null;
-        }
+        // 1. Cek apakah ada data SP resmi di database
+        if ($this->db->table_exists('surat_peringatan')) {
+            $sql = "SELECT sp.* 
+                    FROM surat_peringatan sp
+                    LEFT JOIN pengguna p ON (p.pengguna_id = ? AND (sp.nama = ? OR sp.nama = p.nama))
+                    WHERE (sp.nama = ? OR (p.pengguna_id IS NOT NULL AND sp.nama = p.nama))
+                      AND (sp.ttd_3 IS NULL OR sp.ttd_3 != 2)
+                    ORDER BY sp.tgl_pengajuan DESC, sp.id DESC
+                    LIMIT 1";
+            $q = $this->db->query($sql, array($pengguna_id, (string)$pengguna_id, (string)$pengguna_id));
+            $sp = $q->row();
 
-        // Ambil data SP terbaru untuk karyawan ini
-        $sql = "SELECT sp.* 
-                FROM surat_peringatan sp
-                LEFT JOIN pengguna p ON (p.pengguna_id = ? AND (sp.nama = ? OR sp.nama = p.nama))
-                WHERE (sp.nama = ? OR (p.pengguna_id IS NOT NULL AND sp.nama = p.nama))
-                  AND (sp.ttd_3 IS NULL OR sp.ttd_3 != 2)
-                ORDER BY sp.tgl_pengajuan DESC, sp.id DESC
-                LIMIT 1";
-        $q = $this->db->query($sql, array($pengguna_id, (string)$pengguna_id, (string)$pengguna_id));
-        $sp = $q->row();
+            if ($sp) {
+                $tgl_mulai_str = !empty($sp->tgl_pengajuan) ? $sp->tgl_pengajuan : (!empty($sp->tgl_evaluasi) ? $sp->tgl_evaluasi : null);
+                if ($tgl_mulai_str && $tgl_mulai_str != '0000-00-00') {
+                    $masa_bulan = 0;
+                    if (!empty($sp->masa)) {
+                        if (preg_match('/\d+/', (string)$sp->masa, $matches)) {
+                            $masa_bulan = intval($matches[0]);
+                        }
+                    }
+                    if ($masa_bulan <= 0) {
+                        $masa_bulan = 6;
+                    }
 
-        if (!$sp) {
-            return null;
-        }
+                    try {
+                        $tgl_mulai = new DateTime($tgl_mulai_str);
+                        $tgl_akhir = clone $tgl_mulai;
+                        $tgl_akhir->modify("+" . $masa_bulan . " months");
 
-        // Tentukan tgl mulai
-        $tgl_mulai_str = !empty($sp->tgl_pengajuan) ? $sp->tgl_pengajuan : (!empty($sp->tgl_evaluasi) ? $sp->tgl_evaluasi : null);
-        if (!$tgl_mulai_str || $tgl_mulai_str == '0000-00-00') {
-            return null;
-        }
+                        $today = new DateTime(date('Y-m-d'));
 
-        // Ambil masa dalam bulan
-        $masa_bulan = 0;
-        if (!empty($sp->masa)) {
-            if (preg_match('/\d+/', (string)$sp->masa, $matches)) {
-                $masa_bulan = intval($matches[0]);
-            }
-        }
-        if ($masa_bulan <= 0) {
-            $masa_bulan = 6; // Standar durasi SP di Indonesia adalah 6 bulan
-        }
+                        if ($today >= $tgl_mulai && $today <= $tgl_akhir) {
+                            $diff = $today->diff($tgl_akhir);
+                            $sisa_hari = (int)$diff->format('%a');
 
-        try {
-            $tgl_mulai = new DateTime($tgl_mulai_str);
-            $tgl_akhir = clone $tgl_mulai;
-            $tgl_akhir->modify("+" . $masa_bulan . " months");
+                            $jenis_sp = !empty($sp->jenis_sp) ? trim($sp->jenis_sp) : '';
+                            if (empty($jenis_sp)) {
+                                $perihal = strtolower(trim($sp->perihal));
+                                if ($perihal == 'pertama') $jenis_sp = 'SP 1';
+                                elseif ($perihal == 'kedua') $jenis_sp = 'SP 2';
+                                elseif (in_array($perihal, ['ketiga', 'ketiga lanjutan'])) $jenis_sp = 'SP 3';
+                                else $jenis_sp = 'Surat Peringatan';
+                            }
 
-            $today = new DateTime(date('Y-m-d'));
+                            $tgl_mulai_formatted = date('d', strtotime($tgl_mulai->format('Y-m-d'))) . ' ' . $this->_namaBulanIndo(date('m', strtotime($tgl_mulai->format('Y-m-d')))) . ' ' . date('Y', strtotime($tgl_mulai->format('Y-m-d')));
+                            $tgl_akhir_formatted = date('d', strtotime($tgl_akhir->format('Y-m-d'))) . ' ' . $this->_namaBulanIndo(date('m', strtotime($tgl_akhir->format('Y-m-d')))) . ' ' . date('Y', strtotime($tgl_akhir->format('Y-m-d')));
 
-            // Cek apakah hari ini berada dalam masa SP (inklusif)
-            if ($today >= $tgl_mulai && $today <= $tgl_akhir) {
-                $diff = $today->diff($tgl_akhir);
-                $sisa_hari = (int)$diff->format('%a');
-
-                // Label jenis SP
-                $jenis_sp = !empty($sp->jenis_sp) ? trim($sp->jenis_sp) : '';
-                if (empty($jenis_sp)) {
-                    $perihal = strtolower(trim($sp->perihal));
-                    if ($perihal == 'pertama') $jenis_sp = 'SP 1';
-                    elseif ($perihal == 'kedua') $jenis_sp = 'SP 2';
-                    elseif (in_array($perihal, ['ketiga', 'ketiga lanjutan'])) $jenis_sp = 'SP 3';
-                    else $jenis_sp = 'Surat Peringatan';
+                            return (object) array(
+                                'id'                  => $sp->id,
+                                'kode'                => $sp->kode,
+                                'jenis_sp'            => $jenis_sp,
+                                'perihal'             => $sp->perihal,
+                                'kesalahan'           => $sp->kesalahan,
+                                'sanksi'              => $sp->sanksi,
+                                'masa_bulan'          => $masa_bulan,
+                                'tgl_mulai'           => $tgl_mulai->format('Y-m-d'),
+                                'tgl_mulai_formatted' => $tgl_mulai_formatted,
+                                'tgl_akhir'           => $tgl_akhir->format('Y-m-d'),
+                                'tgl_akhir_formatted' => $tgl_akhir_formatted,
+                                'sisa_hari'           => $sisa_hari,
+                                'ttd_3'               => $sp->ttd_3
+                            );
+                        }
+                    } catch (Exception $e) {
+                    }
                 }
-
-                $tgl_mulai_formatted = date('d', strtotime($tgl_mulai->format('Y-m-d'))) . ' ' . $this->_namaBulanIndo(date('m', strtotime($tgl_mulai->format('Y-m-d')))) . ' ' . date('Y', strtotime($tgl_mulai->format('Y-m-d')));
-                $tgl_akhir_formatted = date('d', strtotime($tgl_akhir->format('Y-m-d'))) . ' ' . $this->_namaBulanIndo(date('m', strtotime($tgl_akhir->format('Y-m-d')))) . ' ' . date('Y', strtotime($tgl_akhir->format('Y-m-d')));
-
-                return (object) array(
-                    'id'                  => $sp->id,
-                    'kode'                => $sp->kode,
-                    'jenis_sp'            => $jenis_sp,
-                    'perihal'             => $sp->perihal,
-                    'kesalahan'           => $sp->kesalahan,
-                    'sanksi'              => $sp->sanksi,
-                    'masa_bulan'          => $masa_bulan,
-                    'tgl_mulai'           => $tgl_mulai->format('Y-m-d'),
-                    'tgl_mulai_formatted' => $tgl_mulai_formatted,
-                    'tgl_akhir'           => $tgl_akhir->format('Y-m-d'),
-                    'tgl_akhir_formatted' => $tgl_akhir_formatted,
-                    'sisa_hari'           => $sisa_hari,
-                    'ttd_3'               => $sp->ttd_3
-                );
             }
-        } catch (Exception $e) {
-            return null;
         }
 
-        // Khusus simulasi/uji coba tampilan untuk Dimas Chandra Winiata (pengguna_id: 778)
-        if ($pengguna_id == 778) {
+        // 2. Simulasi/Uji Coba Tampilan untuk Dimas Chandra Winata (pengguna_id: 770 atau 778 atau nama mengandung Dimas)
+        $nama_session = function_exists('sessNama') ? sessNama() : '';
+        $is_dimas = ($pengguna_id == 770 || $pengguna_id == 778 || stripos($nama_session, 'dimas') !== false);
+
+        if ($is_dimas) {
             $tgl_mulai = new DateTime(date('Y-m-d', strtotime('-1 month')));
             $tgl_akhir = clone $tgl_mulai;
             $tgl_akhir->modify('+6 months');
