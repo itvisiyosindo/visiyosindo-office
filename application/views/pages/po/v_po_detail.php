@@ -324,8 +324,17 @@
                         <i class="fas fa-truck-loading mr-1"></i> Update Status Barang Inden (<?= $count_indent ?> Item)
                     </button>
                 <?php endif; ?>
-            </div>
             <div class="card-body p-0">
+                <?php
+                $fmtRp = function($val) {
+                    if ($val === null || $val === '') return 'Rp 0';
+                    $num = (float)$val;
+                    if (abs($num - round($num)) > 0.0001) {
+                        return 'Rp ' . rtrim(rtrim(number_format($num, 2, ',', '.'), '0'), ',');
+                    }
+                    return 'Rp ' . number_format($num, 0, ',', '.');
+                };
+                ?>
                 <div class="table-responsive">
                     <table class="table table-items mb-0">
                         <thead>
@@ -350,10 +359,10 @@
                                                 <small class="d-block text-muted">Spesifikasi: <?= htmlspecialchars($it->catatan) ?></small>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-right">Rp <?= number_format($it->harga_satuan, 0, ',', '.') ?></td>
+                                        <td class="text-right"><?= $fmtRp($it->harga_satuan) ?></td>
                                         <td class="text-center font-weight-bold"><?= (float)$it->qty ?></td>
                                         <td><?= htmlspecialchars($it->satuan) ?></td>
-                                        <td class="text-right font-weight-bold text-primary">Rp <?= number_format($it->total_harga, 0, ',', '.') ?></td>
+                                        <td class="text-right font-weight-bold text-primary"><?= $fmtRp($it->total_harga) ?></td>
                                         <td class="text-center">
                                             <?php if (($it->status_item ?? 'ready') === 'indent'): ?>
                                                 <span class="badge badge-warning text-dark px-2 py-1">
@@ -391,23 +400,23 @@
                         <div class="col-md-5">
                             <div class="d-flex justify-content-between py-1">
                                 <span class="text-muted">Subtotal Barang:</span>
-                                <span class="font-weight-bold">Rp <?= number_format($po->nominal_subtotal ?? $po->nominal_po, 0, ',', '.') ?></span>
+                                <span class="font-weight-bold"><?= $fmtRp($po->nominal_subtotal ?? $po->nominal_po) ?></span>
                             </div>
                             <?php if (in_array(($po->sistem_perpajakan ?? 'PPN'), ['PPN', 'ENDORSEMENT'])): ?>
                                 <div class="d-flex justify-content-between py-1">
                                     <span class="text-muted"><?= ($po->sistem_perpajakan === 'ENDORSEMENT') ? 'Pajak (11%):' : 'PPN (11%):' ?></span>
-                                    <span class="font-weight-bold">Rp <?= number_format($po->nominal_ppn ?? 0, 0, ',', '.') ?></span>
+                                    <span class="font-weight-bold"><?= $fmtRp($po->nominal_ppn ?? 0) ?></span>
                                 </div>
                             <?php endif; ?>
                             <?php if (!empty($po->nominal_ongkir) && $po->nominal_ongkir > 0): ?>
                                 <div class="d-flex justify-content-between py-1">
                                     <span class="text-muted">Ongkos Kirim (<?= htmlspecialchars($po->ongkir_ditanggung) ?>):</span>
-                                    <span class="font-weight-bold">Rp <?= number_format($po->nominal_ongkir, 0, ',', '.') ?></span>
+                                    <span class="font-weight-bold"><?= $fmtRp($po->nominal_ongkir) ?></span>
                                 </div>
                             <?php endif; ?>
                             <div class="d-flex justify-content-between py-2 border-top mt-1" style="font-size: 1.15rem;">
                                 <span class="font-weight-bold text-dark">TOTAL AKHIR:</span>
-                                <span class="font-weight-bold text-primary">Rp <?= number_format($po->nominal_total_akhir ?: $po->nominal_po, 0, ',', '.') ?></span>
+                                <span class="font-weight-bold text-primary"><?= $fmtRp($po->nominal_total_akhir ?: $po->nominal_po) ?></span>
                             </div>
                         </div>
                     </div>

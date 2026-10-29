@@ -527,9 +527,14 @@
             <div class="card-modern">
                 <div class="card-header-modern">
                     <h5><i class="fas fa-boxes"></i> 3. Rincian Barang / Modalitas (Integrasi Stok Inventory)</h5>
-                    <button type="button" class="btn btn-sm btn-primary" id="btnTambahBarang">
-                        <i class="fas fa-plus mr-1"></i> Tambah Baris
-                    </button>
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary mr-2 shadow-sm font-weight-bold" id="btnBukaCalcInclude" data-toggle="modal" data-target="#modalIncludePpn">
+                            <i class="fas fa-calculator mr-1"></i> Hitung Include PPN (Nett)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnTambahBarang">
+                            <i class="fas fa-plus mr-1"></i> Tambah Baris
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -584,6 +589,12 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </datalist>
+
+                    <div class="px-4 py-2 bg-light border-top d-flex align-items-center justify-content-between flex-wrap">
+                        <small class="text-muted py-1">
+                            <i class="fas fa-info-circle text-primary mr-1"></i> <b>Tips Harga Include PPN:</b> Kolom <i>Harga Satuan</i> mendukung angka desimal/koma (contoh: <code>4.504.504,5</code>) atau klik tombol <b>"Hitung Include PPN (Nett)"</b> di atas agar total akhir pas genap (misal Rp 5.000.000).
+                        </small>
+                    </div>
 
                     <!-- CARD KALKULASI & TOTAL -->
                     <div class="p-4 border-top">
@@ -688,6 +699,67 @@
             </div>
 
         </form>
+    </div>
+</div>
+
+<!-- MODAL HITUNG INCLUDE PPN (NETT) -->
+<div class="modal fade" id="modalIncludePpn" tabindex="-1" role="dialog" aria-labelledby="modalIncludePpnLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title font-weight-bold" id="modalIncludePpnLabel">
+                    <i class="fas fa-calculator mr-2"></i>Kalkulator Harga Include PPN (11%)
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info py-2 px-3 small mb-3" style="border-radius: 8px;">
+                    <i class="fas fa-lightbulb mr-1"></i> Gunakan alat ini jika customer / RS memesan dengan total nilai bersih sudah termasuk PPN (misal pas <b>Rp 5.000.000</b>). Sistem akan menghitung harga dasar (DPP) dan PPN secara presisi tanpa selisih Rp 1.
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label-custom font-weight-bold text-dark">Target Total Nilai Include PPN (Rp) <span class="text-danger">*</span></label>
+                    <input type="text" id="calcTargetTotal" class="form-control form-control-custom font-weight-bold text-primary" style="font-size: 1.15rem;" placeholder="Contoh: 5.000.000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label-custom font-weight-bold text-dark">Jumlah Qty Barang</label>
+                    <input type="number" id="calcTargetQty" class="form-control form-control-custom text-center" value="1" min="1" step="any">
+                </div>
+                
+                <div class="p-3 rounded bg-light border mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small font-weight-bold">Harga Satuan DPP (Dasar):</span>
+                        <span class="font-weight-bold text-dark" id="calcPreviewHargaSatuan">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Subtotal DPP:</span>
+                        <span class="text-muted" id="calcPreviewSubtotal">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small font-weight-bold">PPN (11%):</span>
+                        <span class="font-weight-bold text-dark" id="calcPreviewPpn">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                        <span class="font-weight-bold text-primary" style="font-size: 1.05rem;">Total Akhir Pas:</span>
+                        <span class="font-weight-bold text-primary" style="font-size: 1.05rem;" id="calcPreviewTotal">Rp 0</span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label class="form-label-custom font-weight-bold text-dark">Terapkan ke Baris Barang:</label>
+                    <select id="calcSelectRow" class="form-control form-control-custom">
+                        <option value="0">Baris 1</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary px-3" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success font-weight-bold px-4 shadow-sm" id="btnApplyIncludePpn">
+                    <i class="fas fa-check mr-1"></i> Terapkan ke Form PO
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -802,15 +874,64 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 5. Kalkulasi Barang & Total Realtime
+    // 5. Format & Kalkulasi Barang & Total Realtime
+    function formatCurrencyInput(valStr) {
+        if (!valStr && valStr !== 0) return '';
+        var s = valStr.toString().trim();
+        
+        // Toleransi jika user paste dot tunggal sebagai desimal (misal "4504504.5")
+        if (s.indexOf(',') === -1 && s.indexOf('.') !== -1) {
+            var lastDot = s.lastIndexOf('.');
+            var afterDot = s.substring(lastDot + 1);
+            if (afterDot.length <= 2 && s.indexOf('.') === lastDot) {
+                s = s.substring(0, lastDot) + ',' + afterDot;
+            }
+        }
+
+        var hasComma = s.indexOf(',') !== -1;
+        var parts = s.split(',');
+        
+        var intClean = parts[0].replace(/[^0-9]/g, '');
+        if (!intClean && !hasComma) return '';
+        
+        var intFormatted = intClean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        if (!intFormatted && hasComma) intFormatted = '0';
+        
+        if (hasComma) {
+            var decClean = parts.length > 1 ? parts[1].replace(/[^0-9]/g, '').slice(0, 2) : '';
+            return intFormatted + ',' + decClean;
+        }
+        
+        return intFormatted;
+    }
+
     function parseRupiah(str) {
-        if (!str) return 0;
-        var clean = str.toString().replace(/[^0-9]/g, '');
+        if (!str && str !== 0) return 0;
+        var s = str.toString().trim();
+        if (s.indexOf(',') !== -1) {
+            var parts = s.split(',');
+            var intPart = parts[0].replace(/[^0-9]/g, '') || '0';
+            var decPart = parts[1].replace(/[^0-9]/g, '') || '0';
+            return parseFloat(intPart + '.' + decPart) || 0;
+        }
+        var clean = s.replace(/[^0-9]/g, '');
         return parseFloat(clean) || 0;
     }
 
     function formatRupiah(num) {
-        return 'Rp ' + Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        if (num === null || num === undefined || isNaN(num)) return 'Rp 0';
+        var isNeg = num < 0;
+        var n = Math.abs(num);
+        var isDecimal = (Math.abs(n - Math.round(n)) > 0.0001);
+        if (isDecimal) {
+            var parts = n.toFixed(2).split('.');
+            var intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            var decFormatted = parts[1].replace(/0+$/, '');
+            if (!decFormatted) decFormatted = '0';
+            return (isNeg ? '-Rp ' : 'Rp ') + intFormatted + ',' + decFormatted;
+        } else {
+            return (isNeg ? '-Rp ' : 'Rp ') + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
     }
 
     function recalculate() {
@@ -819,11 +940,13 @@ document.addEventListener('DOMContentLoaded', function () {
         rows.forEach(function (row) {
             var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
             var harga = parseRupiah(row.querySelector('.item-harga').value);
-            var total = qty * harga;
+            var total = Math.round(qty * harga * 100) / 100;
             row.querySelector('.item-total').value = formatRupiah(total);
             row.querySelector('.item-total-raw').value = total;
             subtotal += total;
         });
+
+        subtotal = Math.round(subtotal * 100) / 100;
 
         // Cek PPN / Endorsement (PPh 11%)
         var sistemPajak = 'PPN';
@@ -837,11 +960,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var labelPpn = document.getElementById('labelPpn');
 
         if (sistemPajak === 'PPN') {
-            ppn = Math.round(subtotal * 0.11);
+            ppn = Math.round(subtotal * 0.11 * 100) / 100;
             if (labelPpn) labelPpn.innerText = 'PPN (11%):';
             rowPpn.style.display = 'flex';
         } else if (sistemPajak === 'ENDORSEMENT') {
-            ppn = Math.round(subtotal * 0.11);
+            ppn = Math.round(subtotal * 0.11 * 100) / 100;
             if (labelPpn) labelPpn.innerText = 'Pajak (11%):';
             rowPpn.style.display = 'flex';
         } else {
@@ -849,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var ongkir = parseRupiah(document.getElementById('inputOngkir').value);
-        var totalAkhir = subtotal + ppn + ongkir;
+        var totalAkhir = Math.round((subtotal + ppn + ongkir) * 100) / 100;
 
         document.getElementById('displaySubtotal').innerText = formatRupiah(subtotal);
         document.getElementById('inputSubtotal').value = subtotal;
@@ -872,8 +995,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var inputOngkir = document.getElementById('inputOngkir');
     if (inputOngkir) {
         inputOngkir.addEventListener('input', function () {
-            var val = parseRupiah(this.value);
-            this.value = val ? val.toLocaleString('id-ID') : '0';
+            var val = formatCurrencyInput(this.value);
+            this.value = val;
             recalculate();
         });
     }
@@ -885,8 +1008,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var btnHapus = row.querySelector('.btn-hapus-row');
 
         inputHarga.addEventListener('input', function () {
-            var val = parseRupiah(this.value);
-            this.value = val ? val.toLocaleString('id-ID') : '';
+            var val = formatCurrencyInput(this.value);
+            this.value = val;
             recalculate();
         });
 
@@ -900,6 +1023,91 @@ document.addEventListener('DOMContentLoaded', function () {
                 recalculate();
             } else {
                 alert('Minimal harus ada 1 baris barang!');
+            }
+        });
+    }
+
+    // 6. Kalkulator Include PPN Modal Logic
+    var btnBukaModal = document.getElementById('btnBukaCalcInclude');
+    if (btnBukaModal) {
+        btnBukaModal.addEventListener('click', function () {
+            var selectRow = document.getElementById('calcSelectRow');
+            if (selectRow) {
+                selectRow.innerHTML = '';
+                var rows = document.querySelectorAll('#itemsBody tr.item-row');
+                rows.forEach(function (r, idx) {
+                    var nama = r.querySelector('.item-nama').value.trim() || ('Baris ' + (idx + 1));
+                    var opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.innerText = 'Baris ' + (idx + 1) + ': ' + nama;
+                    selectRow.appendChild(opt);
+                });
+            }
+            updateCalcPreview();
+        });
+    }
+
+    function updateCalcPreview() {
+        var targetTotal = parseRupiah(document.getElementById('calcTargetTotal').value);
+        var qty = parseFloat(document.getElementById('calcTargetQty').value) || 1;
+        if (targetTotal <= 0) {
+            document.getElementById('calcPreviewHargaSatuan').innerText = 'Rp 0';
+            document.getElementById('calcPreviewSubtotal').innerText = 'Rp 0';
+            document.getElementById('calcPreviewPpn').innerText = 'Rp 0';
+            document.getElementById('calcPreviewTotal').innerText = 'Rp 0';
+            return;
+        }
+
+        // DPP = Total / 1.11
+        var totalDpp = Math.round((targetTotal / 1.11) * 100) / 100;
+        var hargaSatuan = Math.round((totalDpp / qty) * 100) / 100;
+        var subtotalAktual = Math.round(hargaSatuan * qty * 100) / 100;
+        var ppnAktual = Math.round(subtotalAktual * 0.11 * 100) / 100;
+        var totalGenap = Math.round((subtotalAktual + ppnAktual) * 100) / 100;
+
+        document.getElementById('calcPreviewHargaSatuan').innerText = formatRupiah(hargaSatuan);
+        document.getElementById('calcPreviewSubtotal').innerText = formatRupiah(subtotalAktual);
+        document.getElementById('calcPreviewPpn').innerText = formatRupiah(ppnAktual);
+        document.getElementById('calcPreviewTotal').innerText = formatRupiah(totalGenap);
+    }
+
+    var inputCalcTargetTotal = document.getElementById('calcTargetTotal');
+    if (inputCalcTargetTotal) {
+        inputCalcTargetTotal.addEventListener('input', function () {
+            this.value = formatCurrencyInput(this.value);
+            updateCalcPreview();
+        });
+    }
+
+    var inputCalcTargetQty = document.getElementById('calcTargetQty');
+    if (inputCalcTargetQty) {
+        inputCalcTargetQty.addEventListener('input', updateCalcPreview);
+    }
+
+    var btnApplyInclude = document.getElementById('btnApplyIncludePpn');
+    if (btnApplyInclude) {
+        btnApplyInclude.addEventListener('click', function () {
+            var targetTotal = parseRupiah(document.getElementById('calcTargetTotal').value);
+            var qty = parseFloat(document.getElementById('calcTargetQty').value) || 1;
+            if (targetTotal <= 0) {
+                alert('Silakan masukkan target total nilai PO!');
+                return;
+            }
+
+            var totalDpp = Math.round((targetTotal / 1.11) * 100) / 100;
+            var hargaSatuan = Math.round((totalDpp / qty) * 100) / 100;
+            var rowIdx = parseInt(document.getElementById('calcSelectRow').value) || 0;
+
+            var targetRow = document.querySelector('#itemsBody tr.item-row[data-row="' + rowIdx + '"]');
+            if (targetRow) {
+                targetRow.querySelector('.item-qty').value = qty;
+                targetRow.querySelector('.item-harga').value = formatCurrencyInput(hargaSatuan.toFixed(2).replace('.', ','));
+                recalculate();
+                if (window.jQuery && $('#modalIncludePpn').modal) {
+                    $('#modalIncludePpn').modal('hide');
+                } else {
+                    document.getElementById('modalIncludePpn').classList.remove('show');
+                }
             }
         });
     }
