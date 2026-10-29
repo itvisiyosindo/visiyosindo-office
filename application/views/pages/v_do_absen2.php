@@ -906,24 +906,8 @@ if (isset($data_absen[0]->waktu_absen)) {
 
         const statusEl = document.getElementById('locationStatus');
         if (statusEl) {
-            let branchHtml = '';
-            const isWfa = getSelectedJenisLokasi() === 'WFA';
-
-            if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
-                const closest = findClosestBranch(latitude, longitude);
-                if (closest) {
-                    const distMeter = Math.round(closest.distance);
-                    const allowedRadius = parseInt(closest.radius) || 100;
-                    if (distMeter <= allowedRadius) {
-                        branchHtml = ' <br><span style="color:#059669;font-weight:700;"><i class="bx bx-check-circle"></i> Terdeteksi di ' + closest.nama_cabang + ' (Jarak: ' + distMeter + 'm / Valid)</span>';
-                    } else {
-                        branchHtml = ' <br><span style="color:#dc2626;font-weight:700;"><i class="bx bx-error-circle"></i> Di luar radius. Terdekat: ' + closest.nama_cabang + ' (' + distMeter + 'm - Max: ' + allowedRadius + 'm)</span>';
-                    }
-                }
-            }
-
             const accText = accuracy ? 'Akurasi GPS sekitar ' + Math.round(accuracy) + ' meter.' : 'Lokasi terdeteksi.';
-            statusEl.innerHTML = accText + branchHtml;
+            statusEl.innerHTML = accText;
         }
     }
 
@@ -1115,6 +1099,8 @@ if (isset($data_absen[0]->waktu_absen)) {
                 return;
             }
 
+            // Validasi radius multi-cabang (DINONAKTIFKAN SEMENTARA)
+            /*
             // Validasi radius multi-cabang sebelum ambil foto
             const isWfa = getSelectedJenisLokasi() === 'WFA';
             if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
@@ -1137,6 +1123,8 @@ if (isset($data_absen[0]->waktu_absen)) {
                     }
                 }
             }
+
+            */
 
             takeSnapshot(function(imageData) {
                 if (!imageData) {

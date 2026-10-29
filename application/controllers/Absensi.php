@@ -717,7 +717,8 @@ class Absensi extends CI_Controller
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
 
         $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
-        // Geofence radius validation untuk Absen Kantor jika bukan WFA
+        // Geofence radius validation untuk Absen Kantor jika bukan WFA (DINONAKTIFKAN SEMENTARA)
+        /*
         if ($jenisLokasi !== 'WFA') {
             if (empty($data['latitude']) || empty($data['longitude'])) {
                 ajaxReturnDie('error', 'Titik lokasi GPS tidak terdeteksi. Silakan aktifkan GPS dan izinkan browser mengakses lokasi.');
@@ -747,6 +748,7 @@ class Absensi extends CI_Controller
                 }
             }
         }
+        */
 
         $this->md_absensi->add($data);
 
