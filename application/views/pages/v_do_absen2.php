@@ -763,7 +763,44 @@ if (isset($data_absen[0]->waktu_absen)) {
     const REAL_TODAY_IS_FRIDAY = <?= !empty($real_today_is_friday) ? 'true' : 'false' ?>;
     const SAVED_LATITUDE = <?= isset($data_absen[0]->latitude) && $data_absen[0]->latitude !== '' ? json_encode($data_absen[0]->latitude) : 'null' ?>;
     const SAVED_LONGITUDE = <?= isset($data_absen[0]->longitude) && $data_absen[0]->longitude !== '' ? json_encode($data_absen[0]->longitude) : 'null' ?>;
+    const LIST_CABANG = <?= json_encode($list_cabang ?? []) ?>;
     const CAMERA_PREF_KEY = 'absen_camera_pref_office_v1';
+
+    function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function findClosestBranch(userLat, userLng) {
+        if (!LIST_CABANG || !LIST_CABANG.length) return null;
+        let closest = null;
+        let minDistance = Infinity;
+
+        LIST_CABANG.forEach(function(branch) {
+            if (branch.latitude && branch.longitude) {
+                const bLat = parseFloat(branch.latitude);
+                const bLng = parseFloat(branch.longitude);
+                if (!isNaN(bLat) && !isNaN(bLng)) {
+                    const dist = calculateDistanceMeters(userLat, userLng, bLat, bLng);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        closest = {
+                            ...branch,
+                            distance: dist
+                        };
+                    }
+                }
+            }
+        });
+
+        return closest;
+    }
 
     const cameraPreference = {
         beautyEffect: true,
@@ -867,10 +904,26 @@ if (isset($data_absen[0]->waktu_absen)) {
         mapEl.innerHTML = '<iframe loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="' +
             buildMapEmbedUrl(latitude, longitude, 19) + '"></iframe>';
 
-        if (accuracy) {
-            setLocationStatus('Lokasi terdeteksi. Akurasi GPS sekitar ' + Math.round(accuracy) + ' meter.');
-        } else {
-            setLocationStatus('Lokasi terdeteksi.');
+        const statusEl = document.getElementById('locationStatus');
+        if (statusEl) {
+            let branchHtml = '';
+            const isWfa = getSelectedJenisLokasi() === 'WFA';
+
+            if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
+                const closest = findClosestBranch(latitude, longitude);
+                if (closest) {
+                    const distMeter = Math.round(closest.distance);
+                    const allowedRadius = parseInt(closest.radius) || 100;
+                    if (distMeter <= allowedRadius) {
+                        branchHtml = ' <br><span style="color:#059669;font-weight:700;"><i class="bx bx-check-circle"></i> Terdeteksi di ' + closest.nama_cabang + ' (Jarak: ' + distMeter + 'm / Valid)</span>';
+                    } else {
+                        branchHtml = ' <br><span style="color:#dc2626;font-weight:700;"><i class="bx bx-error-circle"></i> Di luar radius. Terdekat: ' + closest.nama_cabang + ' (' + distMeter + 'm - Max: ' + allowedRadius + 'm)</span>';
+                    }
+                }
+            }
+
+            const accText = accuracy ? 'Akurasi GPS sekitar ' + Math.round(accuracy) + ' meter.' : 'Lokasi terdeteksi.';
+            statusEl.innerHTML = accText + branchHtml;
         }
     }
 
@@ -1060,6 +1113,29 @@ if (isset($data_absen[0]->waktu_absen)) {
             if (error || latitude === null || longitude === null) {
                 Swal.fire('Lokasi tidak tersedia', 'Aktifkan GPS dan coba lagi.', 'warning');
                 return;
+            }
+
+            // Validasi radius multi-cabang sebelum ambil foto
+            const isWfa = getSelectedJenisLokasi() === 'WFA';
+            if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
+                const closest = findClosestBranch(latitude, longitude);
+                if (closest) {
+                    const distMeter = Math.round(closest.distance);
+                    const allowedRadius = parseInt(closest.radius) || 100;
+                    if (distMeter > allowedRadius) {
+                        Swal.fire({
+                            title: 'Di Luar Radius Kantor',
+                            html: `Anda berada di luar jangkauan absensi kantor.<br><br>
+                                   Kantor cabang terdekat: <b>${closest.nama_cabang}<\/b><br>
+                                   Jarak saat ini: <b class="text-danger">${distMeter} meter<\/b><br>
+                                   Radius diizinkan: <b>${allowedRadius} meter<\/b><br><br>
+                                   <small class="text-muted">Jika sedang dinas luar, silakan gunakan menu <b>Absen Dinas<\/b>.<\/small>`,
+                            icon: 'warning',
+                            confirmButtonText: 'Tutup'
+                        });
+                        return;
+                    }
+                }
             }
 
             takeSnapshot(function(imageData) {

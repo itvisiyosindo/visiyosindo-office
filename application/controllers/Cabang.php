@@ -26,7 +26,7 @@ class Cabang extends CI_Controller
         $page_data['switch']		= $this->id_navbar();
 		$page_data['page_name']  	= 'v_cabang';
         $page_data['page_title'] 	= 'Cabang';
-        $page_data['page_desc']  	= 'Management Data Cabang';
+        $page_data['page_desc']  	= 'Management Data Cabang & Koordinat Absensi';
         $this->load->view('index', $page_data);
     }
 
@@ -34,10 +34,17 @@ class Cabang extends CI_Controller
     {
         grantAccessFor('all');
 
-        $data['nama_cabang'] = $this->input->post('nama_cabang');
-        $data['alamat_cabang'] = $this->input->post('alamat_cabang');
-        $data['penanggung_jawab'] = $this->input->post('penanggung_jawab');
-        checkEmptyForm($data);
+        $data['nama_cabang'] = $this->input->post('nama_cabang', TRUE);
+        $data['alamat_cabang'] = $this->input->post('alamat_cabang', TRUE);
+        $data['penanggung_jawab'] = $this->input->post('penanggung_jawab', TRUE);
+        $data['latitude'] = trim((string)$this->input->post('latitude', TRUE)) ?: NULL;
+        $data['longitude'] = trim((string)$this->input->post('longitude', TRUE)) ?: NULL;
+        $data['radius'] = (int)($this->input->post('radius', TRUE) ?: 100);
+        checkEmptyForm([
+            'nama_cabang' => $data['nama_cabang'],
+            'alamat_cabang' => $data['alamat_cabang'],
+            'penanggung_jawab' => $data['penanggung_jawab']
+        ]);
 
         $this->md_cabang->add($data);
 
@@ -89,10 +96,17 @@ class Cabang extends CI_Controller
         grantAccessFor('all');
 
         $id = decrypt($this->input->post('id_cabang'));
-        $data['nama_cabang'] = $this->input->post('nama_cabang');
-        $data['alamat_cabang'] = $this->input->post('alamat_cabang');
-        $data['penanggung_jawab'] = $this->input->post('penanggung_jawab');
-        checkEmptyForm($data);
+        $data['nama_cabang'] = $this->input->post('nama_cabang', TRUE);
+        $data['alamat_cabang'] = $this->input->post('alamat_cabang', TRUE);
+        $data['penanggung_jawab'] = $this->input->post('penanggung_jawab', TRUE);
+        $data['latitude'] = trim((string)$this->input->post('latitude', TRUE)) ?: NULL;
+        $data['longitude'] = trim((string)$this->input->post('longitude', TRUE)) ?: NULL;
+        $data['radius'] = (int)($this->input->post('radius', TRUE) ?: 100);
+        checkEmptyForm([
+            'nama_cabang' => $data['nama_cabang'],
+            'alamat_cabang' => $data['alamat_cabang'],
+            'penanggung_jawab' => $data['penanggung_jawab']
+        ]);
 
         $this->md_cabang->update(['id_cabang' => $id], $data);
 
@@ -116,14 +130,26 @@ class Cabang extends CI_Controller
             $id       = encrypt($row->id_cabang);
             $li_btn   = '
                 <div class="btn-group" role="group" aria-label="First group">
-                    <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-primary btn-edit" title="Edit Cabang & Koordinat" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
                     <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="cabang/delete"><i class="bx bx-trash"></i></button>
                 </div>';
+
+            if (!empty($row->latitude) && !empty($row->longitude)) {
+                $gps_info = '<div style="font-size:12px; line-height:1.4;">
+                    <span class="badge badge-success" style="font-size:11px; padding:3px 8px;"><i class="fas fa-map-marker-alt"></i> ' . htmlspecialchars($row->latitude) . ', ' . htmlspecialchars($row->longitude) . '</span><br>
+                    <span class="badge badge-info" style="font-size:10px; padding:2px 6px; margin-top:2px;">Radius: ' . ((int)($row->radius ?: 100)) . ' meter</span>
+                    <a href="https://maps.google.com/?q=' . urlencode($row->latitude . ',' . $row->longitude) . '" target="_blank" class="btn btn-xs btn-outline-primary ml-1" style="font-size:10px; padding:1px 5px;" title="Lihat di Google Maps"><i class="fas fa-external-link-alt"></i></a>
+                </div>';
+            } else {
+                $gps_info = '<span class="badge badge-secondary" style="font-size:11px; padding:3px 8px;"><i class="fas fa-exclamation-circle"></i> Belum Diset</span>';
+            }
+
             $th = array();
             $th[] = ++$start . '.';
             $th[] = $row->nama_cabang;
             $th[] = $row->penanggung_jawab;
             $th[] = $row->alamat_cabang;
+            $th[] = $gps_info;
             $th[] = $li_btn;
             $data[] = $th;
         }

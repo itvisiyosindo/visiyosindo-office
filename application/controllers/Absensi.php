@@ -715,6 +715,39 @@ class Absensi extends CI_Controller
         $data['longitude'] = $this->input->post('longitude');
         $data['jenis_absen'] = 'Kantor';
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
+
+        $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
+        // Geofence radius validation untuk Absen Kantor jika bukan WFA
+        if ($jenisLokasi !== 'WFA') {
+            if (empty($data['latitude']) || empty($data['longitude'])) {
+                ajaxReturnDie('error', 'Titik lokasi GPS tidak terdeteksi. Silakan aktifkan GPS dan izinkan browser mengakses lokasi.');
+            }
+
+            $this->load->model('md_cabang');
+            $activeBranches = $this->md_cabang->getActiveBranches();
+
+            if (!empty($activeBranches)) {
+                $closestBranch = null;
+                $minDistance = null;
+
+                foreach ($activeBranches as $branch) {
+                    $dist = $this->_calculateHaversineDistance($data['latitude'], $data['longitude'], $branch->latitude, $branch->longitude);
+                    if ($minDistance === null || $dist < $minDistance) {
+                        $minDistance = $dist;
+                        $closestBranch = $branch;
+                    }
+                }
+
+                if ($closestBranch !== null) {
+                    $allowedRadius = !empty($closestBranch->radius) ? (int)$closestBranch->radius : 100;
+                    if ($minDistance > $allowedRadius) {
+                        $distMeter = round($minDistance);
+                        ajaxReturnDie('error', "Anda berada di luar radius kantor cabang. Jarak terdekat ke {$closestBranch->nama_cabang} adalah {$distMeter} meter (Maksimal {$allowedRadius} meter).");
+                    }
+                }
+            }
+        }
+
         $this->md_absensi->add($data);
 
 
@@ -1228,9 +1261,11 @@ class Absensi extends CI_Controller
         } else if ($param == "do_absen2") {
             grantAccessFor(['Administrator', 'Hrd', 'Karyawan', 'Ga']);
             $pengguna_id = sessPenggunaId();
+            $this->load->model('md_cabang');
             $page_data['switch']              = $this->id_navbar();
             $page_data['data_absen']           = $this->md_absensi->getAbsensiTodayById2($pengguna_id);
             $page_data['data_absen_izin']      = $this->md_absensi->getAbsensiIzinTodayById($pengguna_id);
+            $page_data['list_cabang']          = $this->md_cabang->getActiveBranches();
             // echo_array($page_data);die;
             $page_data['page_name']         = 'v_do_absen2';
             $page_data['page_title']         = 'Absen';
@@ -2180,6 +2215,23 @@ class Absensi extends CI_Controller
         }
         echo json_encode($dt);
         die;
+    }
+
+    private function _calculateHaversineDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // in meters
+        $lat1 = deg2rad((float)$lat1);
+        $lon1 = deg2rad((float)$lon1);
+        $lat2 = deg2rad((float)$lat2);
+        $lon2 = deg2rad((float)$lon2);
+
+        $latDelta = $lat2 - $lat1;
+        $lonDelta = $lon2 - $lon1;
+
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+            cos($lat1) * cos($lat2) * pow(sin($lonDelta / 2), 2)));
+
+        return $angle * $earthRadius;
     }
 
     public function fix_absen_dimas()
