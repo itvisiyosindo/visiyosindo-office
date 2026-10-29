@@ -451,11 +451,14 @@ if (isset($data_absen[0]->waktu_absen)) {
     <div class="dinas-shell">
         <div class="hero">
             <h3>Absensi Dinas</h3>
-            <p>Absensi dinas terverifikasi dengan foto dan geolokasi aktual.</p>
+            <p>Absensi dinas terverifikasi dengan foto dan geolokasi aktual (bebas radius kantor).</p>
             <div class="hero-chips">
                 <span class="hero-chip"><i class="bx bx-calendar"></i> <?= date('d-m-Y') ?></span>
                 <span class="hero-chip"><i class="bx bx-briefcase"></i> Mode dinas aktif</span>
                 <span class="hero-chip"><i class="bx bx-shield"></i> Validasi GPS dan foto</span>
+                <a href="<?= base_url('absensi/show/do_absen2/' . encrypt(sessPenggunaId())) ?>" class="hero-chip text-white" style="text-decoration: none; border-color: rgba(255,255,255,0.4);" title="Beralih ke Absen Kantor">
+                    <i class="bx bx-building"></i> Beralih ke Absen Kantor
+                </a>
             </div>
         </div>
 

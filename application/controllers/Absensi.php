@@ -714,6 +714,7 @@ class Absensi extends CI_Controller
         $data['latitude'] = $this->input->post('latitude');
         $data['longitude'] = $this->input->post('longitude');
         $data['jenis_absen'] = 'Kantor';
+        $data['jenis_lokasi'] = $this->input->post('jenis_lokasi') ?: 'Kantor';
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
 
         $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
@@ -995,7 +996,9 @@ class Absensi extends CI_Controller
         $data['latitude'] = $this->input->post('latitude');
         $data['longitude'] = $this->input->post('longitude');
         $data['jenis_absen'] = 'Dinas';
+        $data['jenis_lokasi'] = 'Dinas';
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
+        // Absen Dinas: Bebas radius kantor (bisa absen dari mana pun)
         $this->md_absensi->add($data);
 
 

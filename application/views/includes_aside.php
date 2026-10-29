@@ -60,19 +60,17 @@
 						</a>
 						<ul class="nav nav-children">
 
-							<?php if (isset($is_dinas) && $is_dinas): ?>
-								<li class="<?= $page_name == 'v_do_absen_dinas2' ? 'nav-active' : '' ?>">
-									<a class="nav-link" href="<?= base_url('absensi/show/do_absen_dinas2/' . encrypt(sessPenggunaId())) ?>">
-										<span>Absen Dinas</span>
-									</a>
-								</li>
-							<?php else: ?>
-								<li class="<?= $page_name == 'v_do_absen2' ? 'nav-active' : '' ?>">
-									<a class="nav-link" href="<?= base_url('absensi/show/do_absen2/' . encrypt(sessPenggunaId())) ?>">
-										<span>Absen Kantor</span>
-									</a>
-								</li>
-							<?php endif; ?>
+							<li class="<?= $page_name == 'v_do_absen2' ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('absensi/show/do_absen2/' . encrypt(sessPenggunaId())) ?>">
+									<span>Absen Kantor</span>
+								</a>
+							</li>
+
+							<li class="<?= $page_name == 'v_do_absen_dinas2' ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('absensi/show/do_absen_dinas2/' . encrypt(sessPenggunaId())) ?>">
+									<span>Absen Dinas</span>
+								</a>
+							</li>
 
 							<?php if (isAdmin() || isHrd()) { ?>
 								<li class="<?= $page_name == 'v_wfa_pengguna' ? 'nav-active' : '' ?>">
@@ -81,21 +79,6 @@
 									</a>
 								</li>
 							<?php } ?>
-
-
-							<!--<li class="<?= $page_name == 'v_do_absen2' ? 'nav-active' : '' ?>">
-						            <a class="nav-link" href="<?= base_url('absensi/show/do_absen2/' . encrypt(sessPenggunaId())) ?>">
-							            <span>Absen Kantor</span>
-						            </a>
-				            	</li>
-
-				            	<li class="<?= $page_name == 'v_do_absen_dinas2' ? 'nav-active' : '' ?>">
-						            <a class="nav-link" href="<?= base_url('absensi/show/do_absen_dinas2/' . encrypt(sessPenggunaId())) ?>">
-							            <span>Absen Dinas</span>
-						            </a>
-				            	</li>-->
-
-							<?php ?>
 						</ul>
 					</li>
 					<!--				    <li class="nav-parent <?= in_array($page_name, ['v_suratpimp', 'v_suratpijk']) ? 'nav-active nav-expanded' : ''; ?>">

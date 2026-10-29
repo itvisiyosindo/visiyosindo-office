@@ -689,14 +689,11 @@
 						<span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 600; padding: 6px 12px; border-radius: 9999px; font-size: 12px;">
 							<i class="fas fa-calendar-day mr-1"></i> <?= date('d M Y') ?>
 						</span>
-						<?php
-						$url_absen = (isset($is_dinas) && $is_dinas)
-							? base_url('absensi/show/do_absen_dinas2/' . encrypt(sessPenggunaId()))
-							: base_url('absensi/show/do_absen2/' . encrypt(sessPenggunaId()));
-						$label_absen = (isset($is_dinas) && $is_dinas) ? 'Absen Dinas' : 'Absen Kantor';
-						?>
-						<a href="<?= $url_absen ?>" class="btn btn-sm btn-primary" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;" title="<?= $label_absen ?>">
-							<i class="fas fa-fingerprint mr-1"></i> <?= $label_absen ?>
+						<a href="<?= base_url('absensi/show/do_absen2/' . encrypt(sessPenggunaId())) ?>" class="btn btn-sm btn-primary" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;" title="Absen Kantor">
+							<i class="fas fa-building mr-1"></i> Absen Kantor
+						</a>
+						<a href="<?= base_url('absensi/show/do_absen_dinas2/' . encrypt(sessPenggunaId())) ?>" class="btn btn-sm btn-warning text-dark" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;" title="Absen Dinas">
+							<i class="fas fa-briefcase mr-1"></i> Absen Dinas
 						</a>
 						<a href="<?= base_url('announcement') ?>" class="btn btn-sm btn-info" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
 							<i class="fas fa-bullhorn mr-1"></i> Pengumuman

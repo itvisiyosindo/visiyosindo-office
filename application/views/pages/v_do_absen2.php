@@ -602,6 +602,9 @@ if (isset($data_absen[0]->waktu_absen)) {
                     <span class="hero-chip"><i class="bx bx-test-tube"></i> Simulasi Jumat Aktif</span>
                 <?php endif; ?>
                 <span class="hero-chip"><i class="bx bx-shield"></i> Validasi GPS dan foto</span>
+                <a href="<?= base_url('absensi/show/do_absen_dinas2/' . encrypt(sessPenggunaId())) ?>" class="hero-chip text-white" style="text-decoration: none; border-color: rgba(255,255,255,0.4);" title="Beralih ke Absen Dinas">
+                    <i class="bx bx-briefcase"></i> Beralih ke Absen Dinas
+                </a>
             </div>
 
             <?php if ($canToggleSimulasi && !$realTodayIsFriday): ?>
