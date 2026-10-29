@@ -704,6 +704,46 @@
 		</div>
 	</div>
 
+	<?php if (!empty($sp_aktif)) { ?>
+		<!-- Banner Peringatan: Masa SP Karyawan -->
+		<div class="col-12 mb-3">
+			<div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border-left: 6px solid #e11d48 !important; overflow: hidden;">
+				<div class="card-body p-3 p-md-4">
+					<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between" style="gap: 14px;">
+						<div class="d-flex align-items-start align-items-md-center">
+							<div class="d-flex align-items-center justify-content-center text-white mr-3 flex-shrink-0" style="width: 50px; height: 50px; background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); border-radius: 12px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);">
+								<i class="fas fa-exclamation-triangle" style="font-size: 22px;"></i>
+							</div>
+							<div>
+								<div class="d-flex flex-wrap align-items-center mb-1" style="gap: 8px;">
+									<h4 class="font-weight-bold mb-0 text-danger" style="font-size: 16px;">
+										Pemberitahuan: Anda Sedang Dalam Masa <?= htmlspecialchars($sp_aktif->jenis_sp) ?>
+									</h4>
+									<span class="badge badge-danger" style="font-size: 11px; padding: 4px 10px; border-radius: 20px;">
+										Aktif &bull; Sisa <?= $sp_aktif->sisa_hari ?> Hari Lagi
+									</span>
+								</div>
+								<p class="mb-0 text-dark" style="font-size: 13px; line-height: 1.5;">
+									Surat Peringatan berlaku mulai <b><?= $sp_aktif->tgl_mulai_formatted ?></b> s.d. <b><?= $sp_aktif->tgl_akhir_formatted ?></b> (Masa berlaku <?= $sp_aktif->masa_bulan ?> bulan). Mohon untuk senantiasa mematuhi SOP kerja, tata tertib, dan meningkatkan kedisiplinan.
+								</p>
+								<?php if (!empty($sp_aktif->sanksi)) { ?>
+									<small class="text-muted d-block mt-1" style="font-size: 12px;">
+										<i class="fas fa-info-circle mr-1 text-danger"></i><b>Sanksi:</b> <?= htmlspecialchars($sp_aktif->sanksi) ?>
+									</small>
+								<?php } ?>
+							</div>
+						</div>
+						<div class="mt-2 mt-md-0 flex-shrink-0 align-self-stretch align-self-md-center text-right">
+							<a href="<?= base_url('surat/show/detail_surat/surat_peringatan/' . $sp_aktif->id . '/1') ?>" class="btn btn-danger btn-sm px-3 py-2 font-weight-bold" style="border-radius: 8px; font-size: 12.5px; box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);" target="_blank">
+								<i class="fas fa-file-alt mr-1"></i> Lihat Dokumen SP
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	<?php } ?>
+
 	<?php if (sessPenggunaId() == 1 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 58 || sessPenggunaId() == 54) { ?>
 
 		<?php if ($ulangtahun[0]->total != 0) { ?>

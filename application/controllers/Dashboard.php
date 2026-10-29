@@ -60,6 +60,9 @@ class Dashboard extends CI_Controller
         //Statistik Presensi Karyawan (Sakit, Izin, Cuti, Terlambat)
         $page_data['stat_karyawan']   = $this->md_dashboard->getPersonalAttendanceStats($pengguna_id);
 
+        // Status Surat Peringatan (SP) Aktif Karyawan
+        $page_data['sp_aktif']        = $this->md_dashboard->getActiveSP($pengguna_id);
+
         //Dashboard Home New
         $page_data['izin_jam']         = $this->md_dashboard->countIzinJamKerja($pengguna_id);
         $page_data['izin_meinggalkan']     = $this->md_dashboard->countIzinMeninggalkan($pengguna_id);
