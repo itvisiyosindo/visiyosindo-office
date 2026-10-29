@@ -1090,7 +1090,7 @@ class Md_dashboard extends CI_Model
                         }
                     }
                     if ($masa_bulan <= 0) {
-                        $masa_bulan = 6;
+                        $masa_bulan = 3;
                     }
 
                     try {
@@ -1145,7 +1145,7 @@ class Md_dashboard extends CI_Model
         if ($is_dimas) {
             $tgl_mulai = new DateTime(date('Y-m-d', strtotime('-1 month')));
             $tgl_akhir = clone $tgl_mulai;
-            $tgl_akhir->modify('+6 months');
+            $tgl_akhir->modify('+3 months');
             $diff = (new DateTime(date('Y-m-d')))->diff($tgl_akhir);
             $sisa_hari = (int)$diff->format('%a');
 
@@ -1158,8 +1158,8 @@ class Md_dashboard extends CI_Model
                 'jenis_sp'            => 'SP 1',
                 'perihal'             => 'Pertama',
                 'kesalahan'           => 'Simulasi Uji Coba: Keterlambatan dan ketidakhadiran kerja tanpa konfirmasi',
-                'sanksi'              => 'Peringatan tertulis dan evaluasi kedisiplinan kerja selama 6 bulan',
-                'masa_bulan'          => 6,
+                'sanksi'              => 'Peringatan tertulis dan evaluasi kedisiplinan kerja selama 3 bulan',
+                'masa_bulan'          => 3,
                 'tgl_mulai'           => $tgl_mulai->format('Y-m-d'),
                 'tgl_mulai_formatted' => $tgl_mulai_formatted,
                 'tgl_akhir'           => $tgl_akhir->format('Y-m-d'),
