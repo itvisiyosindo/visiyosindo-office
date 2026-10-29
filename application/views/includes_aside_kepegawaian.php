@@ -74,6 +74,11 @@
 											Konfigurasi Absen
 										</a>
 									</li>
+									<li class="<?= $page_name == 'v_cabang' ? 'nav-active' : '' ?>">
+										<a class="nav-link" href="<?= base_url('cabang') ?>">
+											Cabang & Lokasi Kantor
+										</a>
+									</li>
 									<li class="<?= $this->uri->segment(1) == 'divisi_Pengguna'  ? 'nav-active' : '' ?>">
 										<a class="nav-link" href="<?= base_url('divisi_Pengguna') ?>">
 											Divisi Pengguna
