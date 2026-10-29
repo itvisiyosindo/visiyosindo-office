@@ -24,7 +24,9 @@ class Md_kalkulator extends CI_Model
         $this->db->distinct();
         $this->db->select('kb.merk');
         $this->db->where('kb.jenis', 1);
-        $this->db->order_by('kb.merk', 'ASC');
+        $this->db->where('kb.merk IS NOT NULL', NULL, FALSE);
+        $this->db->where("TRIM(kb.merk) !=", "");
+        $this->db->order_by('TRIM(kb.merk)', 'ASC');
         return $this->db->get('kalkulator_pricelist kb')->result();
     }
 
@@ -33,7 +35,9 @@ class Md_kalkulator extends CI_Model
         $this->db->distinct();
         $this->db->select('kb.nama');
         $this->db->where('kb.jenis', 1);
-        $this->db->order_by('kb.nama', 'ASC');
+        $this->db->where('kb.nama IS NOT NULL', NULL, FALSE);
+        $this->db->where("TRIM(kb.nama) !=", "");
+        $this->db->order_by('TRIM(kb.nama)', 'ASC');
         return $this->db->get('kalkulator_pricelist kb')->result();
     }
 
@@ -163,7 +167,9 @@ class Md_kalkulator extends CI_Model
         $this->db->distinct();
         $this->db->select('kb.merk');
         $this->db->where('kb.jenis', 2);
-        $this->db->order_by('kb.merk', 'ASC');
+        $this->db->where('kb.merk IS NOT NULL', NULL, FALSE);
+        $this->db->where("TRIM(kb.merk) !=", "");
+        $this->db->order_by('TRIM(kb.merk)', 'ASC');
         return $this->db->get('kalkulator_pricelist kb')->result();
     }
 
@@ -172,7 +178,9 @@ class Md_kalkulator extends CI_Model
         $this->db->distinct();
         $this->db->select('kb.nama');
         $this->db->where('kb.jenis', 2);
-        $this->db->order_by('kb.nama', 'ASC');
+        $this->db->where('kb.nama IS NOT NULL', NULL, FALSE);
+        $this->db->where("TRIM(kb.nama) !=", "");
+        $this->db->order_by('TRIM(kb.nama)', 'ASC');
         return $this->db->get('kalkulator_pricelist kb')->result();
     }
 

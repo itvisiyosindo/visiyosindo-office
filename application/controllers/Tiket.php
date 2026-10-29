@@ -729,8 +729,8 @@ class Tiket extends CI_Controller
                 'subject'   => $datalog2[0]->subject,
                 'cek'       => $up_visit['file_laporan_biaya']
             ];
-            // NOTIF WA LAPORAN AKHIR TIKET TEKNISI (REQ BANG RICKI)
-            $this->sendWaTiket(6, $dataTiket);
+            // NOTIF WA LAPORAN AKHIR TIKET TEKNISI (REQ BANG RICKI) - DINONAKTIFKAN SEMENTARA
+            // $this->sendWaTiket(6, $dataTiket);
 
             $dataGroup = [
                 'idPenerima' => $datalog2[0]->id_penerima,
@@ -741,8 +741,8 @@ class Tiket extends CI_Controller
                 'linkBukti' => $up_log['file_update'],
                 'subject'   => $datalog2[0]->subject
             ];
-            // NOTIF WA LAPORAN AKHIR TIKET TEKNISI (REQ BANG RICKI)
-            $this->sendWaTiket(11, $dataGroup);
+            // NOTIF WA LAPORAN AKHIR TIKET TEKNISI (REQ BANG RICKI) - DINONAKTIFKAN SEMENTARA
+            // $this->sendWaTiket(11, $dataGroup);
 
             addLog('Memperbaharui Tiket', 'Mengirim Laporan Akhir untuk Tiket ' . $datalog2[0]->kode_tiket);
             ajaxReturnDie('success', 'Laporan Akhir Berhasil Dikirim', TRUE);
@@ -1645,28 +1645,42 @@ class Tiket extends CI_Controller
             ];
         }
 
+        // Nonaktifkan notifikasi personal tiketing untuk Ricky Arindi (ID: 14)
+        $isRicky = (
+            (!empty($dataTiket['idPenerima']) && $dataTiket['idPenerima'] == 14) ||
+            (!empty($nama) && (stripos($nama, 'Ricky') !== false || stripos($nama, 'Arindi') !== false))
+        );
+
         if ($kodeKirim == 1) {
-            waTiketOpen($dataWa);
+            if (!$isRicky) {
+                waTiketOpen($dataWa);
+            }
         } else if ($kodeKirim == 2) {
             waTiketAjuVisit($dataWa);
         } else if ($kodeKirim == 3) {
-            waTiketTerbitSudin($dataWa);
+            if (!$isRicky) {
+                waTiketTerbitSudin($dataWa);
+            }
         } else if ($kodeKirim == 4) {
             waTiketAjuBiaya($dataWa);
         } else if ($kodeKirim == 5) {
-            waTiketSetujuBiaya($dataWa);
+            if (!$isRicky) {
+                waTiketSetujuBiaya($dataWa);
+            }
         } else if ($kodeKirim == 6) {
-            waTiketAjuLaporan($dataWa);
+            // waTiketAjuLaporan($dataWa); // Dinonaktifkan sementara (Laporan Akhir)
         } else if ($kodeKirim == 7) {
             waTiketLogUpdate($dataWa);
         } else if ($kodeKirim == 8) {
-            waTiketPertama($dataWa);
+            if (!$isRicky) {
+                waTiketPertama($dataWa);
+            }
         } else if ($kodeKirim == 9) {
             waTiketOpenGroup($dataWa);
         } else if ($kodeKirim == 10) {
             waTiketGroupNew($dataWa);
         } else if ($kodeKirim == 11) {
-            waTiketGroupNew($dataWa);
+            // waTiketGroupNew($dataWa); // Dinonaktifkan sementara (Laporan Akhir)
         }
         return TRUE;
     }
@@ -1680,6 +1694,8 @@ class Tiket extends CI_Controller
         }
 
         $dataWa = [
+            'idPenerima1'   => $dataTiket['idPenerima1'] ?? null,
+            'idPenerima2'   => $dataTiket['idPenerima2'] ?? null,
             'noPenerima1'   => $nope[1],
             'noPenerima2'   => $nope[2],
             'nama1'         => $nama[1],
@@ -1716,10 +1732,23 @@ class Tiket extends CI_Controller
             'pic_support'   => urlencode($dataTiket['pic_support']),
         ];
 
+        $isRickyKetua = (
+            (!empty($dataTiket['idKetua']) && $dataTiket['idKetua'] == 14) ||
+            (!empty($namaKetua) && (stripos($namaKetua, 'Ricky') !== false || stripos($namaKetua, 'Arindi') !== false))
+        );
+        $isRickySupport = (
+            (!empty($dataTiket['idSupport']) && $dataTiket['idSupport'] == 14) ||
+            (!empty($namaSupport) && (stripos($namaSupport, 'Ricky') !== false || stripos($namaSupport, 'Arindi') !== false))
+        );
+
         if ($kodeKirim == 'ketua') {
-            waTiketMultiPicKetua($dataWa);
+            if (!$isRickyKetua) {
+                waTiketMultiPicKetua($dataWa);
+            }
         } else if ($kodeKirim == 'support') {
-            waTiketMultiPicSupport($dataWa);
+            if (!$isRickySupport) {
+                waTiketMultiPicSupport($dataWa);
+            }
         }
         return TRUE;
     }

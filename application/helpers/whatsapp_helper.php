@@ -22,6 +22,11 @@ function hostWa($param)
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------		
 function waTiketOpen_noEnter($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaPenerima']) && (stripos($data['namaPenerima'], 'Ricky') !== false || stripos($data['namaPenerima'], 'Arindi') !== false)) || (!empty($data['idPenerima']) && $data['idPenerima'] == 14)) {
+		return true;
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   'Dear ' . $data['namaPenerima'] . ', Anda mendapatkan Tiket: ' . $data['kodeTiket'] . ' dengan Subjek ' . $data['subject'] .
@@ -32,6 +37,11 @@ function waTiketOpen_noEnter($data)
 
 function waTiketOpen($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaPenerima']) && (stripos($data['namaPenerima'], 'Ricky') !== false || stripos($data['namaPenerima'], 'Arindi') !== false)) || (!empty($data['idPenerima']) && $data['idPenerima'] == 14)) {
+		return true;
+	}
+
 	$dataWa['devId']    = hostWa('2');
 	$dataWa['penerima'] = $data['noPenerima'];
 
@@ -135,6 +145,11 @@ function waTiketAjuVisit($data)
 
 function waTiketPertama($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaPenerima']) && (stripos($data['namaPenerima'], 'Ricky') !== false || stripos($data['namaPenerima'], 'Arindi') !== false)) || (!empty($data['idPenerima']) && $data['idPenerima'] == 14)) {
+		return true;
+	}
+
 	$dataWa['devId']    = hostWa('2');
 	$dataWa['penerima'] = $data['noPenerima'];
 
@@ -180,6 +195,11 @@ function waTiketLogUpdate($data)
 
 function waTiketTerbitSudin($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaPenerima']) && (stripos($data['namaPenerima'], 'Ricky') !== false || stripos($data['namaPenerima'], 'Arindi') !== false)) || (!empty($data['idPenerima']) && $data['idPenerima'] == 14)) {
+		return true;
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Job Ticketing*' .
@@ -211,6 +231,11 @@ function waTiketAjuBiaya($data)
 
 function waTiketSetujuBiaya($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaPenerima']) && (stripos($data['namaPenerima'], 'Ricky') !== false || stripos($data['namaPenerima'], 'Arindi') !== false)) || (!empty($data['idPenerima']) && $data['idPenerima'] == 14)) {
+		return true;
+	}
+
 	$dataWa['devId']	= hostWa('2');
 	$dataWa['penerima']	= $data['noPenerima'];
 	$dataWa['pesan']	=   '*Notifikasi Job Ticketing*' .
@@ -256,6 +281,10 @@ function waTiketAjuLaporan($data)
 
 function waTiketGantiPIC($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	$isRicky1 = ((!empty($data['idPenerima1']) && $data['idPenerima1'] == 14) || (!empty($data['nama1']) && (stripos($data['nama1'], 'Ricky') !== false || stripos($data['nama1'], 'Arindi') !== false)));
+	$isRicky2 = ((!empty($data['idPenerima2']) && $data['idPenerima2'] == 14) || (!empty($data['nama2']) && (stripos($data['nama2'], 'Ricky') !== false || stripos($data['nama2'], 'Arindi') !== false)));
+
 	$data1['devId']	    = hostWa('2');
 	$data1['penerima']	= $data['noPenerima1'];
 	$data1['pesan']	    =   '*Notifikasi Job Ticketing*' .
@@ -277,13 +306,22 @@ function waTiketGantiPIC($data)
 		'%0A%0ADipindahkan dari ' . $data['nama1'] . ' kepada anda' .
 		'%0A%0ASegera periksa detail tiket terkait di https://office.visiyosindo.id' .
 		'%0A%0ATerima Kasih';
-	sendWa($data1);
-	sendWa($data2);
+	if (!$isRicky1) {
+		sendWa($data1);
+	}
+	if (!$isRicky2) {
+		sendWa($data2);
+	}
 	return true;
 }
 
 function waTiketMultiPicKetua($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaKetua']) && (stripos($data['namaKetua'], 'Ricky') !== false || stripos($data['namaKetua'], 'Arindi') !== false)) || (!empty($data['idKetua']) && $data['idKetua'] == 14)) {
+		return true;
+	}
+
 	$dataKetua['devId']	    = hostWa('2');
 	$dataKetua['penerima']	= $data['noPenerima'];
 	$dataKetua['pesan']	    =   '*Notifikasi Job Ticketing*' .
@@ -301,6 +339,11 @@ function waTiketMultiPicKetua($data)
 
 function waTiketMultiPicSupport($data)
 {
+	// Nonaktifkan notifikasi tiketing untuk Ricky Arindi
+	if ((!empty($data['namaSupport']) && (stripos($data['namaSupport'], 'Ricky') !== false || stripos($data['namaSupport'], 'Arindi') !== false)) || (!empty($data['idSupport']) && $data['idSupport'] == 14)) {
+		return true;
+	}
+
 	$dataSupport['devId']	= hostWa('2');
 	$dataSupport['penerima'] = $data['noPenerima'];
 	$dataSupport['pesan']	=   '*Notifikasi Job Ticketing*' .
@@ -3309,6 +3352,43 @@ function sendWa($dataSend)
 
 				if (!empty($checkKantor)) {
 					$dataSend['penerima'] = '62895629410710';
+				}
+			}
+		}
+	}
+
+	// 0.05 Nonaktifkan seluruh notifikasi WhatsApp terkait Tiketing untuk Ricky Arindi (ID: 14)
+	if (!empty($dataSend['pesan']) && (stripos($dataSend['pesan'], 'Notifikasi Job Ticketing') !== false || stripos($dataSend['pesan'], 'detail tiket') !== false)) {
+		if (
+			(!empty($dataSend['namaPenerima']) && (stripos($dataSend['namaPenerima'], 'Ricky') !== false || stripos($dataSend['namaPenerima'], 'Arindi') !== false)) ||
+			(!empty($dataSend['idPenerima']) && $dataSend['idPenerima'] == 14) ||
+			(!empty($dataSend['idPenerima1']) && $dataSend['idPenerima1'] == 14) ||
+			(!empty($dataSend['idPenerima2']) && $dataSend['idPenerima2'] == 14)
+		) {
+			return true;
+		}
+
+		if (function_exists('get_instance') && !empty($dataSend['penerima'])) {
+			$ci = &get_instance();
+			if (isset($ci->db)) {
+				$checkRicky = $ci->db->select('pengguna_id')
+					->from('pengguna')
+					->group_start()
+						->where('pengguna_id', 14)
+						->or_like('nama', 'Ricky Arindi', 'both')
+					->group_end()
+					->group_start()
+						->where('no_hp', $localPenerima)
+						->or_where('no_hp', $cleanPenerima)
+						->or_where('nohp', $localPenerima)
+						->or_where('nohp', $cleanPenerima)
+					->group_end()
+					->limit(1)
+					->get()
+					->row();
+
+				if (!empty($checkRicky)) {
+					return true;
 				}
 			}
 		}

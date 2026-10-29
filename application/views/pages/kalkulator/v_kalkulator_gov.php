@@ -11,6 +11,78 @@
 		text-align: center !important;
 		vertical-align: middle !important;
 	}
+
+	/* Proteksi kontras teks dropdown asli & Select2 agar selalu terbaca jelas */
+	select.form-control,
+	select.form-control option {
+		color: #0f172a !important;
+		background-color: #ffffff !important;
+		text-align: left !important;
+		direction: ltr !important;
+	}
+
+	/* Styling Select2 */
+	.select2-container--bootstrap .select2-selection--single {
+		height: 38px !important;
+		border: 1px solid #cbd5e1 !important;
+		border-radius: 6px !important;
+		padding: 6px 12px !important;
+		font-size: 13px !important;
+		color: #0f172a !important;
+		background-color: #ffffff !important;
+	}
+
+	.select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+		color: #0f172a !important;
+		line-height: 24px !important;
+		padding-left: 0 !important;
+		padding-right: 20px !important;
+		text-align: left !important;
+	}
+
+	.select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
+		height: 36px !important;
+		right: 8px !important;
+	}
+
+	.select2-dropdown {
+		border: 1px solid #cbd5e1 !important;
+		border-radius: 6px !important;
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+		z-index: 1060 !important;
+		background-color: #ffffff !important;
+	}
+
+	.select2-search--dropdown .select2-search__field {
+		border: 1px solid #cbd5e1 !important;
+		border-radius: 4px !important;
+		padding: 6px 10px !important;
+		font-size: 13px !important;
+		color: #0f172a !important;
+		background-color: #ffffff !important;
+	}
+
+	.select2-results__option {
+		padding: 8px 12px !important;
+		font-size: 13px !important;
+		color: #0f172a !important;
+		background-color: #ffffff !important;
+		line-height: 1.4 !important;
+		text-align: left !important;
+		white-space: normal !important;
+		word-break: break-word !important;
+	}
+
+	.select2-container--bootstrap .select2-results__option--highlighted[aria-selected] {
+		background-color: #2563eb !important;
+		color: #ffffff !important;
+	}
+
+	.select2-container--bootstrap .select2-results__option[aria-selected="true"] {
+		background-color: #eff6ff !important;
+		color: #1d4ed8 !important;
+		font-weight: 600 !important;
+	}
 </style>
 
 
@@ -25,26 +97,32 @@
 		<div class="card-body">
 			<div class="row">
 				<div class="col-md-2">
-					<small>Filter By Merk:</small>
-					<select class="form-control " name="filter_merk" id="filter_merk">
+					<small class="font-weight-bold text-dark">Filter By Merk:</small>
+					<select class="form-control select2" name="filter_merk" id="filter_merk" data-plugin-selectTwo data-placeholder="Semua Merk">
 						<option value="">Semua</option>
-						<?php foreach ($filter_merk as $row) { ?>
-							<option value="<?= $row->merk ?>"><?= $row->merk ?></option>
+						<?php foreach ($filter_merk as $row) { 
+							$merk = trim($row->merk ?? "");
+							if ($merk === "") continue;
+						?>
+							<option value="<?= htmlspecialchars($merk, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($merk, ENT_QUOTES, 'UTF-8') ?></option>
+						<?php } ?>
+					</select>
+				</div>
+				<div class="col-md-4">
+					<small class="font-weight-bold text-dark">Filter By Nama:</small>
+					<select class="form-control select2" name="filter_nama" id="filter_nama" data-plugin-selectTwo data-placeholder="Semua Nama Produk">
+						<option value="">Semua</option>
+						<?php foreach ($filter_nama as $row) { 
+							$nama = trim($row->nama ?? "");
+							if ($nama === "") continue;
+						?>
+							<option value="<?= htmlspecialchars($nama, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($nama, ENT_QUOTES, 'UTF-8') ?></option>
 						<?php } ?>
 					</select>
 				</div>
 				<div class="col-md-2">
-					<small>Filter By Nama:</small>
-					<select class="form-control " name="filter_nama" id="filter_nama">
-						<option value="">Semua</option>
-						<?php foreach ($filter_nama as $row) { ?>
-							<option value="<?= $row->nama ?>"><?= $row->nama ?></option>
-						<?php } ?>
-					</select>
-				</div>
-				<div class="col-md-2">
-					<small>Komisi User NPWP Badan:</small>
-					<div class="form-group">
+					<small class="font-weight-bold text-dark">Komisi NPWP Badan:</small>
+					<div class="form-group mb-0">
 						<div class="input-group">
 							<input type="text" class="form-control" id="komisi_badan" placeholder="0">
 							<div class="input-group-append">
@@ -54,8 +132,8 @@
 					</div>
 				</div>
 				<div class="col-md-2">
-					<small>Komisi User NPWP Pribadi:</small>
-					<div class="form-group">
+					<small class="font-weight-bold text-dark">Komisi NPWP Pribadi:</small>
+					<div class="form-group mb-0">
 						<div class="input-group">
 							<input type="text" class="form-control" id="komisi_pribadi" placeholder="0">
 							<div class="input-group-append">
@@ -65,8 +143,8 @@
 					</div>
 				</div>
 				<div class="col-md-2">
-					<small>Komisi User Tanpa NPWP:</small>
-					<div class="form-group">
+					<small class="font-weight-bold text-dark">Komisi Tanpa NPWP:</small>
+					<div class="form-group mb-0">
 						<div class="input-group">
 							<input type="text" class="form-control" id="komisi_npwp" placeholder="0">
 							<div class="input-group-append">
@@ -75,8 +153,6 @@
 						</div>
 					</div>
 				</div>
-				
-			</div>
 			<br>
 			<div class="table-responsive">
 				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
@@ -144,12 +220,29 @@
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			$('#filter_merk, #filter_nama').change(function() {
-				updateDatatable()
-			})
+			if (window.jQuery && $.fn.select2) {
+				$('#filter_merk').select2({
+					theme: 'bootstrap',
+					width: '100%',
+					placeholder: 'Semua Merk',
+					allowClear: true
+				});
+
+				$('#filter_nama').select2({
+					theme: 'bootstrap',
+					width: '100%',
+					placeholder: 'Semua Nama Produk',
+					allowClear: true
+				});
+			}
+
+			$('#filter_merk, #filter_nama').on('change select2:select select2:clear', function() {
+				updateDatatable();
+			});
+
 			$('#komisi_badan, #komisi_pribadi, #komisi_npwp').keyup(function() {
-                updateDatatable()
-            })
+				updateDatatable();
+			});
 			
 			table = $('#kt_table_1').DataTable({
 			responsive: false,
@@ -160,8 +253,8 @@
 				url: 'kalkulator/pagination_gov',
 				type: 'POST',
 				data: function(e) {
-					e.filter_merk = $('#filter_merk').val();
-					e.filter_nama = $('#filter_nama').val();
+					e.filter_merk = $('#filter_merk').val() || '';
+					e.filter_nama = $('#filter_nama').val() || '';
 					e.komisi_badan = $('#komisi_badan').val();
 					e.komisi_pribadi = $('#komisi_pribadi').val();
 					e.komisi_npwp = $('#komisi_npwp').val();
