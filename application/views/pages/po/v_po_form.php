@@ -879,11 +879,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!valStr && valStr !== 0) return '';
         var s = valStr.toString().trim();
         
-        // Toleransi jika user paste dot tunggal sebagai desimal (misal "4504504.5")
+        // Toleransi jika user ketik / paste titik sebagai desimal (termasuk numpad dot ".")
+        // Jika tidak ada koma, titik terakhir dengan 0-2 digit di belakangnya otomatis dijadikan koma desimal
         if (s.indexOf(',') === -1 && s.indexOf('.') !== -1) {
             var lastDot = s.lastIndexOf('.');
             var afterDot = s.substring(lastDot + 1);
-            if (afterDot.length <= 2 && s.indexOf('.') === lastDot) {
+            if (afterDot.length <= 2) {
                 s = s.substring(0, lastDot) + ',' + afterDot;
             }
         }
@@ -908,6 +909,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function parseRupiah(str) {
         if (!str && str !== 0) return 0;
         var s = str.toString().trim();
+        if (s.indexOf(',') === -1 && s.indexOf('.') !== -1) {
+            var lastDot = s.lastIndexOf('.');
+            var afterDot = s.substring(lastDot + 1);
+            if (afterDot.length <= 2) {
+                s = s.substring(0, lastDot) + ',' + afterDot;
+            }
+        }
         if (s.indexOf(',') !== -1) {
             var parts = s.split(',');
             var intPart = parts[0].replace(/[^0-9]/g, '') || '0';
