@@ -904,6 +904,7 @@ class Md_dashboard extends CI_Model
                 'sakit'      => $stats_bulan['sakit'],
                 'izin'       => $stats_bulan['izin'],
                 'cuti'       => $stats_bulan['cuti'],
+                'dinas'      => $stats_bulan['dinas'],
             ),
             'tahun' => array(
                 'label'      => $tahun_ini,
@@ -911,6 +912,7 @@ class Md_dashboard extends CI_Model
                 'sakit'      => $stats_tahun['sakit']['total'],
                 'izin'       => $stats_tahun['izin']['total'],
                 'cuti'       => $stats_tahun['cuti']['total'],
+                'dinas'      => $stats_tahun['dinas']['total'],
             )
         );
     }
@@ -920,12 +922,14 @@ class Md_dashboard extends CI_Model
         $dates_map = array(
             'sakit' => array(),
             'izin'  => array(),
-            'cuti'  => array()
+            'cuti'  => array(),
+            'dinas' => array()
         );
 
         // 1. Dari tabel absensi
-        $sql_absen = "SELECT DATE(data_created) as tgl, waktu_absen, keterangan,
+        $sql_absen = "SELECT DATE(data_created) as tgl, waktu_absen, keterangan, jenis_absen,
             CASE 
+                WHEN UPPER(jenis_absen) = 'DINAS' OR status_absen = 'dinas' OR type_absen = 'dinas' THEN 'dinas'
                 WHEN status_absen = 'sakit' OR type_absen = 'sakit' THEN 'sakit'
                 WHEN status_absen = 'cuti' OR type_absen = 'cuti' THEN 'cuti'
                 WHEN status_absen = 'izin' OR (type_absen = 'izin' AND (status_absen IS NULL OR status_absen = '' OR status_absen = 'izin')) THEN 'izin'
@@ -934,16 +938,20 @@ class Md_dashboard extends CI_Model
             FROM absensi
             WHERE pengguna_id = ?
               AND data_created >= ? AND data_created <= ?
-              AND (type_absen IN ('izin', 'cuti', 'sakit') OR status_absen IN ('izin', 'cuti', 'sakit'))
+              AND (UPPER(jenis_absen) = 'DINAS' OR status_absen IN ('izin', 'cuti', 'sakit', 'dinas') OR type_absen IN ('izin', 'cuti', 'sakit', 'dinas'))
             ORDER BY data_created DESC";
         $q_absen = $this->db->query($sql_absen, array($pengguna_id, $tgl_awal . ' 00:00:00', $tgl_akhir . ' 23:59:59'));
         foreach ($q_absen->result() as $r) {
             if (!empty($r->kategori) && !empty($r->tgl)) {
+                $sumber = ($r->kategori == 'dinas') 
+                    ? 'Absen Dinas (' . ($r->waktu_absen ? date('H:i', strtotime($r->waktu_absen)) : '') . ')' 
+                    : 'Absensi';
+                $ket = !empty($r->keterangan) ? $r->keterangan : ($r->kategori == 'dinas' ? 'Absensi Dinas' : '-');
                 $dates_map[$r->kategori][$r->tgl] = array(
                     'tgl' => $r->tgl,
                     'tgl_formatted' => date('d M Y', strtotime($r->tgl)),
-                    'sumber' => 'Absensi',
-                    'keterangan' => !empty($r->keterangan) ? $r->keterangan : '-'
+                    'sumber' => $sumber,
+                    'keterangan' => $ket
                 );
             }
         }
@@ -1011,8 +1019,32 @@ class Md_dashboard extends CI_Model
             }
         }
 
+        // 4. Dari tabel surat_pd_dinas (Surat Perjalanan Dinas yang disetujui ttd_3 = 1)
+        $sql_pd = "SELECT sp.id, sp.kode, sp.tujuan, sp.keperluan, sp.tgl_dinas, sp.tgl_dinas_akhir 
+                   FROM surat_pd_dinas sp
+                   LEFT JOIN pengguna p ON (p.nama = sp.nama_karyawan)
+                   WHERE (p.pengguna_id = ? OR sp.id_pengguna = ?)
+                     AND sp.ttd_3 = 1
+                     AND sp.tgl_dinas <= ? AND sp.tgl_dinas_akhir >= ?";
+        $q_pd = $this->db->query($sql_pd, array($pengguna_id, $pengguna_id, $tgl_akhir, $tgl_awal));
+        foreach ($q_pd->result() as $r) {
+            $cur = max($tgl_awal, $r->tgl_dinas);
+            $end = min($tgl_akhir, $r->tgl_dinas_akhir);
+            while (strtotime($cur) <= strtotime($end)) {
+                if (!isset($dates_map['dinas'][$cur])) {
+                    $dates_map['dinas'][$cur] = array(
+                        'tgl' => $cur,
+                        'tgl_formatted' => date('d M Y', strtotime($cur)),
+                        'sumber' => 'Surat Dinas (' . (!empty($r->kode) ? $r->kode : 'SPD') . ')',
+                        'keterangan' => !empty($r->keperluan) ? $r->keperluan : (!empty($r->tujuan) ? 'Dinas ke ' . $r->tujuan : 'Perjalanan Dinas')
+                    );
+                }
+                $cur = date('Y-m-d', strtotime('+1 day', strtotime($cur)));
+            }
+        }
+
         $res = array();
-        foreach (array('sakit', 'izin', 'cuti') as $k) {
+        foreach (array('sakit', 'izin', 'cuti', 'dinas') as $k) {
             krsort($dates_map[$k]);
             $list = array_values($dates_map[$k]);
             $res[$k] = array(

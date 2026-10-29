@@ -1023,6 +1023,15 @@
 				background: #ea580c;
 				color: #ffffff;
 			}
+
+			.stat-detail-pill.teal {
+				background: #f0f9ff;
+				color: #0284c7;
+			}
+			.modern-stat-card:hover .stat-detail-pill.teal {
+				background: #0284c7;
+				color: #ffffff;
+			}
 		</style>
 
 		<!-- 1. Rekap Presensi Saya (Sakit, Izin, Cuti, Terlambat) -->
@@ -1038,8 +1047,8 @@
 			</div>
 
 			<div class="row">
-				<!-- Sakit -->
-				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+				<!-- 1. Sakit -->
+				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
 					<a href="javascript:;" id="btn-show-my-sakit" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-rose">
 							<div class="d-flex justify-content-between align-items-center">
@@ -1050,7 +1059,7 @@
 										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
 										<span class="stat-detail-pill rose ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
-									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Total Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['sakit']) ? $stat_karyawan['tahun']['sakit'] : 0 ?></b> Hari</small>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['sakit']) ? $stat_karyawan['tahun']['sakit'] : 0 ?></b> Hari</small>
 								</div>
 								<div class="stat-icon-wrapper stat-icon-rose">
 									<i class="fas fa-procedures"></i>
@@ -1060,8 +1069,8 @@
 					</a>
 				</div>
 
-				<!-- Izin -->
-				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+				<!-- 2. Izin -->
+				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
 					<a href="javascript:;" id="btn-show-my-izin" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-amber">
 							<div class="d-flex justify-content-between align-items-center">
@@ -1072,7 +1081,7 @@
 										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
 										<span class="stat-detail-pill amber ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
-									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Total Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['izin']) ? $stat_karyawan['tahun']['izin'] : 0 ?></b> Hari</small>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['izin']) ? $stat_karyawan['tahun']['izin'] : 0 ?></b> Hari</small>
 								</div>
 								<div class="stat-icon-wrapper stat-icon-amber">
 									<i class="fas fa-envelope-open-text"></i>
@@ -1082,8 +1091,8 @@
 					</a>
 				</div>
 
-				<!-- Cuti -->
-				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+				<!-- 3. Cuti -->
+				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
 					<a href="javascript:;" id="btn-show-my-cuti" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-purple">
 							<div class="d-flex justify-content-between align-items-center">
@@ -1094,7 +1103,7 @@
 										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
 										<span class="stat-detail-pill purple ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
-									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Sisa Cuti Tahunan: <b><?= $cuti_tahunan ?></b> Hari</small>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Sisa Cuti: <b><?= $cuti_tahunan ?></b> Hari</small>
 								</div>
 								<div class="stat-icon-wrapper stat-icon-purple">
 									<i class="fas fa-calendar-check"></i>
@@ -1104,8 +1113,8 @@
 					</a>
 				</div>
 
-				<!-- Terlambat -->
-				<div class="col-xl-3 col-md-6 col-sm-6 col-12 mb-3">
+				<!-- 4. Terlambat -->
+				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
 					<a href="javascript:;" id="btn-show-my-terlambat" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-orange">
 							<div class="d-flex justify-content-between align-items-center">
@@ -1116,10 +1125,32 @@
 										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Kali</span>
 										<span class="stat-detail-pill orange ml-2">Detail <i class="bx bx-chevron-right"></i></span>
 									</div>
-									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Total Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['terlambat']) ? $stat_karyawan['tahun']['terlambat'] : 0 ?></b> Kali</small>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['terlambat']) ? $stat_karyawan['tahun']['terlambat'] : 0 ?></b> Kali</small>
 								</div>
 								<div class="stat-icon-wrapper stat-icon-orange">
 									<i class="fas fa-history"></i>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+
+				<!-- 5. Dinas -->
+				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
+					<a href="javascript:;" id="btn-show-my-dinas" class="text-decoration-none">
+						<div class="modern-stat-card stat-card-teal">
+							<div class="d-flex justify-content-between align-items-center">
+								<div>
+									<div class="stat-card-label" style="color: #0284c7;"><i class="fas fa-briefcase mr-1"></i> Dinas</div>
+									<div class="d-flex align-items-baseline gap-2 mt-1">
+										<span class="stat-card-value"><?= isset($stat_karyawan['bulan']['dinas']['total']) ? $stat_karyawan['bulan']['dinas']['total'] : 0 ?></span>
+										<span class="text-muted ml-1" style="font-size: 13px; font-weight: 600;">Hari</span>
+										<span class="stat-detail-pill teal ml-2">Detail <i class="bx bx-chevron-right"></i></span>
+									</div>
+									<small class="text-muted mt-1 d-block" style="font-size: 11px;">Tahun <?= date('Y') ?>: <b><?= isset($stat_karyawan['tahun']['dinas']) ? $stat_karyawan['tahun']['dinas'] : 0 ?></b> Hari</small>
+								</div>
+								<div class="stat-icon-wrapper stat-icon-teal">
+									<i class="fas fa-plane-departure"></i>
 								</div>
 							</div>
 						</div>
@@ -2069,6 +2100,53 @@
 	</div>
 </div>
 
+<!-- Modal Detail Dinas Pribadi -->
+<div id="modal-my-dinas" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header text-white" style="background: #0284c7;">
+				<h5 class="modal-title font-weight-bold"><i class="fas fa-briefcase mr-2"></i> Rincian Hari Dinas - <?= isset($stat_karyawan['bulan']['label_id']) ? $stat_karyawan['bulan']['label_id'] : date('F Y') ?></h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<div class="modal-body">
+				<?php if (!empty($stat_karyawan['bulan']['dinas']['list'])) { ?>
+					<div class="table-responsive">
+						<table class="table table-bordered table-striped table-sm mb-0">
+							<thead class="bg-light">
+								<tr>
+									<th style="width: 5%;">#</th>
+									<th style="width: 25%;">Tanggal</th>
+									<th style="width: 30%;">Sumber</th>
+									<th>Keperluan / Tujuan</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php $no = 1; foreach ($stat_karyawan['bulan']['dinas']['list'] as $item) { ?>
+									<tr>
+										<td><?= $no++ ?></td>
+										<td><span class="font-weight-bold text-dark"><?= $item['tgl_formatted'] ?></span></td>
+										<td><span class="badge badge-light border text-info"><?= $item['sumber'] ?></span></td>
+										<td><?= htmlspecialchars($item['keterangan']) ?></td>
+									</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				<?php } else { ?>
+					<div class="text-center py-4 text-muted">
+						<i class="fas fa-briefcase fa-3x text-info mb-2"></i>
+						<h6 class="font-weight-bold text-dark">Tidak Ada Catatan Dinas</h6>
+						<p class="mb-0 text-muted" style="font-size: 13px;">Anda tidak memiliki riwayat absensi dinas atau surat dinas pada bulan ini.</p>
+					</div>
+				<?php } ?>
+			</div>
+			<div class="modal-footer bg-light">
+				<button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <!-- Modal Detail Terlambat Pribadi -->
 <div id="modal-my-terlambat" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -2130,6 +2208,10 @@
 
 		$('#btn-show-my-terlambat').click(function() {
 			$('#modal-my-terlambat').modal('show');
+		});
+
+		$('#btn-show-my-dinas').click(function() {
+			$('#modal-my-dinas').modal('show');
 		});
 
 		$('#btn-show-open').click(function() {
