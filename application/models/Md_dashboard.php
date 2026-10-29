@@ -1020,7 +1020,7 @@ class Md_dashboard extends CI_Model
         }
 
         // 4. Dari tabel surat_pd_dinas (Surat Perjalanan Dinas yang disetujui ttd_3 = 1)
-        $sql_pd = "SELECT sp.id, sp.kode, sp.tujuan, sp.keperluan, sp.tgl_dinas, sp.tgl_dinas_akhir 
+        $sql_pd = "SELECT sp.id, sp.kode, sp.lokasi_dinas, sp.perihal, sp.tgl_dinas, sp.tgl_dinas_akhir 
                    FROM surat_pd_dinas sp
                    LEFT JOIN pengguna p ON (p.nama = sp.nama_karyawan)
                    WHERE (p.pengguna_id = ? OR sp.id_pengguna = ?)
@@ -1036,7 +1036,7 @@ class Md_dashboard extends CI_Model
                         'tgl' => $cur,
                         'tgl_formatted' => date('d M Y', strtotime($cur)),
                         'sumber' => 'Surat Dinas (' . (!empty($r->kode) ? $r->kode : 'SPD') . ')',
-                        'keterangan' => !empty($r->keperluan) ? $r->keperluan : (!empty($r->tujuan) ? 'Dinas ke ' . $r->tujuan : 'Perjalanan Dinas')
+                        'keterangan' => !empty($r->perihal) ? $r->perihal : (!empty($r->lokasi_dinas) ? 'Dinas: ' . $r->lokasi_dinas : 'Perjalanan Dinas')
                     );
                 }
                 $cur = date('Y-m-d', strtotime('+1 day', strtotime($cur)));
