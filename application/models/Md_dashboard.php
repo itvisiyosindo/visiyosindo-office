@@ -1149,6 +1149,34 @@ class Md_dashboard extends CI_Model
             return null;
         }
 
+        // Khusus simulasi/uji coba tampilan untuk Dimas Chandra Winiata (pengguna_id: 778)
+        if ($pengguna_id == 778) {
+            $tgl_mulai = new DateTime(date('Y-m-d', strtotime('-1 month')));
+            $tgl_akhir = clone $tgl_mulai;
+            $tgl_akhir->modify('+6 months');
+            $diff = (new DateTime(date('Y-m-d')))->diff($tgl_akhir);
+            $sisa_hari = (int)$diff->format('%a');
+
+            $tgl_mulai_formatted = date('d', strtotime($tgl_mulai->format('Y-m-d'))) . ' ' . $this->_namaBulanIndo(date('m', strtotime($tgl_mulai->format('Y-m-d')))) . ' ' . date('Y', strtotime($tgl_mulai->format('Y-m-d')));
+            $tgl_akhir_formatted = date('d', strtotime($tgl_akhir->format('Y-m-d'))) . ' ' . $this->_namaBulanIndo(date('m', strtotime($tgl_akhir->format('Y-m-d')))) . ' ' . date('Y', strtotime($tgl_akhir->format('Y-m-d')));
+
+            return (object) array(
+                'id'                  => 1,
+                'kode'                => '001/SP/PT.VYM/PKU/' . ambil_bulan() . '/' . date('Y'),
+                'jenis_sp'            => 'SP 1',
+                'perihal'             => 'Pertama',
+                'kesalahan'           => 'Simulasi Uji Coba: Keterlambatan dan ketidakhadiran kerja tanpa konfirmasi',
+                'sanksi'              => 'Peringatan tertulis dan evaluasi kedisiplinan kerja selama 6 bulan',
+                'masa_bulan'          => 6,
+                'tgl_mulai'           => $tgl_mulai->format('Y-m-d'),
+                'tgl_mulai_formatted' => $tgl_mulai_formatted,
+                'tgl_akhir'           => $tgl_akhir->format('Y-m-d'),
+                'tgl_akhir_formatted' => $tgl_akhir_formatted,
+                'sisa_hari'           => $sisa_hari,
+                'ttd_3'               => 1
+            );
+        }
+
         return null;
     }
 
