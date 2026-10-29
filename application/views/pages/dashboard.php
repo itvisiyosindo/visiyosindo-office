@@ -1082,7 +1082,7 @@
 			<div class="row">
 				<!-- 1. Sakit -->
 				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-					<a href="javascript:;" id="btn-show-my-sakit" class="text-decoration-none">
+					<a href="javascript:;" id="btn-show-my-sakit" data-toggle="modal" data-target="#modal-my-sakit" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-rose">
 							<div class="d-flex justify-content-between align-items-center">
 								<div>
@@ -1104,7 +1104,7 @@
 
 				<!-- 2. Izin -->
 				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-					<a href="javascript:;" id="btn-show-my-izin" class="text-decoration-none">
+					<a href="javascript:;" id="btn-show-my-izin" data-toggle="modal" data-target="#modal-my-izin" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-amber">
 							<div class="d-flex justify-content-between align-items-center">
 								<div>
@@ -1126,7 +1126,7 @@
 
 				<!-- 3. Cuti -->
 				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-					<a href="javascript:;" id="btn-show-my-cuti" class="text-decoration-none">
+					<a href="javascript:;" id="btn-show-my-cuti" data-toggle="modal" data-target="#modal-my-cuti" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-purple">
 							<div class="d-flex justify-content-between align-items-center">
 								<div>
@@ -1148,7 +1148,7 @@
 
 				<!-- 4. Terlambat -->
 				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-					<a href="javascript:;" id="btn-show-my-terlambat" class="text-decoration-none">
+					<a href="javascript:;" id="btn-show-my-terlambat" data-toggle="modal" data-target="#modal-my-terlambat" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-orange">
 							<div class="d-flex justify-content-between align-items-center">
 								<div>
@@ -1170,7 +1170,7 @@
 
 				<!-- 5. Dinas -->
 				<div class="col-xl col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-					<a href="javascript:;" id="btn-show-my-dinas" class="text-decoration-none">
+					<a href="javascript:;" id="btn-show-my-dinas" data-toggle="modal" data-target="#modal-my-dinas" class="text-decoration-none">
 						<div class="modern-stat-card stat-card-teal">
 							<div class="d-flex justify-content-between align-items-center">
 								<div>
@@ -1975,23 +1975,6 @@
 	</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-
-		$('#myTableNew1').DataTable();
-		$('#myTableNew2').DataTable();
-		$('#myTableNew3').DataTable();
-		if ($('#myTableSisaCutiKaryawan').length) {
-			$('#myTableSisaCutiKaryawan').DataTable({
-				pageLength: 25,
-				order: [
-					[1, 'asc']
-				]
-			});
-		}
-
 <!-- Modal Detail Sakit Pribadi -->
 <div id="modal-my-sakit" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -2227,7 +2210,24 @@
 	</div>
 </div>
 
-		$('#btn-show-my-sakit').click(function() {
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+
+		$('#myTableNew1').DataTable();
+		$('#myTableNew2').DataTable();
+		$('#myTableNew3').DataTable();
+		if ($('#myTableSisaCutiKaryawan').length) {
+			$('#myTableSisaCutiKaryawan').DataTable({
+				pageLength: 25,
+				order: [
+					[1, 'asc']
+				]
+			});
+		}
+
+$('#btn-show-my-sakit').click(function() {
 			$('#modal-my-sakit').modal('show');
 		});
 
