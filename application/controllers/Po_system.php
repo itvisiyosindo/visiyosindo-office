@@ -51,7 +51,7 @@ class Po_system extends CI_Controller
     }
 
     /**
-     * Ambil daftar karyawan aktif untuk dropdown pengaju PO (kecuali Office Boy & Security)
+     * Ambil daftar karyawan aktif untuk dropdown pengaju PO (kecuali Office Boy, Security, & Helper)
      */
     private function getPengajuList()
     {
@@ -62,6 +62,7 @@ class Po_system extends CI_Controller
                 strpos($jabatan, 'office boy') !== false ||
                 strpos($jabatan, 'security') !== false ||
                 strpos($jabatan, 'satpam') !== false ||
+                strpos($jabatan, 'helper') !== false ||
                 $jabatan === 'ob'
             ) {
                 return false;
