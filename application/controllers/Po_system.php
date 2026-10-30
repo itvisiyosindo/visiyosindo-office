@@ -81,6 +81,7 @@ class Po_system extends CI_Controller
         $this->db->select('pengguna_id, nama, jabatan');
         $this->db->from('pengguna');
         $this->db->where('status', 1);
+        $this->db->where('is_active', 1);
         $this->db->group_start();
         $this->db->like('jabatan', 'Marketing');
         $this->db->or_like('jabatan', 'Sales');
@@ -133,6 +134,7 @@ class Po_system extends CI_Controller
         $this->db->select('pengguna_id, nama, jabatan');
         $this->db->from('pengguna');
         $this->db->where('status', 1);
+        $this->db->where('is_active', 1);
         $this->db->group_start();
         $this->db->like('jabatan', 'Marketing');
         $this->db->or_like('jabatan', 'Sales');

@@ -864,14 +864,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // 4. Update nama sales saat dropdown sales berubah
-    var selectSales = document.getElementById('id_sales');
-    if (selectSales) {
-        selectSales.addEventListener('change', function () {
-            var opt = this.options[this.selectedIndex];
+    function syncNamaSales() {
+        var selectSales = document.getElementById('id_sales');
+        if (selectSales && selectSales.selectedIndex >= 0) {
+            var opt = selectSales.options[selectSales.selectedIndex];
             if (opt) {
                 document.getElementById('nama_sales_input').value = opt.getAttribute('data-nama') || '';
             }
-        });
+        }
+    }
+    var selectSales = document.getElementById('id_sales');
+    if (selectSales) {
+        selectSales.addEventListener('change', syncNamaSales);
+        if (window.jQuery) {
+            $('#id_sales').on('change select2:select', syncNamaSales);
+        }
+        syncNamaSales();
     }
 
     // 5. Format & Kalkulasi Barang & Total Realtime
