@@ -24,6 +24,14 @@ class Pengguna extends CI_Controller
         if ($chk && $chk->num_rows() === 0) {
             @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `id_atasan` INT(11) DEFAULT NULL AFTER `hirarki`, ADD INDEX `idx_id_atasan` (`id_atasan`)");
         }
+        $chkEmailKantor = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'email_kantor'");
+        if ($chkEmailKantor && $chkEmailKantor->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `email_kantor` VARCHAR(150) DEFAULT NULL AFTER `email`");
+        }
+        $chkPassEmailKantor = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'password_email_kantor'");
+        if ($chkPassEmailKantor && $chkPassEmailKantor->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `password_email_kantor` VARCHAR(150) DEFAULT NULL AFTER `email_kantor`");
+        }
     }
 	
 	function id_navbar(){
@@ -83,6 +91,8 @@ class Pengguna extends CI_Controller
 
         $data['nama']     = $this->input->post('nama', TRUE);
         $data['email']    = $this->input->post('email', TRUE);
+        $data['email_kantor'] = $this->input->post('email_kantor', TRUE);
+        $data['password_email_kantor'] = $this->input->post('password_email_kantor');
         $data['username'] = $this->input->post('username', TRUE);
         $data['password'] = hash('sha512', $this->input->post('password', TRUE));
         $data['level']    = $this->input->post('level', TRUE);
@@ -227,6 +237,12 @@ class Pengguna extends CI_Controller
             $data['no_hp']              = $this->input->post('no_hp');
             $data['no_hp_kantor']       = $this->input->post('no_hp_kantor');
             $data['email']              = $this->input->post('email');
+            if ($this->input->post('email_kantor') !== null) {
+                $data['email_kantor']   = $this->input->post('email_kantor');
+            }
+            if ($this->input->post('password_email_kantor') !== null) {
+                $data['password_email_kantor'] = $this->input->post('password_email_kantor');
+            }
             $data['lama_training']      = $this->input->post('lama_training');
             $data['jabatan']            = $this->input->post('jabatan');
             $data['jabatan_visilab']    = $this->input->post('jabatan_visilab');
@@ -309,11 +325,33 @@ class Pengguna extends CI_Controller
             $id_atasan = ($id_atasan_post !== null && $id_atasan_post !== '' && (int)$id_atasan_post > 0 && (int)$id_atasan_post !== $pengguna_id) ? (int)$id_atasan_post : NULL;
             $this->md_pengguna->updatePengguna($pengguna_id, ['id_atasan' => $id_atasan]);
             ajaxReturnDie('success', 'Data Atasan Langsung berhasil diperbarui!', TRUE);
+        } else if ($param == 'email_kantor') {
+            grantAccessFor('all');
+            $raw_id = $this->input->post('pengguna_id', TRUE);
+            $pengguna_id = is_numeric($raw_id) ? (int)$raw_id : (int)decrypt($raw_id);
+            $myId = (int)sessPenggunaId();
+            if ($pengguna_id <= 0 || ($pengguna_id !== $myId && !isAdmin() && !isHrd() && !isGa())) {
+                ajaxReturnDie('error', 'Anda tidak memiliki akses untuk mengubah akun email kantor ini.', FALSE);
+            }
+            $email_kantor = trim((string)$this->input->post('email_kantor', TRUE));
+            $password_email_kantor = (string)$this->input->post('password_email_kantor');
+            $this->md_pengguna->updatePengguna($pengguna_id, [
+                'email_kantor' => $email_kantor,
+                'password_email_kantor' => $password_email_kantor
+            ]);
+            addLog('Update Email Kantor', 'Memperbarui Akun Email Kantor untuk Pengguna ID: ' . $pengguna_id);
+            ajaxReturnDie('success', 'Akun Email Kantor & Password berhasil disimpan!', TRUE);
         } else {
             grantAccessFor(['Administrator', 'Hrd', 'Ga']);
             $pengguna_id      = decrypt($this->input->post('pengguna_id'));
             $data['nama']     = $this->input->post('nama');
             $data['email']    = $this->input->post('email');
+            if ($this->input->post('email_kantor') !== null) {
+                $data['email_kantor'] = $this->input->post('email_kantor');
+            }
+            if ($this->input->post('password_email_kantor') !== null) {
+                $data['password_email_kantor'] = $this->input->post('password_email_kantor');
+            }
             $data['username'] = $this->input->post('username');
             $data['level']    = $this->input->post('level');
             $data['hirarki']    = $this->input->post('hirarki');

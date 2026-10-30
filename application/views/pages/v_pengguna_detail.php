@@ -857,7 +857,7 @@
                         </div>
                         <div class="quick-info-item">
                             <i class="fas fa-envelope"></i>
-                            <div class="quick-info-label">Email</div>
+                            <div class="quick-info-label">Email Pribadi</div>
                             <div class="quick-info-value"><?= $data_pengguna[0]->email ?: '-' ?></div>
                         </div>
                         <div class="quick-info-item">
@@ -885,7 +885,35 @@
                             }
                         }
                         $canEditAtasanProfil = ((int)sessPenggunaId() === (int)$data_pengguna[0]->pengguna_id) || isAdmin() || isHrd() || isGa();
+                        $valEmailKantor = isset($data_pengguna[0]->email_kantor) ? trim((string)$data_pengguna[0]->email_kantor) : '';
+                        $valPassEmailKantor = isset($data_pengguna[0]->password_email_kantor) ? (string)$data_pengguna[0]->password_email_kantor : '';
                         ?>
+                        <div class="quick-info-item" style="border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.18);">
+                            <i class="fas fa-envelope-open-text"></i>
+                            <div class="quick-info-label">Akun Email Kantor</div>
+                            <div class="quick-info-value">
+                                <div>
+                                    <?= !empty($valEmailKantor) ? htmlspecialchars($valEmailKantor) : '<span style="opacity:0.8;font-weight:400;">Belum diatur</span>' ?>
+                                </div>
+                                <?php if ($canEditAtasanProfil && !empty($valPassEmailKantor)): ?>
+                                    <div style="margin-top:3px; font-size:11.5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                        <span style="opacity:0.85; font-weight:500;">Pass:</span>
+                                        <span id="headerPassEmailMask" style="font-family:monospace; letter-spacing:1px;">••••••••</span>
+                                        <span id="headerPassEmailReal" style="font-family:monospace; display:none; background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:4px;"><?= htmlspecialchars($valPassEmailKantor) ?></span>
+                                        <a href="javascript:;" onclick="toggleHeaderPassEmail()" class="badge badge-light" style="color:#1e40af; font-size:10px; padding:2px 6px;" title="Lihat / Sembunyikan Password">
+                                            <i class="fas fa-eye" id="iconHeaderPassEmail"></i>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ($canEditAtasanProfil): ?>
+                                    <div style="margin-top:5px;">
+                                        <a href="javascript:;" data-toggle="modal" data-target="#modalEmailKantorProfil" class="badge badge-light" style="color:#1e40af; font-weight:700; font-size:10.5px; padding:3px 8px;">
+                                            <i class="fas fa-edit"></i> <?= !empty($valEmailKantor) ? 'Ubah Email Kantor' : 'Atur Email Kantor' ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                         <div class="quick-info-item" style="border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.18);">
                             <i class="fas fa-user-shield"></i>
                             <div class="quick-info-label">Atasan Langsung</div>
@@ -1035,13 +1063,13 @@
 
                 <div class="profile-content-card">
                     <div class="card-header-custom">
-                        <h5><i class="fas fa-address-book"></i> Informasi Kontak</h5>
+                        <h5><i class="fas fa-address-book"></i> Informasi Kontak & Akun Email Kantor</h5>
                     </div>
                     <div class="card-body-custom">
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group-modern">
-                                    <label><i class="fas fa-envelope"></i> Email</label>
+                                    <label><i class="fas fa-envelope"></i> Email Pribadi</label>
                                     <input class="form-control" type="email" name="email" value="<?= $data_pengguna[0]->email ?>">
                                 </div>
                             </div>
@@ -1055,6 +1083,38 @@
                                 <div class="form-group-modern">
                                     <label><i class="fas fa-building"></i> No. HP Kantor (Notifikasi)</label>
                                     <input class="form-control" type="text" name="no_hp_kantor" value="<?= $data_pengguna[0]->no_hp_kantor ?>" placeholder="Opsional jika menggunakan nomor kantor">
+                                </div>
+                            </div>
+                        </div>
+                        <hr style="border-top: 1px dashed #e2e8f0; margin: 12px 0 18px 0;">
+                        <div class="row align-items-end">
+                            <div class="col-md-6">
+                                <div class="form-group-modern mb-md-0">
+                                    <label><i class="fas fa-envelope-open-text text-primary"></i> Email Kantor</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="email" id="input_email_kantor_form" name="email_kantor" value="<?= htmlspecialchars($valEmailKantor) ?>" placeholder="contoh: nama@visiyosindo.id" style="border-radius: 10px 0 0 10px;">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="copyTextValue('#input_email_kantor_form', 'Email Kantor')" title="Salin Email Kantor" style="border-radius: 0 10px 10px 0; border-color: #e2e8f0;">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern mb-md-0">
+                                    <label><i class="fas fa-key text-warning"></i> Password Email Kantor</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="password" id="input_pass_email_kantor_form" name="password_email_kantor" value="<?= $canEditAtasanProfil ? htmlspecialchars($valPassEmailKantor) : '' ?>" placeholder="Masukkan password email kantor" style="border-radius: 10px 0 0 10px;">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassInput('#input_pass_email_kantor_form', '#iconPassForm')" title="Lihat / Sembunyikan Password" style="border-color: #e2e8f0;">
+                                                <i class="fas fa-eye" id="iconPassForm"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="copyTextValue('#input_pass_email_kantor_form', 'Password Email Kantor')" title="Salin Password" style="border-radius: 0 10px 10px 0; border-color: #e2e8f0;">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2392,6 +2452,98 @@ function goBack() {
     window.history.back();
 }
 
+function toggleHeaderPassEmail() {
+    var mask = document.getElementById('headerPassEmailMask');
+    var real = document.getElementById('headerPassEmailReal');
+    var icon = document.getElementById('iconHeaderPassEmail');
+    if (!mask || !real) return;
+    if (real.style.display === 'none') {
+        real.style.display = 'inline-block';
+        mask.style.display = 'none';
+        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+    } else {
+        real.style.display = 'none';
+        mask.style.display = 'inline-block';
+        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+    }
+}
+
+function togglePassInput(inputSelector, iconSelector) {
+    var $inp = $(inputSelector);
+    var $ico = $(iconSelector);
+    if ($inp.attr('type') === 'password') {
+        $inp.attr('type', 'text');
+        $ico.removeClass('fa-eye').addClass('fa-eye-slash');
+    } else {
+        $inp.attr('type', 'password');
+        $ico.removeClass('fa-eye-slash').addClass('fa-eye');
+    }
+}
+
+function copyTextValue(inputSelector, labelName) {
+    var val = $(inputSelector).val();
+    if (!val) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Info', (labelName || 'Data') + ' masih kosong.', 'info');
+        }
+        return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(val).then(function() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'success', title: 'Disalin!', text: (labelName || 'Data') + ' berhasil disalin ke clipboard.', timer: 1400, showConfirmButton: false });
+            }
+        });
+    } else {
+        var $temp = $('<input>');
+        $('body').append($temp);
+        $temp.val(val).select();
+        document.execCommand('copy');
+        $temp.remove();
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'success', title: 'Disalin!', text: (labelName || 'Data') + ' berhasil disalin ke clipboard.', timer: 1400, showConfirmButton: false });
+        }
+    }
+}
+
+$(document).on('submit', '#formEmailKantorProfil', function(e) {
+    e.preventDefault();
+    var $btn = $('#btnSimpanEmailKantorProfil');
+    var orig = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+    $.ajax({
+        url: '<?= base_url("pengguna/update/email_kantor") ?>',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            pengguna_id: '<?= encrypt($data_pengguna[0]->pengguna_id) ?>',
+            email_kantor: $('#modal_input_email_kantor').val(),
+            password_email_kantor: $('#modal_input_pass_email_kantor').val(),
+            csrf_token: token
+        },
+        success: function(res) {
+            $btn.prop('disabled', false).html(orig);
+            if (res && res.status === 'success') {
+                $('#modalEmailKantorProfil').modal('hide');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Berhasil!', res.msg || 'Akun Email Kantor berhasil disimpan!', 'success').then(function() {
+                        location.reload();
+                    });
+                } else {
+                    alert(res.msg || 'Akun Email Kantor berhasil disimpan!');
+                    location.reload();
+                }
+            } else {
+                alert((res && res.msg) ? res.msg : 'Gagal menyimpan akun email kantor.');
+            }
+        },
+        error: function() {
+            $btn.prop('disabled', false).html(orig);
+            alert('Terjadi kesalahan jaringan.');
+        }
+    });
+});
+
 $(document).on('submit', '#formPilihAtasanProfil', function(e) {
     e.preventDefault();
     var $btn = $('#btnSimpanAtasanProfil');
@@ -2465,6 +2617,53 @@ $(document).on('submit', '#formPilihAtasanProfil', function(e) {
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary font-weight-bold" id="btnSimpanAtasanProfil">
                         <i class="fas fa-save mr-1"></i> Simpan Atasan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Atur / Ubah Akun Email Kantor di Profil -->
+<div class="modal fade" id="modalEmailKantorProfil" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formEmailKantorProfil" autocomplete="off">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" style="color:#fff;">
+                        <i class="fas fa-envelope-open-text mr-1"></i> Akun Email Kantor & Password
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">
+                        Atur alamat email resmi kantor dan passwordnya untuk <strong><?= htmlspecialchars($data_pengguna[0]->nama) ?></strong>:
+                    </p>
+                    <div class="form-group">
+                        <label class="font-weight-bold"><i class="fas fa-envelope mr-1 text-primary"></i> Alamat Email Kantor</label>
+                        <input type="email" id="modal_input_email_kantor" name="email_kantor" class="form-control" value="<?= htmlspecialchars($valEmailKantor) ?>" placeholder="contoh: nama@visiyosindo.id">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold"><i class="fas fa-key mr-1 text-warning"></i> Password Email Kantor</label>
+                        <div class="input-group">
+                            <input type="password" id="modal_input_pass_email_kantor" name="password_email_kantor" class="form-control" value="<?= $canEditAtasanProfil ? htmlspecialchars($valPassEmailKantor) : '' ?>" placeholder="Masukkan password email kantor">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassInput('#modal_input_pass_email_kantor', '#iconPassModal')" title="Lihat / Sembunyikan Password">
+                                    <i class="fas fa-eye" id="iconPassModal"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyTextValue('#modal_input_pass_email_kantor', 'Password Email Kantor')" title="Salin Password">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold" id="btnSimpanEmailKantorProfil">
+                        <i class="fas fa-save mr-1"></i> Simpan Email Kantor
                     </button>
                 </div>
             </form>

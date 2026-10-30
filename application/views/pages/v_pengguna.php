@@ -858,8 +858,22 @@
                         <input type="text" class="form-control" id="username" name="username" required placeholder="Masukkan username">
                     </div>
                     <div class="form-group-modern">
-                        <label>Email</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="Masukkan email">
+                        <label>Email Pribadi</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Masukkan email pribadi">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label><i class="fas fa-envelope-open-text text-primary"></i> Email Kantor</label>
+                                <input type="email" class="form-control" id="email_kantor" name="email_kantor" placeholder="contoh: nama@visiyosindo.id">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label><i class="fas fa-key text-warning"></i> Password Email Kantor</label>
+                                <input type="text" class="form-control" id="password_email_kantor" name="password_email_kantor" placeholder="Password email kantor">
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group-modern">
                         <label>Hak Akses <span class="text-danger">*</span></label>
@@ -1052,6 +1066,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#main-modal #pengguna_id').val(data[0].pengguna_id);
                 $('#main-modal #nama').val(data[0].nama);
                 $('#main-modal #email').val(data[0].email);
+                $('#main-modal #email_kantor').val(data[0].email_kantor || '');
+                $('#main-modal #password_email_kantor').val(data[0].password_email_kantor || '');
                 $('#main-modal #username').val(data[0].email);
                 $('#main-modal #level option[value="' + data[0].level + '"]').prop("selected", true).trigger('change');
                 $('#main-modal #hirarki option[value="' + data[0].hirarki + '"]').prop("selected", true).trigger('change');

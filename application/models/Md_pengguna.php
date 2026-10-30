@@ -4,6 +4,31 @@ if (!defined('BASEPATH'))
 
 class Md_pengguna extends CI_Model
 {
+    function __construct()
+    {
+        parent::__construct();
+        $this->_ensureEmailKantorColumns();
+    }
+
+    private function _ensureEmailKantorColumns()
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+
+        $orig_debug = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+        $chkEmailKantor = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'email_kantor'");
+        if ($chkEmailKantor && $chkEmailKantor->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `email_kantor` VARCHAR(150) DEFAULT NULL AFTER `email`");
+        }
+        $chkPassEmailKantor = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'password_email_kantor'");
+        if ($chkPassEmailKantor && $chkPassEmailKantor->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `password_email_kantor` VARCHAR(150) DEFAULT NULL AFTER `email_kantor`");
+        }
+        $this->db->db_debug = $orig_debug;
+    }
+
     function resetVoting($id)
     {
         $data = array(
