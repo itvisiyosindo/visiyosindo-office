@@ -50,6 +50,26 @@ class Po_system extends CI_Controller
         return 'helpdesk';
     }
 
+    /**
+     * Ambil daftar karyawan aktif untuk dropdown pengaju PO (kecuali Office Boy & Security)
+     */
+    private function getPengajuList()
+    {
+        $pegawai = $this->md_pengguna->getAllPegawai();
+        return array_values(array_filter($pegawai, function ($p) {
+            $jabatan = strtolower(trim($p->jabatan ?? ''));
+            if (
+                strpos($jabatan, 'office boy') !== false ||
+                strpos($jabatan, 'security') !== false ||
+                strpos($jabatan, 'satpam') !== false ||
+                $jabatan === 'ob'
+            ) {
+                return false;
+            }
+            return true;
+        }));
+    }
+
         /**
      * Halaman Utama: Daftar PO Masuk
      */
@@ -78,7 +98,7 @@ class Po_system extends CI_Controller
         $page_data['cur_tgl_akhir']     = $tgl_akhir;
 
         // Ambil list sales untuk filter/cetak
-        $page_data['sales_list'] = $this->md_pengguna->getAllPegawai();
+        $page_data['sales_list'] = $this->getPengajuList();
 
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
@@ -121,7 +141,7 @@ class Po_system extends CI_Controller
         $page_data['barang_list'] = $this->db->get()->result();
 
         // 3. Ambil data sales/marketing
-        $page_data['sales_list'] = $this->md_pengguna->getAllPegawai();
+        $page_data['sales_list'] = $this->getPengajuList();
 
         $page_data['kode_masuk_auto'] = $this->md_po_system->generateKodeMasuk();
 
