@@ -261,11 +261,19 @@
 										Laporan Mingguan Pegawai &nbsp; <strong> Ver. 2 </strong>
 									</a>
 								</li>
-								<li class="<?= in_array($page_name, ['evaluasi/v_evaluasi', 'evaluasi/v_evaluasi_detail']) ? 'nav-active' : '' ?>">
-									<a class="nav-link" href="<?= base_url('evaluasi') ?>">
-										Evaluasi
-									</a>
-								</li>
+								<?php if ((string)sessPenggunaId() === '744') { ?>
+									<li class="<?= in_array($page_name, ['evaluasi/v_my_evaluasi', 'evaluasi/v_evaluasi_detail_penilai', 'evaluasi/v_my_evaluasi_detail']) ? 'nav-active' : '' ?>">
+										<a class="nav-link" href="<?= base_url('evaluasi/show/list/my_data') ?>">
+											Evaluasi
+										</a>
+									</li>
+								<?php } else { ?>
+									<li class="<?= in_array($page_name, ['evaluasi/v_evaluasi', 'evaluasi/v_evaluasi_detail']) ? 'nav-active' : '' ?>">
+										<a class="nav-link" href="<?= base_url('evaluasi') ?>">
+											Evaluasi
+										</a>
+									</li>
+								<?php } ?>
 								<li class="<?= in_array($page_name, ['evaluasi/v_evaluasi_smt']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('bonus/show/evaluasi') ?>">
 										Nilai Evaluasi Semester

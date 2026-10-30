@@ -22,6 +22,11 @@ class Evaluasi extends CI_Controller
     {
         grantAccessFor('all');
 
+        if ((string)sessPenggunaId() === '744') {
+            redirect('evaluasi/show/list/my_data');
+            return;
+        }
+
         $page_data['switch']          = $this->id_navbar();
         //$page_data['list_nama']     = $this->md_surat_part_two->getBywhereActive();
         $page_data['list_nama']     = $this->md_laporan->getBywhereActive();
