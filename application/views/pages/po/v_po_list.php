@@ -518,7 +518,7 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                             <?php 
                                                 $sp = $row->status_proses ?? 'BELUM DI PROSES';
                                                 if ($sp == 'SUDAH DI PROSES') {
-                                                    echo '<span class="badge-proses badge-proses-sudah"><i class="fas fa-check-circle mr-1"></i>Sudah Proses</span>';
+                                                    echo '<span class="badge-proses badge-proses-sudah"><i class="fas fa-check-circle mr-1"></i>PO Bisa Diproses</span>';
                                                 } elseif ($sp == 'PROSES SEBAGIAN') {
                                                     echo '<span class="badge-proses badge-proses-sebagian"><i class="fas fa-spinner mr-1"></i>Sebagian</span>';
                                                 } elseif ($sp == 'HOLD / INDENT') {
@@ -529,6 +529,24 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                                     echo '<span class="badge-proses badge-proses-belum"><i class="fas fa-hourglass-start mr-1"></i>Belum Diproses</span>';
                                                 }
                                             ?>
+                                            <?php
+                                                $latestNote = $row->gm_catatan ?: ($row->pajak_catatan ?: ($row->acc_catatan ?: ($row->cro_catatan ?: ($row->catatan ?? ''))));
+                                                if (!empty($latestNote)):
+                                                    $noteBg = '#eff6ff'; $noteColor = '#1e40af'; $noteBorder = '#bfdbfe';
+                                                    if (($row->status_proses ?? '') === 'SUDAH DI PROSES' || ($row->gm_status ?? '') === 'disetujui') {
+                                                        $noteBg = '#f0fdf4'; $noteColor = '#15803d'; $noteBorder = '#bbf7d0';
+                                                    } elseif (($row->status_proses ?? '') === 'HOLD / INDENT' || ($row->cro_status ?? '') === 'hold_indent') {
+                                                        $noteBg = '#fff7ed'; $noteColor = '#c2410c'; $noteBorder = '#fed7aa';
+                                                    } elseif (($row->status_proses ?? '') === 'PROSES SEBAGIAN') {
+                                                        $noteBg = '#fefce8'; $noteColor = '#a16207'; $noteBorder = '#fef08a';
+                                                    } elseif (in_array(($row->status ?? ''), ['revisi', 'ditolak']) || ($row->status_proses ?? '') === 'DITOLAK') {
+                                                        $noteBg = '#fef2f2'; $noteColor = '#b91c1c'; $noteBorder = '#fecaca';
+                                                    }
+                                            ?>
+                                                <div class="mt-1 px-2 py-1 rounded text-left" style="background: <?= $noteBg ?>; color: <?= $noteColor ?>; border: 1px solid <?= $noteBorder ?>; font-size: 10.5px; line-height: 1.25;" title="<?= htmlspecialchars($latestNote) ?>">
+                                                    <i class="fas fa-comment-dots mr-1"></i><?= htmlspecialchars(mb_strimwidth($latestNote, 0, 42, '...')) ?>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="text-center">
                                             <?php

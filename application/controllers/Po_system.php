@@ -63,12 +63,41 @@ class Po_system extends CI_Controller
     }
 
     /**
-     * Ambil daftar karyawan aktif untuk dropdown pengaju PO (kecuali Office Boy, Security, & Helper)
+     * Ambil daftar karyawan aktif untuk dropdown pengaju PO (termasuk Teknisi, Marketing Visilab, & After Sales; kecuali Office Boy, Security, & Helper)
      */
     private function getPengajuList()
     {
         $pegawai = $this->md_pengguna->getAllPegawai();
-        return array_values(array_filter($pegawai, function ($p) {
+
+        // Tambahkan juga data teknisi aktif (id_divisi = 7) atau akun khusus Visilab (754) & After Sales (747) bila belum masuk
+        $existingIds = [];
+        foreach ($pegawai as $p) {
+            $existingIds[(int)$p->pengguna_id] = true;
+        }
+
+        $extraRows = $this->db->select('*')
+            ->from('pengguna')
+            ->where('is_active', 1)
+            ->group_start()
+                ->where('id_divisi', 7)
+                ->or_where_in('pengguna_id', [747, 754])
+                ->or_like('jabatan', 'teknisi', 'both')
+                ->or_like('jabatan', 'visilab', 'both')
+                ->or_like('jabatan', 'after sales', 'both')
+            ->group_end()
+            ->order_by('nama', 'ASC')
+            ->get()
+            ->result();
+
+        foreach ($extraRows as $er) {
+            $eid = (int)$er->pengguna_id;
+            if (!isset($existingIds[$eid]) && !in_array($eid, [1, 92, 94, 724], true)) {
+                $pegawai[] = $er;
+                $existingIds[$eid] = true;
+            }
+        }
+
+        $filtered = array_values(array_filter($pegawai, function ($p) {
             $jabatan = strtolower(trim($p->jabatan ?? ''));
             if (
                 strpos($jabatan, 'office boy') !== false ||
@@ -81,6 +110,47 @@ class Po_system extends CI_Controller
             }
             return true;
         }));
+
+        // Pastikan opsi eksplisit Teknisi, Marketing Visilab, dan After Sales tersedia di daftar
+        $specialUnits = [
+            (object)[
+                'pengguna_id' => 737,
+                'nama'        => 'Teknisi',
+                'jabatan'     => 'Divisi Teknisi'
+            ],
+            (object)[
+                'pengguna_id' => 754,
+                'nama'        => 'Marketing Visilab',
+                'jabatan'     => 'Divisi Visilab'
+            ],
+            (object)[
+                'pengguna_id' => 747,
+                'nama'        => 'After Sales',
+                'jabatan'     => 'After Sales Service'
+            ]
+        ];
+
+        $existingNames = [];
+        foreach ($filtered as $item) {
+            if ((int)$item->pengguna_id === 747 && stripos($item->nama, 'after') === false) {
+                $item->nama    = 'After Sales (' . $item->nama . ')';
+                $item->jabatan = $item->jabatan ?: 'After Sales Service';
+            }
+            if ((int)$item->pengguna_id === 754 && stripos($item->nama, 'visilab') === false) {
+                $item->nama    = 'Marketing Visilab (' . $item->nama . ')';
+                $item->jabatan = $item->jabatan ?: 'Divisi Visilab';
+            }
+            $existingNames[strtolower(trim($item->nama))] = true;
+        }
+
+        $prependUnits = [];
+        foreach ($specialUnits as $unit) {
+            if (!isset($existingNames[strtolower($unit->nama)])) {
+                $prependUnits[] = $unit;
+            }
+        }
+
+        return array_merge($prependUnits, $filtered);
     }
 
         /**
@@ -249,7 +319,9 @@ class Po_system extends CI_Controller
         $pic_penagihan_nohp = trim($this->input->post('pic_penagihan_nohp'));
         
         $sistem_pembayaran  = $this->input->post('sistem_pembayaran') ?: 'Cash';
+        $cicilan_dp_tipe    = in_array($this->input->post('cicilan_dp_tipe'), ['persen', 'nominal'], true) ? $this->input->post('cicilan_dp_tipe') : 'persen';
         $cicilan_dp_persen  = floatval(str_replace(['.', ','], ['', '.'], $this->input->post('cicilan_dp_persen') ?? 0));
+        $cicilan_dp_nominal = floatval(str_replace(['.', ','], ['', '.'], $this->input->post('cicilan_dp_nominal') ?? 0));
         $cicilan_kali       = intval($this->input->post('cicilan_kali') ?? 0);
         
         $sistem_perpajakan  = $this->input->post('sistem_perpajakan') ?: 'PPN';
@@ -346,6 +418,24 @@ class Po_system extends CI_Controller
         // Hitung Total Akhir = Subtotal + Pajak + Ongkir
         $nominal_total_akhir = $nominal_subtotal + $nominal_ppn + $nominal_ongkir;
 
+        // Sinkronisasi Uang Muka (DP) Persen <-> Nominal jika sistem pembayaran Cicilan
+        if ($sistem_pembayaran === 'Cicilan') {
+            if ($cicilan_dp_tipe === 'nominal') {
+                if ($nominal_total_akhir > 0 && $cicilan_dp_nominal > 0) {
+                    $cicilan_dp_persen = round(($cicilan_dp_nominal / $nominal_total_akhir) * 100, 2);
+                }
+            } else {
+                if ($nominal_total_akhir > 0 && $cicilan_dp_persen > 0) {
+                    $cicilan_dp_nominal = round(($cicilan_dp_persen / 100) * $nominal_total_akhir, 2);
+                }
+            }
+        } else {
+            $cicilan_dp_tipe    = 'persen';
+            $cicilan_dp_persen  = 0;
+            $cicilan_dp_nominal = 0;
+            $cicilan_kali       = 0;
+        }
+
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_pembuat = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Marketing');
 
@@ -365,7 +455,9 @@ class Po_system extends CI_Controller
                 'pic_penagihan_nama'       => $pic_penagihan_nama,
                 'pic_penagihan_nohp'       => $pic_penagihan_nohp,
                 'sistem_pembayaran'        => $sistem_pembayaran,
+                'cicilan_dp_tipe'          => $cicilan_dp_tipe,
                 'cicilan_dp_persen'        => $cicilan_dp_persen,
+                'cicilan_dp_nominal'       => $cicilan_dp_nominal,
                 'cicilan_kali'             => $cicilan_kali,
                 'sistem_perpajakan'        => $sistem_perpajakan,
                 'no_npwp_ktp'              => $no_npwp_ktp,
@@ -454,7 +546,9 @@ class Po_system extends CI_Controller
             'pic_penagihan_nama'       => $pic_penagihan_nama,
             'pic_penagihan_nohp'       => $pic_penagihan_nohp,
             'sistem_pembayaran'        => $sistem_pembayaran,
+            'cicilan_dp_tipe'          => $cicilan_dp_tipe,
             'cicilan_dp_persen'        => $cicilan_dp_persen,
+            'cicilan_dp_nominal'       => $cicilan_dp_nominal,
             'cicilan_kali'             => $cicilan_kali,
             'sistem_perpajakan'        => $sistem_perpajakan,
             'no_npwp_ktp'              => $no_npwp_ktp,
@@ -663,13 +757,15 @@ class Po_system extends CI_Controller
         if (!empty($cro_catatan)) $logMsg .= " | Catatan: " . $cro_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
 
-        // Notifikasi WA Progres Approval ke Grup Marketing
-        $po_updated = $this->md_po_system->getPoById($id_po);
+        // Notifikasi WA Progres Approval ke Grup Marketing (& Grup Gudang bila ada barang indent)
+        $po_updated   = $this->md_po_system->getPoById($id_po);
+        $indent_items = $this->md_po_system->getIndentItemsByPoId($id_po);
         waPoProgressGroup([
             'po'            => $po_updated,
             'stage'         => 'cro',
             'action_by'     => $nama_user,
             'action_status' => $cro_status,
+            'indent_items'  => $indent_items,
             'link'          => base_url('po_system/detail/' . $id_encrypted)
         ]);
 
@@ -888,13 +984,15 @@ class Po_system extends CI_Controller
         if (!empty($gm_catatan)) $logMsg .= " | Catatan: " . $gm_catatan;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
 
-        // Notifikasi WA Progres Approval ke Grup Marketing
-        $po_updated = $this->md_po_system->getPoById($id_po);
+        // Notifikasi WA Progres Approval ke Grup Marketing & Grup Gudang
+        $po_updated   = $this->md_po_system->getPoById($id_po);
+        $indent_items = $this->md_po_system->getIndentItemsByPoId($id_po);
         waPoProgressGroup([
             'po'            => $po_updated,
             'stage'         => 'gm',
             'action_by'     => $nama_user,
             'action_status' => $gm_status,
+            'indent_items'  => $indent_items,
             'link'          => base_url('po_system/detail/' . $id_encrypted)
         ]);
 
@@ -1051,6 +1149,20 @@ class Po_system extends CI_Controller
         }
 
         $this->md_po_system->addLog($id_po, $po->status, $po->status, $logMsg, sessPenggunaId(), $nama_user);
+
+        // Kirim notifikasi WA update barang inden ke Grup Marketing & Grup Gudang
+        $po_updated   = $this->md_po_system->getPoById($id_po);
+        $indent_items = $this->md_po_system->getIndentItemsByPoId($id_po);
+        waPoProgressGroup([
+            'po'            => $po_updated,
+            'stage'         => 'inden_ready',
+            'action_by'     => $nama_user,
+            'action_status' => ($sisa_inden === 0) ? 'ready_all' : 'ready_partial',
+            'updated_items' => $updated_names,
+            'sisa_inden'    => $sisa_inden,
+            'indent_items'  => $indent_items,
+            'link'          => base_url('po_system/detail/' . $id_encrypted)
+        ]);
 
         $this->session->set_flashdata('success', 'Berhasil memperbarui ' . count($updated_names) . ' barang inden menjadi READY (Tgl: ' . $tgl_formatted . ')!');
         redirect('po_system/detail/' . $id_encrypted);

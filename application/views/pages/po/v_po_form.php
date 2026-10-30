@@ -430,18 +430,36 @@
                     </div>
 
                     <!-- Input Tambahan Jika Cicilan Dipilih -->
+                    <?php
+                        $cur_dp_tipe = $po_edit->cicilan_dp_tipe ?? ((!empty($po_edit->cicilan_dp_nominal) && (float)$po_edit->cicilan_dp_nominal > 0 && (float)($po_edit->cicilan_dp_persen ?? 0) <= 0) ? 'nominal' : 'persen');
+                        $cur_dp_nominal_fmt = (!empty($po_edit->cicilan_dp_nominal) && (float)$po_edit->cicilan_dp_nominal > 0)
+                            ? number_format((float)$po_edit->cicilan_dp_nominal, 0, ',', '.')
+                            : '';
+                    ?>
                     <div class="row mb-3 p-3 border rounded bg-light" id="boxCicilan" style="<?= ($cur_pay === 'Cicilan') ? 'display: flex;' : 'display: none;' ?>">
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label-custom">Uang Muka / DP (%)</label>
-                            <div class="input-group">
-                                <input type="number" step="0.1" name="cicilan_dp_persen" class="form-control form-control-custom" placeholder="Contoh: 30" value="<?= htmlspecialchars($po_edit->cicilan_dp_persen ?? '0') ?>">
-                                <div class="input-group-append"><span class="input-group-text">%</span></div>
-                            </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label-custom">Tipe Uang Muka (DP)</label>
+                            <select name="cicilan_dp_tipe" id="cicilan_dp_tipe" class="form-control form-control-custom">
+                                <option value="persen" <?= ($cur_dp_tipe === 'persen') ? 'selected' : '' ?>>Persen (%)</option>
+                                <option value="nominal" <?= ($cur_dp_tipe === 'nominal') ? 'selected' : '' ?>>Nominal Rupiah (Rp)</option>
+                            </select>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label-custom">Jumlah Cicilan</label>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label-custom" id="labelDpInput"><?= ($cur_dp_tipe === 'nominal') ? 'Nominal Uang Muka / DP (Rp)' : 'Persentase Uang Muka / DP (%)' ?></label>
+                            <div class="input-group" id="wrapDpPersen" style="<?= ($cur_dp_tipe === 'nominal') ? 'display: none;' : '' ?>">
+                                <input type="number" step="0.01" min="0" max="100" name="cicilan_dp_persen" id="cicilan_dp_persen" class="form-control form-control-custom" placeholder="Contoh: 30" value="<?= htmlspecialchars($po_edit->cicilan_dp_persen ?? '0') ?>">
+                                <div class="input-group-append"><span class="input-group-text font-weight-bold">%</span></div>
+                            </div>
+                            <div class="input-group" id="wrapDpNominal" style="<?= ($cur_dp_tipe === 'nominal') ? '' : 'display: none;' ?>">
+                                <div class="input-group-prepend"><span class="input-group-text font-weight-bold">Rp</span></div>
+                                <input type="text" name="cicilan_dp_nominal" id="cicilan_dp_nominal" class="form-control form-control-custom mask-rupiah" placeholder="Contoh: 15.000.000" value="<?= htmlspecialchars($cur_dp_nominal_fmt) ?>">
+                            </div>
+                            <small class="help-hint text-primary font-weight-bold" id="dpPreviewHint"></small>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label-custom">Jumlah Cicilan / Termin</label>
                             <div class="input-group">
-                                <input type="number" name="cicilan_kali" class="form-control form-control-custom" placeholder="Contoh: 3" value="<?= htmlspecialchars($po_edit->cicilan_kali ?? '0') ?>">
+                                <input type="number" min="0" name="cicilan_kali" class="form-control form-control-custom" placeholder="Contoh: 3" value="<?= htmlspecialchars($po_edit->cicilan_kali ?? '0') ?>">
                                 <div class="input-group-append"><span class="input-group-text">Kali (X)</span></div>
                             </div>
                         </div>
@@ -730,14 +748,34 @@
                             <small class="help-hint">Format PDF, JPG, PNG (Maks 10MB)</small>
                         </div>
 
-                        <!-- Diajukan Oleh (Marketing/Sales) -->
-                        <?php $selected_sales_id = $is_edit ? ($po_edit->id_sales ?? sessPenggunaId()) : sessPenggunaId(); ?>
+                        <!-- Diajukan Oleh (Marketing/Sales/Teknisi/Visilab/After Sales) -->
+                        <?php
+                            $selected_sales_id   = $is_edit ? ($po_edit->id_sales ?? sessPenggunaId()) : sessPenggunaId();
+                            $selected_sales_nama = $is_edit ? trim($po_edit->nama_sales ?? '') : '';
+                            $matched_by_nama     = false;
+                            if ($is_edit && !empty($selected_sales_nama) && !empty($sales_list)) {
+                                foreach ($sales_list as $chk) {
+                                    if (strcasecmp(trim($chk->nama), $selected_sales_nama) === 0) {
+                                        $matched_by_nama = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        ?>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label-custom">Diajukan Oleh (Marketing / Sales) <span class="text-danger">*</span></label>
-                            <select name="id_sales" id="id_sales" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Pilih Sales / Marketing --" required>
+                            <label class="form-label-custom">Diajukan Oleh <span class="text-danger">*</span></label>
+                            <select name="id_sales" id="id_sales" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Pilih Pengaju (Marketing / Teknisi / Visilab / After Sales) --" required>
                                 <?php if (!empty($sales_list)): ?>
                                     <?php foreach ($sales_list as $s): ?>
-                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= ($s->pengguna_id == $selected_sales_id) ? 'selected' : '' ?>><?= htmlspecialchars($s->nama . ' (' . $s->jabatan . ')') ?></option>
+                                        <?php
+                                            $is_sel = $matched_by_nama
+                                                ? (strcasecmp(trim($s->nama), $selected_sales_nama) === 0)
+                                                : ($s->pengguna_id == $selected_sales_id && !$matched_by_nama);
+                                            if ($is_sel) {
+                                                $matched_by_nama = true; // hanya pilih 1 option pertama yang cocok
+                                            }
+                                        ?>
+                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= $is_sel ? 'selected' : '' ?>><?= htmlspecialchars($s->nama . (!empty($s->jabatan) ? ' (' . $s->jabatan . ')' : '')) ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
@@ -1071,6 +1109,68 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('displayTotalAkhir').innerText = formatRupiah(totalAkhir);
         document.getElementById('inputTotalAkhir').value = totalAkhir;
         document.getElementById('inputNominalPo').value = totalAkhir;
+
+        updateDpPreview(totalAkhir);
+    }
+
+    // Sinkronisasi Pilihan DP (Persen vs Nominal)
+    var selectDpTipe = document.getElementById('cicilan_dp_tipe');
+    var wrapDpPersen = document.getElementById('wrapDpPersen');
+    var wrapDpNominal = document.getElementById('wrapDpNominal');
+    var inputDpPersen = document.getElementById('cicilan_dp_persen');
+    var inputDpNominal = document.getElementById('cicilan_dp_nominal');
+    var labelDpInput = document.getElementById('labelDpInput');
+    var dpPreviewHint = document.getElementById('dpPreviewHint');
+
+    function updateDpPreview(totalAkhirOverride) {
+        if (!selectDpTipe) return;
+        var tipe = selectDpTipe.value;
+        var totalAkhir = (typeof totalAkhirOverride === 'number') ? totalAkhirOverride : (parseFloat(document.getElementById('inputTotalAkhir').value) || 0);
+
+        if (tipe === 'nominal') {
+            if (wrapDpPersen) wrapDpPersen.style.display = 'none';
+            if (wrapDpNominal) wrapDpNominal.style.display = 'flex';
+            if (labelDpInput) labelDpInput.innerText = 'Nominal Uang Muka / DP (Rp)';
+
+            var nom = inputDpNominal ? parseRupiah(inputDpNominal.value) : 0;
+            if (totalAkhir > 0 && nom > 0) {
+                var pct = Math.round((nom / totalAkhir) * 10000) / 100;
+                if (inputDpPersen) inputDpPersen.value = pct;
+                if (dpPreviewHint) dpPreviewHint.innerText = 'Setara ' + pct + '% dari Total Akhir';
+            } else {
+                if (dpPreviewHint) dpPreviewHint.innerText = '';
+            }
+        } else {
+            if (wrapDpPersen) wrapDpPersen.style.display = 'flex';
+            if (wrapDpNominal) wrapDpNominal.style.display = 'none';
+            if (labelDpInput) labelDpInput.innerText = 'Persentase Uang Muka / DP (%)';
+
+            var pctVal = inputDpPersen ? (parseFloat(inputDpPersen.value) || 0) : 0;
+            if (totalAkhir > 0 && pctVal > 0) {
+                var nomEst = Math.round((pctVal / 100) * totalAkhir);
+                if (inputDpNominal) inputDpNominal.value = formatCurrencyInput(nomEst.toString());
+                if (dpPreviewHint) dpPreviewHint.innerText = 'Estimasi DP: ' + formatRupiah(nomEst);
+            } else {
+                if (dpPreviewHint) dpPreviewHint.innerText = '';
+            }
+        }
+    }
+
+    if (selectDpTipe) {
+        selectDpTipe.addEventListener('change', function () {
+            updateDpPreview();
+        });
+    }
+    if (inputDpPersen) {
+        inputDpPersen.addEventListener('input', function () {
+            updateDpPreview();
+        });
+    }
+    if (inputDpNominal) {
+        inputDpNominal.addEventListener('input', function () {
+            this.value = formatCurrencyInput(this.value);
+            updateDpPreview();
+        });
     }
 
     // Event listener untuk perpajakan

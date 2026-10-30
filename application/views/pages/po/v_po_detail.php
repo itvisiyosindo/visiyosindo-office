@@ -193,7 +193,7 @@
                             elseif ($sp === 'DITOLAK') { $spBadge = 'badge-dark'; $spIcon = 'fa-times-circle'; }
                         ?>
                         <span class="badge-pill-status badge <?= $spBadge ?> text-white font-weight-bold" style="font-size: 0.95rem;">
-                            <i class="fas <?= $spIcon ?>"></i> <?= htmlspecialchars($sp) ?>
+                            <i class="fas <?= $spIcon ?>"></i> <?= htmlspecialchars(($po->gm_status === 'disetujui' && $sp === 'SUDAH DI PROSES') ? 'PO BISA DIPROSES' : $sp) ?>
                         </span>
                         <div class="mt-2">
                             <span class="badge badge-light border text-muted">Status Kroscek: <b><?= strtoupper($po->status) ?></b></span>
@@ -206,6 +206,81 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- BANNER INDIKATOR WARNA CATATAN & INFORMASI STATUS PO -->
+        <?php
+            $infoBg = '#eff6ff';
+            $infoBorder = '#3b82f6';
+            $infoText = '#1e40af';
+            $infoBadgeBg = '#2563eb';
+            $infoStatusTitle = 'MENUNGGU VERIFIKASI / KROSCEK';
+            $infoDot = '🔵';
+
+            if ($po->gm_status === 'disetujui' || $sp === 'SUDAH DI PROSES') {
+                $infoBg = '#f0fdf4';
+                $infoBorder = '#22c55e';
+                $infoText = '#166534';
+                $infoBadgeBg = '#16a34a';
+                $infoStatusTitle = 'PO BISA DIPROSES (SUDAH DI-ACC SEMUA)';
+                $infoDot = '🟢';
+            } elseif ($sp === 'HOLD / INDENT' || $po->cro_status === 'hold_indent') {
+                $infoBg = '#fff7ed';
+                $infoBorder = '#f97316';
+                $infoText = '#9a3412';
+                $infoBadgeBg = '#ea580c';
+                $infoStatusTitle = 'STATUS PO INDENT (HOLD MENUNGGU STOK GUDANG)';
+                $infoDot = '🟠';
+            } elseif ($sp === 'PROSES SEBAGIAN' || (!empty($count_indent) && $count_indent > 0)) {
+                $infoBg = '#fefce8';
+                $infoBorder = '#eab308';
+                $infoText = '#854d0e';
+                $infoBadgeBg = '#ca8a04';
+                $infoStatusTitle = 'PROSES SEBAGIAN (ADA BARANG INDENT)';
+                $infoDot = '🟡';
+            } elseif (in_array($po->status, ['revisi', 'ditolak']) || $sp === 'DITOLAK') {
+                $infoBg = '#fef2f2';
+                $infoBorder = '#ef4444';
+                $infoText = '#991b1b';
+                $infoBadgeBg = '#dc2626';
+                $infoStatusTitle = ($po->status === 'revisi') ? 'PERLU REVISI DATA PO' : 'PO DITOLAK';
+                $infoDot = '🔴';
+            }
+
+            $activeNotes = [];
+            if (!empty($po->catatan)) $activeNotes[] = ['label' => 'Catatan Pengaju', 'text' => $po->catatan];
+            if (!empty($po->cro_catatan)) $activeNotes[] = ['label' => 'Catatan CRO', 'text' => $po->cro_catatan];
+            if (!empty($po->acc_catatan)) $activeNotes[] = ['label' => 'Catatan Accounting', 'text' => $po->acc_catatan];
+            if (!empty($po->pajak_catatan)) $activeNotes[] = ['label' => 'Catatan Pajak', 'text' => $po->pajak_catatan];
+            if (!empty($po->gm_catatan)) $activeNotes[] = ['label' => 'Catatan GM', 'text' => $po->gm_catatan];
+        ?>
+        <div class="mb-4 p-3 rounded shadow-sm" style="background: <?= $infoBg ?>; border-left: 6px solid <?= $infoBorder ?>; color: <?= $infoText ?>;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div class="font-weight-bold" style="font-size: 0.95rem;">
+                    <?= $infoDot ?> INFORMASI & CATATAN STATUS PO:
+                    <span class="badge text-white ml-1 px-2 py-1" style="background: <?= $infoBadgeBg ?>; font-size: 0.82rem;">
+                        <?= htmlspecialchars($infoStatusTitle) ?>
+                    </span>
+                </div>
+                <?php if (!empty($count_indent) && $count_indent > 0): ?>
+                    <span class="badge badge-warning text-dark font-weight-bold mt-1 mt-md-0 px-2 py-1">
+                        <i class="fas fa-box-open mr-1"></i> Terdapat <?= $count_indent ?> Item Barang Indent
+                    </span>
+                <?php endif; ?>
+            </div>
+            <?php if (!empty($activeNotes)): ?>
+                <div class="mt-2 pt-2" style="border-top: 1px dashed <?= $infoBorder ?>; font-size: 0.86rem;">
+                    <?php foreach ($activeNotes as $an): ?>
+                        <div class="mb-1">
+                            <b><?= htmlspecialchars($an['label']) ?>:</b> "<?= nl2br(htmlspecialchars($an['text'])) ?>"
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="mt-1" style="font-size: 0.82rem; opacity: 0.85;">
+                    <i>Belum ada catatan tambahan dari pengaju maupun verifikator.</i>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- CARD 1: INFORMASI PO, CUSTOMER & TRANSAKSI -->
@@ -256,7 +331,25 @@
                         <div class="text-value">
                             <span class="badge badge-info"><?= htmlspecialchars($po->sistem_pembayaran ?: 'Cash') ?></span>
                             <?php if ($po->sistem_pembayaran === 'Cicilan'): ?>
-                                <small class="d-block text-muted">DP: <?= $po->cicilan_dp_persen ?>% | <?= $po->cicilan_kali ?>x Cicilan</small>
+                                <?php
+                                    $dpTipe = $po->cicilan_dp_tipe ?? 'persen';
+                                    $dpPersen = (float)($po->cicilan_dp_persen ?? 0);
+                                    $dpNominal = (float)($po->cicilan_dp_nominal ?? 0);
+                                    $totalRef = (float)($po->nominal_total_akhir ?: $po->nominal_po ?: 0);
+                                    if ($dpNominal <= 0 && $dpPersen > 0 && $totalRef > 0) {
+                                        $dpNominal = round(($dpPersen / 100) * $totalRef, 2);
+                                    }
+                                    $dpPersenStr = rtrim(rtrim(number_format($dpPersen, 2, ',', '.'), '0'), ',');
+                                    $dpNominalStr = 'Rp ' . number_format($dpNominal, 0, ',', '.');
+                                ?>
+                                <small class="d-block text-muted mt-1">
+                                    <?php if ($dpTipe === 'nominal'): ?>
+                                        DP: <b><?= $dpNominalStr ?></b> (<?= $dpPersenStr ?>%)
+                                    <?php else: ?>
+                                        DP: <b><?= $dpPersenStr ?>%</b> (<?= $dpNominalStr ?>)
+                                    <?php endif; ?>
+                                    | <?= (int)$po->cicilan_kali ?>x Cicilan
+                                </small>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -580,7 +673,7 @@
                                 <?php endif; ?>
                             </div>
                             <div style="font-size: 0.82rem;" class="mb-3">
-                                <div><b>Persetujuan PO:</b> <?= ($po->gm_status === 'disetujui') ? '<span class="text-success font-weight-bold">PO Siap Diproses</span>' : '-' ?></div>
+                                <div><b>Persetujuan PO:</b> <?= ($po->gm_status === 'disetujui') ? '<span class="badge badge-success px-2 py-1">🟢 PO BISA DIPROSES</span>' : '-' ?></div>
                                 <?php if (!empty($po->gm_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->gm_catatan) ?>"</div>
                                 <?php endif; ?>

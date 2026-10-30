@@ -6,6 +6,28 @@ class Md_po_system extends CI_Model
     public function __construct()
     {
         parent::__construct();
+        $this->ensureSchema();
+    }
+
+    /**
+     * Pastikan kolom tambahan DP (persen / nominal) tersedia di tabel po_masuk
+     */
+    private function ensureSchema()
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        if ($this->db->table_exists('po_masuk')) {
+            if (!$this->db->field_exists('cicilan_dp_tipe', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `cicilan_dp_tipe` VARCHAR(20) DEFAULT 'persen' AFTER `sistem_pembayaran`");
+            }
+            if (!$this->db->field_exists('cicilan_dp_nominal', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `cicilan_dp_nominal` DECIMAL(18,2) DEFAULT 0.00 AFTER `cicilan_dp_persen`");
+            }
+        }
     }
 
     /**

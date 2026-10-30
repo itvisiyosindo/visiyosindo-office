@@ -134,12 +134,23 @@
                         </td>
                         <td><?= htmlspecialchars($p->nama_sales ?? $p->nama_pembuat ?? '-') ?></td>
                         <td>
-                            <?= htmlspecialchars($p->sistem_pembayaran ?: 'Cash') ?><br>
+                            <?= htmlspecialchars($p->sistem_pembayaran ?: 'Cash') ?>
+                            <?php if (($p->sistem_pembayaran ?? '') === 'Cicilan'): ?>
+                                <?php
+                                    $dpTipeP = $p->cicilan_dp_tipe ?? 'persen';
+                                    $dpPersenP = (float)($p->cicilan_dp_persen ?? 0);
+                                    $dpNominalP = (float)($p->cicilan_dp_nominal ?? 0);
+                                    if ($dpNominalP <= 0 && $dpPersenP > 0 && $totalRow > 0) {
+                                        $dpNominalP = round(($dpPersenP / 100) * $totalRow, 2);
+                                    }
+                                ?>
+                                <br><small style="color: #0369a1;">DP: <?= ($dpTipeP === 'nominal') ? ('Rp ' . number_format($dpNominalP, 0, ',', '.')) : (rtrim(rtrim(number_format($dpPersenP, 2, ',', '.'), '0'), ',') . '%') ?> (<?= (int)($p->cicilan_kali ?? 0) ?>x)</small>
+                            <?php endif; ?><br>
                             <small style="color: #64748b;"><?= htmlspecialchars($p->sistem_perpajakan ?: 'PPN') ?></small>
                         </td>
                         <td class="text-right">Rp <?= number_format($totalRow, 0, ',', '.') ?></td>
                         <td class="text-center">
-                            <b><?= htmlspecialchars($p->status_proses ?? 'BELUM DI PROSES') ?></b>
+                            <b><?= htmlspecialchars((($p->gm_status ?? '') === 'disetujui' && ($p->status_proses ?? '') === 'SUDAH DI PROSES') ? 'PO BISA DIPROSES' : ($p->status_proses ?? 'BELUM DI PROSES')) ?></b>
                         </td>
                     </tr>
                 <?php endforeach; ?>
