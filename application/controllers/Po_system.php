@@ -21,7 +21,7 @@ class Po_system extends CI_Controller
     public function id_navbar()
     {
         $from = $this->input->get('from');
-        if ($from === 'marketing' || $from === 'helpdesk') {
+        if (in_array($from, ['marketing', 'helpdesk', 'accounting', 'inventory'], true)) {
             $this->session->set_userdata('po_from_nav', $from);
             return $from;
         }
@@ -36,6 +36,12 @@ class Po_system extends CI_Controller
             if (strpos($referer, 'marketing') !== false) {
                 $this->session->set_userdata('po_from_nav', 'marketing');
                 return 'marketing';
+            } elseif (strpos($referer, 'accounting') !== false) {
+                $this->session->set_userdata('po_from_nav', 'accounting');
+                return 'accounting';
+            } elseif (strpos($referer, 'inventory') !== false) {
+                $this->session->set_userdata('po_from_nav', 'inventory');
+                return 'inventory';
             } elseif (strpos($referer, 'helpdesk') !== false) {
                 $this->session->set_userdata('po_from_nav', 'helpdesk');
                 return 'helpdesk';
@@ -45,6 +51,12 @@ class Po_system extends CI_Controller
         // Jika pengguna divisi marketing, default ke marketing
         if (isTeamMarketing() && !isAdmin() && !isCRO()) {
             return 'marketing';
+        }
+        if (function_exists('isAccountingUser') && isAccountingUser() && !isAdmin() && !isCRO()) {
+            return 'accounting';
+        }
+        if (function_exists('isAdminInventory') && isAdminInventory() && !isAdmin() && !isCRO()) {
+            return 'inventory';
         }
 
         return 'helpdesk';
@@ -158,13 +170,71 @@ class Po_system extends CI_Controller
     }
 
     /**
-     * Simpan Data PO Baru
+     * Form Edit / Revisi PO
+     */
+    public function edit($id_encrypted)
+    {
+        $id_po = decrypt($id_encrypted);
+        $po    = $this->md_po_system->getPoById($id_po);
+
+        if (!$po) {
+            show_404();
+            return;
+        }
+
+        // Ambil data master customer dari Inventory -> Master Data -> Customer
+        $this->db->select('id_customer, nama_customer, alamat_customer, contact');
+        $this->db->from('customer');
+        $this->db->where('status', 1);
+        $this->db->order_by('nama_customer', 'ASC');
+        $page_data['customer_list'] = $this->db->get()->result();
+        $page_data['customers']     = $page_data['customer_list'];
+
+        // Backup master pelanggan (pelanggan)
+        $this->db->select('id_pelanggan, identitas_pelanggan, alamat, npwp, pengiriman_dokumen, alamat_pengiriman_dokumen, kontak');
+        $this->db->from('pelanggan');
+        $this->db->where('status', '1');
+        $this->db->order_by('identitas_pelanggan', 'ASC');
+        $page_data['pelanggan_list'] = $this->db->get()->result();
+
+        // Ambil master barang dari inventory
+        $this->db->select('id_barang, nama_barang, tipe, kode_barang');
+        $this->db->from('barang');
+        $this->db->where('status', 1);
+        $this->db->order_by('nama_barang', 'ASC');
+        $page_data['barang_list'] = $this->db->get()->result();
+
+        // Ambil data pengaju aktif
+        $page_data['sales_list'] = $this->getPengajuList();
+
+        $page_data['kode_masuk_auto'] = $po->kode_masuk ?: $this->md_po_system->generateKodeMasuk();
+        $page_data['po_edit']         = $po;
+        $page_data['items_edit']      = $this->md_po_system->getItemsByPoId($id_po);
+        $page_data['id_encrypt']      = $id_encrypted;
+
+        $user = $this->md_pengguna->getById(sessPenggunaId());
+        $page_data['current_user'] = is_array($user) ? $user[0] : $user;
+
+        $page_data['page_name']  = 'po/v_po_form';
+        $page_data['page_title'] = 'Edit / Revisi PO Masuk';
+        $page_data['page_desc']  = 'Perbaikan Data PO No: ' . $po->no_po;
+        $page_data['switch']     = $this->id_navbar();
+
+        $this->load->view('index', $page_data);
+    }
+
+    /**
+     * Simpan Data PO Baru atau Simpan Perubahan Revisi PO
      */
     public function simpan()
     {
+        $id_po_edit_enc  = trim($this->input->post('id_po_edit') ?? '');
+        $id_po_edit      = !empty($id_po_edit_enc) ? decrypt($id_po_edit_enc) : null;
+        $po_existing     = !empty($id_po_edit) ? $this->md_po_system->getPoById($id_po_edit) : null;
+
         $no_po           = trim($this->input->post('no_po'));
         $tanggal_po      = $this->input->post('tanggal_po');
-        $tanggal_terima   = $this->input->post('tanggal_terima') ?: date('Y-m-d');
+        $tanggal_terima  = $this->input->post('tanggal_terima') ?: date('Y-m-d');
         
         $id_pelanggan    = $this->input->post('id_pelanggan') ?: null;
         $id_customer     = $this->input->post('id_customer') ?: null;
@@ -204,16 +274,14 @@ class Po_system extends CI_Controller
 
         if (empty($no_po) || empty($tanggal_po)) {
             $this->session->set_flashdata('error', 'Nomor PO dan Tanggal PO wajib diisi!');
-            redirect('po_system/tambah');
+            redirect($po_existing ? ('po_system/edit/' . $id_po_edit_enc) : 'po_system/tambah');
             return;
         }
 
         // Handle upload berkas atau link file PO
-        $file_po = '';
+        $file_po = $po_existing ? ($po_existing->file_po ?? '') : '';
         $link_external = !empty($link_po_customer) ? $link_po_customer : trim($this->input->post('link_file_po'));
-        if (!empty($link_external)) {
-            $file_po = $link_external;
-        } elseif (!empty($_FILES['file_po']['name'])) {
+        if (!empty($_FILES['file_po']['name'])) {
             $config['upload_path']   = './uploads/po/';
             $config['allowed_types'] = 'pdf|jpg|jpeg|png';
             $config['max_size']      = 10240; // 10MB
@@ -225,9 +293,11 @@ class Po_system extends CI_Controller
                 $file_po = base_url('uploads/po/' . $upload_data['file_name']);
             } else {
                 $this->session->set_flashdata('error', 'Upload Berkas Gagal: ' . $this->upload->display_errors('', ''));
-                redirect('po_system/tambah');
+                redirect($po_existing ? ('po_system/edit/' . $id_po_edit_enc) : 'po_system/tambah');
                 return;
             }
+        } elseif (!empty($link_external)) {
+            $file_po = $link_external;
         }
 
         // Hitung total nominal dari item-item
@@ -278,6 +348,81 @@ class Po_system extends CI_Controller
 
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_pembuat = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Marketing');
+
+        if ($po_existing) {
+            $data_update = [
+                'no_po'                    => $no_po,
+                'tanggal_po'               => $tanggal_po,
+                'tanggal_terima'           => $tanggal_terima,
+                'id_pelanggan'             => $id_pelanggan,
+                'id_customer'              => $id_customer,
+                'nama_customer'            => $nama_customer,
+                'alamat_customer'          => $alamat_customer,
+                'npwp_customer'            => $npwp_customer,
+                'alamat_pengiriman'        => $alamat_pengiriman,
+                'pic_penerima_nama'        => $pic_penerima_nama,
+                'pic_penerima_nohp'        => $pic_penerima_nohp,
+                'pic_penagihan_nama'       => $pic_penagihan_nama,
+                'pic_penagihan_nohp'       => $pic_penagihan_nohp,
+                'sistem_pembayaran'        => $sistem_pembayaran,
+                'cicilan_dp_persen'        => $cicilan_dp_persen,
+                'cicilan_kali'             => $cicilan_kali,
+                'sistem_perpajakan'        => $sistem_perpajakan,
+                'no_npwp_ktp'              => $no_npwp_ktp,
+                'info_pengiriman_faktur'   => $info_pengiriman_faktur,
+                'dokumen_pembayaran_tipe'  => $dokumen_pembayaran_tipe,
+                'dokumen_dilampirkan'      => $dokumen_dilampirkan,
+                'alamat_pengiriman_dokumen'=> $alamat_pengiriman_dokumen,
+                'ongkir_ditanggung'        => $ongkir_ditanggung,
+                'nominal_subtotal'         => $nominal_subtotal,
+                'nominal_ppn'              => $nominal_ppn,
+                'nominal_ongkir'           => $nominal_ongkir,
+                'nominal_total_akhir'      => $nominal_total_akhir,
+                'nominal_po'               => $nominal_total_akhir ?: $nominal_subtotal,
+                'link_po_customer'         => $link_po_customer,
+                'link_penawaran'           => $link_penawaran,
+                'link_approval_harga'      => $link_approval_harga,
+                'file_po'                  => $file_po,
+                'id_sales'                 => !empty($id_sales) ? $id_sales : $po_existing->id_sales,
+                'nama_sales'               => !empty($nama_sales) ? $nama_sales : $po_existing->nama_sales,
+                'keterangan'               => $keterangan,
+                'updated_at'               => date('Y-m-d H:i:s')
+            ];
+
+            // Jika sebelumnya berstatus revisi, kembalikan status ke sesuai/menunggu_kroscek agar bisa diverifikasi ulang
+            $status_baru = $po_existing->status;
+            if ($po_existing->status === 'revisi') {
+                if ($po_existing->cro_status === 'revisi') {
+                    $data_update['cro_status'] = null;
+                    $status_baru = 'menunggu_kroscek';
+                } elseif ($po_existing->acc_status === 'revisi') {
+                    $data_update['acc_status'] = null;
+                    $status_baru = 'sesuai';
+                } elseif ($po_existing->pajak_status === 'revisi') {
+                    $data_update['pajak_status'] = null;
+                    $status_baru = 'sesuai';
+                } else {
+                    $status_baru = 'menunggu_kroscek';
+                }
+                $data_update['status'] = $status_baru;
+            }
+
+            $this->md_po_system->updatePo($po_existing->id_po, $data_update);
+
+            if (!empty($items_data)) {
+                $this->md_po_system->deleteItems($po_existing->id_po);
+                foreach ($items_data as &$it) {
+                    $it['id_po'] = $po_existing->id_po;
+                }
+                $this->md_po_system->insertItems($items_data);
+            }
+
+            $this->md_po_system->addLog($po_existing->id_po, $po_existing->status, $status_baru, 'Data PO diperbarui / direvisi oleh ' . $nama_pembuat, sessPenggunaId(), $nama_pembuat);
+
+            $this->session->set_flashdata('success', 'Perubahan Data PO No. ' . $no_po . ' berhasil disimpan!');
+            redirect('po_system/detail/' . $id_po_edit_enc);
+            return;
+        }
 
         $kode_masuk = $this->md_po_system->generateKodeMasuk();
 
@@ -862,12 +1007,23 @@ class Po_system extends CI_Controller
         $sisa_inden = $this->md_po_system->countIndentItems($id_po);
         $status_proses_baru = $po->status_proses;
 
-        // Jika semua barang sudah ready, otomatis selesaikan status_proses jika GM sudah approve atau PO sedang proses sebagian/hold
+        // Jika semua barang sudah ready:
+        // - Bila GM sudah approve (atau status sebelumnya PROSES SEBAGIAN), otomatis selesaikan menjadi SUDAH DI PROSES.
+        // - Bila sebelumnya tertahan di tahap CRO (HOLD / INDENT) dan belum melewati ACC/Pajak/GM, buka kunci CRO menjadi sesuai agar lanjut ke ACC -> Pajak -> GM.
         if ($sisa_inden === 0) {
-            if ($po->gm_status === 'sesuai' || in_array($po->status_proses, ['PROSES SEBAGIAN', 'HOLD / INDENT'])) {
+            if (in_array($po->gm_status, ['disetujui', 'sesuai']) || $po->status_proses === 'PROSES SEBAGIAN') {
                 $status_proses_baru = 'SUDAH DI PROSES';
                 $this->md_po_system->updatePo($id_po, [
                     'status_proses' => 'SUDAH DI PROSES',
+                    'updated_at'    => date('Y-m-d H:i:s')
+                ]);
+            } elseif ($po->cro_status === 'hold_indent' || $po->status_proses === 'HOLD / INDENT') {
+                $status_proses_baru = 'BELUM DI PROSES';
+                $this->md_po_system->updatePo($id_po, [
+                    'cro_cek_stok'  => 'STOK READY WAREHOUSE',
+                    'cro_status'    => 'sesuai',
+                    'status'        => 'sesuai',
+                    'status_proses' => 'BELUM DI PROSES',
                     'updated_at'    => date('Y-m-d H:i:s')
                 ]);
             }

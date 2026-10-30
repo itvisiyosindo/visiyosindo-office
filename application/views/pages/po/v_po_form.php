@@ -239,33 +239,51 @@
             </div>
         <?php endif; ?>
 
+        <?php
+            $is_edit = !empty($po_edit);
+            $doc_checked = $is_edit && !empty($po_edit->dokumen_dilampirkan)
+                ? array_map('trim', explode(',', $po_edit->dokumen_dilampirkan))
+                : ['PO', 'Kwitansi', 'Faktur Pajak', 'Invoice'];
+            $npwp_map = [];
+            if (!empty($pelanggan_list)) {
+                foreach ($pelanggan_list as $pl) {
+                    if (!empty($pl->identitas_pelanggan) && !empty($pl->npwp)) {
+                        $npwp_map[strtolower(trim($pl->identitas_pelanggan))] = trim($pl->npwp);
+                    }
+                }
+            }
+        ?>
+
         <form action="<?= base_url('po_system/simpan') ?>" method="post" enctype="multipart/form-data" id="formPoMasuk">
+            <?php if ($is_edit): ?>
+                <input type="hidden" name="id_po_edit" value="<?= htmlspecialchars($id_encrypt ?? '') ?>">
+            <?php endif; ?>
             
             <!-- CARD 1: INFORMASI PO & DATA CUSTOMER -->
             <div class="card-modern">
                 <div class="card-header-modern">
                     <h5><i class="fas fa-building"></i> 1. Informasi PO & Data Pelanggan / Customer</h5>
-                    <span class="badge badge-info text-white badge-pill-soft">Kode: <?= $kode_masuk_auto ?></span>
+                    <span class="badge badge-info text-white badge-pill-soft">Kode: <?= htmlspecialchars($is_edit ? ($po_edit->kode_masuk ?? $kode_masuk_auto) : $kode_masuk_auto) ?></span>
                 </div>
                 <div class="card-body p-4">
                     <div class="row">
                         <!-- Nomor PO -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Nomor PO Customer <span class="text-danger">*</span></label>
-                            <input type="text" name="no_po" class="form-control form-control-custom" placeholder="Contoh: 045/PO-RSUD/IX/2026" required autofocus>
+                            <input type="text" name="no_po" class="form-control form-control-custom" placeholder="Contoh: 045/PO-RSUD/IX/2026" value="<?= htmlspecialchars($po_edit->no_po ?? '') ?>" required autofocus>
                             <small class="help-hint">Nomor resmi yang tertera pada lembar PO Customer</small>
                         </div>
 
                         <!-- Tanggal PO -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Tanggal Surat PO <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_po" class="form-control form-control-custom" value="<?= date('Y-m-d') ?>" required>
+                            <input type="date" name="tanggal_po" class="form-control form-control-custom" value="<?= htmlspecialchars($po_edit->tanggal_po ?? date('Y-m-d')) ?>" required>
                         </div>
 
                         <!-- Tanggal Diterima -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Tanggal Diterima Marketing</label>
-                            <input type="date" name="tanggal_terima" class="form-control form-control-custom" value="<?= date('Y-m-d') ?>">
+                            <input type="date" name="tanggal_terima" class="form-control form-control-custom" value="<?= htmlspecialchars($po_edit->tanggal_terima ?? date('Y-m-d')) ?>">
                         </div>
                     </div>
 
@@ -282,6 +300,7 @@
                                     <?php foreach ($customer_list as $cust): ?>
                                         <?php
                                             $nama_c = trim($cust->nama_customer ?? '');
+                                            $npwp_c = $npwp_map[strtolower($nama_c)] ?? '';
                                             $contact_preview = '';
                                             if (!empty($cust->contact) && trim($cust->contact) !== '-') {
                                                 $clean_c = preg_replace('/\s+/', ' ', trim($cust->contact));
@@ -291,12 +310,13 @@
                                                 $contact_preview = ' — [' . $clean_c . ']';
                                             }
                                             $display_label = $nama_c . $contact_preview;
+                                            $sel_cust = ($is_edit && ($po_edit->id_customer == $cust->id_customer || strcasecmp(trim($po_edit->nama_customer ?? ''), $nama_c) === 0)) ? 'selected' : '';
                                         ?>
-                                        <option value="<?= $cust->id_customer ?>" data-nama="<?= htmlspecialchars($nama_c) ?>" data-alamat="<?= htmlspecialchars(trim($cust->alamat_customer ?? '')) ?>" data-contact="<?= htmlspecialchars(trim($cust->contact ?? '')) ?>"><?= htmlspecialchars($display_label) ?></option>
+                                        <option value="<?= $cust->id_customer ?>" data-nama="<?= htmlspecialchars($nama_c) ?>" data-alamat="<?= htmlspecialchars(trim($cust->alamat_customer ?? '')) ?>" data-contact="<?= htmlspecialchars(trim($cust->contact ?? '')) ?>" data-npwp="<?= htmlspecialchars($npwp_c) ?>" <?= $sel_cust ?>><?= htmlspecialchars($display_label) ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
-                            <input type="hidden" name="nama_customer" id="namaCustomerInput">
+                            <input type="hidden" name="nama_customer" id="namaCustomerInput" value="<?= htmlspecialchars($po_edit->nama_customer ?? '') ?>">
                             <div class="mt-1">
                                 <small class="text-warning font-italic">
                                     <i class="fas fa-info-circle mr-1"></i>Jika customer belum terdaftar, silakan tambahkan data melalui menu <strong>Inventory &rarr; Master Data &rarr; Customer</strong>.
@@ -309,13 +329,13 @@
                         <!-- Alamat Customer (Otomatis) -->
                         <div class="col-md-8 mb-3">
                             <label class="form-label-custom">Alamat Customer <span class="badge badge-secondary badge-pill-soft ml-1">Otomatis dari Master</span></label>
-                            <textarea name="alamat_customer" id="alamatCustomer" class="form-control form-control-custom" rows="2" placeholder="Otomatis terisi dari data master customer..."></textarea>
+                            <textarea name="alamat_customer" id="alamatCustomer" class="form-control form-control-custom" rows="2" placeholder="Otomatis terisi dari data master customer..."><?= htmlspecialchars($po_edit->alamat_customer ?? '') ?></textarea>
                         </div>
 
                         <!-- NPWP Customer (Otomatis) -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">NPWP Customer <span class="badge badge-secondary badge-pill-soft ml-1">Otomatis</span></label>
-                            <input type="text" name="npwp_customer" id="npwpCustomer" class="form-control form-control-custom" placeholder="Otomatis dari master...">
+                            <input type="text" name="npwp_customer" id="npwpCustomer" class="form-control form-control-custom" placeholder="Otomatis dari master..." value="<?= htmlspecialchars($po_edit->npwp_customer ?? '') ?>">
                         </div>
                     </div>
 
@@ -328,7 +348,7 @@
                                     <i class="fas fa-copy mr-1"></i> Salin dari Alamat Customer
                                 </button>
                             </div>
-                            <textarea name="alamat_pengiriman" id="alamatPengiriman" class="form-control form-control-custom" rows="2" placeholder="Masukkan alamat lengkap tujuan pengiriman fisik barang (Rumah Sakit / Lab / Klinik / Ruangan / Gedung)..." required></textarea>
+                            <textarea name="alamat_pengiriman" id="alamatPengiriman" class="form-control form-control-custom" rows="2" placeholder="Masukkan alamat lengkap tujuan pengiriman fisik barang (Rumah Sakit / Lab / Klinik / Ruangan / Gedung)..." required><?= htmlspecialchars($po_edit->alamat_pengiriman ?? '') ?></textarea>
                         </div>
                     </div>
 
@@ -339,10 +359,10 @@
                                 <label class="form-label-custom text-primary"><i class="fas fa-user-check mr-1"></i> PIC Penerima Barang</label>
                                 <div class="row">
                                     <div class="col-sm-6 mb-2">
-                                        <input type="text" name="pic_penerima_nama" class="form-control form-control-custom" placeholder="Nama PIC Penerima" required>
+                                        <input type="text" name="pic_penerima_nama" class="form-control form-control-custom" placeholder="Nama PIC Penerima" value="<?= htmlspecialchars($po_edit->pic_penerima_nama ?? '') ?>" required>
                                     </div>
                                     <div class="col-sm-6 mb-2">
-                                        <input type="text" name="pic_penerima_nohp" class="form-control form-control-custom" placeholder="No. HP / WhatsApp PIC" required>
+                                        <input type="text" name="pic_penerima_nohp" class="form-control form-control-custom" placeholder="No. HP / WhatsApp PIC" value="<?= htmlspecialchars($po_edit->pic_penerima_nohp ?? '') ?>" required>
                                     </div>
                                 </div>
                             </div>
@@ -354,10 +374,10 @@
                                 <label class="form-label-custom text-primary"><i class="fas fa-file-invoice-dollar mr-1"></i> PIC Penagihan / Keuangan</label>
                                 <div class="row">
                                     <div class="col-sm-6 mb-2">
-                                        <input type="text" name="pic_penagihan_nama" class="form-control form-control-custom" placeholder="Nama PIC Penagihan" required>
+                                        <input type="text" name="pic_penagihan_nama" class="form-control form-control-custom" placeholder="Nama PIC Penagihan" value="<?= htmlspecialchars($po_edit->pic_penagihan_nama ?? '') ?>" required>
                                     </div>
                                     <div class="col-sm-6 mb-2">
-                                        <input type="text" name="pic_penagihan_nohp" class="form-control form-control-custom" placeholder="No. HP / WhatsApp Penagihan" required>
+                                        <input type="text" name="pic_penagihan_nohp" class="form-control form-control-custom" placeholder="No. HP / WhatsApp Penagihan" value="<?= htmlspecialchars($po_edit->pic_penagihan_nohp ?? '') ?>" required>
                                     </div>
                                 </div>
                             </div>
@@ -372,6 +392,7 @@
                     <h5><i class="fas fa-money-check-alt"></i> 2. Sistem Pembayaran, Perpajakan & Dokumen</h5>
                 </div>
                 <div class="card-body p-4">
+                    <?php $cur_pay = $po_edit->sistem_pembayaran ?? 'Cash'; ?>
                     <!-- Sistem Pembayaran -->
                     <div class="row mb-3">
                         <div class="col-12">
@@ -379,7 +400,7 @@
                             <div class="row">
                                 <div class="col-md-4 mb-2">
                                     <label class="custom-radio-card" id="cardPayCash">
-                                        <input type="radio" name="sistem_pembayaran" value="Cash" checked>
+                                        <input type="radio" name="sistem_pembayaran" value="Cash" <?= ($cur_pay === 'Cash') ? 'checked' : '' ?>>
                                         <div>
                                             <span class="font-weight-bold d-block">Cash / Lunas</span>
                                             <small class="text-muted">Pembayaran langsung / tunai saat barang diterima</small>
@@ -388,7 +409,7 @@
                                 </div>
                                 <div class="col-md-4 mb-2">
                                     <label class="custom-radio-card" id="cardPayTempo">
-                                        <input type="radio" name="sistem_pembayaran" value="Tempo">
+                                        <input type="radio" name="sistem_pembayaran" value="Tempo" <?= ($cur_pay === 'Tempo') ? 'checked' : '' ?>>
                                         <div>
                                             <span class="font-weight-bold d-block">Tempo</span>
                                             <small class="text-muted">Pembayaran bertenggang (30 / 60 hari)</small>
@@ -397,7 +418,7 @@
                                 </div>
                                 <div class="col-md-4 mb-2">
                                     <label class="custom-radio-card" id="cardPayCicilan">
-                                        <input type="radio" name="sistem_pembayaran" value="Cicilan">
+                                        <input type="radio" name="sistem_pembayaran" value="Cicilan" <?= ($cur_pay === 'Cicilan') ? 'checked' : '' ?>>
                                         <div>
                                             <span class="font-weight-bold d-block">Cicilan / Bertahap</span>
                                             <small class="text-muted">Pembayaran dengan DP & beberapa kali termin</small>
@@ -409,38 +430,39 @@
                     </div>
 
                     <!-- Input Tambahan Jika Cicilan Dipilih -->
-                    <div class="row mb-3 p-3 border rounded bg-light" id="boxCicilan" style="display: none;">
+                    <div class="row mb-3 p-3 border rounded bg-light" id="boxCicilan" style="<?= ($cur_pay === 'Cicilan') ? 'display: flex;' : 'display: none;' ?>">
                         <div class="col-md-6 mb-2">
                             <label class="form-label-custom">Uang Muka / DP (%)</label>
                             <div class="input-group">
-                                <input type="number" step="0.1" name="cicilan_dp_persen" class="form-control form-control-custom" placeholder="Contoh: 30" value="0">
+                                <input type="number" step="0.1" name="cicilan_dp_persen" class="form-control form-control-custom" placeholder="Contoh: 30" value="<?= htmlspecialchars($po_edit->cicilan_dp_persen ?? '0') ?>">
                                 <div class="input-group-append"><span class="input-group-text">%</span></div>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="form-label-custom">Jumlah Cicilan</label>
                             <div class="input-group">
-                                <input type="number" name="cicilan_kali" class="form-control form-control-custom" placeholder="Contoh: 3" value="0">
+                                <input type="number" name="cicilan_kali" class="form-control form-control-custom" placeholder="Contoh: 3" value="<?= htmlspecialchars($po_edit->cicilan_kali ?? '0') ?>">
                                 <div class="input-group-append"><span class="input-group-text">Kali (X)</span></div>
                             </div>
                         </div>
                     </div>
 
+                    <?php $cur_pajak = $po_edit->sistem_perpajakan ?? 'PPN'; ?>
                     <!-- Sistem Perpajakan -->
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3">
                             <label class="form-label-custom">Sistem Perpajakan <span class="text-danger">*</span></label>
                             <div class="d-flex">
                                 <label class="custom-radio-card mr-2 flex-fill" id="cardPajakPpn">
-                                    <input type="radio" name="sistem_perpajakan" value="PPN" checked>
+                                    <input type="radio" name="sistem_perpajakan" value="PPN" <?= ($cur_pajak === 'PPN') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">PPN (11%)</span>
                                 </label>
                                 <label class="custom-radio-card mr-2 flex-fill" id="cardPajakNonPpn">
-                                    <input type="radio" name="sistem_perpajakan" value="NON PPN">
+                                    <input type="radio" name="sistem_perpajakan" value="NON PPN" <?= ($cur_pajak === 'NON PPN') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">NON PPN</span>
                                 </label>
                                 <label class="custom-radio-card flex-fill" id="cardPajakEndorsement">
-                                    <input type="radio" name="sistem_perpajakan" value="ENDORSEMENT">
+                                    <input type="radio" name="sistem_perpajakan" value="ENDORSEMENT" <?= ($cur_pajak === 'ENDORSEMENT') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">ENDORSEMENT</span>
                                 </label>
                             </div>
@@ -448,21 +470,26 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label-custom">No. NPWP Pajak / KTP</label>
-                            <input type="text" name="no_npwp_ktp" class="form-control form-control-custom" placeholder="Masukkan nomor NPWP atau NIK KTP untuk faktur">
+                            <input type="text" name="no_npwp_ktp" id="noNpwpKtp" class="form-control form-control-custom" placeholder="Masukkan nomor NPWP atau NIK KTP untuk faktur" value="<?= htmlspecialchars($po_edit->no_npwp_ktp ?? '') ?>">
                         </div>
                     </div>
 
+                    <?php
+                        $cur_faktur = $po_edit->info_pengiriman_faktur ?? 'DIMUKA';
+                        $cur_ongkir = $po_edit->ongkir_ditanggung ?? 'PERUSAHAAN';
+                        $cur_dok_tipe = $po_edit->dokumen_pembayaran_tipe ?? 'Hardfile';
+                    ?>
                     <div class="row mb-3">
                         <!-- Informasi Pengiriman Faktur Pajak -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label-custom">Informasi Pengiriman Faktur Pajak</label>
                             <div class="d-flex">
                                 <label class="custom-radio-card mr-2 flex-fill">
-                                    <input type="radio" name="info_pengiriman_faktur" value="DIMUKA" checked>
+                                    <input type="radio" name="info_pengiriman_faktur" value="DIMUKA" <?= ($cur_faktur === 'DIMUKA') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">Di Muka</span>
                                 </label>
                                 <label class="custom-radio-card flex-fill">
-                                    <input type="radio" name="info_pengiriman_faktur" value="SAAT PELUNASAN">
+                                    <input type="radio" name="info_pengiriman_faktur" value="SAAT PELUNASAN" <?= ($cur_faktur === 'SAAT PELUNASAN') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">Saat Pelunasan</span>
                                 </label>
                             </div>
@@ -473,11 +500,11 @@
                             <label class="form-label-custom">Ongkos Kirim Ditanggung Oleh</label>
                             <div class="d-flex">
                                 <label class="custom-radio-card mr-2 flex-fill" id="cardOngkirPerusahaan">
-                                    <input type="radio" name="ongkir_ditanggung" value="PERUSAHAAN" checked>
+                                    <input type="radio" name="ongkir_ditanggung" value="PERUSAHAAN" <?= ($cur_ongkir === 'PERUSAHAAN') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">Perusahaan (Free Ongkir)</span>
                                 </label>
                                 <label class="custom-radio-card flex-fill" id="cardOngkirCustomer">
-                                    <input type="radio" name="ongkir_ditanggung" value="CUSTOMER">
+                                    <input type="radio" name="ongkir_ditanggung" value="CUSTOMER" <?= ($cur_ongkir === 'CUSTOMER') ? 'checked' : '' ?>>
                                     <span class="font-weight-bold">Customer</span>
                                 </label>
                             </div>
@@ -492,10 +519,10 @@
                                 <label class="form-label-custom">Bentuk Dokumen</label>
                                 <div class="d-flex flex-column">
                                     <label class="mb-2">
-                                        <input type="radio" name="dokumen_pembayaran_tipe" value="Hardfile" checked> <b>Hardfile</b> (Fisik)
+                                        <input type="radio" name="dokumen_pembayaran_tipe" value="Hardfile" <?= ($cur_dok_tipe === 'Hardfile') ? 'checked' : '' ?>> <b>Hardfile</b> (Fisik)
                                     </label>
                                     <label>
-                                        <input type="radio" name="dokumen_pembayaran_tipe" value="Softfile"> <b>Softfile</b> (Digital)
+                                        <input type="radio" name="dokumen_pembayaran_tipe" value="Softfile" <?= ($cur_dok_tipe === 'Softfile') ? 'checked' : '' ?>> <b>Softfile</b> (Digital)
                                     </label>
                                 </div>
                             </div>
@@ -503,20 +530,20 @@
                                 <label class="form-label-custom">Detail Dokumen yang Dilampirkan</label>
                                 <div class="row">
                                     <div class="col-6">
-                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="PO" checked> PO Customer</label>
-                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Kwitansi" checked> Kwitansi</label>
-                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Faktur Pajak" checked> Faktur Pajak</label>
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="PO" <?= in_array('PO', $doc_checked) ? 'checked' : '' ?>> PO Customer</label>
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Kwitansi" <?= in_array('Kwitansi', $doc_checked) ? 'checked' : '' ?>> Kwitansi</label>
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Faktur Pajak" <?= in_array('Faktur Pajak', $doc_checked) ? 'checked' : '' ?>> Faktur Pajak</label>
                                     </div>
                                     <div class="col-6">
-                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Invoice" checked> Invoice</label>
-                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Surat Jalan"> Surat Jalan (SJ)</label>
-                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="BAST/SSTB"> BAST / SSTB</label>
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Invoice" <?= in_array('Invoice', $doc_checked) ? 'checked' : '' ?>> Invoice</label>
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Surat Jalan" <?= in_array('Surat Jalan', $doc_checked) ? 'checked' : '' ?>> Surat Jalan (SJ)</label>
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="BAST/SSTB" <?= in_array('BAST/SSTB', $doc_checked) ? 'checked' : '' ?>> BAST / SSTB</label>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label-custom">Alamat Pengiriman Dokumen</label>
-                                <textarea name="alamat_pengiriman_dokumen" id="alamatPengirimanDokumen" class="form-control form-control-custom" rows="3" placeholder="Masukkan alamat pengiriman dokumen/invoice..."></textarea>
+                                <textarea name="alamat_pengiriman_dokumen" id="alamatPengirimanDokumen" class="form-control form-control-custom" rows="3" placeholder="Masukkan alamat pengiriman dokumen/invoice..."><?= htmlspecialchars($po_edit->alamat_pengiriman_dokumen ?? '') ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -551,32 +578,68 @@
                                 </tr>
                             </thead>
                             <tbody id="itemsBody">
-                                <!-- Baris Item 1 -->
-                                <tr class="item-row" data-row="0">
-                                    <td class="text-center font-weight-bold row-num">1</td>
-                                    <td>
-                                        <input type="text" name="items[0][nama_barang]" list="listBarang" class="form-control form-control-custom item-nama" placeholder="Pilih / ketik nama barang..." required>
-                                        <input type="hidden" name="items[0][id_barang]" class="item-id-barang">
-                                        <input type="hidden" name="items[0][tipe_barang]" class="item-tipe-barang">
-                                        <input type="text" name="items[0][catatan]" class="form-control form-control-custom mt-1" style="font-size: 0.78rem;" placeholder="Catatan spesifikasi / nomor seri (opsional)">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="items[0][harga]" class="form-control form-control-custom text-right item-harga mask-rupiah" placeholder="0" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" step="any" min="1" name="items[0][qty]" class="form-control form-control-custom text-center item-qty" value="1" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="items[0][satuan]" class="form-control form-control-custom" value="Unit">
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control form-control-custom text-right item-total font-weight-bold" readonly value="Rp 0">
-                                        <input type="hidden" name="items[0][total]" class="item-total-raw" value="0">
-                                    </td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-row" title="Hapus"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
+                                <?php if ($is_edit && !empty($items_edit)): ?>
+                                    <?php foreach ($items_edit as $idx => $it): ?>
+                                        <?php
+                                            $h_num = (float)($it->harga_satuan ?? 0);
+                                            $h_str = (abs($h_num - round($h_num)) > 0.0001)
+                                                ? rtrim(rtrim(number_format($h_num, 2, ',', '.'), '0'), ',')
+                                                : number_format($h_num, 0, ',', '.');
+                                        ?>
+                                        <tr class="item-row" data-row="<?= $idx ?>">
+                                            <td class="text-center font-weight-bold row-num"><?= $idx + 1 ?></td>
+                                            <td>
+                                                <input type="text" name="items[<?= $idx ?>][nama_barang]" list="listBarang" class="form-control form-control-custom item-nama" placeholder="Pilih / ketik nama barang..." value="<?= htmlspecialchars($it->nama_barang ?? '') ?>" required>
+                                                <input type="hidden" name="items[<?= $idx ?>][id_barang]" class="item-id-barang" value="<?= htmlspecialchars($it->id_barang ?? '') ?>">
+                                                <input type="hidden" name="items[<?= $idx ?>][tipe_barang]" class="item-tipe-barang" value="<?= htmlspecialchars($it->tipe_barang ?? '') ?>">
+                                                <input type="text" name="items[<?= $idx ?>][catatan]" class="form-control form-control-custom mt-1" style="font-size: 0.78rem;" placeholder="Catatan spesifikasi / nomor seri (opsional)" value="<?= htmlspecialchars($it->catatan ?? '') ?>">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="items[<?= $idx ?>][harga]" class="form-control form-control-custom text-right item-harga mask-rupiah" placeholder="0" value="<?= $h_str ?>" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" step="any" min="1" name="items[<?= $idx ?>][qty]" class="form-control form-control-custom text-center item-qty" value="<?= (float)($it->qty ?? 1) ?>" required>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="items[<?= $idx ?>][satuan]" class="form-control form-control-custom" value="<?= htmlspecialchars($it->satuan ?? 'Unit') ?>">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-custom text-right item-total font-weight-bold" readonly value="Rp 0">
+                                                <input type="hidden" name="items[<?= $idx ?>][total]" class="item-total-raw" value="0">
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-row" title="Hapus"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <!-- Baris Item 1 -->
+                                    <tr class="item-row" data-row="0">
+                                        <td class="text-center font-weight-bold row-num">1</td>
+                                        <td>
+                                            <input type="text" name="items[0][nama_barang]" list="listBarang" class="form-control form-control-custom item-nama" placeholder="Pilih / ketik nama barang..." required>
+                                            <input type="hidden" name="items[0][id_barang]" class="item-id-barang">
+                                            <input type="hidden" name="items[0][tipe_barang]" class="item-tipe-barang">
+                                            <input type="text" name="items[0][catatan]" class="form-control form-control-custom mt-1" style="font-size: 0.78rem;" placeholder="Catatan spesifikasi / nomor seri (opsional)">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="items[0][harga]" class="form-control form-control-custom text-right item-harga mask-rupiah" placeholder="0" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="any" min="1" name="items[0][qty]" class="form-control form-control-custom text-center item-qty" value="1" required>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="items[0][satuan]" class="form-control form-control-custom" value="Unit">
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-custom text-right item-total font-weight-bold" readonly value="Rp 0">
+                                            <input type="hidden" name="items[0][total]" class="item-total-raw" value="0">
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-row" title="Hapus"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -614,7 +677,7 @@
                                     <div class="summary-row" id="rowOngkir">
                                         <span class="text-muted font-weight-bold">Ongkos Kirim:</span>
                                         <div style="width: 150px;">
-                                            <input type="text" name="nominal_ongkir" id="inputOngkir" class="form-control form-control-custom text-right mask-rupiah" placeholder="0" value="0">
+                                            <input type="text" name="nominal_ongkir" id="inputOngkir" class="form-control form-control-custom text-right mask-rupiah" placeholder="0" value="<?= $is_edit && !empty($po_edit->nominal_ongkir) ? number_format((float)$po_edit->nominal_ongkir, 0, ',', '.') : '0' ?>">
                                         </div>
                                     </div>
                                     <div class="summary-row total-row">
@@ -637,24 +700,24 @@
                 </div>
                 <div class="card-body p-4">
                     <div class="row">
-                        <!-- Link PO Customer (Wajib) -->
+                        <!-- Link PO Customer (Wajib jika tidak upload file) -->
                         <div class="col-md-4 mb-3">
-                            <label class="form-label-custom">Link PO Customer (Google Drive / Cloud) <span class="text-danger">*</span></label>
-                            <input type="url" name="link_po_customer" class="form-control form-control-custom" placeholder="https://drive.google.com/file/d/..." required>
+                            <label class="form-label-custom">Link PO Customer (Google Drive / Cloud) <?= ($is_edit && !empty($po_edit->file_po)) ? '' : '<span class="text-danger">*</span>' ?></label>
+                            <input type="url" name="link_po_customer" id="linkPoCustomer" class="form-control form-control-custom" placeholder="https://drive.google.com/file/d/..." value="<?= htmlspecialchars($po_edit->link_po_customer ?? '') ?>" <?= ($is_edit && !empty($po_edit->file_po)) ? '' : 'required' ?>>
                             <small class="help-hint">Scan dokumen PO bertanda tangan pihak Rumah Sakit / Pembeli</small>
                         </div>
 
                         <!-- Link Penawaran -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Link Penawaran / SPH <span class="text-muted font-weight-normal">(Jika ada)</span></label>
-                            <input type="url" name="link_penawaran" class="form-control form-control-custom" placeholder="https://drive.google.com/file/d/...">
+                            <input type="url" name="link_penawaran" class="form-control form-control-custom" placeholder="https://drive.google.com/file/d/..." value="<?= htmlspecialchars($po_edit->link_penawaran ?? '') ?>">
                             <small class="help-hint">Surat Penawaran Harga acuan</small>
                         </div>
 
                         <!-- Link Approval Harga -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Link Approval Harga <span class="text-muted font-weight-normal">(Jika ada)</span></label>
-                            <input type="url" name="link_approval_harga" class="form-control form-control-custom" placeholder="https://drive.google.com/file/d/...">
+                            <input type="url" name="link_approval_harga" class="form-control form-control-custom" placeholder="https://drive.google.com/file/d/..." value="<?= htmlspecialchars($po_edit->link_approval_harga ?? '') ?>">
                             <small class="help-hint">Bukti persetujuan harga khusus jika ada diskon</small>
                         </div>
                     </div>
@@ -663,37 +726,38 @@
                         <!-- Upload File PO Fisik Alternatif -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Atau Upload Berkas PO (PDF / Foto)</label>
-                            <input type="file" name="file_po" class="form-control form-control-custom" accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="file" name="file_po" id="filePoInput" class="form-control form-control-custom" accept=".pdf,.jpg,.jpeg,.png">
                             <small class="help-hint">Format PDF, JPG, PNG (Maks 10MB)</small>
                         </div>
 
                         <!-- Diajukan Oleh (Marketing/Sales) -->
+                        <?php $selected_sales_id = $is_edit ? ($po_edit->id_sales ?? sessPenggunaId()) : sessPenggunaId(); ?>
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Diajukan Oleh (Marketing / Sales) <span class="text-danger">*</span></label>
                             <select name="id_sales" id="id_sales" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Pilih Sales / Marketing --" required>
                                 <?php if (!empty($sales_list)): ?>
                                     <?php foreach ($sales_list as $s): ?>
-                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= ($s->pengguna_id == sessPenggunaId()) ? 'selected' : '' ?>><?= htmlspecialchars($s->nama . ' (' . $s->jabatan . ')') ?></option>
+                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= ($s->pengguna_id == $selected_sales_id) ? 'selected' : '' ?>><?= htmlspecialchars($s->nama . ' (' . $s->jabatan . ')') ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
-                            <input type="hidden" name="nama_sales" id="nama_sales_input" value="<?= htmlspecialchars($current_user->nama ?? '') ?>">
+                            <input type="hidden" name="nama_sales" id="nama_sales_input" value="<?= htmlspecialchars($is_edit ? ($po_edit->nama_sales ?? '') : ($current_user->nama ?? '')) ?>">
                         </div>
 
                         <!-- Catatan Tambahan -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Catatan Tambahan untuk CRO / Pengadaan</label>
-                            <textarea name="keterangan" class="form-control form-control-custom" rows="2" placeholder="Catatan khusus terkait pengiriman, batas waktu, dll..."></textarea>
+                            <textarea name="keterangan" class="form-control form-control-custom" rows="2" placeholder="Catatan khusus terkait pengiriman, batas waktu, dll..."><?= htmlspecialchars($po_edit->keterangan ?? '') ?></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
-                    <a href="<?= base_url('po_system') ?>" class="btn btn-outline-secondary px-4">
+                    <a href="<?= $is_edit ? base_url('po_system/detail/' . ($id_encrypt ?? '')) : base_url('po_system') ?>" class="btn btn-outline-secondary px-4">
                         <i class="fas fa-arrow-left mr-1"></i> Batal & Kembali
                     </a>
                     <button type="submit" class="btn btn-success font-weight-bold px-4 py-2 shadow-sm" id="btnSubmit">
-                        <i class="fas fa-paper-plane mr-2"></i> Ajukan PO Masuk ke CRO
+                        <i class="fas fa-paper-plane mr-2"></i> <?= $is_edit ? 'Simpan Perubahan & Ajukan Ulang PO' : 'Ajukan PO Masuk ke CRO' ?>
                     </button>
                 </div>
             </div>
@@ -773,9 +837,17 @@ document.addEventListener('DOMContentLoaded', function () {
             var nama = opt.attr('data-nama') || opt.text().trim();
             var alamat = opt.attr('data-alamat') || '';
             var contact = opt.attr('data-contact') || '';
+            var npwp = opt.attr('data-npwp') || '';
 
             $('#namaCustomerInput').val(nama);
             $('#alamatCustomer').val(alamat);
+            if (npwp) {
+                $('#npwpCustomer').val(npwp);
+                var $npwpKtp = $('#noNpwpKtp');
+                if ($npwpKtp.length && !$npwpKtp.val()) {
+                    $npwpKtp.val(npwp);
+                }
+            }
 
             // Auto pre-fill PIC Penerima Nama & No HP jika tersedia di master customer
             var namaPic = '';
@@ -1017,11 +1089,52 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Format input harga satuan
+    // Map master barang dari datalist untuk auto-fill id_barang & tipe_barang
+    var barangMap = {};
+    document.querySelectorAll('#listBarang option').forEach(function (opt) {
+        var val = (opt.getAttribute('value') || '').trim().toLowerCase();
+        if (val) {
+            barangMap[val] = {
+                id: opt.getAttribute('data-id') || '',
+                tipe: opt.getAttribute('data-tipe') || ''
+            };
+        }
+    });
+
+    var filePoInput = document.getElementById('filePoInput');
+    var linkPoCustomer = document.getElementById('linkPoCustomer');
+    if (filePoInput && linkPoCustomer) {
+        filePoInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                linkPoCustomer.removeAttribute('required');
+            } else if (!linkPoCustomer.value) {
+                linkPoCustomer.setAttribute('required', 'required');
+            }
+        });
+    }
+
+    // Format input harga satuan & sinkronisasi master barang
     function bindRowEvents(row) {
+        var inputNama = row.querySelector('.item-nama');
+        var inputIdBarang = row.querySelector('.item-id-barang');
+        var inputTipeBarang = row.querySelector('.item-tipe-barang');
         var inputHarga = row.querySelector('.item-harga');
         var inputQty = row.querySelector('.item-qty');
         var btnHapus = row.querySelector('.btn-hapus-row');
+
+        if (inputNama) {
+            function syncBarangMeta() {
+                var key = inputNama.value.trim().toLowerCase();
+                if (barangMap[key]) {
+                    if (inputIdBarang) inputIdBarang.value = barangMap[key].id;
+                    if (inputTipeBarang) inputTipeBarang.value = barangMap[key].tipe;
+                } else {
+                    if (inputIdBarang) inputIdBarang.value = '';
+                }
+            }
+            inputNama.addEventListener('input', syncBarangMeta);
+            inputNama.addEventListener('change', syncBarangMeta);
+        }
 
         inputHarga.addEventListener('input', function () {
             var val = formatCurrencyInput(this.value);

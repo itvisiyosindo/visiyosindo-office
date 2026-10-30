@@ -531,11 +531,17 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                             ?>
                                         </td>
                                         <td class="text-center">
+                                            <?php
+                                                $croSt = $row->cro_status ?? '';
+                                                $accSt = $row->acc_status ?? '';
+                                                $pjkSt = $row->pajak_status ?? '';
+                                                $gmSt  = $row->gm_status ?? '';
+                                            ?>
                                             <div class="d-inline-flex align-items-center" title="Status 4 Tahap Approval: CRO, ACC, Pajak, GM">
-                                                <span class="step-dot <?= (!empty($row->cro_approval) && $row->cro_approval == 'sesuai') ? 'step-done' : ((!empty($row->cro_approval) && $row->cro_approval != 'sesuai') ? 'step-reject' : 'step-pending') ?>" title="CRO: <?= $row->cro_approval ?: 'Menunggu' ?>">C</span>
-                                                <span class="step-dot <?= (!empty($row->acc_approval) && $row->acc_approval == 'sesuai') ? 'step-done' : ((!empty($row->acc_approval) && $row->acc_approval != 'sesuai') ? 'step-reject' : 'step-pending') ?>" title="ACC: <?= $row->acc_approval ?: 'Menunggu' ?>">A</span>
-                                                <span class="step-dot <?= (!empty($row->pajak_approval) && $row->pajak_approval == 'sesuai') ? 'step-done' : ((!empty($row->pajak_approval) && $row->pajak_approval != 'sesuai') ? 'step-reject' : 'step-pending') ?>" title="Pajak: <?= $row->pajak_approval ?: 'Menunggu' ?>">P</span>
-                                                <span class="step-dot <?= (!empty($row->gm_approval) && $row->gm_approval == 'sesuai') ? 'step-done' : ((!empty($row->gm_approval) && $row->gm_approval != 'sesuai') ? 'step-reject' : 'step-pending') ?>" title="GM: <?= $row->gm_approval ?: 'Menunggu' ?>">G</span>
+                                                <span class="step-dot <?= ($croSt === 'sesuai') ? 'step-done' : (!empty($croSt) ? 'step-reject' : 'step-pending') ?>" title="CRO: <?= htmlspecialchars($croSt ?: 'Menunggu') ?>">C</span>
+                                                <span class="step-dot <?= ($accSt === 'sesuai') ? 'step-done' : (!empty($accSt) ? 'step-reject' : 'step-pending') ?>" title="ACC: <?= htmlspecialchars($accSt ?: 'Menunggu') ?>">A</span>
+                                                <span class="step-dot <?= ($pjkSt === 'sesuai') ? 'step-done' : (!empty($pjkSt) ? 'step-reject' : 'step-pending') ?>" title="Pajak: <?= htmlspecialchars($pjkSt ?: 'Menunggu') ?>">P</span>
+                                                <span class="step-dot <?= in_array($gmSt, ['disetujui', 'sesuai']) ? 'step-done' : (!empty($gmSt) ? 'step-reject' : 'step-pending') ?>" title="GM: <?= htmlspecialchars($gmSt ?: 'Menunggu') ?>">G</span>
                                             </div>
                                         </td>
                                         <td class="text-center">
@@ -543,6 +549,11 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                                 <a href="<?= base_url('po_system/detail/' . $id_enc) ?>" class="btn btn-sm btn-outline-primary btn-action" title="Detail & Kroscek">
                                                     <i class="fas fa-search"></i>
                                                 </a>
+                                                <?php if (in_array($row->status, ['revisi', 'menunggu_kroscek']) || isAdmin()): ?>
+                                                    <a href="<?= base_url('po_system/edit/' . $id_enc) ?>" class="btn btn-sm btn-outline-warning btn-action ml-1" title="Edit / Revisi PO">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                <?php endif; ?>
                                                 <?php if (isAdmin()): ?>
                                                     <a href="<?= base_url('po_system/hapus/' . $id_enc) ?>" class="btn btn-sm btn-outline-danger btn-action ml-1" title="Hapus PO" onclick="return confirm('Apakah Anda yakin ingin menghapus data PO No: <?= htmlspecialchars($row->no_po, ENT_QUOTES) ?>?')">
                                                         <i class="fas fa-trash-alt"></i>

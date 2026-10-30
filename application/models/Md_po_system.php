@@ -237,7 +237,8 @@ class Md_po_system extends CI_Model
         $last = $this->db->get('po_masuk')->row();
 
         if ($last && !empty($last->kode_masuk)) {
-            $last_num = (int) substr($last->kode_masuk, -3);
+            $parts = explode('-', $last->kode_masuk);
+            $last_num = (int) end($parts);
             $new_num = sprintf('%03d', $last_num + 1);
         } else {
             $new_num = '001';

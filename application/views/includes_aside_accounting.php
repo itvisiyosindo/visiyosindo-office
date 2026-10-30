@@ -81,6 +81,25 @@
 						</a>
 					</li>
 
+					<li class="nav-parent <?= ($this->uri->segment(1) == 'po_system') ? 'nav-active nav-expanded' : ''; ?>">
+						<a class="nav-link" href="#">
+							<i class="fas fa-file-signature" aria-hidden="true"></i>
+							<span>Penerimaan & Kroscek PO</span>
+						</a>
+						<ul class="nav nav-children">
+							<li class="<?= (in_array($page_name, ['po/v_po_list']) || ($this->uri->segment(1) == 'po_system' && empty($this->uri->segment(2)))) ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('po_system?from=accounting') ?>">
+									Daftar PO Masuk
+								</a>
+							</li>
+							<li class="<?= (in_array($page_name, ['po/v_po_form']) && $this->uri->segment(2) == 'tambah') ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('po_system/tambah?from=accounting') ?>">
+									Input PO Baru
+								</a>
+							</li>
+						</ul>
+					</li>
+
 					<li>
 						<a class="nav-link text-danger border-top" href="<?= base_url('auth/logout') ?>">
 							<i class="fas fa-sign-out-alt text-danger" aria-hidden="true"></i>

@@ -197,6 +197,11 @@
                         </span>
                         <div class="mt-2">
                             <span class="badge badge-light border text-muted">Status Kroscek: <b><?= strtoupper($po->status) ?></b></span>
+                            <?php if (in_array($po->status, ['revisi', 'menunggu_kroscek']) || isAdmin() || isCRO()): ?>
+                                <a href="<?= base_url('po_system/edit/' . $id_encrypt) ?>" class="btn btn-xs btn-warning text-dark font-weight-bold ml-1 shadow-sm">
+                                    <i class="fas fa-edit mr-1"></i> Edit / Revisi PO
+                                </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -324,6 +329,7 @@
                         <i class="fas fa-truck-loading mr-1"></i> Update Status Barang Inden (<?= $count_indent ?> Item)
                     </button>
                 <?php endif; ?>
+            </div>
             <div class="card-body p-0">
                 <?php
                 $fmtRp = function($val) {
@@ -434,13 +440,17 @@
 
                     <!-- TAHAP 1: APPROVAL CRO -->
                     <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="approval-step-box <?= ($po->cro_status === 'sesuai') ? 'approved' : (($po->cro_status === 'hold_indent') ? 'rejected' : 'pending') ?>">
+                        <div class="approval-step-box <?= ($po->cro_status === 'sesuai') ? 'approved' : (in_array($po->cro_status, ['hold_indent', 'revisi', 'ditolak']) ? 'rejected' : 'pending') ?>">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="font-weight-bold text-primary">1. Tahap CRO</span>
                                 <?php if ($po->cro_status === 'sesuai'): ?>
                                     <span class="badge badge-success"><i class="fas fa-check"></i> Sesuai</span>
                                 <?php elseif ($po->cro_status === 'hold_indent'): ?>
-                                    <span class="badge badge-warning"><i class="fas fa-pause"></i> Indent</span>
+                                    <span class="badge badge-warning text-dark"><i class="fas fa-pause"></i> Indent</span>
+                                <?php elseif ($po->cro_status === 'revisi'): ?>
+                                    <span class="badge badge-warning text-dark"><i class="fas fa-undo"></i> Revisi</span>
+                                <?php elseif ($po->cro_status === 'ditolak'): ?>
+                                    <span class="badge badge-danger"><i class="fas fa-times"></i> Ditolak</span>
                                 <?php else: ?>
                                     <span class="badge badge-secondary">Menunggu</span>
                                 <?php endif; ?>
@@ -470,11 +480,13 @@
 
                     <!-- TAHAP 2: APPROVAL ACCOUNTING -->
                     <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="approval-step-box <?= ($po->acc_status === 'sesuai') ? 'approved' : (($po->acc_status === 'ditolak') ? 'rejected' : 'pending') ?>">
+                        <div class="approval-step-box <?= ($po->acc_status === 'sesuai') ? 'approved' : (in_array($po->acc_status, ['ditolak', 'revisi']) ? 'rejected' : 'pending') ?>">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="font-weight-bold text-primary">2. Accounting</span>
                                 <?php if ($po->acc_status === 'sesuai'): ?>
                                     <span class="badge badge-success"><i class="fas fa-check"></i> Sesuai</span>
+                                <?php elseif ($po->acc_status === 'revisi'): ?>
+                                    <span class="badge badge-warning text-dark"><i class="fas fa-undo"></i> Revisi</span>
                                 <?php elseif ($po->acc_status === 'ditolak'): ?>
                                     <span class="badge badge-danger"><i class="fas fa-times"></i> Ditolak</span>
                                 <?php else: ?>
@@ -513,11 +525,13 @@
 
                     <!-- TAHAP 3: APPROVAL PAJAK -->
                     <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="approval-step-box <?= ($po->pajak_status === 'sesuai') ? 'approved' : (($po->pajak_status === 'ditolak') ? 'rejected' : 'pending') ?>">
+                        <div class="approval-step-box <?= ($po->pajak_status === 'sesuai') ? 'approved' : (in_array($po->pajak_status, ['ditolak', 'revisi']) ? 'rejected' : 'pending') ?>">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="font-weight-bold text-primary">3. Pajak (Tax)</span>
                                 <?php if ($po->pajak_status === 'sesuai'): ?>
                                     <span class="badge badge-success"><i class="fas fa-check"></i> Sesuai</span>
+                                <?php elseif ($po->pajak_status === 'revisi'): ?>
+                                    <span class="badge badge-warning text-dark"><i class="fas fa-undo"></i> Revisi</span>
                                 <?php elseif ($po->pajak_status === 'ditolak'): ?>
                                     <span class="badge badge-danger"><i class="fas fa-times"></i> Ditolak</span>
                                 <?php else: ?>
