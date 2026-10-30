@@ -78,17 +78,7 @@ class Po_system extends CI_Controller
         $page_data['cur_tgl_akhir']     = $tgl_akhir;
 
         // Ambil list sales untuk filter/cetak
-        $this->db->select('pengguna_id, nama, jabatan');
-        $this->db->from('pengguna');
-        $this->db->where('status', 1);
-        $this->db->where('is_active', 1);
-        $this->db->group_start();
-        $this->db->like('jabatan', 'Marketing');
-        $this->db->or_like('jabatan', 'Sales');
-        $this->db->or_like('jabatan', 'Medical Representative');
-        $this->db->group_end();
-        $this->db->order_by('nama', 'ASC');
-        $page_data['sales_list'] = $this->db->get()->result();
+        $page_data['sales_list'] = $this->md_pengguna->getAllPegawai();
 
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
@@ -131,17 +121,7 @@ class Po_system extends CI_Controller
         $page_data['barang_list'] = $this->db->get()->result();
 
         // 3. Ambil data sales/marketing
-        $this->db->select('pengguna_id, nama, jabatan');
-        $this->db->from('pengguna');
-        $this->db->where('status', 1);
-        $this->db->where('is_active', 1);
-        $this->db->group_start();
-        $this->db->like('jabatan', 'Marketing');
-        $this->db->or_like('jabatan', 'Sales');
-        $this->db->or_like('jabatan', 'Medical Representative');
-        $this->db->group_end();
-        $this->db->order_by('nama', 'ASC');
-        $page_data['sales_list'] = $this->db->get()->result();
+        $page_data['sales_list'] = $this->md_pengguna->getAllPegawai();
 
         $page_data['kode_masuk_auto'] = $this->md_po_system->generateKodeMasuk();
 
