@@ -9982,10 +9982,10 @@ class Surat extends CI_Controller
 				'table' => 'tagihan_ekspedisi',
 				'pk' => 'id_tagihan',
 				'fields' => [
-					'no_invoice' => ['label' => 'No. Invoice', 'type' => 'text', 'required' => true],
-					'nilai_tagihan' => ['label' => 'Nilai Tagihan', 'type' => 'number', 'required' => true],
+					'no_invoice' => ['label' => 'No. Invoice', 'type' => 'text', 'required' => false],
+					'nilai_tagihan' => ['label' => 'Nilai Tagihan', 'type' => 'number', 'required' => false],
 					'biaya_asuransi' => ['label' => 'Biaya Asuransi', 'type' => 'number', 'required' => false],
-					'tanggal_invoice' => ['label' => 'Tanggal Invoice', 'type' => 'date', 'required' => true],
+					'tanggal_invoice' => ['label' => 'Tanggal Invoice', 'type' => 'date', 'required' => false],
 					'link_invoice' => ['label' => 'Link Invoice', 'type' => 'text', 'required' => false],
 					'link_bukti_potong' => ['label' => 'Link Bukti Potong', 'type' => 'text', 'required' => false],
 					'link_dokumen_lain' => ['label' => 'Link Dokumen Lain', 'type' => 'text', 'required' => false]
@@ -9995,16 +9995,16 @@ class Surat extends CI_Controller
 				'table' => 'spp',
 				'pk' => 'id_spp',
 				'fields' => [
-					'no_spp' => ['label' => 'No. SPP', 'type' => 'text', 'required' => true],
-					'no_invoice' => ['label' => 'No. Invoice', 'type' => 'text', 'required' => true],
-					'nama_bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => true],
-					'no_rekening' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => true],
-					'atas_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => true],
-					'total_nilai' => ['label' => 'Total Nilai', 'type' => 'number', 'required' => true],
+					'no_spp' => ['label' => 'No. SPP', 'type' => 'text', 'required' => false],
+					'no_invoice' => ['label' => 'No. Invoice', 'type' => 'text', 'required' => false],
+					'nama_bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => false],
+					'no_rekening' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => false],
+					'atas_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => false],
+					'total_nilai' => ['label' => 'Total Nilai', 'type' => 'number', 'required' => false],
 					'diskon' => ['label' => 'Diskon', 'type' => 'number', 'required' => false],
 					'ppn' => ['label' => 'PPN', 'type' => 'number', 'required' => false],
 					'biaya_lainnya' => ['label' => 'Biaya Lainnya', 'type' => 'number', 'required' => false],
-					'grand_total' => ['label' => 'Grand Total', 'type' => 'number', 'required' => true],
+					'grand_total' => ['label' => 'Grand Total', 'type' => 'number', 'required' => false],
 					'catatan' => ['label' => 'Catatan', 'type' => 'textarea', 'required' => false]
 				]
 			],
@@ -10012,12 +10012,12 @@ class Surat extends CI_Controller
 				'table' => 'surat_biaya_dinas',
 				'pk' => 'id_pb',
 				'fields' => [
-					'kota' => ['label' => 'Kota Tujuan', 'type' => 'text', 'required' => true],
-					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'keperluan' => ['label' => 'Keperluan / Perihal', 'type' => 'textarea', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'tgl_pergi' => ['label' => 'Tanggal Pergi', 'type' => 'date', 'required' => true],
-					'tgl_kembali' => ['label' => 'Tanggal Kembali', 'type' => 'date', 'required' => true],
+					'kota' => ['label' => 'Kota Tujuan', 'type' => 'text', 'required' => false],
+					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'keperluan' => ['label' => 'Keperluan / Perihal', 'type' => 'textarea', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'tgl_pergi' => ['label' => 'Tanggal Pergi', 'type' => 'date', 'required' => false],
+					'tgl_kembali' => ['label' => 'Tanggal Kembali', 'type' => 'date', 'required' => false],
 					'catatan_finance' => ['label' => 'Catatan Finance', 'type' => 'textarea', 'required' => false]
 				],
 				'detail' => [
@@ -10026,9 +10026,9 @@ class Surat extends CI_Controller
 					'fk' => 'id_pb',
 					'where' => ['kode_laporan' => 1],
 					'fields' => [
-						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => true]
+						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10036,12 +10036,12 @@ class Surat extends CI_Controller
 				'table' => 'surat_biaya_dinas',
 				'pk' => 'id_pb',
 				'fields' => [
-					'kota' => ['label' => 'Kota Tujuan', 'type' => 'text', 'required' => true],
-					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'keperluan' => ['label' => 'Keperluan / Perihal', 'type' => 'textarea', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'tgl_pergi' => ['label' => 'Tanggal Pergi', 'type' => 'date', 'required' => true],
-					'tgl_kembali' => ['label' => 'Tanggal Kembali', 'type' => 'date', 'required' => true],
+					'kota' => ['label' => 'Kota Tujuan', 'type' => 'text', 'required' => false],
+					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'keperluan' => ['label' => 'Keperluan / Perihal', 'type' => 'textarea', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'tgl_pergi' => ['label' => 'Tanggal Pergi', 'type' => 'date', 'required' => false],
+					'tgl_kembali' => ['label' => 'Tanggal Kembali', 'type' => 'date', 'required' => false],
 					'catatan_finance' => ['label' => 'Catatan Finance', 'type' => 'textarea', 'required' => false]
 				],
 				'detail' => [
@@ -10050,9 +10050,9 @@ class Surat extends CI_Controller
 					'fk' => 'id_pb',
 					'where' => ['kode_laporan' => 2],
 					'fields' => [
-						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => true]
+						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10060,12 +10060,12 @@ class Surat extends CI_Controller
 				'table' => 'surat_gojek_corp',
 				'pk' => 'id',
 				'fields' => [
-					'kota' => ['label' => 'Kota Tujuan', 'type' => 'text', 'required' => true],
-					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'keperluan' => ['label' => 'Keperluan / Perihal', 'type' => 'textarea', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'tgl_pergi' => ['label' => 'Tanggal Pergi', 'type' => 'date', 'required' => true],
-					'tgl_kembali' => ['label' => 'Tanggal Kembali', 'type' => 'date', 'required' => true]
+					'kota' => ['label' => 'Kota Tujuan', 'type' => 'text', 'required' => false],
+					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'keperluan' => ['label' => 'Keperluan / Perihal', 'type' => 'textarea', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'tgl_pergi' => ['label' => 'Tanggal Pergi', 'type' => 'date', 'required' => false],
+					'tgl_kembali' => ['label' => 'Tanggal Kembali', 'type' => 'date', 'required' => false]
 				],
 				'detail' => [
 					'table' => 'surat_gojek_corp_detail',
@@ -10073,9 +10073,9 @@ class Surat extends CI_Controller
 					'fk' => 'id_srt',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => true]
+						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10083,12 +10083,12 @@ class Surat extends CI_Controller
 				'table' => 'surat_permintaan_pembayaran',
 				'pk' => 'id',
 				'fields' => [
-					'rek_bank' => ['label' => 'Bank Penerima', 'type' => 'text', 'required' => true],
-					'rek_norek' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => true],
-					'rek_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => true],
+					'rek_bank' => ['label' => 'Bank Penerima', 'type' => 'text', 'required' => false],
+					'rek_norek' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => false],
+					'rek_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => false],
 					'file_lampiran' => ['label' => 'File Lampiran Link', 'type' => 'text', 'required' => false],
-					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
+					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
 					'catatan' => ['label' => 'Catatan', 'type' => 'textarea', 'required' => false]
 				],
 				'detail' => [
@@ -10097,9 +10097,9 @@ class Surat extends CI_Controller
 					'fk' => 'id_srt',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => true]
+						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10107,11 +10107,11 @@ class Surat extends CI_Controller
 				'table' => 'surat_pbok',
 				'pk' => 'id_pbok',
 				'fields' => [
-					'alamat' => ['label' => 'Alamat', 'type' => 'text', 'required' => true],
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => true],
-					'rekening' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => true],
-					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => true],
+					'alamat' => ['label' => 'Alamat', 'type' => 'text', 'required' => false],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => false],
+					'rekening' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => false],
+					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false],
 					'trf_pajak' => ['label' => 'Tarif Pajak (%)', 'type' => 'number', 'required' => false],
 					'nml_pajak' => ['label' => 'Nominal Pajak', 'type' => 'number', 'required' => false]
@@ -10122,10 +10122,10 @@ class Surat extends CI_Controller
 					'fk' => 'id_pbok',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'qty' => ['label' => 'Quantity', 'type' => 'number', 'required' => true],
-						'estimasi' => ['label' => 'Estimasi', 'type' => 'number', 'required' => true],
-						'total' => ['label' => 'Total', 'type' => 'number', 'required' => true],
+						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'qty' => ['label' => 'Quantity', 'type' => 'number', 'required' => false],
+						'estimasi' => ['label' => 'Estimasi', 'type' => 'number', 'required' => false],
+						'total' => ['label' => 'Total', 'type' => 'number', 'required' => false],
 						'catatan' => ['label' => 'Catatan', 'type' => 'text', 'required' => false]
 					]
 				]
@@ -10134,8 +10134,8 @@ class Surat extends CI_Controller
 				'table' => 'surat_kunjungan_gudang',
 				'pk' => 'id',
 				'fields' => [
-					'perihal' => ['label' => 'Perihal', 'type' => 'textarea', 'required' => true],
-					'tgl_dinas' => ['label' => 'Tanggal Dinas', 'type' => 'date', 'required' => true],
+					'perihal' => ['label' => 'Perihal', 'type' => 'textarea', 'required' => false],
+					'tgl_dinas' => ['label' => 'Tanggal Dinas', 'type' => 'date', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
 			],
@@ -10143,12 +10143,12 @@ class Surat extends CI_Controller
 				'table' => 'surat_pkk',
 				'pk' => 'id_pkk',
 				'fields' => [
-					'nama_bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => true],
-					'no_rek' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => true],
-					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => true],
-					'keterangan_pengaju' => ['label' => 'Keterangan Pengaju', 'type' => 'textarea', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
+					'nama_bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => false],
+					'no_rek' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => false],
+					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => false],
+					'keterangan_pengaju' => ['label' => 'Keterangan Pengaju', 'type' => 'textarea', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				],
 				'detail' => [
@@ -10157,10 +10157,10 @@ class Surat extends CI_Controller
 					'fk' => 'id_pkk',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'ket_detail' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => true],
-						'jenis_pengajuan' => ['label' => 'Jenis Pengajuan (Int)', 'type' => 'number', 'required' => true]
+						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'ket_detail' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => false],
+						'jenis_pengajuan' => ['label' => 'Jenis Pengajuan (Int)', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10168,12 +10168,12 @@ class Surat extends CI_Controller
 				'table' => 'surat_pkketoll',
 				'pk' => 'id_pkk',
 				'fields' => [
-					'nama_bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => true],
-					'no_rek' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => true],
-					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => true],
-					'keterangan_pengaju' => ['label' => 'Keterangan Pengaju', 'type' => 'textarea', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
+					'nama_bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => false],
+					'no_rek' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => false],
+					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => false],
+					'keterangan_pengaju' => ['label' => 'Keterangan Pengaju', 'type' => 'textarea', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				],
 				'detail' => [
@@ -10182,11 +10182,11 @@ class Surat extends CI_Controller
 					'fk' => 'id_pkk',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'nokartu' => ['label' => 'No Kartu', 'type' => 'text', 'required' => true],
-						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'ket_detail' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => true],
-						'jenis_pengajuan' => ['label' => 'Jenis Pengajuan (Int)', 'type' => 'number', 'required' => true]
+						'nokartu' => ['label' => 'No Kartu', 'type' => 'text', 'required' => false],
+						'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'ket_detail' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'nominal' => ['label' => 'Nominal', 'type' => 'number', 'required' => false],
+						'jenis_pengajuan' => ['label' => 'Jenis Pengajuan (Int)', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10194,13 +10194,13 @@ class Surat extends CI_Controller
 				'table' => 'surat_ppa',
 				'pk' => 'id_ppa',
 				'fields' => [
-					'alamat' => ['label' => 'Alamat', 'type' => 'text', 'required' => true],
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => true],
-					'rekening' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => true],
-					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => true],
+					'alamat' => ['label' => 'Alamat', 'type' => 'text', 'required' => false],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'bank' => ['label' => 'Nama Bank', 'type' => 'text', 'required' => false],
+					'rekening' => ['label' => 'No. Rekening', 'type' => 'text', 'required' => false],
+					'ats_nama' => ['label' => 'Atas Nama', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true]
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false]
 				],
 				'detail' => [
 					'table' => 'surat_ppa_detail',
@@ -10208,10 +10208,10 @@ class Surat extends CI_Controller
 					'fk' => 'id_ppa',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => true],
-						'qty' => ['label' => 'Quantity', 'type' => 'number', 'required' => true],
-						'estimasi' => ['label' => 'Estimasi', 'type' => 'number', 'required' => true],
-						'total' => ['label' => 'Total', 'type' => 'number', 'required' => true]
+						'keterangan' => ['label' => 'Keterangan', 'type' => 'text', 'required' => false],
+						'qty' => ['label' => 'Quantity', 'type' => 'number', 'required' => false],
+						'estimasi' => ['label' => 'Estimasi', 'type' => 'number', 'required' => false],
+						'total' => ['label' => 'Total', 'type' => 'number', 'required' => false]
 					]
 				]
 			],
@@ -10219,10 +10219,10 @@ class Surat extends CI_Controller
 				'table' => 'surat_approval',
 				'pk' => 'id_approval',
 				'fields' => [
-					'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-					'nama' => ['label' => 'Nama Marketing', 'type' => 'text', 'required' => true],
-					'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => true],
-					'sistem_pembayaran' => ['label' => 'Sistem Pembayaran', 'type' => 'text', 'required' => true],
+					'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+					'nama' => ['label' => 'Nama Marketing', 'type' => 'text', 'required' => false],
+					'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => false],
+					'sistem_pembayaran' => ['label' => 'Sistem Pembayaran', 'type' => 'text', 'required' => false],
 					'cicilan' => ['label' => 'Cicilan', 'type' => 'text', 'required' => false],
 					'ongkir' => ['label' => 'Ongkir', 'type' => 'text', 'required' => false],
 					'pajak' => ['label' => 'Pajak', 'type' => 'text', 'required' => false],
@@ -10234,10 +10234,10 @@ class Surat extends CI_Controller
 					'fk' => 'id_approval',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'nama_barang' => ['label' => 'Nama Barang', 'type' => 'text', 'required' => true],
+						'nama_barang' => ['label' => 'Nama Barang', 'type' => 'text', 'required' => false],
 						'acuan_hrg' => ['label' => 'Acuan Harga', 'type' => 'text', 'required' => false],
-						'hrg_ditawarkan' => ['label' => 'Harga Ditawarkan', 'type' => 'text', 'required' => true],
-						'modal' => ['label' => 'Modal', 'type' => 'number', 'required' => true],
+						'hrg_ditawarkan' => ['label' => 'Harga Ditawarkan', 'type' => 'text', 'required' => false],
+						'modal' => ['label' => 'Modal', 'type' => 'number', 'required' => false],
 						'approvall' => ['label' => 'Approval status', 'type' => 'text', 'required' => false],
 						'trf_komisi' => ['label' => 'Trf Komisi', 'type' => 'text', 'required' => false],
 						'catatan' => ['label' => 'Catatan', 'type' => 'text', 'required' => false]
@@ -10248,13 +10248,13 @@ class Surat extends CI_Controller
 				'table' => 'surat_pd',
 				'pk' => 'id_pd',
 				'fields' => [
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'wilayah_dinas' => ['label' => 'Wilayah Dinas', 'type' => 'text', 'required' => true],
-					'mulai' => ['label' => 'Tanggal Mulai', 'type' => 'date', 'required' => true],
-					'akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true],
-					'tujuan' => ['label' => 'Tujuan Perjalanan', 'type' => 'textarea', 'required' => true],
-					'lama_dinas' => ['label' => 'Lama Dinas', 'type' => 'text', 'required' => true],
-					'transportasi' => ['label' => 'Transportasi', 'type' => 'text', 'required' => true],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'wilayah_dinas' => ['label' => 'Wilayah Dinas', 'type' => 'text', 'required' => false],
+					'mulai' => ['label' => 'Tanggal Mulai', 'type' => 'date', 'required' => false],
+					'akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false],
+					'tujuan' => ['label' => 'Tujuan Perjalanan', 'type' => 'textarea', 'required' => false],
+					'lama_dinas' => ['label' => 'Lama Dinas', 'type' => 'text', 'required' => false],
+					'transportasi' => ['label' => 'Transportasi', 'type' => 'text', 'required' => false],
 					'jenis_kendaraan' => ['label' => 'Jenis Kendaraan', 'type' => 'text', 'required' => false],
 					'no_polisi' => ['label' => 'No Polisi', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
@@ -10265,12 +10265,12 @@ class Surat extends CI_Controller
 					'fk' => 'id_pd',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'hari' => ['label' => 'Hari', 'type' => 'text', 'required' => true],
-						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => true],
-						'tujuan_dinas' => ['label' => 'Tujuan Dinas', 'type' => 'text', 'required' => true],
-						'kota' => ['label' => 'Kota', 'type' => 'text', 'required' => true],
-						'pic' => ['label' => 'PIC', 'type' => 'text', 'required' => true]
+						'hari' => ['label' => 'Hari', 'type' => 'text', 'required' => false],
+						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => false],
+						'tujuan_dinas' => ['label' => 'Tujuan Dinas', 'type' => 'text', 'required' => false],
+						'kota' => ['label' => 'Kota', 'type' => 'text', 'required' => false],
+						'pic' => ['label' => 'PIC', 'type' => 'text', 'required' => false]
 					]
 				]
 			],
@@ -10278,13 +10278,13 @@ class Surat extends CI_Controller
 				'table' => 'surat_pdt',
 				'pk' => 'id_pd',
 				'fields' => [
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'wilayah_dinas' => ['label' => 'Wilayah Dinas', 'type' => 'text', 'required' => true],
-					'mulai' => ['label' => 'Tanggal Mulai', 'type' => 'date', 'required' => true],
-					'akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true],
-					'tujuan' => ['label' => 'Tujuan Perjalanan', 'type' => 'textarea', 'required' => true],
-					'lama_dinas' => ['label' => 'Lama Dinas', 'type' => 'text', 'required' => true],
-					'transportasi' => ['label' => 'Transportasi', 'type' => 'text', 'required' => true],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'wilayah_dinas' => ['label' => 'Wilayah Dinas', 'type' => 'text', 'required' => false],
+					'mulai' => ['label' => 'Tanggal Mulai', 'type' => 'date', 'required' => false],
+					'akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false],
+					'tujuan' => ['label' => 'Tujuan Perjalanan', 'type' => 'textarea', 'required' => false],
+					'lama_dinas' => ['label' => 'Lama Dinas', 'type' => 'text', 'required' => false],
+					'transportasi' => ['label' => 'Transportasi', 'type' => 'text', 'required' => false],
 					'jenis_kendaraan' => ['label' => 'Jenis Kendaraan', 'type' => 'text', 'required' => false],
 					'no_polisi' => ['label' => 'No Polisi', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
@@ -10295,12 +10295,12 @@ class Surat extends CI_Controller
 					'fk' => 'id_pd',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'hari' => ['label' => 'Hari', 'type' => 'text', 'required' => true],
-						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => true],
-						'tujuan_dinas' => ['label' => 'Tujuan Dinas', 'type' => 'text', 'required' => true],
-						'kota' => ['label' => 'Kota', 'type' => 'text', 'required' => true],
-						'pic' => ['label' => 'PIC', 'type' => 'text', 'required' => true]
+						'hari' => ['label' => 'Hari', 'type' => 'text', 'required' => false],
+						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => false],
+						'tujuan_dinas' => ['label' => 'Tujuan Dinas', 'type' => 'text', 'required' => false],
+						'kota' => ['label' => 'Kota', 'type' => 'text', 'required' => false],
+						'pic' => ['label' => 'PIC', 'type' => 'text', 'required' => false]
 					]
 				]
 			],
@@ -10308,13 +10308,13 @@ class Surat extends CI_Controller
 				'table' => 'surat_pd',
 				'pk' => 'id_pd',
 				'fields' => [
-					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
-					'wilayah_dinas' => ['label' => 'Wilayah Dinas', 'type' => 'text', 'required' => true],
-					'mulai' => ['label' => 'Tanggal Mulai', 'type' => 'date', 'required' => true],
-					'akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true],
-					'tujuan' => ['label' => 'Tujuan Perjalanan', 'type' => 'textarea', 'required' => true],
-					'lama_dinas' => ['label' => 'Lama Dinas', 'type' => 'text', 'required' => true],
-					'transportasi' => ['label' => 'Transportasi', 'type' => 'text', 'required' => true],
+					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
+					'wilayah_dinas' => ['label' => 'Wilayah Dinas', 'type' => 'text', 'required' => false],
+					'mulai' => ['label' => 'Tanggal Mulai', 'type' => 'date', 'required' => false],
+					'akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false],
+					'tujuan' => ['label' => 'Tujuan Perjalanan', 'type' => 'textarea', 'required' => false],
+					'lama_dinas' => ['label' => 'Lama Dinas', 'type' => 'text', 'required' => false],
+					'transportasi' => ['label' => 'Transportasi', 'type' => 'text', 'required' => false],
 					'jenis_kendaraan' => ['label' => 'Jenis Kendaraan', 'type' => 'text', 'required' => false],
 					'no_polisi' => ['label' => 'No Polisi', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
@@ -10325,12 +10325,12 @@ class Surat extends CI_Controller
 					'fk' => 'id_pd',
 					'where' => ['kode_detail' => 1],
 					'fields' => [
-						'hari' => ['label' => 'Hari', 'type' => 'text', 'required' => true],
-						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-						'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => true],
-						'tujuan_dinas' => ['label' => 'Tujuan Dinas', 'type' => 'text', 'required' => true],
-						'kota' => ['label' => 'Kota', 'type' => 'text', 'required' => true],
-						'pic' => ['label' => 'PIC', 'type' => 'text', 'required' => true]
+						'hari' => ['label' => 'Hari', 'type' => 'text', 'required' => false],
+						'tgl' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+						'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => false],
+						'tujuan_dinas' => ['label' => 'Tujuan Dinas', 'type' => 'text', 'required' => false],
+						'kota' => ['label' => 'Kota', 'type' => 'text', 'required' => false],
+						'pic' => ['label' => 'PIC', 'type' => 'text', 'required' => false]
 					]
 				]
 			],
@@ -10338,13 +10338,13 @@ class Surat extends CI_Controller
 				'table' => 'surat_pd_dinas',
 				'pk' => 'id',
 				'fields' => [
-					'perihal' => ['label' => 'Perihal / Keperluan', 'type' => 'textarea', 'required' => true],
-					'lokasi_dinas' => ['label' => 'Lokasi Dinas', 'type' => 'textarea', 'required' => true],
-					'tgl_dinas' => ['label' => 'Tanggal Dinas Mulai', 'type' => 'date', 'required' => true],
-					'tgl_dinas_akhir' => ['label' => 'Tanggal Dinas Akhir', 'type' => 'date', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'nama_karyawan' => ['label' => 'Nama Karyawan', 'type' => 'text', 'required' => true],
-					'jabatan_karyawan' => ['label' => 'Jabatan Karyawan', 'type' => 'text', 'required' => true],
+					'perihal' => ['label' => 'Perihal / Keperluan', 'type' => 'textarea', 'required' => false],
+					'lokasi_dinas' => ['label' => 'Lokasi Dinas', 'type' => 'textarea', 'required' => false],
+					'tgl_dinas' => ['label' => 'Tanggal Dinas Mulai', 'type' => 'date', 'required' => false],
+					'tgl_dinas_akhir' => ['label' => 'Tanggal Dinas Akhir', 'type' => 'date', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'nama_karyawan' => ['label' => 'Nama Karyawan', 'type' => 'text', 'required' => false],
+					'jabatan_karyawan' => ['label' => 'Jabatan Karyawan', 'type' => 'text', 'required' => false],
 					'nik_karyawan' => ['label' => 'NIK Karyawan', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false],
 					'lampiran_2' => ['label' => 'Link Lampiran 2', 'type' => 'text', 'required' => false],
@@ -10355,35 +10355,35 @@ class Surat extends CI_Controller
 				'table' => 'surat_izin_jam_kerja',
 				'pk' => 'id',
 				'fields' => [
-					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan / Keperluan', 'type' => 'textarea', 'required' => true],
-					'total' => ['label' => 'Total', 'type' => 'text', 'required' => true],
-					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-					'jam_mulai' => ['label' => 'Jam Mulai', 'type' => 'text', 'required' => true],
-					'jam_akhir' => ['label' => 'Jam Akhir', 'type' => 'text', 'required' => true]
+					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan / Keperluan', 'type' => 'textarea', 'required' => false],
+					'total' => ['label' => 'Total', 'type' => 'text', 'required' => false],
+					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+					'jam_mulai' => ['label' => 'Jam Mulai', 'type' => 'text', 'required' => false],
+					'jam_akhir' => ['label' => 'Jam Akhir', 'type' => 'text', 'required' => false]
 				]
 			],
 			'simp' => [
 				'table' => 'surat_izin_jam_kerja',
 				'pk' => 'id',
 				'fields' => [
-					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan / Keperluan', 'type' => 'textarea', 'required' => true],
-					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => true],
-					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => true],
-					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true]
+					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan / Keperluan', 'type' => 'textarea', 'required' => false],
+					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => false],
+					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => false],
+					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false]
 				]
 			],
 			'cuti' => [
 				'table' => 'surat_cuti_tahunan',
 				'pk' => 'id',
 				'fields' => [
-					'jenis_izin' => ['label' => 'Jenis Cuti', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => true],
-					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => true],
-					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => true],
-					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true],
-					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
+					'jenis_izin' => ['label' => 'Jenis Cuti', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => false],
+					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => false],
+					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => false],
+					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false],
+					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
 			],
@@ -10391,10 +10391,10 @@ class Surat extends CI_Controller
 				'table' => 'surat_meetingroom',
 				'pk' => 'id',
 				'fields' => [
-					'perihal' => ['label' => 'Perihal', 'type' => 'textarea', 'required' => true],
-					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => true],
-					'jam_mulai' => ['label' => 'Jam Mulai', 'type' => 'text', 'required' => true],
-					'jam_akhir' => ['label' => 'Jam Akhir', 'type' => 'text', 'required' => true],
+					'perihal' => ['label' => 'Perihal', 'type' => 'textarea', 'required' => false],
+					'tgl_pengajuan' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
+					'jam_mulai' => ['label' => 'Jam Mulai', 'type' => 'text', 'required' => false],
+					'jam_akhir' => ['label' => 'Jam Akhir', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
 			],
@@ -10402,11 +10402,11 @@ class Surat extends CI_Controller
 				'table' => 'surat_sgm',
 				'pk' => 'id',
 				'fields' => [
-					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => true],
-					'total' => ['label' => 'Total', 'type' => 'text', 'required' => true],
-					'jam_mulai' => ['label' => 'Jam Mulai', 'type' => 'text', 'required' => true],
-					'jam_akhir' => ['label' => 'Jam Akhir', 'type' => 'text', 'required' => true],
+					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => false],
+					'total' => ['label' => 'Total', 'type' => 'text', 'required' => false],
+					'jam_mulai' => ['label' => 'Jam Mulai', 'type' => 'text', 'required' => false],
+					'jam_akhir' => ['label' => 'Jam Akhir', 'type' => 'text', 'required' => false],
 					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => false],
 					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false]
 				]
@@ -10415,23 +10415,23 @@ class Surat extends CI_Controller
 				'table' => 'surat_sgm',
 				'pk' => 'id',
 				'fields' => [
-					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => true],
-					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => true],
-					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => true],
-					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true]
+					'jenis_izin' => ['label' => 'Jenis Izin', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => false],
+					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => false],
+					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => false],
+					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false]
 				]
 			],
 			'cuti_sgm' => [
 				'table' => 'surat_sgm',
 				'pk' => 'id',
 				'fields' => [
-					'jenis_izin' => ['label' => 'Jenis Cuti', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => true],
-					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => true],
-					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => true],
-					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => true],
-					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => true],
+					'jenis_izin' => ['label' => 'Jenis Cuti', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => false],
+					'total' => ['label' => 'Total Hari', 'type' => 'text', 'required' => false],
+					'tgl_awal' => ['label' => 'Tanggal Awal', 'type' => 'date', 'required' => false],
+					'tgl_akhir' => ['label' => 'Tanggal Akhir', 'type' => 'date', 'required' => false],
+					'kota_pengajuan' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
 			],
@@ -10439,11 +10439,11 @@ class Surat extends CI_Controller
 				'table' => 'surat_kendaraan',
 				'pk' => 'id',
 				'fields' => [
-					'keperluan' => ['label' => 'Keperluan', 'type' => 'textarea', 'required' => true],
-					'mobil' => ['label' => 'Mobil', 'type' => 'text', 'required' => true],
-					'nopol' => ['label' => 'Nomor Polisi', 'type' => 'text', 'required' => true],
-					'lama' => ['label' => 'Lama Penggunaan (Hari)', 'type' => 'text', 'required' => true],
-					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
+					'keperluan' => ['label' => 'Keperluan', 'type' => 'textarea', 'required' => false],
+					'mobil' => ['label' => 'Mobil', 'type' => 'text', 'required' => false],
+					'nopol' => ['label' => 'Nomor Polisi', 'type' => 'text', 'required' => false],
+					'lama' => ['label' => 'Lama Penggunaan (Hari)', 'type' => 'text', 'required' => false],
+					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
 			],
@@ -10451,9 +10451,9 @@ class Surat extends CI_Controller
 				'table' => 'surat_po',
 				'pk' => 'id',
 				'fields' => [
-					'no_po' => ['label' => 'Nomor PO', 'type' => 'text', 'required' => true],
-					'tanggal' => ['label' => 'Tanggal PO', 'type' => 'date', 'required' => true],
-					'alasan' => ['label' => 'Alasan Pengajuan', 'type' => 'textarea', 'required' => true],
+					'no_po' => ['label' => 'Nomor PO', 'type' => 'text', 'required' => false],
+					'tanggal' => ['label' => 'Tanggal PO', 'type' => 'date', 'required' => false],
+					'alasan' => ['label' => 'Alasan Pengajuan', 'type' => 'textarea', 'required' => false],
 					'catatan' => ['label' => 'Catatan', 'type' => 'textarea', 'required' => false],
 					'lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
@@ -10462,14 +10462,14 @@ class Surat extends CI_Controller
 				'table' => 'surat_aprv',
 				'pk' => 'id',
 				'fields' => [
-					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-					'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => true],
-					'tujuan' => ['label' => 'Tujuan', 'type' => 'text', 'required' => true],
-					'nama_barang' => ['label' => 'Nama Barang', 'type' => 'text', 'required' => true],
-					'no_sj' => ['label' => 'Nomor Surat Jalan', 'type' => 'text', 'required' => true],
-					'gudang_asal' => ['label' => 'Gudang Asal', 'type' => 'text', 'required' => true],
-					'rencana_expedisi' => ['label' => 'Rencana Ekspedisi', 'type' => 'text', 'required' => true],
-					'harga_expedisi' => ['label' => 'Harga Ekspedisi', 'type' => 'text', 'required' => true],
+					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+					'nama_customer' => ['label' => 'Nama Customer', 'type' => 'text', 'required' => false],
+					'tujuan' => ['label' => 'Tujuan', 'type' => 'text', 'required' => false],
+					'nama_barang' => ['label' => 'Nama Barang', 'type' => 'text', 'required' => false],
+					'no_sj' => ['label' => 'Nomor Surat Jalan', 'type' => 'text', 'required' => false],
+					'gudang_asal' => ['label' => 'Gudang Asal', 'type' => 'text', 'required' => false],
+					'rencana_expedisi' => ['label' => 'Rencana Ekspedisi', 'type' => 'text', 'required' => false],
+					'harga_expedisi' => ['label' => 'Harga Ekspedisi', 'type' => 'text', 'required' => false],
 					'po_customer' => ['label' => 'PO Customer', 'type' => 'textarea', 'required' => false],
 					'sph_customer' => ['label' => 'SPH Customer', 'type' => 'textarea', 'required' => false],
 					'catatan_finance' => ['label' => 'Catatan Finance', 'type' => 'text', 'required' => false],
@@ -10480,10 +10480,10 @@ class Surat extends CI_Controller
 					'pk' => 'id',
 					'fk' => 'id_aprv',
 					'fields' => [
-						'namaekspedisi' => ['label' => 'Nama Ekspedisi', 'type' => 'text', 'required' => true],
-						'berat' => ['label' => 'Berat', 'type' => 'text', 'required' => true],
+						'namaekspedisi' => ['label' => 'Nama Ekspedisi', 'type' => 'text', 'required' => false],
+						'berat' => ['label' => 'Berat', 'type' => 'text', 'required' => false],
 						'fasilitas' => ['label' => 'Fasilitas', 'type' => 'text', 'required' => false],
-						'harga' => ['label' => 'Harga', 'type' => 'text', 'required' => true],
+						'harga' => ['label' => 'Harga', 'type' => 'text', 'required' => false],
 						'acuanharga' => ['label' => 'Acuan Harga', 'type' => 'text', 'required' => false],
 						'kekurangan' => ['label' => 'Kekurangan', 'type' => 'text', 'required' => false],
 						'approval' => ['label' => 'Approval status (Int)', 'type' => 'number', 'required' => false]
@@ -10494,27 +10494,27 @@ class Surat extends CI_Controller
 				'table' => 'approval_director',
 				'pk' => 'id',
 				'fields' => [
-					'nama_dokumen' => ['label' => 'Nama Dokumen', 'type' => 'text', 'required' => true],
-					'ket' => ['label' => 'Keterangan', 'type' => 'textarea', 'required' => true],
-					'link' => ['label' => 'Link Dokumen', 'type' => 'text', 'required' => true],
-					'jenis' => ['label' => 'Jenis (Int)', 'type' => 'number', 'required' => true]
+					'nama_dokumen' => ['label' => 'Nama Dokumen', 'type' => 'text', 'required' => false],
+					'ket' => ['label' => 'Keterangan', 'type' => 'textarea', 'required' => false],
+					'link' => ['label' => 'Link Dokumen', 'type' => 'text', 'required' => false],
+					'jenis' => ['label' => 'Jenis (Int)', 'type' => 'number', 'required' => false]
 				]
 			],
 			'forwarder' => [
 				'table' => 'approval_forwarder',
 				'pk' => 'id',
 				'fields' => [
-					'nama' => ['label' => 'Nama Shipment', 'type' => 'text', 'required' => true],
-					'sistem_pengiriman' => ['label' => 'Sistem Pengiriman', 'type' => 'text', 'required' => true],
-					'pol' => ['label' => 'Port of Loading (POL)', 'type' => 'text', 'required' => true],
-					'pod' => ['label' => 'Port of Discharge (POD)', 'type' => 'text', 'required' => true],
-					'berat_dimensi' => ['label' => 'Berat / Dimensi', 'type' => 'text', 'required' => true],
-					'mata_nilai_inv' => ['label' => 'Mata Uang Invoice', 'type' => 'text', 'required' => true],
-					'nilai_inv' => ['label' => 'Nilai Invoice', 'type' => 'text', 'required' => true],
+					'nama' => ['label' => 'Nama Shipment', 'type' => 'text', 'required' => false],
+					'sistem_pengiriman' => ['label' => 'Sistem Pengiriman', 'type' => 'text', 'required' => false],
+					'pol' => ['label' => 'Port of Loading (POL)', 'type' => 'text', 'required' => false],
+					'pod' => ['label' => 'Port of Discharge (POD)', 'type' => 'text', 'required' => false],
+					'berat_dimensi' => ['label' => 'Berat / Dimensi', 'type' => 'text', 'required' => false],
+					'mata_nilai_inv' => ['label' => 'Mata Uang Invoice', 'type' => 'text', 'required' => false],
+					'nilai_inv' => ['label' => 'Nilai Invoice', 'type' => 'text', 'required' => false],
 					'kota_aju' => ['label' => 'Kota Pengajuan', 'type' => 'text', 'required' => false],
 					'tgl_aju' => ['label' => 'Tanggal Pengajuan', 'type' => 'date', 'required' => false],
 					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
-					'kurs' => ['label' => 'Kurs (USD to IDR)', 'type' => 'text', 'required' => true],
+					'kurs' => ['label' => 'Kurs (USD to IDR)', 'type' => 'text', 'required' => false],
 					'link_final' => ['label' => 'Link Final', 'type' => 'text', 'required' => false]
 				],
 				'detail' => [
@@ -10522,10 +10522,10 @@ class Surat extends CI_Controller
 					'pk' => 'id',
 					'fk' => 'id_app',
 					'fields' => [
-						'id_forwarder' => ['label' => 'ID Forwarder Company', 'type' => 'number', 'required' => true],
+						'id_forwarder' => ['label' => 'ID Forwarder Company', 'type' => 'number', 'required' => false],
 						'freight_ocean' => ['label' => 'Ocean Freight', 'type' => 'text', 'required' => false],
 						'freight_air' => ['label' => 'Air Freight', 'type' => 'text', 'required' => false],
-						'dipilih' => ['label' => 'Dipilih (1=Ya, 2=Tidak)', 'type' => 'number', 'required' => true],
+						'dipilih' => ['label' => 'Dipilih (1=Ya, 2=Tidak)', 'type' => 'number', 'required' => false],
 						'alasan' => ['label' => 'Alasan Dipilih', 'type' => 'text', 'required' => false]
 					]
 				]
@@ -10534,12 +10534,12 @@ class Surat extends CI_Controller
 				'table' => 'approval_faktur_pajak',
 				'pk' => 'id',
 				'fields' => [
-					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => true],
-					'no_po' => ['label' => 'Nomor PO/INV', 'type' => 'text', 'required' => true],
-					'dpp' => ['label' => 'DPP', 'type' => 'text', 'required' => true],
-					'ppn' => ['label' => 'PPN', 'type' => 'text', 'required' => true],
-					'pembayaran' => ['label' => 'Pembayaran', 'type' => 'text', 'required' => true],
-					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => true],
+					'tanggal' => ['label' => 'Tanggal', 'type' => 'date', 'required' => false],
+					'no_po' => ['label' => 'Nomor PO/INV', 'type' => 'text', 'required' => false],
+					'dpp' => ['label' => 'DPP', 'type' => 'text', 'required' => false],
+					'ppn' => ['label' => 'PPN', 'type' => 'text', 'required' => false],
+					'pembayaran' => ['label' => 'Pembayaran', 'type' => 'text', 'required' => false],
+					'alasan' => ['label' => 'Alasan', 'type' => 'textarea', 'required' => false],
 					'link_lampiran' => ['label' => 'Link Lampiran', 'type' => 'text', 'required' => false]
 				]
 			]
@@ -10568,25 +10568,25 @@ class Surat extends CI_Controller
 			ajaxReturnDie('error', 'Data tidak ditemukan.');
 		}
 
-		$html = '<form id="adminEditForm" class="form-horizontal">';
+		$html = '<form id="adminEditForm" class="form-horizontal" novalidate>';
 		$html .= '<input type="hidden" name="module" value="' . htmlspecialchars($module) . '" />';
 		$html .= '<input type="hidden" name="id" value="' . htmlspecialchars($id_enc) . '" />';
 
 		foreach ($config['fields'] as $field => $info) {
 			$val = isset($row->$field) ? $row->$field : '';
 			$html .= '<div class="form-group row align-items-center mb-3">';
-			$html .= '<label class="col-lg-3 control-label text-lg-right pt-2 font-weight-semibold">' . htmlspecialchars($info['label']) . ($info['required'] ? ' <span class="text-danger">*</span>' : '') . '</label>';
+			$html .= '<label class="col-lg-3 control-label text-lg-right pt-2 font-weight-semibold">' . htmlspecialchars($info['label']) . '</label>';
 			$html .= '<div class="col-lg-9">';
 
 			if ($info['type'] === 'textarea') {
-				$html .= '<textarea class="form-control" name="' . htmlspecialchars($field) . '" rows="3" ' . ($info['required'] ? 'required' : '') . '>' . htmlspecialchars($val) . '</textarea>';
+				$html .= '<textarea class="form-control" name="' . htmlspecialchars($field) . '" rows="3">' . htmlspecialchars($val) . '</textarea>';
 			} else if ($info['type'] === 'date') {
-				$formatted_date = !empty($val) ? date('Y-m-d', strtotime($val)) : '';
-				$html .= '<input type="date" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($formatted_date) . '" ' . ($info['required'] ? 'required' : '') . ' />';
+				$formatted_date = (!empty($val) && substr($val, 0, 10) !== '0000-00-00' && strtotime($val) > 0) ? date('Y-m-d', strtotime($val)) : '';
+				$html .= '<input type="date" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($formatted_date) . '" />';
 			} else if ($info['type'] === 'number') {
-				$html .= '<input type="number" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($val) . '" ' . ($info['required'] ? 'required' : '') . ' />';
+				$html .= '<input type="number" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($val) . '" />';
 			} else {
-				$html .= '<input type="text" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($val) . '" ' . ($info['required'] ? 'required' : '') . ' />';
+				$html .= '<input type="text" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($val) . '" />';
 			}
 
 			$html .= '</div>';
@@ -10610,7 +10610,7 @@ class Surat extends CI_Controller
 			$html .= '<table class="table table-bordered table-striped table-sm mb-0" id="detail-rows-table">';
 			$html .= '<thead><tr>';
 			foreach ($det_cfg['fields'] as $df => $di) {
-				$html .= '<th class="text-nowrap">' . htmlspecialchars($di['label']) . ($di['required'] ? ' <span class="text-danger">*</span>' : '') . '</th>';
+				$html .= '<th class="text-nowrap">' . htmlspecialchars($di['label']) . '</th>';
 			}
 			$html .= '<th style="width: 50px;" class="text-center">Aksi</th>';
 			$html .= '</tr></thead>';
@@ -10623,12 +10623,12 @@ class Surat extends CI_Controller
 					$val = isset($drow->$df) ? $drow->$df : '';
 					$html .= '<td>';
 					if ($di['type'] === 'date') {
-						$formatted_date = !empty($val) ? date('Y-m-d', strtotime($val)) : '';
-						$html .= '<input type="date" class="form-control form-control-sm" name="details[' . htmlspecialchars($pk_val) . '][' . htmlspecialchars($df) . ']" value="' . htmlspecialchars($formatted_date) . '" ' . ($di['required'] ? 'required' : '') . ' />';
+						$formatted_date = (!empty($val) && substr($val, 0, 10) !== '0000-00-00' && strtotime($val) > 0) ? date('Y-m-d', strtotime($val)) : '';
+						$html .= '<input type="date" class="form-control form-control-sm" name="details[' . htmlspecialchars($pk_val) . '][' . htmlspecialchars($df) . ']" value="' . htmlspecialchars($formatted_date) . '" />';
 					} else if ($di['type'] === 'number') {
-						$html .= '<input type="number" class="form-control form-control-sm" name="details[' . htmlspecialchars($pk_val) . '][' . htmlspecialchars($df) . ']" value="' . htmlspecialchars($val) . '" ' . ($di['required'] ? 'required' : '') . ' />';
+						$html .= '<input type="number" class="form-control form-control-sm" name="details[' . htmlspecialchars($pk_val) . '][' . htmlspecialchars($df) . ']" value="' . htmlspecialchars($val) . '" />';
 					} else {
-						$html .= '<input type="text" class="form-control form-control-sm" name="details[' . htmlspecialchars($pk_val) . '][' . htmlspecialchars($df) . ']" value="' . htmlspecialchars($val) . '" ' . ($di['required'] ? 'required' : '') . ' />';
+						$html .= '<input type="text" class="form-control form-control-sm" name="details[' . htmlspecialchars($pk_val) . '][' . htmlspecialchars($df) . ']" value="' . htmlspecialchars($val) . '" />';
 					}
 					$html .= '</td>';
 				}
@@ -10657,11 +10657,11 @@ class Surat extends CI_Controller
 			foreach ($det_cfg['fields'] as $df => $di) {
 				$html .= '            rowHtml += \'<td>\';' . "\n";
 				if ($di['type'] === 'date') {
-					$html .= '            rowHtml += \'<input type="date" class="form-control form-control-sm" name="new_details[\' + newRowIndex + \'][' . htmlspecialchars($df) . ']" ' . ($di['required'] ? 'required' : '') . ' />\';' . "\n";
+					$html .= '            rowHtml += \'<input type="date" class="form-control form-control-sm" name="new_details[\' + newRowIndex + \'][' . htmlspecialchars($df) . ']" />\';' . "\n";
 				} else if ($di['type'] === 'number') {
-					$html .= '            rowHtml += \'<input type="number" class="form-control form-control-sm" name="new_details[\' + newRowIndex + \'][' . htmlspecialchars($df) . ']" ' . ($di['required'] ? 'required' : '') . ' />\';' . "\n";
+					$html .= '            rowHtml += \'<input type="number" class="form-control form-control-sm" name="new_details[\' + newRowIndex + \'][' . htmlspecialchars($df) . ']" />\';' . "\n";
 				} else {
-					$html .= '            rowHtml += \'<input type="text" class="form-control form-control-sm" name="new_details[\' + newRowIndex + \'][' . htmlspecialchars($df) . ']" ' . ($di['required'] ? 'required' : '') . ' />\';' . "\n";
+					$html .= '            rowHtml += \'<input type="text" class="form-control form-control-sm" name="new_details[\' + newRowIndex + \'][' . htmlspecialchars($df) . ']" />\';' . "\n";
 				}
 				$html .= '            rowHtml += \'</td>\';' . "\n";
 			}
@@ -10716,20 +10716,26 @@ class Surat extends CI_Controller
 
 		$config = $configs[$module];
 
-		// Validasi input
+		// Cek informasi kolom tabel utama (untuk menangani kolom NOT NULL saat dikosongkan)
+		$main_nullable = [];
+		$main_cols = $this->db->query("SHOW COLUMNS FROM `{$config['table']}`")->result();
+		foreach ($main_cols as $col) {
+			$main_nullable[$col->Field] = (strtoupper($col->Null) === 'YES');
+		}
+
+		// Siapkan data tanpa wajib isi (boleh kosong)
 		$data = [];
 		foreach ($config['fields'] as $field => $info) {
 			$val = $this->input->post($field);
-			if ($info['required'] && ($val === null || $val === '')) {
-				ajaxReturnDie('error', 'Kolom ' . $info['label'] . ' wajib diisi.');
-			}
+			$is_empty = ($val === null || $val === '');
+			$can_null = !empty($main_nullable[$field]);
 
 			if ($info['type'] === 'number') {
-				$data[$field] = $val !== '' ? floatval($val) : null;
+				$data[$field] = !$is_empty ? floatval($val) : ($can_null ? null : 0);
 			} else if ($info['type'] === 'date') {
-				$data[$field] = $val !== '' ? date('Y-m-d', strtotime($val)) : null;
+				$data[$field] = !$is_empty ? date('Y-m-d', strtotime($val)) : ($can_null ? null : '0000-00-00');
 			} else {
-				$data[$field] = $val;
+				$data[$field] = !$is_empty ? $val : '';
 			}
 		}
 
@@ -10756,11 +10762,15 @@ class Surat extends CI_Controller
 			// Fetch parent row to copy fields like 'perusahaan' if needed
 			$row = $this->db->get_where($config['table'], [$config['pk'] => $id])->row();
 
-			// Check if detail table has 'perusahaan' field
+			// Check detail table columns & 'perusahaan' field
 			$has_perusahaan = false;
-			$fields_query = $this->db->query("SHOW COLUMNS FROM `{$det_cfg['table']}` LIKE 'perusahaan'");
-			if ($fields_query->num_rows() > 0) {
-				$has_perusahaan = true;
+			$det_nullable = [];
+			$det_cols = $this->db->query("SHOW COLUMNS FROM `{$det_cfg['table']}`")->result();
+			foreach ($det_cols as $col) {
+				$det_nullable[$col->Field] = (strtoupper($col->Null) === 'YES');
+				if ($col->Field === 'perusahaan') {
+					$has_perusahaan = true;
+				}
 			}
 
 			// 2. Updates
@@ -10770,16 +10780,15 @@ class Surat extends CI_Controller
 					$update_data = [];
 					foreach ($det_cfg['fields'] as $df => $di) {
 						$val = isset($fields[$df]) ? $fields[$df] : null;
-						if ($di['required'] && ($val === null || $val === '')) {
-							$this->db->trans_rollback();
-							ajaxReturnDie('error', 'Kolom detail ' . $di['label'] . ' wajib diisi.');
-						}
+						$is_empty = ($val === null || $val === '');
+						$can_null = !empty($det_nullable[$df]);
+
 						if ($di['type'] === 'number') {
-							$update_data[$df] = $val !== '' ? floatval($val) : null;
+							$update_data[$df] = !$is_empty ? floatval($val) : ($can_null ? null : 0);
 						} else if ($di['type'] === 'date') {
-							$update_data[$df] = $val !== '' ? date('Y-m-d', strtotime($val)) : null;
+							$update_data[$df] = !$is_empty ? date('Y-m-d', strtotime($val)) : ($can_null ? null : '0000-00-00');
 						} else {
-							$update_data[$df] = $val;
+							$update_data[$df] = !$is_empty ? $val : '';
 						}
 					}
 
@@ -10802,16 +10811,15 @@ class Surat extends CI_Controller
 					$insert_data = [];
 					foreach ($det_cfg['fields'] as $df => $di) {
 						$val = isset($fields[$df]) ? $fields[$df] : null;
-						if ($di['required'] && ($val === null || $val === '')) {
-							$this->db->trans_rollback();
-							ajaxReturnDie('error', 'Kolom detail baru ' . $di['label'] . ' wajib diisi.');
-						}
+						$is_empty = ($val === null || $val === '');
+						$can_null = !empty($det_nullable[$df]);
+
 						if ($di['type'] === 'number') {
-							$insert_data[$df] = $val !== '' ? floatval($val) : null;
+							$insert_data[$df] = !$is_empty ? floatval($val) : ($can_null ? null : 0);
 						} else if ($di['type'] === 'date') {
-							$insert_data[$df] = $val !== '' ? date('Y-m-d', strtotime($val)) : null;
+							$insert_data[$df] = !$is_empty ? date('Y-m-d', strtotime($val)) : ($can_null ? null : '0000-00-00');
 						} else {
-							$insert_data[$df] = $val;
+							$insert_data[$df] = !$is_empty ? $val : '';
 						}
 					}
 
