@@ -4,6 +4,12 @@ if (!defined('BASEPATH'))
 
 class Md_absensi extends CI_Model
 {
+    function __construct()
+    {
+        parent::__construct();
+        $this->load->model('md_surat_part_two');
+    }
+
     /**
      * Cek apakah pengguna memiliki akses WFA
      * @param int $pengguna_id - ID Pengguna
