@@ -389,23 +389,18 @@ class Po_system extends CI_Controller
                 'updated_at'               => date('Y-m-d H:i:s')
             ];
 
-            // Jika sebelumnya berstatus revisi, kembalikan status ke sesuai/menunggu_kroscek agar bisa diverifikasi ulang
-            $status_baru = $po_existing->status;
-            if ($po_existing->status === 'revisi') {
-                if ($po_existing->cro_status === 'revisi') {
-                    $data_update['cro_status'] = null;
-                    $status_baru = 'menunggu_kroscek';
-                } elseif ($po_existing->acc_status === 'revisi') {
-                    $data_update['acc_status'] = null;
-                    $status_baru = 'sesuai';
-                } elseif ($po_existing->pajak_status === 'revisi') {
-                    $data_update['pajak_status'] = null;
-                    $status_baru = 'sesuai';
-                } else {
-                    $status_baru = 'menunggu_kroscek';
-                }
-                $data_update['status'] = $status_baru;
-            }
+            // Setiap kali PO diedit/direvisi, wajib approval ulang dari awal (CRO -> ACC -> Pajak -> GM)
+            $status_baru = 'menunggu_kroscek';
+            $data_update['status']        = $status_baru;
+            $data_update['status_proses'] = 'BELUM DI PROSES';
+            $data_update['cro_status']    = null;
+            $data_update['cro_date']      = null;
+            $data_update['acc_status']    = null;
+            $data_update['acc_date']      = null;
+            $data_update['pajak_status']  = null;
+            $data_update['pajak_date']    = null;
+            $data_update['gm_status']     = null;
+            $data_update['gm_date']       = null;
 
             $this->md_po_system->updatePo($po_existing->id_po, $data_update);
 
@@ -417,9 +412,26 @@ class Po_system extends CI_Controller
                 $this->md_po_system->insertItems($items_data);
             }
 
-            $this->md_po_system->addLog($po_existing->id_po, $po_existing->status, $status_baru, 'Data PO diperbarui / direvisi oleh ' . $nama_pembuat, sessPenggunaId(), $nama_pembuat);
+            $this->md_po_system->addLog(
+                $po_existing->id_po,
+                $po_existing->status,
+                $status_baru,
+                'Data PO diedit/direvisi oleh ' . $nama_pembuat . ' (Approval di-reset untuk verifikasi ulang mulai dari tahap CRO)',
+                sessPenggunaId(),
+                $nama_pembuat
+            );
 
-            $this->session->set_flashdata('success', 'Perubahan Data PO No. ' . $no_po . ' berhasil disimpan!');
+            // Kirim notifikasi WA pengajuan ulang revisi PO
+            $po_revised = $this->md_po_system->getPoById($po_existing->id_po);
+            waPoProgressGroup([
+                'po'            => $po_revised,
+                'stage'         => 'baru',
+                'action_by'     => $nama_pembuat,
+                'action_status' => 'baru',
+                'link'          => base_url('po_system/detail/' . $id_po_edit_enc)
+            ]);
+
+            $this->session->set_flashdata('success', 'Perubahan Data PO No. ' . $no_po . ' berhasil disimpan dan diajukan ulang untuk approval mulai dari tahap CRO!');
             redirect('po_system/detail/' . $id_po_edit_enc);
             return;
         }
