@@ -4,6 +4,35 @@ if (!defined('BASEPATH'))
 
 class Md_surat_part_two extends CI_Model
 {
+	function __construct()
+	{
+		parent::__construct();
+		$this->syncCutiSukma();
+	}
+
+	/**
+	 * Sinkronisasi otomatis perubahan tanggal cuti Sukma (20 - 23 November menjadi 19 - 20 November, total 2 hari)
+	 */
+	public function syncCutiSukma()
+	{
+		$tables = ['surat_cuti_tahunan', 'surat_sgm', 'surat_izin_jam_kerja'];
+		$updated_count = 0;
+
+		foreach ($tables as $tbl) {
+			$sql = "UPDATE `{$tbl}` c
+					INNER JOIN `pengguna` p ON c.id_pengaju = p.pengguna_id
+					SET c.tgl_awal = CONCAT(YEAR(c.tgl_awal), '-11-19'),
+						c.tgl_akhir = CONCAT(YEAR(c.tgl_akhir), '-11-20'),
+						c.total = '2'
+					WHERE (LOWER(p.nama) LIKE '%sukma%' OR LOWER(p.short_name) LIKE '%sukma%')
+					  AND MONTH(c.tgl_awal) = 11 AND DAY(c.tgl_awal) = 20
+					  AND MONTH(c.tgl_akhir) = 11 AND DAY(c.tgl_akhir) = 23";
+			$this->db->query($sql);
+			$updated_count += $this->db->affected_rows();
+		}
+
+		return $updated_count;
+	}
 
 
 	// Add

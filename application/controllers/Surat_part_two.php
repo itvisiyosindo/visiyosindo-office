@@ -4309,4 +4309,23 @@ class Surat_part_two extends CI_Controller
     // Pastikan helper 'whatsapp_helper' sudah diload
     waAppGroupCuti($dataWa);
   }
+
+  public function sync_cuti_sukma()
+  {
+    $updated = $this->md_surat_part_two->syncCutiSukma();
+    $rows = $this->db->select('c.id, c.kode_cuti, c.tgl_awal, c.tgl_akhir, c.total, c.status, p.nama')
+      ->from('surat_cuti_tahunan c')
+      ->join('pengguna p', 'c.id_pengaju = p.pengguna_id', 'left')
+      ->where("(LOWER(p.nama) LIKE '%sukma%' OR LOWER(p.short_name) LIKE '%sukma%')")
+      ->order_by('c.id', 'DESC')
+      ->get()
+      ->result();
+
+    header('Content-Type: application/json');
+    echo json_encode([
+      'status' => 'success',
+      'updated_rows' => $updated,
+      'data_cuti_sukma' => $rows
+    ]);
+  }
 }

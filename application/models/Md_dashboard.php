@@ -5,6 +5,11 @@ if (!defined('BASEPATH'))
 
 class Md_dashboard extends CI_Model
 {
+    function __construct()
+    {
+        parent::__construct();
+        $this->load->model('md_surat_part_two');
+    }
 
     function get_dashboard_count()
     {
