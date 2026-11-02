@@ -567,7 +567,8 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                                 <a href="<?= base_url('po_system/detail/' . $id_enc) ?>" class="btn btn-sm btn-outline-primary btn-action" title="Detail & Kroscek">
                                                     <i class="fas fa-search"></i>
                                                 </a>
-                                                <?php if (in_array($row->status, ['revisi', 'menunggu_kroscek']) || isAdmin()): ?>
+                                                <?php $is_gm_locked_row = in_array(strtolower(trim($row->gm_status ?? '')), ['disetujui', 'sesuai'], true); ?>
+                                                <?php if (!$is_gm_locked_row && (in_array($row->status, ['revisi', 'menunggu_kroscek']) || isAdmin())): ?>
                                                     <a href="<?= base_url('po_system/edit/' . $id_enc) ?>" class="btn btn-sm btn-outline-warning btn-action ml-1" title="Edit / Revisi PO">
                                                         <i class="fas fa-edit"></i>
                                                     </a>

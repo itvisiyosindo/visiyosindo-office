@@ -252,6 +252,12 @@ class Po_system extends CI_Controller
             return;
         }
 
+        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'Data PO No. ' . $po->no_po . ' sudah disetujui oleh General Manager (GM) dan tidak dapat diedit lagi!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
         // Ambil data master customer dari Inventory -> Master Data -> Customer
         $this->db->select('id_customer, nama_customer, alamat_customer, contact');
         $this->db->from('customer');
@@ -301,6 +307,12 @@ class Po_system extends CI_Controller
         $id_po_edit_enc  = trim($this->input->post('id_po_edit') ?? '');
         $id_po_edit      = !empty($id_po_edit_enc) ? decrypt($id_po_edit_enc) : null;
         $po_existing     = !empty($id_po_edit) ? $this->md_po_system->getPoById($id_po_edit) : null;
+
+        if ($po_existing && in_array(strtolower(trim($po_existing->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'Data PO No. ' . $po_existing->no_po . ' sudah disetujui oleh General Manager (GM) dan tidak dapat diedit lagi!');
+            redirect('po_system/detail/' . $id_po_edit_enc);
+            return;
+        }
 
         $no_po           = trim($this->input->post('no_po'));
         $tanggal_po      = $this->input->post('tanggal_po');

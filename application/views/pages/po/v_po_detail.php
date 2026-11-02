@@ -197,7 +197,12 @@
                         </span>
                         <div class="mt-2">
                             <span class="badge badge-light border text-muted">Status Kroscek: <b><?= strtoupper($po->status) ?></b></span>
-                            <?php if (in_array($po->status, ['revisi', 'menunggu_kroscek']) || isAdmin() || isCRO()): ?>
+                            <?php $is_gm_locked = in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true); ?>
+                            <?php if ($is_gm_locked): ?>
+                                <span class="badge badge-secondary ml-1 px-2 py-1" title="PO telah disetujui General Manager dan tidak dapat diedit">
+                                    <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
+                                </span>
+                            <?php elseif (in_array($po->status, ['revisi', 'menunggu_kroscek']) || isAdmin() || isCRO()): ?>
                                 <a href="<?= base_url('po_system/edit/' . $id_encrypt) ?>" class="btn btn-xs btn-warning text-dark font-weight-bold ml-1 shadow-sm">
                                     <i class="fas fa-edit mr-1"></i> Edit / Revisi PO
                                 </a>
