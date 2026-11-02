@@ -341,10 +341,8 @@ class Evaluasi_lisan extends CI_Controller
 
             $this->db->insert('evaluasi_lisan', $payload);
 
-            // Kirim notifikasi WA ke HRD bila karyawan mengajukan konseling
-            if ($butuh_konseling === 1) {
-                $this->_notifyHrGaNewSubmission($myId, $payload);
-            }
+            // Kirim notifikasi WA ke Manajemen (Bob Ariyos, Meilina, Yola) & HR/GA setiap ada Evaluasi Lisan baru
+            $this->_notifyHrGaNewSubmission($myId, $payload);
 
             $this->session->set_flashdata('success', 'Evaluasi Lisan & Masukan Anda berhasil dikirim!');
         }
@@ -467,31 +465,46 @@ class Evaluasi_lisan extends CI_Controller
         $namaKaryawan = $emp ? $emp->nama : 'Karyawan';
         $jabatan      = ($emp && !empty($emp->jabatan)) ? ' (' . $emp->jabatan . ')' : '';
 
-        // Cari nomor HP HRD/Manajemen (ID 744 = Yola/HRD)
-        $targets = $this->db->select('no_hp')
-            ->where_in('pengguna_id', [744])
+        // Cari nomor HP Manajemen (Bob Ariyos, Meilina Safitri, Yolanda Pratiwi) & HR/GA
+        $users = $this->db->select('pengguna_id, nama, jabatan, level, no_hp')
             ->where('is_active', 1)
+            ->where('status', 1)
             ->get('pengguna')
             ->result();
 
+        $phones = [];
+        foreach ($users as $u) {
+            if ($this->canManageAll((int)$u->pengguna_id, $u)) {
+                $phone = preg_replace('/[^0-9]/', '', (string)($u->no_hp ?? ''));
+                if (!empty($phone)) {
+                    if (substr($phone, 0, 1) === '0') {
+                        $phone = '62' . substr($phone, 1);
+                    }
+                    $phones[$phone] = true;
+                }
+            }
+        }
+
+        $butuhKonseling = (int)($payload['butuh_konseling'] ?? 0) === 1;
         $tglUsulan = !empty($payload['tgl_usulan_konseling']) ? date('d/m/Y', strtotime($payload['tgl_usulan_konseling'])) : '-';
         $jamUsulan = !empty($payload['jam_usulan_konseling']) ? $payload['jam_usulan_konseling'] : '-';
 
-        $pesan = "*[PENGAJUAN EVALUASI LISAN & KONSELING HRGA]*\n\n"
+        $pesan = "*[EVALUASI LISAN & KONSELING HRGA BARU]*\n\n"
             . "Karyawan: *" . $namaKaryawan . "*" . $jabatan . "\n"
-            . "Kode: " . $payload['kode_evaluasi'] . "\n"
-            . "Usulan Jadwal Konseling: *" . $tglUsulan . " (" . $jamUsulan . ")*\n"
-            . "Metode: " . ($payload['metode_konseling'] ?: 'Tatap Muka') . "\n"
-            . (!empty($payload['topik_konseling']) ? "Topik: " . $payload['topik_konseling'] . "\n" : "")
-            . "\nSilakan cek di menu *Evaluasi Lisan & Konseling HRGA*:\n"
+            . "Kode: *" . $payload['kode_evaluasi'] . "*\n"
+            . "Tanggal: " . date('d/m/Y', strtotime($payload['tanggal_evaluasi'])) . "\n"
+            . "Pengajuan Konseling HRGA: *" . ($butuhKonseling ? "YA (Butuh Konseling)" : "Tidak") . "*\n";
+
+        if ($butuhKonseling) {
+            $pesan .= "Usulan Jadwal: *" . $tglUsulan . " (" . $jamUsulan . ")*\n"
+                . "Metode: " . ($payload['metode_konseling'] ?: 'Tatap Muka') . "\n"
+                . (!empty($payload['topik_konseling']) ? "Topik: " . $payload['topik_konseling'] . "\n" : "");
+        }
+
+        $pesan .= "\nSilakan cek detail masukan di menu *Evaluasi Lisan & Konseling HRGA*:\n"
             . base_url('evaluasi_lisan');
 
-        foreach ($targets as $t) {
-            $phone = preg_replace('/[^0-9]/', '', (string)$t->no_hp);
-            if (empty($phone)) continue;
-            if (substr($phone, 0, 1) === '0') {
-                $phone = '62' . substr($phone, 1);
-            }
+        foreach (array_keys($phones) as $phone) {
             @sendWa([
                 'devId'    => hostWa('1'),
                 'penerima' => $phone,
