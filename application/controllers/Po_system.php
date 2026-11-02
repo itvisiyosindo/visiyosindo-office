@@ -475,12 +475,21 @@ class Po_system extends CI_Controller
         $file_po = $po_existing ? ($po_existing->file_po ?? '') : '';
         $link_external = !empty($link_po_customer) ? $link_po_customer : trim($this->input->post('link_file_po'));
         if (!empty($_FILES['file_po']['name'])) {
-            $config['upload_path']   = './uploads/po/';
-            $config['allowed_types'] = 'pdf|jpg|jpeg|png';
-            $config['max_size']      = 10240; // 10MB
-            $config['encrypt_name']  = TRUE;
+            $upload_dir = FCPATH . 'uploads/po/';
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0775, true);
+            }
+            @chmod($upload_dir, 0775);
+
+            $config = [
+                'upload_path'   => $upload_dir,
+                'allowed_types' => 'pdf|jpg|jpeg|png',
+                'max_size'      => 10240, // 10MB
+                'encrypt_name'  => TRUE,
+            ];
 
             $this->load->library('upload', $config);
+            $this->upload->initialize($config);
             if ($this->upload->do_upload('file_po')) {
                 $upload_data = $this->upload->data();
                 $file_po = base_url('uploads/po/' . $upload_data['file_name']);
