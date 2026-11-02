@@ -9604,7 +9604,15 @@ class Surat extends CI_Controller
 		$par = explode(",", decryptvym($param1));
 		$data['iddetail'] = $par[0];
 		$data['namabarang'] = $par[1];
-		$data['modalbarang'] = $par[2];
+		$modalbarang = isset($par[2]) ? trim($par[2]) : '';
+		if ($modalbarang == 'Margin > 45% Harga Modal' || $modalbarang == 'Margin > 25% Harga Modal') {
+			$modalbarang = '1';
+		} else if ($modalbarang == 'Margin < 45% Harga Modal' || $modalbarang == 'Margin < 25% Harga Modal') {
+			$modalbarang = '2';
+		} else if ($modalbarang == 'Margin < 20% Harga Modal' || $modalbarang == 'Margin < 10% Harga Modal') {
+			$modalbarang = '3';
+		}
+		$data['modalbarang'] = $modalbarang;
 		echo json_encode($data);
 		die;
 	}
@@ -9757,13 +9765,34 @@ class Surat extends CI_Controller
 						<div class="btn-group" role="group" aria-label="First group">
 							<button type="button" class="btn btn-sm btn-primary btn-edit" title="Edit Data" data-id="' . $parJSONedit . '"><i class="bx bx-pencil"></i></button>
 						</div>';
+				$modal_label = trim($row->modal);
+				switch ($modal_label) {
+					case '1':
+						$modal_label = 'Margin > 25% Harga Modal';
+						break;
+					case '2':
+						$modal_label = 'Margin < 25% Harga Modal';
+						break;
+					case '3':
+						$modal_label = 'Margin < 10% Harga Modal';
+						break;
+					case 'Margin > 45% Harga Modal':
+						$modal_label = 'Margin > 25% Harga Modal';
+						break;
+					case 'Margin < 45% Harga Modal':
+						$modal_label = 'Margin < 25% Harga Modal';
+						break;
+					case 'Margin < 20% Harga Modal':
+						$modal_label = 'Margin < 10% Harga Modal';
+						break;
+				}
 				$th = array();
 				$th[] = $index;
 				$th[] = $row->id;
 				$th[] = $row->nama_barang;
 				$th[] = $row->acuan_hrg;
 				$th[] = $row->hrg_ditawarkan;
-				$th[] =  $row->modal;
+				$th[] = $modal_label;
 				$th[] = $li_btn;
 				$data[] = $th;
 				$index++;

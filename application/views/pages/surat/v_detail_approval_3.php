@@ -49,9 +49,9 @@
                         <label class="control-label col-sm-6" for="modalbarang">Jenis Approval:</label>
                     	<select class="form-control" id="modalbarang" name="modalbarang" required>
 							<option value="0">- Jenis Approval Harga -</option>
-							<option value="1">Margin > 45% Harga Modal </option>
-							<option value="2">Margin < 45% Harga Modal </option>
-							<option value="3">Margin < 20% Harga Modal </option>
+							<option value="1">Margin > 25% Harga Modal </option>
+							<option value="2">Margin < 25% Harga Modal </option>
+							<option value="3">Margin < 10% Harga Modal </option>
 						</select>
                     </div>
                 </div>
@@ -227,7 +227,28 @@
                                     <?php
 										$xtampil+=1;
 										if (isAdmin() || (sessPenggunaId() == '107') || (sessPenggunaId() == '23') || (sessPenggunaId() == '54')){
-											echo "<td class='hrg_modal' style='text-align:center;width:16%;'><label class='hrg_modal' style='text-align:center'></label><label class='hrg_modal' style='text-align:right'>".$row->modal."</label></td>";
+											$modal_label = trim($row->modal);
+											switch ($modal_label) {
+												case '1':
+													$modal_label = 'Margin > 25% Harga Modal';
+													break;
+												case '2':
+													$modal_label = 'Margin < 25% Harga Modal';
+													break;
+												case '3':
+													$modal_label = 'Margin < 10% Harga Modal';
+													break;
+												case 'Margin > 45% Harga Modal':
+													$modal_label = 'Margin > 25% Harga Modal';
+													break;
+												case 'Margin < 45% Harga Modal':
+													$modal_label = 'Margin < 25% Harga Modal';
+													break;
+												case 'Margin < 20% Harga Modal':
+													$modal_label = 'Margin < 10% Harga Modal';
+													break;
+											}
+											echo "<td class='hrg_modal' style='text-align:center;width:16%;'><label class='hrg_modal' style='text-align:center'></label><label class='hrg_modal' style='text-align:right'>".$modal_label."</label></td>";
 										}
 									?>
                                     <td>
