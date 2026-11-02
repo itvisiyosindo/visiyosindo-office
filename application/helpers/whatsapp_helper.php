@@ -3302,6 +3302,10 @@ function waPoProgressGroup($data)
 	if (!empty($statusColorInfo)) {
 		$catatanList[] = $statusColorInfo;
 	}
+	$hasSyaratFaktur = stripos((string)($po->dokumen_dilampirkan ?? ''), 'Syarat Pembayaran') !== false;
+	if ($hasSyaratFaktur) {
+		$catatanList[] = "⚠️ *Ketentuan Dokumen*: Customer mewajibkan *Faktur Pajak sebagai Syarat Pembayaran*.";
+	}
 	if (!empty($ket_pengaju)) {
 		$catatanList[] = "🔵 *Catatan Pengaju* (" . $nama_sales . "): \"" . $ket_pengaju . "\"";
 	}
@@ -3357,7 +3361,8 @@ function waPoProgressGroup($data)
 		"📄 *No. PO*: " . $no_po . "\n" .
 		"🏢 *Customer*: " . $nama_customer . "\n" .
 		"👤 *Diajukan Oleh*: " . $nama_sales . "\n" .
-		"💰 *Nilai Total*: " . $nominal . "\n\n" .
+		"💰 *Nilai Total*: " . $nominal . "\n" .
+		($hasSyaratFaktur ? "⚠️ *Syarat Bayar*: *Wajib Faktur Pajak*\n" : "") . "\n" .
 		"📊 *Tracking Tahapan Approval:*\n" .
 		"1️⃣ Input PO : " . $p_mkt . "\n" .
 		"2️⃣ Kroscek CRO : " . $p_cro . "\n" .

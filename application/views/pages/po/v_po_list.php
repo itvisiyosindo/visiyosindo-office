@@ -504,6 +504,11 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                             <small class="text-muted d-block">
                                                 <?= htmlspecialchars($row->sistem_pembayaran ?: 'Cash') ?> &bull; <?= htmlspecialchars($row->sistem_perpajakan ?: 'PPN') ?>
                                             </small>
+                                            <?php if (stripos((string)($row->dokumen_dilampirkan ?? ''), 'Syarat Pembayaran') !== false): ?>
+                                                <span class="badge badge-warning text-dark font-weight-bold mt-1 d-inline-block" style="font-size: 10px; padding: 2px 6px;">
+                                                    <i class="fas fa-file-invoice-dollar mr-1"></i>Faktur Syarat Bayar
+                                                </span>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="text-center">
                                             <?php if ($row->status == 'menunggu_kroscek'): ?>

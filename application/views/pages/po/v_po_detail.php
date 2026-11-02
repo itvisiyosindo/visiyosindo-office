@@ -378,6 +378,20 @@
                         <div class="text-value">
                             <b><?= htmlspecialchars($po->dokumen_pembayaran_tipe ?: 'Hardfile') ?></b>
                             <small class="d-block text-muted">Lampiran: <?= htmlspecialchars($po->dokumen_dilampirkan ?: '-') ?></small>
+                            <?php
+                                $hasSyaratFaktur = stripos((string)($po->dokumen_dilampirkan ?? ''), 'Syarat Pembayaran') !== false;
+                            ?>
+                            <div class="mt-1">
+                                <?php if ($hasSyaratFaktur): ?>
+                                    <span class="badge badge-primary" style="white-space: normal; text-align: left;">
+                                        <i class="fas fa-check-square mr-1"></i> Pembayaran Faktur Pajak sbg Syarat Pembayaran
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge badge-light border text-muted" style="white-space: normal; text-align: left;">
+                                        Faktur Pajak Bukan Syarat Pembayaran
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
@@ -608,6 +622,7 @@
                                 <div><b>Cek Harga:</b> <?= htmlspecialchars($po->acc_cek_harga ?: '-') ?></div>
                                 <div><b>Sistem Harga:</b> <?= htmlspecialchars($po->acc_sistem_harga ?: '-') ?></div>
                                 <div><b>Sistem Bayar:</b> <?= htmlspecialchars($po->acc_sistem_pembayaran ?: '-') ?></div>
+                                <div><b>Syarat Faktur:</b> <?= $hasSyaratFaktur ? '<span class="badge badge-warning text-dark font-weight-bold"><i class="fas fa-exclamation-circle mr-1"></i>WAJIB FAKTUR</span>' : '<span class="text-muted">Bukan Syarat</span>' ?></div>
                                 <?php if (!empty($po->acc_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->acc_catatan) ?>"</div>
                                 <?php endif; ?>
@@ -656,6 +671,7 @@
                             <div style="font-size: 0.82rem;" class="mb-3">
                                 <div><b>Cek Pajak:</b> <?= htmlspecialchars($po->pajak_cek_pajak ?: '-') ?></div>
                                 <div><b>Sistem Pajak:</b> <?= htmlspecialchars($po->pajak_sistem_perpajakan ?: '-') ?></div>
+                                <div><b>Faktur Syarat Bayar:</b> <?= $hasSyaratFaktur ? '<span class="badge badge-danger font-weight-bold"><i class="fas fa-exclamation-triangle mr-1"></i>WAJIB SEBAGAI SYARAT</span>' : '<span class="badge badge-light border text-muted">Bukan Syarat</span>' ?></div>
                                 <?php if (!empty($po->pajak_link_approval_faktur)): ?>
                                     <div><a href="<?= htmlspecialchars($po->pajak_link_approval_faktur) ?>" target="_blank" class="text-info"><i class="fas fa-link mr-1"></i>Link Faktur Pajak</a></div>
                                 <?php endif; ?>
@@ -1007,6 +1023,11 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <?php if ($hasSyaratFaktur): ?>
+                        <div class="alert alert-warning py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e;">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERHATIAN ACCOUNTING:</b> Customer mensyaratkan <u>Faktur Pajak sebagai Syarat Pembayaran</u>! Pastikan dokumen penagihan menyertakan faktur pajak.
+                        </div>
+                    <?php endif; ?>
                     <div class="form-group">
                         <label class="font-weight-bold">1. Cek Kesesuaian Harga</label>
                         <select name="acc_cek_harga" class="form-control" required>
@@ -1061,6 +1082,15 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <?php if ($hasSyaratFaktur): ?>
+                        <div class="alert alert-warning py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #ef4444; background: #fef2f2; color: #991b1b;">
+                            <i class="fas fa-exclamation-circle mr-1"></i> <b>PERHATIAN DIVISI PAJAK:</b> Customer mensyaratkan <u>Faktur Pajak sebagai Syarat Pembayaran</u>! Penerbitan Faktur Pajak wajib diprioritaskan sebelum penagihan customer.
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-light border py-2 px-3 small text-muted mb-3">
+                            <i class="fas fa-info-circle mr-1"></i> Catatan: Faktur Pajak BUKAN sebagai syarat pembayaran customer.
+                        </div>
+                    <?php endif; ?>
                     <div class="form-group">
                         <label class="font-weight-bold">1. Cek Pajak</label>
                         <select name="pajak_cek_pajak" class="form-control" required>
