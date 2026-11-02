@@ -21,6 +21,10 @@ class Md_po_system extends CI_Model
         $checked = true;
 
         if ($this->db->table_exists('po_masuk')) {
+            $colPay = $this->db->query("SHOW COLUMNS FROM `po_masuk` LIKE 'sistem_pembayaran'")->row();
+            if ($colPay && isset($colPay->Type) && stripos($colPay->Type, 'enum') !== false && stripos($colPay->Type, 'COD') === false) {
+                @$this->db->query("ALTER TABLE `po_masuk` MODIFY COLUMN `sistem_pembayaran` VARCHAR(50) DEFAULT 'Cash'");
+            }
             if (!$this->db->field_exists('cicilan_dp_tipe', 'po_masuk')) {
                 @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `cicilan_dp_tipe` VARCHAR(20) DEFAULT 'persen' AFTER `sistem_pembayaran`");
             }

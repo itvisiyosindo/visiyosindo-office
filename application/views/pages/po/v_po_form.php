@@ -398,16 +398,25 @@
                         <div class="col-12">
                             <label class="form-label-custom">Sistem Pembayaran <span class="text-danger">*</span></label>
                             <div class="row">
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 col-sm-6 mb-2">
                                     <label class="custom-radio-card" id="cardPayCash">
                                         <input type="radio" name="sistem_pembayaran" value="Cash" <?= ($cur_pay === 'Cash') ? 'checked' : '' ?>>
                                         <div>
                                             <span class="font-weight-bold d-block">Cash / Lunas</span>
-                                            <small class="text-muted">Pembayaran langsung / tunai saat barang diterima</small>
+                                            <small class="text-muted">Pembayaran langsung / lunas di muka</small>
                                         </div>
                                     </label>
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <label class="custom-radio-card" id="cardPayCod">
+                                        <input type="radio" name="sistem_pembayaran" value="COD" <?= ($cur_pay === 'COD') ? 'checked' : '' ?>>
+                                        <div>
+                                            <span class="font-weight-bold d-block">COD</span>
+                                            <small class="text-muted">Cash on Delivery (Bayar saat barang diterima)</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
                                     <label class="custom-radio-card" id="cardPayTempo">
                                         <input type="radio" name="sistem_pembayaran" value="Tempo" <?= ($cur_pay === 'Tempo') ? 'checked' : '' ?>>
                                         <div>
@@ -416,7 +425,7 @@
                                         </div>
                                     </label>
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 col-sm-6 mb-2">
                                     <label class="custom-radio-card" id="cardPayCicilan">
                                         <input type="radio" name="sistem_pembayaran" value="Cicilan" <?= ($cur_pay === 'Cicilan') ? 'checked' : '' ?>>
                                         <div>

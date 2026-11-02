@@ -992,7 +992,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="font-weight-bold">3. Sistem Pembayaran (TOP/Cash/Cicilan)</label>
+                        <label class="font-weight-bold">3. Sistem Pembayaran (TOP/Cash/COD/Cicilan)</label>
                         <select name="acc_sistem_pembayaran" class="form-control" required>
                             <option value="SUDAH SESUAI" <?= ($po->acc_sistem_pembayaran === 'SUDAH SESUAI') ? 'selected' : '' ?>>SUDAH SESUAI</option>
                             <option value="TIDAK" <?= ($po->acc_sistem_pembayaran === 'TIDAK') ? 'selected' : '' ?>>TIDAK SESUAI</option>
