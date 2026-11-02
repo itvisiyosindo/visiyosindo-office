@@ -143,14 +143,18 @@ class Marketing_target extends CI_Controller
             }
 
             if ($row->is_achieved == 1) {
-                $status_badge .= '<br><span class="badge badge-success font-weight-bold" style="background-color: #10B981; color: white; display: inline-block; margin-top: 4px;"><i class="fas fa-handshake"></i> Deal Closed: Rp ' . rupiah($row->nilai_achievement) . '</span>';
+                $status_badge .= '<br><span class="badge badge-success font-weight-bold" style="background-color: #10B981; color: white; display: inline-block; margin-top: 4px; padding: 4px 6px; font-size: 0.75rem;"><i class="fas fa-handshake"></i> Deal Closed: Rp ' . rupiah($row->nilai_achievement) . '</span>';
             }
 
             // Support info
-            $support_info = '<strong>' . htmlspecialchars($row->jenis_support ?: '-') . '</strong>';
+            $support_info = '<div class="table-cell-text"><strong>' . htmlspecialchars($row->jenis_support ?: '-') . '</strong>';
             if ($row->kebutuhan_support) {
-                $support_info .= '<br><small>' . htmlspecialchars($row->kebutuhan_support) . '</small>';
+                $support_info .= '<br><small class="text-muted">' . htmlspecialchars($row->kebutuhan_support) . '</small>';
             }
+            $support_info .= '</div>';
+
+            // Kendala
+            $kendala_info = '<div class="table-cell-text">' . htmlspecialchars($row->kendala ?: '-') . '</div>';
 
             // Estimasi Closing formatted
             $estimasi = date('F Y', strtotime($row->estimasi_closing));
@@ -158,14 +162,18 @@ class Marketing_target extends CI_Controller
             // Gap Harga formatted
             $gap_harga = round($row->gap_harga, 1) . '%';
 
+            // Persentase Kecapaian / Peluang Closing badge
+            $pct_val = (int)$row->persentase_kecapaian;
+            $pct_badge_class = $pct_val >= 75 ? 'badge-success' : ($pct_val >= 40 ? 'badge-warning' : 'badge-danger');
+
             // Buttons
             $btn_ach_class = $row->is_achieved ? 'btn-success' : 'btn-warning';
             $btn_ach_title = $row->is_achieved ? 'Edit Realisasi' : 'Realisasi (Closing Deal)';
 
-            $btn_actions = '<div class="btn-group" role="group">';
-            $btn_actions .= '<button type="button" class="btn btn-sm ' . $btn_ach_class . ' btn-achieve" data-id="' . $id_encrypt . '" data-instansi="' . htmlspecialchars($row->nama_instansi) . '" data-unit="' . htmlspecialchars($row->nama_unit) . '" data-harga-jual="' . rupiah($row->harga_jual) . '" data-harga-permintaan="' . rupiah($row->harga_permintaan) . '" data-nilai-achievement="' . ($row->nilai_achievement > 0 ? rupiah($row->nilai_achievement) : rupiah($row->harga_permintaan)) . '" data-tgl-achievement="' . ($row->tgl_achievement ?: date('Y-m-d')) . '" data-is-achieved="' . $row->is_achieved . '" title="' . $btn_ach_title . '"><i class="fas fa-trophy"></i></button>';
-            $btn_actions .= '<button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id_encrypt . '" title="Edit"><i class="fas fa-pencil-alt"></i></button>';
-            $btn_actions .= '<button type="button" class="btn btn-sm btn-danger btn-delete-target" data-id="' . $id_encrypt . '" title="Delete"><i class="fas fa-trash-alt"></i></button>';
+            $btn_actions = '<div class="btn-group btn-group-sm" role="group">';
+            $btn_actions .= '<button type="button" class="btn ' . $btn_ach_class . ' btn-achieve" data-id="' . $id_encrypt . '" data-instansi="' . htmlspecialchars($row->nama_instansi) . '" data-unit="' . htmlspecialchars($row->nama_unit) . '" data-harga-jual="' . rupiah($row->harga_jual) . '" data-harga-permintaan="' . rupiah($row->harga_permintaan) . '" data-nilai-achievement="' . ($row->nilai_achievement > 0 ? rupiah($row->nilai_achievement) : rupiah($row->harga_permintaan)) . '" data-tgl-achievement="' . ($row->tgl_achievement ?: date('Y-m-d')) . '" data-is-achieved="' . $row->is_achieved . '" title="' . $btn_ach_title . '"><i class="fas fa-trophy"></i></button>';
+            $btn_actions .= '<button type="button" class="btn btn-primary btn-edit" data-id="' . $id_encrypt . '" title="Edit Target"><i class="fas fa-pencil-alt"></i></button>';
+            $btn_actions .= '<button type="button" class="btn btn-danger btn-delete-target" data-id="' . $id_encrypt . '" title="Hapus Target"><i class="fas fa-trash-alt"></i></button>';
             $btn_actions .= '</div>';
 
             $th = [];
@@ -177,13 +185,13 @@ class Marketing_target extends CI_Controller
             $th[] = htmlspecialchars($row->nama_kota ?: '-');
             $th[] = htmlspecialchars($row->pic_customer);
             $th[] = htmlspecialchars($row->nama_unit);
-            $th[] = 'Rp ' . rupiah($row->harga_jual);
-            $th[] = 'Rp ' . rupiah($row->harga_permintaan);
-            $th[] = $gap_harga;
-            $th[] = $row->persentase_kecapaian . '%';
+            $th[] = '<span class="d-none">' . sprintf('%015.2f', (float)$row->harga_jual) . '</span><span class="text-nowrap font-weight-bold text-dark">Rp ' . rupiah($row->harga_jual) . '</span>';
+            $th[] = '<span class="d-none">' . sprintf('%015.2f', (float)$row->harga_permintaan) . '</span><span class="text-nowrap font-weight-bold text-primary">Rp ' . rupiah($row->harga_permintaan) . '</span>';
+            $th[] = '<span class="d-none">' . sprintf('%08.2f', (float)$row->gap_harga) . '</span><span class="badge badge-light border text-dark font-weight-bold">' . $gap_harga . '</span>';
+            $th[] = '<span class="d-none">' . sprintf('%03d', $pct_val) . '</span><span class="badge ' . $pct_badge_class . ' font-weight-bold" style="font-size: 0.82rem; padding: 4px 8px;">' . $pct_val . '%</span>';
             $th[] = $status_badge;
-            $th[] = $estimasi;
-            $th[] = htmlspecialchars($row->kendala ?: '-');
+            $th[] = '<span class="d-none">' . $row->estimasi_closing . '</span><span class="text-nowrap">' . $estimasi . '</span>';
+            $th[] = $kendala_info;
             $th[] = $support_info;
             $th[] = $btn_actions;
 

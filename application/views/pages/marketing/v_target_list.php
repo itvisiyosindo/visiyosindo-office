@@ -46,30 +46,185 @@
         color: white;
         transform: translateY(-1px);
     }
+    
+    /* Table Wrapper & Smooth Scrollbar */
+    .target-table-wrapper {
+        position: relative;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        background: #FFFFFF;
+        margin-bottom: 1rem;
+    }
+    .target-table-wrapper::-webkit-scrollbar {
+        height: 8px;
+    }
+    .target-table-wrapper::-webkit-scrollbar-track {
+        background: #F1F5F9;
+        border-radius: 4px;
+    }
+    .target-table-wrapper::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 4px;
+    }
+    .target-table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #94A3B8;
+    }
+
     .custom-table {
         border-collapse: separate;
         border-spacing: 0;
         width: 100% !important;
+        min-width: 1800px;
+        margin-bottom: 0 !important;
     }
     .custom-table th {
-        background-color: #F3F4F6 !important;
-        color: #374151 !important;
+        background-color: #F8FAFC !important;
+        color: #334155 !important;
         font-weight: 700 !important;
         text-transform: uppercase;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         letter-spacing: 0.05em;
-        border-bottom: 2px solid #E5E7EB !important;
+        border-bottom: 2px solid #CBD5E1 !important;
         padding: 12px 10px !important;
+        white-space: nowrap;
+        vertical-align: middle !important;
     }
     .custom-table td {
-        padding: 12px 10px !important;
+        padding: 10px 10px !important;
         vertical-align: middle !important;
-        border-bottom: 1px solid #E5E7EB !important;
+        border-bottom: 1px solid #EDF2F7 !important;
+        font-size: 0.82rem;
+        color: #1E293B;
     }
     .custom-table tbody tr:hover {
-        background-color: #F9FAFB !important;
+        background-color: #F1F5F9 !important;
         transition: background-color 0.15s ease;
     }
+
+    /* Sticky Right Action Column */
+    .custom-table th.col-aksi,
+    .custom-table td.col-aksi {
+        position: sticky;
+        right: 0;
+        background: #FFFFFF;
+        z-index: 2;
+        box-shadow: -4px 0 8px rgba(0, 0, 0, 0.06);
+    }
+    .custom-table th.col-aksi {
+        background-color: #F8FAFC !important;
+        z-index: 3;
+    }
+    .custom-table tbody tr:hover td.col-aksi {
+        background-color: #F1F5F9 !important;
+    }
+
+    /* Wrap long text in kendala & support */
+    .table-cell-text {
+        max-width: 220px;
+        word-break: break-word;
+        white-space: normal;
+        line-height: 1.4;
+        font-size: 0.8rem;
+    }
+
+    /* Clean DataTables Controls */
+    .dataTables_wrapper .dataTables_length {
+        margin-bottom: 12px;
+        float: left;
+    }
+    .dataTables_wrapper .dataTables_length label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-weight: 500 !important;
+        color: #64748B !important;
+        font-size: 0.85rem !important;
+    }
+    .dataTables_wrapper .dataTables_length select {
+        width: 75px !important;
+        height: 36px !important;
+        padding: 4px 8px !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 8px !important;
+        background-color: #FFFFFF !important;
+        color: #1E293B !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
+    }
+    .dataTables_wrapper .dataTables_length .select2-container {
+        display: none !important;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 12px;
+        float: right;
+    }
+    .dataTables_wrapper .dataTables_filter label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-weight: 500 !important;
+        color: #64748B !important;
+        font-size: 0.85rem !important;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 8px !important;
+        border: 1px solid #CBD5E1 !important;
+        padding: 6px 14px !important;
+        height: 36px !important;
+        font-size: 0.85rem !important;
+        width: 260px !important;
+        transition: all 0.2s;
+    }
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        outline: none !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        color: #64748B !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        padding-top: 14px !important;
+        float: left;
+    }
+    .dataTables_wrapper .dataTables_paginate {
+        padding-top: 10px !important;
+        float: right;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 6px !important;
+        padding: 5px 12px !important;
+        margin: 0 2px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        border: 1px solid #E2E8F0 !important;
+        background: #FFFFFF !important;
+        color: #334155 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #2563EB !important;
+        color: #FFFFFF !important;
+        border-color: #2563EB !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #F1F5F9 !important;
+        color: #1E293B !important;
+        border-color: #CBD5E1 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        background: #F8FAFC !important;
+        border-color: #E2E8F0 !important;
+    }
+
     .form-control-premium {
         border-radius: 8px;
         border: 1px solid #D1D5DB;
@@ -126,7 +281,8 @@
                             $current_year = date('Y');
                             for ($y = $current_year - 5; $y <= $current_year + 5; $y++) {
                                 $selected = ($y == $current_year) ? 'selected' : '';
-                                echo "<option value='{$y}' {$selected}>Tahun berjalan: {$y}</option>";
+                                $label = ($y == $current_year) ? "Tahun berjalan: {$y}" : "Tahun: {$y}";
+                                echo "<option value='{$y}' {$selected}>{$label}</option>";
                             }
                             ?>
                         </select>
@@ -177,28 +333,31 @@
 
         <div class="card premium-card">
             <div class="card-body">
-                <!-- Table View -->
-                <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted"><i class="fas fa-arrows-alt-h text-primary"></i> <strong>Tips:</strong> Geser tabel ke kanan untuk melihat kendala, kebutuhan support, dan tombol aksi (Edit, Hapus, Realisasi).</small>
+                </div>
+                <!-- Table View with Responsive Wrapper -->
+                <div class="target-table-wrapper">
                     <table class="table custom-table table-hover" id="target_table">
                         <thead>
                             <tr>
-                                <th style="width: 3%">No</th>
-                                <th style="width: 4%">Thn</th>
-                                <th style="width: 10%">Marketing</th>
-                                <th style="width: 12%">Instansi</th>
-                                <th style="width: 8%">Provinsi</th>
-                                <th style="width: 8%">Kota</th>
-                                <th style="width: 10%">PIC</th>
-                                <th style="width: 10%">Unit/Produk</th>
-                                <th style="width: 10%">Harga Jual</th>
-                                <th style="width: 10%">Harga Permintaan</th>
-                                <th style="width: 5%">Gap</th>
-                                <th style="width: 5%">Kecapaian</th>
-                                <th style="width: 5%">Funnel</th>
-                                <th style="width: 8%">Estimasi</th>
-                                <th style="width: 10%">Kendala</th>
-                                <th style="width: 12%">Kebutuhan Support</th>
-                                <th style="width: 8%">Aksi</th>
+                                <th style="width: 45px">No</th>
+                                <th style="width: 60px">Thn</th>
+                                <th style="width: 140px">Marketing</th>
+                                <th style="width: 180px">Instansi</th>
+                                <th style="width: 120px">Provinsi</th>
+                                <th style="width: 120px">Kota</th>
+                                <th style="width: 140px">PIC</th>
+                                <th style="width: 160px">Unit/Produk</th>
+                                <th style="width: 135px" class="text-right">Harga Jual</th>
+                                <th style="width: 135px" class="text-right">Harga Permintaan</th>
+                                <th style="width: 75px" class="text-center">Gap</th>
+                                <th style="width: 90px" class="text-center" title="Peluang Closing Funnel">Peluang (%)</th>
+                                <th style="width: 125px" class="text-center">Funnel</th>
+                                <th style="width: 110px" class="text-center">Estimasi</th>
+                                <th style="width: 180px">Kendala</th>
+                                <th style="width: 180px">Kebutuhan Support</th>
+                                <th style="width: 110px" class="text-center col-aksi">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -317,8 +476,9 @@
                         <input type="text" id="gap_harga_display" class="form-control form-control-premium" readonly style="background-color: #F3F4F6;" value="0%">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="font-weight-bold">Persentase Kecapaian (%) <span class="text-danger">*</span></label>
+                        <label class="font-weight-bold">Peluang Closing (%) <span class="text-danger">*</span></label>
                         <input type="number" name="persentase_kecapaian" id="persentase_kecapaian" class="form-control form-control-premium" min="0" max="100" placeholder="0" required>
+                        <small class="text-muted d-block mt-1">&ge;75% Hot, 40-74% Warm, &lt;40% Cold</small>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="font-weight-bold d-block">Status Funnel</label>
@@ -419,13 +579,33 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        let token = $('input[name=token]').val();
+        // 1. Helper function to load Kota dynamically by Provinsi without race condition
+        function loadKotaByProvinsi(provKode, selectedKotaId) {
+            let kotaSelect = $('#kota_id');
+            if (!provKode) {
+                kotaSelect.html('<option value="">- Pilih Kabupaten/Kota -</option>');
+                return;
+            }
+            kotaSelect.html('<option value="">Memuat data kota...</option>');
+            $.get('<?= site_url('calonpelanggan/add_ajax_kota') ?>/' + provKode, function(data) {
+                kotaSelect.html(data);
+                if (selectedKotaId) {
+                    kotaSelect.val(selectedKotaId);
+                }
+            });
+        }
 
-        // 1. DataTables Init
+        $('#provinsi_kode').on('change', function() {
+            loadKotaByProvinsi(this.value, null);
+        });
+
+        // 2. DataTables Init (Client-Side for Instant Search, Sorting & Pagination)
         let target_table = $('#target_table').DataTable({
             responsive: false,
             processing: true,
-            serverSide: true,
+            serverSide: false, // Ensures instant search, sorting, and pagination work seamlessly
+            pageLength: 25,
+            order: [], // Keep server default order initially
             ajax: {
                 url: '<?= base_url('marketing_target/get_targets_json') ?>',
                 type: 'POST',
@@ -433,27 +613,53 @@
                     d.tahun = $('#filter_tahun').val();
                     d.marketing_id = $('#filter_marketing').val() || 'all';
                     d.bulan = $('#filter_bulan').val() || 'all';
-                    d.csrf_token = token;
                 }
             },
             columnDefs: [
-                {
-                    targets: [8, 9, 10, 11, 12, 13, 16],
-                    className: 'text-center'
-                }
+                { targets: [0, 16], orderable: false },
+                { targets: [0, 1, 10, 11, 12, 13], className: 'text-center' },
+                { targets: [8, 9], className: 'text-right' },
+                { targets: [8, 9, 10, 11, 13], className: 'text-nowrap' },
+                { targets: 16, className: 'text-center text-nowrap col-aksi' }
             ],
             language: {
-                processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
+                search: "",
+                searchPlaceholder: "Cari target, instansi, produk, PIC, kota...",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ s/d _END_ dari _TOTAL_ data target",
+                infoEmpty: "Menampilkan 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Tidak ada target yang sesuai pencarian",
+                emptyTable: "Belum ada data target penjualan untuk filter ini",
+                processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Memuat...</span></div>',
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>',
+                    previous: '<i class="fas fa-chevron-left"></i>',
+                    next: '<i class="fas fa-chevron-right"></i>'
+                }
+            },
+            initComplete: function(settings, json) {
+                // Ensure native select styling on length menu without squished select2 conflicts
+                let $lenSelect = $('.dataTables_length select', settings.nTableWrapper);
+                if ($lenSelect.hasClass('select2-hidden-accessible')) {
+                    $lenSelect.select2('destroy');
+                }
+            },
+            drawCallback: function(settings) {
+                let $lenSelect = $('.dataTables_length select', settings.nTableWrapper);
+                if ($lenSelect.hasClass('select2-hidden-accessible')) {
+                    $lenSelect.select2('destroy');
+                }
             }
         });
 
-        // Reload table triggers
+        // Reload table triggers on filter dropdown change
         $('#filter_tahun, #filter_marketing, #filter_bulan').on('change', function() {
-            target_table.search('').columns().search('');
             target_table.ajax.reload();
         });
 
-        // Autofill Customer Data Queries
+        // 3. Autofill Customer Data
         function loadAutofillCustomers() {
             let autofillSelect = $('#autofill_customer');
             autofillSelect.html('<option value="">-- Cari & Pilih Customer --</option>');
@@ -502,14 +708,8 @@
 
             $('#nama_instansi').val(nama);
             if (provinsi) {
-                $('#provinsi_kode').val(provinsi).trigger('change');
-                
-                // Allow province loading to trigger city dropdown population first
-                setTimeout(function() {
-                    if (kota) {
-                        $('#kota_id').val(kota);
-                    }
-                }, 600);
+                $('#provinsi_kode').val(provinsi);
+                loadKotaByProvinsi(provinsi, kota);
             }
 
             // Fetch PIC for selected customer
@@ -531,20 +731,8 @@
             });
         });
 
-        // 2. Province -> Kota Dynamic Loading
-        $('#provinsi_kode').on('change', function() {
-            let kode = this.value;
-            let kotaSelect = $('#kota_id');
-            kotaSelect.html('<option value="">Loading...</option>');
-            if (kode) {
-                kotaSelect.load('<?= site_url('calonpelanggan/add_ajax_kota') ?>/' + kode);
-            } else {
-                kotaSelect.html('<option value="">- Pilih Kabupaten/Kota -</option>');
-            }
-        });
-
-        // 3. Currency Input Helper (Rupiah formatting)
-        $(document).on('keyup', '.format-rupiah', function() {
+        // 4. Currency Input Helper (Rupiah formatting)
+        $(document).on('input keyup', '.format-rupiah', function() {
             let val = $(this).val();
             let clean = val.replace(/\D/g, "");
             let formatted = clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -552,7 +740,7 @@
             calculateGapPercentage();
         });
 
-        // 4. Automatic Gap and Funnel Status Calculation
+        // 5. Automatic Gap and Funnel Status Calculation
         function calculateGapPercentage() {
             let hjVal = $('#harga_jual').val() || "0";
             let hpVal = $('#harga_permintaan').val() || "0";
@@ -581,7 +769,7 @@
             }
         });
 
-        // 5. Add Target Action
+        // 6. Add Target Action
         $('#btn-add-target').click(function() {
             $('#form-target')[0].reset();
             $('#target_id').val('');
@@ -589,10 +777,17 @@
             $('#kota_id').html('<option value="">- Pilih Kabupaten/Kota -</option>');
             $('#gap_harga_display').val('0%');
             $('#funnel_status_badge').html('<span class="badge badge-danger font-weight-bold" style="background-color: #dc3545; color: white; padding: 8px 12px; font-size: 0.9rem;">Cold</span>');
+            
+            if ($.fn.select2 && $('#autofill_customer').hasClass('select2-hidden-accessible')) {
+                $('#autofill_customer').val('').trigger('change.select2');
+            } else {
+                $('#autofill_customer').val('');
+            }
+
             $('#modal-target').modal('show');
         });
 
-        // 6. Edit Action
+        // 7. Edit Action
         $('#target_table').on('click', '.btn-edit', function() {
             let id = $(this).data('id');
             $.ajax({
@@ -610,12 +805,9 @@
                     }
                     $('#nama_instansi').val(data.nama_instansi);
                     $('#pic_customer').val(data.pic_customer);
-                    $('#provinsi_kode').val(data.provinsi_kode).trigger('change');
                     
-                    // Delay loading kota to allow province change trigger to complete
-                    setTimeout(function() {
-                        $('#kota_id').val(data.kota_id);
-                    }, 500);
+                    $('#provinsi_kode').val(data.provinsi_kode);
+                    loadKotaByProvinsi(data.provinsi_kode, data.kota_id);
 
                     $('#nama_unit').val(data.nama_unit);
                     $('#estimasi_closing').val(data.estimasi_closing);
@@ -633,12 +825,18 @@
                     $('#jenis_support').val(data.jenis_support);
                     $('#kebutuhan_support').val(data.kebutuhan_support);
 
+                    if ($.fn.select2 && $('#autofill_customer').hasClass('select2-hidden-accessible')) {
+                        $('#autofill_customer').val('').trigger('change.select2');
+                    } else {
+                        $('#autofill_customer').val('');
+                    }
+
                     $('#modal-target').modal('show');
                 }
             });
         });
 
-        // 7. Delete Action
+        // 8. Delete Action
         $('#target_table').on('click', '.btn-delete-target', function() {
             let id = $(this).data('id');
             Swal.fire({
@@ -655,9 +853,6 @@
                     $.ajax({
                         url: '<?= base_url('marketing_target/delete/') ?>' + id,
                         type: 'POST',
-                        data: {
-                            '<?= $this->security->get_csrf_token_name() ?>': '<?= $this->security->get_csrf_hash() ?>'
-                        },
                         dataType: 'JSON',
                         success: function(res) {
                             if (res.status === 'success') {
@@ -675,7 +870,7 @@
             });
         });
 
-        // 8. Submit Form Action
+        // 9. Submit Form Action
         $('#form-target').on('submit', function(e) {
             e.preventDefault();
             let actionUrl = '<?= base_url('marketing_target/save_target') ?>';
@@ -700,7 +895,7 @@
             });
         });
 
-        // 9. Achieve Action (Closing Deal)
+        // 10. Achieve Action (Closing Deal)
         $('#target_table').on('click', '.btn-achieve', function() {
             let id = $(this).attr('data-id');
             let instansi = $(this).attr('data-instansi');
@@ -730,7 +925,7 @@
             $('#modal-achievement').modal('show');
         });
 
-        // 10. Submit Achievement Action
+        // 11. Submit Achievement Action
         $('#form-achievement').on('submit', function(e) {
             e.preventDefault();
             let actionUrl = '<?= base_url('marketing_target/save_achievement') ?>';
@@ -755,7 +950,7 @@
             });
         });
 
-        // 11. Excel Export Action
+        // 12. Excel Export Action
         $('#btn-export-excel').click(function() {
             let tahun = $('#filter_tahun').val();
             let marketing_id = $('#filter_marketing').val() || 'all';
