@@ -453,7 +453,9 @@ class Po_system extends CI_Controller
         $alamat_pengiriman_dokumen = trim($this->input->post('alamat_pengiriman_dokumen'));
         
         $ongkir_ditanggung  = $this->input->post('ongkir_ditanggung') ?: 'PERUSAHAAN';
-        $nominal_ongkir     = floatval(str_replace(['.', ','], ['', '.'], $this->input->post('nominal_ongkir') ?? 0));
+        $nominal_ongkir     = ($ongkir_ditanggung === 'CUSTOMER')
+            ? floatval(str_replace(['.', ','], ['', '.'], $this->input->post('nominal_ongkir') ?? 0))
+            : 0;
         
         $link_po_customer   = trim($this->input->post('link_po_customer'));
         $link_penawaran     = trim($this->input->post('link_penawaran'));
@@ -776,6 +778,12 @@ class Po_system extends CI_Controller
             return;
         }
 
+        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'PO ini telah disetujui oleh General Manager (GM) dan status verifikasinya sudah terkunci!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'CRO');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
@@ -841,6 +849,7 @@ class Po_system extends CI_Controller
                     'status_item'   => 'ready',
                     'tanggal_ready' => date('Y-m-d')
                 ]);
+                $status_proses_baru = 'BELUM DI PROSES';
             }
             // Tetap status sesuai untuk tahap CRO
             $status_po_baru = 'sesuai';
@@ -849,6 +858,7 @@ class Po_system extends CI_Controller
             $status_proses_baru = 'DITOLAK';
         } elseif ($cro_status === 'revisi') {
             $status_po_baru = 'revisi';
+            $status_proses_baru = 'BELUM DI PROSES';
         }
 
         $data_update = [
@@ -866,6 +876,16 @@ class Po_system extends CI_Controller
             'status_proses'            => $status_proses_baru,
             'updated_at'               => date('Y-m-d H:i:s')
         ];
+
+        // Jika CRO tidak sesuai (revisi/ditolak/hold_indent), reset status tahapan di bawahnya agar konsisten
+        if ($cro_status !== 'sesuai') {
+            $data_update['acc_status']   = null;
+            $data_update['acc_date']     = null;
+            $data_update['pajak_status'] = null;
+            $data_update['pajak_date']   = null;
+            $data_update['gm_status']    = null;
+            $data_update['gm_date']      = null;
+        }
 
         $this->md_po_system->updatePo($id_po, $data_update);
 
@@ -903,6 +923,12 @@ class Po_system extends CI_Controller
 
         if (!$po) {
             show_404();
+            return;
+        }
+
+        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'PO ini telah disetujui oleh General Manager (GM) dan status verifikasinya sudah terkunci!');
+            redirect('po_system/detail/' . $id_encrypted);
             return;
         }
 
@@ -944,8 +970,18 @@ class Po_system extends CI_Controller
         if ($acc_status === 'ditolak') {
             $data_update['status'] = 'ditolak';
             $data_update['status_proses'] = 'DITOLAK';
+            $data_update['pajak_status'] = null;
+            $data_update['pajak_date']   = null;
+            $data_update['gm_status']    = null;
+            $data_update['gm_date']      = null;
         } elseif ($acc_status === 'revisi') {
             $data_update['status'] = 'revisi';
+            $data_update['pajak_status'] = null;
+            $data_update['pajak_date']   = null;
+            $data_update['gm_status']    = null;
+            $data_update['gm_date']      = null;
+        } elseif ($acc_status === 'sesuai') {
+            $data_update['status'] = 'sesuai';
         }
 
         $this->md_po_system->updatePo($id_po, $data_update);
@@ -979,6 +1015,12 @@ class Po_system extends CI_Controller
 
         if (!$po) {
             show_404();
+            return;
+        }
+
+        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'PO ini telah disetujui oleh General Manager (GM) dan status verifikasinya sudah terkunci!');
+            redirect('po_system/detail/' . $id_encrypted);
             return;
         }
 
@@ -1019,8 +1061,14 @@ class Po_system extends CI_Controller
         if ($pajak_status === 'ditolak') {
             $data_update['status'] = 'ditolak';
             $data_update['status_proses'] = 'DITOLAK';
+            $data_update['gm_status'] = null;
+            $data_update['gm_date']   = null;
         } elseif ($pajak_status === 'revisi') {
             $data_update['status'] = 'revisi';
+            $data_update['gm_status'] = null;
+            $data_update['gm_date']   = null;
+        } elseif ($pajak_status === 'sesuai') {
+            $data_update['status'] = 'sesuai';
         }
 
         $this->md_po_system->updatePo($id_po, $data_update);

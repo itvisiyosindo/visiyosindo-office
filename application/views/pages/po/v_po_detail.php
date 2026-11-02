@@ -253,7 +253,8 @@
             }
 
             $activeNotes = [];
-            if (!empty($po->catatan)) $activeNotes[] = ['label' => 'Catatan Pengaju', 'text' => $po->catatan];
+            $catatanPengaju = !empty($po->keterangan) ? $po->keterangan : ($po->catatan ?? '');
+            if (!empty($catatanPengaju)) $activeNotes[] = ['label' => 'Catatan Pengaju', 'text' => $catatanPengaju];
             if (!empty($po->cro_catatan)) $activeNotes[] = ['label' => 'Catatan CRO', 'text' => $po->cro_catatan];
             if (!empty($po->acc_catatan)) $activeNotes[] = ['label' => 'Catatan Accounting', 'text' => $po->acc_catatan];
             if (!empty($po->pajak_catatan)) $activeNotes[] = ['label' => 'Catatan Pajak', 'text' => $po->pajak_catatan];
@@ -569,9 +570,15 @@
                             </div>
 
                             <?php if ($can_cro): ?>
-                                <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalCro">
-                                    <i class="fas fa-edit mr-1"></i> Verifikasi CRO
-                                </button>
+                                <?php if ($is_gm_locked): ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-muted" disabled title="PO sudah disetujui General Manager">
+                                        <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalCro">
+                                        <i class="fas fa-edit mr-1"></i> Verifikasi CRO
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -604,7 +611,11 @@
                             </div>
 
                             <?php if ($can_acc): ?>
-                                <?php if ($po->cro_status === 'sesuai'): ?>
+                                <?php if ($is_gm_locked): ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-muted" disabled title="PO sudah disetujui General Manager">
+                                        <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
+                                    </button>
+                                <?php elseif ($po->cro_status === 'sesuai'): ?>
                                     <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalAcc">
                                         <i class="fas fa-edit mr-1"></i> Verifikasi ACC
                                     </button>
@@ -651,7 +662,11 @@
                             </div>
 
                             <?php if ($can_pajak): ?>
-                                <?php if ($po->acc_status === 'sesuai'): ?>
+                                <?php if ($is_gm_locked): ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-muted" disabled title="PO sudah disetujui General Manager">
+                                        <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
+                                    </button>
+                                <?php elseif ($po->acc_status === 'sesuai'): ?>
                                     <button type="button" class="btn btn-sm btn-outline-primary btn-block" data-toggle="modal" data-target="#modalPajak">
                                         <i class="fas fa-edit mr-1"></i> Verifikasi Pajak
                                     </button>
@@ -688,7 +703,11 @@
                             </div>
 
                             <?php if ($can_gm): ?>
-                                <?php if ($po->pajak_status === 'sesuai'): ?>
+                                <?php if ($is_gm_locked): ?>
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-success font-weight-bold" disabled title="PO sudah disetujui General Manager">
+                                        <i class="fas fa-check-double mr-1"></i> Sudah Disetujui GM
+                                    </button>
+                                <?php elseif ($po->pajak_status === 'sesuai'): ?>
                                     <button type="button" class="btn btn-sm btn-success btn-block" data-toggle="modal" data-target="#modalGm">
                                         <i class="fas fa-signature mr-1"></i> Approval GM
                                     </button>
@@ -951,10 +970,10 @@
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Approval CRO</label>
                         <select name="cro_status" id="cro_status" class="form-control" required>
-                            <option value="sesuai" id="opt_cro_sesuai">Disetujui / Sesuai (Lanjut ke Accounting)</option>
-                            <option value="revisi">Perlu Revisi (Kembalikan ke Marketing)</option>
-                            <option value="hold_indent" id="opt_cro_hold">HOLD / INDENT (Stok Belum Tersedia)</option>
-                            <option value="ditolak">Ditolak</option>
+                            <option value="sesuai" id="opt_cro_sesuai" <?= (($po->cro_status ?? '') === 'sesuai') ? 'selected' : '' ?>>Disetujui / Sesuai (Lanjut ke Accounting)</option>
+                            <option value="revisi" <?= (($po->cro_status ?? '') === 'revisi') ? 'selected' : '' ?>>Perlu Revisi (Kembalikan ke Marketing)</option>
+                            <option value="hold_indent" id="opt_cro_hold" <?= (($po->cro_status ?? '') === 'hold_indent') ? 'selected' : '' ?>>HOLD / INDENT (Stok Belum Tersedia)</option>
+                            <option value="ditolak" <?= (($po->cro_status ?? '') === 'ditolak') ? 'selected' : '' ?>>Ditolak</option>
                         </select>
                         <div id="alertCroStok" class="alert alert-warning py-2 px-3 small mt-2" style="display: none; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e;">
                             <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -1010,9 +1029,9 @@
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Accounting</label>
                         <select name="acc_status" class="form-control" required>
-                            <option value="sesuai">Disetujui / Sesuai (Lanjut ke Pajak)</option>
-                            <option value="revisi">Perlu Revisi</option>
-                            <option value="ditolak">Ditolak</option>
+                            <option value="sesuai" <?= (($po->acc_status ?? '') === 'sesuai') ? 'selected' : '' ?>>Disetujui / Sesuai (Lanjut ke Pajak)</option>
+                            <option value="revisi" <?= (($po->acc_status ?? '') === 'revisi') ? 'selected' : '' ?>>Perlu Revisi</option>
+                            <option value="ditolak" <?= (($po->acc_status ?? '') === 'ditolak') ? 'selected' : '' ?>>Ditolak</option>
                         </select>
                     </div>
                 </div>
@@ -1061,9 +1080,9 @@
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Pajak</label>
                         <select name="pajak_status" class="form-control" required>
-                            <option value="sesuai">Disetujui / Sesuai (Lanjut ke General Manager)</option>
-                            <option value="revisi">Perlu Revisi</option>
-                            <option value="ditolak">Ditolak</option>
+                            <option value="sesuai" <?= (($po->pajak_status ?? '') === 'sesuai') ? 'selected' : '' ?>>Disetujui / Sesuai (Lanjut ke General Manager)</option>
+                            <option value="revisi" <?= (($po->pajak_status ?? '') === 'revisi') ? 'selected' : '' ?>>Perlu Revisi</option>
+                            <option value="ditolak" <?= (($po->pajak_status ?? '') === 'ditolak') ? 'selected' : '' ?>>Ditolak</option>
                         </select>
                     </div>
                 </div>

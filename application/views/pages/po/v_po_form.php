@@ -1209,9 +1209,31 @@ document.addEventListener('DOMContentLoaded', function () {
         r.addEventListener('change', recalculate);
     });
 
-    // Event listener ongkir
+    // Event listener ongkir & penanggung ongkir
     var inputOngkir = document.getElementById('inputOngkir');
+    var radioOngkirs = document.querySelectorAll('input[name="ongkir_ditanggung"]');
+    function syncOngkirStatus() {
+        var checkedOngkir = document.querySelector('input[name="ongkir_ditanggung"]:checked');
+        var penanggung = checkedOngkir ? checkedOngkir.value : 'PERUSAHAAN';
+        if (inputOngkir) {
+            if (penanggung === 'PERUSAHAAN') {
+                inputOngkir.value = '0';
+                inputOngkir.setAttribute('readonly', 'readonly');
+            } else {
+                inputOngkir.removeAttribute('readonly');
+            }
+        }
+        recalculate();
+    }
+    radioOngkirs.forEach(function (r) {
+        r.addEventListener('change', syncOngkirStatus);
+    });
     if (inputOngkir) {
+        var initCheckedOngkir = document.querySelector('input[name="ongkir_ditanggung"]:checked');
+        if (!initCheckedOngkir || initCheckedOngkir.value === 'PERUSAHAAN') {
+            inputOngkir.value = '0';
+            inputOngkir.setAttribute('readonly', 'readonly');
+        }
         inputOngkir.addEventListener('input', function () {
             var val = formatCurrencyInput(this.value);
             this.value = val;

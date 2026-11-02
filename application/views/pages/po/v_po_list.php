@@ -466,7 +466,7 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                 <?php $no = 1; foreach ($po_list as $row): ?>
                                     <?php 
                                         $id_enc = encrypt($row->id_po);
-                                        $nama_cust = !empty($row->nama_customer) ? $row->nama_customer : ($row->master_nama_customer ?? '-');
+                                        $nama_cust = !empty($row->nama_customer) ? $row->nama_customer : ($row->master_nama_customer ?: ($row->master_pelanggan_nama ?? '-'));
                                         $nominal_show = ($row->nominal_total_akhir > 0) ? $row->nominal_total_akhir : $row->nominal_po;
                                     ?>
                                     <tr>
@@ -530,7 +530,7 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                                 }
                                             ?>
                                             <?php
-                                                $latestNote = $row->gm_catatan ?: ($row->pajak_catatan ?: ($row->acc_catatan ?: ($row->cro_catatan ?: ($row->catatan ?? ''))));
+                                                $latestNote = $row->gm_catatan ?: ($row->pajak_catatan ?: ($row->acc_catatan ?: ($row->cro_catatan ?: (!empty($row->keterangan) ? $row->keterangan : ($row->catatan ?? '')))));
                                                 if (!empty($latestNote)):
                                                     $noteBg = '#eff6ff'; $noteColor = '#1e40af'; $noteBorder = '#bfdbfe';
                                                     if (($row->status_proses ?? '') === 'SUDAH DI PROSES' || ($row->gm_status ?? '') === 'disetujui') {
