@@ -227,7 +227,8 @@
 												'laporan/v_lap_rev2',
 												'laporan/v_lap_detail_rev2',
 												'evaluasi/v_evaluasi_smt',
-												'task_proyek/v_task_proyek'
+												'task_proyek/v_task_proyek',
+												'evaluasi_lisan/v_evaluasi_lisan'
 											]) ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
 							<i class="fa fa-chart-bar" aria-hidden="true"></i>
@@ -237,6 +238,11 @@
 							<li class="<?= $page_name == 'task_proyek/v_task_proyek' ? 'nav-active' : '' ?>">
 								<a class="nav-link" href="<?= base_url('task_proyek') ?>">
 									<i class="fas fa-star text-warning mr-1"></i> Task & Proyek Kerja <strong>(★5)</strong>
+								</a>
+							</li>
+							<li class="<?= $page_name == 'evaluasi_lisan/v_evaluasi_lisan' ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('evaluasi_lisan') ?>">
+									<i class="fas fa-comments text-info mr-1"></i> Evaluasi Lisan & Konseling
 								</a>
 							</li>
 
@@ -348,6 +354,13 @@
 							<?php } ?>
 
 						</ul>
+					</li>
+
+					<li class="<?= in_array($page_name, ['evaluasi_lisan/v_evaluasi_lisan']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('evaluasi_lisan') ?>">
+							<i class="fas fa-comments text-info" aria-hidden="true"></i>
+							<span>Evaluasi Lisan & Konseling</span>
+						</a>
 					</li>
 
 					<?php
