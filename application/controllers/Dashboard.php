@@ -61,8 +61,7 @@ class Dashboard extends CI_Controller
         $page_data['stat_karyawan']   = $this->md_dashboard->getPersonalAttendanceStats($pengguna_id);
 
         // Status Surat Peringatan (SP) Aktif Karyawan
-        $target_sp_id = ($this->input->get('novem') == '1' || $this->input->get('preview_sp') == '1') ? 771 : $pengguna_id;
-        $page_data['sp_aktif']        = $this->md_dashboard->getActiveSP($target_sp_id);
+        $page_data['sp_aktif']        = $this->md_dashboard->getActiveSP($pengguna_id);
 
         //Dashboard Home New
         $page_data['izin_jam']         = $this->md_dashboard->countIzinJamKerja($pengguna_id);

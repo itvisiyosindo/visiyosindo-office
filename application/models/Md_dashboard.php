@@ -1143,11 +1143,8 @@ class Md_dashboard extends CI_Model
             }
         }
 
-        // 2. Simulasi/Uji Coba Tampilan untuk Novemby Ardiansyah Putra (pengguna_id: 771 atau nama mengandung Novem)
-        $nama_session = function_exists('sessNama') ? sessNama() : '';
-        $is_novem = ($pengguna_id == 771 || stripos($nama_session, 'novem') !== false);
-
-        if ($is_novem) {
+        // 2. Simulasi/Preview Tampilan hanya jika dibuka oleh Admin dengan URL ?preview_sp=1
+        if ($this->input->get('preview_sp') == '1' && (function_exists('isAdmin') && isAdmin())) {
             $tgl_mulai = new DateTime(date('Y-m-d', strtotime('-1 month')));
             $tgl_akhir = clone $tgl_mulai;
             $tgl_akhir->modify('+3 months');
