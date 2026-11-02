@@ -1695,6 +1695,25 @@
                                 </div>
                             </div>
 
+                            <!-- BPJS Ketenagakerjaan -->
+                            <div class="document-card <?= !empty($data_pengguna[0]->file_bpjs_ketenagakerjaan) ? 'has-file' : '' ?>">
+                                <i class="doc-icon fas fa-user-shield"></i>
+                                <div class="doc-title">Kartu BPJS Ketenagakerjaan</div>
+                                <span class="doc-status"><?= !empty($data_pengguna[0]->file_bpjs_ketenagakerjaan) ? 'Tersedia' : 'Belum Upload' ?></span>
+                                <div class="doc-actions">
+                                    <?php if(!empty($data_pengguna[0]->file_bpjs_ketenagakerjaan)): ?>
+                                        <button type="button" class="btn btn-info btn-doc btn-preview-file" data-type="bpjs_ketenagakerjaan" data-file="<?= $data_pengguna[0]->file_bpjs_ketenagakerjaan ?>">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if (isAdmin() || isHrd() || isGa()) { ?>
+                                        <button type="button" class="btn btn-primary btn-doc btn-upload-file" data-type="bpjs_ketenagakerjaan">
+                                            <i class="fas fa-upload"></i>
+                                        </button>
+                                    <?php } ?>
+                                </div>
+                            </div>
+
                             <!-- SKCK -->
                             <div class="document-card <?= $data_pengguna[0]->file_skck ? 'has-file' : '' ?>">
                                 <i class="doc-icon fas fa-shield-alt"></i>
@@ -2157,6 +2176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'transkip': 'Transkip Nilai',
         'sim': 'SIM',
         'bpjs': 'Kartu BPJS',
+        'bpjs_ketenagakerjaan': 'Kartu BPJS Ketenagakerjaan',
         'skck': 'SKCK',
         'no_rek': 'Buku Tabungan',
         'domisili': 'Surat Domisili',

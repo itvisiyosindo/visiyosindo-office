@@ -32,6 +32,10 @@ class Pengguna extends CI_Controller
         if ($chkPassEmailKantor && $chkPassEmailKantor->num_rows() === 0) {
             @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `password_email_kantor` VARCHAR(150) DEFAULT NULL AFTER `email_kantor`");
         }
+        $chkFileBpjsTk = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'file_bpjs_ketenagakerjaan'");
+        if ($chkFileBpjsTk && $chkFileBpjsTk->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `file_bpjs_ketenagakerjaan` VARCHAR(255) DEFAULT NULL AFTER `file_bpjs`");
+        }
     }
 	
 	function id_navbar(){
@@ -284,7 +288,7 @@ class Pengguna extends CI_Controller
 
             //cek file sebelumnya, jika ada hapus file itu
             $tmp = 'file_' . $param2;
-            if ($karyawan[0]->$tmp) {
+            if (!empty($karyawan[0]->$tmp)) {
                 file_exists('uploads/file_karyawan/' . $param2 . '/' .  $karyawan[0]->$tmp) ? unlink('uploads/file_karyawan/' . $param2 . '/' .  $karyawan[0]->$tmp) : '';
             }
 
