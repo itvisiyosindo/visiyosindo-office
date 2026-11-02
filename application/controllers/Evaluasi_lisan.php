@@ -57,52 +57,53 @@ class Evaluasi_lisan extends CI_Controller
     }
 
     /**
-     * Cek apakah user login termasuk Manajemen (Bob Ariyos, Meilina, Yola) atau HR / GA / Admin
+     * Cek apakah user tertentu termasuk Manajemen (Bob Ariyos, Meilina, Yola) atau HR / GA / Admin
      */
-    public function canManageAll($myId = null, $meRow = null)
+    public function canManageAll($targetId = null, $userRow = null)
     {
-        if ($myId === null) {
-            $myId = (int)sessPenggunaId();
+        $sessionUserId = (int)sessPenggunaId();
+        if ($targetId === null) {
+            $targetId = $sessionUserId;
+        } else {
+            $targetId = (int)$targetId;
         }
-        if (isAdmin() || isHrd() || isGa()) {
-            return true;
-        }
-        if (in_array((int)$myId, [1, 58, 69, 744], true)) {
+
+        // Cek session helper HANYA jika yang dicek adalah user yang sedang login
+        if ($targetId === $sessionUserId && (isAdmin() || isHrd() || isGa())) {
             return true;
         }
 
-        if (!$meRow && $myId > 0) {
-            $meRow = $this->db->select('nama, jabatan, level')
-                ->where('pengguna_id', $myId)
+        // ID khusus Manajemen & HRD (1=Admin, 58=Meilina Safitri, 69=Bob Ariyos, 744=Yolanda/HRD)
+        if (in_array($targetId, [1, 58, 69, 744], true)) {
+            return true;
+        }
+
+        if (!$userRow && $targetId > 0) {
+            $userRow = $this->db->select('pengguna_id, nama, jabatan, level')
+                ->where('pengguna_id', $targetId)
                 ->get('pengguna')
                 ->row();
         }
 
-        if ($meRow) {
-            $nama    = strtolower(trim((string)($meRow->nama ?? '')));
-            $jabatan = strtolower(trim((string)($meRow->jabatan ?? '')));
-            $level   = strtolower(trim((string)($meRow->level ?? '')));
+        if ($userRow) {
+            $nama    = strtolower(trim((string)($userRow->nama ?? '')));
+            $jabatan = strtolower(trim((string)($userRow->jabatan ?? '')));
+            $level   = strtolower(trim((string)($userRow->level ?? '')));
 
-            // Manajemen: Bob Ariyos, Meilina Safitri, Yolanda Pratiwi (Yola)
+            // Manajemen: Bob Ariyos, Meilina Safitri, Yolanda Pratiwi
             if (
                 strpos($nama, 'bob ariyos') !== false ||
-                strpos($nama, 'meilina') !== false ||
-                strpos($nama, 'yolanda') !== false ||
-                strpos($nama, 'yola') !== false
+                strpos($nama, 'meilina safitri') !== false ||
+                strpos($nama, 'yolanda pratiwi') !== false
             ) {
                 return true;
             }
 
-            // HR & GA berdasarkan jabatan/level
+            // HR & GA berdasarkan level akun atau jabatan spesifik (word-boundary)
             if (
                 $level === 'hrd' ||
                 $level === 'ga' ||
-                strpos($jabatan, 'hr') !== false ||
-                strpos($jabatan, 'human resource') !== false ||
-                strpos($jabatan, 'general affair') !== false ||
-                strpos($jabatan, 'general manager') !== false ||
-                strpos($jabatan, 'direktur') !== false ||
-                strpos($jabatan, 'director') !== false
+                (bool)preg_match('/\b(hr|hrd|hrga|human resource|general affair)\b/i', $jabatan)
             ) {
                 return true;
             }
@@ -469,12 +470,25 @@ class Evaluasi_lisan extends CI_Controller
         $users = $this->db->select('pengguna_id, nama, jabatan, level, no_hp')
             ->where('is_active', 1)
             ->where('status', 1)
+            ->where('pengguna_id !=', 1)
             ->get('pengguna')
             ->result();
 
         $phones = [];
         foreach ($users as $u) {
-            if ($this->canManageAll((int)$u->pengguna_id, $u)) {
+            $namaLower = strtolower(trim((string)($u->nama ?? '')));
+            if (strpos($namaLower, 'dirangga') !== false) {
+                continue;
+            }
+            $jabatanLower = strtolower(trim((string)($u->jabatan ?? '')));
+            $isTargetWa = (
+                in_array((int)$u->pengguna_id, [58, 69, 744], true) ||
+                strpos($namaLower, 'bob ariyos') !== false ||
+                strpos($namaLower, 'meilina safitri') !== false ||
+                strpos($namaLower, 'yolanda pratiwi') !== false ||
+                (bool)preg_match('/\b(hr|hrd|hrga|human resource|general affair)\b/i', $jabatanLower)
+            );
+            if ($isTargetWa) {
                 $phone = preg_replace('/[^0-9]/', '', (string)($u->no_hp ?? ''));
                 if (!empty($phone)) {
                     if (substr($phone, 0, 1) === '0') {
