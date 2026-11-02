@@ -2,7 +2,13 @@
     <h2><i class="fas fa-file-signature text-primary mr-2"></i><?= $page_title ?></h2>
     <div class="right-wrapper text-left">
         <ol class="breadcrumbs">
-            <li><a href="<?= base_url(($switch ?? '') == 'marketing' ? 'dashboard_marketing' : 'dashboard_helpdesk') ?>"><i class="fas fa-home"></i></a></li>
+            <?php
+                $home_dash = 'dashboard_helpdesk';
+                if (($switch ?? '') === 'marketing') $home_dash = 'dashboard_marketing';
+                elseif (($switch ?? '') === 'accounting') $home_dash = 'dashboard_accounting';
+                elseif (($switch ?? '') === 'inventory') $home_dash = 'dashboard_inventory';
+            ?>
+            <li><a href="<?= base_url($home_dash) ?>"><i class="fas fa-home"></i></a></li>
             <li><span><?= $page_desc ?></span></li>
         </ol>
     </div>
@@ -573,7 +579,7 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                 <?php endif; ?>
-                                                <?php if (isAdmin()): ?>
+                                                <?php if (isAdmin() && !$is_gm_locked_row): ?>
                                                     <a href="<?= base_url('po_system/hapus/' . $id_enc) ?>" class="btn btn-sm btn-outline-danger btn-action ml-1" title="Hapus PO" onclick="return confirm('Apakah Anda yakin ingin menghapus data PO No: <?= htmlspecialchars($row->no_po, ENT_QUOTES) ?>?')">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </a>

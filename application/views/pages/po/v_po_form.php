@@ -2,7 +2,13 @@
     <h2><i class="fas fa-file-invoice text-primary mr-2"></i><?= $page_title ?></h2>
     <div class="right-wrapper text-left">
         <ol class="breadcrumbs">
-            <li><a href="<?= base_url(($switch ?? '') == 'marketing' ? 'dashboard_marketing' : 'dashboard_helpdesk') ?>"><i class="fas fa-home"></i></a></li>
+            <?php
+                $home_dash = 'dashboard_helpdesk';
+                if (($switch ?? '') === 'marketing') $home_dash = 'dashboard_marketing';
+                elseif (($switch ?? '') === 'accounting') $home_dash = 'dashboard_accounting';
+                elseif (($switch ?? '') === 'inventory') $home_dash = 'dashboard_inventory';
+            ?>
+            <li><a href="<?= base_url($home_dash) ?>"><i class="fas fa-home"></i></a></li>
             <li><a href="<?= base_url('po_system') ?>">Daftar PO Masuk</a></li>
             <li><span><?= $page_title ?></span></li>
         </ol>

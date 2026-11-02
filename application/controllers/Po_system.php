@@ -747,12 +747,13 @@ class Po_system extends CI_Controller
         $page_data['my_jabatan'] = $my_jabatan;
 
         // Otorisasi Tahapan Approval
-        $page_data['can_cro']   = (isAdmin() || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false);
-        $page_data['can_acc']   = (isAdmin() || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'Finance') !== false);
-        $page_data['can_pajak'] = (isAdmin() || stripos($my_jabatan, 'Tax') !== false || stripos($my_jabatan, 'Pajak') !== false);
-        $page_data['can_gm']    = (isAdmin() || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
-        $page_data['can_upload_doc'] = ($page_data['can_cro'] || $page_data['can_acc'] || $page_data['can_pajak'] || $page_data['can_gm'] || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false);
-        $page_data['can_update_inden'] = ($page_data['can_cro'] || $page_data['can_gm'] || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false || stripos($my_jabatan, 'Accounting') !== false);
+        $can_gudang = ((function_exists('isGudangUser') && isGudangUser()) || (function_exists('isAdminInventory') && isAdminInventory()) || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false);
+        $page_data['can_cro']   = (isAdmin() || (function_exists('isCRO') && isCRO()) || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false);
+        $page_data['can_acc']   = (isAdmin() || (function_exists('isAccountingUser') && isAccountingUser()) || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'Finance') !== false);
+        $page_data['can_pajak'] = (isAdmin() || (function_exists('isAccountingUser') && isAccountingUser()) || stripos($my_jabatan, 'Tax') !== false || stripos($my_jabatan, 'Pajak') !== false);
+        $page_data['can_gm']    = (isAdmin() || (function_exists('isEksekutif') && isEksekutif()) || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
+        $page_data['can_upload_doc'] = ($page_data['can_cro'] || $page_data['can_acc'] || $page_data['can_pajak'] || $page_data['can_gm'] || $can_gudang);
+        $page_data['can_update_inden'] = ($page_data['can_cro'] || $page_data['can_gm'] || $can_gudang || $page_data['can_acc']);
         $page_data['count_indent']     = $this->md_po_system->countIndentItems($id_po);
         $page_data['indent_items']     = $this->md_po_system->getIndentItemsByPoId($id_po);
 
@@ -787,7 +788,7 @@ class Po_system extends CI_Controller
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'CRO');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
-        $can_cro    = (isAdmin() || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false);
+        $can_cro    = (isAdmin() || (function_exists('isCRO') && isCRO()) || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false);
 
         if (!$can_cro) {
             $this->session->set_flashdata('error', 'Hanya CRO atau Administrator yang memiliki hak akses untuk approval tahap CRO!');
@@ -935,7 +936,7 @@ class Po_system extends CI_Controller
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Accounting');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
-        $can_acc    = (isAdmin() || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'Finance') !== false);
+        $can_acc    = (isAdmin() || (function_exists('isAccountingUser') && isAccountingUser()) || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'Finance') !== false);
 
         if (!$can_acc) {
             $this->session->set_flashdata('error', 'Hanya Tim Accounting/Finance atau Administrator yang berhak melakukan verifikasi ini!');
@@ -1027,7 +1028,7 @@ class Po_system extends CI_Controller
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Pajak');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
-        $can_pajak  = (isAdmin() || stripos($my_jabatan, 'Tax') !== false || stripos($my_jabatan, 'Pajak') !== false);
+        $can_pajak  = (isAdmin() || (function_exists('isAccountingUser') && isAccountingUser()) || stripos($my_jabatan, 'Tax') !== false || stripos($my_jabatan, 'Pajak') !== false);
 
         if (!$can_pajak) {
             $this->session->set_flashdata('error', 'Hanya Tim Pajak atau Administrator yang berhak melakukan verifikasi ini!');
@@ -1105,11 +1106,17 @@ class Po_system extends CI_Controller
             return;
         }
 
+        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'PO ini telah disetujui oleh General Manager (GM) dan status verifikasinya sudah terkunci!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'GM');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
         $my_level   = is_array($user) ? $user[0]->level : ($user->level ?? '');
-        $can_gm     = (isAdmin() || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
+        $can_gm     = (isAdmin() || (function_exists('isEksekutif') && isEksekutif()) || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
 
         if (!$can_gm) {
             $this->session->set_flashdata('error', 'Hanya General Manager atau Administrator yang berhak memberikan approval persetujuan final!');
@@ -1182,7 +1189,36 @@ class Po_system extends CI_Controller
         }
 
         $user = $this->md_pengguna->getById(sessPenggunaId());
-        $nama_user = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Staf');
+        $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Staf');
+        $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
+        $my_level   = is_array($user) ? $user[0]->level : ($user->level ?? '');
+        $can_upload = (
+            isAdmin() ||
+            (function_exists('isCRO') && isCRO()) ||
+            (function_exists('isAccountingUser') && isAccountingUser()) ||
+            (function_exists('isGudangUser') && isGudangUser()) ||
+            (function_exists('isAdminInventory') && isAdminInventory()) ||
+            (function_exists('isEksekutif') && isEksekutif()) ||
+            stripos($my_jabatan, 'CRO') !== false ||
+            stripos($my_jabatan, 'Customer Relationship') !== false ||
+            stripos($my_jabatan, 'Accounting') !== false ||
+            stripos($my_jabatan, 'Finance') !== false ||
+            stripos($my_jabatan, 'Tax') !== false ||
+            stripos($my_jabatan, 'Pajak') !== false ||
+            stripos($my_jabatan, 'Gudang') !== false ||
+            stripos($my_jabatan, 'Warehouse') !== false ||
+            stripos($my_jabatan, 'Logistik') !== false ||
+            stripos($my_jabatan, 'General Manager') !== false ||
+            stripos($my_jabatan, 'Direktur') !== false ||
+            $my_level == 'Hrd'
+        );
+
+        if (!$can_upload) {
+            $this->session->set_flashdata('error', 'Anda tidak memiliki hak akses untuk memperbarui dokumen kelengkapan PO!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
         $divisi    = $this->input->post('divisi');
 
         $data_update = ['updated_at' => date('Y-m-d H:i:s')];
@@ -1248,7 +1284,21 @@ class Po_system extends CI_Controller
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Staf');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
         $my_level   = is_array($user) ? $user[0]->level : ($user->level ?? '');
-        $can_update = (isAdmin() || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'General Manager') !== false || $my_level == 'Hrd');
+        $can_update = (
+            isAdmin() ||
+            (function_exists('isCRO') && isCRO()) ||
+            (function_exists('isAccountingUser') && isAccountingUser()) ||
+            (function_exists('isGudangUser') && isGudangUser()) ||
+            (function_exists('isAdminInventory') && isAdminInventory()) ||
+            (function_exists('isEksekutif') && isEksekutif()) ||
+            stripos($my_jabatan, 'CRO') !== false ||
+            stripos($my_jabatan, 'Gudang') !== false ||
+            stripos($my_jabatan, 'Warehouse') !== false ||
+            stripos($my_jabatan, 'Logistik') !== false ||
+            stripos($my_jabatan, 'Accounting') !== false ||
+            stripos($my_jabatan, 'General Manager') !== false ||
+            $my_level == 'Hrd'
+        );
 
         if (!$can_update) {
             $this->session->set_flashdata('error', 'Anda tidak memiliki hak akses untuk memperbarui status pemenuhan barang!');
@@ -1349,11 +1399,23 @@ class Po_system extends CI_Controller
      */
     public function hapus($id_encrypted)
     {
+        if (!isAdmin()) {
+            $this->session->set_flashdata('error', 'Hanya Administrator yang memiliki hak akses untuk menghapus data PO!');
+            redirect('po_system');
+            return;
+        }
+
         $id_po = decrypt($id_encrypted);
         $po    = $this->md_po_system->getPoById($id_po);
 
         if (!$po) {
             show_404();
+            return;
+        }
+
+        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
+            $this->session->set_flashdata('error', 'Data PO No. ' . $po->no_po . ' sudah disetujui oleh General Manager (GM) dan tidak dapat dihapus!');
+            redirect('po_system/detail/' . $id_encrypted);
             return;
         }
 
