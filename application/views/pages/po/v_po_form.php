@@ -583,13 +583,8 @@
                                         <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Surat Jalan" <?= in_array('Surat Jalan', $doc_checked) ? 'checked' : '' ?>> Surat Jalan (SJ)</label>
                                         <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="BAST/SSTB" <?= in_array('BAST/SSTB', $doc_checked) ? 'checked' : '' ?>> BAST / SSTB</label>
                                     </div>
-                                    <div class="col-12 mt-2 pt-2 border-top">
-                                        <label class="d-flex align-items-center mb-0 p-2 rounded" style="background: #eff6ff; border: 1px solid #bfdbfe; cursor: pointer;">
-                                            <input type="checkbox" name="dokumen_dilampirkan[]" value="Pembayaran Faktur Pajak sebagai Syarat Pembayaran" class="mr-2" <?= (in_array('Pembayaran Faktur Pajak sebagai Syarat Pembayaran', $doc_checked) || in_array('Faktur Pajak sebagai Syarat Pembayaran', $doc_checked)) ? 'checked' : '' ?>>
-                                            <span class="font-weight-bold text-primary" style="font-size: 0.85rem;">
-                                                <i class="fas fa-file-invoice-dollar mr-1"></i> Pembayaran Faktur Pajak sebagai Syarat Pembayaran
-                                            </span>
-                                        </label>
+                                    <div class="col-12 mt-1">
+                                        <label class="d-block mb-1"><input type="checkbox" name="dokumen_dilampirkan[]" value="Faktur Pajak sebagai Syarat Pembayaran" <?= (in_array('Faktur Pajak sebagai Syarat Pembayaran', $doc_checked) || in_array('Pembayaran Faktur Pajak sebagai Syarat Pembayaran', $doc_checked)) ? 'checked' : '' ?>> Pembayaran Faktur Pajak sebagai Syarat Pembayaran</label>
                                     </div>
                                 </div>
                             </div>
