@@ -814,4 +814,92 @@ class Pengguna extends CI_Controller
         ]);
         die;
     }
+
+    /**
+     * Batch sync 15 akun email kantor (@visiyosindo.com) dan password standar ke database
+     * Akses via URL: https://office.visiyosindo.id/pengguna/batch_sync_email_kantor
+     */
+    public function batch_sync_email_kantor()
+    {
+        grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+
+        $accounts = [
+            ['pattern' => 'Afrianto', 'email' => 'afrianto@visiyosindo.com'],
+            ['pattern' => 'Afylmardopila', 'email' => 'afylmardopila@visiyosindo.com'],
+            ['pattern' => 'Azhari Pratama', 'email' => 'azharipratama@visiyosindo.com'],
+            ['pattern' => 'Budi Pradikno', 'email' => 'budipradikno@visiyosindo.com'],
+            ['pattern' => 'Dimas Chandra', 'email' => 'dimaschandrawinata@visiyosindo.com'],
+            ['pattern' => 'Dirangga', 'email' => 'diranggamadali@visiyosindo.com'],
+            ['pattern' => 'Fitri Andriani', 'email' => 'fitriandriani@visiyosindo.com'],
+            ['pattern' => 'Muammar', 'email' => 'muammaralfha@visiyosindo.com'],
+            ['pattern' => 'Mulia', 'email' => 'mulia@visiyosindo.com'],
+            ['pattern' => 'Novemby', 'email' => 'novembyardiansyah@visiyosindo.com'],
+            ['pattern' => 'Sinta Kartika', 'email' => 'sintakartika@visiyosindo.com'],
+            ['pattern' => 'Sukma', 'email' => 'sukmasakinah@visiyosindo.com'],
+            ['pattern' => 'Sulistyo', 'email' => 'sulistyoharmoko@visiyosindo.com'],
+            ['pattern' => 'Syarifah Annisa', 'email' => 'syarifahannisa@visiyosindo.com'],
+            ['pattern' => 'Yuliannisa', 'email' => 'yuliannisaekaputri@visiyosindo.com']
+        ];
+
+        $password = 'visiyosindo2014';
+        $updated = [];
+        $not_found = [];
+
+        foreach ($accounts as $item) {
+            $user = $this->db->like('nama', $item['pattern'])
+                             ->order_by('is_active', 'DESC')
+                             ->get('pengguna')
+                             ->row();
+
+            if ($user) {
+                $this->db->where('pengguna_id', $user->pengguna_id)->update('pengguna', [
+                    'email_kantor' => $item['email'],
+                    'password_email_kantor' => $password
+                ]);
+                $updated[] = [
+                    'id' => $user->pengguna_id,
+                    'nama' => $user->nama,
+                    'email_kantor' => $item['email'],
+                    'password' => $password
+                ];
+                addLog('Sync Email Kantor', 'Batch set email kantor ' . $item['email'] . ' untuk pengguna: ' . $user->nama);
+            } else {
+                $not_found[] = $item;
+            }
+        }
+
+        echo '<div style="font-family:sans-serif; max-width:850px; margin:40px auto; padding:24px; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">';
+        echo '<h2 style="color:#1e3a8a; margin-top:0;"><i class="fas fa-check-circle" style="color:#10b981;"></i> Sinkronisasi Email Kantor Berhasil</h2>';
+        echo '<p style="color:#475569;">Berhasil memperbarui data akun email kantor untuk <strong>' . count($updated) . '</strong> karyawan.</p>';
+        echo '<table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:13px; border-color:#cbd5e1;">';
+        echo '<tr style="background:#f1f5f9; color:#1e293b; text-align:left;"><th>No</th><th>ID</th><th>Nama Karyawan</th><th>Email Kantor</th><th>Password</th><th>Status</th></tr>';
+        $no = 1;
+        foreach ($updated as $u) {
+            echo '<tr>';
+            echo '<td align="center">' . $no++ . '</td>';
+            echo '<td align="center">' . $u['id'] . '</td>';
+            echo '<td><strong>' . htmlspecialchars($u['nama']) . '</strong></td>';
+            echo '<td><code style="color:#2563eb; font-size:13px;">' . $u['email_kantor'] . '</code></td>';
+            echo '<td><code>' . $u['password'] . '</code></td>';
+            echo '<td style="color:#059669; font-weight:600;"><span style="background:#ecfdf5; border:1px solid #a7f3d0; padding:2px 8px; border-radius:12px;">Tersimpan</span></td>';
+            echo '</tr>';
+        }
+        if (!empty($not_found)) {
+            foreach ($not_found as $nf) {
+                echo '<tr style="background:#fef2f2;">';
+                echo '<td align="center">-</td>';
+                echo '<td align="center">-</td>';
+                echo '<td>' . htmlspecialchars($nf['pattern']) . '</td>';
+                echo '<td>' . $nf['email'] . '</td>';
+                echo '<td>-</td>';
+                echo '<td style="color:#dc2626; font-weight:600;">Nama Tidak Ditemukan</td>';
+                echo '</tr>';
+            }
+        }
+        echo '</table>';
+        echo '<div style="margin-top:24px;">';
+        echo '<a href="' . base_url('pengguna') . '" style="display:inline-block; padding:10px 18px; background:#2563eb; color:#ffffff; text-decoration:none; border-radius:8px; font-weight:600;">&laquo; Kembali ke Data Karyawan</a>';
+        echo '</div>';
+        echo '</div>';
+    }
 }
