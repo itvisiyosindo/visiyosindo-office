@@ -288,11 +288,11 @@
                     </div>
 
                     <div class="row">
-                        <!-- Pilih Customer dari Inventory -> Master Data -> Customer -->
+                        <!-- Pilih Customer dari Data Pelanggan & Master Data Customer -->
                         <div class="col-md-12 mb-3">
                             <label class="form-label-custom">
-                                Nama Customer <span class="text-danger">*</span>
-                                <span class="text-muted font-weight-normal">(Inventory &rarr; Master Data &rarr; Customer)</span>
+                                Nama Customer / Pelanggan <span class="text-danger">*</span>
+                                <span class="text-muted font-weight-normal">(Data Pelanggan &amp; Master Customer Inventory)</span>
                             </label>
                             <select name="id_customer" id="selectCustomer" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Ketik / Pilih Customer --" required>
                                 <option value="">-- Ketik / Pilih Customer --</option>
@@ -300,7 +300,8 @@
                                     <?php foreach ($customer_list as $cust): ?>
                                         <?php
                                             $nama_c = trim($cust->nama_customer ?? '');
-                                            $npwp_c = $npwp_map[strtolower($nama_c)] ?? '';
+                                            $npwp_c = !empty($cust->npwp) ? trim($cust->npwp) : ($npwp_map[strtolower($nama_c)] ?? '');
+                                            $opt_val = $cust->option_value ?? $cust->id_customer;
                                             $contact_preview = '';
                                             if (!empty($cust->contact) && trim($cust->contact) !== '-') {
                                                 $clean_c = preg_replace('/\s+/', ' ', trim($cust->contact));
@@ -310,16 +311,26 @@
                                                 $contact_preview = ' — [' . $clean_c . ']';
                                             }
                                             $display_label = $nama_c . $contact_preview;
-                                            $sel_cust = ($is_edit && ($po_edit->id_customer == $cust->id_customer || strcasecmp(trim($po_edit->nama_customer ?? ''), $nama_c) === 0)) ? 'selected' : '';
+                                            $sel_cust = '';
+                                            if ($is_edit) {
+                                                if (!empty($po_edit->id_customer) && $po_edit->id_customer == ($cust->id_customer ?? '')) {
+                                                    $sel_cust = 'selected';
+                                                } elseif (!empty($po_edit->id_pelanggan) && $po_edit->id_pelanggan == ($cust->id_pelanggan ?? '')) {
+                                                    $sel_cust = 'selected';
+                                                } elseif (strcasecmp(trim($po_edit->nama_customer ?? ''), $nama_c) === 0) {
+                                                    $sel_cust = 'selected';
+                                                }
+                                            }
                                         ?>
-                                        <option value="<?= $cust->id_customer ?>" data-nama="<?= htmlspecialchars($nama_c) ?>" data-alamat="<?= htmlspecialchars(trim($cust->alamat_customer ?? '')) ?>" data-contact="<?= htmlspecialchars(trim($cust->contact ?? '')) ?>" data-npwp="<?= htmlspecialchars($npwp_c) ?>" <?= $sel_cust ?>><?= htmlspecialchars($display_label) ?></option>
+                                        <option value="<?= htmlspecialchars($opt_val) ?>" data-id-pelanggan="<?= htmlspecialchars($cust->id_pelanggan ?? '') ?>" data-nama="<?= htmlspecialchars($nama_c) ?>" data-alamat="<?= htmlspecialchars(trim($cust->alamat_customer ?? '')) ?>" data-contact="<?= htmlspecialchars(trim($cust->contact ?? '')) ?>" data-npwp="<?= htmlspecialchars($npwp_c) ?>" data-alamat-dokumen="<?= htmlspecialchars($cust->alamat_pengiriman_dokumen ?? '') ?>" <?= $sel_cust ?>><?= htmlspecialchars($display_label) ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
+                            <input type="hidden" name="id_pelanggan" id="idPelangganInput" value="<?= htmlspecialchars($po_edit->id_pelanggan ?? '') ?>">
                             <input type="hidden" name="nama_customer" id="namaCustomerInput" value="<?= htmlspecialchars($po_edit->nama_customer ?? '') ?>">
                             <div class="mt-1">
                                 <small class="text-warning font-italic">
-                                    <i class="fas fa-info-circle mr-1"></i>Jika customer belum terdaftar, silakan tambahkan data melalui menu <strong>Inventory &rarr; Master Data &rarr; Customer</strong>.
+                                    <i class="fas fa-info-circle mr-1"></i>Jika customer belum terdaftar, silakan tambahkan melalui menu <strong>Data Pelanggan</strong> atau <strong>Inventory &rarr; Master Data &rarr; Customer</strong>.
                                 </small>
                             </div>
                         </div>
@@ -882,10 +893,13 @@ document.addEventListener('DOMContentLoaded', function () {
         var opt = $select.find('option:selected');
         if (opt.length && opt.val()) {
             var nama = opt.attr('data-nama') || opt.text().trim();
+            var idPelanggan = opt.attr('data-id-pelanggan') || '';
             var alamat = opt.attr('data-alamat') || '';
             var contact = opt.attr('data-contact') || '';
             var npwp = opt.attr('data-npwp') || '';
+            var alamatDok = opt.attr('data-alamat-dokumen') || '';
 
+            $('#idPelangganInput').val(idPelanggan);
             $('#namaCustomerInput').val(nama);
             $('#alamatCustomer').val(alamat);
             if (npwp) {
@@ -893,6 +907,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 var $npwpKtp = $('#noNpwpKtp');
                 if ($npwpKtp.length && !$npwpKtp.val()) {
                     $npwpKtp.val(npwp);
+                }
+            }
+            if (alamatDok) {
+                var $alDok = $('#alamatPengirimanDokumen');
+                if ($alDok.length && !$alDok.val()) {
+                    $alDok.val(alamatDok);
                 }
             }
 
@@ -928,6 +948,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         } else {
+            $('#idPelangganInput').val('');
             $('#namaCustomerInput').val('');
             $('#alamatCustomer').val('');
         }

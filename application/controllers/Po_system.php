@@ -197,24 +197,134 @@ class Po_system extends CI_Controller
     }
 
     /**
-     * Form Input PO Baru
+     * Ambil gabungan data customer dari tabel `customer` (Inventory) dan `pelanggan` (Data Pelanggan Helpdesk/Marketing)
      */
-    public function tambah()
+    private function getMergedCustomerData()
     {
-        // 1. Ambil data master customer dari Inventory -> Master Data -> Customer
         $this->db->select('id_customer, nama_customer, alamat_customer, contact');
         $this->db->from('customer');
         $this->db->where('status', 1);
         $this->db->order_by('nama_customer', 'ASC');
-        $page_data['customer_list'] = $this->db->get()->result();
-        $page_data['customers']     = $page_data['customer_list'];
+        $customer_rows = $this->db->get()->result();
 
-        // Backup master pelanggan (pelanggan) jika sewaktu-waktu dibutuhkan
-        $this->db->select('id_pelanggan, identitas_pelanggan, alamat, npwp, pengiriman_dokumen, alamat_pengiriman_dokumen, kontak');
+        $this->db->select('id_pelanggan, identitas_pelanggan, alamat, kota, provinsi, npwp, pengiriman_dokumen, alamat_pengiriman_dokumen, kontak, cpname');
         $this->db->from('pelanggan');
-        $this->db->where('status', '1');
+        $this->db->group_start();
+            $this->db->where('status', 1);
+            $this->db->or_where('status', '1');
+            $this->db->or_where('status IS NULL', null, false);
+        $this->db->group_end();
         $this->db->order_by('identitas_pelanggan', 'ASC');
-        $page_data['pelanggan_list'] = $this->db->get()->result();
+        $pelanggan_rows = $this->db->get()->result();
+
+        $normalizeName = function ($str) {
+            $s = strtolower(trim((string)$str));
+            $s = preg_replace('/\s+/', ' ', $s);
+            return $s;
+        };
+
+        $merged = [];
+        $byNormName = [];
+
+        foreach ($customer_rows as $c) {
+            $nama = trim($c->nama_customer ?? '');
+            if ($nama === '') continue;
+            $key = $normalizeName($nama);
+            $item = (object)[
+                'option_value'              => (string)$c->id_customer,
+                'id_customer'               => $c->id_customer,
+                'id_pelanggan'              => '',
+                'nama_customer'             => $nama,
+                'alamat_customer'           => trim($c->alamat_customer ?? ''),
+                'contact'                   => trim($c->contact ?? ''),
+                'npwp'                      => '',
+                'cpname'                    => '',
+                'alamat_pengiriman_dokumen' => '',
+                'source'                    => 'customer'
+            ];
+            $merged[] = $item;
+            if (!isset($byNormName[$key])) {
+                $byNormName[$key] = $item;
+            }
+        }
+
+        foreach ($pelanggan_rows as $pl) {
+            $namaPl = trim($pl->identitas_pelanggan ?? '');
+            if ($namaPl === '') continue;
+            $key = $normalizeName($namaPl);
+
+            $alamatPl = trim($pl->alamat ?? '');
+            if ($alamatPl === '' && (!empty($pl->kota) || !empty($pl->provinsi))) {
+                $alamatPl = trim(($pl->kota ?? '') . (!empty($pl->provinsi) ? ', ' . $pl->provinsi : ''), ', ');
+            }
+
+            $kontakPl = trim($pl->kontak ?? '');
+            $cpPl     = trim($pl->cpname ?? '');
+            $contactCombined = '';
+            if ($cpPl !== '' && $kontakPl !== '' && $kontakPl !== '0') {
+                $contactCombined = $cpPl . ' (' . $kontakPl . ')';
+            } elseif ($kontakPl !== '' && $kontakPl !== '0') {
+                $contactCombined = $kontakPl;
+            } elseif ($cpPl !== '') {
+                $contactCombined = $cpPl;
+            }
+
+            if (isset($byNormName[$key])) {
+                $existing = $byNormName[$key];
+                $existing->id_pelanggan = $pl->id_pelanggan;
+                if ($existing->alamat_customer === '' && $alamatPl !== '') {
+                    $existing->alamat_customer = $alamatPl;
+                }
+                if ($existing->contact === '' && $contactCombined !== '') {
+                    $existing->contact = $contactCombined;
+                }
+                if (!empty($pl->npwp)) {
+                    $existing->npwp = trim($pl->npwp);
+                }
+                if ($cpPl !== '') {
+                    $existing->cpname = $cpPl;
+                }
+                if (!empty($pl->alamat_pengiriman_dokumen)) {
+                    $existing->alamat_pengiriman_dokumen = trim($pl->alamat_pengiriman_dokumen);
+                }
+            } else {
+                $newItem = (object)[
+                    'option_value'              => 'PLG-' . $pl->id_pelanggan,
+                    'id_customer'               => '',
+                    'id_pelanggan'              => $pl->id_pelanggan,
+                    'nama_customer'             => $namaPl,
+                    'alamat_customer'           => $alamatPl,
+                    'contact'                   => $contactCombined,
+                    'npwp'                      => trim($pl->npwp ?? ''),
+                    'cpname'                    => $cpPl,
+                    'alamat_pengiriman_dokumen' => trim($pl->alamat_pengiriman_dokumen ?? ''),
+                    'source'                    => 'pelanggan'
+                ];
+                $merged[] = $newItem;
+                $byNormName[$key] = $newItem;
+            }
+        }
+
+        usort($merged, function ($a, $b) {
+            return strcasecmp($a->nama_customer, $b->nama_customer);
+        });
+
+        return [
+            'customer_list'  => $merged,
+            'pelanggan_list' => $pelanggan_rows
+        ];
+    }
+
+    /**
+     * Form Input PO Baru
+     */
+    public function tambah()
+    {
+        // 1. Ambil gabungan data master customer & data pelanggan
+        $custData = $this->getMergedCustomerData();
+        $page_data['customer_list']  = $custData['customer_list'];
+        $page_data['customers']      = $custData['customer_list'];
+        $page_data['pelanggan_list'] = $custData['pelanggan_list'];
 
         // 2. Ambil master barang (barang) dari inventory
         $this->db->select('id_barang, nama_barang, tipe, kode_barang');
@@ -258,20 +368,11 @@ class Po_system extends CI_Controller
             return;
         }
 
-        // Ambil data master customer dari Inventory -> Master Data -> Customer
-        $this->db->select('id_customer, nama_customer, alamat_customer, contact');
-        $this->db->from('customer');
-        $this->db->where('status', 1);
-        $this->db->order_by('nama_customer', 'ASC');
-        $page_data['customer_list'] = $this->db->get()->result();
-        $page_data['customers']     = $page_data['customer_list'];
-
-        // Backup master pelanggan (pelanggan)
-        $this->db->select('id_pelanggan, identitas_pelanggan, alamat, npwp, pengiriman_dokumen, alamat_pengiriman_dokumen, kontak');
-        $this->db->from('pelanggan');
-        $this->db->where('status', '1');
-        $this->db->order_by('identitas_pelanggan', 'ASC');
-        $page_data['pelanggan_list'] = $this->db->get()->result();
+        // Ambil gabungan data master customer & data pelanggan
+        $custData = $this->getMergedCustomerData();
+        $page_data['customer_list']  = $custData['customer_list'];
+        $page_data['customers']      = $custData['customer_list'];
+        $page_data['pelanggan_list'] = $custData['pelanggan_list'];
 
         // Ambil master barang dari inventory
         $this->db->select('id_barang, nama_barang, tipe, kode_barang');
@@ -318,8 +419,14 @@ class Po_system extends CI_Controller
         $tanggal_po      = $this->input->post('tanggal_po');
         $tanggal_terima  = $this->input->post('tanggal_terima') ?: date('Y-m-d');
         
-        $id_pelanggan    = $this->input->post('id_pelanggan') ?: null;
-        $id_customer     = $this->input->post('id_customer') ?: null;
+        $raw_id_cust     = trim($this->input->post('id_customer') ?? '');
+        $id_pelanggan    = $this->input->post('id_pelanggan') ? intval($this->input->post('id_pelanggan')) : null;
+        $id_customer     = null;
+        if (strpos($raw_id_cust, 'PLG-') === 0) {
+            $id_pelanggan = intval(substr($raw_id_cust, 4)) ?: $id_pelanggan;
+        } elseif (is_numeric($raw_id_cust) && intval($raw_id_cust) > 0) {
+            $id_customer = intval($raw_id_cust);
+        }
         $nama_customer   = trim($this->input->post('nama_customer'));
         $alamat_customer = trim($this->input->post('alamat_customer'));
         $npwp_customer   = trim($this->input->post('npwp_customer'));
