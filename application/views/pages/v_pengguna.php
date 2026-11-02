@@ -592,32 +592,28 @@
         padding: 20px;
     }
 
-    #kt_table_1_wrapper .dataTables_length,
     #kt_table_1_wrapper .dataTables_filter {
+        display: none !important;
+    }
+
+    #kt_table_1_wrapper .dataTables_length {
         margin-bottom: 16px;
     }
 
+    #kt_table_1_wrapper .dataTables_length .select2-container {
+        display: none !important;
+    }
+
     #kt_table_1_wrapper .dataTables_length select {
-        padding: 6px 10px;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 8px;
-        margin: 0 6px;
-        font-size: 13px;
-    }
-
-    #kt_table_1_wrapper .dataTables_filter input {
-        padding: 8px 14px;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 10px;
-        margin-left: 8px;
-        min-width: 240px;
-        font-size: 13px;
-    }
-
-    #kt_table_1_wrapper .dataTables_filter input:focus {
-        border-color: #2563eb;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        padding: 4px 8px !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        margin: 0 6px !important;
+        font-size: 13px !important;
+        width: 75px !important;
+        height: 36px !important;
+        background-color: #ffffff !important;
+        display: inline-block !important;
     }
 
     #kt_table_1_wrapper .dataTables_info {
@@ -939,6 +935,7 @@ document.addEventListener('DOMContentLoaded', function() {
         responsive: false,
         processing: true,
         serverSide: true,
+        searching: false, // Menghilangkan kolom pencarian DataTables di atas tabel / status aktif
         order: [[0, 'desc']],
         ajax: {
             url: 'pengguna/pagination',
@@ -958,9 +955,20 @@ document.addEventListener('DOMContentLoaded', function() {
         language: {
             processing: '<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>',
             emptyTable: '<div class="empty-state"><i class="fas fa-inbox"></i><h5>Tidak ada data</h5><p>Belum ada data karyawan yang tersedia</p></div>',
-            zeroRecords: '<div class="empty-state"><i class="fas fa-search"></i><h5>Tidak ditemukan</h5><p>Tidak ada data yang sesuai dengan filter</p></div>'
+            zeroRecords: '<div class="empty-state"><i class="fas fa-search"></i><h5>Tidak ditemukan</h5><p>Tidak ada data yang sesuai dengan filter</p></div>',
+            lengthMenu: 'Tampilkan _MENU_ data'
         },
-        drawCallback: function() {
+        initComplete: function(settings, json) {
+            let $lenSelect = $('.dataTables_length select', settings.nTableWrapper);
+            if ($lenSelect.hasClass('select2-hidden-accessible')) {
+                $lenSelect.select2('destroy');
+            }
+        },
+        drawCallback: function(settings) {
+            let $lenSelect = $('.dataTables_length select', settings.nTableWrapper);
+            if ($lenSelect.hasClass('select2-hidden-accessible')) {
+                $lenSelect.select2('destroy');
+            }
             // Animate rows on draw
             $('.modern-table tbody tr').each(function(i) {
                 $(this).css('opacity', 0).delay(i * 30).animate({opacity: 1}, 200);
