@@ -702,7 +702,7 @@ class Md_laporan extends CI_Model
             $this->db->group_end();
         $this->db->group_end();
 
-        $this->db->order_by('COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)', 'DESC');
+        $this->db->order_by('COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at) DESC', '', FALSE);
         $this->db->order_by('t.id_task', 'DESC');
 
         return $this->db->get()->result();
