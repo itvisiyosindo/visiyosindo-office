@@ -177,6 +177,7 @@ class Laporan extends CI_Controller
                     $page_data['nilai_point_map'][$np->point] = $np;
                 }
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
+                $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
                 $penilaian_umum = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
                 $page_data['penilaian_umum'] = $penilaian_umum;
@@ -254,6 +255,7 @@ class Laporan extends CI_Controller
                     $page_data['nilai_point_map'][$np->point] = $np;
                 }
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
+                $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
                 $page_data['switch'] = $this->id_navbar();
 
@@ -415,6 +417,7 @@ class Laporan extends CI_Controller
                     $page_data['data_detail'] = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
                 }
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
+                $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
                 //$minggu_lalu = -1; // minggu lalu
                 $wednesday = date('Y-m-d', strtotime("wednesday this week $week_offset week"));
@@ -2072,12 +2075,14 @@ class Laporan extends CI_Controller
             $data_detail = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
         }
         $data_detail_pencapaian = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
+        $data_project_selesai = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
         $dt = [
             'title_pdf' => 'Laporan Mingguan - ' . ($data_job ? $data_job->nama : ''),
             'data_job' => $data_job,
             'data_detail' => $data_detail,
             'data_detail_pencapaian' => $data_detail_pencapaian,
+            'data_project_selesai' => $data_project_selesai,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'week_number' => $week_number,

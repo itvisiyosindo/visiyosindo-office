@@ -264,104 +264,234 @@
 		
 		<br>
 
-		<?= form_open('laporan/inputNilaiPencapaian', array('id' => 'main-form-pencapaian', 'autocomplete' => 'off')); ?>
-		<!-- PENCAPAIAN -->
-		<div class="card-body">
-			<div class="table-responsive">
-
-				<div>
-						<h4>Pencapaian Mingguan dari Tanggal <strong> <?= $startDate ?> </strong> sampai <strong> <?= $endDate ?> </strong></h4>
-
-						
-					<div style="max-width: 100%;">
-    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1" style="width: 100%; table-layout: fixed;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="1%"><font color='#000000'> No </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Tanggal </th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="15%"><font color='#000000'> Deskripsi</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="5%"><font color='#000000'> Hasil Kerja</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="2%"><font color='#000000'> Nilai B</th>
-                                    <th style="text-align:center" bgcolor="#C6DEFF" width="10%"><font color='#000000'> Catatan B</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                               <?php 
-                                $no = 1;
-                                $total_nilai = 0; // Variabel untuk menampung total nilai
-                                $jumlah_data = count($data_detail_pencapaian); // Jumlah data untuk menghitung rata-rata
-
-                                foreach ($data_detail_pencapaian as $row) {
-                                    
-                                    if (!empty($row->link) && empty($row->keterangan)) {
-																						$link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer"><i class="fas fa-link"></i> Hasil Kerja</a>';
-																				} elseif (empty($row->link) && !empty($row->keterangan)) {
-																						$link_download = htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8');
-																				} else {
-																						$link_download = 'Tidak Ada';
-																				}
-
-                                    $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
-                                    $nama_hari = $hari[date('l', strtotime($row->tanggal))];
-
-                                    // Gunakan week_offset untuk menghitung Senin dan Jumat berdasarkan minggu
-																				$monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
-																				$Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
-
-																				// Cek apakah tanggal created_at berada di luar rentang minggu
-																				$created_at = date('Y-m-d', strtotime($row->created_at));
-																				$is_outside_range = ($created_at < $monday || $created_at > $Sunday);
-
-                                    $id = $row->id;
-																		$id_edit = encrypt($row->id);
-
-                                    // Tambahkan nilai ke total_nilai
-                                    $total_nilai += $row->nilai_b;
-
-                                ?>
-                                    <tr <?php if ($is_outside_range) { echo 'style="background-color: red;"'; } ?>>
-                                        <td style="text-align:center"><font color='#000000'><?= $no++ ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
-                                        <td><font color='#000000'><?= $row->detail ?></td>
-                                        <td style="text-align:center"><font color='#000000'><?= $link_download ?></td>
-																				<td><input class="form-control" type="text" name="nilaipb[<?= $id ?>]" value="<?= $row->nilai_b ?>"></td>
-																				<td><input class="form-control" type="text" name="catatanpb[<?= $id ?>]" value="<?= $row->catatan_b ?>"></td>
-                                    </tr>
-
-                                <?php } 
-
-                                // Menghitung rata-rata, jika jumlah data > 0
-                                if ($jumlah_data > 0) {
-                                    $nilaiRataPenc = $total_nilai / $jumlah_data;
-                                } else {
-                                    $nilaiRataPenc = 0; // Jika tidak ada data, set rata-rata 0
-                                }
-                                ?>
-
-                                <tr>
-                                    <td colspan="4" style="text-align:right; border: 1px solid black;"><font color='#000000'><strong>Rata-rata :</strong></td>
-                                    <td style="text-align:center;border: 1px solid black;"><font color='#000000'><strong><?= number_format($nilaiRataPenc, 2) ?></strong></td>
-                                </tr>
-
-                            </tbody>
-                        </table>
-
-                    </div>
-
-
-						<br>
-						<div>
-								<!--<a href="<?= base_url('laporan/show/detail/my_detail_nilai_rev2/' . $id_pengaju . '/'  . ($week_offset - 1)) ?>" class="btn btn-outline-secondary">< Minggu Sebelumnya</a>
-								<a href="<?= base_url('laporan/show/detail/my_detail_nilai_rev2/' . $id_pengaju . '/'  . ($week_offset + 1)) ?>" class="btn btn-outline-secondary">Minggu Berikutnya ></a>-->
-								
-								<button type="button" class="btn btn-success btn-save float-right">Simpan</button>
+		<!-- PROJECT & TASK YANG DISELESAIKAN (SINKRON TASK & PROYEK) -->
+		<div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+			<div class="card-body p-3 p-md-4">
+				<div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
+					<div>
+						<h5 class="font-weight-bold text-dark mb-1" style="font-size: 15px;">
+							<i class="fas fa-tasks text-primary mr-1"></i> Project & Task yang Diselesaikan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+						</h5>
+						<div class="text-muted small">
+							<i class="fas fa-sync-alt mr-1 text-success"></i> Terisi otomatis & sinkron dengan menu <strong>Task & Proyek</strong>
 						</div>
+					</div>
+					<div class="d-flex align-items-center" style="gap: 8px;">
+						<span class="badge badge-success font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
+							<i class="fas fa-check-circle mr-1"></i> <?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> Selesai
+						</span>
+						<a href="<?= base_url('task_proyek') ?>" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-weight: 600; padding: 6px 14px;">
+							<i class="fas fa-external-link-alt mr-1"></i> Menu Task & Proyek
+						</a>
+					</div>
 				</div>
+				
+				<div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0" style="min-width: 980px; width: 100%;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9;">
+                                <th style="width: 45px; text-align: center;">No</th>
+                                <th style="width: 120px; text-align: center;">Kode Task</th>
+                                <th style="min-width: 220px; text-align: left;">Judul & Deskripsi</th>
+                                <th style="width: 150px; text-align: left;">Proyek / Jenis</th>
+                                <th style="width: 140px; text-align: left;">Pemberi Tugas</th>
+                                <th style="width: 120px; text-align: center;">Tgl Selesai</th>
+                                <th style="width: 150px; text-align: left;">Hasil / Bukti</th>
+                                <th style="width: 140px; text-align: center;">Rating & Ulasan</th>
+                                <th style="width: 110px; text-align: center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $no_ps = 1;
+                            $count_ps = !empty($data_project_selesai) ? count($data_project_selesai) : 0;
+                            if ($count_ps > 0):
+                                foreach ($data_project_selesai as $t): 
+                                    $tgl_selesai = !empty($t->tgl_dinilai) ? $t->tgl_dinilai : (!empty($t->tgl_submit) ? $t->tgl_submit : $t->updated_at);
+                                    $prio_badge = 'badge-secondary';
+                                    if ($t->prioritas === 'Urgent') $prio_badge = 'badge-danger';
+                                    elseif ($t->prioritas === 'High') $prio_badge = 'badge-warning text-dark';
+                                    elseif ($t->prioritas === 'Medium') $prio_badge = 'badge-info';
+                            ?>
+                                <tr>
+                                    <td style="text-align:center; font-weight: 600; color: #475569;"><?= $no_ps++ ?></td>
+                                    <td style="text-align:center;">
+                                        <div class="font-weight-bold text-dark" style="font-size: 12px;"><?= htmlspecialchars($t->kode_task) ?></div>
+                                        <span class="badge <?= $prio_badge ?> mt-1" style="font-size: 10px; padding: 2px 6px;"><?= htmlspecialchars($t->prioritas ?: 'Normal') ?></span>
+                                    </td>
+                                    <td>
+                                        <div class="font-weight-bold text-dark mb-1" style="font-size: 13px;"><?= htmlspecialchars($t->judul) ?></div>
+                                        <?php if (!empty($t->deskripsi)): ?>
+                                            <div class="text-muted small" style="line-height: 1.4;"><?= nl2br(htmlspecialchars(character_limiter($t->deskripsi, 120))) ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($t->nama_proyek)): ?>
+                                            <div class="font-weight-600 text-dark small mb-1"><i class="fas fa-folder-open text-primary mr-1"></i><?= htmlspecialchars($t->nama_proyek) ?></div>
+                                        <?php endif; ?>
+                                        <span class="badge badge-light-primary text-primary" style="font-size: 11px;"><?= htmlspecialchars($t->jenis ?: 'Task') ?></span>
+                                    </td>
+                                    <td>
+                                        <div class="font-weight-600 text-dark small"><?= htmlspecialchars($t->nama_pemberi ?: '-') ?></div>
+                                        <?php if (!empty($t->jabatan_pemberi)): ?>
+                                            <div class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($t->jabatan_pemberi) ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center; white-space: nowrap; font-size: 12px;">
+                                        <i class="far fa-calendar-check text-success mr-1"></i><?= date('d-m-Y', strtotime($tgl_selesai)) ?>
+                                    </td>
+                                    <td>
+                                        <?php 
+                                        if (!empty($t->bukti_selesai)): 
+                                            $is_url = filter_var($t->bukti_selesai, FILTER_VALIDATE_URL) || preg_match('/^(http|https):\/\//i', $t->bukti_selesai);
+                                            if ($is_url):
+                                        ?>
+                                            <a href="<?= htmlspecialchars($t->bukti_selesai, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;">
+                                                <i class="fas fa-external-link-alt mr-1"></i> Bukti Kerja
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="small text-dark font-weight-500"><?= htmlspecialchars($t->bukti_selesai) ?></span>
+                                        <?php endif; endif; ?>
 
+                                        <?php if (!empty($t->catatan_bawahan)): ?>
+                                            <div class="text-muted small mt-1" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(character_limiter($t->catatan_bawahan, 80)) ?>"</div>
+                                        <?php endif; ?>
+
+                                        <?php if (empty($t->bukti_selesai) && empty($t->catatan_bawahan)): ?>
+                                            <span class="text-muted small">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <?php if (!empty($t->rating_bintang)): ?>
+                                            <div class="text-warning mb-1" style="font-size: 11px; letter-spacing: 1px;">
+                                                <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                    <?= $s <= (int)$t->rating_bintang ? '<i class="fas fa-star text-warning"></i>' : '<i class="far fa-star text-muted"></i>' ?>
+                                                <?php endfor; ?>
+                                                <span class="font-weight-bold text-dark ml-1" style="font-size: 12px;"><?= $t->rating_bintang ?>/5</span>
+                                            </div>
+                                            <?php if (!empty($t->ulasan_atasan)): ?>
+                                                <div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(character_limiter($t->ulasan_atasan, 60)) ?>"</div>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="badge badge-warning text-dark small px-2 py-1" style="border-radius: 6px;">
+                                                <i class="far fa-clock mr-1"></i> Menunggu Rating
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <?php if ((int)$t->status_task === 4): ?>
+                                            <span class="badge badge-success px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <i class="fas fa-check-double mr-1"></i> Selesai
+                                            </span>
+                                        <?php elseif ((int)$t->status_task === 2): ?>
+                                            <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <i class="fas fa-hourglass-half mr-1"></i> Review
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-info px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <?= (int)$t->progres ?>%
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php 
+                                endforeach;
+                            else: 
+                            ?>
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4" style="background: #fafbfc;">
+                                        <div class="my-2">
+                                            <i class="fas fa-clipboard-check text-muted fa-2x d-block mb-2" style="opacity: 0.5;"></i>
+                                            <span class="font-weight-bold text-dark">Belum ada project atau task yang diselesaikan pada periode minggu ini.</span><br>
+                                            <small class="text-muted">Task atau proyek yang diselesaikan di menu <a href="<?= base_url('task_proyek') ?>" target="_blank" class="font-weight-bold">Task & Proyek</a> akan otomatis sinkron dan muncul di sini.</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
 			</div>
 		</div>
-		<!-- PENCAPAIAN -->
+		<!-- PROJECT & TASK YANG DISELESAIKAN -->
+
+        <?php 
+        $jumlah_data_pencapaian = !empty($data_detail_pencapaian) ? count($data_detail_pencapaian) : 0;
+        $total_nilai = 0;
+        $nilaiRataPenc = 0;
+
+        if ($jumlah_data_pencapaian > 0): 
+        ?>
+		<?= form_open('laporan/inputNilaiPencapaian', array('id' => 'main-form-pencapaian', 'autocomplete' => 'off')); ?>
+		<!-- ARSIP PENCAPAIAN SEBELUMNYA -->
+		<div class="card mb-4 border-warning" style="background-color: #fffdfa; border-radius: 10px;">
+			<div class="card-body p-3 p-md-4">
+				<div class="d-flex align-items-center justify-content-between mb-3">
+					<div>
+						<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+							<i class="fas fa-archive text-warning mr-1"></i> Riwayat Pencapaian Sebelumnya: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+							<span class="badge badge-warning ml-2" style="font-size: 11px;">Data Arsip</span>
+						</h5>
+						<div class="text-muted small mt-1">Data pencapaian manual periode ini tetap tersimpan utuh dan dapat ditinjau.</div>
+					</div>
+				</div>
+				<div class="table-responsive">
+                    <table class="table table-striped table-sm table-bordered table-hover mb-0" id="kt_table_1" style="width: 100%;">
+                        <thead>
+                            <tr style="background-color: #e2e8f0;">
+                                <th style="text-align:center; width: 45px;">No</th>
+                                <th style="text-align:center; width: 140px;">Tanggal</th>
+                                <th style="text-align:left;">Deskripsi</th>
+                                <th style="text-align:center; width: 150px;">Hasil Kerja</th>
+                                <th style="text-align:center; width: 90px;">Nilai B</th>
+                                <th style="text-align:left; width: 200px;">Catatan B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $no = 1;
+                            foreach ($data_detail_pencapaian as $row):
+                                if (!empty($row->link) && empty($row->keterangan)) {
+                                    $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer"><i class="fas fa-link"></i> Hasil Kerja</a>';
+                                } elseif (empty($row->link) && !empty($row->keterangan)) {
+                                    $link_download = htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8');
+                                } else {
+                                    $link_download = '<span class="text-muted small">-</span>';
+                                }
+
+                                $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
+                                $nama_hari = isset($hari[date('l', strtotime($row->tanggal))]) ? $hari[date('l', strtotime($row->tanggal))] : '-';
+
+                                $id = $row->id;
+                                $total_nilai += (float)$row->nilai_b;
+                            ?>
+                                <tr>
+                                    <td style="text-align:center;"><?= $no++ ?></td>
+                                    <td style="text-align:center; white-space: nowrap;"><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
+                                    <td><?= htmlspecialchars($row->detail) ?></td>
+                                    <td style="text-align:center"><?= $link_download ?></td>
+                                    <td><input class="form-control form-control-sm text-center" type="text" name="nilaipb[<?= $id ?>]" value="<?= $row->nilai_b ?>"></td>
+                                    <td><input class="form-control form-control-sm" type="text" name="catatanpb[<?= $id ?>]" value="<?= htmlspecialchars($row->catatan_b) ?>"></td>
+                                </tr>
+                            <?php endforeach; 
+                            $nilaiRataPenc = $jumlah_data_pencapaian > 0 ? $total_nilai / $jumlah_data_pencapaian : 0;
+                            ?>
+                            <tr class="row-summary font-weight-bold">
+                                <td colspan="4" style="text-align:right;">Rata-rata :</td>
+                                <td style="text-align:center; color: #2563eb;"><?= number_format($nilaiRataPenc, 2) ?></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+				</div>
+				<div class="mt-3 clearfix">
+					<button type="button" class="btn btn-success btn-save float-right">Simpan Penilaian Arsip</button>
+				</div>
+			</div>
+		</div>
+		<!-- ARSIP PENCAPAIAN SEBELUMNYA -->
 		<?= form_close(); ?>
+        <?php endif; ?>
 		
 
 

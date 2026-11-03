@@ -383,8 +383,57 @@
         </tbody>
     </table>
 
+    <?php if (!empty($data_project_selesai)): ?>
+        <div class="section-title">II. PROJECT &amp; TASK YANG DISELESAIKAN (SINKRON TASK &amp; PROYEK)</div>
+        <table class="content-table">
+            <thead>
+                <tr>
+                    <th width="4%">No</th>
+                    <th width="12%">Kode Task</th>
+                    <th width="28%">Judul &amp; Deskripsi</th>
+                    <th width="14%">Proyek / Jenis</th>
+                    <th width="14%">Pemberi Tugas</th>
+                    <th width="10%">Tgl Selesai</th>
+                    <th width="10%">Rating</th>
+                    <th width="8%">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $no_ps = 1; foreach ($data_project_selesai as $t): 
+                    $tgl_selesai = !empty($t->tgl_dinilai) ? $t->tgl_dinilai : (!empty($t->tgl_submit) ? $t->tgl_submit : $t->updated_at);
+                ?>
+                    <tr>
+                        <td class="text-center"><?= $no_ps++ ?></td>
+                        <td class="text-center"><strong><?= htmlspecialchars($t->kode_task) ?></strong></td>
+                        <td>
+                            <strong><?= htmlspecialchars($t->judul) ?></strong>
+                            <?php if (!empty($t->deskripsi)): ?>
+                                <br><small><?= htmlspecialchars(mb_strimwidth($t->deskripsi, 0, 90, '...')) ?></small>
+                            <?php endif; ?>
+                            <?php if (!empty($t->catatan_bawahan)): ?>
+                                <br><small><em>Hasil: <?= htmlspecialchars(mb_strimwidth($t->catatan_bawahan, 0, 70, '...')) ?></em></small>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?= !empty($t->nama_proyek) ? htmlspecialchars($t->nama_proyek) . '<br>' : '' ?>
+                            <small><?= htmlspecialchars($t->jenis ?: 'Task') ?></small>
+                        </td>
+                        <td><?= htmlspecialchars($t->nama_pemberi ?: '-') ?></td>
+                        <td class="text-center"><?= date('d-m-Y', strtotime($tgl_selesai)) ?></td>
+                        <td class="text-center">
+                            <?= !empty($t->rating_bintang) ? $t->rating_bintang . '/5 &#9733;' : '-' ?>
+                        </td>
+                        <td class="text-center">
+                            <small><?= (int)$t->status_task === 4 ? 'Selesai' : 'Review' ?></small>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
     <?php if (!empty($data_detail_pencapaian)): ?>
-        <div class="section-title">II. PENCAPAIAN LAINNYA</div>
+        <div class="section-title"><?= !empty($data_project_selesai) ? "III. ARSIP PENCAPAIAN SEBELUMNYA" : "II. PENCAPAIAN LAINNYA" ?></div>
         <table class="content-table">
             <thead>
                 <tr>
