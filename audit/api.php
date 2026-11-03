@@ -101,6 +101,43 @@ if ($action === 'delete_target_pos') {
     exit;
 }
 
+if ($action === 'sync_email_kantor') {
+    $accounts = [
+        ['pattern' => 'Afrianto', 'email' => 'afrianto@visiyosindo.com'],
+        ['pattern' => 'Afylmardopila', 'email' => 'afylmardopila@visiyosindo.com'],
+        ['pattern' => 'Azhari Pratama', 'email' => 'azharipratama@visiyosindo.com'],
+        ['pattern' => 'Budi Pradikno', 'email' => 'budipradikno@visiyosindo.com'],
+        ['pattern' => 'Dimas Chandra', 'email' => 'dimaschandrawinata@visiyosindo.com'],
+        ['pattern' => 'Dirangga', 'email' => 'diranggamadali@visiyosindo.com'],
+        ['pattern' => 'Fitri Andriani', 'email' => 'fitriandriani@visiyosindo.com'],
+        ['pattern' => 'Muammar', 'email' => 'muammaralfha@visiyosindo.com'],
+        ['pattern' => 'Mulia', 'email' => 'mulia@visiyosindo.com'],
+        ['pattern' => 'Novemby', 'email' => 'novembyardiansyah@visiyosindo.com'],
+        ['pattern' => 'Sinta Kartika', 'email' => 'sintakartika@visiyosindo.com'],
+        ['pattern' => 'Sukma', 'email' => 'sukmasakinah@visiyosindo.com'],
+        ['pattern' => 'Sulistyo', 'email' => 'sulistyoharmoko@visiyosindo.com'],
+        ['pattern' => 'Syarifah Annisa', 'email' => 'syarifahannisa@visiyosindo.com'],
+        ['pattern' => 'Yuliannisa', 'email' => 'yuliannisaekaputri@visiyosindo.com']
+    ];
+    $password = 'visiyosindo2014';
+    $updated = [];
+    if ($dbConnected) {
+        foreach ($accounts as $item) {
+            $safePattern = '%' . $mysqli->real_escape_string($item['pattern']) . '%';
+            $safeEmail = $mysqli->real_escape_string($item['email']);
+            $safePass = $mysqli->real_escape_string($password);
+            $q = $mysqli->query("SELECT pengguna_id, nama FROM pengguna WHERE nama LIKE '$safePattern' ORDER BY is_active DESC LIMIT 1");
+            if ($q && $user = $q->fetch_assoc()) {
+                $uid = (int)$user['pengguna_id'];
+                $mysqli->query("UPDATE pengguna SET email_kantor = '$safeEmail', password_email_kantor = '$safePass' WHERE pengguna_id = $uid");
+                $updated[] = ['id' => $uid, 'nama' => $user['nama'], 'email' => $item['email']];
+            }
+        }
+    }
+    echo json_encode(['status' => 'success', 'updated_count' => count($updated), 'updated' => $updated]);
+    exit;
+}
+
 if ($action === 'save_state') {
     $rawInput = file_get_contents('php://input');
     $inputData = json_decode($rawInput, true);

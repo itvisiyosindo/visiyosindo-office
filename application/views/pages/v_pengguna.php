@@ -796,6 +796,9 @@
             <a href="javascript:;" id="btn-show-add-form" class="btn-action btn-action-add">
                 <i class="fas fa-plus"></i> Tambah Karyawan
             </a>
+            <a href="<?= base_url('pengguna/batch_sync_email_kantor') ?>" target="_blank" class="btn-action" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" title="Sinkronkan otomatis email & password 15 karyawan baru">
+                <i class="fas fa-sync-alt mr-1"></i> Sinkronkan 15 Email Kantor
+            </a>
             <?php } ?>
             <a href="javascript:;" id="btn-laporan-cetak-form" class="btn-action btn-action-print">
                 <i class="fas fa-print"></i> Cetak Laporan
