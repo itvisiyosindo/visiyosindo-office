@@ -684,21 +684,25 @@ class Md_laporan extends CI_Model
         $this->db->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left');
         $this->db->where('t.is_deleted', 0);
         $this->db->where('t.id_penerima', $id_pengguna);
-
-        // Task harus sudah mulai/dibuat sebelum atau pada akhir minggu laporan ini
-        $this->db->where("DATE(COALESCE(t.tgl_mulai, t.created_at)) <=", $end_date);
-
-        // Periode tampil: tampil terus sampai projek/task selesai
-        // 1. Task yang masih aktif / berjalan (status_task < 4)
-        // 2. ATAU task yang selesai pada minggu ini atau setelah minggu ini
         $this->db->group_start();
-            $this->db->where('t.status_task <', 4);
-            $this->db->or_where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) >=", $start_date);
+            $this->db->where_in('t.status_task', [2, 4]);
+            $this->db->or_where('t.progres >=', 100);
         $this->db->group_end();
 
-        // Urutan: task aktif lebih dulu (1: Sedang Dikerjakan, 2: Menunggu Review, 3: Revisi, 0: Draft, 4: Selesai), lalu berdasarkan tanggal terbaru
-        $this->db->order_by("FIELD(t.status_task, 1, 2, 3, 0, 4)", "", FALSE);
-        $this->db->order_by("COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at) DESC", "", FALSE);
+        $this->db->group_start();
+            $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) >=", $start_date);
+            $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) <=", $end_date);
+            $this->db->or_group_start();
+                $this->db->where("DATE(t.tgl_submit) >=", $start_date);
+                $this->db->where("DATE(t.tgl_submit) <=", $end_date);
+            $this->db->group_end();
+            $this->db->or_group_start();
+                $this->db->where("DATE(t.tgl_dinilai) >=", $start_date);
+                $this->db->where("DATE(t.tgl_dinilai) <=", $end_date);
+            $this->db->group_end();
+        $this->db->group_end();
+
+        $this->db->order_by('COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at) DESC', '', FALSE);
         $this->db->order_by('t.id_task', 'DESC');
 
         return $this->db->get()->result();

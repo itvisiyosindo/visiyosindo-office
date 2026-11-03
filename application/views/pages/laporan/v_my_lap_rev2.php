@@ -601,38 +601,21 @@ foreach ($data_detail as $row) {
 <div class="row">
 	<div class="col-12">
 
-		<!-- TASK & PROYEK (SINKRON TASK & PROYEK) -->
-        <?php 
-        $count_total = !empty($data_project_selesai) ? count($data_project_selesai) : 0;
-        $count_selesai = 0;
-        $count_aktif = 0;
-        if ($count_total > 0) {
-            foreach ($data_project_selesai as $item) {
-                if ((int)$item->status_task === 4) {
-                    $count_selesai++;
-                } else {
-                    $count_aktif++;
-                }
-            }
-        }
-        ?>
+		<!-- PROJECT & TASK YANG DISELESAIKAN (SINKRON TASK & PROYEK) -->
 		<div class="card laporan-card mb-4">
 			<div class="card-body p-3 p-md-4">
 				<div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
 					<div>
 						<h5 class="font-weight-bold text-dark mb-1" style="font-size: 14.5px;">
-							<i class="fas fa-tasks text-primary mr-1"></i> Task & Proyek: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+							<i class="fas fa-tasks text-primary mr-1"></i> Project & Task yang Diselesaikan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
 						</h5>
 						<div class="text-muted small">
-							<i class="fas fa-sync-alt mr-1 text-success"></i> Terisi otomatis & sinkron dengan menu <strong>Task & Proyek</strong> (tampil hingga proyek/task selesai)
+							<i class="fas fa-sync-alt mr-1 text-success"></i> Terisi otomatis & sinkron dengan menu <strong>Task & Proyek</strong>
 						</div>
 					</div>
-					<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
-						<span class="badge badge-light-primary font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
-							<i class="fas fa-spinner mr-1"></i> <?= $count_aktif ?> Berjalan
-						</span>
+					<div class="d-flex align-items-center" style="gap: 8px;">
 						<span class="badge badge-light-success font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
-							<i class="fas fa-check-circle mr-1"></i> <?= $count_selesai ?> Selesai
+							<i class="fas fa-check-circle mr-1"></i> <?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> Selesai
 						</span>
 						<a href="<?= base_url('task_proyek') ?>" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 6px 14px;">
 							<i class="fas fa-external-link-alt mr-1"></i> Menu Task & Proyek
@@ -641,7 +624,7 @@ foreach ($data_detail as $row) {
 				</div>
 				
 				<div class="table-responsive">
-                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_project_selesai" style="min-width: 1050px; width: 100%;">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_project_selesai" style="min-width: 980px; width: 100%;">
                         <thead>
                             <tr>
                                 <th style="width: 45px; text-align: center;">No</th>
@@ -649,16 +632,17 @@ foreach ($data_detail as $row) {
                                 <th style="min-width: 200px; text-align: left;">Judul & Deskripsi</th>
                                 <th style="width: 150px; text-align: left;">Proyek / Jenis</th>
                                 <th style="width: 140px; text-align: left;">Pemberi Tugas</th>
-                                <th style="width: 130px; text-align: center;">Periode / Deadline</th>
-                                <th style="width: 135px; text-align: center;">Progres & Status</th>
-                                <th style="width: 140px; text-align: left;">Hasil / Bukti</th>
-                                <th style="width: 130px; text-align: center;">Rating & Ulasan</th>
+                                <th style="width: 120px; text-align: center;">Tgl Selesai</th>
+                                <th style="width: 150px; text-align: left;">Hasil / Bukti</th>
+                                <th style="width: 140px; text-align: center;">Rating & Ulasan</th>
+                                <th style="width: 110px; text-align: center;">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
                             $no_ps = 1;
-                            if ($count_total > 0):
+                            $count_ps = !empty($data_project_selesai) ? count($data_project_selesai) : 0;
+                            if ($count_ps > 0):
                                 foreach ($data_project_selesai as $t): 
                                     $tgl_selesai = !empty($t->tgl_dinilai) ? $t->tgl_dinilai : (!empty($t->tgl_submit) ? $t->tgl_submit : $t->updated_at);
                                     $prio_badge = 'badge-secondary';
@@ -690,56 +674,8 @@ foreach ($data_detail as $row) {
                                             <div class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($t->jabatan_pemberi) ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td style="text-align:center; white-space: nowrap;">
-                                        <?php if ((int)$t->status_task === 4): ?>
-                                            <div class="text-success font-weight-600" style="font-size: 11.5px;">
-                                                <i class="fas fa-check-circle mr-1"></i>Selesai: <?= date('d-m-Y', strtotime($tgl_selesai)) ?>
-                                            </div>
-                                            <?php if (!empty($t->tgl_deadline)): ?>
-                                                <div class="text-muted" style="font-size: 11px;">Target: <?= date('d-m-Y', strtotime($t->tgl_deadline)) ?></div>
-                                            <?php endif; ?>
-                                        <?php else: ?>
-                                            <?php if (!empty($t->tgl_deadline)): 
-                                                $is_overdue = (strtotime($t->tgl_deadline) < strtotime(date('Y-m-d')));
-                                            ?>
-                                                <div class="<?= $is_overdue ? 'text-danger font-weight-bold' : 'text-dark font-weight-600' ?>" style="font-size: 11.5px;">
-                                                    <i class="<?= $is_overdue ? 'fas fa-exclamation-circle' : 'far fa-calendar-alt text-primary' ?> mr-1"></i>
-                                                    Deadline: <?= date('d-m-Y', strtotime($t->tgl_deadline)) ?>
-                                                </div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($t->tgl_mulai)): ?>
-                                                <div class="text-muted" style="font-size: 11px;">Mulai: <?= date('d-m-Y', strtotime($t->tgl_mulai)) ?></div>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="text-align:center;">
-                                        <div class="d-flex align-items-center mb-1" style="gap: 5px;">
-                                            <div class="progress flex-grow-1" style="height: 6px; border-radius: 3px; background-color: #e2e8f0;">
-                                                <div class="progress-bar <?= (int)$t->status_task === 4 ? 'bg-success' : ((int)$t->status_task === 2 ? 'bg-warning' : 'bg-primary') ?>" role="progressbar" style="width: <?= (int)$t->progres ?>%;"></div>
-                                            </div>
-                                            <span class="font-weight-bold text-dark" style="font-size: 11px; min-width: 28px; text-align: right;"><?= (int)$t->progres ?>%</span>
-                                        </div>
-                                        <?php if ((int)$t->status_task === 4): ?>
-                                            <span class="badge badge-success px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
-                                                <i class="fas fa-check-double mr-1"></i> Selesai
-                                            </span>
-                                        <?php elseif ((int)$t->status_task === 2): ?>
-                                            <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
-                                                <i class="fas fa-hourglass-half mr-1"></i> Menunggu Review
-                                            </span>
-                                        <?php elseif ((int)$t->status_task === 3): ?>
-                                            <span class="badge badge-danger px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
-                                                <i class="fas fa-exclamation-triangle mr-1"></i> Perlu Revisi
-                                            </span>
-                                        <?php elseif ((int)$t->status_task === 1): ?>
-                                            <span class="badge badge-primary px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
-                                                <i class="fas fa-spinner fa-spin mr-1"></i> Sedang Dikerjakan
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge badge-secondary px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
-                                                Belum Dikerjakan
-                                            </span>
-                                        <?php endif; ?>
+                                    <td style="text-align:center; white-space: nowrap; font-size: 12px;">
+                                        <i class="far fa-calendar-check text-success mr-1"></i><?= date('d-m-Y', strtotime($tgl_selesai)) ?>
                                     </td>
                                     <td>
                                         <?php 
@@ -774,7 +710,24 @@ foreach ($data_detail as $row) {
                                                 <div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(character_limiter($t->ulasan_atasan, 60)) ?>"</div>
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <span class="text-muted small">-</span>
+                                            <span class="badge badge-light-warning text-warning small px-2 py-1" style="border-radius: 6px;">
+                                                <i class="far fa-clock mr-1"></i> Menunggu Rating
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <?php if ((int)$t->status_task === 4): ?>
+                                            <span class="badge badge-success px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <i class="fas fa-check-double mr-1"></i> Selesai
+                                            </span>
+                                        <?php elseif ((int)$t->status_task === 2): ?>
+                                            <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <i class="fas fa-hourglass-half mr-1"></i> Review
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-info px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <?= (int)$t->progres ?>%
+                                            </span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -786,8 +739,8 @@ foreach ($data_detail as $row) {
                                     <td colspan="9" class="text-center text-muted py-4" style="background: #fafbfc;">
                                         <div class="my-2">
                                             <i class="fas fa-clipboard-check text-muted fa-2x d-block mb-2" style="opacity: 0.5;"></i>
-                                            <span class="font-weight-bold text-dark">Tidak ada project atau task aktif/selesai pada periode minggu ini.</span><br>
-                                            <small class="text-muted">Task atau proyek yang ditugaskan di menu <a href="<?= base_url('task_proyek') ?>" target="_blank" class="font-weight-bold">Task & Proyek</a> akan terus tampil di laporan mingguan sampai tugas/proyek tersebut selesai.</small>
+                                            <span class="font-weight-bold text-dark">Belum ada project atau task yang diselesaikan pada periode minggu ini.</span><br>
+                                            <small class="text-muted">Task atau proyek yang diselesaikan di menu <a href="<?= base_url('task_proyek') ?>" target="_blank" class="font-weight-bold">Task & Proyek</a> akan otomatis sinkron dan muncul di sini.</small>
                                         </div>
                                     </td>
                                 </tr>
@@ -797,7 +750,7 @@ foreach ($data_detail as $row) {
                 </div>
 			</div>
 		</div>
-		<!-- TASK & PROYEK (SINKRON TASK & PROYEK) -->
+		<!-- PROJECT & TASK YANG DISELESAIKAN -->
 
         <?php 
         $jumlah_data_pencapaian = !empty($data_detail_pencapaian) ? count($data_detail_pencapaian) : 0;
@@ -1043,7 +996,7 @@ foreach ($data_detail as $row) {
                         <div class="col-md-3 col-sm-6">
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="text-muted small font-weight-500">Task & Proyek</div>
+                                    <div class="text-muted small font-weight-500">Project Diselesaikan</div>
                                     <div class="font-weight-bold text-success mt-1" style="font-size: 18px;"><?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> <span style="font-size: 13px; font-weight: 500;" class="text-muted">Task</span></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;">
