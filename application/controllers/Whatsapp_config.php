@@ -18,9 +18,9 @@ class Whatsapp_config extends CI_Controller
     // Device IDs - Sesuaikan dengan device yang terdaftar di WhacCenter
     private $registered_devices = [
         [
-            'device_id' => '4611b50d90ba3abb8e5dca14b6d53557',
-            'name' => 'Whatsapp Notifikasi Config',
-            'description' => 'Device WhatsApp untuk notifikasi Office Backup'
+            'device_id' => 'bbe8ce03e61d0c490e850bce5f3df56c',
+            'name' => 'Databank (Utama Connected)',
+            'description' => 'Device WhatsApp Utama untuk seluruh Notifikasi Sistem Office'
         ],
         [
             'device_id' => '7388d9d2431fbc65c0ce49a4fac7550b',
@@ -28,9 +28,9 @@ class Whatsapp_config extends CI_Controller
             'description' => 'Device WhatsApp Admin IT untuk notifikasi sistem'
         ],
         [
-            'device_id' => 'bbe8ce03e61d0c490e850bce5f3df56c',
-            'name' => 'Databank',
-            'description' => 'Device WhatsApp Databank (Connected)'
+            'device_id' => '4611b50d90ba3abb8e5dca14b6d53557',
+            'name' => 'Whatsapp Notifikasi Backup',
+            'description' => 'Device WhatsApp untuk notifikasi Office Backup'
         ]
     ];
 

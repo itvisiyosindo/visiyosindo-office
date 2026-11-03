@@ -4,15 +4,15 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Menentukan Host Wa -----------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------	
-function hostWa($param)
+function hostWa($param = null)
 {
-	$devId = '';
+	$devId = 'bbe8ce03e61d0c490e850bce5f3df56c'; // Device ID Databank (Utama Connected) di WhaCenter
 	if ($param == '1') {
-		$devId = '7388d9d2431fbc65c0ce49a4fac7550b'; //device ID IT di WhaCenter
+		$devId = 'bbe8ce03e61d0c490e850bce5f3df56c'; // device ID IT di WhaCenter
 	} else if ($param == '2') {
-		$devId = 'bbe8ce03e61d0c490e850bce5f3df56c'; //device ID Notifikasi IT di WhaCenter
+		$devId = 'bbe8ce03e61d0c490e850bce5f3df56c'; // device ID Notifikasi IT di WhaCenter
 	} else if ($param == '3') {
-		$devId = 'bbe8ce03e61d0c490e850bce5f3df56c'; //device ID Databank (Connected) di WhaCenter
+		$devId = 'bbe8ce03e61d0c490e850bce5f3df56c'; // device ID Databank (Connected) di WhaCenter
 	}
 	return $devId;
 }
@@ -2955,12 +2955,10 @@ function waPoPengajuanBaruGroup($data)
 
 	$dataWa = [
 		'penerima' => $targetGroup,
-		'pesan'    => $pesan,
-		'delay'    => '60',
-		'schedule' => time() + 60
+		'pesan'    => $pesan
 	];
 
-	return sendWaFonnte($dataWa);
+	return sendWaGroup($dataWa);
 }
 
 /**
@@ -3001,11 +2999,9 @@ function waPoIndentGroup($data)
 	$targets = !empty($data['groupPenerima']) ? [$data['groupPenerima']] : array_unique([$marketingGroup, $gudangGroup]);
 	$res = false;
 	foreach ($targets as $idx => $tg) {
-		$res = sendWaFonnte([
+		$res = sendWaGroup([
 			'penerima' => $tg,
-			'pesan'    => $pesan,
-			'delay'    => (string)(60 + ($idx * 15)),
-			'schedule' => time() + 60 + ($idx * 15)
+			'pesan'    => $pesan
 		]);
 	}
 
@@ -3050,11 +3046,9 @@ function waPoSiapDiprosesGroup($data)
 	$targets = !empty($data['groupPenerima']) ? [$data['groupPenerima']] : array_unique([$marketingGroup, $gudangGroup]);
 	$res = false;
 	foreach ($targets as $idx => $tg) {
-		$res = sendWaFonnte([
+		$res = sendWaGroup([
 			'penerima' => $tg,
-			'pesan'    => $pesan,
-			'delay'    => (string)(60 + ($idx * 15)),
-			'schedule' => time() + 60 + ($idx * 15)
+			'pesan'    => $pesan
 		]);
 	}
 
@@ -3089,12 +3083,10 @@ function waPoUpdateDokumenGroup($data)
 
 	$dataWa = [
 		'penerima' => $targetGroup,
-		'pesan'    => $pesan,
-		'delay'    => '60',
-		'schedule' => time() + 60
+		'pesan'    => $pesan
 	];
 
-	return sendWaFonnte($dataWa);
+	return sendWaGroup($dataWa);
 }
 
 function waPoLolosKroscekGroup($data)
@@ -3130,12 +3122,10 @@ function waPoLolosKroscekGroup($data)
 
 	$dataWa = [
 		'penerima' => $targetGroup,
-		'pesan'    => $pesan,
-		'delay'    => '60',
-		'schedule' => time() + 60
+		'pesan'    => $pesan
 	];
 
-	return sendWaFonnte($dataWa);
+	return sendWaGroup($dataWa);
 }
 
 
@@ -3389,11 +3379,9 @@ function waPoProgressGroup($data)
 
 	$res = false;
 	foreach ($targets as $idx => $tg) {
-		$res = sendWaFonnte([
+		$res = sendWaGroup([
 			'penerima' => $tg,
-			'pesan'    => $pesan,
-			'delay'    => (string)(2 + ($idx * 15)),
-			'schedule' => time() + 2 + ($idx * 15)
+			'pesan'    => $pesan
 		]);
 	}
 
@@ -3488,36 +3476,8 @@ function sendWa($dataSend)
 		}
 	}
 
-	// 0.1 Aturan 24-Hour Messaging Window (Khusus Nomor Pribadi):
-	// Pesan ke GRUP WhatsApp (@g.us / nama grup) bebas dikirim 24/7 tanpa batas.
-	// Pesan ke NOMOR PRIBADI hanya diizinkan jika nomor tujuan ada chat masuk dalam 24 jam terakhir.
-	$rawPenerimaTarget = trim((string)($dataSend['penerima'] ?? ''));
-	$isGroupTarget = (
-		strpos($rawPenerimaTarget, '@g.us') !== false ||
-		in_array($rawPenerimaTarget, [
-			'MARKETING PT. VYM',
-			'TEKNISI MEDIKAL PT. VYM',
-			'Gudang PT. VYM',
-			'Notifikasi tes',
-			'Visilab',
-			'VISILAB'
-		])
-	);
-
-	if (!$isGroupTarget && empty($dataSend['bypass_24h'])) {
-		if (function_exists('get_instance')) {
-			$ci = &get_instance();
-			if (!isset($ci->Md_whatsapp_session)) {
-				$ci->load->model('Md_whatsapp_session');
-			}
-			if (isset($ci->Md_whatsapp_session)) {
-				if (!$ci->Md_whatsapp_session->is_session_active($rawPenerimaTarget)) {
-					// Abaikan pengiriman pesan pribadi karena di luar jendela 24 jam
-					return false;
-				}
-			}
-		}
-	}
+	// 0.1 Pengiriman Normal WhaCenter (Bebas kirim ke nomor pribadi dan grup 24 jam)
+	// (Restriksi sesi 24-jam Convia/Cloud API dinonaktifkan agar notifikasi sistem ke karyawan dapat masuk normal)
 
 	// Pastikan link dalam pesan selalu mengarah ke domain publik yang bisa dibuka dari HP
 	if (isset($dataSend['pesan'])) {
@@ -3563,25 +3523,30 @@ function sendWa($dataSend)
 	}
 	@file_put_contents($lockFile, (string)time());
 
-	// 1. Utamakan kirim via Fonnte API (dengan sistem antrean 1-per-1 Anti-Ban) selama Convia bermasalah
+	// 1. Utamakan kirim via Whacenter Gateway (Device ID Databank: bbe8ce03e61d0c490e850bce5f3df56c)
+	if (sendWaWhacenter($dataSend)) {
+		return true;
+	}
+
+	// 2. Fallback ke Fonnte API jika Whacenter gagal
 	if (sendWaFonnte($dataSend)) {
 		return true;
 	}
 
-	// 2. Fallback ke Convia API jika Fonnte gagal
-	if (sendWaConvia($dataSend)) {
-		return true;
-	}
-
-	// 3. Fallback ke Whacenter
-	return sendWaWhacenter($dataSend);
+	// 3. Fallback ke Convia API jika keduanya gagal
+	return sendWaConvia($dataSend);
 }
 /**
  * Kirim pesan via Whacenter Gateway
  */
 function sendWaWhacenter($dataSend)
 {
-	$penerima = preg_replace('/[^0-9]/', '', $dataSend['penerima']);
+	$deviceId = !empty($dataSend['devId']) ? $dataSend['devId'] : hostWa('3');
+	if (empty($deviceId)) {
+		$deviceId = 'bbe8ce03e61d0c490e850bce5f3df56c';
+	}
+
+	$penerima = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
 	if (substr($penerima, 0, 2) == '08') {
 		$penerima = '62' . substr($penerima, 1);
 	}
@@ -3591,19 +3556,31 @@ function sendWaWhacenter($dataSend)
 	}
 
 	$pesanText = urldecode($dataSend['pesan']);
-	if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanText)) {
-		$pesanText = rtrim($pesanText) . "\n_Sistem Office PT Visi Yosindo Medikal_";
+	if (empty($dataSend['raw_chat'])) {
+		if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanText)) {
+			$pesanText = rtrim($pesanText) . "\n_Sistem Office PT Visi Yosindo Medikal_";
+		}
 	}
-	$pesan = urlencode($pesanText);
-	$url = "https://app.whacenter.com/api/send?device_id=" . urlencode($dataSend['devId']) . "&number=" . urlencode($penerima) . "&message=" . $pesan;
+
+	$url = "https://app.whacenter.com/api/send";
+	$postData = [
+		'device_id' => $deviceId,
+		'number'    => $penerima,
+		'message'   => $pesanText
+	];
+	if (!empty($dataSend['file'])) {
+		$postData['file'] = $dataSend['file'];
+	}
 
 	if (function_exists('curl_init')) {
 		$curl = curl_init();
 		curl_setopt_array($curl, [
 			CURLOPT_URL            => $url,
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => $postData,
 			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_TIMEOUT        => 5,
-			CURLOPT_CONNECTTIMEOUT => 3,
+			CURLOPT_TIMEOUT        => 10,
+			CURLOPT_CONNECTTIMEOUT => 5,
 			CURLOPT_SSL_VERIFYPEER => false,
 			CURLOPT_SSL_VERIFYHOST => false,
 			CURLOPT_FOLLOWLOCATION => true
@@ -3612,14 +3589,15 @@ function sendWaWhacenter($dataSend)
 		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
-		if ($response && $httpCode == 200) {
+		if ($response && ($httpCode == 200 || $httpCode == 201)) {
 			return true;
 		}
 	}
 
+	$getUrl = "https://app.whacenter.com/api/send?device_id=" . urlencode($deviceId) . "&number=" . urlencode($penerima) . "&message=" . urlencode($pesanText);
 	$ctx = stream_context_create([
 		'http' => [
-			'timeout' => 5,
+			'timeout' => 8,
 			'header'  => "User-Agent: VYM-System/1.0\r\n"
 		],
 		'ssl' => [
@@ -3627,7 +3605,7 @@ function sendWaWhacenter($dataSend)
 			'verify_peer_name' => false
 		]
 	]);
-	@file_get_contents($url, false, $ctx);
+	@file_get_contents($getUrl, false, $ctx);
 
 	return true;
 }
@@ -3676,18 +3654,18 @@ function sendWaGroup($dataSend)
 	}
 	@file_put_contents($lockFile, (string)time());
 
-	// 1. Utamakan Fonnte API Group (dengan antrean 1-per-1 & jeda 60 detik)
+	// 1. Utamakan kirim via Whacenter Group Gateway (Device ID Databank: bbe8ce03e61d0c490e850bce5f3df56c)
+	if (sendWaWhacenterGroup($dataSend)) {
+		return true;
+	}
+
+	// 2. Fallback Fonnte API Group jika Whacenter gagal
 	if (sendWaFonnteGroup($dataSend)) {
 		return true;
 	}
 
-	// 2. Fallback Convia API Group
-	if (sendWaConviaGroup($dataSend)) {
-		return true;
-	}
-
-	// 3. Fallback Whacenter Group
-	return sendWaWhacenterGroup($dataSend);
+	// 3. Fallback Convia Group
+	return sendWaConviaGroup($dataSend);
 }
 
 /**
@@ -3699,16 +3677,46 @@ function sendWaWhacenterGroup($dataSend)
 		return false;
 	}
 
-	$pesan = urlencode(urldecode($dataSend['pesan']));
-	$url = "https://app.whacenter.com/api/sendGroup?device_id=" . urlencode($dataSend['devId']) . "&group=" . urlencode(urldecode($dataSend['penerima'])) . "&message=" . $pesan;
+	$deviceId = !empty($dataSend['devId']) ? $dataSend['devId'] : hostWa('3');
+	if (empty($deviceId)) {
+		$deviceId = 'bbe8ce03e61d0c490e850bce5f3df56c';
+	}
+
+	$targetGroup = trim(urldecode((string)($dataSend['penerima'] ?? '')));
+	$group_mappings_to_name = [
+		'6281261457547-1569293240@g.us' => 'MARKETING PT. VYM',
+		'6281261457547-1578895457@g.us' => 'TEKNISI MEDIKAL PT. VYM',
+		'6281261457547-1572316215@g.us' => 'Gudang PT. VYM',
+		'120363429248456823@g.us'        => 'Notifikasi tes'
+	];
+	$groupParam = isset($group_mappings_to_name[$targetGroup]) ? $group_mappings_to_name[$targetGroup] : $targetGroup;
+
+	$pesanText = urldecode($dataSend['pesan']);
+	if (empty($dataSend['raw_chat'])) {
+		if (!preg_match('/_Sistem Office PT Visi Yosindo Medikal_/i', $pesanText)) {
+			$pesanText = rtrim($pesanText) . "\n_Sistem Office PT Visi Yosindo Medikal_";
+		}
+	}
+
+	$url = "https://app.whacenter.com/api/sendGroup";
+	$postData = [
+		'device_id' => $deviceId,
+		'group'     => $groupParam,
+		'message'   => $pesanText
+	];
+	if (!empty($dataSend['file'])) {
+		$postData['file'] = $dataSend['file'];
+	}
 
 	if (function_exists('curl_init')) {
 		$curl = curl_init();
 		curl_setopt_array($curl, [
 			CURLOPT_URL            => $url,
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => $postData,
 			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_TIMEOUT        => 5,
-			CURLOPT_CONNECTTIMEOUT => 3,
+			CURLOPT_TIMEOUT        => 10,
+			CURLOPT_CONNECTTIMEOUT => 5,
 			CURLOPT_SSL_VERIFYPEER => false,
 			CURLOPT_SSL_VERIFYHOST => false,
 			CURLOPT_FOLLOWLOCATION => true
@@ -3717,14 +3725,38 @@ function sendWaWhacenterGroup($dataSend)
 		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
-		if ($response && $httpCode == 200) {
+		if ($response && ($httpCode == 200 || $httpCode == 201)) {
 			return true;
+		}
+
+		if ($groupParam !== $targetGroup) {
+			$postData['group'] = $targetGroup;
+			$curl = curl_init();
+			curl_setopt_array($curl, [
+				CURLOPT_URL            => $url,
+				CURLOPT_POST           => true,
+				CURLOPT_POSTFIELDS     => $postData,
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_TIMEOUT        => 10,
+				CURLOPT_CONNECTTIMEOUT => 5,
+				CURLOPT_SSL_VERIFYPEER => false,
+				CURLOPT_SSL_VERIFYHOST => false,
+				CURLOPT_FOLLOWLOCATION => true
+			]);
+			$response = curl_exec($curl);
+			$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			curl_close($curl);
+
+			if ($response && ($httpCode == 200 || $httpCode == 201)) {
+				return true;
+			}
 		}
 	}
 
+	$getUrl = "https://app.whacenter.com/api/sendGroup?device_id=" . urlencode($deviceId) . "&group=" . urlencode($groupParam) . "&message=" . urlencode($pesanText);
 	$ctx = stream_context_create([
 		'http' => [
-			'timeout' => 5,
+			'timeout' => 8,
 			'header'  => "User-Agent: VYM-System/1.0\r\n"
 		],
 		'ssl' => [
@@ -3732,7 +3764,7 @@ function sendWaWhacenterGroup($dataSend)
 			'verify_peer_name' => false
 		]
 	]);
-	@file_get_contents($url, false, $ctx);
+	@file_get_contents($getUrl, false, $ctx);
 
 	return true;
 }
