@@ -470,7 +470,7 @@
                         <strong class="text-dark"><i class="fab fa-whatsapp text-success mr-1"></i> WhatsApp Inbox</strong>
                         <div class="text-muted small" style="font-size: 11px;">Nomor Kantor: <strong>0896-6280-3131</strong></div>
                     </div>
-                    <span class="badge badge-success px-2 py-1"><i class="fas fa-circle mr-1" style="font-size: 8px;"></i> Fonnte Gateway</span>
+                    <span class="badge badge-success px-2 py-1"><i class="fas fa-circle mr-1" style="font-size: 8px;"></i> WhaCenter Gateway</span>
                 </div>
                 <div class="wa-search-box">
                     <i class="fas fa-search search-icon"></i>
@@ -901,8 +901,8 @@ function updateChatHeader(data) {
         bypassWarning.style.display = 'none';
         document.getElementById('checkBypass').checked = false;
     } else {
-        sessionContainer.innerHTML = '<span class="wa-session-pill expired"><i class="fas fa-exclamation-circle mr-1"></i> Sesi Kedaluwarsa</span>';
-        bypassWarning.style.display = 'flex';
+        sessionContainer.innerHTML = '<span class="wa-session-pill active"><i class="fas fa-check-circle mr-1"></i> WhaCenter 24/7 Aktif</span>';
+        bypassWarning.style.display = 'none';
     }
 }
 
