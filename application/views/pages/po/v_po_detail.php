@@ -213,6 +213,11 @@
                                     <i class="fas fa-edit mr-1"></i> Edit / Revisi PO
                                 </a>
                             <?php endif; ?>
+                            <?php if (isAdmin()): ?>
+                                <a href="<?= base_url('po_system/hapus/' . $id_encrypt) ?>" class="btn btn-xs btn-outline-danger font-weight-bold ml-1 shadow-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data PO No: <?= htmlspecialchars($po->no_po, ENT_QUOTES) ?>?')">
+                                    <i class="fas fa-trash-alt mr-1"></i> Hapus PO
+                                </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

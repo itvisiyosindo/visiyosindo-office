@@ -60,6 +60,47 @@ if ($mysqli && !$mysqli->connect_error) {
 
 $action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : 'get_state');
 
+if ($action === 'list_po_masuk') {
+    $rows = [];
+    if ($dbConnected) {
+        $q = $mysqli->query("SELECT id_po, no_po, tanggal_po, status, status_proses, gm_status, deleted FROM po_masuk ORDER BY id_po DESC LIMIT 10");
+        if ($q) {
+            while ($r = $q->fetch_assoc()) {
+                $rows[] = $r;
+            }
+        }
+    }
+    echo json_encode(['status' => 'success', 'rows' => $rows]);
+    exit;
+}
+
+if ($action === 'delete_target_pos') {
+    $target_pos = ['PO-202611-001', 'PO-202610-010'];
+    $res_info = [];
+    $affected = 0;
+    if ($dbConnected) {
+        $escaped = array_map(function($p) use ($mysqli) {
+            return "'" . $mysqli->real_escape_string($p) . "'";
+        }, $target_pos);
+        $inClause = implode(',', $escaped);
+        $q = $mysqli->query("SELECT id_po, no_po, status, status_proses, gm_status, deleted FROM po_masuk WHERE no_po IN ($inClause)");
+        if ($q) {
+            while ($r = $q->fetch_assoc()) {
+                $res_info[] = $r;
+            }
+        }
+        $mysqli->query("UPDATE po_masuk SET deleted = 1 WHERE no_po IN ($inClause)");
+        $affected = $mysqli->affected_rows;
+    }
+    echo json_encode([
+        'status' => 'success',
+        'affected_rows' => $affected,
+        'found_rows' => $res_info,
+        'message' => 'PO PO-202611-001 dan PO-202610-010 berhasil dihapus (deleted=1)'
+    ]);
+    exit;
+}
+
 if ($action === 'save_state') {
     $rawInput = file_get_contents('php://input');
     $inputData = json_decode($rawInput, true);

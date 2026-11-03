@@ -1422,11 +1422,7 @@ class Po_system extends CI_Controller
             return;
         }
 
-        if (in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true)) {
-            $this->session->set_flashdata('error', 'Data PO No. ' . $po->no_po . ' sudah disetujui oleh General Manager (GM) dan tidak dapat dihapus!');
-            redirect('po_system/detail/' . $id_encrypted);
-            return;
-        }
+
 
         $this->md_po_system->deletePo($id_po);
 

@@ -584,7 +584,7 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                 <?php endif; ?>
-                                                <?php if (isAdmin() && !$is_gm_locked_row): ?>
+                                                <?php if (isAdmin()): ?>
                                                     <a href="<?= base_url('po_system/hapus/' . $id_enc) ?>" class="btn btn-sm btn-outline-danger btn-action ml-1" title="Hapus PO" onclick="return confirm('Apakah Anda yakin ingin menghapus data PO No: <?= htmlspecialchars($row->no_po, ENT_QUOTES) ?>?')">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </a>
