@@ -174,8 +174,18 @@ class Wa_chat extends CI_Controller
 
         $normalizedPhone = $this->Md_whatsapp_chat->normalize_phone($phone);
 
-        // Dengan WhaCenter Gateway (Multi-Device), pengiriman bebas dilakukan 24/7 tanpa batasan sesi 24 jam
-        // Pesan langsung diteruskan ke WhaCenter tanpa blokir sesi expired
+        // Cek jendela 24 jam jika bypass tidak aktif
+        $isActive = $this->Md_whatsapp_session->is_session_active($normalizedPhone);
+        if (!$isActive && empty($bypass24h)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status'  => 'error',
+                    'code'    => 'SESSION_EXPIRED',
+                    'message' => 'Sesi 24 jam untuk nomor ini sudah kedaluwarsa. Gunakan centang kirim template atau tunggu pelanggan chat kembali.'
+                ]));
+            return;
+        }
 
         // Kirim via Fonnte
         $dataSend = [

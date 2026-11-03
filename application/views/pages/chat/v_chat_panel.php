@@ -901,8 +901,8 @@ function updateChatHeader(data) {
         bypassWarning.style.display = 'none';
         document.getElementById('checkBypass').checked = false;
     } else {
-        sessionContainer.innerHTML = '<span class="wa-session-pill active"><i class="fas fa-check-circle mr-1"></i> WhaCenter 24/7 Aktif</span>';
-        bypassWarning.style.display = 'none';
+        sessionContainer.innerHTML = '<span class="wa-session-pill expired"><i class="fas fa-exclamation-circle mr-1"></i> Sesi Kedaluwarsa</span>';
+        bypassWarning.style.display = 'flex';
     }
 }
 
