@@ -111,8 +111,26 @@ class Po_system extends CI_Controller
             return true;
         }));
 
-        // Pastikan opsi eksplisit Teknisi, Marketing Visilab, dan After Sales tersedia di daftar
+        // Cari pengguna_id untuk Bob Ariyos
+        $bobUser = $this->db->select('pengguna_id, nama, jabatan')
+            ->from('pengguna')
+            ->group_start()
+                ->like('nama', 'Bob Ariyos', 'both')
+                ->or_where_in('pengguna_id', [54, 69])
+            ->group_end()
+            ->order_by('is_active', 'DESC')
+            ->get()
+            ->row();
+
+        $bobId = $bobUser ? (int)$bobUser->pengguna_id : 54;
+
+        // Pastikan opsi eksplisit Bob Ariyos (Directur), Teknisi, Marketing Visilab, dan After Sales tersedia di daftar
         $specialUnits = [
+            (object)[
+                'pengguna_id' => $bobId,
+                'nama'        => 'Bob Ariyos (Directur)',
+                'jabatan'     => ''
+            ],
             (object)[
                 'pengguna_id' => 737,
                 'nama'        => 'Teknisi',
@@ -131,7 +149,11 @@ class Po_system extends CI_Controller
         ];
 
         $existingNames = [];
-        foreach ($filtered as $item) {
+        foreach ($filtered as $key => $item) {
+            if ((int)$item->pengguna_id === $bobId || stripos($item->nama, 'bob ariyos') !== false) {
+                unset($filtered[$key]);
+                continue;
+            }
             if ((int)$item->pengguna_id === 747 && stripos($item->nama, 'after') === false) {
                 $item->nama    = 'After Sales (' . $item->nama . ')';
                 $item->jabatan = $item->jabatan ?: 'After Sales Service';
@@ -142,6 +164,7 @@ class Po_system extends CI_Controller
             }
             $existingNames[strtolower(trim($item->nama))] = true;
         }
+        $filtered = array_values($filtered);
 
         $prependUnits = [];
         foreach ($specialUnits as $unit) {

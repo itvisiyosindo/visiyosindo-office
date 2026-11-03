@@ -777,14 +777,14 @@
                             <small class="help-hint">Format PDF, JPG, PNG (Maks 10MB)</small>
                         </div>
 
-                        <!-- Diajukan Oleh (Marketing/Sales/Teknisi/Visilab/After Sales) -->
+                        <!-- Diajukan Oleh (Bob Ariyos(Directur) / Marketing / Sales / Teknisi / Visilab / After Sales) -->
                         <?php
                             $selected_sales_id   = $is_edit ? ($po_edit->id_sales ?? sessPenggunaId()) : sessPenggunaId();
                             $selected_sales_nama = $is_edit ? trim($po_edit->nama_sales ?? '') : '';
                             $matched_by_nama     = false;
                             if ($is_edit && !empty($selected_sales_nama) && !empty($sales_list)) {
                                 foreach ($sales_list as $chk) {
-                                    if (strcasecmp(trim($chk->nama), $selected_sales_nama) === 0) {
+                                    if (strcasecmp(trim($chk->nama), $selected_sales_nama) === 0 || strcasecmp(str_replace(' ', '', $chk->nama), str_replace(' ', '', $selected_sales_nama)) === 0) {
                                         $matched_by_nama = true;
                                         break;
                                     }
@@ -793,18 +793,22 @@
                         ?>
                         <div class="col-md-4 mb-3">
                             <label class="form-label-custom">Diajukan Oleh <span class="text-danger">*</span></label>
-                            <select name="id_sales" id="id_sales" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Pilih Pengaju (Marketing / Teknisi / Visilab / After Sales) --" required>
+                            <select name="id_sales" id="id_sales" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Pilih Pengaju (Bob Ariyos / Marketing / Teknisi / Visilab / After Sales) --" required>
                                 <?php if (!empty($sales_list)): ?>
                                     <?php foreach ($sales_list as $s): ?>
                                         <?php
+                                            $sLabel = $s->nama;
+                                            if (!empty($s->jabatan) && stripos($s->nama, $s->jabatan) === false) {
+                                                $sLabel .= ' (' . $s->jabatan . ')';
+                                            }
                                             $is_sel = $matched_by_nama
-                                                ? (strcasecmp(trim($s->nama), $selected_sales_nama) === 0)
+                                                ? (strcasecmp(trim($s->nama), $selected_sales_nama) === 0 || strcasecmp(str_replace(' ', '', $s->nama), str_replace(' ', '', $selected_sales_nama)) === 0)
                                                 : ($s->pengguna_id == $selected_sales_id && !$matched_by_nama);
                                             if ($is_sel) {
                                                 $matched_by_nama = true; // hanya pilih 1 option pertama yang cocok
                                             }
                                         ?>
-                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($s->nama) ?>" <?= $is_sel ? 'selected' : '' ?>><?= htmlspecialchars($s->nama . (!empty($s->jabatan) ? ' (' . $s->jabatan . ')' : '')) ?></option>
+                                        <option value="<?= $s->pengguna_id ?>" data-nama="<?= htmlspecialchars($sLabel) ?>" <?= $is_sel ? 'selected' : '' ?>><?= htmlspecialchars($sLabel) ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>

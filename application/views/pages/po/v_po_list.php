@@ -645,7 +645,13 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                             <option value="">-- Semua Marketing / Sales --</option>
                             <?php if (!empty($sales_list)): ?>
                                 <?php foreach ($sales_list as $sl): ?>
-                                    <option value="<?= $sl->pengguna_id ?>"><?= htmlspecialchars($sl->nama) ?> (<?= htmlspecialchars($sl->jabatan) ?>)</option>
+                                    <?php
+    $slLabel = $sl->nama;
+    if (!empty($sl->jabatan) && stripos($sl->nama, $sl->jabatan) === false) {
+        $slLabel .= ' (' . $sl->jabatan . ')';
+    }
+?>
+                                    <option value="<?= $sl->pengguna_id ?>"><?= htmlspecialchars($slLabel) ?></option>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </select>
