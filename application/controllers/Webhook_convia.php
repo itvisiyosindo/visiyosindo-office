@@ -94,6 +94,10 @@ class Webhook_convia extends CI_Controller
                 $phone = $data['data']['phone_number'];
             } elseif (isset($data['data']['from'])) {
                 $phone = $data['data']['from'];
+            } elseif (!empty($data['number'])) {
+                $phone = $data['number'];
+            } elseif (isset($data['data']['number'])) {
+                $phone = $data['data']['number'];
             }
 
             // 2. Cek field isi pesan
