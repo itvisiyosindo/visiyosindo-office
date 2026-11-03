@@ -1516,6 +1516,15 @@ function waAllGroupVisilab($data)
 if (!defined('ENABLE_WA_PO_NOTIF')) {
     define('ENABLE_WA_PO_NOTIF', true);
 }
+if (!defined('WA_GROUP_MARKETING')) {
+    define('WA_GROUP_MARKETING', '6281261457547-1569293240@g.us');
+}
+if (!defined('WA_GROUP_TEKNISI')) {
+    define('WA_GROUP_TEKNISI', '6281261457547-1578895457@g.us');
+}
+if (!defined('WA_GROUP_GUDANG')) {
+    define('WA_GROUP_GUDANG', '6281261457547-1572316215@g.us');
+}
 
 function waPoVisilabOpen($data)
 {
@@ -2918,14 +2927,113 @@ function sendWaFonnteGroup($dataSend)
 }
 
 /**
- * Notifikasi Pengajuan PO Baru dari Marketing ke Grup Marketing / Visilab & PIC (CRO, GM)
+ * Helper untuk mendeteksi apakah suatu PO merupakan PO After Sales (produk / jasa teknisi / sparepart / diajukan oleh After Sales atau Teknisi)
+ */
+if (!function_exists('isPoAfterSales')) {
+	function isPoAfterSales($data = [], $po = null)
+	{
+		// 1. Cek explicit flag
+		if (isset($data['is_after_sales'])) {
+			return (bool)$data['is_after_sales'];
+		}
+
+		$nama_sales = !empty($data['nama_sales']) ? $data['nama_sales'] : (!empty($po->nama_sales) ? $po->nama_sales : (!empty($po->nama_pembuat) ? $po->nama_pembuat : ''));
+
+		// 2. Cek nama sales / pengaju
+		if (!empty($nama_sales)) {
+			if (
+				stripos($nama_sales, 'after sales') !== false ||
+				stripos($nama_sales, 'aftersales') !== false ||
+				stripos($nama_sales, 'after-sales') !== false ||
+				stripos($nama_sales, 'teknisi') !== false
+			) {
+				return true;
+			}
+		}
+
+		// 3. Cek id_sales atau created_by (747 = After Sales, 737 = Teknisi)
+		$id_sales   = !empty($data['id_sales']) ? (int)$data['id_sales'] : (!empty($po->id_sales) ? (int)$po->id_sales : 0);
+		$created_by = !empty($data['created_by']) ? (int)$data['created_by'] : (!empty($po->created_by) ? (int)$po->created_by : 0);
+		if ($id_sales === 747 || $id_sales === 737 || $created_by === 747 || $created_by === 737) {
+			return true;
+		}
+
+		// 4. Cek jabatan pembuat / pengaju
+		if (!empty($po->jabatan_pembuat)) {
+			if (stripos($po->jabatan_pembuat, 'after sales') !== false || stripos($po->jabatan_pembuat, 'teknisi') !== false) {
+				return true;
+			}
+		}
+
+		// 5. Cek items dari array $data jika dikirim langsung
+		$raw_items = $data['items'] ?? ($data['indent_items'] ?? []);
+		if (!empty($raw_items) && is_array($raw_items)) {
+			foreach ($raw_items as $it) {
+				$nm = is_object($it) ? ($it->nama_barang ?? '') : ($it['nama_barang'] ?? '');
+				$tp = is_object($it) ? ($it->tipe_barang ?? '') : ($it['tipe_barang'] ?? '');
+				if (
+					stripos($nm, 'after sales') !== false || stripos($nm, 'aftersales') !== false || stripos($nm, 'after-sales') !== false ||
+					stripos($nm, 'spare part') !== false || stripos($nm, 'sparepart') !== false ||
+					stripos($nm, 'service') !== false || stripos($nm, 'servis') !== false ||
+					stripos($tp, 'after sales') !== false || stripos($tp, 'aftersales') !== false || stripos($tp, 'after-sales') !== false ||
+					stripos($tp, 'spare part') !== false || stripos($tp, 'sparepart') !== false ||
+					stripos($tp, 'service') !== false || stripos($tp, 'servis') !== false
+				) {
+					return true;
+				}
+			}
+		}
+
+		// 6. Cek items di database jika id_po tersedia
+		$id_po = !empty($data['id_po']) ? (int)$data['id_po'] : (!empty($po->id_po) ? (int)$po->id_po : 0);
+		if ($id_po > 0) {
+			$CI =& get_instance();
+			if (isset($CI->db)) {
+				$found = $CI->db->select('id_item')
+					->from('po_masuk_item')
+					->where('id_po', $id_po)
+					->group_start()
+						->like('nama_barang', 'after sales')
+						->or_like('nama_barang', 'aftersales')
+						->or_like('nama_barang', 'after-sales')
+						->or_like('nama_barang', 'spare part')
+						->or_like('nama_barang', 'sparepart')
+						->or_like('nama_barang', 'service')
+						->or_like('nama_barang', 'servis')
+						->or_like('tipe_barang', 'after sales')
+						->or_like('tipe_barang', 'aftersales')
+						->or_like('tipe_barang', 'after-sales')
+						->or_like('tipe_barang', 'spare part')
+						->or_like('tipe_barang', 'sparepart')
+						->or_like('tipe_barang', 'service')
+						->or_like('tipe_barang', 'servis')
+					->group_end()
+					->limit(1)
+					->get()
+					->row();
+				if ($found) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+}
+
+/**
+ * Notifikasi Pengajuan PO Baru dari Marketing / After Sales ke Grup WhatsApp
  */
 function waPoPengajuanBaruGroup($data)
 {
 	if (!ENABLE_WA_PO_NOTIF) {
 		return false; // Notifikasi PO dimatikan sementara
 	}
-	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$marketingGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$teknisiGroup   = defined('WA_GROUP_TEKNISI') ? WA_GROUP_TEKNISI : (getenv('WA_GROUP_TEKNISI') ?: (isset($_ENV['WA_GROUP_TEKNISI']) ? $_ENV['WA_GROUP_TEKNISI'] : '6281261457547-1578895457@g.us'));
+
+	$is_after_sales = isPoAfterSales($data);
+	$targetGroup    = $is_after_sales ? $teknisiGroup : $marketingGroup;
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
 	}
@@ -2974,7 +3082,12 @@ function waPoIndentGroup($data)
 		return false; // Notifikasi PO dimatikan sementara
 	}
 	$marketingGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$teknisiGroup   = defined('WA_GROUP_TEKNISI') ? WA_GROUP_TEKNISI : (getenv('WA_GROUP_TEKNISI') ?: (isset($_ENV['WA_GROUP_TEKNISI']) ? $_ENV['WA_GROUP_TEKNISI'] : '6281261457547-1578895457@g.us'));
 	$gudangGroup    = defined('WA_GROUP_GUDANG') ? WA_GROUP_GUDANG : '6281261457547-1572316215@g.us';
+
+	$po = $data['po'] ?? null;
+	$is_after_sales = isPoAfterSales($data, $po);
+	$baseGroup      = $is_after_sales ? $teknisiGroup : $marketingGroup;
 
 	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
 	$kode_masuk = !empty($data['kode_masuk']) ? $data['kode_masuk'] : '-';
@@ -2984,7 +3097,7 @@ function waPoIndentGroup($data)
 	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
 
 	$pesan = "🟠 *NOTIFIKASI PO STATUS: HOLD / INDENT*\n\n" .
-		"Halo Tim Gudang, Marketing, & Visilab,\n" .
+		"Halo Tim Gudang, " . ($is_after_sales ? "Teknisi" : "Marketing") . ", & Visilab,\n" .
 		"PO Masuk berikut saat ini berstatus *HOLD / INDENT* karena stok barang belum tersedia di gudang:\n\n" .
 		"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
 		"📄 *No. PO*: " . $no_po . "\n" .
@@ -2996,7 +3109,7 @@ function waPoIndentGroup($data)
 		"Cek detail PO:\n" . $link . "\n\n" .
 		"Terima Kasih.";
 
-	$targets = !empty($data['groupPenerima']) ? [$data['groupPenerima']] : array_unique([$marketingGroup, $gudangGroup]);
+	$targets = !empty($data['groupPenerima']) ? [$data['groupPenerima']] : array_unique([$baseGroup, $gudangGroup]);
 	$res = false;
 	foreach ($targets as $idx => $tg) {
 		$res = sendWaGroup([
@@ -3017,7 +3130,12 @@ function waPoSiapDiprosesGroup($data)
 		return false; // Notifikasi PO dimatikan sementara
 	}
 	$marketingGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$teknisiGroup   = defined('WA_GROUP_TEKNISI') ? WA_GROUP_TEKNISI : (getenv('WA_GROUP_TEKNISI') ?: (isset($_ENV['WA_GROUP_TEKNISI']) ? $_ENV['WA_GROUP_TEKNISI'] : '6281261457547-1578895457@g.us'));
 	$gudangGroup    = defined('WA_GROUP_GUDANG') ? WA_GROUP_GUDANG : '6281261457547-1572316215@g.us';
+
+	$po = $data['po'] ?? null;
+	$is_after_sales = isPoAfterSales($data, $po);
+	$baseGroup      = $is_after_sales ? $teknisiGroup : $marketingGroup;
 
 	$no_po = !empty($data['no_po']) ? $data['no_po'] : '-';
 	$kode_masuk = !empty($data['kode_masuk']) ? $data['kode_masuk'] : '-';
@@ -3027,7 +3145,7 @@ function waPoSiapDiprosesGroup($data)
 	$link = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
 
 	$pesan = "🟢 *NOTIFIKASI PO DISETUJUI GM — PO BISA DIPROSES*\n\n" .
-		"Halo Tim Marketing, Visilab, Gudang, Accounting, & Pajak,\n" .
+		"Halo Tim " . ($is_after_sales ? "Teknisi" : "Marketing") . ", Visilab, Gudang, Accounting, & Pajak,\n" .
 		"PO berikut telah *DISETUJUI SEMUA HINGGA GENERAL MANAGER (GM)*:\n" .
 		"🟢 *Keterangan*: *PO BISA DIPROSES*\n\n" .
 		"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
@@ -3043,7 +3161,7 @@ function waPoSiapDiprosesGroup($data)
 		"Tautan Sistem PO:\n" . $link . "\n\n" .
 		"Terima Kasih atas kerja sama seluruh divisi!";
 
-	$targets = !empty($data['groupPenerima']) ? [$data['groupPenerima']] : array_unique([$marketingGroup, $gudangGroup]);
+	$targets = !empty($data['groupPenerima']) ? [$data['groupPenerima']] : array_unique([$baseGroup, $gudangGroup]);
 	$res = false;
 	foreach ($targets as $idx => $tg) {
 		$res = sendWaGroup([
@@ -3063,7 +3181,19 @@ function waPoUpdateDokumenGroup($data)
 	if (!ENABLE_WA_PO_NOTIF) {
 		return false; // Notifikasi PO dimatikan sementara
 	}
-	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$marketingGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$teknisiGroup   = defined('WA_GROUP_TEKNISI') ? WA_GROUP_TEKNISI : (getenv('WA_GROUP_TEKNISI') ?: (isset($_ENV['WA_GROUP_TEKNISI']) ? $_ENV['WA_GROUP_TEKNISI'] : '6281261457547-1578895457@g.us'));
+
+	$po = $data['po'] ?? null;
+	if (!$po && !empty($data['no_po'])) {
+		$CI =& get_instance();
+		if (isset($CI->db)) {
+			$po = $CI->db->get_where('po_masuk', ['no_po' => $data['no_po'], 'deleted' => 0])->row();
+		}
+	}
+
+	$is_after_sales = isPoAfterSales($data, $po);
+	$targetGroup    = $is_after_sales ? $teknisiGroup : $marketingGroup;
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
 	}
@@ -3094,7 +3224,11 @@ function waPoLolosKroscekGroup($data)
 	if (!ENABLE_WA_PO_NOTIF) {
 		return false; // Notifikasi PO dimatikan sementara
 	}
-	$targetGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$marketingGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$teknisiGroup   = defined('WA_GROUP_TEKNISI') ? WA_GROUP_TEKNISI : (getenv('WA_GROUP_TEKNISI') ?: (isset($_ENV['WA_GROUP_TEKNISI']) ? $_ENV['WA_GROUP_TEKNISI'] : '6281261457547-1578895457@g.us'));
+
+	$is_after_sales = isPoAfterSales($data);
+	$targetGroup    = $is_after_sales ? $teknisiGroup : $marketingGroup;
 	if (!empty($data['groupPenerima'])) {
 		$targetGroup = $data['groupPenerima'];
 	}
@@ -3138,6 +3272,7 @@ function waPoProgressGroup($data)
 		return false; // Notifikasi PO dimatikan sementara
 	}
 	$marketingGroup = defined('WA_GROUP_MARKETING') ? WA_GROUP_MARKETING : (getenv('WA_GROUP_MARKETING') ?: (isset($_ENV['WA_GROUP_MARKETING']) ? $_ENV['WA_GROUP_MARKETING'] : '6281261457547-1569293240@g.us'));
+	$teknisiGroup   = defined('WA_GROUP_TEKNISI') ? WA_GROUP_TEKNISI : (getenv('WA_GROUP_TEKNISI') ?: (isset($_ENV['WA_GROUP_TEKNISI']) ? $_ENV['WA_GROUP_TEKNISI'] : '6281261457547-1578895457@g.us'));
 	$gudangGroup    = defined('WA_GROUP_GUDANG') ? WA_GROUP_GUDANG : '6281261457547-1572316215@g.us';
 
 	$po = $data['po'] ?? null;
@@ -3365,12 +3500,16 @@ function waPoProgressGroup($data)
 		"_Sistem Office PT Visi Yosindo Medikal_";
 
 	// Tentukan grup penerima:
-	// - Selalu kirim ke Grup Marketing
+	// - Jika PO After Sales / Produk After Sales / diajukan After Sales atau Teknisi: diarahkan ke Grup Teknisi (TEKNISI MEDIKAL PT. VYM)
+	// - Jika PO Marketing biasa: dikirim ke Grup Marketing (MARKETING PT. VYM)
 	// - Jika PO terdapat Barang Indent (Hold/Indent atau Proses Sebagian), Update Barang Indent, atau sudah di-ACC GM ("PO BISA DIPROSES"), kirim juga ke Grup Gudang!
+	$is_after_sales = isPoAfterSales($data, $po);
+	$baseGroup      = $is_after_sales ? $teknisiGroup : $marketingGroup;
+
 	if (!empty($data['groupPenerima'])) {
 		$targets = is_array($data['groupPenerima']) ? $data['groupPenerima'] : [$data['groupPenerima']];
 	} else {
-		$targets = [$marketingGroup];
+		$targets = [$baseGroup];
 		if ($has_indent || $is_gm_acc || $stage === 'inden_ready') {
 			$targets[] = $gudangGroup;
 		}

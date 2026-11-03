@@ -1287,6 +1287,7 @@ class Po_system extends CI_Controller
 
         // Notifikasi WA update dokumen ke grup
         waPoUpdateDokumenGroup([
+            'po'         => $po,
             'no_po'      => $po->no_po,
             'divisi'     => $divisi,
             'user_nama'  => $nama_user,
