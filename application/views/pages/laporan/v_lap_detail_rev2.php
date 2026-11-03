@@ -549,10 +549,6 @@
                             $grouped_data = [];
                             $point_has_lap = [];
                             foreach ($data_detail as $row) {
-                                // Sembunyikan rincian jobdesk yang tidak diisi pegawai pada minggu ini
-                                if (empty($row->id_lap) && $row->nilai_isi != 1) {
-                                    continue;
-                                }
 
                                 if (!isset($grouped_data[$row->id])) {
                                     $grouped_data[$row->id] = [];
