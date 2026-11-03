@@ -384,17 +384,17 @@
     </table>
 
     <?php if (!empty($data_project_selesai)): ?>
-        <div class="section-title">II. PROJECT &amp; TASK YANG DISELESAIKAN (SINKRON TASK &amp; PROYEK)</div>
+        <div class="section-title">II. TASK &amp; PROYEK (SINKRON TASK &amp; PROYEK - TAMPIL HINGGA SELESAI)</div>
         <table class="content-table">
             <thead>
                 <tr>
                     <th width="4%">No</th>
                     <th width="12%">Kode Task</th>
-                    <th width="28%">Judul &amp; Deskripsi</th>
+                    <th width="26%">Judul &amp; Deskripsi</th>
                     <th width="14%">Proyek / Jenis</th>
                     <th width="14%">Pemberi Tugas</th>
-                    <th width="10%">Tgl Selesai</th>
-                    <th width="10%">Rating</th>
+                    <th width="12%">Deadline / Tgl</th>
+                    <th width="10%">Progres</th>
                     <th width="8%">Status</th>
                 </tr>
             </thead>
@@ -419,12 +419,29 @@
                             <small><?= htmlspecialchars($t->jenis ?: 'Task') ?></small>
                         </td>
                         <td><?= htmlspecialchars($t->nama_pemberi ?: '-') ?></td>
-                        <td class="text-center"><?= date('d-m-Y', strtotime($tgl_selesai)) ?></td>
                         <td class="text-center">
-                            <?= !empty($t->rating_bintang) ? $t->rating_bintang . '/5 &#9733;' : '-' ?>
+                            <?php if ((int)$t->status_task === 4): ?>
+                                <small>Selesai: <?= date('d-m-Y', strtotime($tgl_selesai)) ?></small>
+                            <?php else: ?>
+                                <small><?= !empty($t->tgl_deadline) ? 'Deadline: ' . date('d-m-Y', strtotime($t->tgl_deadline)) : '-' ?></small>
+                            <?php endif; ?>
                         </td>
                         <td class="text-center">
-                            <small><?= (int)$t->status_task === 4 ? 'Selesai' : 'Review' ?></small>
+                            <strong><?= (int)$t->progres ?>%</strong>
+                            <?php if (!empty($t->rating_bintang)): ?>
+                                <br><small><?= $t->rating_bintang ?>/5 &#9733;</small>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center">
+                            <small>
+                                <?php 
+                                if ((int)$t->status_task === 4) echo 'Selesai';
+                                elseif ((int)$t->status_task === 2) echo 'Review';
+                                elseif ((int)$t->status_task === 3) echo 'Revisi';
+                                elseif ((int)$t->status_task === 1) echo 'Dikerjakan';
+                                else echo 'Baru';
+                                ?>
+                            </small>
                         </td>
                     </tr>
                 <?php endforeach; ?>
