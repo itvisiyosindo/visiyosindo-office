@@ -75,29 +75,38 @@ if ($action === 'list_po_masuk') {
 }
 
 if ($action === 'delete_target_pos') {
-    $target_pos = ['PO-202611-001', 'PO-202610-010'];
-    $res_info = [];
     $affected = 0;
+    $res_info = [];
     if ($dbConnected) {
-        $escaped = array_map(function($p) use ($mysqli) {
-            return "'" . $mysqli->real_escape_string($p) . "'";
-        }, $target_pos);
-        $inClause = implode(',', $escaped);
-        $q = $mysqli->query("SELECT id_po, no_po, status, status_proses, gm_status, deleted FROM po_masuk WHERE no_po IN ($inClause)");
+        $q = $mysqli->query("SELECT id_po, no_po, kode_masuk, tanggal_po, status, status_proses FROM po_masuk WHERE id_po IN (10, 11) OR kode_masuk IN ('PO-202611-001', 'PO-202610-010')");
         if ($q) {
             while ($r = $q->fetch_assoc()) {
                 $res_info[] = $r;
             }
         }
-        $mysqli->query("UPDATE po_masuk SET deleted = 1 WHERE no_po IN ($inClause)");
+        $mysqli->query("UPDATE po_masuk SET deleted = 1 WHERE id_po IN (10, 11) OR kode_masuk IN ('PO-202611-001', 'PO-202610-010')");
         $affected = $mysqli->affected_rows;
     }
     echo json_encode([
         'status' => 'success',
         'affected_rows' => $affected,
         'found_rows' => $res_info,
-        'message' => 'PO PO-202611-001 dan PO-202610-010 berhasil dihapus (deleted=1)'
+        'message' => 'PO ID 10 dan 11 berhasil dihapus (deleted=1)'
     ]);
+    exit;
+}
+
+if ($action === 'check_bob') {
+    $bob_rows = [];
+    if ($dbConnected) {
+        $q = $mysqli->query("SELECT pengguna_id, nama, jabatan, email, level FROM pengguna WHERE nama LIKE '%Bob%' OR jabatan LIKE '%Direct%' OR pengguna_id IN (54, 69)");
+        if ($q) {
+            while ($r = $q->fetch_assoc()) {
+                $bob_rows[] = $r;
+            }
+        }
+    }
+    echo json_encode(['status' => 'success', 'rows' => $bob_rows]);
     exit;
 }
 
