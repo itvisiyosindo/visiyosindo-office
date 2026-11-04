@@ -171,11 +171,14 @@ if ($action === 'get_pbok_info') {
 if ($action === 'apply_pbok_changes') {
     $results = [];
     if ($dbConnected) {
-        // 1. PBOK 497: Ubah "cleo pure water 220 ml" -> "aquviva 250 ml", estimasi 28.000, total = qty * 28.000
-        $q497 = $mysqli->query("SELECT id_pbok, kode_pbok FROM surat_pbok WHERE kode_pbok LIKE '%497%' LIMIT 1");
+        // Clean up accidental item 4199 on PBOK 1317 from test run
+        $mysqli->query("DELETE FROM surat_pbok_detail WHERE id = 4199 AND id_pbok = 1317 AND keterangan = 'ongkos kirim'");
+
+        // 1. PBOK 497/PBOK/FAT/VYM/XI/2026 (id_pbok = 2498): Ubah "cleo pure water 220 ml" -> "aquviva 250 ml", estimasi 28.000, total = qty * 28.000
+        $q497 = $mysqli->query("SELECT id_pbok, kode_pbok FROM surat_pbok WHERE id_pbok = 2498 OR (kode_pbok LIKE '%497%' AND kode_pbok LIKE '%2026%') LIMIT 1");
         if ($q497 && $row497 = $q497->fetch_assoc()) {
             $id497 = (int)$row497['id_pbok'];
-            $qItem = $mysqli->query("SELECT id, keterangan, qty, estimasi, total FROM surat_pbok_detail WHERE id_pbok = $id497 AND keterangan LIKE '%cleo%' LIMIT 1");
+            $qItem = $mysqli->query("SELECT id, keterangan, qty, estimasi, total FROM surat_pbok_detail WHERE id_pbok = $id497 AND (keterangan LIKE '%cleo%' OR keterangan LIKE '%aquviva%') LIMIT 1");
             if ($qItem && $item = $qItem->fetch_assoc()) {
                 $itemId = (int)$item['id'];
                 $qty = (float)$item['qty'];
@@ -203,8 +206,8 @@ if ($action === 'apply_pbok_changes') {
             $results['pbok_497'] = ['status' => 'pbok_not_found'];
         }
 
-        // 2. PBOK 499: Tambahkan "ongkos kirim" harga satuan 5.000, qty 6, total = 30.000
-        $q499 = $mysqli->query("SELECT id_pbok, kode_pbok, mata_uang FROM surat_pbok WHERE kode_pbok LIKE '%499%' LIMIT 1");
+        // 2. PBOK 499/PBOK/FAT/VYM/XI/2026 (id_pbok = 2500): Tambahkan "ongkos kirim" harga satuan 5.000, qty 6, total = 30.000
+        $q499 = $mysqli->query("SELECT id_pbok, kode_pbok, mata_uang FROM surat_pbok WHERE id_pbok = 2500 OR (kode_pbok LIKE '%499%' AND kode_pbok LIKE '%2026%') LIMIT 1");
         if ($q499 && $row499 = $q499->fetch_assoc()) {
             $id499 = (int)$row499['id_pbok'];
             $mataUang = !empty($row499['mata_uang']) ? $row499['mata_uang'] : '1';
@@ -252,6 +255,10 @@ if ($action === 'apply_pbok_changes') {
         } else {
             $results['pbok_499'] = ['status' => 'pbok_not_found'];
         }
+    }
+    echo json_encode(['status' => 'success', 'results' => $results]);
+    exit;
+}
     }
     echo json_encode(['status' => 'success', 'results' => $results]);
     exit;
