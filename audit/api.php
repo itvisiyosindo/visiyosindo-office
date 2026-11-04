@@ -260,26 +260,37 @@ if ($action === 'apply_pbok_changes') {
 if ($action === 'update_no_po_001') {
     $res = [];
     if ($dbConnected) {
-        $q = $mysqli->query("SELECT id_po, no_po, kode_masuk, nama_customer, tanggal_po, total_nilai FROM po_masuk WHERE kode_masuk = 'PO-202611-006' OR (no_po = '000' AND nama_customer LIKE '%Rajanti%') LIMIT 1");
+        $q = $mysqli->query("SELECT * FROM po_masuk WHERE id_po = 16 OR kode_masuk = 'PO-202611-006' OR no_po = '000' LIMIT 1");
         if ($q && $po = $q->fetch_assoc()) {
             $idPo = (int)$po['id_po'];
             $oldNoPo = $po['no_po'];
             $newNoPo = '001';
             $mysqli->query("UPDATE po_masuk SET no_po = '$newNoPo' WHERE id_po = $idPo");
             $affected = $mysqli->affected_rows;
+
+            // Fetch the updated record to confirm
+            $qAfter = $mysqli->query("SELECT * FROM po_masuk WHERE id_po = $idPo");
+            $poAfter = $qAfter ? $qAfter->fetch_assoc() : [];
+
             $res = [
                 'status' => 'success',
                 'id_po' => $idPo,
-                'kode_masuk' => $po['kode_masuk'],
-                'customer' => $po['nama_customer'],
+                'kode_masuk' => $po['kode_masuk'] ?? '',
                 'old_no_po' => $oldNoPo,
                 'new_no_po' => $newNoPo,
                 'affected_rows' => $affected,
+                'po_after' => $poAfter,
                 'message' => "No. PO berhasil diubah dari $oldNoPo menjadi $newNoPo (kode_masuk {$po['kode_masuk']} tetap utuh)"
             ];
         } else {
-            $res = ['status' => 'error', 'msg' => 'Data PO PO-202611-006 tidak ditemukan'];
+            $res = [
+                'status' => 'error', 
+                'msg' => 'Data PO ID 16 / PO-202611-006 tidak ditemukan',
+                'db_error' => $mysqli->error
+            ];
         }
+    } else {
+        $res = ['status' => 'error', 'msg' => 'DB not connected'];
     }
     echo json_encode($res);
     exit;
