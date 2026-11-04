@@ -1497,8 +1497,9 @@ class Absensi extends CI_Controller
             $th[] = isset($row->jenis_lokasi) && $row->jenis_lokasi ? $row->jenis_lokasi : '-';
             $th[] = $row->jenis_absen;
             if ($can_edit) {
-                $btn_edit = '<button type="button" class="btn btn-sm btn-warning btn-edit-absen text-white" data-id="' . $id . '" title="Edit Absensi"><i class="fas fa-pencil-alt"></i> Edit</button>';
-                $th[] = $btn_edit;
+                $btn_edit = '<button type="button" class="btn btn-sm btn-warning btn-edit-absen text-white mr-1" data-id="' . $id . '" title="Edit Absensi"><i class="fas fa-pencil-alt"></i> Edit</button>';
+                $btn_delete = '<button type="button" class="btn btn-sm btn-danger btn-delete-absen text-white" data-id="' . $id . '" title="Hapus Absensi"><i class="fas fa-trash-alt"></i> Hapus</button>';
+                $th[] = '<div class="d-flex align-items-center justify-content-center" style="white-space:nowrap;">' . $btn_edit . $btn_delete . '</div>';
             }
             $data[] = $th;
         }
@@ -1689,6 +1690,41 @@ class Absensi extends CI_Controller
         addlog('Tambah Absensi Manual', 'Menambah data absensi tanggal ' . $tanggal . ' milik: ' . $nama_karyawan . ' (Status: ' . ($status_absen ?: '-') . ', Tipe: ' . $type_absen . ')');
 
         echo json_encode(['status' => 'success', 'msg' => 'Data absensi berhasil ditambahkan.']);
+        die;
+    }
+
+    public function delete_absen()
+    {
+        $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'General Affair');
+        if (!$can_edit) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak. Fitur ini hanya untuk General Affair dan Administrator.']);
+            die;
+        }
+
+        $encrypted_id = $this->input->post('id_absensi');
+        $id_absensi = decrypt($encrypted_id);
+
+        if (empty($id_absensi)) {
+            echo json_encode(['status' => 'error', 'msg' => 'ID Absensi tidak valid.']);
+            die;
+        }
+
+        $existing = $this->md_absensi->getAbsenMasukById($id_absensi);
+        if (empty($existing)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Data absensi tidak ditemukan.']);
+            die;
+        }
+
+        $karyawan_info = $this->md_pengguna->getById($existing[0]->pengguna_id);
+        $nama_karyawan = !empty($karyawan_info) ? $karyawan_info[0]->nama : 'ID ' . $existing[0]->pengguna_id;
+        $tgl_absen = !empty($existing[0]->data_created) ? date('d-m-Y', strtotime($existing[0]->data_created)) : '-';
+        $type_absen = $existing[0]->type_absen;
+
+        $this->md_absensi->deleteById($id_absensi);
+
+        addlog('Hapus Absensi', 'Menghapus data absensi ID: ' . $id_absensi . ' milik: ' . $nama_karyawan . ' (Tanggal: ' . $tgl_absen . ', Tipe: ' . $type_absen . ')');
+
+        echo json_encode(['status' => 'success', 'msg' => 'Data absensi berhasil dihapus.']);
         die;
     }
 

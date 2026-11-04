@@ -923,5 +923,11 @@ class Md_absensi extends CI_Model
         }
         return $result;
     }
+
+    public function deleteById($id)
+    {
+        $this->db->where('id_absensi', $id);
+        return $this->db->delete('absensi');
+    }
 }
 

@@ -551,7 +551,7 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                         <th> Lokasi Kerja </th>
                         <th> Jenis Absen </th>
                         <?php if ($can_edit): ?>
-                            <th> Aksi </th>
+                            <th style="text-align: center; min-width: 150px;"> Aksi </th>
                         <?php endif; ?>
                     </tr>
                 </thead>
@@ -1062,6 +1062,59 @@ $can_edit = isAdmin() || isGa() || ($this->session->userdata('login_type') == 'G
                             },
                             error: function() {
                                 Swal.fire('Error', 'Terjadi kesalahan pada server saat memperbarui data.', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.btn-delete-absen', function() {
+                var id = $(this).attr('data-id');
+                Swal.fire({
+                    title: 'Hapus Data Absensi?',
+                    text: 'Data absensi ini akan dihapus secara permanen dari sistem.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.value) {
+                        $.ajax({
+                            url: 'absensi/delete_absen',
+                            type: 'POST',
+                            data: {
+                                id_absensi: id,
+                                csrf_token: token
+                            },
+                            dataType: 'JSON',
+                            beforeSend: function() {
+                                Swal.fire({
+                                    html: '<h4>Menghapus Data...</h4>',
+                                    icon: 'info',
+                                    allowOutsideClick: false,
+                                    showConfirmButton: false,
+                                });
+                            },
+                            success: function(resp) {
+                                if (resp.status == 'success') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: resp.msg || 'Data absensi berhasil dihapus.',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(function() {
+                                        updateDatatable();
+                                        updateStatsCards();
+                                    });
+                                } else {
+                                    Swal.fire('Error', resp.msg || 'Gagal menghapus data absensi.', 'error');
+                                }
+                            },
+                            error: function() {
+                                Swal.fire('Error', 'Terjadi kesalahan pada server saat menghapus data.', 'error');
                             }
                         });
                     }
