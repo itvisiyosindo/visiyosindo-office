@@ -147,6 +147,116 @@ if ($action === 'sync_email_kantor') {
     exit;
 }
 
+if ($action === 'get_pbok_info') {
+    $pboks = [];
+    $details = [];
+    if ($dbConnected) {
+        $q1 = $mysqli->query("SELECT id_pbok, kode_pbok, id_kat_surat, id_pengguna, alamat, kota_aju, bank, rekening, ats_nama, tgl_pengajuan, created_at, pembayar_pajak, trf_pajak, nml_pajak FROM surat_pbok WHERE kode_pbok LIKE '%497%' OR kode_pbok LIKE '%499%' OR id_pbok IN (2498, 2500) ORDER BY id_pbok ASC");
+        if ($q1) {
+            while ($r = $q1->fetch_assoc()) {
+                $pboks[] = $r;
+            }
+        }
+        $q2 = $mysqli->query("SELECT id, id_pbok, kode_detail, keterangan, estimasi, qty, total, catatan, mata_uang FROM surat_pbok_detail WHERE id_pbok IN (SELECT id_pbok FROM surat_pbok WHERE kode_pbok LIKE '%497%' OR kode_pbok LIKE '%499%' OR id_pbok IN (2498, 2500)) ORDER BY id_pbok ASC, id ASC");
+        if ($q2) {
+            while ($r = $q2->fetch_assoc()) {
+                $details[] = $r;
+            }
+        }
+    }
+    echo json_encode(['status' => 'success', 'pboks' => $pboks, 'details' => $details]);
+    exit;
+}
+
+if ($action === 'apply_pbok_changes') {
+    $results = [];
+    if ($dbConnected) {
+        // 1. PBOK 497: Ubah "cleo pure water 220 ml" -> "aquviva 250 ml", estimasi 28.000, total = qty * 28.000
+        $q497 = $mysqli->query("SELECT id_pbok, kode_pbok FROM surat_pbok WHERE kode_pbok LIKE '%497%' LIMIT 1");
+        if ($q497 && $row497 = $q497->fetch_assoc()) {
+            $id497 = (int)$row497['id_pbok'];
+            $qItem = $mysqli->query("SELECT id, keterangan, qty, estimasi, total FROM surat_pbok_detail WHERE id_pbok = $id497 AND keterangan LIKE '%cleo%' LIMIT 1");
+            if ($qItem && $item = $qItem->fetch_assoc()) {
+                $itemId = (int)$item['id'];
+                $qty = (float)$item['qty'];
+                $newEstimasi = 28000;
+                $newTotal = $qty * $newEstimasi;
+                $newKet = 'aquviva 250 ml';
+                $mysqli->query("UPDATE surat_pbok_detail SET keterangan = '$newKet', estimasi = $newEstimasi, total = $newTotal WHERE id = $itemId");
+                $results['pbok_497'] = [
+                    'status' => 'updated',
+                    'id_pbok' => $id497,
+                    'kode_pbok' => $row497['kode_pbok'],
+                    'item_id' => $itemId,
+                    'old_keterangan' => $item['keterangan'],
+                    'old_estimasi' => $item['estimasi'],
+                    'old_total' => $item['total'],
+                    'new_keterangan' => $newKet,
+                    'new_estimasi' => $newEstimasi,
+                    'qty' => $qty,
+                    'new_total' => $newTotal
+                ];
+            } else {
+                $results['pbok_497'] = ['status' => 'item_not_found', 'id_pbok' => $id497];
+            }
+        } else {
+            $results['pbok_497'] = ['status' => 'pbok_not_found'];
+        }
+
+        // 2. PBOK 499: Tambahkan "ongkos kirim" harga satuan 5.000, qty 6, total = 30.000
+        $q499 = $mysqli->query("SELECT id_pbok, kode_pbok, mata_uang FROM surat_pbok WHERE kode_pbok LIKE '%499%' LIMIT 1");
+        if ($q499 && $row499 = $q499->fetch_assoc()) {
+            $id499 = (int)$row499['id_pbok'];
+            $mataUang = !empty($row499['mata_uang']) ? $row499['mata_uang'] : '1';
+            
+            // Periksa apakah ongkos kirim sudah pernah ditambahkan agar tidak duplikat jika dipanggil ulang
+            $checkExisting = $mysqli->query("SELECT id, keterangan, qty, estimasi, total FROM surat_pbok_detail WHERE id_pbok = $id499 AND keterangan LIKE '%ongkos kirim%' LIMIT 1");
+            if ($checkExisting && $existingItem = $checkExisting->fetch_assoc()) {
+                $existingId = (int)$existingItem['id'];
+                $newKet = 'ongkos kirim';
+                $newEst = 5000;
+                $newQty = 6;
+                $newTotal = 30000;
+                $mysqli->query("UPDATE surat_pbok_detail SET keterangan = '$newKet', estimasi = $newEst, qty = $newQty, total = $newTotal WHERE id = $existingId");
+                $results['pbok_499'] = [
+                    'status' => 'updated_existing',
+                    'id_pbok' => $id499,
+                    'kode_pbok' => $row499['kode_pbok'],
+                    'item_id' => $existingId,
+                    'keterangan' => $newKet,
+                    'estimasi' => $newEst,
+                    'qty' => $newQty,
+                    'total' => $newTotal
+                ];
+            } else {
+                $stmt = $mysqli->prepare("INSERT INTO surat_pbok_detail (id_pbok, kode_detail, keterangan, estimasi, qty, total, catatan, mata_uang) VALUES (?, 1, 'ongkos kirim', 5000, 6, 30000, '', ?)");
+                if ($stmt) {
+                    $stmt->bind_param('is', $id499, $mataUang);
+                    $stmt->execute();
+                    $newId = $mysqli->insert_id;
+                    $stmt->close();
+                    $results['pbok_499'] = [
+                        'status' => 'inserted',
+                        'id_pbok' => $id499,
+                        'kode_pbok' => $row499['kode_pbok'],
+                        'item_id' => $newId,
+                        'keterangan' => 'ongkos kirim',
+                        'estimasi' => 5000,
+                        'qty' => 6,
+                        'total' => 30000
+                    ];
+                } else {
+                    $results['pbok_499'] = ['status' => 'insert_failed', 'error' => $mysqli->error];
+                }
+            }
+        } else {
+            $results['pbok_499'] = ['status' => 'pbok_not_found'];
+        }
+    }
+    echo json_encode(['status' => 'success', 'results' => $results]);
+    exit;
+}
+
 if ($action === 'save_state') {
     $rawInput = file_get_contents('php://input');
     $inputData = json_decode($rawInput, true);
