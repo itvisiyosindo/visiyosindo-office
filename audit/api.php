@@ -257,6 +257,34 @@ if ($action === 'apply_pbok_changes') {
     exit;
 }
 
+if ($action === 'update_no_po_001') {
+    $res = [];
+    if ($dbConnected) {
+        $q = $mysqli->query("SELECT id_po, no_po, kode_masuk, nama_customer, tanggal_po, total_nilai FROM po_masuk WHERE kode_masuk = 'PO-202611-006' OR (no_po = '000' AND nama_customer LIKE '%Rajanti%') LIMIT 1");
+        if ($q && $po = $q->fetch_assoc()) {
+            $idPo = (int)$po['id_po'];
+            $oldNoPo = $po['no_po'];
+            $newNoPo = '001';
+            $mysqli->query("UPDATE po_masuk SET no_po = '$newNoPo' WHERE id_po = $idPo");
+            $affected = $mysqli->affected_rows;
+            $res = [
+                'status' => 'success',
+                'id_po' => $idPo,
+                'kode_masuk' => $po['kode_masuk'],
+                'customer' => $po['nama_customer'],
+                'old_no_po' => $oldNoPo,
+                'new_no_po' => $newNoPo,
+                'affected_rows' => $affected,
+                'message' => "No. PO berhasil diubah dari $oldNoPo menjadi $newNoPo (kode_masuk {$po['kode_masuk']} tetap utuh)"
+            ];
+        } else {
+            $res = ['status' => 'error', 'msg' => 'Data PO PO-202611-006 tidak ditemukan'];
+        }
+    }
+    echo json_encode($res);
+    exit;
+}
+
 if ($action === 'save_state') {
     $rawInput = file_get_contents('php://input');
     $inputData = json_decode($rawInput, true);
