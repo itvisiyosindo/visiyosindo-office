@@ -95,6 +95,77 @@ class Stock_gudang extends CI_Controller
         return $dt;
     }
 
+    public function cek_shielding()
+    {
+        $rows = $this->db->query("
+            SELECT 
+                db.id_detail_barang,
+                db.id_barang,
+                b.nama_barang,
+                b.kode_barang,
+                db.id_penerimaan_barang,
+                db.qty,
+                db.current_stock,
+                db.no_batch,
+                db.status as db_status,
+                pb.id_gudang,
+                pb.no_terima,
+                pb.tgl_masuk,
+                pb.status as pb_status,
+                g.nama_gudang,
+                g.status as g_status
+            FROM detail_barang db
+            LEFT JOIN barang b ON b.id_barang = db.id_barang
+            LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang
+            LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
+            WHERE b.nama_barang LIKE '%Shielding%'
+        ")->result();
+
+        $pengeluaran = $this->db->query("
+            SELECT 
+                dbk.id_detail_barang_keluar,
+                dbk.id_detail_barang,
+                dbk.id_barang,
+                dbk.qty,
+                pb.no_keluar,
+                pb.tgl_keluar,
+                pb.id_gudang,
+                pb.status as pb_status,
+                g.nama_gudang
+            FROM detail_barang_keluar dbk
+            LEFT JOIN pengeluaran_barang pb ON pb.id_pengeluaran_barang = dbk.id_pengeluaran_barang
+            LEFT JOIN detail_barang db ON db.id_detail_barang = dbk.id_detail_barang
+            LEFT JOIN barang b ON b.id_barang = dbk.id_barang
+            LEFT JOIN gudang g ON g.id_gudang = pb.id_gudang
+            WHERE b.nama_barang LIKE '%Shielding%'
+        ")->result();
+
+        $pengiriman = $this->db->query("
+            SELECT 
+                dbps.id_detail_barang_pengiriman_stok,
+                dbps.id_barang,
+                dbps.qty,
+                dbps.current_qty,
+                dbps.status as dbps_status,
+                ps.no_pemindahan,
+                ps.id_gudang_asal,
+                ps.id_gudang_tujuan,
+                ps.status as ps_status
+            FROM detail_barang_pengiriman_stok dbps
+            LEFT JOIN pengiriman_stok ps ON ps.id_pengiriman_stok = dbps.id_pengiriman_stok
+            LEFT JOIN barang b ON b.id_barang = dbps.id_barang
+            WHERE b.nama_barang LIKE '%Shielding%'
+        ")->result();
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'detail_barang' => $rows,
+            'pengeluaran' => $pengeluaran,
+            'pengiriman_transit' => $pengiriman
+        ], JSON_PRETTY_PRINT);
+        exit;
+    }
+
     public function index()
     {
         grantAccessFor('all');
