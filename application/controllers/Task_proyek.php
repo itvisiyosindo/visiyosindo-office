@@ -67,7 +67,36 @@ class Task_proyek extends CI_Controller
 
     private function _canViewAllTasks($myId)
     {
-        return isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 23, 33, 54, 55, 56, 58, 69, 744], true);
+        return isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 23, 33, 54, 55, 56, 58, 69, 744], true) || $this->_canAssignAllTasks($myId);
+    }
+
+    private function _canAssignAllTasks($myId)
+    {
+        // 1. Admin, HRD, Eksekutif, Akun Manajemen & Dian Melati (ID 744)
+        if (isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 69, 744], true)) {
+            return true;
+        }
+
+        // 2. Cek username session atau nama session yang mengandung kata 'dian'
+        $sessUser = strtolower((string)$this->session->userdata('username'));
+        $sessNama = strtolower((string)sessNama());
+        if (strpos($sessUser, 'dian') !== false || strpos($sessNama, 'dian') !== false) {
+            return true;
+        }
+
+        // 3. Cek database profil pengguna saat ini
+        if ($myId > 0) {
+            $userRow = $this->db->select('username, nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+            if ($userRow) {
+                $uName = strtolower((string)$userRow->username);
+                $nName = strtolower((string)$userRow->nama);
+                if (strpos($uName, 'dian') !== false || strpos($nName, 'dian') !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function index()
@@ -98,8 +127,9 @@ class Task_proyek extends CI_Controller
             ->get()
             ->row();
 
-        $myDivisi = ($me && !empty($me->id_divisi)) ? (int)$me->id_divisi : 0;
-        $canViewAll = $this->_canViewAllTasks($myId);
+        $myDivisi     = ($me && !empty($me->id_divisi)) ? (int)$me->id_divisi : 0;
+        $canAssignAll = $this->_canAssignAllTasks($myId);
+        $canViewAll   = $this->_canViewAllTasks($myId);
 
         // 1. Daftar semua karyawan aktif (untuk pilihan Atasan Saya di modal & opsi Admin)
         $list_semua_karyawan = $this->db->query("
@@ -386,15 +416,16 @@ class Task_proyek extends CI_Controller
             return ($b->skor_akhir < $a->skor_akhir) ? -1 : 1;
         });
 
-        $page_data['switch']          = $nav;
-        $page_data['page_name']       = 'task_proyek/v_task_proyek';
-        $page_data['page_title']      = 'Manajemen Task & Proyek Kerja';
-        $page_data['page_desc']       = 'Penugasan Atasan ke Karyawan, Monitoring Progres & Penilaian Rating Bintang 5';
-        $page_data['me']              = $me;
-        $page_data['myId']            = $myId;
-        $page_data['canViewAll']      = $canViewAll;
-        $page_data['isAdmin']         = (isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
-        $page_data['viewMode']        = $viewMode;
+        $page_data['switch']              = $nav;
+        $page_data['page_name']           = 'task_proyek/v_task_proyek';
+        $page_data['page_title']          = 'Manajemen Task & Proyek Kerja';
+        $page_data['page_desc']           = 'Penugasan Atasan ke Karyawan, Monitoring Progres & Penilaian Rating Bintang 5';
+        $page_data['me']                  = $me;
+        $page_data['myId']                = $myId;
+        $page_data['canViewAll']          = $canViewAll;
+        $page_data['canAssignAll']        = $canAssignAll;
+        $page_data['isAdmin']             = ($canAssignAll || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
+        $page_data['viewMode']            = $viewMode;
         $page_data['filterBulan']         = $filterBulan;
         $page_data['filterTahun']         = $filterTahun;
         $page_data['list_bawahan']        = $list_bawahan;
@@ -449,9 +480,10 @@ class Task_proyek extends CI_Controller
             $penerima_list = [$penerima_list];
         }
 
-        $isAdmin = (isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
+        $canAssignAll = $this->_canAssignAllTasks($myId);
+        $isAdmin      = ($canAssignAll || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
 
-        // Validasi: Jika bukan Administrator, hanya boleh memberikan task kepada karyawan yang dibawahi langsung (id_atasan == $myId)
+        // Validasi: Jika bukan Administrator / yang berwenang menugaskan ke semua karyawan (seperti akun Dian / HRD), hanya boleh memberikan task kepada karyawan yang dibawahi langsung (id_atasan == $myId)
         foreach ($penerima_list as $id_penerima_raw) {
             $id_penerima = (int)$id_penerima_raw;
             if ($id_penerima <= 0) continue;

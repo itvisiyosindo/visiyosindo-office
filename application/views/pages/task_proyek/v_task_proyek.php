@@ -170,10 +170,11 @@ $namaBulanList = [
     <div class="col">
 
     <?php
-    $isAdminUser      = (!empty($isAdmin) || isAdmin() || (int)$myId === 1);
+    $canAssignToAll   = (!empty($canAssignAll) || !empty($isAdmin) || isAdmin() || (int)$myId === 1);
+    $isAdminUser      = $canAssignToAll;
     $jmlSupervisiSaya = count($list_bawahan);
-    $canGiveTask      = ($isAdminUser || $jmlSupervisiSaya > 0);
-    $penerimaList     = $isAdminUser ? $list_semua_karyawan : $list_bawahan;
+    $canGiveTask      = ($canAssignToAll || $jmlSupervisiSaya > 0);
+    $penerimaList     = $canAssignToAll ? $list_semua_karyawan : $list_bawahan;
     ?>
 
     <!-- KARTU KONTROL FILTER & STATUS SUPERVISI -->
@@ -265,9 +266,9 @@ $namaBulanList = [
                     <span class="badge <?= $jmlSupervisiSaya > 0 ? 'badge-success' : 'badge-secondary' ?> px-2 py-1" style="font-size: 12px; font-weight: 600; border-radius: 6px;">
                         <?= $jmlSupervisiSaya ?> Karyawan
                     </span>
-                    <?php if ($isAdminUser): ?>
-                        <span class="badge badge-info px-2 py-1 ml-2" title="Sebagai Administrator Anda dapat menugaskan task ke pegawai manapun" style="font-size: 11px; border-radius: 6px;">
-                            <i class="fas fa-shield-alt mr-1"></i> Akses Administrator (Bisa Beri Task ke Pegawai Manapun)
+                    <?php if ($canAssignToAll): ?>
+                        <span class="badge badge-info px-2 py-1 ml-2" title="Anda memiliki akses untuk menugaskan task ke seluruh pegawai" style="font-size: 11px; border-radius: 6px;">
+                            <i class="fas fa-shield-alt mr-1"></i> Akses Penugasan (Bisa Beri Task ke Semua Pegawai)
                         </span>
                     <?php endif; ?>
                 </div>
@@ -878,12 +879,12 @@ $namaBulanList = [
                             <label class="font-weight-bold mb-0">Pilih Karyawan Penerima Tugas <span class="text-danger">*</span></label>
                             <?php if (!empty($penerimaList)): ?>
                                 <button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnSelectSupervisedEmployees">
-                                    <i class="fas fa-user-check"></i> <?= $isAdminUser ? 'Pilih Semua Pegawai' : 'Pilih Semua Bawahan' ?> (<?= count($penerimaList) ?>)
+                                    <i class="fas fa-user-check"></i> <?= $canAssignToAll ? 'Pilih Semua Pegawai' : 'Pilih Semua Bawahan' ?> (<?= count($penerimaList) ?>)
                                 </button>
                             <?php endif; ?>
                         </div>
-                        <?php if ($isAdminUser): ?>
-                            <small class="text-primary d-block mb-1"><i class="fas fa-shield-alt mr-1"></i> Sebagai <strong>Administrator</strong>, Anda dapat memberikan task / proyek kepada seluruh pegawai perusahaan.</small>
+                        <?php if ($canAssignToAll): ?>
+                            <small class="text-primary d-block mb-1"><i class="fas fa-shield-alt mr-1"></i> Anda memiliki akses untuk memberikan task / proyek kepada seluruh pegawai perusahaan.</small>
                         <?php else: ?>
                             <small class="text-muted d-block mb-1">Hanya menampilkan karyawan yang berada di bawah supervisi / atasan langsung Anda.</small>
                         <?php endif; ?>
@@ -1312,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Buka Modal Buat Task
     $('#btnOpenModalBuatTask').on('click', function() {
-        <?php if (!$isAdminUser && empty($list_bawahan)): ?>
+        <?php if (!$canAssignToAll && empty($list_bawahan)): ?>
             if (window.swal) {
                 swal('Perhatian', 'Anda belum memiliki karyawan yang dibawahi langsung, sehingga belum dapat memberikan tugas. Karyawan harus memilih Anda sebagai Atasan Langsung terlebih dahulu.', 'warning');
             } else {
