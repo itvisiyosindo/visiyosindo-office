@@ -60,6 +60,26 @@ if ($mysqli && !$mysqli->connect_error) {
 
 $action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : 'get_state');
 
+if ($action === 'test_date') {
+    $results = [];
+    for ($w = 0; $w >= -12; $w--) {
+        $base = strtotime("$w week");
+        $mon1 = date('Y-m-d', strtotime("monday this week", $base));
+        $sun1 = date('Y-m-d', strtotime("sunday this week", $base));
+        $mon2 = date('Y-m-d', strtotime("monday this week $w week"));
+        $sun2 = date('Y-m-d', strtotime("sunday this week $w week"));
+        $results[$w] = [
+            'base' => date('Y-m-d (D)', $base),
+            'method1_mon' => $mon1,
+            'method1_sun' => $sun1,
+            'method2_mon' => $mon2,
+            'method2_sun' => $sun2,
+        ];
+    }
+    echo json_encode(['status' => 'success', 'results' => $results]);
+    exit;
+}
+
 if ($action === 'get_categories') {
     $topik_tiket = [];
     $kategori_barang = [];
