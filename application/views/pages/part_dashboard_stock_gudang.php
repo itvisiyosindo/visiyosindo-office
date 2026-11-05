@@ -543,8 +543,22 @@
 <!-- Load Chart.js (v3) for high performance modern charts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
 
+<?php
+$scope_gudang_ids = [];
+if (!empty($gudang)) {
+    foreach ($gudang as $rowG) {
+        $gid = is_numeric($rowG->id_gudang) ? (int)$rowG->id_gudang : (int)decrypt($rowG->id_gudang);
+        if ($gid > 0) {
+            $scope_gudang_ids[] = $gid;
+        }
+    }
+}
+$scope_gudang_str = implode(',', array_unique($scope_gudang_ids));
+?>
+
 <script>
     window._ChartV3StockDash = window.Chart;
+    const pageGudangScope = '<?= $scope_gudang_str ?>';
     document.addEventListener('DOMContentLoaded', function() {
         const ChartLib = window._ChartV3StockDash || window.Chart;
         let chartKategoriInstance = null;
@@ -934,7 +948,8 @@
                 type: 'GET',
                 data: {
                     tahun: tahun,
-                    id_gudang: isGudangFiltered ? selectedGudangIds.join(',') : '',
+                    id_gudang: (isGudangFiltered && selectedGudangIds.length > 0) ? selectedGudangIds.join(',') : pageGudangScope,
+                    scope_gudang: pageGudangScope,
                     id_kategori: isKatFiltered ? selectedKatIds.join(',') : '',
                     id_barang: isBarangFiltered ? selectedBarangIds.join(',') : ''
                 },

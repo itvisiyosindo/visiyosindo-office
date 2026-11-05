@@ -595,6 +595,35 @@ class Stock_gudang extends CI_Controller
             }
         }
 
+        // Scope gudang dari halaman jika id_gudang belum ada / kosong
+        if (empty($gudang_ids) && $id_gudang <= 0) {
+            $scope_gudang_raw = $this->input->get('scope_gudang');
+            if (!empty($scope_gudang_raw)) {
+                $scopeList = is_array($scope_gudang_raw) ? $scope_gudang_raw : explode(',', (string)$scope_gudang_raw);
+                foreach ($scopeList as $item) {
+                    $item = trim((string)$item);
+                    if ($item === '' || $item === '0' || $item === 'all') continue;
+                    $decrypted = decrypt($item);
+                    if (is_numeric($decrypted) && (int)$decrypted > 0) {
+                        $gudang_ids[] = (int)$decrypted;
+                    } elseif (is_numeric($item) && (int)$item > 0) {
+                        $gudang_ids[] = (int)$item;
+                    }
+                }
+                $gudang_ids = array_values(array_unique($gudang_ids));
+            }
+        }
+
+        // Fallback default: batasi ke 13 gudang default aktif (inventory ready stock)
+        // Mencegah gudang rusak, barang customer, dan kanibal masuk ke stok default
+        if (empty($gudang_ids) && $id_gudang <= 0) {
+            $defaultGudangList = $this->md_gudang->getBywhereIn(['g.status' => 1]);
+            foreach ($defaultGudangList as $dg) {
+                $gudang_ids[] = (int)$dg->id_gudang;
+            }
+            $gudang_ids = array_values(array_unique($gudang_ids));
+        }
+
         $id_kategori_raw = $this->input->get('id_kategori');
         $kategori_ids = [];
         $id_kategori = 0;
@@ -905,20 +934,32 @@ class Stock_gudang extends CI_Controller
             ->result();
 
         // 6. Daftar saran Nama Barang untuk autocomplete & multi-filter (diurutkan stok > 0 di atas)
-        $this->db->select('b.id_barang, b.nama_barang, b.kode_barang, COALESCE(SUM(db.current_stock), 0) as stok')
-            ->from('barang b')
-            ->join('detail_barang db', 'db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0', 'left')
-            ->where('b.status', 1);
+        $extraBarangKatWhere = "";
         if (!empty($kategori_ids)) {
-            $this->db->where_in('b.id_kategori', $kategori_ids);
+            $katIdListStr = implode(',', array_map('intval', $kategori_ids));
+            $extraBarangKatWhere = " AND b.id_kategori IN ({$katIdListStr})";
         } elseif ($id_kategori > 0) {
-            $this->db->where('b.id_kategori', $id_kategori);
+            $extraBarangKatWhere = " AND b.id_kategori = " . (int)$id_kategori;
         }
-        $barang_options = $this->db->group_by(['b.id_barang', 'b.nama_barang', 'b.kode_barang'])
-            ->order_by('stok', 'DESC')
-            ->order_by('b.nama_barang', 'ASC')
-            ->get()
-            ->result();
+
+        $extraPbGudangJoin = "";
+        if (!empty($gudang_ids)) {
+            $gIdListStr = implode(',', array_map('intval', $gudang_ids));
+            $extraPbGudangJoin = " AND pb.id_gudang IN ({$gIdListStr})";
+        } elseif ($id_gudang > 0) {
+            $extraPbGudangJoin = " AND pb.id_gudang = " . (int)$id_gudang;
+        }
+
+        $barang_options = $this->db->query("
+            SELECT b.id_barang, b.nama_barang, b.kode_barang, 
+                   COALESCE(SUM(CASE WHEN pb.id_penerimaan_barang IS NOT NULL THEN db.current_stock ELSE 0 END), 0) as stok
+            FROM barang b
+            LEFT JOIN detail_barang db ON db.id_barang = b.id_barang AND db.status = 1 AND db.current_stock > 0
+            LEFT JOIN penerimaan_barang pb ON pb.id_penerimaan_barang = db.id_penerimaan_barang AND pb.status = 1 {$extraPbGudangJoin}
+            WHERE b.status = 1 {$extraBarangKatWhere}
+            GROUP BY b.id_barang, b.nama_barang, b.kode_barang
+            ORDER BY stok DESC, b.nama_barang ASC
+        ")->result();
 
         $response = [
             'status' => 'success',
