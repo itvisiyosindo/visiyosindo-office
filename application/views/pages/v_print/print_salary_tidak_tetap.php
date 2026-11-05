@@ -98,9 +98,9 @@
                 $sumPotongan = 0;
                 $sumtunjanganlain = 0;
 
-                $excluded_ids = [29, 768]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (contoh: [29, 30, 31])
+                $excluded_ids = [29, 77, 768]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (29: Hendri, 77: Buldani)
                 foreach ($dt as $row) {
-                    if (in_array($row->pengguna_id, $excluded_ids)) continue;
+                    if (in_array($row->pengguna_id, $excluded_ids) || stripos($row->nama, 'buldani') !== false) continue;
                     // 1. AMBIL DATA DASAR DARI HELPER
                     $dataSistem      = tunjangan($row->pengguna_id, $month);
                     $absen_approved  = $dataSistem['kantor_approved'] ?? $dataSistem['dinas_approved'];
@@ -333,9 +333,9 @@
                 $sumPotongan = 0;
                 $sumtunjanganlain = 0;
 
-                $excluded_ids = [29]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (contoh: [29, 30, 31])
+                $excluded_ids = [29, 77]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (29: Hendri, 77: Buldani)
                 foreach ($dt as $row) {
-                    if (in_array($row->pengguna_id, $excluded_ids)) continue;
+                    if (in_array($row->pengguna_id, $excluded_ids) || stripos($row->nama, 'buldani') !== false) continue;
                     // 1. AMBIL SEMUA DATA TUNJANGAN SEKALI SAJA
                     $dataTunjangan = tunjangan($row->pengguna_id, $month);
 

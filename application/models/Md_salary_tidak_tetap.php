@@ -96,12 +96,13 @@ class Md_salary_tidak_tetap extends CI_Model
         $this->db->delete('salary_tidak_tetap_override');
     }
 
-    public function getPenggunaWithSalaryDatatables($excluded_ids = [29])
+    public function getPenggunaWithSalaryDatatables($excluded_ids = [29, 77])
     {
         $this->db->order_by('pg.nama', 'ASC');
         if (!empty($excluded_ids)) {
             $this->datatables->where('pg.pengguna_id NOT IN (' . implode(',', array_map('intval', $excluded_ids)) . ')');
         }
+        $this->datatables->where("LOWER(pg.nama) NOT LIKE '%buldani%'");
         return $this->datatables
             ->select('
                 pg.pengguna_id,
@@ -140,7 +141,7 @@ class Md_salary_tidak_tetap extends CI_Model
             ->generate();
     }
 
-    public function getAllPenggunaWithSalaryList($excluded_ids = [29])
+    public function getAllPenggunaWithSalaryList($excluded_ids = [29, 77])
     {
         $this->db->select('
             pg.pengguna_id,
@@ -179,6 +180,7 @@ class Md_salary_tidak_tetap extends CI_Model
         if (!empty($excluded_ids)) {
             $this->db->where_not_in('pg.pengguna_id', $excluded_ids);
         }
+        $this->db->where("LOWER(pg.nama) NOT LIKE '%buldani%'");
         $this->db->order_by('pg.nama', 'ASC');
         return $this->db->get()->result();
     }

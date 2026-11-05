@@ -147,7 +147,7 @@ class Salary_tidak_tetap extends CI_Controller
             die;
         } else {
 
-            $excluded_ids = [29]; // ID karyawan yang dikecualikan
+            $excluded_ids = [29, 77]; // ID karyawan yang dikecualikan (29: Hendri, 77: Buldani - Freelance)
             $month = $this->input->post('filter_month');
             $monthfield = $month ? $month : date("Y-m");
             
@@ -410,7 +410,7 @@ class Salary_tidak_tetap extends CI_Controller
         grantAccessFor(['Administrator', 'Hrd', 'Ga']);
 
         $month = $this->input->post('filter_month') ? $this->input->post('filter_month') : date("Y-m");
-        $excluded_ids = [29]; // ID karyawan yang dikecualikan
+        $excluded_ids = [29, 77]; // ID karyawan yang dikecualikan (29: Hendri, 77: Buldani - Freelance)
         
         // Batch query efisien: 1 query attendance + 1 query overrides + 1 query pengguna with salary
         $attendance_map = $this->md_absensi->getMonthlyAttendanceSummary($month);
@@ -586,8 +586,9 @@ class Salary_tidak_tetap extends CI_Controller
         // Data bulan, jika tidak ada dipilih gunakan bulan sekarang
         $month = $param2 ? $param2 : date('Y-m');
         // Data tunjangan
-        $excluded_ids = [29]; // Tambahkan ID karyawan yang ingin dikecualikan di sini (contoh: [29, 30, 31])
+        $excluded_ids = [29, 77]; // ID karyawan yang dikecualikan (29: Hendri, 77: Buldani - Freelance)
         $this->db->where_not_in('pg.pengguna_id', $excluded_ids);
+        $this->db->where("LOWER(pg.nama) NOT LIKE '%buldani%'");
         $data = [
             'dt' => $this->md_pengguna->getAllPenggunaAktif(),
             'title_pdf' => 'Rekapitulasi Tunjangan Tidak Tetap',
