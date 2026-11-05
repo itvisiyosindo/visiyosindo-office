@@ -709,7 +709,8 @@ class Md_tiket extends CI_Model
         12 => "FDR Smart X",
         15 => "FDR X-Air",
         26 => "FDL SE LITE",
-        42 => "KPACS"
+        42 => "KPACS",
+        49 => "DAP"
     ];
 
     public function get_detail_ticket()
