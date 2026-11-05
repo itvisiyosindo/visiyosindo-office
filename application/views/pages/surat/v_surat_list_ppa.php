@@ -25,7 +25,7 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 			<div class="card-body p-3">
 				<!-- Filter & Action Menu -->
 				<div class="row mb-3 align-items-end" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-					<div class="col-md-5 col-sm-12 mb-2 mb-md-0">
+					<div class="col-md-4 col-sm-12 mb-2 mb-md-0">
 						<label for="id_pengaju" class="font-weight-bold text-dark mb-1">
 							<i class="fas fa-user-check text-primary mr-1"></i> Pilih Nama Pengaju:
 						</label>
@@ -40,7 +40,16 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 							<?php endif; ?>
 						</select>
 					</div>
-					<div class="col-md-7 col-sm-12 text-md-left">
+					<div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+						<label for="urutan_tanggal" class="font-weight-bold text-dark mb-1">
+							<i class="fas fa-sort-amount-down text-primary mr-1"></i> Urutkan Tanggal:
+						</label>
+						<select class="form-control" id="urutan_tanggal" name="urutan_tanggal" style="border-radius: 6px; font-weight: 500;">
+							<option value="desc" selected>Tanggal Terbaru</option>
+							<option value="asc">Tanggal Terlama</option>
+						</select>
+					</div>
+					<div class="col-md-5 col-sm-6 text-md-left">
 						<button type="button" id="btn-print-menjabat" class="btn btn-primary btn-sm shadow-sm" title="Print Pengajuan Selama Menjabat">
 							<i class="fas fa-print mr-1"></i> Print Pengajuan (Masa Menjabat)
 						</button>
@@ -89,7 +98,7 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 			processing: true,
 			serverSide: true,
 			order: [
-				[0, 'desc']
+				[3, 'desc']
 			],
 			ajax: {
 				url: 'surat/pagination/list_ppa',
@@ -97,21 +106,42 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 				data: function(e) {
 					e.tahun = $('#tahun').val();
 					e.id_pengaju = $('#id_pengaju').val();
+					e.urutan_tanggal = $('#urutan_tanggal').val();
 					e.csrf_token = token;
 				}
 			},
-			columnDefs: [{
-				targets: [0, 1, 2, 3, 4, 5, 6],
-				className: 'text-center'
-			}]
+			columnDefs: [
+				{
+					targets: [0, 1, 2, 3, 4, 5, 6],
+					className: 'text-center'
+				},
+				{
+					targets: [6],
+					orderable: false
+				}
+			]
 		});
 
 		$('#id_pengaju').on('change', function() {
 			updateDatatable();
 		});
 
+		$('#urutan_tanggal').on('change', function() {
+			var dir = $(this).val();
+			table.order([3, dir]).draw();
+		});
+
+		table.on('order.dt', function() {
+			var order = table.order();
+			if (order && order.length > 0 && order[0][0] === 3) {
+				$('#urutan_tanggal').val(order[0][1]);
+			}
+		});
+
 		$('#btn-reset-filter').on('click', function() {
 			$('#id_pengaju').val('').trigger('change');
+			$('#urutan_tanggal').val('desc');
+			table.order([3, 'desc']).draw();
 		});
 
 		$('#btn-print-menjabat').on('click', function() {

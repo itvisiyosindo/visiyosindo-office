@@ -39,6 +39,7 @@
 						<tr>
 							<th width="40"> # </th>
 							<th> Kode Surat </th>
+							<th> Nama Karyawan </th>
 							<th> Kategori </th>
 							<th> Diajukan Oleh </th>
 							<th> Status </th>
@@ -68,7 +69,7 @@
 				}
 			},
 			columnDefs: [{
-				targets: [0, 1, 3, 4],
+				targets: [0, 1, 3, 4, 5],
 				className: 'text-center'
 			}]
 		});

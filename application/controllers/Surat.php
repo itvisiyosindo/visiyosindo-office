@@ -7096,7 +7096,8 @@ class Surat extends CI_Controller
 			die;
 		} else if ($param == 'list_pbok') {
 			$id_pengaju = $this->input->post('id_pengaju');
-			$dt    = $this->md_surat_list->getAllPbok($id_pengaju);
+			$urutan_tanggal = $this->input->post('urutan_tanggal');
+			$dt    = $this->md_surat_list->getAllPbok($id_pengaju, $urutan_tanggal);
 			$start = $this->input->post('start');
 			$data  = array();
 			foreach ($dt['data'] as $row) {
@@ -7268,7 +7269,8 @@ class Surat extends CI_Controller
 			die;
 		} else if ($param == 'list_ppa') {
 			$id_pengaju = $this->input->post('id_pengaju');
-			$dt    = $this->md_surat_list->getAllPpa($id_pengaju);
+			$urutan_tanggal = $this->input->post('urutan_tanggal');
+			$dt    = $this->md_surat_list->getAllPpa($id_pengaju, $urutan_tanggal);
 			$start = $this->input->post('start');
 			$data  = array();
 			foreach ($dt['data'] as $row) {
@@ -7634,7 +7636,8 @@ class Surat extends CI_Controller
 			echo json_encode($dt);
 			die;
 		} else if ($param == 'list_surat_peringatan') {
-			$dt    = $this->md_surat_list->getAllSp();
+			$tahun = $this->input->post('tahun');
+			$dt    = $this->md_surat_list->getAllSp($tahun);
 			$start = $this->input->post('start');
 			$data  = array();
 			foreach ($dt['data'] as $row) {
@@ -7651,6 +7654,7 @@ class Surat extends CI_Controller
 				$th = array();
 				$th[] = ++$start;
 				$th[] = $kode_surat;
+				$th[] = $row->nama ? $row->nama : '-';
 				$th[] = $row->kategori;
 				// $th[] = $row->perihal;
 				$th[] = $row->pengaju;

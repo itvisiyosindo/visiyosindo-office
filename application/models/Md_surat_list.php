@@ -770,34 +770,33 @@ class md_surat_list extends CI_Model
 		return $this->db->get()->result();
 	}
 
-	function getAllPbok($id_pengaju = null)
+	function getAllPbok($id_pengaju = null, $urutan_tanggal = null)
 	{
-		$this->db->order_by('s.id_list_surat', 'DESC');
 		$this->datatables
 			->select('
-            	
-				s.status as stat_persetujuan,
-                pbok.id_pbok as idPbok,
+				pbok.id_pbok as idPbok,
 				pbok.kode_pbok as kode,
+				(SELECT pbokd.keterangan FROM surat_pbok_detail pbokd WHERE pbok.id_pbok = pbokd.id_pbok LIMIT 1) as keterangan,
+				pbok.tgl_pengajuan as tgl_pengajuan,
+				p.nama as pengguna,
+				s.status as stat_persetujuan,
+				s.id_list_surat as id_list_surat,
 				pbok.bank as bank,
 				pbok.id_kat_surat as id_kat_surat,
 				pbok.rekening as rekening,
 				pbok.ats_nama as ats_nama,
 				pbok.kota_aju as kota_aju,
-				pbok.tgl_pengajuan as tgl_pengajuan,
 				pbok.pengajuan_ttd_1 as aju_ttd1,
 				pbok.ttd_2 as aju_ttd2,
 				pbok.ttd_3 as aju_ttd3,
 				pbok.trf_pajak as trf_pajak,
 				pbok.nml_pajak as nml_pajak,
 				pbok.pembayar_pajak as pembayar_pajak,
-        		(SELECT pbokd.keterangan FROM surat_pbok_detail pbokd WHERE pbok.id_pbok = pbokd.id_pbok LIMIT 1) as keterangan,
-				p.nama as pengguna,
+				pbok.id_pengguna as id_pengguna,
 				p.short_name as nama_ttd,
 				p.jabatan as jabatan,
 				sKat.kat_surat as kategori
             ')
-
 			->from('surat_list s')
 			->join('surat_pbok pbok', 's.id_srt=pbok.id_pbok')
 			->join('pengguna p', 'pbok.id_pengguna=p.pengguna_id')
@@ -806,6 +805,11 @@ class md_surat_list extends CI_Model
 
 		if (!empty($id_pengaju)) {
 			$this->datatables->where('pbok.id_pengguna', $id_pengaju);
+		}
+
+		if (!empty($urutan_tanggal)) {
+			$dir = (strtolower($urutan_tanggal) === 'asc') ? 'ASC' : 'DESC';
+			$this->db->order_by('pbok.tgl_pengajuan', $dir);
 		}
 
 		return $this->datatables->generate();
@@ -1417,20 +1421,22 @@ class md_surat_list extends CI_Model
 		return $this->db->get()->result();
 	}
 
-	function getAllPpa($id_pengaju = null)
+	function getAllPpa($id_pengaju = null, $urutan_tanggal = null)
 	{
-		$this->db->order_by('s.id_list_surat', 'DESC');
 		$this->datatables
 			->select('
-				s.status as stat_persetujuan,
-                ppa.id_ppa as idppa,
+				ppa.id_ppa as idppa,
 				ppa.kode_ppa as kodePPA,
+				(SELECT ppad.keterangan FROM surat_ppa_detail ppad WHERE ppa.id_ppa = ppad.id_ppa LIMIT 1) as keterangan,
+				ppa.tgl_pengajuan as tgl_pengajuan,
+				p.nama as pengguna,
+				s.status as stat_persetujuan,
+				s.id_list_surat as id_list_surat,
 				ppa.bank as bank,
 				ppa.id_kat_surat as id_kat_surat,
 				ppa.rekening as rekening,
 				ppa.ats_nama as ats_nama,
 				ppa.kota_aju as kota_aju,
-				ppa.tgl_pengajuan as tgl_pengajuan,
 				ppa.pengajuan_ttd_1 as aju_ttd1,
 				ppa.ttd_2 as aju_ttd2,
 				ppa.ttd_3 as aju_ttd3,
@@ -1439,9 +1445,7 @@ class md_surat_list extends CI_Model
 				ppa.trf_pajak as trf_pajak,
 				ppa.nml_pajak as nml_pajak,
 				ppa.pembayar_pajak as pembayar_pajak,
-        		(SELECT ppad.keterangan FROM surat_ppa_detail ppad WHERE ppa.id_ppa = ppad.id_ppa LIMIT 1) as keterangan,
 				ppa.catatan as catatan,
-				p.nama as pengguna,
 				p.short_name as nama_ttd,
 				p.jabatan as jabatan,
 				sKat.kat_surat as kategori
@@ -1454,6 +1458,11 @@ class md_surat_list extends CI_Model
 
 		if (!empty($id_pengaju)) {
 			$this->datatables->where('ppa.id_pengguna', $id_pengaju);
+		}
+
+		if (!empty($urutan_tanggal)) {
+			$dir = (strtolower($urutan_tanggal) === 'asc') ? 'ASC' : 'DESC';
+			$this->db->order_by('ppa.tgl_pengajuan', $dir);
 		}
 
 		return $this->datatables->generate();
@@ -2705,18 +2714,19 @@ class md_surat_list extends CI_Model
 	}
 
 	//surat peringatan
-	function getAllSp()
+	function getAllSp($tahun = null)
 	{
-		$this->db->order_by('s.id_list_surat', 'DESC');
-		return $this->datatables
+		$this->datatables
 			->select('
-                s.status as stat_persetujuan,
                 sp.id as id,
-				sp.kode as kode,
-				sp.perihal as perihal,
+                sp.kode as kode,
+                sp.nama as nama,
+                sKat.kat_surat as kategori,
+                p.nama as pengaju,
+                s.status as stat_persetujuan,
+                sp.perihal as perihal,
 				sp.id_kat_surat as id_kat_surat,
 				sp.id_pengguna as idPengaju,
-				sp.nama as nama,
 				sp.jabatan as jabatan1,
 				sp.tgl_evaluasi as tgl_evaluasi,
 				sp.tgl_salah as tgl_salah,
@@ -2728,18 +2738,22 @@ class md_surat_list extends CI_Model
 				sp.tembusan as tembusan,
 				sp.tgl_pengajuan as tgl_pengajuan,
 				sp.ttd_3 as ttd_3,
-				p.nama as pengaju,
 				p.short_name as nama_ttd,
 				p.jabatan as jabatan,
 				p.nik as nik,
-				sKat.kat_surat as kategori
+                s.id_list_surat as id_list_surat
             ')
 			->from('surat_list s')
 			->join('surat_peringatan sp', 's.id_srt=sp.id')
 			->join('pengguna p', 'sp.id_pengguna=p.pengguna_id')
 			->join('surat_kategori sKat', 'sp.id_kat_surat=sKat.id_kat_surat')
-			->where('s.id_kat_surat = 14')
-			->generate();
+			->where('s.id_kat_surat = 14');
+
+		if (!empty($tahun)) {
+			$this->datatables->where('YEAR(sp.tgl_pengajuan)', $tahun);
+		}
+
+		return $this->datatables->generate();
 	}
 
 	function getAllMySp($id_pengaju)
