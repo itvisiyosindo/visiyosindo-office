@@ -60,6 +60,31 @@ if ($mysqli && !$mysqli->connect_error) {
 
 $action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : 'get_state');
 
+if ($action === 'get_categories') {
+    $topik_tiket = [];
+    $kategori_barang = [];
+    if ($dbConnected) {
+        $q1 = $mysqli->query("SELECT * FROM topik_tiket ORDER BY id_topik ASC");
+        if ($q1) {
+            while ($r = $q1->fetch_assoc()) {
+                $topik_tiket[] = $r;
+            }
+        }
+        $q2 = $mysqli->query("SELECT * FROM kategori_barang ORDER BY id_kategori ASC");
+        if ($q2) {
+            while ($r = $q2->fetch_assoc()) {
+                $kategori_barang[] = $r;
+            }
+        }
+    }
+    echo json_encode([
+        'status' => 'success',
+        'topik_tiket' => $topik_tiket,
+        'kategori_barang' => $kategori_barang
+    ]);
+    exit;
+}
+
 if ($action === 'list_po_masuk') {
     $rows = [];
     if ($dbConnected) {
