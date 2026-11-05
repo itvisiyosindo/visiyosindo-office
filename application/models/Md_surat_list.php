@@ -2720,7 +2720,7 @@ class md_surat_list extends CI_Model
 			->select('
                 sp.id as id,
                 sp.kode as kode,
-                sp.nama as nama,
+                COALESCE(p2.nama, sp.nama) as nama,
                 sKat.kat_surat as kategori,
                 p.nama as pengaju,
                 s.status as stat_persetujuan,
@@ -2741,11 +2741,13 @@ class md_surat_list extends CI_Model
 				p.short_name as nama_ttd,
 				p.jabatan as jabatan,
 				p.nik as nik,
-                s.id_list_surat as id_list_surat
+                s.id_list_surat as id_list_surat,
+                p2.nama as nama_karyawan
             ')
 			->from('surat_list s')
 			->join('surat_peringatan sp', 's.id_srt=sp.id')
 			->join('pengguna p', 'sp.id_pengguna=p.pengguna_id')
+			->join('pengguna p2', 'sp.nama=p2.pengguna_id', 'left')
 			->join('surat_kategori sKat', 'sp.id_kat_surat=sKat.id_kat_surat')
 			->where('s.id_kat_surat = 14');
 
@@ -2768,7 +2770,7 @@ class md_surat_list extends CI_Model
 				sp.id_kat_surat as id_kat_surat,
 				sp.id_pengguna as idPengaju,
 				sp.tgl_evaluasi as tgl_evalusi,
-				sp.nama as nama,
+				COALESCE(p2.nama, sp.nama) as nama,
 				sp.jabatan as jabatan1,
 				sp.tgl_salah as tgl_salah,
 				sp.kesalahan as kesalahan,
@@ -2783,11 +2785,13 @@ class md_surat_list extends CI_Model
 				p.short_name as nama_ttd,
 				p.jabatan as jabatan,
 				p.nik as nik,
-				sKat.kat_surat as kategori
+				sKat.kat_surat as kategori,
+				p2.nama as nama_karyawan
             ')
 			->from('surat_list s')
 			->join('surat_peringatan sp', 's.id_srt=sp.id')
 			->join('pengguna p', 'sp.id_pengguna=p.pengguna_id')
+			->join('pengguna p2', 'sp.nama=p2.pengguna_id', 'left')
 			->join('surat_kategori sKat', 'sp.id_kat_surat=sKat.id_kat_surat')
 			->where('s.id_kat_surat = 14')
 			->where('p.pengguna_id', $id_pengaju)

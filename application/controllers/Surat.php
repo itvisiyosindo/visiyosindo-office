@@ -7654,7 +7654,8 @@ class Surat extends CI_Controller
 				$th = array();
 				$th[] = ++$start;
 				$th[] = $kode_surat;
-				$th[] = $row->nama ? $row->nama : '-';
+				$nama_karyawan = !empty($row->nama_karyawan) ? $row->nama_karyawan : (!empty($row->nama) ? $row->nama : '-');
+				$th[] = $nama_karyawan;
 				$th[] = $row->kategori;
 				// $th[] = $row->perihal;
 				$th[] = $row->pengaju;
