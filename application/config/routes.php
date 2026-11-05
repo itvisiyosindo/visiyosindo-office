@@ -52,34 +52,40 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $route['default_controller'] = 'auth';
 $route['login'] = 'rest/index_post';
 $route['dashboard_anggota/(:num)'] = 'anggota/show/detail/$1';
-$route['laporan/show/detail/laporan_mingguan/(:any)/(:num)'] = 'laporan/show/detail/laporan_mingguan/$1/$2';
+$route['laporan/show/detail/laporan_mingguan/(:any)/(-?[0-9]+)'] = 'laporan/show/detail/laporan_mingguan/$1/$2';
 $route['laporan/show/detail/laporan_mingguan/(:any)'] = 'laporan/show/detail/laporan_mingguan/$1/0';
-$route['laporan/show/list/my_data(:num)'] = 'laporan/show/list/my_data/$2';
+$route['laporan/show/list/my_data/(-?[0-9]+)'] = 'laporan/show/list/my_data/$1';
+$route['laporan/show/list/my_data(:num)'] = 'laporan/show/list/my_data/$1';
 $route['laporan/show/list/my_data'] = 'laporan/show/list/my_data/0';
 
 //Yang ada New nya
-$route['laporan/show/list/my(:num)'] = 'laporan/show/list/my/$2';
+$route['laporan/show/list/my/(-?[0-9]+)'] = 'laporan/show/list/my/$1';
+$route['laporan/show/list/my(:num)'] = 'laporan/show/list/my/$1';
 $route['laporan/show/list/my'] = 'laporan/show/list/my/0';
-$route['laporan/show/detail/laporan/(:any)/(:num)'] = 'laporan/show/detail/laporan/$1/$2';
+$route['laporan/show/detail/laporan/(:any)/(-?[0-9]+)'] = 'laporan/show/detail/laporan/$1/$2';
 $route['laporan/show/detail/laporan/(:any)'] = 'laporan/show/detail/laporan/$1/0';
-$route['laporan/show/list/nilai(:num)'] = 'laporan/show/list/nilai/$2';
+$route['laporan/show/list/nilai/(-?[0-9]+)'] = 'laporan/show/list/nilai/$1';
+$route['laporan/show/list/nilai(:num)'] = 'laporan/show/list/nilai/$1';
 $route['laporan/show/list/nilai'] = 'laporan/show/list/nilai/0';
 
 //Setelah Tambah Pencapaian dan Nilai B / Atasan yang ada Rev1 nya
-$route['laporan/show/list/mydata(:num)'] = 'laporan/show/list/mydata/$2';
+$route['laporan/show/list/mydata/(-?[0-9]+)'] = 'laporan/show/list/mydata/$1';
+$route['laporan/show/list/mydata(:num)'] = 'laporan/show/list/mydata/$1';
 $route['laporan/show/list/mydata'] = 'laporan/show/list/mydata/0';
-$route['laporan/show/detail/laporan_detail/(:any)/(:num)'] = 'laporan/show/detail/laporan_detail/$1/$2';
+$route['laporan/show/detail/laporan_detail/(:any)/(-?[0-9]+)'] = 'laporan/show/detail/laporan_detail/$1/$2';
 $route['laporan/show/detail/laporan_detail/(:any)'] = 'laporan/show/detail/laporan_detail/$1/0';
-$route['laporan/show/detail/my_detail_nilai/(:any)/(:num)'] = 'laporan/show/detail/my_detail_nilai/$1/$2';
+$route['laporan/show/detail/my_detail_nilai/(:any)/(-?[0-9]+)'] = 'laporan/show/detail/my_detail_nilai/$1/$2';
 $route['laporan/show/detail/my_detail_nilai/(:any)'] = 'laporan/show/detail/my_detail_nilai/$1/0';
 
 
 //Rev2
-$route['laporan/show/list/rev2(:num)'] = 'laporan/show/list/rev2/$2';
+$route['laporan/show/list/rev2/(-?[0-9]+)'] = 'laporan/show/list/rev2/$1';
+$route['laporan/show/list/rev2(-?[0-9]+)'] = 'laporan/show/list/rev2/$1';
+$route['laporan/show/list/rev2(:num)'] = 'laporan/show/list/rev2/$1';
 $route['laporan/show/list/rev2'] = 'laporan/show/list/rev2/0';
-$route['laporan/show/detail/laporan_detail_rev2/(:any)/(:num)'] = 'laporan/show/detail/laporan_detail_rev2/$1/$2';
+$route['laporan/show/detail/laporan_detail_rev2/(:any)/(-?[0-9]+)'] = 'laporan/show/detail/laporan_detail_rev2/$1/$2';
 $route['laporan/show/detail/laporan_detail_rev2/(:any)'] = 'laporan/show/detail/laporan_detail_rev2/$1/0';
-$route['laporan/show/detail/my_detail_nilai_rev2/(:any)/(:num)'] = 'laporan/show/detail/my_detail_nilai_rev2/$1/$2';
+$route['laporan/show/detail/my_detail_nilai_rev2/(:any)/(-?[0-9]+)'] = 'laporan/show/detail/my_detail_nilai_rev2/$1/$2';
 $route['laporan/show/detail/my_detail_nilai_rev2/(:any)'] = 'laporan/show/detail/my_detail_nilai_rev2/$1/0';
 
 

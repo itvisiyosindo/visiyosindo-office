@@ -234,12 +234,22 @@ class Laporan extends CI_Controller
                 // Cek apakah $param4 valid, jika tidak, set 0
                 $week_offset = (isset($param4) && is_numeric($param4)) ? (int)$param4 : 0;
 
-                // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                // Hitung rentang tanggal minggu secara presisi berdasarkan offset
+                $base_monday = strtotime("monday this week");
+                $monday_ts = $base_monday + ($week_offset * 7 * 86400);
+                $sunday_ts = $monday_ts + (6 * 86400);
+                $wednesday_ts = $monday_ts + (2 * 86400);
 
-                $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
-                $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', $monday_ts);
+                $friday = date('Y-m-d', $sunday_ts);
+                $wednesday = date('Y-m-d', $wednesday_ts);
+
+                $startDate = date('d-m-Y', $monday_ts);
+                $endDate = date('d-m-Y', $sunday_ts);
+
+                $page_data['monday'] = $monday;
+                $page_data['friday'] = $friday;
+                $page_data['Sunday'] = $friday;
 
                 $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
 
@@ -259,12 +269,8 @@ class Laporan extends CI_Controller
 
                 $page_data['switch'] = $this->id_navbar();
 
-
-                //$minggu_lalu = -1; // minggu lalu
-                $wednesday = date('Y-m-d', strtotime("wednesday this week $week_offset week"));
                 $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
                 $page_data['penilaian_umum'] = $penilaian_umum;
-
 
                 // Navigasi minggu
                 $page_data['week_offset'] = $week_offset;
