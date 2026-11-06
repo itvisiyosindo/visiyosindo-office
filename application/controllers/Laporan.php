@@ -48,6 +48,7 @@ class Laporan extends CI_Controller
         $this->load->helper('tanggal_helper');
         $this->load->helper('whatsapp_helper');
         $this->load->helper('encrypt_helper');
+        $this->load->helper('text');
     }
 
     public function show($param = "", $param2 = "", $param3 = "", $param4 = "0")
