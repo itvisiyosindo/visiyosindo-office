@@ -182,7 +182,7 @@ class Reminder extends CI_Controller {
     }
 
     // ==========================================
-    // LOGIKA 5: UCAPAN WEEKEND OTOMATIS (JUMAT 17:30)
+    // LOGIKA 5: UCAPAN WEEKEND OTOMATIS (JUMAT 18:00 WIB / JAM 6 SORE)
     // ==========================================
     public function cron_weekend_greeting($secret_key = '')
     {
@@ -196,7 +196,7 @@ class Reminder extends CI_Controller {
         $isFriday = (date('N') == 5);
         $force = $this->input->get_post('force');
         if (!$isFriday && empty($force)) {
-            $msg = 'Ucapan weekend otomatis hanya dijadwalkan setiap hari Jumat (Hari ini: ' . date('l') . ').';
+            $msg = 'Ucapan weekend otomatis hanya dijadwalkan setiap hari Jumat pukul 18:00 WIB (Hari ini: ' . date('l') . ').';
             if (is_cli()) {
                 echo $msg . "\n";
             } else {
@@ -204,6 +204,9 @@ class Reminder extends CI_Controller {
             }
             return;
         }
+
+        // Target pengiriman mulai pukul 18:00 WIB (jam 6 sore) di hari Jumat secara berurutan (antrian 1-per-1)
+        $targetStartTs = empty($force) ? strtotime(date('Y-m-d 18:00:00')) : time();
 
         // Ambil daftar karyawan yang sudah dikirim ucapan hari Jumat ini agar tidak dobel
         $today = date('Y-m-d');
@@ -277,11 +280,12 @@ class Reminder extends CI_Controller {
                 "_Sistem Office PT Visi Yosindo Medikal_";
 
             $dataSend = [
-                'devId'      => hostWa('1'),
-                'penerima'   => $phone,
-                'pesan'      => urlencode($pesan),
-                'bypass_24h' => false,
-                'raw_chat'   => true
+                'devId'        => hostWa('1'),
+                'penerima'     => $phone,
+                'pesan'        => urlencode($pesan),
+                'bypass_24h'   => false,
+                'raw_chat'     => true,
+                'min_start_ts' => $targetStartTs
             ];
 
             if (sendWa($dataSend)) {

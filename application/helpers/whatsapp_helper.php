@@ -3668,7 +3668,8 @@ function sendWa($dataSend)
 	// Sistem Antrian Sequential 1-per-1 (mencegah pesan terkirim serentak/bersamaan)
 	if (empty($dataSend['_from_queue_worker']) && empty($dataSend['immediate'])) {
 		$customDelay = (isset($dataSend['delay']) && is_numeric($dataSend['delay'])) ? (int)$dataSend['delay'] : null;
-		$slotInfo = acquireWaSequentialQueueSlot(false, $customDelay);
+		$minStartTs  = (isset($dataSend['min_start_ts']) && is_numeric($dataSend['min_start_ts'])) ? (int)$dataSend['min_start_ts'] : 0;
+		$slotInfo = acquireWaSequentialQueueSlot(false, $customDelay, $minStartTs);
 		if (empty($slotInfo['send_now'])) {
 			if (enqueueWaSequentialMessage($dataSend, false, (int)$slotInfo['slot_ts'])) {
 				return true;
@@ -3749,7 +3750,7 @@ if (!function_exists('ensureWaQueueTable')) {
  * - Jika ada pesan yang baru saja dikirim atau sedang mengantri, pesan berikutnya diberi jadwal berurutan (send_now = false).
  */
 if (!function_exists('acquireWaSequentialQueueSlot')) {
-	function acquireWaSequentialQueueSlot($isGroup = false, $customMinDelay = null)
+	function acquireWaSequentialQueueSlot($isGroup = false, $customMinDelay = null, $minStartTs = 0)
 	{
 		$now = time();
 		$lockDir = getWaQueueLockDir();
@@ -3772,7 +3773,12 @@ if (!function_exists('acquireWaSequentialQueueSlot')) {
 			$content = trim((string)stream_get_contents($fp));
 			$nextFreeSlot = is_numeric($content) ? (int)$content : 0;
 
-			if ($nextFreeSlot <= $now) {
+			if ((int)$minStartTs > $now) {
+				// Jika ada target waktu mulai minimum (misal: Jumat pukul 18:00 WIB), antrikan mulai waktu tersebut
+				$sendNow = false;
+				$assignedSlot = max($nextFreeSlot, (int)$minStartTs);
+				$newNextFreeSlot = $assignedSlot + $randomGap;
+			} elseif ($nextFreeSlot <= $now) {
 				// Antrian sedang kosong: kirim pesan pertama sekarang, dan tahan pesan berikutnya sejauh $randomGap detik
 				$sendNow = true;
 				$assignedSlot = $now;
@@ -3793,6 +3799,10 @@ if (!function_exists('acquireWaSequentialQueueSlot')) {
 		} else {
 			if ($fp) {
 				fclose($fp);
+			}
+			if ((int)$minStartTs > $now) {
+				$sendNow = false;
+				$assignedSlot = (int)$minStartTs;
 			}
 		}
 
@@ -4903,19 +4913,21 @@ if (!function_exists('waSalamWeekend')) {
 	{
 		// $data: noPenerima, namaKaryawan
 		$dataWa['penerima'] = $data['noPenerima'];
-		
-		// Jika template_name dikirimkan (dari Convia Template)
+		if (!empty($data['min_start_ts'])) {
+			$dataWa['min_start_ts'] = (int)$data['min_start_ts'];
+		}
 		if (!empty($data['template_name'])) {
 			$dataWa['template_name'] = $data['template_name'];
 			$dataWa['language']      = 'id';
 			$dataWa['parameters']    = [$data['namaKaryawan']];
-		} else {
-			$dataWa['pesan'] =
-				"Halo *" . $data['namaKaryawan'] . "*! 🎉 Selamat berakhir pekan! " .
-				"%0A%0ATerima kasih banyak atas kerja keras dan semangatmu sepanjang minggu ini. Waktunya istirahat, recharge energi, dan nikmati waktu bersama keluarga tercinta ya." .
-				"%0A%0AHappy Weekend! Sampai jumpa di hari Senin! 🏖️✨" .
-				"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		}
+		$dataWa['pesan'] =
+			"Halo *" . $data['namaKaryawan'] . "*! 👋✨" .
+			"%0A%0ASelamat menyelesaikan pekerjaan minggu ini! 🌿" .
+			"%0ATerima kasih banyak atas dedikasi, kerja keras, dan kontribusi terbaiknya selama sepekan ini di PT Visi Yosindo Medikal." .
+			"%0A%0ASelamat menikmati waktu istirahat dan berkumpul bersama keluarga serta orang-orang terkasih. Semoga akhir pekan ini menyenangkan dan kembali dengan energi baru di minggu depan!" .
+			"%0A%0ASelamat beristirahat & Happy Weekend! ☕🎉" .
+			"%0A%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }

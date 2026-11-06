@@ -17,15 +17,40 @@ class Bot extends CI_Controller
     }
 
     /**
-     * Cron Job: Ucapan Selamat Akhir Pekan (Jumat Sore 17:00 WIB)
+     * Cron Job: Ucapan Selamat Akhir Pekan (Jumat Sore 18:00 WIB / Jam 6 Sore)
      * URL: https://office.visiyosindo.id/bot/cron_weekend
      */
     public function cron_weekend()
     {
+        $isFriday = (date('N') == 5);
+        $force = $this->input->get_post('force');
+        if (!$isFriday && empty($force)) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status'  => 'skipped',
+                'pesan'   => 'Ucapan weekend otomatis hanya dijadwalkan setiap hari Jumat pukul 18:00 WIB.',
+                'hari'    => date('l')
+            ]);
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $alreadySentIds = [];
+        if ($this->db->table_exists('tbl_weekend_greetings_log')) {
+            $sentRows = $this->db->query("SELECT pengguna_id FROM tbl_weekend_greetings_log WHERE tanggal_jumat = ?", [$today])->result_array();
+            foreach ($sentRows as $s) {
+                $alreadySentIds[] = (int)$s['pengguna_id'];
+            }
+        }
+
+        // Target pengiriman mulai pukul 18:00 WIB (jam 6 sore) di hari Jumat secara berurutan (antrian 1-per-1)
+        $targetStartTs = empty($force) ? strtotime(date('Y-m-d 18:00:00')) : time();
+
         // Ambil semua karyawan yang aktif
         $this->db->select('pengguna_id, nama, no_hp');
         $this->db->from('pengguna');
         $this->db->where('status', 1);
+        $this->db->where('is_active', 1);
         $karyawanList = $this->db->get()->result();
 
         $totalSent = 0;
@@ -33,6 +58,10 @@ class Bot extends CI_Controller
         $details = [];
 
         foreach ($karyawanList as $karyawan) {
+            if (in_array((int)$karyawan->pengguna_id, $alreadySentIds) && empty($force)) {
+                continue;
+            }
+
             $phone = !empty($karyawan->no_hp) ? $karyawan->no_hp : '';
             $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
 
@@ -47,12 +76,23 @@ class Bot extends CI_Controller
             $res = waSalamWeekend([
                 'noPenerima'    => $cleanPhone,
                 'namaKaryawan'  => $namaPanggilan,
-                'template_name' => 'ucapan_akhir_pekan' // Otomatis pakai template Convia jika sudah diapprove
+                'template_name' => 'ucapan_akhir_pekan',
+                'min_start_ts'  => $targetStartTs
             ]);
 
             if ($res) {
                 $totalSent++;
-                $details[] = ['nama' => $namaLengkap, 'phone' => $cleanPhone, 'status' => 'success'];
+                $details[] = ['nama' => $namaLengkap, 'phone' => $cleanPhone, 'status' => 'queued_18_00'];
+                if ($this->db->table_exists('tbl_weekend_greetings_log')) {
+                    @$this->db->replace('tbl_weekend_greetings_log', [
+                        'pengguna_id'   => (int)$karyawan->pengguna_id,
+                        'nama'          => $namaLengkap,
+                        'phone_number'  => $cleanPhone,
+                        'tanggal_jumat' => $today,
+                        'status'        => 'sent',
+                        'created_at'    => date('Y-m-d H:i:s')
+                    ]);
+                }
             } else {
                 $failed++;
                 $details[] = ['nama' => $namaLengkap, 'phone' => $cleanPhone, 'status' => 'failed'];
