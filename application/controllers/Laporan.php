@@ -407,11 +407,18 @@ class Laporan extends CI_Controller
                 // $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
                 // $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
                 
-                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
-                $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
-                
-                $startDate = date('d-m-Y', strtotime("monday this week $week_offset week"));
-                $endDate = date('d-m-Y', strtotime("sunday this week $week_offset week"));
+                                // Hitung rentang tanggal minggu secara presisi berdasarkan offset
+                $base_monday = strtotime("monday this week");
+                $monday_ts = $base_monday + ($week_offset * 7 * 86400);
+                $sunday_ts = $monday_ts + (6 * 86400);
+                $wednesday_ts = $monday_ts + (2 * 86400);
+
+                $monday = date('Y-m-d', $monday_ts);
+                $friday = date('Y-m-d', $sunday_ts);
+                $wednesday = date('Y-m-d', $wednesday_ts);
+
+                $startDate = date('d-m-Y', $monday_ts);
+                $endDate = date('d-m-Y', $sunday_ts);
 
                 // Ambil data nilai_point
                 $this->db->where('id_pengguna', $id_pengaju);
@@ -664,8 +671,12 @@ class Laporan extends CI_Controller
         $week_offset = $this->input->post('week_offset7', TRUE);
         $week_offset = $week_offset !== null && $week_offset !== '' ? (int)$week_offset : 0;
 
-        $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
-        $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
+                $base_monday = strtotime("monday this week");
+        $monday_ts = $base_monday + ($week_offset * 7 * 86400);
+        $sunday_ts = $monday_ts + (6 * 86400);
+
+        $monday = date('Y-m-d', $monday_ts);
+        $friday = date('Y-m-d', $sunday_ts);
 
         $data['id_pengaju']        = sessPenggunaId();
         //$data['tanggal']	       = date_db_format($this->input->post('tanggal', TRUE));
@@ -2085,10 +2096,14 @@ class Laporan extends CI_Controller
             $week_offset = 0;
         } else {
             $week_offset = (isset($param2) && is_numeric($param2)) ? (int)$param2 : 0;
-            $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
-            $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
-            $startDate = date('d-m-Y', strtotime($monday));
-            $endDate = date('d-m-Y', strtotime($friday));
+                        $base_monday = strtotime("monday this week");
+            $monday_ts = $base_monday + ($week_offset * 7 * 86400);
+            $sunday_ts = $monday_ts + (6 * 86400);
+
+            $monday = date('Y-m-d', $monday_ts);
+            $friday = date('Y-m-d', $sunday_ts);
+            $startDate = date('d-m-Y', $monday_ts);
+            $endDate = date('d-m-Y', $sunday_ts);
         }
 
         $week_number = ceil(date('d', strtotime($monday)) / 7);

@@ -81,10 +81,12 @@
     const dropdownTahun = document.getElementById("tahun");
 
     // Loop untuk menambahkan opsi tahun (-1 tahun hingga +1 tahun dari tahun sekarang)
+    if (dropdownTahun) {
     for (let i = tahunSekarang - 0; i <= tahunSekarang + 2; i++) {
         let option = document.createElement("option");
         option.value = i;
         option.textContent = i;
         dropdownTahun.appendChild(option);
+    }
     }
 </script>

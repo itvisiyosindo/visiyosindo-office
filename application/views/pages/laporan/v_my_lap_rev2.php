@@ -1,9 +1,7 @@
-
 <!-- 
 	Create by KURNIAWAN  
 	12-06-2025
 -->
-
 <header class="page-header">
 	<h2><i class="fas fa-clipboard-list"></i>&nbsp;<?= $page_title ?></h2>
 	<div class="right-wrapper text-left">
@@ -12,7 +10,6 @@
 		</ol>
 	</div>
 </header>
-
 <style>
     .laporan-card {
         border-radius: 12px;
@@ -43,28 +40,20 @@
         padding: 4px 8px;
         font-weight: 600;
     }
-
     .badge-istimewa { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
     .badge-istimewa .score-range { background: #10b981; color: #ffffff; }
-
     .badge-sangat-baik { background: #f0fdfa; border-color: #99f6e4; color: #115e59; }
     .badge-sangat-baik .score-range { background: #0d9488; color: #ffffff; }
-
     .badge-baik { background: #f0f9ff; border-color: #bae6fd; color: #075985; }
     .badge-baik .score-range { background: #0284c7; color: #ffffff; }
-
     .badge-cukup-baik { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
     .badge-cukup-baik .score-range { background: #6366f1; color: #ffffff; }
-
     .badge-cukup { background: #fffbeb; border-color: #fde68a; color: #92400e; }
     .badge-cukup .score-range { background: #f59e0b; color: #ffffff; }
-
     .badge-kurang { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
     .badge-kurang .score-range { background: #ea580c; color: #ffffff; }
-
     .badge-kurang-sekali { background: #fff1f2; border-color: #fecdd3; color: #9f1239; }
     .badge-kurang-sekali .score-range { background: #e11d48; color: #ffffff; }
-
     /* Custom Week Dropdown Styling */
     .custom-week-dropdown .dropdown-toggle {
         background: #ffffff;
@@ -162,7 +151,6 @@
         color: #3b82f6;
         font-weight: 500;
     }
-
     /* Modern Table Styling & Responsive Behavior */
     /* Clean, Neat, Responsive Table Styling */
     .table-responsive,
@@ -244,7 +232,6 @@
         padding: 11px 12px !important;
     }
 </style>
-
 <div class="row">
     <div class="col-12">
         <div class="card laporan-card mb-4">
@@ -269,7 +256,6 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- Top Toolbar & Week Selector Row -->
                 <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3" style="border-bottom: 1px solid #f1f5f9; gap: 12px;">
                     <!-- Left: Periode Badge & Action Buttons -->
@@ -284,7 +270,6 @@
                             <i class="fas fa-file-pdf"></i> Cetak Rangkuman 1 Bulan
                         </button>
                     </div>
-
                     <!-- Right: Week Selector & Top Navigation -->
                     <div class="d-flex align-items-center" style="gap: 8px;">
                         <?php 
@@ -355,7 +340,6 @@
                         </a>
                     </div>
                 </div>
-
                 <!-- Modern Keterangan Nilai Legend Bar -->
                 <div class="p-2 p-md-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
                     <div class="d-flex align-items-center mb-2" style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -396,7 +380,6 @@
         </div>
     </div>
 </div>
-
 <div class="row">
     <div class="col-12">
         <div class="card laporan-card mb-4">
@@ -425,30 +408,25 @@
                                     <th style="width: 90px; min-width: 85px;">Aksi</th>
                                 </tr>
                             </thead>
-
                             <?php
                                 $total_nilai_a = 0;
                                 $jumlah_nilai_a = 0;
                                 $total_nilai_b = 0;
                                 $jumlah_nilai_b = 0;
-
                                 foreach ($nilai_point_map as $poin) {
                                     if (!empty($poin->nilai_a) && is_numeric($poin->nilai_a)) {
                                         $total_nilai_a += $poin->nilai_a;
                                         $jumlah_nilai_a++;
                                     }
-
                                     if (!empty($poin->nilai_b) && is_numeric($poin->nilai_b)) {
                                         $total_nilai_b += $poin->nilai_b;
                                         $jumlah_nilai_b++;
                                     }
                                 }
-
                                 $nilaiRataLapA = ($jumlah_nilai_a > 0) ? ($total_nilai_a / $jumlah_nilai_a) : 0;
                                 $nilaiRataLap = ($jumlah_nilai_b > 0) ? ($total_nilai_b / $jumlah_nilai_b) : 0;
                                 $rataAll = ($nilaiRataLapA + $nilaiRataLap)/2;
                             ?>
-
                             <tbody>
                               <?php 
 $no = 1;
@@ -459,7 +437,6 @@ foreach ($data_detail as $row) {
         $grouped_data[$row->id] = [];
     }
     $grouped_data[$row->id][] = $row;
-
     // Tandai point mana saja yang memiliki laporan terisi pada minggu ini
     if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
         if (!empty($row->point)) {
@@ -468,7 +445,6 @@ foreach ($data_detail as $row) {
     }
 }
 ?>
-
                                 <?php if (empty($grouped_data)): ?>
                                     <tr>
                                         <td colspan="13" class="text-center py-4 text-muted">
@@ -481,7 +457,6 @@ foreach ($data_detail as $row) {
                                     $firstRow = true;
                                     $rowspan = count($rows);
                                     foreach ($rows as $row): 
-
                                         $nama_hari = '-';
                                         $tgl_format = '-';
                                         if (!empty($row->tanggal)) {
@@ -490,10 +465,6 @@ foreach ($data_detail as $row) {
                                             $nama_hari = isset($hari[$day_name]) ? $hari[$day_name] : $day_name;
                                             $tgl_format = date('d-m-Y', strtotime($row->tanggal));
                                         }
-
-
-
-
                                         if (!empty($row->link) && empty($row->ket_hasil)) {
                                             $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary shadow-sm" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;"><i class="fas fa-link mr-1"></i> Link</a>';
                                         } elseif (empty($row->link) && !empty($row->ket_hasil)) {
@@ -501,20 +472,17 @@ foreach ($data_detail as $row) {
                                         } else {
                                             $link_download = '<span class="text-muted small">-</span>';
                                         }
+                                        // Cek apakah tanggal created_at berada di luar rentang minggu berjalan
+                                        $base_monday = strtotime("monday this week");
+                                        $monday_ts = $base_monday + ($week_offset * 7 * 86400);
+                                        $sunday_ts = $monday_ts + (6 * 86400);
+                                        $monday_range = date('Y-m-d', $monday_ts);
+                                        $sunday_range = date('Y-m-d', $sunday_ts);
 
-                                        // Gunakan week_offset untuk menghitung Senin dan Jumat berdasarkan minggu
-                                        $monday = date('Y-m-d', strtotime("monday this week +$week_offset week"));
-                                        $Sunday = date('Y-m-d', strtotime("Sunday this week +$week_offset week"));
-
-                                        // Cek apakah tanggal created_at berada di luar rentang minggu
-                                        $created_at = date('Y-m-d', strtotime($row->created_at));
-                                        $is_outside_range = ($created_at < $monday || $created_at > $Sunday);
-                                        
-                                        // Menambahkan nilai ke total hanya jika id_lap tidak kosong
-                                        if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
-                                            $total_nilai += $row->nilai;
-                                            $total_nilai_b += $row->nilai_b;
-                                            $jumlah_data++; // Hanya hitung jika data valid
+                                        $is_outside_range = false;
+                                        if (!empty($row->created_at) && !empty($row->id_lap)) {
+                                            $created_at = date('Y-m-d', strtotime($row->created_at));
+                                            $is_outside_range = ($created_at < $monday_range || $created_at > $sunday_range);
                                         }
                                     ?>
                                     <tr 
@@ -526,7 +494,6 @@ foreach ($data_detail as $row) {
                                             }
                                         ?>
                                     >
-
                                         <?php if ($firstRow): ?>
                                             <td rowspan="<?= $rowspan ?>" style="text-align:center; font-weight: 600; color: #475569;"><?= $no++ ?></td>
                                             <?php if($row->nilai_isi != 1){ ?>
@@ -539,7 +506,6 @@ foreach ($data_detail as $row) {
                                                 <td rowspan="<?= $rowspan ?>"></td>
                                             <?php } ?>
                                         <?php endif; ?>
-
                                         <td style="text-align:center">
                                             <?php if (!empty($row->id_lap)): ?>
                                                 <span class="badge badge-light border text-dark font-weight-bold" style="font-size: 11px; padding: 4px 7px; border-radius: 6px;"><?= $row->jenis ?></span>
@@ -618,7 +584,9 @@ foreach ($data_detail as $row) {
                                                         <button type="button" class="btn btn-sm btn-primary btn-edit shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= encrypt($row->id_lap) ?>" title="Edit Data"><i class="fas fa-pencil-alt"></i></button>
                                                         <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Data" data-id="<?= $row->id_lap ?>" data-object="laporan/delete/<?= $row->id_lap ?>"><i class="fas fa-trash-alt"></i></button>
                                                     </div>
-                                                <?php }?>		 
+                                                <?php } else { ?>
+                                                    <span class="badge badge-light-success text-success border border-success px-2 py-1" style="font-size: 10.5px; border-radius: 6px;" title="Laporan sudah dinilai oleh atasan"><i class="fas fa-lock mr-1"></i> Dinilai</span>
+                                                <?php } ?>
                                             <?php } else { ?>
                                                 <span class="text-muted small">-</span>
                                             <?php }?>
@@ -629,14 +597,12 @@ foreach ($data_detail as $row) {
                                     endforeach; 
                                     ?>
                                 <?php endforeach; ?>
-
                                 <tr class="row-summary">
                                     <td colspan="10" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>		
                                     <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataLapA, 2) ?></td>
                                     <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataLap, 2) ?></td>
                                     <td style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;"><?= number_format($rataAll, 2) ?></td>
                                 </tr>
-
                             </tbody>
                         </table>
                     </div>
@@ -646,7 +612,6 @@ foreach ($data_detail as $row) {
     </div>
 <div class="row">
 	<div class="col-12">
-
 		<!-- PROJECT & TASK YANG DISELESAIKAN (SINKRON TASK & PROYEK) -->
 		<div class="card laporan-card mb-4">
 			<div class="card-body p-3 p-md-4">
@@ -735,11 +700,9 @@ foreach ($data_detail as $row) {
                                         <?php else: ?>
                                             <span class="small text-dark font-weight-500"><?= htmlspecialchars($t->bukti_selesai) ?></span>
                                         <?php endif; endif; ?>
-
                                         <?php if (!empty($t->catatan_bawahan)): ?>
                                             <div class="text-muted small mt-1" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(character_limiter($t->catatan_bawahan, 80)) ?>"</div>
                                         <?php endif; ?>
-
                                         <?php if (empty($t->bukti_selesai) && empty($t->catatan_bawahan)): ?>
                                             <span class="text-muted small">-</span>
                                         <?php endif; ?>
@@ -797,7 +760,6 @@ foreach ($data_detail as $row) {
 			</div>
 		</div>
 		<!-- PROJECT & TASK YANG DISELESAIKAN -->
-
         <?php 
         $jumlah_data_pencapaian = !empty($data_detail_pencapaian) ? count($data_detail_pencapaian) : 0;
         $total_nilai = 0;
@@ -805,7 +767,6 @@ foreach ($data_detail as $row) {
         $nilaiRataA = 0;
         $nilaiRataB = 0;
         $nilaiRataPencapaian = 0;
-
         if ($jumlah_data_pencapaian > 0): 
             foreach ($data_detail_pencapaian as $row) {
                 $total_nilai += (float)$row->nilai_a;
@@ -830,7 +791,6 @@ foreach ($data_detail as $row) {
                         <i class="fas fa-chevron-down mr-1"></i> Buka Data Arsip (<?= $jumlah_data_pencapaian ?>)
                     </button>
                 </div>
-
                 <div class="collapse show" id="collapsePencapaianHistori">
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 980px; width: 100%;">
@@ -857,7 +817,6 @@ foreach ($data_detail as $row) {
                                     } else {
                                         $link_download = '<span class="text-muted small">-</span>';
                                     }
-
                                     $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
                                     $nama_hari = isset($hari[date('l', strtotime($row->tanggal))]) ? $hari[date('l', strtotime($row->tanggal))] : '-';
                                 ?>
@@ -886,13 +845,10 @@ foreach ($data_detail as $row) {
         </div>
         <!-- ARSIP DATA PENCAPAIAN SEBELUMNYA -->
         <?php endif; ?>
-
 	</div>
 </div>
-
 <div class="row">
 	<div class="col-12">
-
 		<!-- PENILAIAN UMUM -->
 		<div class="card laporan-card mb-4">
 			<div class="card-body p-3 p-md-4">
@@ -901,7 +857,6 @@ foreach ($data_detail as $row) {
 						<i class="fas fa-star text-warning mr-1"></i> Penilaian Umum: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
 					</h5>
 				</div>
-
 				<div class="table-responsive">
                     <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_umum" style="min-width: 900px; width: 100%;">
                         <thead>
@@ -1002,8 +957,6 @@ foreach ($data_detail as $row) {
 								$nilaiRataa = ($cnt_a > 0) ? ($sum_a / $cnt_a) : 0;
 								$nilaiRatab = ($cnt_b > 0) ? ($sum_b / $cnt_b) : 0;
 								$nilaiRataPumum = ($cnt_a > 0 || $cnt_b > 0) ? (($nilaiRataa + $nilaiRatab) / (($cnt_a > 0 && $cnt_b > 0) ? 2 : 1)) : 0;
-
-
 							?>
 							<tr class="row-summary">
                                 <td colspan="3" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
@@ -1011,11 +964,9 @@ foreach ($data_detail as $row) {
 								<td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRatab, 2) ?></td>
 								<td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPumum, 2) ?></td>
 							</tr>
-
                         </tbody>
                     </table>
                 </div>
-
                 <!-- Modern Summary Card -->
                 <div class="p-3 mt-4" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                     <div class="d-flex align-items-center mb-3" style="font-size: 13px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -1068,7 +1019,6 @@ foreach ($data_detail as $row) {
                         </div>
                     </div>
                 </div>
-
                 <!-- Bottom Navigation Buttons -->
                 <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
                     <a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset - 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 16px;">
@@ -1078,14 +1028,11 @@ foreach ($data_detail as $row) {
                         Minggu Berikutnya <i class="fas fa-chevron-right ml-1"></i>
                     </a>
                 </div>
-
 			</div>
 		</div>
 		<!-- PENILAIAN UMUM -->
-
 	</div>
 </div>
-
 <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content ">
@@ -1121,7 +1068,6 @@ foreach ($data_detail as $row) {
 						</select>
 					</div>
 					<input type="hidden" id="jobdesc_text" name="jobdesc_text">
-
 					<div class="form-group" id="form_keterangan_konfirmasi" style="display:none;">
 							<label for="keterangan_konfirmasi" class="form-control-label">Jobdesc Lainnya <span class="text-danger">*</span> :</label>
 							<textarea type="text" class="form-control" id="keterangan_konfirmasi" name="keterangan_konfirmasi" required></textarea>
@@ -1135,12 +1081,10 @@ foreach ($data_detail as $row) {
               <option value = "TIDAK ADA PEKERJAAN DI MINGGU INI">TIDAK ADA PEKERJAAN DI MINGGU INI</option>
 						</select>
 					</div>
-
 					<div class="form-group">
 						<label for="progress" class="form-control-label">Progress <span class="text-danger">*</span> :</label>
 						<textarea class="form-control" placeholder="Masukkan Progress Pekerjaan Anda" name="progress" id="progress" cols="10" rows="5"></textarea>
 					</div>
-
 					
 					<div class="form-group">
 						<label for="status_pekerjaan" class="form-control-label">Status Pekerjaan <span class="text-danger">*</span> :</label>
@@ -1160,19 +1104,14 @@ foreach ($data_detail as $row) {
 							<option value="2">Keterangan</option>
 						</select>
 					</div>
-
-
 					<div class="form-group" id="form_ket_hasil" style="display:none;">
 							<label for="ket_hasil" class="form-control-label">Keterangan <span class="text-danger">*</span> :</label>
 							<textarea type="text" class="form-control" id="ket_hasil" name="ket_hasil"></textarea>
 					</div>
-
 					<div class="form-group" id="form_link" style="display:none;">
 						<label for="link" class="form-control-label">Link Bukti Pekerjaan <span class="text-danger">*</span>:</label>
 						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link">
 					</div>
-
-
 					<div class="form-group">
 							<label for="pihak" class="form-control-label">Nama Pihak Terkait :</label>
 							<select class="form-control" id="pihak" name="pihak" required>
@@ -1186,14 +1125,11 @@ foreach ($data_detail as $row) {
 									<?php endif; ?>
 							</select>
 					</div>
-
-
 					<div class="form-group" id="keterangan-group" style="display: none;">
 							<label for="keterangan" class="form-control-label">Keterangan yang Dikerjakan oleh Pihak Terkait :</label>
 							<textarea class="form-control" placeholder="Masukkan Keterangan yang Dikerjakan oleh Pihak Terkait" 
 												name="keterangan" id="keterangan" cols="10" rows="2"></textarea>
 					</div>
-
 					<!--<div class="form-group">
 						<label for="pencapaian" class="form-control-label">Apakah ini termasuk Pencapaian ?<span class="text-danger">*</span> :</label>
 						<select data-plugin-selectTwo class="form-control populate" id="pencapaian" name="pencapaian" required>
@@ -1202,8 +1138,6 @@ foreach ($data_detail as $row) {
 						</select>
 					</div>-->
 					
-
-
 				</div>
 			</div>
 			<div class="modal-footer">
@@ -1216,9 +1150,6 @@ foreach ($data_detail as $row) {
 		</div>
 	</div>
 </div>
-
-
-
 <div id="main-modal2" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content ">
@@ -1247,7 +1178,6 @@ foreach ($data_detail as $row) {
 						</div>
 					</div>
 					<input type="hidden" name="week_offset7" value="<?= $week_offset ?>">
-
 									
 					
 					<div class="form-group">
@@ -1258,12 +1188,10 @@ foreach ($data_detail as $row) {
               <option value = "TIDAK ADA PEKERJAAN DI MINGGU INI">TIDAK ADA PEKERJAAN DI MINGGU INI</option>
 						</select>
 					</div>
-
 					<div class="form-group">
 						<label for="progress" class="form-control-label">Progress (Keterangan Proyek) <span class="text-danger">*</span> :</label>
 						<textarea class="form-control" placeholder="Masukkan Progress Pekerjaan Anda" name="progress" id="progress" cols="10" rows="5"></textarea>
 					</div>
-
 					
 					<div class="form-group">
 						<label for="status_pekerjaan" class="form-control-label">Status Pekerjaan <span class="text-danger">*</span> :</label>
@@ -1275,7 +1203,6 @@ foreach ($data_detail as $row) {
               <option value = "TIDAK SELESAI">TIDAK SELESAI</option>
 						</select>
 					</div>
-
 					<div class="form-group">
 						<label for="hasil2" class="form-control-label">Hasil Pekerjaan <span class="text-danger">*</span> :</label>
 						<select data-plugin-selectTwo class="form-control populate" id="hasil2" name="hasil2" required onchange="toggleFormHasil2()">
@@ -1284,19 +1211,14 @@ foreach ($data_detail as $row) {
 							<option value="2">Keterangan</option>
 						</select>
 					</div>
-
-
 					<div class="form-group" id="form_ket_hasil2" style="display:none;">
 							<label for="ket_hasil" class="form-control-label">Keterangan <span class="text-danger">*</span> :</label>
 							<textarea type="text" class="form-control" id="ket_hasil" name="ket_hasil"></textarea>
 					</div>
-
 					<div class="form-group" id="form_link2" style="display:none;">
 						<label for="link" class="form-control-label">Link Bukti Pekerjaan <span class="text-danger">*</span>:</label>
 						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link">
 					</div>
-
-
 					<div class="form-group">
 							<label for="pihak2" class="form-control-label">Nama Pihak Terkait :</label>
 							<select class="form-control" id="pihak2" name="pihak2" required>
@@ -1310,14 +1232,11 @@ foreach ($data_detail as $row) {
 									<?php endif; ?>
 							</select>
 					</div>
-
-
 					<div class="form-group" id="keterangan-group2" style="display: none;">
 							<label for="keterangan" class="form-control-label">Keterangan yang Dikerjakan oleh Pihak Terkait :</label>
 							<textarea class="form-control" placeholder="Masukkan Keterangan yang Dikerjakan oleh Pihak Terkait" 
 												name="keterangan" id="keterangan" cols="10" rows="2"></textarea>
 					</div>
-
 					<!--<div class="form-group">
 						<label for="pencapaian" class="form-control-label">Apakah ini termasuk Pencapaian ?<span class="text-danger">*</span> :</label>
 						<select data-plugin-selectTwo class="form-control populate" id="pencapaian" name="pencapaian" required>
@@ -1326,8 +1245,6 @@ foreach ($data_detail as $row) {
 						</select>
 					</div>-->
 					
-
-
 				</div>
 			</div>
 			<div class="modal-footer">
@@ -1340,10 +1257,6 @@ foreach ($data_detail as $row) {
 		</div>
 	</div>
 </div>
-
-
-
-
 <div id="main-modal-pencapaian" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content ">
@@ -1367,12 +1280,10 @@ foreach ($data_detail as $row) {
 					</div>
 					
 					
-
 					<div class="form-group">
 						<label for="detail" class="form-control-label">Detail <span class="text-danger">*</span> :</label>
 						<textarea class="form-control" placeholder="Masukkan Detail Pencapaian Anda" name="detail" id="detail" cols="10" rows="5"></textarea>
 					</div>
-
 					
 					<div class="form-group">
 						<label for="hasil3" class="form-control-label">Hasil Pekerjaan <span class="text-danger">*</span> :</label>
@@ -1382,20 +1293,15 @@ foreach ($data_detail as $row) {
 							<option value="2">Keterangan</option>
 						</select>
 					</div>
-
-
 					<div class="form-group" id="form_ket_hasil3" style="display:none;">
 							<label for="keterangan" class="form-control-label">Keterangan <span class="text-danger">*</span> :</label>
 							<textarea type="text" class="form-control" id="keterangan" name="keterangan" required></textarea>
 					</div>
-
 					<div class="form-group" id="form_link3" style="display:none;">
 						<label for="link" class="form-control-label">Link Bukti Pekerjaan <span class="text-danger">*</span>:</label>
 						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link">
 					</div>
 					
-
-
 				</div>
 			</div>
 			<div class="modal-footer">
@@ -1408,8 +1314,6 @@ foreach ($data_detail as $row) {
 		</div>
 	</div>
 </div>
-
-
 <!-- Modal Indikator Skala Penilaian -->
 <div id="main-modal-indikatorPenilaian" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog modal-custom" role="document">
@@ -1422,7 +1326,6 @@ foreach ($data_detail as $row) {
 					</button>
 				</h5>
 			</div>
-
 			<div class="modal-body">
 				<div class="table-responsive">
 					<table class="table table-bordered table-striped">
@@ -1465,7 +1368,6 @@ foreach ($data_detail as $row) {
 					</table>
 				</div>
 			</div>
-
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
 			</div>
@@ -1476,16 +1378,13 @@ foreach ($data_detail as $row) {
 	/*function toggleFormStatus() {
         var status = document.getElementById("jobdesc").value;
         var formKet = document.getElementById("form_keterangan_konfirmasi");
-
         if (status === "0") {
             formKet.style.display = "block";
         } else {
             formKet.style.display = "none";
         }
     }*/
-
 		
-
 		function toggleFormHasil() {
         var statusHasil = $("#main-modal #hasil").val();
         if (statusHasil === "1") {
@@ -1505,7 +1404,6 @@ foreach ($data_detail as $row) {
             $("#main-modal #ket_hasil").prop('required', false);
         }
     }
-
 	function toggleFormHasil2() {
         var statusHasil = $("#main-modal2 #hasil2").val();
         if (statusHasil === "1") {
@@ -1525,12 +1423,10 @@ foreach ($data_detail as $row) {
             $("#main-modal2 #ket_hasil").prop('required', false);
         }
     }
-
 	function toggleFormHasil3() {
         var statusHasil = document.getElementById("hasil3").value;
         var formKetHasil = document.getElementById("form_ket_hasil3");
         var formLink = document.getElementById("form_link3");
-
         if (statusHasil === "1") {
             formLink.style.display = "block";
             formKetHasil.style.display = "none";
@@ -1542,9 +1438,7 @@ foreach ($data_detail as $row) {
             formKetHasil.style.display = "none";
         }
     }
-
 		
-
 	function toggleFormStatus() {
 			var select = document.getElementById("jobdesc");
 			var selectedValue = select.value;
@@ -1560,39 +1454,30 @@ foreach ($data_detail as $row) {
 					jobdescText.value = selectedText; // Simpan deskripsi dari dropdown
 			}
 	}
-
 	// Tambahkan event listener untuk menangkap input manual jika "Lainnya" dipilih
 	document.getElementById("keterangan_konfirmasi").addEventListener("input", function() {
 			var jobdescText = document.getElementById("jobdesc_text");
 			jobdescText.value = this.value; // Simpan input manual ke jobdesc_text
 	});
 	
-
 	document.getElementById("pihak").addEventListener("change", function() {
 				var selectedValue = this.value.trim(); 
 				var keteranganGroup = document.getElementById("keterangan-group");
-
-
 				if (selectedValue === "") {
 						keteranganGroup.style.display = "none"; 
 				} else {
 						keteranganGroup.style.display = "block"; 
 				}
 		});
-
-
 	document.getElementById("pihak2").addEventListener("change", function() {
 				var selectedValue = this.value.trim(); 
 				var keteranganGroup = document.getElementById("keterangan-group2");
-
-
 				if (selectedValue === "") {
 						keteranganGroup.style.display = "none"; 
 				} else {
 						keteranganGroup.style.display = "block"; 
 				}
 		});
-
 	/*$('#btn-show-add-form2').click(function() {
 			$('.form-control').val(null)
 			$('.btn-isactive').remove()
@@ -1600,14 +1485,11 @@ foreach ($data_detail as $row) {
 			$('#main-modal2 #modal-form2').attr('action', 'laporan/add')
 			$('#main-modal2').modal()
 		})*/
-
 	document.addEventListener('DOMContentLoaded', function() {
 		$(document).on('click', '.btn-petujuk', function() {
 			$('#main-modal-indikatorPenilaian').modal('show');
 		});
-
 	
-
 		$(document).on('click', '.btn-edit2', function() {
 			$('.btn-isactive').remove();
 			var object = 'laporan';
@@ -1618,10 +1500,8 @@ foreach ($data_detail as $row) {
 			$('#main-modal2 #modal-form2').attr('action', 'laporan/addRev2');
 			$('#main-modal2').modal('show');
 		});
-
 	$(document).on('click', '.btn-save7', function(e) {
     e.preventDefault(); // Hindari submit langsung
-
     Swal.fire({
         title: 'Apakah Anda yakin?',
         text: 'Pastikan data sudah benar sebelum disimpan.',
@@ -1635,13 +1515,10 @@ foreach ($data_detail as $row) {
         }
     });
 });
-
 $('#modal-form2').on('submit', function(e) {
     e.preventDefault(); // Hindari reload page
-
     var form = $(this);
     var actionUrl = form.attr('action');
-
     $.ajax({
         type: 'POST',
         url: actionUrl,
@@ -1679,7 +1556,6 @@ $('#modal-form2').on('submit', function(e) {
                             name: 'force_save',
                             value: '1'
                         }).appendTo('#modal-form2');
-
                         $('#modal-form2').submit(); // kirim ulang AJAX
                     }
                 });
@@ -1687,10 +1563,7 @@ $('#modal-form2').on('submit', function(e) {
         }
     });
 });
-
-
 	
-
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)
 			$('.btn-isactive').remove()
@@ -1698,13 +1571,11 @@ $('#modal-form2').on('submit', function(e) {
 			$('#main-modal #modal-form').attr('action', 'laporan/add')
 			$('#main-modal').modal()
 		})
-
 		$(document).on('click', '.btn-edit', function() {
 			$('.btn-isactive').remove();
 			var object = 'laporan';
 			$('#main-modal #modal-form').attr('action', 'laporan/update');
 			$('#main-modal').modal('show');
-
 			var id = $(this).attr("data-id");
 			fetch(object + '/edit/' + id)
 				.then(function(resp) {
@@ -1736,7 +1607,6 @@ $('#modal-form2').on('submit', function(e) {
 					}
 				});
 		});
-
 		//Pencapaian
 		$('#btn-show-add-form-pencapaian').click(function() {
 			$('.form-control').val(null)
@@ -1745,13 +1615,11 @@ $('#modal-form2').on('submit', function(e) {
 			$('#main-modal-pencapaian #modal-form-pencapaian').attr('action', 'laporan/addPencapaian')
 			$('#main-modal-pencapaian').modal()
 		})
-
 		$(document).on('click', '.btn-edit-pencapaian', function() {
 			$('.btn-isactive').remove()
 			var object = 'laporan'
 			$('#main-modal-pencapaian #modal-form-pencapaian').attr('action', 'laporan/updatePencapaian')
 			$('#main-modal-pencapaian').modal()
-
 			var id = $(this).attr("data-id")
 			fetch(object + '/editPencapaian/' + id)
 				.then(function(resp) {
@@ -1765,8 +1633,6 @@ $('#modal-form2').on('submit', function(e) {
 					$('#main-modal-pencapaian #id_pelanggan').val(id)
 				})
 		})
-
-
 		// Search filter for custom week dropdown
 		$(document).on('keyup', '.week-search-input', function(e) {
 			e.stopPropagation();
@@ -1781,15 +1647,15 @@ $('#modal-form2').on('submit', function(e) {
 				}
 			});
 		});
-
 	})
-
 	function updateDatatable() {
-		table.ajax.reload(null, false)
+		if (typeof table !== 'undefined' && table && table.ajax) {
+			table.ajax.reload(null, false);
+		} else {
+			location.reload();
+		}
 	}
-
 </script>
-
 <div id="modal-cetak-bulanan" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
 	<div class="modal-dialog modal-sm" role="document">
 		<div class="modal-content">
