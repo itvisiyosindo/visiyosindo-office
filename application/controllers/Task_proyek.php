@@ -661,17 +661,19 @@ class Task_proyek extends CI_Controller
     }
 
     /**
-     * Bawahan: Update Progres / Checklist / Komentar atau Mulai Kerjakan
+     * Bawahan: Update Progres / Tambah & Centang Checklist / Komentar atau Mulai Kerjakan
      */
     public function update_progres()
     {
         grantAccessFor('all');
 
-        $myId           = (int)sessPenggunaId();
-        $id_task        = (int)$this->input->post('id_task', TRUE);
-        $progres        = (int)$this->input->post('progres', TRUE);
-        $catatan        = trim((string)$this->input->post('catatan', FALSE));
-        $checklist_done = $this->input->post('checklist_done', TRUE);
+        $myId                = (int)sessPenggunaId();
+        $id_task             = (int)$this->input->post('id_task', TRUE);
+        $progres             = (int)$this->input->post('progres', TRUE);
+        $catatan             = trim((string)$this->input->post('catatan', FALSE));
+        $checklist_items_raw = $this->input->post('checklist_items', FALSE);
+        $checklist_flags_raw = $this->input->post('checklist_done_flags', TRUE);
+        $checklist_done      = $this->input->post('checklist_done', TRUE);
 
         $task = $this->db->get_where('task_proyek', ['id_task' => $id_task, 'is_deleted' => 0])->row();
         if (!$task) {
@@ -682,42 +684,66 @@ class Task_proyek extends CI_Controller
         if ($progres < 0) $progres = 0;
         if ($progres > 100) $progres = 100;
 
-        // Update checklist JSON jika ada
-        $checklist = !empty($task->checklist_json) ? json_decode($task->checklist_json, true) : [];
-        if (!empty($checklist) && is_array($checklist)) {
+        // Susun / perbarui checklist dari input penerima task (jika dikirimkan)
+        $checklist = [];
+        $doneCount = 0;
+        if (is_array($checklist_items_raw)) {
+            $flags = is_array($checklist_flags_raw) ? $checklist_flags_raw : [];
             $doneIndices = is_array($checklist_done) ? array_map('intval', $checklist_done) : [];
-            $doneCount = 0;
-            foreach ($checklist as $idx => &$item) {
-                $item['done'] = in_array($idx, $doneIndices, true) ? 1 : 0;
-                if ($item['done']) $doneCount++;
+            foreach ($checklist_items_raw as $idx => $rawText) {
+                $cleanText = trim((string)$rawText);
+                if ($cleanText === '') {
+                    continue;
+                }
+                $isDone = isset($flags[$idx]) ? ((int)$flags[$idx] === 1) : in_array((int)$idx, $doneIndices, true);
+                $checklist[] = [
+                    'item' => $cleanText,
+                    'done' => $isDone ? 1 : 0
+                ];
+                if ($isDone) {
+                    $doneCount++;
+                }
             }
-            unset($item);
-            // Jika progres belum diubah manual tapi ada checklist yang dicentang, sesuaikan otomatis
             if (count($checklist) > 0 && $this->input->post('auto_calc_checklist') == '1') {
                 $progres = (int)round(($doneCount / count($checklist)) * 100);
+            }
+        } else {
+            // Fallback jika hanya mengirim centangan dari checklist yang sudah ada
+            $checklist = !empty($task->checklist_json) ? json_decode($task->checklist_json, true) : [];
+            if (!empty($checklist) && is_array($checklist)) {
+                $doneIndices = is_array($checklist_done) ? array_map('intval', $checklist_done) : [];
+                foreach ($checklist as $idx => &$item) {
+                    $item['done'] = in_array($idx, $doneIndices, true) ? 1 : 0;
+                    if ($item['done']) $doneCount++;
+                }
+                unset($item);
+                if (count($checklist) > 0 && $this->input->post('auto_calc_checklist') == '1') {
+                    $progres = (int)round(($doneCount / count($checklist)) * 100);
+                }
             }
         }
 
         $newStatus = (int)$task->status_task;
         if ($newStatus === 0 || $newStatus === 3) {
             $newStatus = 1; // In Progress
-            if ($progres === 0) $progres = 10;
+            if ($progres === 0 && empty($checklist)) $progres = 10;
         }
 
         $this->db->where('id_task', $id_task)->update('task_proyek', [
             'progres'        => $progres,
             'status_task'    => $newStatus,
-            'checklist_json' => !empty($checklist) ? json_encode($checklist, JSON_UNESCAPED_UNICODE) : $task->checklist_json
+            'checklist_json' => !empty($checklist) ? json_encode($checklist, JSON_UNESCAPED_UNICODE) : null
         ]);
 
+        $checklistInfo = !empty($checklist) ? ' [Checklist: ' . $doneCount . '/' . count($checklist) . ' selesai]' : '';
         $this->db->insert('task_proyek_log', [
             'id_task'     => $id_task,
             'id_pengguna' => $myId,
             'aksi'        => 'Update Progres (' . $progres . '%)',
-            'catatan'     => $catatan !== '' ? $catatan : 'Memperbarui progres pengerjaan menjadi ' . $progres . '%.'
+            'catatan'     => ($catatan !== '' ? $catatan : 'Memperbarui progres pengerjaan menjadi ' . $progres . '%.') . $checklistInfo
         ]);
 
-        ajaxReturnDie('success', 'Progres pengerjaan berhasil diperbarui (' . $progres . '%)!', TRUE);
+        ajaxReturnDie('success', 'Checklist & progres pengerjaan berhasil diperbarui (' . $progres . '%)!', TRUE);
     }
 
     /**
@@ -743,13 +769,25 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        // Tandai semua checklist selesai
-        $checklist = !empty($task->checklist_json) ? json_decode($task->checklist_json, true) : [];
-        if (!empty($checklist) && is_array($checklist)) {
-            foreach ($checklist as &$item) {
-                $item['done'] = 1;
+        // Tandai semua checklist selesai (ambil dari input terbaru jika ada, atau dari database)
+        $checklist_items_raw = $this->input->post('checklist_items', FALSE);
+        $checklist = [];
+        if (is_array($checklist_items_raw)) {
+            foreach ($checklist_items_raw as $rawText) {
+                $cleanText = trim((string)$rawText);
+                if ($cleanText !== '') {
+                    $checklist[] = ['item' => $cleanText, 'done' => 1];
+                }
             }
-            unset($item);
+        }
+        if (empty($checklist)) {
+            $checklist = !empty($task->checklist_json) ? json_decode($task->checklist_json, true) : [];
+            if (!empty($checklist) && is_array($checklist)) {
+                foreach ($checklist as &$item) {
+                    $item['done'] = 1;
+                }
+                unset($item);
+            }
         }
 
         $this->db->where('id_task', $id_task)->update('task_proyek', [

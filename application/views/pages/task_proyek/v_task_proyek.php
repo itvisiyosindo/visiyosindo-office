@@ -1047,27 +1047,10 @@ $namaBulanList = [
                         <textarea name="deskripsi" rows="3" class="form-control" placeholder="Tuliskan rincian target, spesifikasi hasil yang diharapkan, atau langkah kerja..."></textarea>
                     </div>
 
-                    <!-- DYNAMIC CHECKLIST BUILDER -->
-                    <div class="form-group">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="font-weight-bold mb-0"><i class="fas fa-list-ul text-primary"></i> Checklist Sub-Task / Langkah Kerja (Opsional)</label>
-                            <button type="button" class="btn btn-xs btn-outline-primary" id="btnAddChecklistRow">
-                                <i class="fas fa-plus"></i> Tambah Item Checklist
-                            </button>
-                        </div>
-                        <div id="checklistBuilderContainer">
-                            <div class="input-group input-group-sm mb-1 checklist-input-row">
-                                <input type="text" name="checklist_items[]" class="form-control" placeholder="Item checklist ke-1 (contoh: Siapkan peralatan & bahan)...">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-danger btn-remove-checklist"><i class="fas fa-times"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <label class="font-weight-bold">Link Lampiran / Referensi dari Atasan (Opsional)</label>
                         <input type="text" name="lampiran_atasan" class="form-control" placeholder="https://drive.google.com/... (Link dokumen, desain, atau referensi)">
+                        <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Catatan: <strong>Checklist langkah kerja / sub-task</strong> akan diisi dan dicentang langsung oleh <strong>Karyawan Penerima Tugas</strong> sebagai dasar perhitungan progres.</small>
                     </div>
 
                     <div class="checkbox-custom checkbox-success mt-2">
@@ -1142,6 +1125,7 @@ $namaBulanList = [
                         <div id="dt_catatan_revisi"></div>
                     </div>
                     <div id="dt_sp_alert_wrap" class="mt-2" style="display:none;"></div>
+                    <div id="dt_readonly_checklist_wrap" class="mt-2 p-2 rounded bg-white border" style="display:none;"></div>
                 </div>
 
                 <!-- HASIL PENILAIAN BINTANG 5 (TAMPIL JIKA SUDAH DINILAI) -->
@@ -1156,16 +1140,22 @@ $namaBulanList = [
                     </div>
                 </div>
 
-                <!-- PANEL 1: CHECKLIST & UPDATE PROGRES (UNTUK PELAKSANA / KARYAWAN) -->
+                <!-- PANEL 1: CHECKLIST & UPDATE PROGRES (DIISI OLEH PELAKSANA / KARYAWAN PENERIMA TASK) -->
                 <div id="panelBawahanProgres" class="card mb-3 border-primary">
-                    <div class="card-header bg-light py-2">
-                        <strong class="text-primary"><i class="fas fa-tasks mr-1"></i> Checklist Sub-Task & Update Progres Pengerjaan</strong>
+                    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center flex-wrap">
+                        <strong class="text-primary"><i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Saya & Update Progres</strong>
+                        <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold" id="btnAddBawahanChecklist">
+                            <i class="fas fa-plus mr-1"></i> Tambah Item Checklist
+                        </button>
                     </div>
                     <div class="card-body py-3">
                         <form id="formUpdateProgres">
                             <input type="hidden" name="id_task" id="up_id_task">
-                            <input type="hidden" name="auto_calc_checklist" id="up_auto_calc" value="0">
+                            <input type="hidden" name="auto_calc_checklist" id="up_auto_calc" value="1">
 
+                            <div class="small text-muted mb-2">
+                                Tambahkan langkah-langkah kerja (sub-task) Anda di bawah ini, lalu centang item yang sudah dikerjakan untuk menghitung persentase progres secara otomatis:
+                            </div>
                             <div id="dt_checklist_container" class="mb-3"></div>
 
                             <div class="form-group mb-2">
@@ -1660,26 +1650,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sub_bukti_selesai').val(t.bukti_selesai || '');
 
                 var isPenerima = (parseInt(t.id_penerima, 10) === myId);
+                var canEditChecklist = isPenerima && parseInt(t.status_task, 10) < 4;
 
-                // Render Checklist Interaktif
+                // Render Checklist untuk Penerima Task (Bisa tambah, edit, hapus & centang)
                 var chkHtml = '';
-                if (t.checklist && t.checklist.length > 0) {
-                    chkHtml += '<label class="font-weight-bold small">Checklist Sub-Task ' + (isPenerima ? '(Centang yang sudah selesai):' : '(Daftar Sub-Task):') + '</label>';
-                    for (var i = 0; i < t.checklist.length; i++) {
-                        var item = t.checklist[i];
-                        var isChecked = parseInt(item.done, 10) === 1;
-                        var disabledAttr = isPenerima ? '' : 'disabled';
-                        chkHtml += '<div class="tp-checklist-row ' + (isChecked ? 'done' : '') + '">' +
-                            '<input type="checkbox" class="chk-subtask-item" name="checklist_done[]" value="' + i + '" ' + (isChecked ? 'checked' : '') + ' ' + disabledAttr + '>' +
-                            '<span>' + $('<div>').text(item.item).html() + '</span>' +
-                            '</div>';
+                if (canEditChecklist) {
+                    if (t.checklist && t.checklist.length > 0) {
+                        for (var i = 0; i < t.checklist.length; i++) {
+                            var item = t.checklist[i];
+                            var isChecked = parseInt(item.done, 10) === 1;
+                            chkHtml += buildEditableChecklistRowHtml(item.item || '', isChecked, i + 1);
+                        }
+                    } else {
+                        chkHtml += buildEditableChecklistRowHtml('', false, 1);
+                    }
+                    $('#dt_checklist_container').html(chkHtml);
+                    $('#dt_readonly_checklist_wrap').hide().empty();
+                } else {
+                    $('#dt_checklist_container').empty();
+                    if (t.checklist && t.checklist.length > 0) {
+                        var doneCntRo = 0;
+                        var roHtml = '<div class="small font-weight-bold text-primary mb-1"><i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Karyawan:</div>';
+                        for (var k = 0; k < t.checklist.length; k++) {
+                            var roItem = t.checklist[k];
+                            var roDone = parseInt(roItem.done, 10) === 1;
+                            if (roDone) doneCntRo++;
+                            roHtml += '<div class="tp-checklist-row ' + (roDone ? 'done' : '') + ' mb-1">' +
+                                '<i class="fas ' + (roDone ? 'fa-check-square text-success' : 'fa-square text-muted') + ' mr-1"></i>' +
+                                '<span>' + $('<div>').text(roItem.item || '').html() + '</span>' +
+                                '</div>';
+                        }
+                        roHtml = '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                            '<span class="small font-weight-bold text-primary"><i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Karyawan</span>' +
+                            '<span class="badge badge-info">' + doneCntRo + ' / ' + t.checklist.length + ' Selesai</span>' +
+                            '</div>' + roHtml.replace('<div class="small font-weight-bold text-primary mb-1"><i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Karyawan:</div>', '');
+                        $('#dt_readonly_checklist_wrap').html(roHtml).show();
+                    } else {
+                        $('#dt_readonly_checklist_wrap').hide().empty();
                     }
                 }
-                $('#dt_checklist_container').html(chkHtml);
 
                 // Tampilkan / sembunyikan panel sesuai status & role
                 // Form Update Progres & Submit Selesai HANYA untuk Karyawan Penerima Tugas (Pelaksana) jika belum tuntas
-                if (isPenerima && parseInt(t.status_task, 10) < 4) {
+                if (canEditChecklist) {
                     $('#panelBawahanProgres').show();
                     $('#panelBawahanSubmit').show();
                 } else {
@@ -1745,6 +1758,66 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Helper pembuat baris checklist interaktif milik Penerima Task
+    function buildEditableChecklistRowHtml(textVal, isChecked, num) {
+        var safeVal = $('<div>').text(textVal || '').html().replace(/"/g, '&quot;');
+        return '<div class="input-group input-group-sm mb-2 tp-checklist-edit-row">' +
+            '<div class="input-group-prepend">' +
+            '<div class="input-group-text bg-white">' +
+            '<input type="checkbox" class="chk-subtask-item" title="Centang jika langkah ini sudah selesai" ' + (isChecked ? 'checked' : '') + '>' +
+            '<input type="hidden" name="checklist_done_flags[]" class="chk-subtask-flag" value="' + (isChecked ? '1' : '0') + '">' +
+            '</div>' +
+            '</div>' +
+            '<input type="text" name="checklist_items[]" class="form-control txt-subtask-item" value="' + safeVal + '" placeholder="Langkah kerja ke-' + (num || 1) + ' (ketik langkah kerja Anda)..." style="' + (isChecked ? 'text-decoration: line-through; color: #16a34a; background:#f0fdf4;' : '') + '">' +
+            '<div class="input-group-append">' +
+            '<button type="button" class="btn btn-outline-danger btn-remove-subtask-item" title="Hapus item checklist"><i class="fas fa-times"></i></button>' +
+            '</div>' +
+            '</div>';
+    }
+
+    function recalcChecklistProgres() {
+        var total = 0;
+        var done = 0;
+        $('#dt_checklist_container .tp-checklist-edit-row').each(function() {
+            var txt = $.trim($(this).find('.txt-subtask-item').val() || '');
+            var isChk = $(this).find('.chk-subtask-item').is(':checked');
+            $(this).find('.chk-subtask-flag').val(isChk ? '1' : '0');
+            $(this).find('.txt-subtask-item').css({
+                'text-decoration': isChk ? 'line-through' : 'none',
+                'color': isChk ? '#16a34a' : '#1e293b',
+                'background': isChk ? '#f0fdf4' : '#ffffff'
+            });
+            if (txt !== '') {
+                total++;
+                if (isChk) done++;
+            }
+        });
+        if (total > 0) {
+            var pct = Math.round((done / total) * 100);
+            $('#up_progres_slider').val(pct);
+            $('#up_progres_label').text(pct);
+            $('#up_auto_calc').val('1');
+        }
+    }
+
+    $('#btnAddBawahanChecklist').on('click', function() {
+        var nextNum = $('#dt_checklist_container .tp-checklist-edit-row').length + 1;
+        $('#dt_checklist_container').append(buildEditableChecklistRowHtml('', false, nextNum));
+        $('#dt_checklist_container .tp-checklist-edit-row:last .txt-subtask-item').trigger('focus');
+        recalcChecklistProgres();
+    });
+
+    $(document).on('click', '.btn-remove-subtask-item', function() {
+        if ($('#dt_checklist_container .tp-checklist-edit-row').length > 1) {
+            $(this).closest('.tp-checklist-edit-row').remove();
+        } else {
+            var $row = $(this).closest('.tp-checklist-edit-row');
+            $row.find('.txt-subtask-item').val('');
+            $row.find('.chk-subtask-item').prop('checked', false);
+        }
+        recalcChecklistProgres();
+    });
+
     // Slider Progres & Checklist Auto-Calculation
     $('#up_progres_slider').on('input change', function() {
         $('#up_progres_label').text($(this).val());
@@ -1752,20 +1825,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     $(document).on('change', '.chk-subtask-item', function() {
-        var $row = $(this).closest('.tp-checklist-row');
-        if ($(this).is(':checked')) {
-            $row.addClass('done');
-        } else {
-            $row.removeClass('done');
-        }
-        var total = $('.chk-subtask-item').length;
-        var done = $('.chk-subtask-item:checked').length;
-        if (total > 0) {
-            var pct = Math.round((done / total) * 100);
-            $('#up_progres_slider').val(pct);
-            $('#up_progres_label').text(pct);
-            $('#up_auto_calc').val('1');
-        }
+        recalcChecklistProgres();
+    });
+
+    $(document).on('input', '.txt-subtask-item', function() {
+        recalcChecklistProgres();
     });
 
     // Submit Update Progres
@@ -1793,6 +1857,12 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#formSubmitSelesai').on('submit', function(e) {
         e.preventDefault();
         var formData = $(this).serializeArray();
+        $('#dt_checklist_container .txt-subtask-item').each(function() {
+            var v = $.trim($(this).val() || '');
+            if (v !== '') {
+                formData.push({ name: 'checklist_items[]', value: v });
+            }
+        });
         formData.push({ name: csrfName, value: getCsrfHash() });
 
         $.ajax({
