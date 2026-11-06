@@ -229,20 +229,22 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? min(100, round(($total_hadir / $to
 
 	<!-- 2. Four Key Performance Indicator (KPI) Cards -->
 	<div class="col-xl-3 col-sm-6 mb-3">
-		<div class="kpi-card h-100">
-			<div class="card-body p-3">
-				<div class="d-flex justify-content-between align-items-center">
-					<div>
-						<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Karyawan Aktif</span>
-						<h3 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 4px 0 2px 0;"><?= $total_karyawan_aktif ?></h3>
-						<span style="font-size: 11.5px; color: #10b981; font-weight: 600;"><i class="fas fa-check-circle mr-1"></i> Terdaftar Aktif</span>
-					</div>
-					<div class="kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
-						<i class="fas fa-users"></i>
+		<a href="javascript:;" id="btn-show-karyawan-aktif" style="text-decoration: none; color: inherit;">
+			<div class="kpi-card h-100" style="cursor: pointer;">
+				<div class="card-body p-3">
+					<div class="d-flex justify-content-between align-items-center">
+						<div>
+							<span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Karyawan Aktif</span>
+							<h3 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 4px 0 2px 0;"><?= $total_karyawan_aktif ?></h3>
+							<span style="font-size: 11.5px; color: #10b981; font-weight: 600;"><i class="fas fa-check-circle mr-1"></i> Terdaftar Aktif</span>
+						</div>
+						<div class="kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
+							<i class="fas fa-users"></i>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</a>
 	</div>
 
 	<div class="col-xl-3 col-sm-6 mb-3">
@@ -975,6 +977,46 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? min(100, round(($total_hadir / $to
     }
 </style>
 
+<!-- Modal Karyawan Aktif -->
+<div id="main-modal-karyawan-aktif" class="modal fade modal-kepegawaian" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5><i class="fas fa-users text-primary"></i> Daftar Karyawan Aktif (<?= $total_karyawan_aktif ?> Orang)</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<table id="myTableAktif" class="table table-striped table-sm table-bordered table-hover w-100">
+					<thead class="bg-light">
+						<tr>
+							<th style="width: 50px; text-align: center;">#</th>
+							<th>Nama Karyawan</th>
+							<th>Jabatan</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$x = 1;
+						$list_modal_aktif = !empty($daftar_karyawan_aktif) ? $daftar_karyawan_aktif : (!empty($list_pengguna) ? $list_pengguna : []);
+						foreach ($list_modal_aktif as $row) { ?>
+							<tr>
+								<td style="text-align: center; font-weight: 600; color: #64748b;"><?= $x++ ?></td>
+								<td style="font-weight: 600; color: #0f172a;"><?= $row->nama ?></td>
+								<td style="color: #475569; font-size: 12.5px;"><?= !empty($row->jabatan) ? $row->jabatan : '-' ?></td>
+							</tr>
+						<?php } ?>
+					</tbody>
+				</table>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <!-- Modal Karyawan Hadir -->
 <div id="main-modal-hadir" class="modal fade modal-kepegawaian" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered" role="document">
@@ -1128,7 +1170,7 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? min(100, round(($total_hadir / $to
 		$('#filter_month').change(function() {
 			table.ajax.reload()
 		})
-		$('#myTable, #myTable1, #myTable2, #myTable3').DataTable({
+		$('#myTableAktif, #myTable, #myTable1, #myTable2, #myTable3').DataTable({
 			responsive: true,
 			autoWidth: false,
 			pageLength: 10,
@@ -1186,6 +1228,11 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? min(100, round(($total_hadir / $to
 				targets: [0],
 				className: 'text-center'
 			}]
+		})
+
+		$('#btn-show-karyawan-aktif').click(function() {
+			$('.btn-isactive').remove()
+			$('#main-modal-karyawan-aktif').modal()
 		})
 
 		$('#btn-show-izin').click(function() {
