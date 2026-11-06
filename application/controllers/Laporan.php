@@ -94,8 +94,8 @@ class Laporan extends CI_Controller
                 $week_offset = (isset($param4) && is_numeric($param4)) ? (int)$param4 : 0;
 
                 // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+                $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
 
                 $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
                 $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
@@ -124,8 +124,8 @@ class Laporan extends CI_Controller
                 $week_offset = (isset($param4) && is_numeric($param4)) ? (int)$param4 : 0;
 
                 // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+                $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
 
                 $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
                 $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
@@ -204,8 +204,8 @@ class Laporan extends CI_Controller
                 $week_offset = (isset($param4) && is_numeric($param4)) ? (int)$param4 : 0;
 
                 // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+                $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
 
                 $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
                 $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
@@ -270,6 +270,15 @@ class Laporan extends CI_Controller
                 $page_data['switch'] = $this->id_navbar();
 
                 $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
+                if (empty($penilaian_umum) || !is_object($penilaian_umum)) {
+                    $penilaian_umum = (object)[
+                        'nilaia1' => '', 'nilaib1' => '', 'catatana1' => '', 'catatanb1' => '',
+                        'nilaia2' => '', 'nilaib2' => '', 'catatana2' => '', 'catatanb2' => '',
+                        'nilaia3' => '', 'nilaib3' => '', 'catatana3' => '', 'catatanb3' => '',
+                        'nilaia4' => '', 'nilaib4' => '', 'catatana4' => '', 'catatanb4' => '',
+                        'nilaia5' => '', 'nilaib5' => '', 'catatana5' => '', 'catatanb5' => '',
+                    ];
+                }
                 $page_data['penilaian_umum'] = $penilaian_umum;
 
                 // Navigasi minggu
@@ -336,8 +345,8 @@ class Laporan extends CI_Controller
                 $week_offset = (isset($param3) && is_numeric($param3)) ? (int)$param3 : 0;
 
                 // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+                $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
 
                 $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
                 $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
@@ -363,8 +372,8 @@ class Laporan extends CI_Controller
                 $week_offset = (isset($param3) && is_numeric($param3)) ? (int)$param3 : 0;
 
                 // Dapatkan hari ini, lalu cari Senin pada minggu saat ini, lalu tambahkan offset minggu
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-                $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+                $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
 
                 $startDate = date('d-m-Y', strtotime("monday this week", strtotime("$week_offset week")));
                 $endDate = date('d-m-Y', strtotime("sunday this week", strtotime("$week_offset week")));
@@ -428,6 +437,15 @@ class Laporan extends CI_Controller
                 //$minggu_lalu = -1; // minggu lalu
                 $wednesday = date('Y-m-d', strtotime("wednesday this week $week_offset week"));
                 $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
+                if (empty($penilaian_umum) || !is_object($penilaian_umum)) {
+                    $penilaian_umum = (object)[
+                        'nilaia1' => '', 'nilaib1' => '', 'catatana1' => '', 'catatanb1' => '',
+                        'nilaia2' => '', 'nilaib2' => '', 'catatana2' => '', 'catatanb2' => '',
+                        'nilaia3' => '', 'nilaib3' => '', 'catatana3' => '', 'catatanb3' => '',
+                        'nilaia4' => '', 'nilaib4' => '', 'catatana4' => '', 'catatanb4' => '',
+                        'nilaia5' => '', 'nilaib5' => '', 'catatana5' => '', 'catatanb5' => '',
+                    ];
+                }
                 $page_data['penilaian_umum'] = $penilaian_umum;
 
 
@@ -442,6 +460,7 @@ class Laporan extends CI_Controller
 
                 $page_data['list_nama'] = $this->md_laporan->getBywhereActive();
                 $page_data['list_job'] = $this->md_laporan->getByJobs(sessPenggunaId());
+                $page_data['data_job'] = $this->md_laporan->getPengguna($id_pengaju);
                 $page_data['page_name'] = 'laporan/v_my_lap_rev2';
                 $page_data['page_title'] = 'Laporan Mingguan';
                 $page_data['page_desc'] = 'Detail Laporan Mingguan';
@@ -475,7 +494,7 @@ class Laporan extends CI_Controller
                 $week_offset = (isset($param3) && is_numeric($param3)) ? (int)$param3 : 0;
 
                 // Format tanggal harus Y-m-d agar sesuai dengan database
-                $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
+                $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
                 $friday = date('Y-m-d', strtotime("friday this week", strtotime("$week_offset week")));
 
                 $page_data['switch'] = $this->id_navbar();
@@ -645,8 +664,8 @@ class Laporan extends CI_Controller
         $week_offset = $this->input->post('week_offset7', TRUE);
         $week_offset = $week_offset !== null && $week_offset !== '' ? (int)$week_offset : 0;
 
-        $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-        $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+        $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+        $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
 
         $data['id_pengaju']        = sessPenggunaId();
         //$data['tanggal']	       = date_db_format($this->input->post('tanggal', TRUE));
@@ -2066,8 +2085,8 @@ class Laporan extends CI_Controller
             $week_offset = 0;
         } else {
             $week_offset = (isset($param2) && is_numeric($param2)) ? (int)$param2 : 0;
-            $monday = date('Y-m-d', strtotime("monday this week", strtotime("$week_offset week")));
-            $friday = date('Y-m-d', strtotime("sunday this week", strtotime("$week_offset week")));
+            $monday = date('Y-m-d', strtotime("monday this week $week_offset week"));
+            $friday = date('Y-m-d', strtotime("sunday this week $week_offset week"));
             $startDate = date('d-m-Y', strtotime($monday));
             $endDate = date('d-m-Y', strtotime($friday));
         }

@@ -249,10 +249,34 @@
     <div class="col-12">
         <div class="card laporan-card mb-4">
             <div class="card-body p-3 p-md-4">
+                <!-- User Info Row -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3" style="border-bottom: 1px solid #f1f5f9; gap: 15px;">
+                    <div class="d-flex align-items-center" style="gap: 14px;">
+                        <div style="width: 46px; height: 46px; border-radius: 10px; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;"><?= !empty($data_job->nama) ? htmlspecialchars($data_job->nama) : '-' ?></h5>
+                            <div class="text-muted small" style="font-size: 12px;">
+                                <span class="mr-3"><i class="fas fa-id-badge text-primary mr-1"></i> NPP: <strong><?= !empty($data_job->no_pegawai) ? htmlspecialchars($data_job->no_pegawai) : '-' ?></strong></span>
+                                <span><i class="fas fa-briefcase text-info mr-1"></i> Jabatan: <strong><?= !empty($data_job->jabatan) ? htmlspecialchars($data_job->jabatan) : '-' ?></strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap: 8px;">
+                        <button type="button" class="btn btn-sm btn-outline-danger shadow-sm btn-petujuk" style="border-radius: 8px; font-weight: 600; padding: 6px 14px; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-info-circle"></i> Petunjuk Nilai
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Top Toolbar & Week Selector Row -->
                 <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3" style="border-bottom: 1px solid #f1f5f9; gap: 12px;">
-                    <!-- Left: Action Buttons -->
+                    <!-- Left: Periode Badge & Action Buttons -->
                     <div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+                        <span class="badge badge-light-primary font-weight-bold px-3 py-2 mr-2" style="border-radius: 8px; font-size: 12.5px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                            <i class="fas fa-calendar-alt mr-1"></i> Periode: <strong><?= $startDate ?></strong> s/d <strong><?= $endDate ?></strong>
+                        </span>
                         <a href="<?= base_url('laporan/print_mingguan/' . encrypt(sessPenggunaId()) . '/' . $week_offset) ?>" target="_blank" class="btn btn-sm btn-success shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;">
                             <i class="fas fa-print"></i> Cetak Laporan Mingguan Ini
                         </a>
@@ -261,7 +285,7 @@
                         </button>
                     </div>
 
-                    <!-- Right: Week Selector Custom Dropdown -->
+                    <!-- Right: Week Selector & Top Navigation -->
                     <div class="d-flex align-items-center" style="gap: 8px;">
                         <?php 
                             $curr_m_time = strtotime("monday this week {$week_offset} week");
@@ -270,6 +294,9 @@
                             $curr_end = date('d/m/Y', $curr_s_time);
                             $curr_title = ($week_offset == 0) ? 'Minggu Ini' : 'Minggu ' . abs($week_offset) . ' Lalu';
                         ?>
+                        <a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset - 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 5px;" title="Minggu Sebelumnya">
+                            <i class="fas fa-chevron-left"></i> <span class="d-none d-sm-inline">Minggu Sebelumnya</span>
+                        </a>
                         <div class="dropdown custom-week-dropdown">
                             <button class="btn btn-sm btn-white border dropdown-toggle d-flex align-items-center justify-content-between shadow-sm" type="button" id="dropdownWeekMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="min-width: 290px; border-radius: 8px; font-weight: 500; font-size: 12.5px; padding: 7px 14px; background: #ffffff; color: #334155; border-color: #cbd5e1;">
                                 <span class="d-flex align-items-center text-truncate mr-2">
@@ -284,7 +311,7 @@
                                     <span class="font-weight-bold text-dark" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
                                         <i class="fas fa-history mr-1 text-primary"></i> Pilih Periode Minggu
                                     </span>
-                                    <span class="badge badge-primary badge-pill" style="font-size: 10px; font-weight: 600;">20 Minggu Terakhir</span>
+                                    <span class="badge badge-primary badge-pill" style="font-size: 10px; font-weight: 600;">Riwayat Minggu</span>
                                 </div>
                                 <div class="p-2 border-bottom bg-white">
                                     <div class="input-group input-group-sm">
@@ -295,10 +322,12 @@
                                     </div>
                                 </div>
                                 <div class="custom-week-scroll">
-                                    <?php for ($i = 0; $i >= -20; $i--): ?>
-                                        <?php 
-                                            $m_time = strtotime("monday this week $i week");
-                                            $s_time = strtotime("sunday this week $i week");
+                                    <?php 
+                                        $base_m_ts = strtotime("monday this week");
+                                        $base_s_ts = strtotime("sunday this week");
+                                        for ($i = 0; $i >= -50; $i--): 
+                                            $m_time = $base_m_ts + ($i * 604800);
+                                            $s_time = $base_s_ts + ($i * 604800);
                                             $start_w = date('d/m/Y', $m_time);
                                             $end_w = date('d/m/Y', $s_time);
                                             $is_active = ($week_offset == $i);
@@ -321,6 +350,9 @@
                                 </div>
                             </div>
                         </div>
+                        <a href="<?= base_url('laporan/show/list/rev2/' . ($week_offset + 1)) ?>" class="btn btn-sm btn-outline-secondary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 7px 14px; display: inline-flex; align-items: center; gap: 5px;" title="Minggu Berikutnya">
+                            <span class="d-none d-sm-inline">Minggu Berikutnya</span> <i class="fas fa-chevron-right"></i>
+                        </a>
                     </div>
                 </div>
 
@@ -437,16 +469,30 @@ foreach ($data_detail as $row) {
 }
 ?>
 
+                                <?php if (empty($grouped_data)): ?>
+                                    <tr>
+                                        <td colspan="13" class="text-center py-4 text-muted">
+                                            <i class="fas fa-info-circle mr-1"></i> Belum ada data jobdesk atau laporan untuk periode ini.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
                                 <?php foreach ($grouped_data as $id_desc => $rows): ?>
                                     <?php 
                                     $firstRow = true;
                                     $rowspan = count($rows);
                                     foreach ($rows as $row): 
 
-                                        $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
-                                        $nama_hari = $hari[date('l', strtotime($row->tanggal))];
+                                        $nama_hari = '-';
+                                        $tgl_format = '-';
+                                        if (!empty($row->tanggal)) {
+                                            $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
+                                            $day_name = date('l', strtotime($row->tanggal));
+                                            $nama_hari = isset($hari[$day_name]) ? $hari[$day_name] : $day_name;
+                                            $tgl_format = date('d-m-Y', strtotime($row->tanggal));
+                                        }
 
-                                        $tgl_format = date('d-m-Y', strtotime($row->tanggal));
+
+
 
                                         if (!empty($row->link) && empty($row->ket_hasil)) {
                                             $link_download = '<a href="' . htmlspecialchars($row->link, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary shadow-sm" style="border-radius: 6px; font-size: 11px; padding: 2px 8px;"><i class="fas fa-link mr-1"></i> Link</a>';
@@ -877,10 +923,10 @@ foreach ($data_detail as $row) {
                                     a. Mampu mengerjakan pekerjaan rutin secara efektif dan/atau secara keseluruhan meskipun tanpa arahan atasan tanpa kendala.<br>
 									b. Mampu melaksanakan tindakan awal sesuai kapasitas/kewenangannya untuk mencegah/menyelesaikan permasalahan yang dihadapi pribadi/bersama.				
 								</td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia1) ?></td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib1) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatana1) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatanb1) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaia1) ? htmlspecialchars($penilaian_umum->nilaia1) : '<span class="text-muted small">-</span>' ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaib1) ? htmlspecialchars($penilaian_umum->nilaib1) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatana1) ? htmlspecialchars($penilaian_umum->catatana1) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatanb1) ? htmlspecialchars($penilaian_umum->catatanb1) : '<span class="text-muted small">-</span>' ?></td>
 							</tr>
 							<tr>
 								<td style="text-align:center; font-weight: 600; color: #475569;">2</td>
@@ -892,10 +938,10 @@ foreach ($data_detail as $row) {
 									d. Melaksanakan pekerjaan sesuai SOP dan Peraturan/Tata Tertib Perusahaan.<br>
 									e. Kepatuhan dalam menjalankan semua Peraturan/Tata Tertib Peraturan.				
 								</td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia2) ?></td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib2) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatana2) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatanb2) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaia2) ? htmlspecialchars($penilaian_umum->nilaia2) : '<span class="text-muted small">-</span>' ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaib2) ? htmlspecialchars($penilaian_umum->nilaib2) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatana2) ? htmlspecialchars($penilaian_umum->catatana2) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatanb2) ? htmlspecialchars($penilaian_umum->catatanb2) : '<span class="text-muted small">-</span>' ?></td>
 							</tr>
 							<tr>
 								<td style="text-align:center; font-weight: 600; color: #475569;">3</td>
@@ -905,10 +951,10 @@ foreach ($data_detail as $row) {
 									b. Mampu menganalisa risiko/hasil akhir atas trouble/problem yang dihadapi.<br>
 									c. Mampu melakukan penanganan awal atas trouble/problem yang dihadapi sesuai kewenangan/kapasitasnya.				
 								</td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia3) ?></td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib3) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatana3) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatanb3) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaia3) ? htmlspecialchars($penilaian_umum->nilaia3) : '<span class="text-muted small">-</span>' ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaib3) ? htmlspecialchars($penilaian_umum->nilaib3) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatana3) ? htmlspecialchars($penilaian_umum->catatana3) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatanb3) ? htmlspecialchars($penilaian_umum->catatanb3) : '<span class="text-muted small">-</span>' ?></td>
 							</tr>
 							<tr>
 								<td style="text-align:center; font-weight: 600; color: #475569;">4</td>
@@ -920,10 +966,10 @@ foreach ($data_detail as $row) {
 									d. Kesesuaian lokasi komunikasi (Personal/Group).<br>
 									e. Kemampuan membuat pelaporan on time.				
 								</td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia4) ?></td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib4) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatana4) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatanb4) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaia4) ? htmlspecialchars($penilaian_umum->nilaia4) : '<span class="text-muted small">-</span>' ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaib4) ? htmlspecialchars($penilaian_umum->nilaib4) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatana4) ? htmlspecialchars($penilaian_umum->catatana4) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatanb4) ? htmlspecialchars($penilaian_umum->catatanb4) : '<span class="text-muted small">-</span>' ?></td>
 							</tr>
 							<tr>
 								<td style="text-align:center; font-weight: 600; color: #475569;">5</td>
@@ -933,15 +979,31 @@ foreach ($data_detail as $row) {
 									b. Kemampuan melakukan administrasi pekerjaan yang dilakukan sesuai jobdesc/kewenangannya secara lengkap.<br>
 									c. Pelaksanaan pekerjaan secara efektif dan minim human error.						
 								</td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaia5) ?></td>
-								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= htmlspecialchars($penilaian_umum->nilaib5) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatana5) ?></td>
-								<td><?= htmlspecialchars($penilaian_umum->catatanb5) ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaia5) ? htmlspecialchars($penilaian_umum->nilaia5) : '<span class="text-muted small">-</span>' ?></td>
+								<td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($penilaian_umum->nilaib5) ? htmlspecialchars($penilaian_umum->nilaib5) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatana5) ? htmlspecialchars($penilaian_umum->catatana5) : '<span class="text-muted small">-</span>' ?></td>
+								<td><?= !empty($penilaian_umum->catatanb5) ? htmlspecialchars($penilaian_umum->catatanb5) : '<span class="text-muted small">-</span>' ?></td>
 							</tr>
 							<?php
-								$nilaiRataa = ($penilaian_umum->nilaia1 + $penilaian_umum->nilaia2 + $penilaian_umum->nilaia3 + $penilaian_umum->nilaia4 + $penilaian_umum->nilaia5)/5;
-								$nilaiRatab = ($penilaian_umum->nilaib1 + $penilaian_umum->nilaib2 + $penilaian_umum->nilaib3 + $penilaian_umum->nilaib4 + $penilaian_umum->nilaib5)/5;
-								$nilaiRataPumum = ($nilaiRataa + $nilaiRatab)/2;
+								$sum_a = 0; $cnt_a = 0;
+								$sum_b = 0; $cnt_b = 0;
+								for ($idx_p = 1; $idx_p <= 5; $idx_p++) {
+									$fa = "nilaia$idx_p";
+									$fb = "nilaib$idx_p";
+									if (isset($penilaian_umum->$fa) && is_numeric($penilaian_umum->$fa)) {
+										$sum_a += (float)$penilaian_umum->$fa;
+										$cnt_a++;
+									}
+									if (isset($penilaian_umum->$fb) && is_numeric($penilaian_umum->$fb)) {
+										$sum_b += (float)$penilaian_umum->$fb;
+										$cnt_b++;
+									}
+								}
+								$nilaiRataa = ($cnt_a > 0) ? ($sum_a / $cnt_a) : 0;
+								$nilaiRatab = ($cnt_b > 0) ? ($sum_b / $cnt_b) : 0;
+								$nilaiRataPumum = ($cnt_a > 0 || $cnt_b > 0) ? (($nilaiRataa + $nilaiRatab) / (($cnt_a > 0 && $cnt_b > 0) ? 2 : 1)) : 0;
+
+
 							?>
 							<tr class="row-summary">
                                 <td colspan="3" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
@@ -1102,12 +1164,12 @@ foreach ($data_detail as $row) {
 
 					<div class="form-group" id="form_ket_hasil" style="display:none;">
 							<label for="ket_hasil" class="form-control-label">Keterangan <span class="text-danger">*</span> :</label>
-							<textarea type="text" class="form-control" id="ket_hasil" name="ket_hasil" required></textarea>
+							<textarea type="text" class="form-control" id="ket_hasil" name="ket_hasil"></textarea>
 					</div>
 
 					<div class="form-group" id="form_link" style="display:none;">
 						<label for="link" class="form-control-label">Link Bukti Pekerjaan <span class="text-danger">*</span>:</label>
-						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link" required>
+						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link">
 					</div>
 
 
@@ -1178,7 +1240,13 @@ foreach ($data_detail as $row) {
 							<input type="text" class="form-control" id="tanggal" name="tanggal" required>
 						</div>
 					</div>
-					<input type="hidden" name="week_offset7" value="0">
+										<div class="form-group">
+						<label class="form-control-label font-weight-bold">Jobdesk :</label>
+						<div id="jobdesc_display_modal2" class="p-2 rounded border bg-light text-dark font-weight-bold" style="font-size: 13px;">
+							-
+						</div>
+					</div>
+					<input type="hidden" name="week_offset7" value="<?= $week_offset ?>">
 
 									
 					
@@ -1220,12 +1288,12 @@ foreach ($data_detail as $row) {
 
 					<div class="form-group" id="form_ket_hasil2" style="display:none;">
 							<label for="ket_hasil" class="form-control-label">Keterangan <span class="text-danger">*</span> :</label>
-							<textarea type="text" class="form-control" id="ket_hasil" name="ket_hasil" required></textarea>
+							<textarea type="text" class="form-control" id="ket_hasil" name="ket_hasil"></textarea>
 					</div>
 
 					<div class="form-group" id="form_link2" style="display:none;">
 						<label for="link" class="form-control-label">Link Bukti Pekerjaan <span class="text-danger">*</span>:</label>
-						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link" required>
+						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link">
 					</div>
 
 
@@ -1323,7 +1391,7 @@ foreach ($data_detail as $row) {
 
 					<div class="form-group" id="form_link3" style="display:none;">
 						<label for="link" class="form-control-label">Link Bukti Pekerjaan <span class="text-danger">*</span>:</label>
-						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link" required>
+						<input type="text" class="form-control" placeholder="Masukkan Link Hasil / Bukti Pekerjaan Anda" id="link" name="link">
 					</div>
 					
 
@@ -1341,6 +1409,69 @@ foreach ($data_detail as $row) {
 	</div>
 </div>
 
+
+<!-- Modal Indikator Skala Penilaian -->
+<div id="main-modal-indikatorPenilaian" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+	<div class="modal-dialog modal-custom" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-dark text-light">
+				<h5 id="modal-label" class="mb-0 d-flex justify-content-between w-100 align-items-center">
+					<span><i class="flaticon2-avatar icon-2x text-grey-light"></i> Indikator Skala Penilaian 60â€“100</span>
+					<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="font-size: 1.5rem;">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</h5>
+			</div>
+
+			<div class="modal-body">
+				<div class="table-responsive">
+					<table class="table table-bordered table-striped">
+						<thead class="bg-light">
+							<tr>
+								<th style="width: 25%; text-align: center; background-color: #C7C6C1;">Nilai</th>
+								<th style="text-align: center; background-color: #C7C6C1;">Indikator Penilaian</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td style="text-align: center;">96 â€“ 100 <br><strong>Istimewa</strong> (Outstanding)</td>
+								<td>Kinerja luar biasa, melebihi semua target yang ditetapkan. Sangat proaktif, menunjukkan inisiatif tinggi, kepemimpinan kuat, dan menjadi panutan bagi rekan kerja.</td>
+							</tr>
+							<tr>
+								<td style="text-align: center;">90 â€“ 95 <br><strong>Sangat Baik</strong> (Excellent)</td>
+								<td>Kinerja sangat memuaskan. Mencapai semua target dan sering kali melebihi ekspektasi. Disiplin, mandiri, dan berkinerja konsisten.</td>
+							</tr>
+							<tr>
+								<td style="text-align: center;">85 â€“ 89 <br><strong>Baik</strong> (Very Good)</td>
+								<td>Kinerja baik dan memenuhi seluruh target kerja. Terkadang menunjukkan inisiatif, bisa diandalkan dan bekerja efektif dengan pengawasan minimal.</td>
+							</tr>
+							<tr>
+								<td style="text-align: center;">80 â€“ 84 <br><strong>Cukup Baik</strong> (Good)</td>
+								<td>Umumnya memenuhi target kerja, meskipun masih ada beberapa aspek yang perlu ditingkatkan. Perlu dorongan untuk lebih proaktif dan konsisten.</td>
+							</tr>
+							<tr>
+								<td style="text-align: center;">75 â€“ 79 <br><strong>Cukup</strong> (Fair)</td>
+								<td>Kinerja memenuhi sebagian besar harapan, namun ada beberapa kekurangan yang perlu diperbaiki. Memerlukan pemantauan dan bimbingan lebih lanjut.</td>
+							</tr>
+							<tr>
+								<td style="text-align: center;">70 â€“ 74 <br><strong>Kurang</strong> (Below Average)</td>
+								<td>Beberapa target tidak tercapai. Kurang inisiatif, kurang akurat dalam bekerja, dan membutuhkan peningkatan dalam beberapa aspek penting.</td>
+							</tr>
+							<tr>
+								<td style="text-align: center;">60 â€“ 69 <br><strong>Kurang Sekali</strong> (Poor)</td>
+								<td>Kinerja jauh di bawah standar yang ditetapkan. Gagal mencapai sebagian besar target, kurang tanggung jawab, dan perlu evaluasi menyeluruh untuk perbaikan.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
+			</div>
+		</div>
+	</div>
+</div>
 <script>
 	/*function toggleFormStatus() {
         var status = document.getElementById("jobdesc").value;
@@ -1356,41 +1487,46 @@ foreach ($data_detail as $row) {
 		
 
 		function toggleFormHasil() {
-        var statusHasil = document.getElementById("hasil").value;
-        var formKetHasil = document.getElementById("form_ket_hasil");
-        var formLink = document.getElementById("form_link");
-
+        var statusHasil = $("#main-modal #hasil").val();
         if (statusHasil === "1") {
-            formLink.style.display = "block";
-            formKetHasil.style.display = "none";
+            $("#main-modal #form_link").show();
+            $("#main-modal #link").prop('required', true);
+            $("#main-modal #form_ket_hasil").hide();
+            $("#main-modal #ket_hasil").prop('required', false).val('');
         } else if (statusHasil === "2") {
-            formLink.style.display = "none";
-            formKetHasil.style.display = "block";
+            $("#main-modal #form_link").hide();
+            $("#main-modal #link").prop('required', false).val('');
+            $("#main-modal #form_ket_hasil").show();
+            $("#main-modal #ket_hasil").prop('required', true);
         } else {
-            formLink.style.display = "none";
-            formKetHasil.style.display = "none";
+            $("#main-modal #form_link").hide();
+            $("#main-modal #link").prop('required', false);
+            $("#main-modal #form_ket_hasil").hide();
+            $("#main-modal #ket_hasil").prop('required', false);
         }
     }
 
-		function toggleFormHasil2() {
-        var statusHasil = document.getElementById("hasil2").value;
-        var formKetHasil = document.getElementById("form_ket_hasil2");
-        var formLink = document.getElementById("form_link2");
-
+	function toggleFormHasil2() {
+        var statusHasil = $("#main-modal2 #hasil2").val();
         if (statusHasil === "1") {
-            formLink.style.display = "block";
-            formKetHasil.style.display = "none";
+            $("#main-modal2 #form_link2").show();
+            $("#main-modal2 #link").prop('required', true);
+            $("#main-modal2 #form_ket_hasil2").hide();
+            $("#main-modal2 #ket_hasil").prop('required', false).val('');
         } else if (statusHasil === "2") {
-            formLink.style.display = "none";
-            formKetHasil.style.display = "block";
+            $("#main-modal2 #form_link2").hide();
+            $("#main-modal2 #link").prop('required', false).val('');
+            $("#main-modal2 #form_ket_hasil2").show();
+            $("#main-modal2 #ket_hasil").prop('required', true);
         } else {
-            formLink.style.display = "none";
-            formKetHasil.style.display = "none";
+            $("#main-modal2 #form_link2").hide();
+            $("#main-modal2 #link").prop('required', false);
+            $("#main-modal2 #form_ket_hasil2").hide();
+            $("#main-modal2 #ket_hasil").prop('required', false);
         }
     }
 
-
-			function toggleFormHasil3() {
+	function toggleFormHasil3() {
         var statusHasil = document.getElementById("hasil3").value;
         var formKetHasil = document.getElementById("form_ket_hasil3");
         var formLink = document.getElementById("form_link3");
@@ -1466,25 +1602,22 @@ foreach ($data_detail as $row) {
 		})*/
 
 	document.addEventListener('DOMContentLoaded', function() {
+		$(document).on('click', '.btn-petujuk', function() {
+			$('#main-modal-indikatorPenilaian').modal('show');
+		});
 
 	
 
 		$(document).on('click', '.btn-edit2', function() {
-			$('.btn-isactive').remove()
-			var object = 'laporan'
-			//$('#main-modal2 #modal-form2').attr('action', 'laporan/addRev1')  Yang lama, Saat ini Rev2 menggunakan validasi agar tidak submit diluar priode
-			$('#main-modal2 #modal-form2').attr('action', 'laporan/addRev2')
-			$('#main-modal2').modal()
-
-			var id2 = $(this).attr("data-id")
-			fetch(object + '/edit2/' + id2)
-				.then(function(resp) {
-					return resp.json()
-				})
-				.then(function(data) {
-					$('#main-modal2 #jobdesc').val(id2)  // DATA MASIH BELUM MASUK ID NYA
-				})
-		})
+			$('.btn-isactive').remove();
+			var object = 'laporan';
+			var id2 = $(this).attr("data-id");
+			var deskripsi = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+			$('#main-modal2 #jobdesc').val(id2);
+			$('#main-modal2 #jobdesc_display_modal2').text(deskripsi || 'Jobdesk Terpilih');
+			$('#main-modal2 #modal-form2').attr('action', 'laporan/addRev2');
+			$('#main-modal2').modal('show');
+		});
 
 	$(document).on('click', '.btn-save7', function(e) {
     e.preventDefault(); // Hindari submit langsung
@@ -1567,35 +1700,42 @@ $('#modal-form2').on('submit', function(e) {
 		})
 
 		$(document).on('click', '.btn-edit', function() {
-			$('.btn-isactive').remove()
-			var object = 'laporan'
-			$('#main-modal #modal-form').attr('action', 'laporan/update')
-			$('#main-modal').modal()
+			$('.btn-isactive').remove();
+			var object = 'laporan';
+			$('#main-modal #modal-form').attr('action', 'laporan/update');
+			$('#main-modal').modal('show');
 
-			var id = $(this).attr("data-id")
+			var id = $(this).attr("data-id");
 			fetch(object + '/edit/' + id)
 				.then(function(resp) {
-					return resp.json()
+					return resp.json();
 				})
 				.then(function(data) {
-					$('#main-modal #tanggal').val(data[0].tanggal)
-					$('#main-modal #jobdesc').val(data[0].id_job)
-					$('#main-modal #jenis').val(data[0].jenis)
-					$('#main-modal #progress').val(data[0].progress)
-
-					$('#main-modal #status_pekerjaan').val(data[0].status_pekerjaan)
-					$('#main-modal #link').val(data[0].link)
-					$('#main-modal #ket_hasil').val(data[0].ket_hasil)
-					$('#main-modal #pihak').val(data[0].pihak)
-					$('#main-modal #keterangan').val(data[0].keterangan)
-					//$('#main-modal #pencapaian').val(data[0].pencapaian)
-					$('#main-modal #id_pelanggan').val(id)
-				})
-		})
-
-
-
-
+					if (data && data.length > 0) {
+						var d = data[0];
+						$('#main-modal #tanggal').val(d.tanggal);
+						$('#main-modal #jobdesc').val(d.id_job).trigger('change');
+						$('#main-modal #jenis').val(d.jenis).trigger('change');
+						$('#main-modal #progress').val(d.progress);
+						$('#main-modal #status_pekerjaan').val(d.status_pekerjaan).trigger('change');
+						if (d.link && !d.ket_hasil) {
+							$('#main-modal #hasil').val('1');
+							toggleFormHasil();
+							$('#main-modal #link').val(d.link);
+						} else if (d.ket_hasil) {
+							$('#main-modal #hasil').val('2');
+							toggleFormHasil();
+							$('#main-modal #ket_hasil').val(d.ket_hasil);
+						} else {
+							$('#main-modal #hasil').val('');
+							toggleFormHasil();
+						}
+						$('#main-modal #pihak').val(d.pihak).trigger('change');
+						$('#main-modal #keterangan').val(d.keterangan);
+						$('#main-modal #id_pelanggan').val(id);
+					}
+				});
+		});
 
 		//Pencapaian
 		$('#btn-show-add-form-pencapaian').click(function() {
