@@ -3640,27 +3640,43 @@ function sendWa($dataSend)
 	}
 
 	// Deduplikasi pengiriman pesan yang identik ke nomor yang sama (in-process + file-based lock 60 detik)
-	static $sent_messages = [];
-	$penerimaClean = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
-	if (substr($penerimaClean, 0, 2) === '62') {
-		$penerimaClean = '0' . substr($penerimaClean, 2);
-	}
-	$cleanMsg = preg_replace('/\s+/', ' ', trim(strip_tags(urldecode((string)($dataSend['pesan'] ?? '')))));
-	$msgHash = md5($penerimaClean . '_' . $cleanMsg);
-	if (isset($sent_messages[$msgHash])) {
-		return true; // Lewati karena pesan yang sama persis sudah dikirim ke nomor ini dalam satu proses
-	}
-	$sent_messages[$msgHash] = true;
+	// (Dilewati saat dieksekusi ulang oleh worker antrian karena sudah tervalidasi saat masuk antrian)
+	if (empty($dataSend['_from_queue_worker'])) {
+		static $sent_messages = [];
+		$penerimaClean = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
+		if (substr($penerimaClean, 0, 2) === '62') {
+			$penerimaClean = '0' . substr($penerimaClean, 2);
+		}
+		$cleanMsg = preg_replace('/\s+/', ' ', trim(strip_tags(urldecode((string)($dataSend['pesan'] ?? '')))));
+		$msgHash = md5($penerimaClean . '_' . $cleanMsg);
+		if (isset($sent_messages[$msgHash])) {
+			return true; // Lewati karena pesan yang sama persis sudah dikirim ke nomor ini dalam satu proses
+		}
+		$sent_messages[$msgHash] = true;
 
-	$lockDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
-	if (!is_dir($lockDir)) {
-		@mkdir($lockDir, 0777, true);
+		$lockDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
+		if (!is_dir($lockDir)) {
+			@mkdir($lockDir, 0777, true);
+		}
+		$lockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_' . $msgHash . '.lock';
+		if (file_exists($lockFile) && (time() - filemtime($lockFile)) < 60) {
+			return true; // Lewati karena pesan yang sama persis sudah dikirim dalam 60 detik terakhir
+		}
+		@file_put_contents($lockFile, (string)time());
 	}
-	$lockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_' . $msgHash . '.lock';
-	if (file_exists($lockFile) && (time() - filemtime($lockFile)) < 60) {
-		return true; // Lewati karena pesan yang sama persis sudah dikirim dalam 60 detik terakhir
+
+	// Sistem Antrian Sequential 1-per-1 (mencegah pesan terkirim serentak/bersamaan)
+	if (empty($dataSend['_from_queue_worker']) && empty($dataSend['immediate'])) {
+		$customDelay = (isset($dataSend['delay']) && is_numeric($dataSend['delay'])) ? (int)$dataSend['delay'] : null;
+		$slotInfo = acquireWaSequentialQueueSlot(false, $customDelay);
+		if (empty($slotInfo['send_now'])) {
+			if (enqueueWaSequentialMessage($dataSend, false, (int)$slotInfo['slot_ts'])) {
+				return true;
+			}
+			// Fallback jadwal ke API jika tabel DB belum tersedia
+			$dataSend['schedule_ts'] = (int)$slotInfo['slot_ts'];
+		}
 	}
-	@file_put_contents($lockFile, (string)time());
 
 	// 1. Utamakan kirim via Whacenter Gateway (Device ID Databank: bbe8ce03e61d0c490e850bce5f3df56c)
 	if (sendWaWhacenter($dataSend)) {
@@ -3675,6 +3691,335 @@ function sendWa($dataSend)
 	// 3. Fallback ke Convia API jika keduanya gagal
 	return sendWaConvia($dataSend);
 }
+
+/**
+ * Direktori penyimpanan lock antrian WhatsApp
+ */
+if (!function_exists('getWaQueueLockDir')) {
+	function getWaQueueLockDir()
+	{
+		$dir = (defined('APPPATH') && is_dir(APPPATH . 'cache') && is_writable(APPPATH . 'cache'))
+			? rtrim(APPPATH . 'cache', '/\\') . DIRECTORY_SEPARATOR . 'vym_wa_locks'
+			: sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
+		if (!is_dir($dir)) {
+			@mkdir($dir, 0777, true);
+		}
+		return $dir;
+	}
+}
+
+/**
+ * Pastikan tabel antrian WhatsApp (tbl_wa_queue) tersedia di database
+ */
+if (!function_exists('ensureWaQueueTable')) {
+	function ensureWaQueueTable()
+	{
+		static $ensured = false;
+		if ($ensured) {
+			return true;
+		}
+		if (!function_exists('get_instance')) {
+			return false;
+		}
+		$CI =& get_instance();
+		if (!isset($CI->db)) {
+			return false;
+		}
+		@$CI->db->query("CREATE TABLE IF NOT EXISTS `tbl_wa_queue` (
+			`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+			`is_group` TINYINT(1) NOT NULL DEFAULT 0,
+			`penerima` VARCHAR(120) NOT NULL DEFAULT '',
+			`payload_json` MEDIUMTEXT NOT NULL,
+			`scheduled_at` INT(11) UNSIGNED NOT NULL DEFAULT 0,
+			`status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+			`attempts` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
+			`created_at` DATETIME DEFAULT NULL,
+			`sent_at` DATETIME DEFAULT NULL,
+			PRIMARY KEY (`id`),
+			KEY `idx_status_sched` (`status`, `scheduled_at`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+		$ensured = true;
+		return true;
+	}
+}
+
+/**
+ * Ambil slot waktu pengiriman berurutan (1 per 1, tidak pernah serentak).
+ * - Jika antrian kosong, pesan pertama dikirim langsung (send_now = true) dan mengunci jeda untuk pesan berikutnya.
+ * - Jika ada pesan yang baru saja dikirim atau sedang mengantri, pesan berikutnya diberi jadwal berurutan (send_now = false).
+ */
+if (!function_exists('acquireWaSequentialQueueSlot')) {
+	function acquireWaSequentialQueueSlot($isGroup = false, $customMinDelay = null)
+	{
+		$now = time();
+		$lockDir = getWaQueueLockDir();
+		$queueFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_global_sequential_queue.lock';
+		$fp = @fopen($queueFile, 'c+');
+
+		if ($isGroup) {
+			$minGap = ($customMinDelay !== null && (int)$customMinDelay > 0) ? (int)$customMinDelay : 30;
+			$randomGap = mt_rand($minGap, $minGap + 15); // 30 - 45 detik antar pesan grup
+		} else {
+			$minGap = ($customMinDelay !== null && (int)$customMinDelay > 0) ? (int)$customMinDelay : 15;
+			$randomGap = mt_rand($minGap, $minGap + 10); // 15 - 25 detik antar pesan personal
+		}
+
+		$sendNow = true;
+		$assignedSlot = $now;
+
+		if ($fp && @flock($fp, LOCK_EX)) {
+			rewind($fp);
+			$content = trim((string)stream_get_contents($fp));
+			$nextFreeSlot = is_numeric($content) ? (int)$content : 0;
+
+			if ($nextFreeSlot <= $now) {
+				// Antrian sedang kosong: kirim pesan pertama sekarang, dan tahan pesan berikutnya sejauh $randomGap detik
+				$sendNow = true;
+				$assignedSlot = $now;
+				$newNextFreeSlot = $now + $randomGap;
+			} else {
+				// Antrian sedang aktif: masukkan pesan ini ke slot berikutnya secara berurutan
+				$sendNow = false;
+				$assignedSlot = $nextFreeSlot;
+				$newNextFreeSlot = $assignedSlot + $randomGap;
+			}
+
+			ftruncate($fp, 0);
+			rewind($fp);
+			fwrite($fp, (string)$newNextFreeSlot);
+			fflush($fp);
+			@flock($fp, LOCK_UN);
+			fclose($fp);
+		} else {
+			if ($fp) {
+				fclose($fp);
+			}
+		}
+
+		return [
+			'send_now' => $sendNow,
+			'slot_ts'  => $assignedSlot,
+			'wait_sec' => max(0, $assignedSlot - $now)
+		];
+	}
+}
+
+/**
+ * Masukkan pesan WA ke dalam tabel antrian (tbl_wa_queue) dan aktifkan background worker
+ */
+if (!function_exists('enqueueWaSequentialMessage')) {
+	function enqueueWaSequentialMessage($dataSend, $isGroup = false, $slotTs = 0)
+	{
+		if (!ensureWaQueueTable()) {
+			return false;
+		}
+		$CI =& get_instance();
+		if (!isset($CI->db)) {
+			return false;
+		}
+
+		$scheduledAt = ($slotTs > time()) ? (int)$slotTs : (time() + 15);
+		$payload = $dataSend;
+		unset($payload['_from_queue_worker']);
+
+		$ok = @$CI->db->insert('tbl_wa_queue', [
+			'is_group'     => $isGroup ? 1 : 0,
+			'penerima'     => substr(trim((string)($dataSend['penerima'] ?? '')), 0, 120),
+			'payload_json' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+			'scheduled_at' => $scheduledAt,
+			'status'       => 'pending',
+			'attempts'     => 0,
+			'created_at'   => date('Y-m-d H:i:s')
+		]);
+
+		if ($ok) {
+			registerWaQueueShutdownRunner();
+			triggerWaQueueWorkerAsync();
+			return true;
+		}
+
+		return false;
+	}
+}
+
+/**
+ * Daftarkan runner antrian pada saat PHP selesai mengirim response ke browser/client
+ * sehingga user/browser tidak perlu menunggu loading, namun antrian tetap diproses 1-per-1 di background.
+ */
+if (!function_exists('registerWaQueueShutdownRunner')) {
+	function registerWaQueueShutdownRunner()
+	{
+		static $registered = false;
+		if ($registered) {
+			return;
+		}
+		$registered = true;
+
+		register_shutdown_function(function () {
+			@ignore_user_abort(true);
+			@set_time_limit(0);
+
+			if (function_exists('fastcgi_finish_request')) {
+				@fastcgi_finish_request();
+			} else {
+				if (ob_get_level() > 0) {
+					@ob_end_flush();
+				}
+				@flush();
+			}
+
+			processWaQueueWorker(900);
+		});
+	}
+}
+
+/**
+ * Trigger worker antrian via non-blocking loopback HTTP (cadangan jika proses utama berhenti)
+ */
+if (!function_exists('triggerWaQueueWorkerAsync')) {
+	function triggerWaQueueWorkerAsync()
+	{
+		static $triggeredInRequest = false;
+		if ($triggeredInRequest) {
+			return;
+		}
+
+		// Cek apakah worker sudah aktif memegang lock
+		$lockDir = getWaQueueLockDir();
+		$workerLockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_queue_worker_active.lock';
+		$fp = @fopen($workerLockFile, 'c+');
+		if ($fp) {
+			if (!@flock($fp, LOCK_EX | LOCK_NB)) {
+				// Worker sedang berjalan aktif di proses lain
+				fclose($fp);
+				$triggeredInRequest = true;
+				return;
+			}
+			@flock($fp, LOCK_UN);
+			fclose($fp);
+		}
+
+		$triggeredInRequest = true;
+		$workerUrl = function_exists('base_url') ? base_url('reminder_wa/process_queue') : 'https://office.visiyosindo.id/reminder_wa/process_queue';
+		$parts = @parse_url($workerUrl);
+		if (!$parts || empty($parts['host'])) {
+			return;
+		}
+
+		$scheme = isset($parts['scheme']) && $parts['scheme'] === 'https' ? 'ssl://' : '';
+		$port   = isset($parts['port']) ? (int)$parts['port'] : ($scheme === 'ssl://' ? 443 : 80);
+		$path   = (isset($parts['path']) ? $parts['path'] : '/reminder_wa/process_queue') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+
+		$sock = @fsockopen($scheme . $parts['host'], $port, $errno, $errstr, 1.5);
+		if ($sock) {
+			stream_set_blocking($sock, false);
+			$req = "GET " . $path . " HTTP/1.1\r\n";
+			$req .= "Host: " . $parts['host'] . "\r\n";
+			$req .= "User-Agent: VYM-WA-Queue-Trigger/1.0\r\n";
+			$req .= "Connection: Close\r\n\r\n";
+			@fwrite($sock, $req);
+			@fclose($sock);
+		}
+	}
+}
+
+/**
+ * Worker Pemroses Antrian WhatsApp (Single-Instance Mutex Lock)
+ * Mengirim pesan dari tbl_wa_queue satu per satu sesuai jadwal (tidak pernah serentak).
+ */
+if (!function_exists('processWaQueueWorker')) {
+	function processWaQueueWorker($maxRunSeconds = 900)
+	{
+		if (!ensureWaQueueTable()) {
+			return 0;
+		}
+		$CI =& get_instance();
+		if (!isset($CI->db)) {
+			return 0;
+		}
+
+		$lockDir = getWaQueueLockDir();
+		$workerLockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_queue_worker_active.lock';
+		$fp = @fopen($workerLockFile, 'c+');
+		if (!$fp || !@flock($fp, LOCK_EX | LOCK_NB)) {
+			if ($fp) {
+				fclose($fp);
+			}
+			// Worker lain sedang aktif memproses antrian
+			return 0;
+		}
+
+		@ignore_user_abort(true);
+		@set_time_limit(0);
+
+		$startTime = time();
+		$processedCount = 0;
+
+		try {
+			// Kembalikan pesan yang macet di status 'processing' lebih dari 5 menit ke 'pending'
+			@$CI->db->query("UPDATE `tbl_wa_queue` SET `status` = 'pending' WHERE `status` = 'processing' AND `created_at` < DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+
+			while ((time() - $startTime) < $maxRunSeconds) {
+				$row = @$CI->db->query("SELECT * FROM `tbl_wa_queue` WHERE `status` = 'pending' ORDER BY `scheduled_at` ASC, `id` ASC LIMIT 1")->row();
+				if (!$row) {
+					break; // Antrian sudah habis
+				}
+
+				$now = time();
+				$waitSec = (int)$row->scheduled_at - $now;
+				if ($waitSec > 0) {
+					// Tunggu hingga tiba giliran pesan ini
+					sleep(min($waitSec, 30));
+					continue;
+				}
+
+				// Kunci baris ini menjadi 'processing'
+				@$CI->db->where('id', (int)$row->id)->where('status', 'pending')->update('tbl_wa_queue', [
+					'status'   => 'processing',
+					'attempts' => (int)$row->attempts + 1
+				]);
+				if ($CI->db->affected_rows() <= 0) {
+					continue;
+				}
+
+				$payload = @json_decode($row->payload_json, true);
+				if (!is_array($payload) || empty($payload['penerima'])) {
+					@$CI->db->where('id', (int)$row->id)->update('tbl_wa_queue', [
+						'status'  => 'failed',
+						'sent_at' => date('Y-m-d H:i:s')
+					]);
+					continue;
+				}
+
+				$payload['_from_queue_worker'] = true;
+				$payload['immediate'] = true;
+				unset($payload['schedule_ts']);
+
+				$ok = ((int)$row->is_group === 1) ? sendWaGroup($payload) : sendWa($payload);
+
+				@$CI->db->where('id', (int)$row->id)->update('tbl_wa_queue', [
+					'status'  => $ok ? 'sent' : 'failed',
+					'sent_at' => date('Y-m-d H:i:s')
+				]);
+
+				$processedCount++;
+
+				// Pastikan ada jeda minimal 5 detik sebelum mengecek antrian berikutnya
+				sleep(5);
+			}
+
+			// Bersihkan histori antrian yang sudah terkirim lebih dari 7 hari agar tabel tetap ringan
+			@$CI->db->query("DELETE FROM `tbl_wa_queue` WHERE `status` IN ('sent', 'failed') AND `created_at` < DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		} catch (\Throwable $e) {
+		}
+
+		@flock($fp, LOCK_UN);
+		@fclose($fp);
+
+		return $processedCount;
+	}
+}
+
 /**
  * Kirim pesan via Whacenter Gateway
  */
@@ -3710,6 +4055,9 @@ function sendWaWhacenter($dataSend)
 	if (!empty($dataSend['file'])) {
 		$postData['file'] = $dataSend['file'];
 	}
+	if (!empty($dataSend['schedule_ts']) && (int)$dataSend['schedule_ts'] > time()) {
+		$postData['schedule'] = date('Y-m-d H:i:s', (int)$dataSend['schedule_ts']);
+	}
 
 	if (function_exists('curl_init')) {
 		$curl = curl_init();
@@ -3734,6 +4082,9 @@ function sendWaWhacenter($dataSend)
 	}
 
 	$getUrl = "https://app.whacenter.com/api/send?device_id=" . urlencode($deviceId) . "&number=" . urlencode($penerima) . "&message=" . urlencode($pesanText);
+	if (!empty($postData['schedule'])) {
+		$getUrl .= "&schedule=" . urlencode($postData['schedule']);
+	}
 	$ctx = stream_context_create([
 		'http' => [
 			'timeout' => 8,
@@ -3773,25 +4124,39 @@ function sendWaGroup($dataSend)
 	}
 
 	// Deduplikasi pengiriman pesan group yang identik (in-process + file-based lock 60 detik)
-	static $sent_group_messages = [];
-	$groupTarget = trim((string)($dataSend['penerima'] ?? ''));
-	$cleanGroupMsg = preg_replace('/\s+/', ' ', trim(strip_tags(urldecode((string)($dataSend['pesan'] ?? '')))));
-	$msgGroupHash = md5($groupTarget . '_' . $cleanGroupMsg);
+	if (empty($dataSend['_from_queue_worker'])) {
+		static $sent_group_messages = [];
+		$groupTarget = trim((string)($dataSend['penerima'] ?? ''));
+		$cleanGroupMsg = preg_replace('/\s+/', ' ', trim(strip_tags(urldecode((string)($dataSend['pesan'] ?? '')))));
+		$msgGroupHash = md5($groupTarget . '_' . $cleanGroupMsg);
 
-	if (isset($sent_group_messages[$msgGroupHash])) {
-		return true;
-	}
-	$sent_group_messages[$msgGroupHash] = true;
+		if (isset($sent_group_messages[$msgGroupHash])) {
+			return true;
+		}
+		$sent_group_messages[$msgGroupHash] = true;
 
-	$lockDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
-	if (!is_dir($lockDir)) {
-		@mkdir($lockDir, 0777, true);
+		$lockDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vym_wa_locks';
+		if (!is_dir($lockDir)) {
+			@mkdir($lockDir, 0777, true);
+		}
+		$lockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_group_' . $msgGroupHash . '.lock';
+		if (file_exists($lockFile) && (time() - filemtime($lockFile)) < 60) {
+			return true;
+		}
+		@file_put_contents($lockFile, (string)time());
 	}
-	$lockFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_group_' . $msgGroupHash . '.lock';
-	if (file_exists($lockFile) && (time() - filemtime($lockFile)) < 60) {
-		return true;
+
+	// Sistem Antrian Sequential 1-per-1 untuk Group (mencegah pesan terkirim serentak)
+	if (empty($dataSend['_from_queue_worker']) && empty($dataSend['immediate'])) {
+		$customDelay = (isset($dataSend['delay']) && is_numeric($dataSend['delay'])) ? (int)$dataSend['delay'] : null;
+		$slotInfo = acquireWaSequentialQueueSlot(true, $customDelay);
+		if (empty($slotInfo['send_now'])) {
+			if (enqueueWaSequentialMessage($dataSend, true, (int)$slotInfo['slot_ts'])) {
+				return true;
+			}
+			$dataSend['schedule_ts'] = (int)$slotInfo['slot_ts'];
+		}
 	}
-	@file_put_contents($lockFile, (string)time());
 
 	// 1. Utamakan kirim via Whacenter Group Gateway (Device ID Databank: bbe8ce03e61d0c490e850bce5f3df56c)
 	if (sendWaWhacenterGroup($dataSend)) {
@@ -3845,6 +4210,9 @@ function sendWaWhacenterGroup($dataSend)
 	];
 	if (!empty($dataSend['file'])) {
 		$postData['file'] = $dataSend['file'];
+	}
+	if (!empty($dataSend['schedule_ts']) && (int)$dataSend['schedule_ts'] > time()) {
+		$postData['schedule'] = date('Y-m-d H:i:s', (int)$dataSend['schedule_ts']);
 	}
 
 	if (function_exists('curl_init')) {

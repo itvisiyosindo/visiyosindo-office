@@ -113,9 +113,88 @@ class Reminder_wa extends CI_Controller
             'details'       => $details
         ];
 
+        if (function_exists('registerWaQueueShutdownRunner')) {
+            registerWaQueueShutdownRunner();
+        }
+
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode($response, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Endpoint Background Worker Antrian WhatsApp (Sequential 1-per-1)
+     * URL: https://office.visiyosindo.id/reminder_wa/process_queue
+     */
+    public function process_queue()
+    {
+        @ignore_user_abort(true);
+        @set_time_limit(0);
+
+        $processed = 0;
+        if (function_exists('processWaQueueWorker')) {
+            $processed = processWaQueueWorker(900);
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status'    => 'success',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'processed' => $processed
+            ], JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Endpoint Monitoring Status Antrian WhatsApp
+     * URL: https://office.visiyosindo.id/reminder_wa/queue_status
+     */
+    public function queue_status()
+    {
+        if (function_exists('ensureWaQueueTable')) {
+            ensureWaQueueTable();
+        }
+
+        $summary = [
+            'pending'    => 0,
+            'processing' => 0,
+            'sent'       => 0,
+            'failed'     => 0
+        ];
+        $upcoming = [];
+
+        if ($this->db->table_exists('tbl_wa_queue')) {
+            $counts = $this->db->query("SELECT status, COUNT(*) AS total FROM tbl_wa_queue GROUP BY status")->result();
+            foreach ($counts as $c) {
+                $summaryKey = strtolower((string)$c->status);
+                if (isset($summary[$summaryKey])) {
+                    $summary[$summaryKey] = (int)$c->total;
+                }
+            }
+
+            $rows = $this->db->query("SELECT id, is_group, penerima, scheduled_at, status, attempts, created_at, sent_at FROM tbl_wa_queue WHERE status IN ('pending', 'processing') ORDER BY scheduled_at ASC, id ASC LIMIT 50")->result();
+            foreach ($rows as $r) {
+                $upcoming[] = [
+                    'id'                 => (int)$r->id,
+                    'is_group'           => (int)$r->is_group,
+                    'penerima'           => $r->penerima,
+                    'status'             => $r->status,
+                    'scheduled_time'     => date('Y-m-d H:i:s', (int)$r->scheduled_at),
+                    'seconds_until_send' => max(0, (int)$r->scheduled_at - time()),
+                    'attempts'           => (int)$r->attempts,
+                    'created_at'         => $r->created_at
+                ];
+            }
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status'      => 'success',
+                'server_time' => date('Y-m-d H:i:s'),
+                'summary'     => $summary,
+                'queue_items' => $upcoming
+            ], JSON_PRETTY_PRINT));
     }
 
     /**
