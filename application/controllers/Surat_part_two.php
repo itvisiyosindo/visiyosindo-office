@@ -92,7 +92,10 @@ class Surat_part_two extends CI_Controller
         $this->load->view('index', $page_data);
       } else if ($param2 == 'ba' || $param2 == 'berita_acara') {
         $page_data['switch']        = $this->id_navbar();
-        $page_data['data_ba']      = $this->md_surat_part_two->getBeritaAcaraById($param3);
+        $page_data['data_ba']       = $this->md_surat_part_two->getBeritaAcaraById($param3);
+        if ((int)$param3 === 728) {
+          $this->_autoNotifyBobBa728($page_data['data_ba'], false);
+        }
         $page_data['page_name']     = 'surat/v_detail_berita_acara';
         $page_data['page_title']    = 'Berita Acara';
         $page_data['page_desc']     = 'Detail Berita Acara';
@@ -1439,12 +1442,14 @@ class Surat_part_two extends CI_Controller
         //Cek status direktor
         if ($ambilDataPengaju[0]->status_dir == 1) {
           //send notif wa
+          $targetDirId  = ((int)$id_sp === 728 && empty($id_dir)) ? 54 : $id_dir;
+          $targetDirJbt = !empty($jabatanDir) ? $jabatanDir : ((int)$targetDirId === 54 ? 'Bob Ariyos (Director)' : 'Director');
           $dataWa = [
             'id'             => $id_sp,
-            'idPenerima1'   => $id_dir,
+            'idPenerima1'   => $targetDirId,
             'idPenerima2'   => '',
             'namaSurat'     => 'Berita Acara',
-            'penerima'       => $jabatanDir,
+            'penerima'       => $targetDirJbt,
             'pengaju'       => $pengaju,
             'kode'           => $kdBa,
             'perihal'        => $analisis,
@@ -3053,6 +3058,7 @@ class Surat_part_two extends CI_Controller
       echo json_encode($dt);
       die;
     } else if ($param == 'list_ba') {
+      $this->_autoNotifyBobBa728(null, false);
       if (sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || isGa()) {
         $dt     = $this->md_surat_part_two->getAllBA();
       } elseif (sessPenggunaId() == '54') {
@@ -3858,6 +3864,75 @@ class Surat_part_two extends CI_Controller
       } else if ($param == '4') {
         waSuratAprovGABA($dataWa);
       }
+    }
+  }
+
+  /**
+   * Kirim notifikasi WA persetujuan Berita Acara 728 ke Bob Ariyos (ID 54)
+   */
+  public function _autoNotifyBobBa728($dataBa = null, $force = false)
+  {
+    if (empty($dataBa)) {
+      $dataBa = $this->md_surat_part_two->getBeritaAcaraById(728);
+    }
+    if (empty($dataBa) || !isset($dataBa[0])) {
+      return false;
+    }
+    $ba = $dataBa[0];
+
+    if (!$this->db->field_exists('notif_bob_sent', 'surat_berita_acara')) {
+      $this->db->query("ALTER TABLE `surat_berita_acara` ADD COLUMN `notif_bob_sent` INT(2) NOT NULL DEFAULT 0");
+    }
+
+    $chk = $this->db->select('notif_bob_sent')->where('id', 728)->get('surat_berita_acara')->row();
+    if (!$force && $chk && (int)$chk->notif_bob_sent === 1) {
+      return false;
+    }
+
+    // Cari nomor HP Bob Ariyos (ID 54 atau 69 atau nama Bob Ariyos)
+    $bobRow = $this->db->select('pengguna_id, nama, no_hp')
+      ->from('pengguna')
+      ->where('no_hp IS NOT NULL', null, false)
+      ->where("TRIM(no_hp) != ''", null, false)
+      ->group_start()
+        ->where_in('pengguna_id', [54, 69])
+        ->or_like('nama', 'Bob Ariyos', 'both')
+      ->group_end()
+      ->order_by('FIELD(pengguna_id, 54, 69)', '', false)
+      ->get()
+      ->row();
+
+    $bobId = $bobRow ? (int)$bobRow->pengguna_id : 54;
+    $analisis = !empty($ba->analisis) ? strip_tags($ba->analisis) : $ba->kode_ba;
+
+    $dataWa = [
+      'id'             => 728,
+      'idPenerima1'    => $bobId,
+      'idPenerima2'    => '',
+      'namaSurat'      => 'Berita Acara',
+      'penerima'       => 'Bob Ariyos (Director)',
+      'pengaju'        => $ba->pengaju ?: '-',
+      'kode'           => $ba->kode_ba ?: 'BA-728',
+      'perihal'        => $analisis,
+      'link'           => 'surat_part_two/show/detail/ba/728',
+      'ttd_sebelum1'   => !empty($ba->jabatan_diketahui) ? $ba->jabatan_diketahui : ($ba->nama_diketahui ?: ''),
+      'ttd_sebelum2'   => !empty($ba->jabatan_disetujui) ? $ba->jabatan_disetujui : ($ba->nama_disetujui ?: 'Meilina Safitri'),
+      'ttd_sebelum3'   => (!empty($ba->id_dir) && (int)$ba->id_dir !== 54) ? ($ba->nama_dir ?: 'Meilina Safitri') : ''
+    ];
+
+    $this->notifWaAprov(1, 3, $dataWa);
+    $this->db->where('id', 728)->update('surat_berita_acara', ['notif_bob_sent' => 1]);
+    return true;
+  }
+
+  public function kirim_notif_bob($id_ba = 728)
+  {
+    grantAccessFor('all');
+    $ok = $this->_autoNotifyBobBa728(null, true);
+    if ($ok) {
+      ajaxReturnDie('success', 'Notifikasi WhatsApp berhasil dikirim ke Bob Ariyos.', TRUE);
+    } else {
+      ajaxReturnDie('error', 'Data Berita Acara tidak ditemukan.', FALSE);
     }
   }
 

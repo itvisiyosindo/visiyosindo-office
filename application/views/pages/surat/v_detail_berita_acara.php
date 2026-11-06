@@ -463,6 +463,9 @@
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-times"></i> Tolak </button>				
             <?php } ?>
+            <?php if ($is_ba_728) { ?>
+				<button type="button" class="btn btn-info float-right btn-notif-bob" style="margin-left:12px; margin-top:12px;"> <i class="fab fa-whatsapp"></i> Kirim Notif WA ke Bob Ariyos </button>
+            <?php } ?>
 			<a href="surat_part_two/print_page/ba/<?=$data_ba[0]->id_ba?>" class="btn btn-warning float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-print"></i> Cetak </a>
             <?php if($data_ba[0]->lampiran != "") { ?>
 			    <a href="<?=$data_ba[0]->lampiran?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran </a>
@@ -513,6 +516,27 @@
         })
         
 		
+		$(document).on('click', '.btn-notif-bob', function() {
+			var $btn = $(this);
+			$btn.prop('disabled', true);
+			$.ajax({
+				method: 'POST',
+				url: 'surat_part_two/kirim_notif_bob/728',
+				dataType: 'JSON',
+				data: {
+					id: $('#id').val(),
+					csrf_token: token
+				},
+				success: function(resp) {
+					$btn.prop('disabled', false);
+					handleResponse(resp);
+				},
+				error: function() {
+					$btn.prop('disabled', false);
+				}
+			});
+		});
+
 		$(document).on('click', '.btn-denial', function() {
 			var id = $('#id').val();
 			
