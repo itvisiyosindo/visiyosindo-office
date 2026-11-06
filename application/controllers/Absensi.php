@@ -151,7 +151,7 @@ class Absensi extends CI_Controller
 
         //send notif wa
         $dataWa = [
-            'idPenerima1'     => "58",
+            'idPenerima1'     => GA_USER_ID,
             'idPenerima2'     => "1",
             'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
             'penerima'         => '_General Affair_',
@@ -160,7 +160,7 @@ class Absensi extends CI_Controller
         ];
         //$this->notifWaAddSurat(2, $dataWa);
 
-        $datapenggunanotifikasi = $this->md_pengguna->getById(58);
+        $datapenggunanotifikasi = $this->md_pengguna->getById(GA_USER_ID);
         $nope           = $datapenggunanotifikasi[0]->no_hp;
         $email           = $datapenggunanotifikasi[0]->email;
 
@@ -168,7 +168,7 @@ class Absensi extends CI_Controller
         $datanotifikasi['jenis'] = 21;
         $datanotifikasi['idsurat'] = $lastSimpId;
         $datanotifikasi['idpenggunaakses'] = sessPenggunaId();
-        $datanotifikasi['id_pengguna'] = 58;
+        $datanotifikasi['id_pengguna'] = GA_USER_ID;
         $datanotifikasi['keterangan'] = 'Pengajuan Surat ' . $kode;
         $datanotifikasi['link'] = encryptvym('surat/show/detail_surat/kg/' . $lastKgId . '/1');
         $datanotifikasi['status'] = 0;

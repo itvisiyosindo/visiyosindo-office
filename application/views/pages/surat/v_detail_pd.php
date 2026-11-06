@@ -248,7 +248,7 @@
 
 				<br><br>
 				<div width="100%">
-					<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58') { ?>
+					<?php if (sessPenggunaId() == '1' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID])) { ?>
 						<?php if ($data_pd[0]->id_surat_dinas != '') { ?>
 							<a href="surat/show/detail_surat/sd/<?= $data_pd[0]->id_surat_dinas ?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;"> <i></i> Cek Surat Dinas </a>
 						<?php } else { ?>
@@ -261,7 +261,7 @@
 						<?php } ?>
 
 					<?php } ?>
-					<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58') { ?>
+					<?php if (sessPenggunaId() == '1' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID])) { ?>
 
 						<!-- Ini coba
 				<a href="surat/show/pengajuan/permintaan_sd/<?= $data_pd[0]->id_pd ?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;"> <i></i> Surat Dinas </a>			

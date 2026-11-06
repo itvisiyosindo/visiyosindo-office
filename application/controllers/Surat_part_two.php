@@ -361,7 +361,7 @@ class Surat_part_two extends CI_Controller
 
 
       // Notifikasi WA ke GA (id=58) saat SIJK diajukan
-      $approverSijk = $this->md_pengguna->getById(58);
+      $approverSijk = $this->md_pengguna->getById(GA_USER_ID);
       $noPengajuSijk = $this->md_pengguna->getById(sessPenggunaId());
       if (!empty($approverSijk[0]->no_hp)) {
         waIzinJamKerjaPengajuan([
@@ -419,7 +419,7 @@ class Surat_part_two extends CI_Controller
 
 
       // Notifikasi WA ke GA (id=58) saat SIMP diajukan
-      $approverSimp = $this->md_pengguna->getById(58);
+      $approverSimp = $this->md_pengguna->getById(GA_USER_ID);
       $noPengajuSimp = $this->md_pengguna->getById(sessPenggunaId());
       if (!empty($approverSimp[0]->no_hp)) {
         waIzinMeninggalkanPengajuan([
@@ -477,7 +477,7 @@ class Surat_part_two extends CI_Controller
 
 
       // Notifikasi WA ke GA (id=58) saat Cuti diajukan
-      $approverCuti = $this->md_pengguna->getById(58);
+      $approverCuti = $this->md_pengguna->getById(GA_USER_ID);
       $noPengajuCuti = $this->md_pengguna->getById(sessPenggunaId());
       if (!empty($approverCuti[0]->no_hp)) {
         waCutiPengajuan([
@@ -536,7 +536,7 @@ class Surat_part_two extends CI_Controller
 
       //send notif wa TEST
       $dataWa = [
-        'idPenerima1'   => 58,
+        'idPenerima1'   => GA_USER_ID,
         'idPenerima2'   => '',
         'namaSurat'     => 'Surat Izin Pada Jam Kerja PT Sumpah Gajah Mada',
         'penerima'       => '_General Affair_',
@@ -590,7 +590,7 @@ class Surat_part_two extends CI_Controller
 
       //send notif wa TEST
       $dataWa = [
-        'idPenerima1'   => 58,
+        'idPenerima1'   => GA_USER_ID,
         'idPenerima2'   => '',
         'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
         'penerima'       => '_General Affair_',
@@ -644,7 +644,7 @@ class Surat_part_two extends CI_Controller
 
       //send notif wa TEST
       $dataWa = [
-        'idPenerima1'   => 58,
+        'idPenerima1'   => GA_USER_ID,
         'idPenerima2'   => '',
         'namaSurat'     => 'Cuti Tahunan',
         'penerima'       => '_General Affair_',
@@ -890,7 +890,7 @@ class Surat_part_two extends CI_Controller
 
       //send notif wa 
       $dataWa = [
-        'idPenerima1'   => 58,
+        'idPenerima1'   => GA_USER_ID,
         'idPenerima2'   => '',
         'namaSurat'     => 'Penggunaan Ruang Meeting',
         'penerima'       => 'General Affair',
@@ -1016,7 +1016,7 @@ class Surat_part_two extends CI_Controller
           $dataWa = [
             'id'             => $id_sp,
             'idPenerima1'   => '',
-            'idPenerima2'   => '58',
+            'idPenerima2'   => GA_USER_ID,
             'namaSurat'     => 'Surat Izin Pada Jam Kerja',
             //'penerima' 	    => '_General Manager_',
             'ttd_sebelum1'   => 'HR and Legal Officer',
@@ -1180,7 +1180,7 @@ class Surat_part_two extends CI_Controller
           $dataWa = [
             'id'             => $id_sp,
             'idPenerima1'   => '',
-            'idPenerima2'   => '58',
+            'idPenerima2'   => GA_USER_ID,
             'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
             //'penerima' 	    => '_General Manager_',
             'ttd_sebelum1'   => 'HR and Legal Officer',
@@ -1339,7 +1339,7 @@ class Surat_part_two extends CI_Controller
           $dataWa = [
             'id'             => $id_sp,
             'idPenerima1'   => '',
-            'idPenerima2'   => '58',
+            'idPenerima2'   => GA_USER_ID,
             'namaSurat'     => 'Cuti Tahunan',
             //'penerima' 	    => '_General Manager_',
             'ttd_sebelum1'   => 'HR and Legal Officer',
@@ -1477,7 +1477,7 @@ class Surat_part_two extends CI_Controller
           //send notif wa ke GA
           $dataWa = [
             'id'             => $id_sp,
-            'idPenerima1'   => 58,
+            'idPenerima1'   => GA_USER_ID,
             'idPenerima2'   => '',
             'namaSurat'     => 'Berita Acara',
             'penerima'       => $pengaju,
@@ -1536,7 +1536,7 @@ class Surat_part_two extends CI_Controller
         //send notif wa ke GA
         $dataWa = [
           'id'             => $id_sp,
-          'idPenerima1'   => 58,
+          'idPenerima1'   => GA_USER_ID,
           'idPenerima2'   => '',
           'namaSurat'     => 'Berita Acara',
           'penerima'       => $pengaju,
@@ -1571,7 +1571,7 @@ class Surat_part_two extends CI_Controller
         //send notif wa
         $dataWa = [
           'id'             => $id_sp,
-          'idPenerima1'   => '58',
+          'idPenerima1'   => GA_USER_ID,
           'idPenerima2'   => '',
           'kode'           => $kdBa,
           'namaSurat'     => 'Pengalaman Kerja',
@@ -1942,7 +1942,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Surat Izin Pada Jam Kerja',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectPb($dataWa);
@@ -2001,7 +2001,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectPb($dataWa);
@@ -2057,7 +2057,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Cuti Tahunan',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectCuti($dataWa);
@@ -2218,7 +2218,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Penggunaan Ruang Meeting',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectMR($dataWa);
@@ -2258,7 +2258,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Surat Izin Pada Jam Kerja',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectPbSGM($dataWa);
@@ -2298,7 +2298,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Surat Izin Meninggalkan Pekerjaan',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectPbSGM($dataWa);
@@ -2338,7 +2338,7 @@ class Surat_part_two extends CI_Controller
         $dataWa = [
           'namaSurat'     => 'Cuti Tahunan',
           'id'       => $id_sp,
-          'idPenolak'     => 58,
+          'idPenolak'     => GA_USER_ID,
           'namaPenolak'   => '*General Affair*'
         ];
         $this->notifWaRejectPbSGM($dataWa);
@@ -2997,13 +2997,13 @@ class Surat_part_two extends CI_Controller
         $tgl_aju = date('d-M-Y', strtotime($row->tanggal));
 
         if ($row->id_diketahui == "58") {
-          $diketahui = "Amtisari Destiani Eka Putri";
+          $diketahui = GA_USER_NAME;
         } else {
           $diketahui = $row->nama_diketahui;
         }
 
         if ($row->id_disetujui == "58") {
-          $disetujui = "Amtisari Destiani Eka Putri";
+          $disetujui = GA_USER_NAME;
         } else {
           $disetujui = $row->nama_disetujui;
         }
@@ -3060,13 +3060,13 @@ class Surat_part_two extends CI_Controller
         $tgl_aju = date('d-M-Y', strtotime($row->tanggal));
 
         if ($row->id_diketahui == 58) {
-          $diketahui = "Amtisari Destiani Eka Putri";
+          $diketahui = GA_USER_NAME;
         } else {
           $diketahui = $row->nama_diketahui;
         }
 
         if ($row->id_disetujui == 58) {
-          $disetujui = "Amtisari Destiani Eka Putri";
+          $disetujui = GA_USER_NAME;
         } else {
           $disetujui = $row->nama_disetujui;
         }
@@ -3131,7 +3131,7 @@ class Surat_part_two extends CI_Controller
       die;
     } else if ($param == 'meetingroom') {
 
-      if (sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || sessPenggunaId() == '58' || sessPenggunaId() == '69' || sessPenggunaId() == '744') {
+      if (sessPenggunaId() == '1' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID]) || sessPenggunaId() == '69' || sessPenggunaId() == '744') {
         $dt     = $this->md_surat_part_two->getAllMeeting();
       } else {
         $dt     = $this->md_surat_part_two->getAllMeetingBy(sessPenggunaId());

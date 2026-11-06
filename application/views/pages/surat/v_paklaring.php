@@ -15,7 +15,7 @@
 					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-list mr-1"></i> Data Surat Pengalaman Kerja</span>
 				</div>
 				<div class="table-actions">
-					<?php if ( sessPenggunaId() == '1' || sessPenggunaId() == '58'){ ?>
+					<?php if ( sessPenggunaId() == '1' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID])){ ?>
 						<a href="surat_part_two/show/pengajuan/paklaring" id="btn-a-gc" class="btn btn-sm btn-success shadow-sm">
 							<i class="fas fa-plus mr-1"></i> Ajukan Pengalaman Kerja
 						</a>

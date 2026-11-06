@@ -231,7 +231,7 @@
 							$ttd2 		= $img_path."ttd_notyet2.png";
 							
 							if($data_sijk[0]->ttd_1 == '1'){
-								$ttd1 = $img_path."ttd_58.png";
+								$ttd1 = $img_path."ttd_" . GA_USER_ID . ".png";
 							}else if($data_sijk[0]->ttd_1 == '2'){
 								$ttd1 = $img_path."ttd_not.png";
 							}
@@ -252,7 +252,7 @@
                         <td style="text-align:center; "></td>
 						<td style="text-align:center; "><font color="#000000"><?= $data_sijk[0]->pengaju ?><hr></hr></font></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; "><font color="#000000">Amtisari Destiani Eka Putri<hr></hr></font></td>
+						<td style="text-align:center; "><font color="#000000"><?= GA_USER_NAME ?><hr></hr></font></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; "><font color="#000000">Yolanda Pratiwi<hr></hr></font></td>
 					</tr>

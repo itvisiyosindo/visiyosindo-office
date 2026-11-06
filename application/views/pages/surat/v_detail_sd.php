@@ -216,12 +216,12 @@
 					<?php } ?>
 					<a href="surat/print_page/sd/<?= $data_sd[0]->id ?>" class="btn btn-warning float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-print"></i> Cetak </a>
 					<?php if ($data_sd[0]->lampiran_2 != "") { ?>
-						<?php if (sessPenggunaId() == '33' || sessPenggunaId() == '58' || sessPenggunaId() == '54') { ?>
+						<?php if (sessPenggunaId() == '33' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID]) || sessPenggunaId() == '54') { ?>
 							<a href="<?= $data_sd[0]->lampiran_2 ?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;" target="_blank"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran Permintaan Dinas</a>
 						<?php } ?>
 					<?php } ?>
 					<?php if ($data_sd[0]->lampiran != "") { ?>
-						<?php if (sessPenggunaId() == '33' || sessPenggunaId() == '58' || sessPenggunaId() == '54') { ?>
+						<?php if (sessPenggunaId() == '33' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID]) || sessPenggunaId() == '54') { ?>
 							<a href="<?= $data_sd[0]->lampiran ?>" class="btn btn-primary float-right" style="margin-left:12px; margin-top:12px;" target="_blank"> <i class="fas fa-info"></i>&nbsp;&nbsp;Lampiran Pengaju</a>
 						<?php } ?>
 					<?php } ?>

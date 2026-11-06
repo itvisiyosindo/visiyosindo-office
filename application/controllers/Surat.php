@@ -698,7 +698,7 @@ class Surat extends CI_Controller
 
 			//send notif wa
 			$dataWa = [
-				'idPenerima1' 	=> "58",
+				'idPenerima1' 	=> GA_USER_ID,
 				'idPenerima2' 	=> "",
 				'namaSurat' 	=> 'Surat Kunjungan Gudang',
 				'penerima' 	    => '_General Affair_',
@@ -707,7 +707,7 @@ class Surat extends CI_Controller
 			];
 			$this->notifWaAddSurat(1, $dataWa);
 
-			$datapenggunanotifikasi = $this->md_pengguna->getById(58);
+			$datapenggunanotifikasi = $this->md_pengguna->getById(GA_USER_ID);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
 			$email           = $datapenggunanotifikasi[0]->email;
 
@@ -715,7 +715,7 @@ class Surat extends CI_Controller
 			$datanotifikasi['jenis'] = 6;
 			$datanotifikasi['idsurat'] = $lastKgId;
 			$datanotifikasi['idpenggunaakses'] = sessPenggunaId();
-			$datanotifikasi['id_pengguna'] = 58;
+			$datanotifikasi['id_pengguna'] = GA_USER_ID;
 			$datanotifikasi['keterangan'] = 'Pengajuan Surat ' . $kode;
 			$datanotifikasi['link'] = encryptvym('surat/show/detail_surat/kg/' . $lastKgId . '/1');
 			$datanotifikasi['status'] = 0;
@@ -1782,7 +1782,7 @@ class Surat extends CI_Controller
 
 			//send notif wa
 			$dataWa = [
-				'idPenerima1' 	=> 58,
+				'idPenerima1' 	=> GA_USER_ID,
 				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Surat Permintaan Dinas Karyawan',
 				'penerima' 	    => '_General  Affair_',
@@ -1793,14 +1793,14 @@ class Surat extends CI_Controller
 
 			$this->notifWaAddSurat(1, $dataWa);
 
-			$datapenggunanotifikasi = $this->md_pengguna->getById(58, 771, 714);
+			$datapenggunanotifikasi = $this->md_pengguna->getById(GA_USER_ID, 771, 714);
 			$nope           = $datapenggunanotifikasi[0]->no_hp;
 			$email           = $datapenggunanotifikasi[0]->email;
 
 			$datanotifikasi['jenis'] = 12;
 			$datanotifikasi['idsurat'] = $lastPdId;
 			$datanotifikasi['idpenggunaakses'] = sessPenggunaId();
-			$datanotifikasi['id_pengguna'] = 58;
+			$datanotifikasi['id_pengguna'] = GA_USER_ID;
 			$datanotifikasi['id_pengguna'] = 771;
 			$datanotifikasi['id_pengguna'] = 714;
 			$datanotifikasi['keterangan'] = 'Pengajuan Surat ' . $kode;
@@ -5910,7 +5910,7 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'id' 	        => $id_pb,
-				'idPenerima1' 	=> 58,
+				'idPenerima1' 	=> GA_USER_ID,
 				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Laporan Surat Biaya Perjalanan Dinas',
 				'penerima' 	    => 'General Affair',
@@ -5939,7 +5939,7 @@ class Surat extends CI_Controller
 			//send notif wa
 			$dataWa = [
 				'id' 	        => $id,
-				'idPenerima1' 	=> 58,
+				'idPenerima1' 	=> GA_USER_ID,
 				'idPenerima2' 	=> '',
 				'namaSurat' 	=> 'Laporan Kunjungan Gudang',
 				'penerima' 	    => 'General Affair',

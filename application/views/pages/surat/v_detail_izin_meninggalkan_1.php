@@ -77,7 +77,7 @@
         </div>
 		<?php
 		    $ttd = "ttd_1";
-				if((sessPenggunaId() == '58')){
+				if((in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID]))){
 					$ttd = 'ttd_1';
 				}else if((sessPenggunaId() == '720')){
 					$ttd = 'ttd_2';
@@ -174,7 +174,7 @@
 							$ttd2 		= $img_path."ttd_notyet2.png";
 							
 							if($data_sijk[0]->ttd_1 == '1'){
-								$ttd1 = $img_path."ttd_58.png";
+								$ttd1 = $img_path."ttd_" . GA_USER_ID . ".png";
 							}else if($data_sijk[0]->ttd_1 == '2'){
 								$ttd1 = $img_path."ttd_not.png";
 							}
@@ -193,7 +193,7 @@
 					<tr>
 						<td style="text-align:center; "><?= $data_sijk[0]->pengaju ?><hr></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Amtisari Destiani Eka Putri<hr></hr></td>
+						<td style="text-align:center; "><?= GA_USER_NAME ?><hr></hr></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; ">Yolanda Pratiwi<hr></hr></td>
 					</tr>
@@ -211,7 +211,7 @@
 			<?= form_close(); ?>
 			<br><br>
 		<div width="100%">
-            <?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58' || sessPenggunaId() == '720' || sessPenggunaId() == '33') { ?>
+            <?php if (sessPenggunaId() == '1' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID]) || sessPenggunaId() == '720' || sessPenggunaId() == '33') { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-Sijk="<?=encrypt($data_sijk[0]->id_Sijk)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-Sijk="<?=encrypt($data_sijk[0]->id_Sijk)?>"> <i class="fas fa-times"></i> Tolak </button>				
             <?php } ?>

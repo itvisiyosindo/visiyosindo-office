@@ -278,13 +278,13 @@
 							  }
 
                             if($data_ba[0]->id_diketahui==58){
-								$diketahui= "Amtisari Destiani Eka Putri";
+								$diketahui= GA_USER_NAME;
 							  }else{
 								$diketahui= $data_ba[0]->nama_diketahui;
 							  }
 					
 							  if($data_ba[0]->id_disetujui==58){
-								$disetujui= "Amtisari Destiani Eka Putri";
+								$disetujui= GA_USER_NAME;
 							  }else{
 								$disetujui= $data_ba[0]->nama_disetujui;
 							  }

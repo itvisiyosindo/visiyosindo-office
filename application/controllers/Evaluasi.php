@@ -390,7 +390,7 @@ class Evaluasi extends CI_Controller
             $dataWa = [
                 'id'            => $id_vs,
                 'idPenerima1'   => '69',
-                'idPenerima2'   => '58',
+                'idPenerima2'   => GA_USER_ID,
                 // 'idPenerima3'   => $myID,
                 'namaSurat'     => 'Evaluasi Pegawai'
             ];

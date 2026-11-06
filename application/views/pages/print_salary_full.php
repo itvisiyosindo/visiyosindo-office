@@ -218,7 +218,7 @@
                 <td style="width: 29.8296%; height: 56px; text-align: center;">&nbsp;</td>
             </tr>
            <tr style="height: 18px;">
-                <td style="width: 25%; text-align: center; height: 18px;"><u>Amtisari Destiani Eka Putri</u></td>
+                <td style="width: 25%; text-align: center; height: 18px;"><u><?= GA_USER_NAME ?></u></td>
                 <td style="width: 21.8748%; height: 18px; text-align: center;"><u>Azhari Pratama</u></td>
                 <td style="width: 25%; text-align: center; height: 18px;"><u>Dirangga Madali</u></td>
                 <td style="width: 23.2955%; height: 18px; text-align: center;"><u>Yolanda Pratiwi</u></td>

@@ -131,13 +131,13 @@
 									$bln = $bulan[$blnInggris];
 
 									if ($data_serah[0]->idPengaju==58){
-										$pengaju = "Amtisari Destiani Eka Putri";
+										$pengaju = GA_USER_NAME;
 									}else{
 										$pengaju = $data_serah[0]->pengaju;
 									}
 
 									if ($data_serah[0]->id_terima==58){
-										$penerima = "Amtisari Destiani Eka Putri";
+										$penerima = GA_USER_NAME;
 									}else{
 										$penerima = $data_serah[0]->penerima;
 									}

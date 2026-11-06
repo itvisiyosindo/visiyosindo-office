@@ -186,7 +186,7 @@
 							  }
 
 							if($data_ba[0]->id_diketahui==58){
-								$Namadiketahui= "Amtisari Destiani Eka Putri";
+								$Namadiketahui= GA_USER_NAME;
 							  }else{
 								$Namadiketahui= $data_ba[0]->nama_diketahui;
 							  }
@@ -194,7 +194,7 @@
 								
 					
 							  if($data_ba[0]->id_disetujui==58){
-								$Namadisetujui= "Amtisari Destiani Eka Putri";
+								$Namadisetujui= GA_USER_NAME;
 							  }else{
 								$Namadisetujui= $data_ba[0]->nama_disetujui;
 							  }

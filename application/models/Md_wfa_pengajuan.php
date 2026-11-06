@@ -6,7 +6,7 @@ if (!defined('BASEPATH')) {
 class Md_wfa_pengajuan extends CI_Model
 {
     private $table = 'wfa_pengajuan';
-    private $memverifikasi_user_ids = [29, 58];
+    private $memverifikasi_user_ids = [29, 58, 771];
     private $menyetujui_user_ids = [744, 69];
     private $memverifikasi_user_id = 29;
     private $menyetujui_user_id = 744;

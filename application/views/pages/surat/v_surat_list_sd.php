@@ -30,7 +30,7 @@
 							?>
 						</select>
 					</div>
-					<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58') { ?>
+					<?php if (sessPenggunaId() == '1' || in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID])) { ?>
 						<a href="surat/show/pengajuan/permintaan_sd/" class="btn btn-sm btn-success font-weight-bold" style="border-radius: 6px;">
 							<i class="fas fa-plus mr-1"></i> Ajukan Surat Dinas
 						</a>

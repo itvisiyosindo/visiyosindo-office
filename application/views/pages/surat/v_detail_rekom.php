@@ -483,7 +483,7 @@
 						<td style="text-align:center; width:24%;"><?php echo'<img src="'.$ttd2.'" height="70">';?></td>
 					</tr>
 					<tr>
-						<td style="text-align:center; ">Amtisari Destiani Eka Putri<hr></hr></td>
+						<td style="text-align:center; "><?= GA_USER_NAME ?><hr></hr></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; ">Yolanda Pratiwi<hr></hr></td>
 						<td style="text-align:center; "></td>

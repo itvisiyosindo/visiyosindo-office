@@ -182,9 +182,9 @@ class Pinjam extends CI_Controller
                   $data['jenis']	     = '1';
                   $idpenerima1         = '33';
               } else {
-                  $data['idttd_1']	   = '58';
+                  $data['idttd_1']	   = (string)GA_USER_ID;
                   $data['jenis']	     = '2';
-                  $idpenerima1         = '58';
+                  $idpenerima1         = (string)GA_USER_ID;
               }
 
               $data['idttd_2']	     = '749';
@@ -505,7 +505,7 @@ class Pinjam extends CI_Controller
                       $dataWa = [
                           'namaSurat'     => 'Peminjaman Unit',
                                 'id' 	    => $id_sp,
-                          'idPenolak'     => 58,
+                          'idPenolak'     => GA_USER_ID,
                           'namaPengaju'   => $namaPengaju,
                                   'kode'  => $kode,
                               'perihal'   => $perihal,

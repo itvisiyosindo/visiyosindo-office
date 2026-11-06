@@ -1244,7 +1244,7 @@ class Surat_new extends CI_Controller
         $dataWa = [
           'id'             => $id_sp,
           'idPenerima1'   => $idpengaju,
-          'idPenerima2'   => '58',
+          'idPenerima2'   => GA_USER_ID,
           'namaSurat'     => 'Serah Terima Pekerjaan',
           'namaPengaju'   => $namaPengaju,
           'kode'           => $kode,

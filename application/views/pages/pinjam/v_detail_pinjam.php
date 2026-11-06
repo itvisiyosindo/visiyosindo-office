@@ -67,7 +67,7 @@
 			$ttd_2 = $data_aprv->idttd_2;
 
 		    $ttd = "ttd_1";
-				if((sessPenggunaId() == $ttd_1)){
+				if((sessPenggunaId() == $ttd_1 || ($ttd_1 == '58' && sessPenggunaId() == (string)GA_USER_ID))){
 					if($data_aprv->jenis == 1){
 							$ttd = 'ttd_2';	 //GM
 					}else{
@@ -273,7 +273,7 @@
 		
 			<br><br>
 		<div width="100%">
-			 <?php if (sessPenggunaId() == '1' || sessPenggunaId() == $ttd_1  || sessPenggunaId() == $ttd_2) { ?>
+			 <?php if (sessPenggunaId() == '1' || sessPenggunaId() == $ttd_1 || sessPenggunaId() == $ttd_2 || ($ttd_1 == '58' && sessPenggunaId() == (string)GA_USER_ID)) { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-Sijk="<?=encrypt($data_aprv->id)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-Sijk="<?=encrypt($data_aprv->id)?>"> <i class="fas fa-times"></i> Tolak </button>				
        <?php } ?>

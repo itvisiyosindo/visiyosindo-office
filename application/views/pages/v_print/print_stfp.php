@@ -220,7 +220,7 @@
 									$bln = $bulan[$blnInggris];
 
 									if ($data_serah[0]->idPengaju==58){
-										$pengaju = "Amtisari Destiani Eka Putri";
+										$pengaju = GA_USER_NAME;
 									}else{
 										$pengaju = $data_serah[0]->pengaju;
 									}

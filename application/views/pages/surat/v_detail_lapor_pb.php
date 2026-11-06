@@ -394,7 +394,7 @@
             <?php } ?> -->
 
 					<!-- Logic TTD GA -->
-					<?php if (sessPenggunaId() == '58') { ?>
+					<?php if (in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID])) { ?>
 						<?php if ($data_pb[0]->persetujuan_ga == 0) { ?>
 							<button type="button" class="btn btn-success btn-save float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-pb="<?= encrypt($data_pb[0]->idPB) ?>"> <i class="fas fa-check"></i> Setujui </button>
 							<button type="button" class="btn btn-secondary btn-save float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-pb="<?= encrypt($data_pb[0]->idPB) ?>"> <i class="fas fa-times"></i> Tolak </button>

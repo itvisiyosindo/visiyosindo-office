@@ -33,7 +33,7 @@ class Wfa_pengajuan extends CI_Controller
 
     private function memverifikasiOfficeUserId()
     {
-        return 58;
+        return GA_USER_ID;
     }
 
     private function memverifikasiAllowedUserIds()
@@ -152,7 +152,7 @@ class Wfa_pengajuan extends CI_Controller
         }
 
         if ($param === 'admin_jumat') {
-            grantAccessFor(['Administrator', 'Hrd', sessPenggunaId() == 58]);
+            grantAccessFor(['Administrator', 'Hrd', in_array((string)sessPenggunaId(), ['58', (string)GA_USER_ID])]);
 
             $tanggal_input = $this->input->get('tanggal_wfa', true);
             $tanggal_wfa = $this->normalizeDateInput($tanggal_input);
