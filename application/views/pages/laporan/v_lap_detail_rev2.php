@@ -1,4 +1,16 @@
-<!-- 
+<?php
+if (!function_exists('lap_limit_text')) {
+    function lap_limit_text($str, $n = 100)
+    {
+        $str = (string)$str;
+        if ($str === '') return '';
+        if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+            return (mb_strlen($str) <= $n) ? $str : mb_substr($str, 0, $n) . '...';
+        }
+        return (strlen($str) <= $n) ? $str : substr($str, 0, $n) . '...';
+    }
+}
+?><!-- 
 	Create by KURNIAWAN  
 	12-06-2025
 -->
@@ -757,7 +769,7 @@
                                     <td>
                                         <div class="font-weight-bold text-dark mb-1" style="font-size: 13px;"><?= htmlspecialchars($t->judul) ?></div>
                                         <?php if (!empty($t->deskripsi)): ?>
-                                            <div class="text-muted small" style="line-height: 1.4;"><?= nl2br(htmlspecialchars(character_limiter($t->deskripsi, 120))) ?></div>
+                                            <div class="text-muted small" style="line-height: 1.4;"><?= nl2br(htmlspecialchars(lap_limit_text($t->deskripsi, 120))) ?></div>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -789,7 +801,7 @@
                                         <?php endif; endif; ?>
 
                                         <?php if (!empty($t->catatan_bawahan)): ?>
-                                            <div class="text-muted small mt-1" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(character_limiter($t->catatan_bawahan, 80)) ?>"</div>
+                                            <div class="text-muted small mt-1" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(lap_limit_text($t->catatan_bawahan, 80)) ?>"</div>
                                         <?php endif; ?>
 
                                         <?php if (empty($t->bukti_selesai) && empty($t->catatan_bawahan)): ?>
@@ -805,7 +817,7 @@
                                                 <span class="font-weight-bold text-dark ml-1" style="font-size: 12px;"><?= $t->rating_bintang ?>/5</span>
                                             </div>
                                             <?php if (!empty($t->ulasan_atasan)): ?>
-                                                <div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(character_limiter($t->ulasan_atasan, 60)) ?>"</div>
+                                                <div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(lap_limit_text($t->ulasan_atasan, 60)) ?>"</div>
                                             <?php endif; ?>
                                         <?php else: ?>
                                             <span class="badge badge-light-warning text-warning small px-2 py-1" style="border-radius: 6px;">
