@@ -183,13 +183,17 @@ if (!empty($data_mingguan)) {
         $w_num++;
     }
 }
-$total_karyawan_aktif = !empty($list_pengguna) ? count($list_pengguna) : 0;
+$total_karyawan_lap = !empty($list_pengguna) ? count($list_pengguna) : 0;
 $total_hadir = isset($present[0]->total) ? (int)$present[0]->total : 0;
 $total_izin = isset($izin[0]->total) ? (int)$izin[0]->total : 0;
 $total_sakit = isset($sakit[0]->total) ? (int)$sakit[0]->total : 0;
 $total_cuti = isset($cuti[0]->total) ? (int)$cuti[0]->total : 0;
-$total_absen_lainnya = max(0, $total_karyawan_aktif - ($total_hadir + $total_izin + $total_sakit + $total_cuti));
-$rate_kehadiran = $total_karyawan_aktif > 0 ? round(($total_hadir / $total_karyawan_aktif) * 100, 1) : 0;
+$total_tercatat_hari_ini = $total_hadir + $total_izin + $total_sakit + $total_cuti;
+$total_karyawan_aktif = isset($total_karyawan_aktif_absen) && $total_karyawan_aktif_absen > 0
+    ? max((int)$total_karyawan_aktif_absen, $total_karyawan_lap, $total_tercatat_hari_ini)
+    : max($total_karyawan_lap, $total_tercatat_hari_ini);
+$total_absen_lainnya = max(0, $total_karyawan_aktif - $total_tercatat_hari_ini);
+$rate_kehadiran = $total_karyawan_aktif > 0 ? min(100, round(($total_hadir / $total_karyawan_aktif) * 100, 1)) : 0;
 ?>
 
 	<!-- 1. Executive Top Banner Overview -->

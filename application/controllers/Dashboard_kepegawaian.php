@@ -32,6 +32,7 @@ class Dashboard_kepegawaian extends CI_Controller
         $page_data['izin']         = $this->md_absensi->countIzinToday();
         $page_data['cuti']         = $this->md_absensi->countCutiToday();
         $page_data['sakit']        = $this->md_absensi->countSakitToday();
+        $page_data['total_karyawan_aktif_absen'] = $this->md_dashboard->countKaryawanAktifAbsensi();
         $page_data['daftar_hadir'] = $this->md_absensi->daftar_hadirToday();
         $page_data['daftar_izin']  = $this->md_absensi->daftar_izinToday('izin');
         $page_data['daftar_sakit'] = $this->md_absensi->daftar_izinToday('sakit');

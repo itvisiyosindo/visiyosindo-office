@@ -483,6 +483,25 @@ class Md_dashboard extends CI_Model
         return $query->result(); // Mengembalikan hasil query dalam bentuk array objek
     }
 
+    public function countKaryawanAktifAbsensi()
+    {
+        $today = date('Y-m-d');
+        $perusahaan = (int)grantAccessForPerusahaan();
+        $sql = "SELECT COUNT(DISTINCT p.pengguna_id) AS total
+                FROM pengguna p
+                LEFT JOIN absensi a ON a.pengguna_id = p.pengguna_id
+                    AND a.data_created LIKE '{$today}%'
+                    AND a.perusahaan = {$perusahaan}
+                WHERE p.is_active = 1
+                AND p.pengguna_id != 1
+                AND (
+                    p.pengguna_id NOT IN (1, 727, 714, 84, 109, 110, 79, 54, 72, 81, 70, 58, 69, 57, 74, 56, 83, 55, 107, 86, 77, 743)
+                    OR a.absen_id IS NOT NULL
+                )";
+        $row = $this->db->query($sql)->row();
+        return $row ? (int)$row->total : 0;
+    }
+
 
 
 

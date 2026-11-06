@@ -203,9 +203,12 @@ class Md_absensi extends CI_Model
         $data = $this->db->select('pengguna.nama, absensi.waktu_absen, absensi.jenis_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where('type_absen', 'masuk')
             ->where('absensi.perusahaan', grantAccessForPerusahaan())
+            ->group_by('absensi.pengguna_id')
             ->get()->result();
         return $data;
     }
@@ -231,9 +234,12 @@ class Md_absensi extends CI_Model
         $data = $this->db->select('pengguna.nama, absensi.waktu_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where('type_absen', 'keluar')
             ->where('absensi.perusahaan', grantAccessForPerusahaan())
+            ->group_by('absensi.pengguna_id')
             ->get()->result();
         return $data;
     }
@@ -243,9 +249,12 @@ class Md_absensi extends CI_Model
         $data = $this->db->select('pengguna.nama, absensi.waktu_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where('type_absen', 'istirahat')
             ->where('absensi.perusahaan', grantAccessForPerusahaan())
+            ->group_by('absensi.pengguna_id')
             ->get()->result();
         return $data;
     }
@@ -255,10 +264,13 @@ class Md_absensi extends CI_Model
         $data = $this->db->select('pengguna.nama, absensi.waktu_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where('type_absen', 'masuk')
             ->where('status_absen', 'terlambat')
             ->where('absensi.perusahaan', grantAccessForPerusahaan())
+            ->group_by('absensi.pengguna_id')
             ->get()->result();
         return $data;
     }
@@ -269,8 +281,11 @@ class Md_absensi extends CI_Model
         $data = $this->db->select('pengguna.nama')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where($where)
+            ->group_by('absensi.pengguna_id')
             ->get()->result();
         return $data;
     }
@@ -279,7 +294,10 @@ class Md_absensi extends CI_Model
     function countTerlambatToday($id_pengguna = "")
     {
         if ($id_pengguna == "") {
-            $this->db->select('count(*) as total');
+            $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total');
+            $this->db->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id');
+            $this->db->where('pengguna.is_active', 1);
+            $this->db->where('pengguna.pengguna_id !=', 1);
             $this->db->like('data_created', date('Y-m-d', time()));
             $this->db->where('type_absen', 'masuk');
             $this->db->where('status_absen', 'terlambat');
@@ -299,7 +317,10 @@ class Md_absensi extends CI_Model
     function countPresentToday($id_pengguna = "")
     {
         if ($id_pengguna == "") {
-            $this->db->select('count(*) as total');
+            $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total');
+            $this->db->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id');
+            $this->db->where('pengguna.is_active', 1);
+            $this->db->where('pengguna.pengguna_id !=', 1);
             $this->db->like('data_created', date('Y-m-d', time()));
             $this->db->where('type_absen', 'masuk');
             $this->db->where('absensi.perusahaan', grantAccessForPerusahaan());
@@ -318,7 +339,10 @@ class Md_absensi extends CI_Model
     function countPulangToday($id_pengguna = "")
     {
         if ($id_pengguna == "") {
-            $this->db->select('count(*) as total');
+            $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total');
+            $this->db->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id');
+            $this->db->where('pengguna.is_active', 1);
+            $this->db->where('pengguna.pengguna_id !=', 1);
             $this->db->like('data_created', date('Y-m-d', time()));
             $this->db->where('type_absen', 'keluar');
             $this->db->where('absensi.perusahaan', grantAccessForPerusahaan());
@@ -337,7 +361,10 @@ class Md_absensi extends CI_Model
     function countIstirahatToday($id_pengguna = "")
     {
         if ($id_pengguna == "") {
-            $this->db->select('count(*) as total');
+            $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total');
+            $this->db->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id');
+            $this->db->where('pengguna.is_active', 1);
+            $this->db->where('pengguna.pengguna_id !=', 1);
             $this->db->like('data_created', date('Y-m-d', time()));
             $this->db->where('type_absen', 'istirahat');
             $this->db->where('absensi.perusahaan', grantAccessForPerusahaan());
@@ -399,7 +426,10 @@ class Md_absensi extends CI_Model
     {
         if ($id_pengguna == "") {
             $where = "absensi.perusahaan=" . grantAccessForPerusahaan() . " AND type_absen ='izin' AND (status_absen='izin')";
-            $this->db->select('count(*) as total')
+            $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total')
+                ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+                ->where('pengguna.is_active', 1)
+                ->where('pengguna.pengguna_id !=', 1)
                 ->like('data_created', date('Y-m-d', time()))
                 ->where($where);
             return $this->db->get('absensi')->result();
@@ -415,7 +445,10 @@ class Md_absensi extends CI_Model
     function countSakitToday()
     {
         $where = "absensi.perusahaan=" . grantAccessForPerusahaan() . " AND type_absen ='izin' AND (status_absen='sakit')";
-        $this->db->select('count(*) as total')
+        $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total')
+            ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where($where);
         return $this->db->get('absensi')->result();
@@ -423,7 +456,10 @@ class Md_absensi extends CI_Model
     function countCutiToday()
     {
         $where = "absensi.perusahaan=" . grantAccessForPerusahaan() . " AND type_absen ='izin' AND (status_absen='cuti')";
-        $this->db->select('count(*) as total')
+        $this->db->select('COUNT(DISTINCT absensi.pengguna_id) as total')
+            ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
+            ->where('pengguna.is_active', 1)
+            ->where('pengguna.pengguna_id !=', 1)
             ->like('data_created', date('Y-m-d', time()))
             ->where($where);
         return $this->db->get('absensi')->result();
