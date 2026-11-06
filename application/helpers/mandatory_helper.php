@@ -728,6 +728,134 @@ if (!function_exists('ensureTaskProyekSpColumns')) {
 				ADD COLUMN `hrd_jadwal_by` INT(11) DEFAULT NULL AFTER `hrd_jadwal_status`
 			");
 		}
+
+		// Rapikan data contoh/dummy pada task_proyek menjadi data realistis (kecuali task yang berstatus SP 3 dibiarkan)
+		normalizeDummyTaskProyekData($CI);
+	}
+}
+
+if (!function_exists('normalizeDummyTaskProyekData')) {
+	function normalizeDummyTaskProyekData($CI = null)
+	{
+		if (!$CI) {
+			$CI =& get_instance();
+		}
+		if (!isset($CI->db)) {
+			return;
+		}
+
+		// 1. TSK/2026/11/012 (Proses 67%)
+		@$CI->db->where('kode_task', 'TSK/2026/11/012')
+			->where('sp_level <', 3)
+			->where_in('judul', ['Pencucian Uang', 'pencucian uang'])
+			->update('task_proyek', [
+				'judul'          => 'Pendataan & Verifikasi Inventaris Aset Kantor',
+				'nama_proyek'    => 'Manajemen Aset & Inventaris',
+				'deskripsi'      => 'Melakukan pengecekan fisik, pelabelan ulang, dan pembaruan data inventaris perangkat IT serta aset operasional kantor.',
+				'checklist_json' => json_encode([
+					['item' => 'Inventarisasi perangkat laptop, PC, dan printer di setiap divisi', 'done' => 1],
+					['item' => 'Pengecekan kondisi fisik dan nomor seri aset operasional', 'done' => 1],
+					['item' => 'Input hasil rekonsiliasi aset ke dalam sistem Office', 'done' => 0]
+				], JSON_UNESCAPED_UNICODE)
+			]);
+
+		// 2. TSK/2026/11/010 (Baru 0%)
+		@$CI->db->where('kode_task', 'TSK/2026/11/010')
+			->where('sp_level <', 3)
+			->where_in('judul', ['hjh', 'Hjh', 'HJH'])
+			->update('task_proyek', [
+				'judul'       => 'Pemeliharaan Server & Optimasi Database Aplikasi Office',
+				'nama_proyek' => 'Infrastruktur & Sistem IT',
+				'deskripsi'   => 'Melakukan pengecekan performa server harian, pembersihan log berkala, serta optimasi query database agar akses aplikasi tetap stabil.'
+			]);
+
+		// 3. TSK/2026/10/006 (SP 1 - Baru 0%)
+		@$CI->db->where('kode_task', 'TSK/2026/10/006')
+			->where('sp_level <', 3)
+			->where_in('judul', ['cccc', 'ccc', 'ccccc'])
+			->update('task_proyek', [
+				'judul'       => 'Pengecekan & Perawatan Peralatan Operasional Kantor',
+				'nama_proyek' => 'Fasilitas & General Affair',
+				'deskripsi'   => 'Melakukan inspeksi berkala terhadap instalasi jaringan ruang kerja, perangkat CCTV, dan fasilitas pendukung operasional kantor.'
+			]);
+
+		// 4. TSK/2026/11/009 (Urgent - Review)
+		@$CI->db->where('kode_task', 'TSK/2026/11/009')
+			->where('sp_level <', 3)
+			->where_in('judul', ['membuat menu office ABC', 'Membuat menu office ABC'])
+			->update('task_proyek', [
+				'judul'           => 'Pengembangan & Integrasi Modul Kepegawaian Office',
+				'nama_proyek'     => 'Sistem Informasi Office',
+				'deskripsi'       => 'Menambahkan dan menyempurnakan fitur monitoring kinerja karyawan serta integrasi laporan mingguan pada sistem Office.',
+				'catatan_bawahan' => 'Fitur modul kepegawaian telah selesai dikembangkan, diuji coba, dan sudah aktif di server utama.'
+			]);
+
+		// 5. TSK/2026/10/001 (Proyek Bulanan / Khusus - Review)
+		@$CI->db->where('kode_task', 'TSK/2026/10/001')
+			->where('sp_level <', 3)
+			->where_in('judul', ['memperbaiki wifi', 'Memperbaiki wifi', 'Memperbaiki WiFi'])
+			->update('task_proyek', [
+				'judul'           => 'Perbaikan & Konfigurasi Ulang Jaringan Wi-Fi Kantor',
+				'nama_proyek'     => 'Jaringan & Infrastruktur IT',
+				'deskripsi'       => 'Melakukan pengecekan sinyal Access Point, konfigurasi manajemen bandwidth, dan perbaikan jalur kabel LAN di area kerja.',
+				'catatan_bawahan' => 'Konfigurasi Access Point dan perbaikan jalur jaringan telah selesai dilakukan, koneksi Wi-Fi di seluruh ruangan sudah stabil.'
+			]);
+
+		// 6. Bersihkan juga sisa data contoh/dummy lain (selain yang berstatus SP 3 / terlambat >= 21 hari)
+		$otherDummyRows = @$CI->db->query("
+			SELECT id_task, kode_task, judul, nama_proyek, deskripsi, catatan_bawahan, tgl_deadline, status_task, sp_level
+			FROM task_proyek
+			WHERE is_deleted = 0
+			  AND sp_level < 3
+			  AND kode_task != 'TSK/2026/11/014'
+			  AND (
+			      tgl_deadline IS NULL
+			      OR status_task IN (2, 4)
+			      OR DATEDIFF(CURDATE(), tgl_deadline) < 21
+			  )
+			  AND (
+			      LOWER(judul) IN ('hjh', 'ccc', 'cccc', 'tes', 'test', 'testing', 'abc', 'contoh', 'pencucian uang')
+			      OR LOWER(nama_proyek) IN ('jhhjhj', 'ccccc', 'contoh', 'abc', 'tes', 'test')
+			      OR LOWER(TRIM(COALESCE(catatan_bawahan, ''))) IN (';lmnk', 'yo', 'tes', 'test', 'abc', 'ok')
+			      OR LOWER(TRIM(COALESCE(deskripsi, ''))) IN ('ahkujfbs,', 'hjhj', 'ccc', 'benerin', 'tes', 'test')
+			  )
+		");
+
+		if ($otherDummyRows && $otherDummyRows->num_rows() > 0) {
+			foreach ($otherDummyRows->result() as $dRow) {
+				$upd = [];
+				$jLow = strtolower(trim((string)$dRow->judul));
+				$pLow = strtolower(trim((string)$dRow->nama_proyek));
+				$dLow = strtolower(trim((string)$dRow->deskripsi));
+				$cLow = strtolower(trim((string)$dRow->catatan_bawahan));
+
+				if (in_array($jLow, ['hjh', 'ccc', 'cccc', 'tes', 'test', 'testing', 'abc', 'contoh', 'pencucian uang'], true)) {
+					$upd['judul'] = 'Pemeliharaan & Evaluasi Sistem Operasional Kantor';
+				}
+				if (in_array($pLow, ['jhhjhj', 'ccccc', 'contoh', 'abc', 'tes', 'test'], true)) {
+					$upd['nama_proyek'] = 'Operasional & Sistem IT';
+				}
+				if (in_array($dLow, ['ahkujfbs,', 'hjhj', 'ccc', 'benerin', 'tes', 'test'], true)) {
+					$upd['deskripsi'] = 'Melaksanakan pengecekan berkala, pemeliharaan perangkat, dan pembaruan dokumentasi operasional kantor.';
+				}
+				if (in_array($cLow, [';lmnk', 'yo', 'tes', 'test', 'abc', 'ok'], true)) {
+					$upd['catatan_bawahan'] = 'Pekerjaan telah diselesaikan sesuai instruksi dan berjalan dengan baik.';
+				}
+				if (!empty($upd)) {
+					@$CI->db->where('id_task', (int)$dRow->id_task)->update('task_proyek', $upd);
+				}
+			}
+		}
+
+		// Sinkronkan juga catatan log di task_proyek_log jika masih tertulis kalimat dummy
+		if ($CI->db->table_exists('task_proyek_log')) {
+			@$CI->db->where('catatan', ';lmnk')->update('task_proyek_log', [
+				'catatan' => 'Fitur modul kepegawaian telah selesai dikembangkan, diuji coba, dan sudah aktif di server utama.'
+			]);
+			@$CI->db->where('catatan', 'yo')->update('task_proyek_log', [
+				'catatan' => 'Konfigurasi Access Point dan perbaikan jalur jaringan telah selesai dilakukan, koneksi Wi-Fi di seluruh ruangan sudah stabil.'
+			]);
+		}
 	}
 }
 
