@@ -260,9 +260,9 @@ class Reminder extends CI_Controller {
 
             $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
 
-            // Pastikan nomor HP ada dan sesi 24 jam masih aktif
-            if (empty($phone) || !$this->Md_whatsapp_session->is_session_active($phone)) {
-                $skippedSess++;
+            // Kirim ke seluruh karyawan aktif yang memiliki nomor HP (meskipun status sesi 24 jam di panel kadaluarsa)
+            if (empty($phone)) {
+                $gagal++;
                 continue;
             }
 
@@ -283,7 +283,7 @@ class Reminder extends CI_Controller {
                 'devId'        => hostWa('1'),
                 'penerima'     => $phone,
                 'pesan'        => urlencode($pesan),
-                'bypass_24h'   => false,
+                'bypass_24h'   => true,
                 'raw_chat'     => true,
                 'min_start_ts' => $targetStartTs
             ];
@@ -311,7 +311,7 @@ class Reminder extends CI_Controller {
             }
         }
 
-        $msg = "Pengiriman ucapan weekend selesai. Terkirim: $terkirim, Skip (Sudah dikirim): $skipped, Skip (Sesi 24j Mati): $skippedSess, Gagal: $gagal.";
+        $msg = "Pengiriman ucapan weekend selesai (antrian berurutan 1-per-1). Terkirim/Antri: $terkirim, Skip (Sudah dikirim): $skipped, Gagal/No HP Kosong: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {
@@ -403,9 +403,9 @@ class Reminder extends CI_Controller {
 
             $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
 
-            // Pastikan nomor HP ada dan sesi 24 jam masih aktif
-            if (empty($phone) || !$this->Md_whatsapp_session->is_session_active($phone)) {
-                $skippedSess++;
+            // Kirim ke seluruh karyawan aktif yang memiliki nomor HP (meskipun status sesi 24 jam di panel kadaluarsa)
+            if (empty($phone)) {
+                $gagal++;
                 continue;
             }
 
@@ -425,7 +425,7 @@ class Reminder extends CI_Controller {
                 'devId'      => hostWa('1'),
                 'penerima'   => $phone,
                 'pesan'      => urlencode($pesan),
-                'bypass_24h' => false,
+                'bypass_24h' => true,
                 'raw_chat'   => true
             ];
 
@@ -452,7 +452,7 @@ class Reminder extends CI_Controller {
             }
         }
 
-        $msg = "Pengiriman ucapan semangat Senin selesai. Terkirim: $terkirim, Skip (Sudah dikirim): $skipped, Skip (Sesi 24j Mati): $skippedSess, Gagal: $gagal.";
+        $msg = "Pengiriman ucapan semangat Senin selesai (antrian berurutan 1-per-1). Terkirim/Antri: $terkirim, Skip (Sudah dikirim): $skipped, Gagal/No HP Kosong: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {

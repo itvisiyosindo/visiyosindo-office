@@ -9,7 +9,7 @@
                 <i class="fas fa-sun mr-1"></i> Kirim Semangat Senin (Senin 09:00)
             </button>
             <button type="button" class="btn btn-sm btn-info mr-2" id="btn-ucapan-weekend">
-                <i class="fas fa-coffee mr-1"></i> Kirim Ucapan Weekend (Jumat 17:30)
+                <i class="fas fa-coffee mr-1"></i> Kirim Ucapan Weekend (Jumat 18:00)
             </button>
             <button type="button" class="btn btn-sm btn-success" id="btn-cek-massal">
                 <i class="fab fa-whatsapp"></i> Cek & Kirim Reminder H-3 (Massal)
