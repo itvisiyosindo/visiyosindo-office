@@ -616,7 +616,56 @@ class Md_laporan extends CI_Model
         $this->db->order_by('jd.id_urut', 'ASC');
         $this->db->order_by('l.tanggal', 'ASC');
 
-        return $this->db->get()->result();
+        $result = $this->db->get()->result();
+
+        // Fallback: Jika tidak ada data yang cocok dengan rentang tanggal jobdesc,
+        // ambil seluruh jobdesk aktif karyawan (status = 1) agar karyawan tetap bisa mengisi laporan!
+        if (empty($result)) {
+            $this->db->select('
+                jd.id, 
+                jd.deskripsi, 
+                jd.nilai as nilai_isi,
+                jd.point,
+                jd.idPengguna,
+                l.id as id_lap, 
+                l.tanggal, 
+                l.id_pengaju, 
+                l.id_job,
+                l.jobdesc, 
+                l.jenis, 
+                l.progress, 
+                l.kendala,
+                l.solusi, 
+                l.status_pekerjaan, 
+                l.link,
+                l.ket_hasil, 
+                l.pihak, 
+                l.keterangan, 
+                l.nilai,  
+                l.nilai_b,  
+                l.nilai_pencapaian_a,  
+                l.nilai_pencapaian_b, 
+                l.status, 
+                l.created_at
+            ');
+            $this->db->from('jobdesc_detail jd');
+            $this->db->join('laporan l', "jd.id = l.id_job AND (l.tanggal IS NULL OR (l.tanggal >= '$start_date' AND l.tanggal <= '$end_date'))", 'left');
+            $this->db->where('jd.idPengguna', $id);
+            $this->db->where('jd.status', 1);
+
+            $this->db->group_start();
+                $this->db->where('l.status !=', 3);
+                $this->db->or_where('l.status IS NULL');
+            $this->db->group_end();
+
+            $this->db->order_by('jd.point', 'ASC');
+            $this->db->order_by('jd.id_urut', 'ASC');
+            $this->db->order_by('l.tanggal', 'ASC');
+
+            $result = $this->db->get()->result();
+        }
+
+        return $result;
     }
 
 
@@ -842,20 +891,74 @@ class Md_laporan extends CI_Model
 
     public function getPenilaianUmum($id_pengguna, $tanggal, $monday = null, $friday = null)
     {
-        $res = $this->db->get_where('penilaian_umum', [
-            'id_pengguna' => $id_pengguna,
-            'date' => $tanggal
-        ])->row();
+        // 1. Ambil semua baris penilaian_umum untuk user ini dalam rentang minggu (atau tanggal yang diberikan)
+        $this->db->where('id_pengguna', $id_pengguna);
+        if (!empty($monday) && !empty($friday)) {
+            $this->db->group_start();
+                $this->db->where('date >=', $monday);
+                $this->db->where('date <=', $friday);
+                if (!empty($tanggal)) {
+                    $this->db->or_where('date', $tanggal);
+                }
+            $this->db->group_end();
+        } else if (!empty($tanggal)) {
+            $this->db->where('date', $tanggal);
+        }
+        $this->db->order_by('date', 'DESC');
+        $this->db->order_by('id', 'DESC');
+        $rows = $this->db->get('penilaian_umum')->result();
 
-        if (!$res && !empty($monday) && !empty($friday)) {
-            $this->db->where('id_pengguna', $id_pengguna);
-            $this->db->where('date >=', $monday);
-            $this->db->where('date <=', $friday);
-            $this->db->order_by('date', 'DESC');
-            $res = $this->db->get('penilaian_umum')->row();
+        if (empty($rows)) {
+            // Fallback toleransi tanggal (+/- 3 hari) jika ada selisih perhitungan offset
+            if (!empty($monday) && !empty($friday)) {
+                $ext_monday = date('Y-m-d', strtotime($monday . ' -3 days'));
+                $ext_friday = date('Y-m-d', strtotime($friday . ' +3 days'));
+                $this->db->where('id_pengguna', $id_pengguna);
+                $this->db->where('date >=', $ext_monday);
+                $this->db->where('date <=', $ext_friday);
+                $this->db->order_by('date', 'DESC');
+                $rows = $this->db->get('penilaian_umum')->result();
+            }
         }
 
-        return $res;
+        if (empty($rows)) {
+            return null;
+        }
+
+        // Susun objek gabungan agar nilai penilai A dan penilai B tidak saling menimpa bila tersimpan di tanggal berbeda
+        $merged = (object)[
+            'id' => $rows[0]->id ?? null,
+            'id_pengguna' => $id_pengguna,
+            'date' => $rows[0]->date ?? $tanggal,
+            'nilaia1' => '', 'nilaib1' => '', 'catatana1' => '', 'catatanb1' => '',
+            'nilaia2' => '', 'nilaib2' => '', 'catatana2' => '', 'catatanb2' => '',
+            'nilaia3' => '', 'nilaib3' => '', 'catatana3' => '', 'catatanb3' => '',
+            'nilaia4' => '', 'nilaib4' => '', 'catatana4' => '', 'catatanb4' => '',
+            'nilaia5' => '', 'nilaib5' => '', 'catatana5' => '', 'catatanb5' => '',
+        ];
+
+        foreach ($rows as $r) {
+            for ($i = 1; $i <= 5; $i++) {
+                $na = "nilaia$i";
+                $nb = "nilaib$i";
+                $ca = "catatana$i";
+                $cb = "catatanb$i";
+                if ($merged->$na === '' && isset($r->$na) && $r->$na !== '' && $r->$na !== null) {
+                    $merged->$na = $r->$na;
+                }
+                if ($merged->$nb === '' && isset($r->$nb) && $r->$nb !== '' && $r->$nb !== null) {
+                    $merged->$nb = $r->$nb;
+                }
+                if ($merged->$ca === '' && isset($r->$ca) && $r->$ca !== '' && $r->$ca !== null) {
+                    $merged->$ca = $r->$ca;
+                }
+                if ($merged->$cb === '' && isset($r->$cb) && $r->$cb !== '' && $r->$cb !== null) {
+                    $merged->$cb = $r->$cb;
+                }
+            }
+        }
+
+        return $merged;
     }
 
 

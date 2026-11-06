@@ -168,6 +168,12 @@ class Laporan extends CI_Controller
                 $endDate = date('d-m-Y', $sunday_ts);
 
                 $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
+                if (empty($page_data['data_detail'])) {
+                    $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev1($monday, $friday, $id_pengaju);
+                }
+                if (empty($page_data['data_detail'])) {
+                    $page_data['data_detail'] = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
+                }
 
                 // Ambil data nilai_point
                 $this->db->where('id_pengguna', $id_pengaju);
@@ -265,6 +271,12 @@ class Laporan extends CI_Controller
                 $page_data['Sunday'] = $friday;
 
                 $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
+                if (empty($page_data['data_detail'])) {
+                    $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev1($monday, $friday, $id_pengaju);
+                }
+                if (empty($page_data['data_detail'])) {
+                    $page_data['data_detail'] = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
+                }
 
                 // Ambil data nilai_point
                 $this->db->where('id_pengguna', $id_pengaju);
@@ -448,6 +460,9 @@ class Laporan extends CI_Controller
                 // $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
                 
                 $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
+                if (empty($page_data['data_detail'])) {
+                    $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev1($monday, $friday, $id_pengaju);
+                }
                 if (empty($page_data['data_detail'])) {
                     $page_data['data_detail'] = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
                 }

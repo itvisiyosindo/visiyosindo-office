@@ -873,15 +873,48 @@ foreach ($data_detail as $row) {
         <!-- PENCAPAIAN MINGGUAN -->
 	</div>
 </div>
+<?php
+    $sum_a = 0; $cnt_a = 0;
+    $sum_b = 0; $cnt_b = 0;
+    for ($idx_p = 1; $idx_p <= 5; $idx_p++) {
+        $fa = "nilaia$idx_p";
+        $fb = "nilaib$idx_p";
+        if (isset($penilaian_umum->$fa) && is_numeric($penilaian_umum->$fa)) {
+            $sum_a += (float)$penilaian_umum->$fa;
+            $cnt_a++;
+        }
+        if (isset($penilaian_umum->$fb) && is_numeric($penilaian_umum->$fb)) {
+            $sum_b += (float)$penilaian_umum->$fb;
+            $cnt_b++;
+        }
+    }
+    $nilaiRataa = ($cnt_a > 0) ? ($sum_a / $cnt_a) : 0;
+    $nilaiRatab = ($cnt_b > 0) ? ($sum_b / $cnt_b) : 0;
+    $nilaiRataPumum = ($cnt_a > 0 || $cnt_b > 0) ? (($nilaiRataa + $nilaiRatab) / (($cnt_a > 0 && $cnt_b > 0) ? 2 : 1)) : 0;
+?>
 <div class="row">
 	<div class="col-12">
 		<!-- PENILAIAN UMUM -->
 		<div class="card laporan-card mb-4">
 			<div class="card-body p-3 p-md-4">
-				<div class="d-flex align-items-center justify-content-between mb-3">
-					<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
-						<i class="fas fa-star text-warning mr-1"></i> Penilaian Umum: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
-					</h5>
+				<div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
+					<div>
+						<h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
+							<i class="fas fa-star text-warning mr-1"></i> Penilaian Umum: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+						</h5>
+						<div class="text-muted small mt-1">Penilaian aspek perilaku dan kinerja mingguan oleh Penilai A &amp; Penilai B.</div>
+					</div>
+					<div>
+						<?php if ($cnt_a > 0 || $cnt_b > 0): ?>
+							<span class="badge badge-light-success text-success border border-success px-3 py-2 font-weight-bold" style="border-radius: 8px; font-size: 12px;">
+								<i class="fas fa-check-circle mr-1"></i> Sudah Dinilai Atasan
+							</span>
+						<?php else: ?>
+							<span class="badge badge-light-warning text-warning border border-warning px-3 py-2 font-weight-bold" style="border-radius: 8px; font-size: 12px;">
+								<i class="fas fa-clock mr-1"></i> Menunggu Penilaian Atasan
+							</span>
+						<?php endif; ?>
+					</div>
 				</div>
 				<div class="table-responsive">
                     <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_umum" style="min-width: 900px; width: 100%;">
@@ -1032,7 +1065,9 @@ foreach ($data_detail as $row) {
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
                                 <div>
                                     <div class="text-muted small font-weight-500">Penilaian Umum</div>
-                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPumum, 2) ?></div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;">
+                                        <?= ($cnt_a > 0 || $cnt_b > 0) ? number_format($nilaiRataPumum, 2) : '<span class="text-warning font-weight-600" style="font-size: 13px;">Belum Dinilai</span>' ?>
+                                    </div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-star"></i>
@@ -1499,29 +1534,33 @@ foreach ($data_detail as $row) {
 			}
 	}
 	// Tambahkan event listener untuk menangkap input manual jika "Lainnya" dipilih
-	document.getElementById("keterangan_konfirmasi").addEventListener("input", function() {
+	var elKetKonf = document.getElementById("keterangan_konfirmasi");
+	if (elKetKonf) {
+		elKetKonf.addEventListener("input", function() {
 			var jobdescText = document.getElementById("jobdesc_text");
-			jobdescText.value = this.value; // Simpan input manual ke jobdesc_text
-	});
-	
-	document.getElementById("pihak").addEventListener("change", function() {
-				var selectedValue = this.value.trim(); 
-				var keteranganGroup = document.getElementById("keterangan-group");
-				if (selectedValue === "") {
-						keteranganGroup.style.display = "none"; 
-				} else {
-						keteranganGroup.style.display = "block"; 
-				}
+			if (jobdescText) jobdescText.value = this.value;
 		});
-	document.getElementById("pihak2").addEventListener("change", function() {
-				var selectedValue = this.value.trim(); 
-				var keteranganGroup = document.getElementById("keterangan-group2");
-				if (selectedValue === "") {
-						keteranganGroup.style.display = "none"; 
-				} else {
-						keteranganGroup.style.display = "block"; 
-				}
+	}
+	var elPihak = document.getElementById("pihak");
+	if (elPihak) {
+		elPihak.addEventListener("change", function() {
+			var selectedValue = this.value.trim(); 
+			var keteranganGroup = document.getElementById("keterangan-group");
+			if (keteranganGroup) {
+				keteranganGroup.style.display = (selectedValue === "") ? "none" : "block";
+			}
 		});
+	}
+	var elPihak2 = document.getElementById("pihak2");
+	if (elPihak2) {
+		elPihak2.addEventListener("change", function() {
+			var selectedValue = this.value.trim(); 
+			var keteranganGroup = document.getElementById("keterangan-group2");
+			if (keteranganGroup) {
+				keteranganGroup.style.display = (selectedValue === "") ? "none" : "block";
+			}
+		});
+	}
 	/*$('#btn-show-add-form2').click(function() {
 			$('.form-control').val(null)
 			$('.btn-isactive').remove()
