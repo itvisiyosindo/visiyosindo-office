@@ -271,6 +271,21 @@
 								$ttd3 = img_to_base64($img_path."ttd_not.png");
 							}
 
+							$ttd4 = img_to_base64($img_path."ttd_notyet2.png");
+							if(!empty($data_ba[0]->ttd_dir2) && $data_ba[0]->ttd_dir2 == '1'){
+								$ttd4 = img_to_base64($img_path."ttd_54.png");
+							}else if(!empty($data_ba[0]->ttd_dir2) && $data_ba[0]->ttd_dir2 == '2'){
+								$ttd4 = img_to_base64($img_path."ttd_not.png");
+							}
+
+							$is_ba_728 = ((int)$data_ba[0]->id_ba === 728);
+							$has_extra_bob_col = ($is_ba_728 && (int)$data_ba[0]->id_dir !== 54);
+							$nama_dir_display = $data_ba[0]->nama_dir;
+							if ((int)$data_ba[0]->id_dir === 54 && (empty($nama_dir_display) || stripos($nama_dir_display, 'kantor pusat') !== false)) {
+								$nama_dir_display = 'Bob Ariyos';
+							}
+							$jabatan_dir_display = !empty($data_ba[0]->jabatan_dir) ? $data_ba[0]->jabatan_dir : ((int)$data_ba[0]->id_dir === 54 ? 'Director' : '');
+
                             if($data_ba[0]->idPengaju==72){
 								$nmpengaju= "Syarifah Annisa Andira Alhabsyi";
 							  }else{
@@ -290,7 +305,129 @@
 							  }
 
 
-                            if($data_ba[0]->status_dir==1){
+                            if ($is_ba_728 && $has_extra_bob_col) {
+                                if ((int)$data_ba[0]->id_diketahui === 1) {
+                        ?>
+                    <tr style="height: 18px;">
+                        <td style="text-align:center; width:2%;"></td>
+                        <td style="text-align:center; width:22%;"><font color="#000000">Diajukan Oleh,</font></td>
+                        <td style="text-align:center; width:3%;"></td>
+                        <td style="text-align:center; width:22%;"><font color="#000000">Disetujui Oleh,</font></td>
+                        <td style="text-align:center; width:3%;"></td>
+                        <td style="text-align:center; width:22%;"><font color="#000000">Disetujui Oleh,</font></td>
+                        <td style="text-align:center; width:3%;"></td>
+                        <td style="text-align:center; width:22%;"><font color="#000000">Disetujui Oleh,</font></td>
+                    </tr>
+                    <tr style="height:60px;">
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttdaju ?>" height="70"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd2 ?>" height="70"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd3 ?>" height="70"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd4 ?>" height="70"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $nmpengaju ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $disetujui ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $nama_dir_display ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000">Bob Ariyos<hr></hr></font></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_disetujui ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i>Director</i></font></td>
+                    </tr>
+                                <?php } else { ?>
+                    <tr style="height: 18px;">
+                        <td style="text-align:center; width:1%;"></td>
+                        <td style="text-align:center; width:18%;"><font color="#000000">Diajukan Oleh,</font></td>
+                        <td style="text-align:center; width:2%;"></td>
+                        <td style="text-align:center; width:18%;"><font color="#000000">Diverifikasi Oleh,</font></td>
+                        <td style="text-align:center; width:2%;"></td>
+                        <td style="text-align:center; width:18%;"><font color="#000000">Disetujui Oleh,</font></td>
+                        <td style="text-align:center; width:2%;"></td>
+                        <td style="text-align:center; width:18%;"><font color="#000000">Disetujui Oleh,</font></td>
+                        <td style="text-align:center; width:19%;"><font color="#000000">Disetujui Oleh,</font></td>
+                    </tr>
+                    <tr style="height:60px;">
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttdaju ?>" height="65"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd1 ?>" height="65"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd2 ?>" height="65"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd3 ?>" height="65"></td>
+                        <td style="text-align:center;"><img src="<?= $ttd4 ?>" height="65"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $nmpengaju ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $diketahui ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $disetujui ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $nama_dir_display ?><hr></hr></font></td>
+                        <td style="text-align:center;"><font color="#000000">Bob Ariyos<hr></hr></font></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_diketahui ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_disetujui ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i>Director</i></font></td>
+                    </tr>
+                                <?php } ?>
+                            <?php } else if ($is_ba_728 && (int)$data_ba[0]->id_diketahui === 1) { ?>
+                    <tr style="height: 18px;">
+                        <td style="text-align:center; width:4%;"></td>
+                        <td style="text-align:center; width:26%;"><font color="#000000">Diajukan Oleh,</font></td>
+                        <td style="text-align:center; width:6%;"></td>
+                        <td style="text-align:center; width:26%;"><font color="#000000">Disetujui Oleh,</font></td>
+                        <td style="text-align:center; width:6%;"></td>
+                        <td style="text-align:center; width:26%;"><font color="#000000">Disetujui Oleh,</font></td>
+                    </tr>
+                    <tr style="height:60px;">
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttdaju ?>" height="70"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd2 ?>" height="70"></td>
+                        <td></td>
+                        <td style="text-align:center;"><img src="<?= $ttd3 ?>" height="70"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $nmpengaju ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $disetujui ?><hr></hr></font></td>
+                        <td></td>
+                        <td style="text-align:center;"><font color="#000000"><?= $nama_dir_display ?><hr></hr></font></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_disetujui ?></i></font></td>
+                        <td></td>
+                        <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
+                    </tr>
+                            <?php } else if($data_ba[0]->status_dir==1){
 						?>
 
 
@@ -298,9 +435,9 @@
 						<td style="text-align:center; width:3%;"></td>
 						<td style="text-align:center; width:20%;"><font color="#000000">Diajukan Oleh,</font></td>
 						<td style="text-align:center; width:3%;"></td>
-						<td style="text-align:right; width:3%;"><font color="#000000">Diverifikasi</font></td>
-						<td style="text-align:left; width:3%;"><font color="#000000">Oleh,</font></td>
-						<td style="text-align:center; width:20%;"></td>
+						<td style="text-align:<?= $is_ba_728 ? 'center' : 'right' ?>; width:<?= $is_ba_728 ? '25%' : '3%' ?>;"><font color="#000000"><?= $is_ba_728 ? 'Diverifikasi Oleh,' : 'Diverifikasi' ?></font></td>
+						<td style="text-align:left; width:3%;"><font color="#000000"><?= $is_ba_728 ? '' : 'Oleh,' ?></font></td>
+						<td style="text-align:center; width:20%;"><font color="#000000"><?= $is_ba_728 ? 'Disetujui Oleh,' : '' ?></font></td>
 						<td style="text-align:center; width:3%;"></td>
 						<td style="text-align:center; width:20%;" ><font color="#000000">Disetujui Oleh,</font></td>
 					</tr>
@@ -322,7 +459,7 @@
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; "><font color="#000000"><?= $disetujui ?><hr></hr></font></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; "><font color="#000000"><?= $data_ba[0]->nama_dir ?><hr></hr></font></td>
+						<td style="text-align:center; "><font color="#000000"><?= $nama_dir_display ?><hr></hr></font></td>
 					</tr>
 					<tr>
                         <td style="text-align:center; "></td>
@@ -332,7 +469,7 @@
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_disetujui ?></i></font></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_dir ?></i></font></td>
+						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
 					</tr>
 
                     <?php }else{ ?>

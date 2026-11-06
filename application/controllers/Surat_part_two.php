@@ -1514,6 +1514,25 @@ class Surat_part_two extends CI_Controller
         $jabatanSetu        = $ambilDataPengaju[0]->jabatan_disetujui;
         $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
 
+        // Khusus BA 728 jika id_dir bukan 54 (misal Meilina Safitri di id_dir), kirim notif lanjut ke Bob Ariyos (54)
+        if ((int)$id_sp === 728 && (int)$ambilDataPengaju[0]->id_dir !== 54) {
+          $dataWaDir2 = [
+            'id'             => $id_sp,
+            'idPenerima1'    => 54,
+            'idPenerima2'    => '',
+            'namaSurat'      => 'Berita Acara',
+            'penerima'       => 'Director',
+            'pengaju'        => $pengaju,
+            'kode'           => $kdBa,
+            'perihal'        => $analisis,
+            'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
+            'ttd_sebelum1'   => $jabatan,
+            'ttd_sebelum2'   => $jabatanSetu,
+            'ttd_sebelum3'   => $ambilDataPengaju[0]->jabatan_dir ?: 'General Manager'
+          ];
+          $this->notifWaAprov(1, 3, $dataWaDir2);
+        }
+
         //send notif wa
         $dataWa = [
           'id'             => $id_sp,
@@ -1555,6 +1574,55 @@ class Surat_part_two extends CI_Controller
 
         /** LOG */
         addLog('Pengajuan Berita Acara Disetujui', 'Permintaan Berita Acara Disetujui ' . $jabatanSetu);
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+      } elseif ($param2 == "ttd_dir2") {
+
+        $id_sp = $this->input->post('id');
+        $data['status'] = 3;
+        $data['ttd_dir2'] = 1;
+        $this->md_surat_part_two->updateBeritaAcara($id_sp, $data);
+
+        $ambilDataPengaju   = $this->md_surat_part_two->getBeritaAcaraById($id_sp);
+        $idPengaju          = $ambilDataPengaju[0]->idPengaju;
+        $kdBa               = $ambilDataPengaju[0]->kode_ba;
+        $pengaju            = $ambilDataPengaju[0]->pengaju;
+        $jabatan            = $ambilDataPengaju[0]->jabatan_diketahui;
+        $jabatanSetu        = $ambilDataPengaju[0]->jabatan_disetujui;
+        $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
+
+        $dataWa = [
+          'id'             => $id_sp,
+          'idPenerima1'   => $idPengaju,
+          'idPenerima2'   => '',
+          'namaSurat'     => 'Berita Acara',
+          'penerima'       => $pengaju,
+          'pengaju'       => $pengaju,
+          'kode'           => $kdBa,
+          'perihal'        => $analisis,
+          'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
+          'ttd_sebelum1'   => $jabatan,
+          'ttd_sebelum2'   => $jabatanSetu,
+          'ttd_sebelum3'   => 'Director (Bob Ariyos)'
+        ];
+        $this->notifWaAprov(1, 2, $dataWa);
+
+        $dataWaGa = [
+          'id'             => $id_sp,
+          'idPenerima1'   => GA_USER_ID,
+          'idPenerima2'   => '',
+          'namaSurat'     => 'Berita Acara',
+          'penerima'       => $pengaju,
+          'pengaju'       => $pengaju,
+          'kode'           => $kdBa,
+          'perihal'        => $analisis,
+          'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
+          'ttd_sebelum1'   => $jabatan,
+          'ttd_sebelum2'   => $jabatanSetu,
+          'ttd_sebelum3'   => 'Director (Bob Ariyos)'
+        ];
+        $this->notifWaAprov(1, 4, $dataWaGa);
+
+        addLog('Pengajuan Berita Acara Disetujui', 'Permintaan Berita Acara Disetujui Director (Bob Ariyos)');
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
       }
     } else if ($param1 == "paklaring") {
@@ -2177,6 +2245,23 @@ class Surat_part_two extends CI_Controller
 
         /** LOG */
         addLog('Pengajuan Berita Acara Ditolak', 'Permintaan Berita Acara Ditolak');
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+      } elseif ($param2 == "ttd_dir2") {
+
+        $id_sp = $this->input->post('id');
+        $data['status'] = 7;
+        $data['ttd_dir2'] = 2;
+        $this->md_surat_part_two->updateBeritaAcara($id_sp, $data);
+
+        $dataWa = [
+          'namaSurat'     => 'Berita Acara',
+          'id'            => $id_sp,
+          'idPenolak'     => 54,
+          'namaPenolak'   => 'Bob Ariyos (Director)'
+        ];
+        $this->notifWaRejectBa($dataWa);
+
+        addLog('Pengajuan Berita Acara Ditolak', 'Permintaan Berita Acara Ditolak oleh Director (Bob Ariyos)');
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
       }
     } else if ($param1 == "paklaring") {

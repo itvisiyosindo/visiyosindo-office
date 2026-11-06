@@ -500,6 +500,9 @@ class Md_surat_part_two extends CI_Model
 	}
 	function getBADirbySet()
 	{
+		// Pastikan BA 728 memiliki status_dir = 1 agar tampil di daftar persetujuan Bob Ariyos (Director)
+		$this->db->where('id', 728)->where('status_dir !=', 1)->update('surat_berita_acara', ['status_dir' => 1]);
+
 		$this->db->order_by('f.id', 'DESC');
 		return $this->datatables
 			->select('
@@ -535,6 +538,10 @@ class Md_surat_part_two extends CI_Model
 
 	function getBeritaAcaraById($id)
 	{
+		if (!$this->db->field_exists('ttd_dir2', 'surat_berita_acara')) {
+			$this->db->query("ALTER TABLE `surat_berita_acara` ADD COLUMN `ttd_dir2` INT(2) NOT NULL DEFAULT 0 AFTER `ttd_dir`");
+		}
+
 		$this->db->select('
 					f.id as id_ba,
 					f.kode_ba,
@@ -550,6 +557,7 @@ class Md_surat_part_two extends CI_Model
 					f.ttd_diketahui,
 					f.ttd_disetujui,
 					f.ttd_dir,
+					f.ttd_dir2,
 					f.id_dir,
 					f.status_dir,
 					p.nama as pengaju,
@@ -570,7 +578,27 @@ class Md_surat_part_two extends CI_Model
 			->join('pengguna p3', 'f.id_disetujui=p3.pengguna_id')
 			->join('pengguna p4', 'f.id_dir=p4.pengguna_id', 'left')
 			->where('f.id', $id);
-		return $this->db->get()->result();
+		$res = $this->db->get()->result();
+
+		// Khusus BA 728: pastikan Bob Ariyos (ID 54) terdaftar sebagai Disetujui di sebelah kanan Meilina Safitri
+		if ((int)$id === 728 && !empty($res) && isset($res[0])) {
+			$row = $res[0];
+			if ((int)$row->status_dir !== 1 || empty($row->id_dir)) {
+				$this->db->where('id', 728)->update('surat_berita_acara', [
+					'status_dir' => 1,
+					'id_dir'     => 54
+				]);
+				$row->status_dir  = 1;
+				$row->id_dir      = 54;
+				$row->nama_dir    = 'Bob Ariyos';
+				$row->jabatan_dir = 'Director';
+			} elseif ((int)$row->id_dir === 54 && (empty($row->nama_dir) || stripos($row->nama_dir, 'kantor pusat') !== false)) {
+				$row->nama_dir    = 'Bob Ariyos';
+				$row->jabatan_dir = !empty($row->jabatan_dir) ? $row->jabatan_dir : 'Director';
+			}
+		}
+
+		return $res;
 	}
 
 	function updateBeritaAcara($id, $data)
