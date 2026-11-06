@@ -269,14 +269,14 @@ class Reminder extends CI_Controller {
             $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
 
             $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
-                ? "Halo Rekan Tim PT Visi Yosindo Medikal! 👋✨"
-                : "Halo " . $friendly . "! 👋✨";
+                ? "Halo *Rekan Tim PT Visi Yosindo Medikal*, selamat sore! 🌤️✨"
+                : "Halo *" . $friendly . "*, selamat sore! 🌤️✨";
 
             $pesan = $greeting . "\n\n" .
-                "Selamat menyelesaikan pekerjaan minggu ini! 🌿\n" .
-                "Terima kasih banyak atas dedikasi, kerja keras, dan kontribusi terbaiknya selama sepekan ini di PT Visi Yosindo Medikal.\n\n" .
-                "Selamat menikmati waktu istirahat dan berkumpul bersama keluarga serta orang-orang terkasih. Semoga akhir pekan ini menyenangkan dan kembali dengan energi baru di minggu depan!\n\n" .
-                "Selamat beristirahat & Happy Weekend! ☕🎉\n\n" .
+                "Terima kasih banyak sudah berjuang dan memberikan yang terbaik sepanjang minggu ini. Setiap usaha, ketelitian, dan langkah kecil yang kamu lakukan sangat berarti bagi perjalanan kita bersama di PT Visi Yosindo Medikal. 🤝💛\n\n" .
+                "Apa pun tantangan yang sudah dilewati pekan ini, kamu hebat sudah menyelesaikannya sampai hari Jumat! Sekarang saatnya melepas lelah sejenak, mengistirahatkan pikiran, dan menikmati waktu hangat bersama keluarga maupun orang-orang tersayang. 🏡☕\n\n" .
+                "Jaga kesehatan selalu, semoga akhir pekanmu penuh kebahagiaan dan ketenangan. Sampai jumpa kembali di hari Senin dengan semangat dan senyum yang baru! 🌿😊\n\n" .
+                "*Selamat beristirahat & Happy Weekend!* 🎉✨\n" .
                 "_Sistem Office PT Visi Yosindo Medikal_";
 
             $dataSend = [

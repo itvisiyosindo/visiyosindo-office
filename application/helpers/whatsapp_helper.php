@@ -4922,12 +4922,12 @@ if (!function_exists('waSalamWeekend')) {
 			$dataWa['parameters']    = [$data['namaKaryawan']];
 		}
 		$dataWa['pesan'] =
-			"Halo *" . $data['namaKaryawan'] . "*! 👋✨" .
-			"%0A%0ASelamat menyelesaikan pekerjaan minggu ini! 🌿" .
-			"%0ATerima kasih banyak atas dedikasi, kerja keras, dan kontribusi terbaiknya selama sepekan ini di PT Visi Yosindo Medikal." .
-			"%0A%0ASelamat menikmati waktu istirahat dan berkumpul bersama keluarga serta orang-orang terkasih. Semoga akhir pekan ini menyenangkan dan kembali dengan energi baru di minggu depan!" .
-			"%0A%0ASelamat beristirahat & Happy Weekend! ☕🎉" .
-			"%0A%0A_Sistem Office PT Visi Yosindo Medikal_";
+			"Halo *" . $data['namaKaryawan'] . "*, selamat sore! 🌤️✨" .
+			"%0A%0ATerima kasih banyak sudah berjuang dan memberikan yang terbaik sepanjang minggu ini. Setiap usaha, ketelitian, dan langkah kecil yang kamu lakukan sangat berarti bagi perjalanan kita bersama di PT Visi Yosindo Medikal. 🤝💛" .
+			"%0A%0AApa pun tantangan yang sudah dilewati pekan ini, kamu hebat sudah menyelesaikannya sampai hari Jumat! Sekarang saatnya melepas lelah sejenak, mengistirahatkan pikiran, dan menikmati waktu hangat bersama keluarga maupun orang-orang tersayang. 🏡☕" .
+			"%0A%0AJaga kesehatan selalu, semoga akhir pekanmu penuh kebahagiaan dan ketenangan. Sampai jumpa kembali di hari Senin dengan semangat dan senyum yang baru! 🌿😊" .
+			"%0A%0A*Selamat beristirahat & Happy Weekend!* 🎉✨" .
+			"%0A_Sistem Office PT Visi Yosindo Medikal_";
 		return sendWa($dataWa);
 	}
 }
