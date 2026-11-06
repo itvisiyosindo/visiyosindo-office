@@ -200,7 +200,7 @@ class Md_absensi extends CI_Model
 
     function daftar_hadirToday()
     {
-        $data = $this->db->select('pengguna.nama, absensi.waktu_absen, absensi.jenis_absen')
+        $data = $this->db->select('MAX(pengguna.nama) as nama, MAX(absensi.waktu_absen) as waktu_absen, MAX(absensi.jenis_absen) as jenis_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
             ->where('pengguna.is_active', 1)
@@ -231,7 +231,7 @@ class Md_absensi extends CI_Model
 
     function daftar_pulangToday()
     {
-        $data = $this->db->select('pengguna.nama, absensi.waktu_absen')
+        $data = $this->db->select('MAX(pengguna.nama) as nama, MAX(absensi.waktu_absen) as waktu_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
             ->where('pengguna.is_active', 1)
@@ -246,7 +246,7 @@ class Md_absensi extends CI_Model
 
     function daftar_istirahatToday()
     {
-        $data = $this->db->select('pengguna.nama, absensi.waktu_absen')
+        $data = $this->db->select('MAX(pengguna.nama) as nama, MAX(absensi.waktu_absen) as waktu_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
             ->where('pengguna.is_active', 1)
@@ -261,7 +261,7 @@ class Md_absensi extends CI_Model
 
     function daftar_terlambatToday()
     {
-        $data = $this->db->select('pengguna.nama, absensi.waktu_absen')
+        $data = $this->db->select('MAX(pengguna.nama) as nama, MAX(absensi.waktu_absen) as waktu_absen')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
             ->where('pengguna.is_active', 1)
@@ -278,7 +278,7 @@ class Md_absensi extends CI_Model
     function daftar_izinToday($status)
     {
         $where = "absensi.perusahaan=" . grantAccessForPerusahaan() . " AND type_absen ='izin' AND (status_absen='" . $status . "')";
-        $data = $this->db->select('pengguna.nama')
+        $data = $this->db->select('MAX(pengguna.nama) as nama')
             ->from('absensi')
             ->join('pengguna', 'absensi.pengguna_id=pengguna.pengguna_id')
             ->where('pengguna.is_active', 1)
