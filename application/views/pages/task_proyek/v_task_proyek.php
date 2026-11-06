@@ -823,7 +823,7 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu):</strong> Integrasi bobot <strong>70% Penugasan Task Proyek</strong> (konversi rating bintang 1–5 ⭐) + <strong>30% Nilai Laporan Mingguan</strong>.
+                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu):</strong> Integrasi bobot <strong>50% Penugasan Task Proyek</strong> (konversi rating bintang 1–5 ⭐) + <strong>50% Nilai Laporan Mingguan</strong>.
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
                             <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
@@ -842,11 +842,11 @@ $namaBulanList = [
                                     <th class="align-middle">Divisi & Jabatan</th>
                                     <th class="text-center align-middle" style="min-width: 130px;">
                                         <div>Task Proyek</div>
-                                        <small class="badge badge-primary" style="font-size: 10px;">Bobot 70%</small>
+                                        <small class="badge badge-primary" style="font-size: 10px;">Bobot 50%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 130px;">
                                         <div>Laporan Mingguan</div>
-                                        <small class="badge badge-info" style="font-size: 10px;">Bobot 30%</small>
+                                        <small class="badge badge-info" style="font-size: 10px;">Bobot 50%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 110px; background: #f0fdf4;">
                                         <div class="text-success font-weight-bold">Skor Akhir</div>
