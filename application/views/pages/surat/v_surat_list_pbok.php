@@ -45,8 +45,9 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 							<i class="fas fa-sort-amount-down text-primary mr-1"></i> Urutkan Tanggal:
 						</label>
 						<select class="form-control" id="urutan_tanggal" name="urutan_tanggal" style="border-radius: 6px; font-weight: 500;">
-							<option value="desc" selected>Tanggal Terbaru</option>
-							<option value="asc">Tanggal Terlama</option>
+							<option value="" selected>Default (Data Terbaru)</option>
+							<option value="desc">Tanggal Pengajuan Terbaru</option>
+							<option value="asc">Tanggal Pengajuan Terlama</option>
 						</select>
 					</div>
 					<div class="col-md-5 col-sm-6 text-md-left">
@@ -98,7 +99,7 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 			processing: true,
 			serverSide: true,
 			order: [
-				[3, 'desc']
+				[0, 'desc']
 			],
 			ajax: {
 				url: 'surat/pagination/list_pbok',
@@ -128,20 +129,28 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 
 		$('#urutan_tanggal').on('change', function() {
 			var dir = $(this).val();
-			table.order([3, dir]).draw();
+			if (dir === 'asc' || dir === 'desc') {
+				table.order([3, dir]).draw();
+			} else {
+				table.order([0, 'desc']).draw();
+			}
 		});
 
 		table.on('order.dt', function() {
 			var order = table.order();
-			if (order && order.length > 0 && order[0][0] === 3) {
-				$('#urutan_tanggal').val(order[0][1]);
+			if (order && order.length > 0) {
+				if (order[0][0] === 3) {
+					$('#urutan_tanggal').val(order[0][1]);
+				} else if (order[0][0] === 0) {
+					$('#urutan_tanggal').val('');
+				}
 			}
 		});
 
 		$('#btn-reset-filter').on('click', function() {
 			$('#id_pengaju').val('').trigger('change');
-			$('#urutan_tanggal').val('desc');
-			table.order([3, 'desc']).draw();
+			$('#urutan_tanggal').val('');
+			table.order([0, 'desc']).draw();
 		});
 
 		$('#btn-print-menjabat').on('click', function() {

@@ -810,6 +810,12 @@ class md_surat_list extends CI_Model
 		if (!empty($urutan_tanggal)) {
 			$dir = (strtolower($urutan_tanggal) === 'asc') ? 'ASC' : 'DESC';
 			$this->db->order_by('pbok.tgl_pengajuan', $dir);
+			$this->db->order_by('pbok.id_pbok', 'DESC');
+		} else {
+			$orders = $this->input->post('order');
+			if (empty($orders) || (isset($orders[0]['column']) && ($orders[0]['column'] == 0 || $orders[0]['column'] == '0'))) {
+				$this->db->order_by('s.id_list_surat', 'DESC');
+			}
 		}
 
 		return $this->datatables->generate();
@@ -1463,6 +1469,12 @@ class md_surat_list extends CI_Model
 		if (!empty($urutan_tanggal)) {
 			$dir = (strtolower($urutan_tanggal) === 'asc') ? 'ASC' : 'DESC';
 			$this->db->order_by('ppa.tgl_pengajuan', $dir);
+			$this->db->order_by('ppa.id_ppa', 'DESC');
+		} else {
+			$orders = $this->input->post('order');
+			if (empty($orders) || (isset($orders[0]['column']) && ($orders[0]['column'] == 0 || $orders[0]['column'] == '0'))) {
+				$this->db->order_by('s.id_list_surat', 'DESC');
+			}
 		}
 
 		return $this->datatables->generate();
