@@ -3934,18 +3934,18 @@ if (!function_exists('triggerWaQueueWorkerAsync')) {
 }
 
 /**
- * Worker Pemroses Antrian WhatsApp (Single-Instance Mutex Lock)
- * Mengirim pesan dari tbl_wa_queue satu per satu sesuai jadwal (tidak pernah serentak).
+ * Proses 1 item tertua dari antrian tbl_wa_queue secara aman (atomic lock)
+ * Digunakan oleh AJAX Queue Runner maupun Background Worker agar 100% jalan di LiteSpeed/cPanel.
  */
-if (!function_exists('processWaQueueWorker')) {
-	function processWaQueueWorker($maxRunSeconds = 900)
+if (!function_exists('processOneWaQueueItem')) {
+	function processOneWaQueueItem($ignoreScheduleTime = false)
 	{
 		if (!ensureWaQueueTable()) {
-			return 0;
+			return ['processed' => 0, 'remaining' => 0, 'item' => null];
 		}
 		$CI =& get_instance();
 		if (!isset($CI->db)) {
-			return 0;
+			return ['processed' => 0, 'remaining' => 0, 'item' => null];
 		}
 
 		$lockDir = getWaQueueLockDir();
@@ -3955,76 +3955,105 @@ if (!function_exists('processWaQueueWorker')) {
 			if ($fp) {
 				fclose($fp);
 			}
-			// Worker lain sedang aktif memproses antrian
-			return 0;
+			$rem = (int)($CI->db->query("SELECT COUNT(*) AS cnt FROM `tbl_wa_queue` WHERE `status` = 'pending'")->row()->cnt ?? 0);
+			return ['processed' => 0, 'remaining' => $rem, 'item' => null, 'busy' => true];
 		}
 
-		@ignore_user_abort(true);
-		@set_time_limit(0);
-
-		$startTime = time();
-		$processedCount = 0;
+		$processed = 0;
+		$itemInfo = null;
 
 		try {
-			// Kembalikan pesan yang macet di status 'processing' lebih dari 5 menit ke 'pending'
-			@$CI->db->query("UPDATE `tbl_wa_queue` SET `status` = 'pending' WHERE `status` = 'processing' AND `created_at` < DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+			// Kembalikan pesan yang macet di status 'processing' lebih dari 2 menit ke 'pending'
+			@$CI->db->query("UPDATE `tbl_wa_queue` SET `status` = 'pending' WHERE `status` = 'processing' AND `created_at` < DATE_SUB(NOW(), INTERVAL 2 MINUTE)");
+			// Batalkan baris yang nomor penerimanya tidak valid (misal '-')
+			@$CI->db->query("UPDATE `tbl_wa_queue` SET `status` = 'failed', `sent_at` = NOW() WHERE `status` = 'pending' AND (`penerima` = '' OR `penerima` = '-' OR CHAR_LENGTH(`penerima`) < 7)");
 
-			while ((time() - $startTime) < $maxRunSeconds) {
-				$row = @$CI->db->query("SELECT * FROM `tbl_wa_queue` WHERE `status` = 'pending' ORDER BY `scheduled_at` ASC, `id` ASC LIMIT 1")->row();
-				if (!$row) {
-					break; // Antrian sudah habis
-				}
-
+			$row = @$CI->db->query("SELECT * FROM `tbl_wa_queue` WHERE `status` = 'pending' ORDER BY `scheduled_at` ASC, `id` ASC LIMIT 1")->row();
+			if ($row) {
 				$now = time();
 				$waitSec = (int)$row->scheduled_at - $now;
-				if ($waitSec > 0) {
-					// Tunggu hingga tiba giliran pesan ini
-					sleep(min($waitSec, 30));
-					continue;
+				if (!$ignoreScheduleTime && $waitSec > 0 && $waitSec <= 8) {
+					sleep($waitSec);
 				}
 
-				// Kunci baris ini menjadi 'processing'
 				@$CI->db->where('id', (int)$row->id)->where('status', 'pending')->update('tbl_wa_queue', [
 					'status'   => 'processing',
 					'attempts' => (int)$row->attempts + 1
 				]);
-				if ($CI->db->affected_rows() <= 0) {
-					continue;
+
+				if ($CI->db->affected_rows() > 0) {
+					$payload = @json_decode($row->payload_json, true);
+					$cleanTarget = isset($payload['penerima']) ? preg_replace('/[^0-9]/', '', (string)$payload['penerima']) : '';
+					if (!is_array($payload) || empty($payload['penerima']) || ((int)$row->is_group === 0 && strlen($cleanTarget) < 9)) {
+						@$CI->db->where('id', (int)$row->id)->update('tbl_wa_queue', [
+							'status'  => 'failed',
+							'sent_at' => date('Y-m-d H:i:s')
+						]);
+					} else {
+						$payload['_from_queue_worker'] = true;
+						$payload['immediate'] = true;
+						unset($payload['schedule_ts']);
+
+						$ok = ((int)$row->is_group === 1) ? sendWaGroup($payload) : sendWa($payload);
+
+						@$CI->db->where('id', (int)$row->id)->update('tbl_wa_queue', [
+							'status'  => $ok ? 'sent' : 'failed',
+							'sent_at' => date('Y-m-d H:i:s')
+						]);
+
+						// Sinkronkan juga slot lock global agar kiriman berikutnya tetap berjarak aman
+						$queueFile = $lockDir . DIRECTORY_SEPARATOR . 'wa_global_sequential_queue.lock';
+						@file_put_contents($queueFile, (string)(time() + 6));
+
+						$processed = 1;
+						$itemInfo = [
+							'id'       => (int)$row->id,
+							'penerima' => $row->penerima,
+							'status'   => $ok ? 'sent' : 'failed'
+						];
+					}
 				}
-
-				$payload = @json_decode($row->payload_json, true);
-				if (!is_array($payload) || empty($payload['penerima'])) {
-					@$CI->db->where('id', (int)$row->id)->update('tbl_wa_queue', [
-						'status'  => 'failed',
-						'sent_at' => date('Y-m-d H:i:s')
-					]);
-					continue;
-				}
-
-				$payload['_from_queue_worker'] = true;
-				$payload['immediate'] = true;
-				unset($payload['schedule_ts']);
-
-				$ok = ((int)$row->is_group === 1) ? sendWaGroup($payload) : sendWa($payload);
-
-				@$CI->db->where('id', (int)$row->id)->update('tbl_wa_queue', [
-					'status'  => $ok ? 'sent' : 'failed',
-					'sent_at' => date('Y-m-d H:i:s')
-				]);
-
-				$processedCount++;
-
-				// Pastikan ada jeda minimal 5 detik sebelum mengecek antrian berikutnya
-				sleep(5);
 			}
-
-			// Bersihkan histori antrian yang sudah terkirim lebih dari 7 hari agar tabel tetap ringan
-			@$CI->db->query("DELETE FROM `tbl_wa_queue` WHERE `status` IN ('sent', 'failed') AND `created_at` < DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		} catch (\Throwable $e) {
 		}
 
+		$rem = (int)($CI->db->query("SELECT COUNT(*) AS cnt FROM `tbl_wa_queue` WHERE `status` = 'pending'")->row()->cnt ?? 0);
+
 		@flock($fp, LOCK_UN);
 		@fclose($fp);
+
+		return [
+			'processed' => $processed,
+			'remaining' => $rem,
+			'item'      => $itemInfo
+		];
+	}
+}
+
+/**
+ * Worker Pemroses Antrian WhatsApp (Single-Instance Mutex Lock)
+ * Mengirim pesan dari tbl_wa_queue satu per satu sesuai jadwal (tidak pernah serentak).
+ */
+if (!function_exists('processWaQueueWorker')) {
+	function processWaQueueWorker($maxRunSeconds = 900)
+	{
+		if (!ensureWaQueueTable()) {
+			return 0;
+		}
+		$startTime = time();
+		$processedCount = 0;
+
+		while ((time() - $startTime) < $maxRunSeconds) {
+			$step = processOneWaQueueItem(true);
+			if (!empty($step['busy'])) {
+				break;
+			}
+			$processedCount += (int)($step['processed'] ?? 0);
+			if ((int)($step['remaining'] ?? 0) <= 0) {
+				break;
+			}
+			sleep(5);
+		}
 
 		return $processedCount;
 	}

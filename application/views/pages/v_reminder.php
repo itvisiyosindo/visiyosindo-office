@@ -152,11 +152,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
+            function runWaQueueStepByStep(totalTargets) {
+                function nextStep() {
+                    $.getJSON("<?= base_url('reminder_wa/process_next_queue') ?>", function(qRes) {
+                        var rem = (qRes && typeof qRes.remaining_pending !== 'undefined') ? parseInt(qRes.remaining_pending, 10) : 0;
+                        var doneCount = Math.max(1, totalTargets - rem);
+                        var lastTarget = (qRes && qRes.item && qRes.item.penerima) ? qRes.item.penerima : '-';
+
+                        if (rem > 0) {
+                            if (Swal.isVisible()) {
+                                Swal.update({
+                                    title: "Mengirim Antrian 1-per-1 (" + doneCount + " / " + totalTargets + ")",
+                                    html: "<div class='text-center'><p class='mb-1'>Terkirim terakhir ke: <code>" + lastTarget + "</code></p><small class='text-muted'>Tersisa <b>" + rem + "</b> nomor dalam antrian (jeda 5 detik antar nomor)...</small></div>"
+                                });
+                            }
+                            setTimeout(nextStep, 5000);
+                        } else {
+                            Swal.fire("Selesai Terkirim Semua!", "Seluruh " + totalTargets + " karyawan aktif telah menerima pesan secara berurutan (1-per-1).", "success");
+                        }
+                    }).fail(function() {
+                        setTimeout(nextStep, 5000);
+                    });
+                }
+                setTimeout(nextStep, 4500);
+            }
+
             // Handler Semangat Senin
             $("#btn-ucapan-senin").on("click", function() {
                 Swal.fire({
-                    title: "Kirim Semangat Senin?",
-                    html: "Kirim pesan penyemangat awal pekan ke seluruh karyawan aktif sekarang?<br><small class='text-muted'>Pesan bertanda tangan: <b>_Sistem Office PT Visi Yosindo Medikal_</b></small>",
+                    title: "Kirim Ucapan Senin?",
+                    html: "Kirim pesan penyemangat awal pekan ke seluruh karyawan aktif sekarang secara berurutan (1-per-1)?<br><small class='text-muted'>Pesan bertanda tangan: <b>_Sistem Office PT Visi Yosindo Medikal_</b></small>",
                     icon: "question",
                     showCancelButton: true,
                     confirmButtonText: "Ya, Kirim Sekarang",
@@ -164,11 +189,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonColor: "#3085d6"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire({title: "Sedang Mengirim Pesan...", allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+                        Swal.fire({title: "Memulai Antrian Pengiriman...", html: "Mengirim nomor ke-1 dan menyusun antrian...", allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading() }});
                         
                         $.get("<?= base_url('reminder/cron_monday_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
                             if(res.status) {
-                                Swal.fire("Selesai!", res.msg, "success");
+                                var total = parseInt(res.terkirim || 0, 10);
+                                var pending = parseInt(res.pending_queue || 0, 10);
+                                if (pending > 0) {
+                                    Swal.update({
+                                        title: "Mengirim Antrian 1-per-1 (1 / " + total + ")",
+                                        html: "<small class='text-muted'>Tersisa <b>" + pending + "</b> nomor dalam antrian (jeda 5 detik antar nomor)...</small>"
+                                    });
+                                    runWaQueueStepByStep(total);
+                                } else {
+                                    Swal.fire("Selesai!", res.msg, "success");
+                                }
                             } else {
                                 Swal.fire("Info", res.msg || "Gagal mengirim pesan.", "warning");
                             }
@@ -182,8 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handler Ucapan Weekend
             $("#btn-ucapan-weekend").on("click", function() {
                 Swal.fire({
-                    title: "Kirim Ucapan Weekend?",
-                    html: "Kirim pesan ucapan selamat berakhir pekan ke seluruh karyawan aktif sekarang?<br><small class='text-muted'>Pesan bertanda tangan: <b>_Sistem Office PT Visi Yosindo Medikal_</b></small>",
+                    title: "Kirim Ucapan Jumat (Weekend)?",
+                    html: "Kirim pesan ucapan selamat berakhir pekan ke seluruh karyawan aktif sekarang secara berurutan (1-per-1)?<br><small class='text-muted'>Pesan bertanda tangan: <b>_Sistem Office PT Visi Yosindo Medikal_</b></small>",
                     icon: "question",
                     showCancelButton: true,
                     confirmButtonText: "Ya, Kirim Sekarang",
@@ -191,11 +226,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonColor: "#0284c7"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire({title: "Sedang Mengirim Ucapan...", allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+                        Swal.fire({title: "Memulai Antrian Pengiriman...", html: "Mengirim nomor ke-1 dan menyusun antrian...", allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading() }});
                         
                         $.get("<?= base_url('reminder/cron_weekend_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
                             if(res.status) {
-                                Swal.fire("Selesai!", res.msg, "success");
+                                var total = parseInt(res.terkirim || 0, 10);
+                                var pending = parseInt(res.pending_queue || 0, 10);
+                                if (pending > 0) {
+                                    Swal.update({
+                                        title: "Mengirim Antrian 1-per-1 (1 / " + total + ")",
+                                        html: "<small class='text-muted'>Tersisa <b>" + pending + "</b> nomor dalam antrian (jeda 5 detik antar nomor)...</small>"
+                                    });
+                                    runWaQueueStepByStep(total);
+                                } else {
+                                    Swal.fire("Selesai!", res.msg, "success");
+                                }
                             } else {
                                 Swal.fire("Info", res.msg || "Gagal mengirim ucapan.", "warning");
                             }

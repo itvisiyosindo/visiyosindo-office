@@ -306,6 +306,42 @@ if (!empty($sessions)) {
             });
         }
 
+        function runWaQueueStepByStep(totalTargets, initialMsg) {
+            var stepSent = 1; // Nomor ke-1 sudah langsung terkirim saat inisialisasi
+            function nextStep() {
+                $.getJSON("<?= base_url('reminder_wa/process_next_queue') ?>", function(qRes) {
+                    if (qRes && qRes.processed > 0) {
+                        stepSent++;
+                    }
+                    var rem = (qRes && typeof qRes.remaining_pending !== 'undefined') ? parseInt(qRes.remaining_pending, 10) : 0;
+                    var doneCount = Math.max(1, totalTargets - rem);
+                    var lastTarget = (qRes && qRes.item && qRes.item.penerima) ? qRes.item.penerima : '-';
+
+                    if (rem > 0) {
+                        if (Swal.isVisible()) {
+                            Swal.update({
+                                title: 'Mengirim Antrian 1-per-1 (' + doneCount + ' / ' + totalTargets + ')',
+                                html: '<div class="text-center">' +
+                                    '<p class="mb-1">Terkirim terakhir ke: <code>' + lastTarget + '</code></p>' +
+                                    '<small class="text-muted">Tersisa <b>' + rem + '</b> nomor dalam antrian (jeda 5 detik antar nomor)...</small>' +
+                                    '</div>'
+                            });
+                        }
+                        setTimeout(nextStep, 5000);
+                    } else {
+                        Swal.fire(
+                            'Selesai Terkirim Semua!',
+                            'Seluruh ' + totalTargets + ' karyawan aktif telah menerima pesan secara berurutan (1-per-1).',
+                            'success'
+                        );
+                    }
+                }).fail(function() {
+                    setTimeout(nextStep, 5000);
+                });
+            }
+            setTimeout(nextStep, 4500);
+        }
+
         // Handler Tombol Manual Kirim Ucapan Senin
         $('#btn-panel-ucapan-senin').on('click', function() {
             Swal.fire({
@@ -319,15 +355,25 @@ if (!empty($sessions)) {
             }).then(function(result) {
                 if (result.isConfirmed || result.value) {
                     Swal.fire({
-                        title: 'Memasukkan ke Antrian...',
-                        text: 'Mohon tunggu sebentar.',
+                        title: 'Memulai Antrian Pengiriman...',
+                        html: 'Mengirim nomor ke-1 dan menyusun antrian karyawan aktif...',
                         allowOutsideClick: false,
                         showConfirmButton: false,
                         didOpen: function() { Swal.showLoading(); }
                     });
                     $.getJSON("<?= base_url('reminder/cron_monday_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
                         if (res && res.status) {
-                            Swal.fire('Berhasil!', res.msg, 'success');
+                            var total = parseInt(res.terkirim || 0, 10);
+                            var pending = parseInt(res.pending_queue || 0, 10);
+                            if (pending > 0) {
+                                Swal.update({
+                                    title: 'Mengirim Antrian 1-per-1 (1 / ' + total + ')',
+                                    html: '<small class="text-muted">Tersisa <b>' + pending + '</b> nomor dalam antrian (jeda 5 detik antar nomor)...</small>'
+                                });
+                                runWaQueueStepByStep(total, res.msg);
+                            } else {
+                                Swal.fire('Berhasil!', res.msg, 'success');
+                            }
                         } else {
                             Swal.fire('Info', (res && res.msg) ? res.msg : 'Gagal mengirim ucapan.', 'warning');
                         }
@@ -351,15 +397,25 @@ if (!empty($sessions)) {
             }).then(function(result) {
                 if (result.isConfirmed || result.value) {
                     Swal.fire({
-                        title: 'Memasukkan ke Antrian...',
-                        text: 'Mohon tunggu sebentar.',
+                        title: 'Memulai Antrian Pengiriman...',
+                        html: 'Mengirim nomor ke-1 dan menyusun antrian karyawan aktif...',
                         allowOutsideClick: false,
                         showConfirmButton: false,
                         didOpen: function() { Swal.showLoading(); }
                     });
                     $.getJSON("<?= base_url('reminder/cron_weekend_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
                         if (res && res.status) {
-                            Swal.fire('Berhasil!', res.msg, 'success');
+                            var total = parseInt(res.terkirim || 0, 10);
+                            var pending = parseInt(res.pending_queue || 0, 10);
+                            if (pending > 0) {
+                                Swal.update({
+                                    title: 'Mengirim Antrian 1-per-1 (1 / ' + total + ')',
+                                    html: '<small class="text-muted">Tersisa <b>' + pending + '</b> nomor dalam antrian (jeda 5 detik antar nomor)...</small>'
+                                });
+                                runWaQueueStepByStep(total, res.msg);
+                            } else {
+                                Swal.fire('Berhasil!', res.msg, 'success');
+                            }
                         } else {
                             Swal.fire('Info', (res && res.msg) ? res.msg : 'Gagal mengirim ucapan.', 'warning');
                         }

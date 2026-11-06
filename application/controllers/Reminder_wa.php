@@ -146,6 +146,29 @@ class Reminder_wa extends CI_Controller
     }
 
     /**
+     * Endpoint Step-by-Step AJAX Antrian WhatsApp (Proses 1 Item per Panggilan)
+     * URL: https://office.visiyosindo.id/reminder_wa/process_next_queue
+     */
+    public function process_next_queue()
+    {
+        $res = ['processed' => 0, 'remaining' => 0, 'item' => null];
+        if (function_exists('processOneWaQueueItem')) {
+            $res = processOneWaQueueItem(true);
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status'            => 'success',
+                'timestamp'         => date('Y-m-d H:i:s'),
+                'processed'         => (int)($res['processed'] ?? 0),
+                'remaining_pending' => (int)($res['remaining'] ?? 0),
+                'item'              => $res['item'] ?? null,
+                'busy'              => !empty($res['busy'])
+            ], JSON_PRETTY_PRINT));
+    }
+
+    /**
      * Endpoint Monitoring Status Antrian WhatsApp
      * URL: https://office.visiyosindo.id/reminder_wa/queue_status
      */

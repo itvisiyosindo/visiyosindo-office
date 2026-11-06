@@ -206,6 +206,11 @@ class Reminder extends CI_Controller {
 
         $targetStartTs = time();
 
+        // Bersihkan sisa antrian pending lama sebelum memulai batch manual baru
+        if (function_exists('ensureWaQueueTable') && ensureWaQueueTable()) {
+            @$this->db->query("DELETE FROM `tbl_wa_queue` WHERE `status` = 'pending'");
+        }
+
         // Ambil daftar karyawan yang sudah dikirim ucapan hari Jumat ini agar tidak dobel
         $today = date('Y-m-d');
         $alreadySentIds = [];
@@ -214,17 +219,27 @@ class Reminder extends CI_Controller {
             $alreadySentIds[] = (int)$s['pengguna_id'];
         }
 
-        // Ambil seluruh karyawan aktif yang memiliki nomor HP
+        // Gunakan filter Karyawan Aktif resmi (sama dengan Dashboard Kepegawaian)
+        $this->load->model('Md_dashboard');
+        $excludedIds = method_exists($this->Md_dashboard, 'getExcludedKaryawanIds') ? $this->Md_dashboard->getExcludedKaryawanIds() : [1];
+        $excludedSql = !empty($excludedIds) ? implode(',', array_map('intval', $excludedIds)) : '1';
+        $todayLike   = date('Y-m-d') . '%';
+
         $employees = $this->db->query("
-            SELECT pengguna_id, nama, short_name, no_hp, nohp 
-            FROM pengguna 
-            WHERE status = 1 
-              AND is_active = 1 
+            SELECT p.pengguna_id, p.nama, p.short_name, p.no_hp, p.nohp 
+            FROM pengguna p
+            LEFT JOIN (
+                SELECT DISTINCT pengguna_id FROM absensi WHERE data_created LIKE '{$todayLike}' AND perusahaan = 0
+            ) a ON a.pengguna_id = p.pengguna_id
+            WHERE p.status = 1 
+              AND p.is_active = 1 
+              AND p.pengguna_id != 1
+              AND (p.pengguna_id NOT IN ({$excludedSql}) OR a.pengguna_id IS NOT NULL)
               AND (
-                  (no_hp IS NOT NULL AND no_hp != '') 
-                  OR (nohp IS NOT NULL AND nohp != '')
+                  (p.no_hp IS NOT NULL AND p.no_hp != '' AND p.no_hp != '-') 
+                  OR (p.nohp IS NOT NULL AND p.nohp != '' AND p.nohp != '-')
               )
-            ORDER BY nama ASC
+            ORDER BY p.nama ASC
         ")->result_array();
 
         if (empty($employees)) {
@@ -242,6 +257,7 @@ class Reminder extends CI_Controller {
         $skippedSess = 0;
         $gagal    = 0;
         $sentNames = [];
+        $seenPhones = [];
 
         // Load model chat & session
         $this->load->model('Md_whatsapp_session');
@@ -257,12 +273,22 @@ class Reminder extends CI_Controller {
             }
 
             $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
+            $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
+            if (substr($cleanPhone, 0, 2) === '08') {
+                $normPhone = '62' . substr($cleanPhone, 1);
+            } else {
+                $normPhone = $cleanPhone;
+            }
 
-            // Kirim ke seluruh karyawan aktif yang memiliki nomor HP (meskipun status sesi 24 jam di panel kadaluarsa)
-            if (empty($phone)) {
+            // Kirim ke seluruh karyawan aktif yang memiliki nomor HP valid & belum duplikat
+            if (empty($cleanPhone) || strlen($cleanPhone) < 9) {
                 $gagal++;
                 continue;
             }
+            if (isset($seenPhones[$normPhone])) {
+                continue;
+            }
+            $seenPhones[$normPhone] = true;
 
             $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
 
@@ -309,18 +335,24 @@ class Reminder extends CI_Controller {
             }
         }
 
-        $msg = "Pengiriman ucapan weekend selesai (antrian berurutan 1-per-1). Terkirim/Antri: $terkirim, Skip (Sudah dikirim): $skipped, Gagal/No HP Kosong: $gagal.";
+        $pendingQueue = 0;
+        if ($this->db->table_exists('tbl_wa_queue')) {
+            $pendingQueue = (int)($this->db->query("SELECT COUNT(*) AS cnt FROM `tbl_wa_queue` WHERE `status` = 'pending'")->row()->cnt ?? 0);
+        }
+
+        $msg = "Pengiriman ucapan weekend selesai dimasukkan ke antrian (1-per-1). Total Karyawan Aktif: $terkirim, Gagal/No HP Kosong: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {
             echo json_encode([
-                'status'    => true,
-                'terkirim'  => $terkirim,
-                'skipped'   => $skipped,
+                'status'          => true,
+                'terkirim'        => $terkirim,
+                'pending_queue'   => $pendingQueue,
+                'skipped'         => $skipped,
                 'skipped_session' => $skippedSess,
-                'gagal'     => $gagal,
-                'msg'       => $msg,
-                'sent_to'   => $sentNames
+                'gagal'           => $gagal,
+                'msg'             => $msg,
+                'sent_to'         => $sentNames
             ]);
         }
     }
@@ -348,6 +380,11 @@ class Reminder extends CI_Controller {
             return;
         }
 
+        // Bersihkan sisa antrian pending lama sebelum memulai batch manual baru
+        if (function_exists('ensureWaQueueTable') && ensureWaQueueTable()) {
+            @$this->db->query("DELETE FROM `tbl_wa_queue` WHERE `status` = 'pending'");
+        }
+
         // Ambil daftar karyawan yang sudah dikirim ucapan hari Senin ini agar tidak dobel
         $today = date('Y-m-d');
         $alreadySentIds = [];
@@ -356,17 +393,27 @@ class Reminder extends CI_Controller {
             $alreadySentIds[] = (int)$s['pengguna_id'];
         }
 
-        // Ambil seluruh karyawan aktif yang memiliki nomor HP
+        // Gunakan filter Karyawan Aktif resmi (sama dengan Dashboard Kepegawaian)
+        $this->load->model('Md_dashboard');
+        $excludedIds = method_exists($this->Md_dashboard, 'getExcludedKaryawanIds') ? $this->Md_dashboard->getExcludedKaryawanIds() : [1];
+        $excludedSql = !empty($excludedIds) ? implode(',', array_map('intval', $excludedIds)) : '1';
+        $todayLike   = date('Y-m-d') . '%';
+
         $employees = $this->db->query("
-            SELECT pengguna_id, nama, short_name, no_hp, nohp 
-            FROM pengguna 
-            WHERE status = 1 
-              AND is_active = 1 
+            SELECT p.pengguna_id, p.nama, p.short_name, p.no_hp, p.nohp 
+            FROM pengguna p
+            LEFT JOIN (
+                SELECT DISTINCT pengguna_id FROM absensi WHERE data_created LIKE '{$todayLike}' AND perusahaan = 0
+            ) a ON a.pengguna_id = p.pengguna_id
+            WHERE p.status = 1 
+              AND p.is_active = 1 
+              AND p.pengguna_id != 1
+              AND (p.pengguna_id NOT IN ({$excludedSql}) OR a.pengguna_id IS NOT NULL)
               AND (
-                  (no_hp IS NOT NULL AND no_hp != '') 
-                  OR (nohp IS NOT NULL AND nohp != '')
+                  (p.no_hp IS NOT NULL AND p.no_hp != '' AND p.no_hp != '-') 
+                  OR (p.nohp IS NOT NULL AND p.nohp != '' AND p.nohp != '-')
               )
-            ORDER BY nama ASC
+            ORDER BY p.nama ASC
         ")->result_array();
 
         if (empty($employees)) {
@@ -384,6 +431,7 @@ class Reminder extends CI_Controller {
         $skippedSess = 0;
         $gagal    = 0;
         $sentNames = [];
+        $seenPhones = [];
 
         // Load model chat & session
         $this->load->model('Md_whatsapp_session');
@@ -399,12 +447,22 @@ class Reminder extends CI_Controller {
             }
 
             $phone = !empty($karyawan['no_hp']) ? $karyawan['no_hp'] : $karyawan['nohp'];
+            $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
+            if (substr($cleanPhone, 0, 2) === '08') {
+                $normPhone = '62' . substr($cleanPhone, 1);
+            } else {
+                $normPhone = $cleanPhone;
+            }
 
-            // Kirim ke seluruh karyawan aktif yang memiliki nomor HP (meskipun status sesi 24 jam di panel kadaluarsa)
-            if (empty($phone)) {
+            // Kirim ke seluruh karyawan aktif yang memiliki nomor HP valid & belum duplikat
+            if (empty($cleanPhone) || strlen($cleanPhone) < 9) {
                 $gagal++;
                 continue;
             }
+            if (isset($seenPhones[$normPhone])) {
+                continue;
+            }
+            $seenPhones[$normPhone] = true;
 
             $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
 
@@ -449,13 +507,19 @@ class Reminder extends CI_Controller {
             }
         }
 
-        $msg = "Pengiriman ucapan semangat Senin selesai (antrian berurutan 1-per-1). Terkirim/Antri: $terkirim, Skip (Sudah dikirim): $skipped, Gagal/No HP Kosong: $gagal.";
+        $pendingQueue = 0;
+        if ($this->db->table_exists('tbl_wa_queue')) {
+            $pendingQueue = (int)($this->db->query("SELECT COUNT(*) AS cnt FROM `tbl_wa_queue` WHERE `status` = 'pending'")->row()->cnt ?? 0);
+        }
+
+        $msg = "Pengiriman ucapan semangat Senin selesai dimasukkan ke antrian (1-per-1). Total Karyawan Aktif: $terkirim, Gagal/No HP Kosong: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {
             echo json_encode([
                 'status'          => true,
                 'terkirim'        => $terkirim,
+                'pending_queue'   => $pendingQueue,
                 'skipped'         => $skipped,
                 'skipped_session' => $skippedSess,
                 'gagal'           => $gagal,
