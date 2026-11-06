@@ -154,14 +154,18 @@ class Laporan extends CI_Controller
                 // Cek apakah $param4 valid, jika tidak, set 0
                 $week_offset = (isset($param4) && is_numeric($param4)) ? (int)$param4 : 0;
 
-                // Optimasi kalkulasi tanggal berdasarkan offset minggu
-                $curr_offset_str = "{$week_offset} week";
-                $monday = date('Y-m-d', strtotime("monday this week $curr_offset_str"));
-                $friday = date('Y-m-d', strtotime("sunday this week $curr_offset_str"));
-                $wednesday = date('Y-m-d', strtotime("wednesday this week $curr_offset_str"));
+                // Hitung rentang tanggal minggu secara presisi berdasarkan offset
+                $base_monday = strtotime("monday this week");
+                $monday_ts = $base_monday + ($week_offset * 7 * 86400);
+                $sunday_ts = $monday_ts + (6 * 86400);
+                $wednesday_ts = $monday_ts + (2 * 86400);
 
-                $startDate = date('d-m-Y', strtotime($monday));
-                $endDate = date('d-m-Y', strtotime($friday));
+                $monday = date('Y-m-d', $monday_ts);
+                $friday = date('Y-m-d', $sunday_ts);
+                $wednesday = date('Y-m-d', $wednesday_ts);
+
+                $startDate = date('d-m-Y', $monday_ts);
+                $endDate = date('d-m-Y', $sunday_ts);
 
                 $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
 
@@ -179,7 +183,16 @@ class Laporan extends CI_Controller
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
                 $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
-                $penilaian_umum = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
+                $penilaian_umum = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday, $monday, $friday);
+                if (empty($penilaian_umum) || !is_object($penilaian_umum)) {
+                    $penilaian_umum = (object)[
+                        'nilaia1' => '', 'nilaib1' => '', 'catatana1' => '', 'catatanb1' => '',
+                        'nilaia2' => '', 'nilaib2' => '', 'catatana2' => '', 'catatanb2' => '',
+                        'nilaia3' => '', 'nilaib3' => '', 'catatana3' => '', 'catatanb3' => '',
+                        'nilaia4' => '', 'nilaib4' => '', 'catatana4' => '', 'catatanb4' => '',
+                        'nilaia5' => '', 'nilaib5' => '', 'catatana5' => '', 'catatanb5' => '',
+                    ];
+                }
                 $page_data['penilaian_umum'] = $penilaian_umum;
 
                 // Navigasi minggu
@@ -269,7 +282,7 @@ class Laporan extends CI_Controller
 
                 $page_data['switch'] = $this->id_navbar();
 
-                $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
+                $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday, $monday, $friday);
                 if (empty($penilaian_umum) || !is_object($penilaian_umum)) {
                     $penilaian_umum = (object)[
                         'nilaia1' => '', 'nilaib1' => '', 'catatana1' => '', 'catatanb1' => '',
@@ -441,9 +454,7 @@ class Laporan extends CI_Controller
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
                 $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
-                //$minggu_lalu = -1; // minggu lalu
-                $wednesday = date('Y-m-d', strtotime("wednesday this week $week_offset week"));
-                $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday);
+                $penilaian_umum     = $this->md_laporan->getPenilaianUmum($id_pengaju, $wednesday, $monday, $friday);
                 if (empty($penilaian_umum) || !is_object($penilaian_umum)) {
                     $penilaian_umum = (object)[
                         'nilaia1' => '', 'nilaib1' => '', 'catatana1' => '', 'catatanb1' => '',
@@ -454,6 +465,7 @@ class Laporan extends CI_Controller
                     ];
                 }
                 $page_data['penilaian_umum'] = $penilaian_umum;
+                $page_data['wednesday'] = $wednesday;
 
 
                 $page_data['switch'] = $this->id_navbar();

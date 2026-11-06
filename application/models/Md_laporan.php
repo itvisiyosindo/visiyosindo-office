@@ -840,12 +840,22 @@ class Md_laporan extends CI_Model
         }
     }
 
-    public function getPenilaianUmum($id_pengguna, $tanggal)
+    public function getPenilaianUmum($id_pengguna, $tanggal, $monday = null, $friday = null)
     {
-        return $this->db->get_where('penilaian_umum', [
+        $res = $this->db->get_where('penilaian_umum', [
             'id_pengguna' => $id_pengguna,
             'date' => $tanggal
         ])->row();
+
+        if (!$res && !empty($monday) && !empty($friday)) {
+            $this->db->where('id_pengguna', $id_pengguna);
+            $this->db->where('date >=', $monday);
+            $this->db->where('date <=', $friday);
+            $this->db->order_by('date', 'DESC');
+            $res = $this->db->get('penilaian_umum')->row();
+        }
+
+        return $res;
     }
 
 

@@ -1066,9 +1066,23 @@
 								<td><?= htmlspecialchars($penilaian_umum->catatanb5) ?></td>
 							</tr>
 							<?php
-								$nilaiRataa = ($penilaian_umum->nilaia1 + $penilaian_umum->nilaia2 + $penilaian_umum->nilaia3 + $penilaian_umum->nilaia4 + $penilaian_umum->nilaia5)/5;
-								$nilaiRatab = ($penilaian_umum->nilaib1 + $penilaian_umum->nilaib2 + $penilaian_umum->nilaib3 + $penilaian_umum->nilaib4 + $penilaian_umum->nilaib5)/5;
-								$nilaiRataPumum = ($nilaiRataa + $nilaiRatab)/2;
+								$sum_a = 0; $cnt_a = 0;
+								$sum_b = 0; $cnt_b = 0;
+								for ($idx_p = 1; $idx_p <= 5; $idx_p++) {
+									$fa = "nilaia$idx_p";
+									$fb = "nilaib$idx_p";
+									if (isset($penilaian_umum->$fa) && is_numeric($penilaian_umum->$fa)) {
+										$sum_a += (float)$penilaian_umum->$fa;
+										$cnt_a++;
+									}
+									if (isset($penilaian_umum->$fb) && is_numeric($penilaian_umum->$fb)) {
+										$sum_b += (float)$penilaian_umum->$fb;
+										$cnt_b++;
+									}
+								}
+								$nilaiRataa = ($cnt_a > 0) ? ($sum_a / $cnt_a) : 0;
+								$nilaiRatab = ($cnt_b > 0) ? ($sum_b / $cnt_b) : 0;
+								$nilaiRataPumum = ($cnt_a > 0 || $cnt_b > 0) ? (($nilaiRataa + $nilaiRatab) / (($cnt_a > 0 && $cnt_b > 0) ? 2 : 1)) : 0;
 							?>
 							<tr class="row-summary">
                                 <td colspan="3" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
@@ -1427,7 +1441,7 @@
 
 					// 2. Pencapaian
 					var sumPaA = 0;
-					var totalRowsPa = <?= (int)$jumlah_data ?>;
+					var totalRowsPa = <?= (int)(isset($jumlah_data_pencapaian) ? $jumlah_data_pencapaian : 0) ?>;
 					$('input[name^="nilaipa["]').each(function() {
 						var raw = $(this).val();
 						if (typeof raw !== 'undefined' && raw !== null && raw.toString().trim() !== '') {
@@ -1437,7 +1451,7 @@
 							}
 						}
 					});
-					var avgPaB = parseFloat('<?= $nilaiRataB ?>') || 0;
+					var avgPaB = parseFloat('<?= isset($nilaiRataB) ? $nilaiRataB : 0 ?>') || 0;
 					var avgPaA = (totalRowsPa > 0) ? (sumPaA / totalRowsPa) : 0;
 					var avgPaTotal = (totalRowsPa > 0) ? ((avgPaA + avgPaB) / 2) : 0;
 
@@ -1452,7 +1466,7 @@
 						sumUmumA += v;
 					}
 					var avgUmumA = sumUmumA / 5;
-					var avgUmumB = parseFloat('<?= $nilaiRatab ?>') || 0;
+					var avgUmumB = parseFloat('<?= isset($nilaiRatab) ? $nilaiRatab : 0 ?>') || 0;
 					var avgUmumTotal = (avgUmumA + avgUmumB) / 2;
 
 					$('#val-rata-umum-a').text(avgUmumA.toFixed(2));

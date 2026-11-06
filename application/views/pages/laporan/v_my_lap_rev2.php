@@ -764,49 +764,65 @@ foreach ($data_detail as $row) {
         $jumlah_data_pencapaian = !empty($data_detail_pencapaian) ? count($data_detail_pencapaian) : 0;
         $total_nilai = 0;
         $total_nilai_b = 0;
-        $nilaiRataA = 0;
-        $nilaiRataB = 0;
-        $nilaiRataPencapaian = 0;
-        if ($jumlah_data_pencapaian > 0): 
-            foreach ($data_detail_pencapaian as $row) {
+        $cnt_pa_a = 0;
+        $cnt_pa_b = 0;
+        foreach ($data_detail_pencapaian as $row) {
+            if (isset($row->nilai_a) && is_numeric($row->nilai_a)) {
                 $total_nilai += (float)$row->nilai_a;
-                $total_nilai_b += (float)$row->nilai_b;
+                $cnt_pa_a++;
             }
-            $nilaiRataA = $total_nilai / $jumlah_data_pencapaian;
-            $nilaiRataB = $total_nilai_b / $jumlah_data_pencapaian;
-            $nilaiRataPencapaian = ($nilaiRataA + $nilaiRataB) / 2;
+            if (isset($row->nilai_b) && is_numeric($row->nilai_b)) {
+                $total_nilai_b += (float)$row->nilai_b;
+                $cnt_pa_b++;
+            }
+        }
+        $nilaiRataA = ($cnt_pa_a > 0) ? ($total_nilai / $cnt_pa_a) : 0;
+        $nilaiRataB = ($cnt_pa_b > 0) ? ($total_nilai_b / $cnt_pa_b) : 0;
+        $nilaiRataPencapaian = ($cnt_pa_a > 0 || $cnt_pa_b > 0) ? (($nilaiRataA + $nilaiRataB) / (($cnt_pa_a > 0 && $cnt_pa_b > 0) ? 2 : 1)) : 0;
         ?>
-        <!-- ARSIP DATA PENCAPAIAN SEBELUMNYA (HISTORI) -->
-        <div class="card laporan-card mb-4 border-warning" style="background-color: #fffdfa;">
+        <!-- PENCAPAIAN MINGGUAN -->
+        <div class="card laporan-card mb-4">
             <div class="card-body p-3 p-md-4">
-                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="cursor: pointer;" data-toggle="collapse" data-target="#collapsePencapaianHistori" aria-expanded="false">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
                     <div>
                         <h5 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">
-                            <i class="fas fa-archive text-warning mr-1"></i> Riwayat Pencapaian Sebelumnya: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
-                            <span class="badge badge-warning ml-2" style="font-size: 11px;">Data Arsip</span>
+                            <i class="fas fa-trophy text-warning mr-1"></i> Pencapaian Mingguan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
                         </h5>
-                        <div class="text-muted small mt-1">Data pencapaian manual periode ini tetap tersimpan utuh dan dapat ditinjau.</div>
+                        <div class="text-muted small mt-1">Form input dan daftar pencapaian / hasil kerja mandiri karyawan di luar tugas rutin.</div>
                     </div>
-                    <button type="button" class="btn btn-xs btn-outline-secondary" data-toggle="collapse" data-target="#collapsePencapaianHistori">
-                        <i class="fas fa-chevron-down mr-1"></i> Buka Data Arsip (<?= $jumlah_data_pencapaian ?>)
-                    </button>
+                    <a href="javascript:;" id="btn-show-add-form-pencapaian" class="btn btn-sm btn-success shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 6px 14px;">
+                        <i class="fas fa-plus mr-1"></i> Tambah Pencapaian
+                    </a>
                 </div>
-                <div class="collapse show" id="collapsePencapaianHistori">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 980px; width: 100%;">
-                            <thead>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_pencapaian" style="min-width: 980px; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; min-width: 45px; text-align: center;">No</th>
+                                <th style="width: 130px; min-width: 120px; text-align: center;">Tanggal</th>
+                                <th style="min-width: 220px; text-align: left;">Deskripsi</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Hasil Kerja</th>
+                                <th style="width: 75px; min-width: 70px; text-align: center;">Nilai A</th>
+                                <th style="width: 75px; min-width: 70px; text-align: center;">Nilai B</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Catatan A</th>
+                                <th style="width: 160px; min-width: 140px; text-align: left;">Catatan B</th>
+                                <th style="width: 90px; min-width: 85px; text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($jumlah_data_pencapaian === 0): ?>
                                 <tr>
-                                    <th style="width: 50px; min-width: 45px; text-align: center;">No</th>
-                                    <th style="width: 130px; min-width: 120px; text-align: center;">Tanggal</th>
-                                    <th style="min-width: 220px; text-align: left;">Deskripsi</th>
-                                    <th style="width: 160px; min-width: 140px; text-align: left;">Hasil Kerja</th>
-                                    <th style="width: 75px; min-width: 70px; text-align: center;">Nilai A</th>
-                                    <th style="width: 75px; min-width: 70px; text-align: center;">Nilai B</th>
-                                    <th style="width: 160px; min-width: 140px; text-align: left;">Catatan A</th>
-                                    <th style="width: 160px; min-width: 140px; text-align: left;">Catatan B</th>
+                                    <td colspan="9" class="text-center text-muted py-4" style="background: #fafbfc;">
+                                        <div class="my-2">
+                                            <i class="fas fa-trophy text-muted fa-2x d-block mb-2" style="opacity: 0.5;"></i>
+                                            <span class="font-weight-bold text-dark">Belum ada data pencapaian mingguan pada periode ini.</span><br>
+                                            <button type="button" class="btn btn-sm btn-outline-success mt-2" onclick="$('#btn-show-add-form-pencapaian').click()" style="border-radius: 6px; font-weight: 600;">
+                                                <i class="fas fa-plus mr-1"></i> Tambah Pencapaian Sekarang
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
+                            <?php else: ?>
                                 <?php 
                                 $no_p = 1;
                                 foreach ($data_detail_pencapaian as $row):
@@ -819,32 +835,42 @@ foreach ($data_detail as $row) {
                                     }
                                     $hari = array('Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu');
                                     $nama_hari = isset($hari[date('l', strtotime($row->tanggal))]) ? $hari[date('l', strtotime($row->tanggal))] : '-';
+                                    $id_edit = encrypt($row->id);
                                 ?>
                                     <tr>
                                         <td style="text-align:center; font-weight: 600; color: #475569;"><?= $no_p++ ?></td>
                                         <td style="text-align:center; white-space: nowrap; font-weight: 500;"><?= $nama_hari . ', ' . date('d-m-Y', strtotime($row->tanggal)); ?></td>
                                         <td style="word-break: normal; overflow-wrap: break-word;"><?= htmlspecialchars($row->detail) ?></td>
                                         <td style="min-width: 160px;"><?= $link_download ?></td>
-                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_a ?></td>
-                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= $row->nilai_b ?></td>
-                                        <td style="min-width: 160px;"><?= htmlspecialchars($row->catatan_a) ?></td>
-                                        <td style="min-width: 160px;"><?= htmlspecialchars($row->catatan_b) ?></td>
+                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($row->nilai_a) ? htmlspecialchars($row->nilai_a) : '<span class="text-muted small">-</span>' ?></td>
+                                        <td style="text-align:center; font-weight: 700; color: #1e293b;"><?= !empty($row->nilai_b) ? htmlspecialchars($row->nilai_b) : '<span class="text-muted small">-</span>' ?></td>
+                                        <td style="min-width: 160px;"><?= !empty($row->catatan_a) ? htmlspecialchars($row->catatan_a) : '<span class="text-muted small">-</span>' ?></td>
+                                        <td style="min-width: 160px;"><?= !empty($row->catatan_b) ? htmlspecialchars($row->catatan_b) : '<span class="text-muted small">-</span>' ?></td>
+                                        <td style="text-align:center">
+                                            <?php if (empty($row->nilai_a) && empty($row->nilai_b)): ?>
+                                                <div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
+                                                    <button type="button" class="btn btn-sm btn-primary btn-edit-pencapaian shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" data-id="<?= $id_edit ?>" title="Edit Pencapaian"><i class="fas fa-pencil-alt"></i></button>
+                                                    <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" style="border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Hapus Pencapaian" data-id="<?= $row->id ?>" data-object="laporan/deletePencapaian/<?= $row->id ?>"><i class="fas fa-trash-alt"></i></button>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="badge badge-light-success text-success border border-success px-2 py-1" style="font-size: 10.5px; border-radius: 6px;" title="Pencapaian sudah dinilai"><i class="fas fa-lock mr-1"></i> Dinilai</span>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                                 <tr class="row-summary">
                                     <td colspan="4" style="text-align:right; font-weight: 700; color: #1e293b;">Rata-rata :</td>
                                     <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataA, 2) ?></td>
                                     <td style="text-align:center; font-weight: 700; color: #2563eb; font-size: 13px;"><?= number_format($nilaiRataB, 2) ?></td>
-                                    <td colspan="2" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
+                                    <td colspan="3" style="text-align:center; font-weight: 700; color: #10b981; font-size: 13px;">Total Rata-rata: <?= number_format($nilaiRataPencapaian, 2) ?></td>
                                 </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <!-- ARSIP DATA PENCAPAIAN SEBELUMNYA -->
-        <?php endif; ?>
+        <!-- PENCAPAIAN MINGGUAN -->
 	</div>
 </div>
 <div class="row">
@@ -967,14 +993,21 @@ foreach ($data_detail as $row) {
                         </tbody>
                     </table>
                 </div>
+                <?php
+                $skor_aktif = [];
+                if ($rataAll > 0) $skor_aktif[] = $rataAll;
+                if ($nilaiRataPencapaian > 0) $skor_aktif[] = $nilaiRataPencapaian;
+                if ($nilaiRataPumum > 0) $skor_aktif[] = $nilaiRataPumum;
+                $totalRataAkhir = count($skor_aktif) > 0 ? (array_sum($skor_aktif) / count($skor_aktif)) : 0;
+                ?>
                 <!-- Modern Summary Card -->
                 <div class="p-3 mt-4" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                     <div class="d-flex align-items-center mb-3" style="font-size: 13px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">
                         <i class="fas fa-calculator text-primary mr-2"></i> Rangkuman Nilai Akhir
                     </div>
                     <div class="row" style="row-gap: 12px;">
-                        <div class="col-md-3 col-sm-6">
-                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                        <div class="col-md col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
                                 <div>
                                     <div class="text-muted small font-weight-500">Laporan Mingguan</div>
                                     <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($rataAll, 2) ?></div>
@@ -984,8 +1017,19 @@ foreach ($data_detail as $row) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                        <div class="col-md col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
+                                <div>
+                                    <div class="text-muted small font-weight-500">Pencapaian</div>
+                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPencapaian, 2) ?></div>
+                                </div>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef9c3; color: #ca8a04; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
                                 <div>
                                     <div class="text-muted small font-weight-500">Penilaian Umum</div>
                                     <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPumum, 2) ?></div>
@@ -995,22 +1039,22 @@ foreach ($data_detail as $row) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                        <div class="col-md col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
                                 <div>
-                                    <div class="text-muted small font-weight-500">Rata-rata Gabungan</div>
-                                    <div class="font-weight-bold text-primary mt-1" style="font-size: 18px;"><?= number_format(($rataAll+$nilaiRataPumum)/2, 2) ?></div>
+                                    <div class="text-muted small font-weight-500">Total Rata-rata</div>
+                                    <div class="font-weight-bold text-primary mt-1" style="font-size: 18px;"><?= number_format($totalRataAkhir, 2) ?></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #e0e7ff; color: #4338ca; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-layer-group"></i>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center">
+                        <div class="col-md col-sm-6">
+                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
                                 <div>
-                                    <div class="text-muted small font-weight-500">Project Diselesaikan</div>
-                                    <div class="font-weight-bold text-success mt-1" style="font-size: 18px;"><?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> <span style="font-size: 13px; font-weight: 500;" class="text-muted">Task</span></div>
+                                    <div class="text-muted small font-weight-500">Project Selesai</div>
+                                    <div class="font-weight-bold text-success mt-1" style="font-size: 18px;"><?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> <span style="font-size: 12px; font-weight: 500;" class="text-muted">Task</span></div>
                                 </div>
                                 <div style="width: 36px; height: 36px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-tasks"></i>
