@@ -149,16 +149,22 @@ if (!empty($sessions)) {
 
         <!-- Main Card Sessions -->
         <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid #edf2f7; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap py-3" style="border-bottom: 1px solid #edf2f7; border-top-left-radius: 12px; border-top-right-radius: 12px; gap: 8px;">
                 <h5 class="mb-0 font-weight-bold text-dark"><i class="fas fa-history text-primary mr-2"></i>Daftar Sesi WhatsApp Nomor Pribadi</h5>
-                <div>
-                    <a href="<?= base_url('reminder_wa/deactivate_inactive_sessions') ?>" class="btn btn-outline-danger btn-sm font-weight-bold mr-1" onclick="return confirm('Apakah Anda yakin ingin menonaktifkan seluruh sesi WhatsApp milik karyawan yang sudah tidak aktif?')">
+                <div class="d-flex flex-wrap align-items-center" style="gap: 6px;">
+                    <button type="button" class="btn btn-primary btn-sm font-weight-bold shadow-sm" id="btn-panel-ucapan-senin">
+                        <i class="fas fa-sun mr-1"></i> Kirim Ucapan Senin
+                    </button>
+                    <button type="button" class="btn btn-info btn-sm font-weight-bold shadow-sm" id="btn-panel-ucapan-weekend">
+                        <i class="fas fa-coffee mr-1"></i> Kirim Ucapan Jumat (Weekend)
+                    </button>
+                    <a href="<?= base_url('reminder_wa/deactivate_inactive_sessions') ?>" class="btn btn-outline-danger btn-sm font-weight-bold" onclick="return confirm('Apakah Anda yakin ingin menonaktifkan seluruh sesi WhatsApp milik karyawan yang sudah tidak aktif?')">
                         <i class="fas fa-user-slash mr-1"></i> Matikan Sesi Karyawan Non-Aktif
                     </a>
                     <button type="button" class="btn btn-success btn-sm font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalAktivasiManual">
                         <i class="fas fa-plus-circle mr-1"></i> Buka Sesi Manual (24 Jam)
                     </button>
-                    <a href="<?= base_url('reminder_wa/check_sessions') ?>" target="_blank" class="btn btn-outline-secondary btn-sm ml-1">
+                    <a href="<?= base_url('reminder_wa/check_sessions') ?>" target="_blank" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-bell mr-1"></i> Cek & Kirim Reminder
                     </a>
                 </div>
@@ -299,5 +305,69 @@ if (!empty($sessions)) {
                 "pageLength": 25
             });
         }
+
+        // Handler Tombol Manual Kirim Ucapan Senin
+        $('#btn-panel-ucapan-senin').on('click', function() {
+            Swal.fire({
+                title: 'Kirim Ucapan Senin?',
+                html: 'Kirim pesan penyemangat hari Senin ke <b>seluruh karyawan aktif</b> secara berurutan (antrian 1-per-1)?<br><small class="text-muted">Tetap dikirim meskipun status sesi 24 jam di tabel Kadaluarsa.</small>',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Kirim Sekarang',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#2563eb'
+            }).then(function(result) {
+                if (result.isConfirmed || result.value) {
+                    Swal.fire({
+                        title: 'Memasukkan ke Antrian...',
+                        text: 'Mohon tunggu sebentar.',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: function() { Swal.showLoading(); }
+                    });
+                    $.getJSON("<?= base_url('reminder/cron_monday_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
+                        if (res && res.status) {
+                            Swal.fire('Berhasil!', res.msg, 'success');
+                        } else {
+                            Swal.fire('Info', (res && res.msg) ? res.msg : 'Gagal mengirim ucapan.', 'warning');
+                        }
+                    }).fail(function() {
+                        Swal.fire('Error', 'Terjadi kesalahan koneksi jaringan.', 'error');
+                    });
+                }
+            });
+        });
+
+        // Handler Tombol Manual Kirim Ucapan Jumat (Weekend)
+        $('#btn-panel-ucapan-weekend').on('click', function() {
+            Swal.fire({
+                title: 'Kirim Ucapan Jumat (Weekend)?',
+                html: 'Kirim pesan apresiasi & selamat berakhir pekan ke <b>seluruh karyawan aktif</b> secara berurutan (antrian 1-per-1)?<br><small class="text-muted">Tetap dikirim meskipun status sesi 24 jam di tabel Kadaluarsa.</small>',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Kirim Sekarang',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#0284c7'
+            }).then(function(result) {
+                if (result.isConfirmed || result.value) {
+                    Swal.fire({
+                        title: 'Memasukkan ke Antrian...',
+                        text: 'Mohon tunggu sebentar.',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: function() { Swal.showLoading(); }
+                    });
+                    $.getJSON("<?= base_url('reminder/cron_weekend_greeting/vysi_medikal_2026?force=1') ?>", function(res) {
+                        if (res && res.status) {
+                            Swal.fire('Berhasil!', res.msg, 'success');
+                        } else {
+                            Swal.fire('Info', (res && res.msg) ? res.msg : 'Gagal mengirim ucapan.', 'warning');
+                        }
+                    }).fail(function() {
+                        Swal.fire('Error', 'Terjadi kesalahan koneksi jaringan.', 'error');
+                    });
+                }
+            });
+        });
     });
 </script>

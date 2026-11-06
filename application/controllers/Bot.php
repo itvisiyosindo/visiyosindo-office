@@ -17,19 +17,17 @@ class Bot extends CI_Controller
     }
 
     /**
-     * Cron Job: Ucapan Selamat Akhir Pekan (Jumat Sore 18:00 WIB / Jam 6 Sore)
+     * Ucapan Selamat Akhir Pekan (Hanya Manual via Tombol, Cron Otomatis Dinonaktifkan)
      * URL: https://office.visiyosindo.id/bot/cron_weekend
      */
     public function cron_weekend()
     {
-        $isFriday = (date('N') == 5);
         $force = $this->input->get_post('force');
-        if (!$isFriday && empty($force)) {
+        if (empty($force)) {
             header('Content-Type: application/json');
             echo json_encode([
-                'status'  => 'skipped',
-                'pesan'   => 'Ucapan weekend otomatis hanya dijadwalkan setiap hari Jumat pukul 18:00 WIB.',
-                'hari'    => date('l')
+                'status' => 'disabled',
+                'pesan'  => 'Pengiriman otomatis ucapan Jumat telah dinonaktifkan. Gunakan tombol manual di panel.'
             ]);
             return;
         }
@@ -43,8 +41,7 @@ class Bot extends CI_Controller
             }
         }
 
-        // Target pengiriman mulai pukul 18:00 WIB (jam 6 sore) di hari Jumat secara berurutan (antrian 1-per-1)
-        $targetStartTs = empty($force) ? strtotime(date('Y-m-d 18:00:00')) : time();
+        $targetStartTs = time();
 
         // Ambil semua karyawan yang aktif
         $this->db->select('pengguna_id, nama, no_hp');
@@ -114,11 +111,20 @@ class Bot extends CI_Controller
     }
 
     /**
-     * Cron Job: Ucapan Semangat Senin Pagi (Senin Pagi 07:00 WIB)
+     * Ucapan Semangat Senin Pagi (Hanya Manual via Tombol, Cron Otomatis Dinonaktifkan)
      * URL: https://office.visiyosindo.id/bot/cron_senin
      */
     public function cron_senin()
     {
+        $force = $this->input->get_post('force');
+        if (empty($force)) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'disabled',
+                'pesan'  => 'Pengiriman otomatis ucapan Senin telah dinonaktifkan. Gunakan tombol manual di panel.'
+            ]);
+            return;
+        }
         // Ambil semua karyawan yang aktif
         $this->db->select('pengguna_id, nama, no_hp');
         $this->db->from('pengguna');

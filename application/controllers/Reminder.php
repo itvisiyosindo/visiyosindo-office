@@ -182,7 +182,7 @@ class Reminder extends CI_Controller {
     }
 
     // ==========================================
-    // LOGIKA 5: UCAPAN WEEKEND OTOMATIS (JUMAT 18:00 WIB / JAM 6 SORE)
+    // LOGIKA 5: UCAPAN JUMAT / WEEKEND (MANUAL VIA TOMBOL)
     // ==========================================
     public function cron_weekend_greeting($secret_key = '')
     {
@@ -192,11 +192,10 @@ class Reminder extends CI_Controller {
             return;
         }
 
-        // Cek hari Jumat (N = 5). Jika bukan Jumat dan tanpa force, jangan kirim
-        $isFriday = (date('N') == 5);
+        // Nonaktifkan pengiriman otomatis dari Cron Job (hanya jalan jika tombol manual diklik -> force=1)
         $force = $this->input->get_post('force');
-        if (!$isFriday && empty($force)) {
-            $msg = 'Ucapan weekend otomatis hanya dijadwalkan setiap hari Jumat pukul 18:00 WIB (Hari ini: ' . date('l') . ').';
+        if (empty($force)) {
+            $msg = 'Pengiriman otomatis ucapan Jumat telah dinonaktifkan. Silakan kirim secara manual melalui tombol di panel.';
             if (is_cli()) {
                 echo $msg . "\n";
             } else {
@@ -205,8 +204,7 @@ class Reminder extends CI_Controller {
             return;
         }
 
-        // Target pengiriman mulai pukul 18:00 WIB (jam 6 sore) di hari Jumat secara berurutan (antrian 1-per-1)
-        $targetStartTs = empty($force) ? strtotime(date('Y-m-d 18:00:00')) : time();
+        $targetStartTs = time();
 
         // Ambil daftar karyawan yang sudah dikirim ucapan hari Jumat ini agar tidak dobel
         $today = date('Y-m-d');
@@ -328,7 +326,7 @@ class Reminder extends CI_Controller {
     }
 
     // ==========================================
-    // LOGIKA 6: UCAPAN SEMANGAT SENIN OTOMATIS (SENIN 09:00)
+    // LOGIKA 6: UCAPAN SEMANGAT SENIN (MANUAL VIA TOMBOL)
     // ==========================================
     public function cron_monday_greeting($secret_key = '')
     {
@@ -338,11 +336,10 @@ class Reminder extends CI_Controller {
             return;
         }
 
-        // Cek hari Senin (N = 1). Jika bukan Senin dan tanpa force, jangan kirim
-        $isMonday = (date('N') == 1);
+        // Nonaktifkan pengiriman otomatis dari Cron Job (hanya jalan jika tombol manual diklik -> force=1)
         $force = $this->input->get_post('force');
-        if (!$isMonday && empty($force)) {
-            $msg = 'Ucapan semangat Senin otomatis hanya dijadwalkan setiap hari Senin (Hari ini: ' . date('l') . ').';
+        if (empty($force)) {
+            $msg = 'Pengiriman otomatis ucapan Senin telah dinonaktifkan. Silakan kirim secara manual melalui tombol di panel.';
             if (is_cli()) {
                 echo $msg . "\n";
             } else {

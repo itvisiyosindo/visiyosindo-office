@@ -6,10 +6,10 @@
     <div class="col-md-12 text-right mb-3">
         <?php if(isAdmin() || isHrd()): ?>
             <button type="button" class="btn btn-sm btn-primary mr-2" id="btn-ucapan-senin">
-                <i class="fas fa-sun mr-1"></i> Kirim Semangat Senin (Senin 09:00)
+                <i class="fas fa-sun mr-1"></i> Kirim Ucapan Senin
             </button>
             <button type="button" class="btn btn-sm btn-info mr-2" id="btn-ucapan-weekend">
-                <i class="fas fa-coffee mr-1"></i> Kirim Ucapan Weekend (Jumat 18:00)
+                <i class="fas fa-coffee mr-1"></i> Kirim Ucapan Jumat (Weekend)
             </button>
             <button type="button" class="btn btn-sm btn-success" id="btn-cek-massal">
                 <i class="fab fa-whatsapp"></i> Cek & Kirim Reminder H-3 (Massal)
