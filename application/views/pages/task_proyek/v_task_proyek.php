@@ -138,7 +138,7 @@ function renderStatusTaskBadge($st)
         case 1:
             return '<span class="tp-status-badge tp-st-1"><i class="fas fa-spinner fa-spin"></i> Sedang Dikerjakan</span>';
         case 2:
-            return '<span class="tp-status-badge tp-st-2"><i class="fas fa-Hourglass-half"></i> Menunggu Review & Rating ⭐</span>';
+            return '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>';
         case 3:
             return '<span class="tp-status-badge tp-st-3"><i class="fas fa-redo"></i> Perlu Revisi</span>';
         case 4:
@@ -604,7 +604,7 @@ $namaBulanList = [
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td><?= renderStatusTaskBadge($row->status_task) ?></td>
+                                        <td><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
                                         <td>
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
@@ -756,7 +756,7 @@ $namaBulanList = [
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td><?= renderStatusTaskBadge($row->status_task) ?></td>
+                                        <td><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
                                         <td>
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
@@ -778,13 +778,17 @@ $namaBulanList = [
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-center">
-                                            <?php if ((int)$row->status_task === 2): ?>
+                                            <?php
+                                            $effStatusAtasan = ((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : (int)$row->status_task;
+                                            $alreadyRated = ($effStatusAtasan === 4 && !empty($row->rating_bintang));
+                                            ?>
+                                            <?php if ($effStatusAtasan === 2 && !$alreadyRated): ?>
                                                 <button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
                                                     <i class="fas fa-star"></i> Beri Rating ⭐
                                                 </button><br>
                                             <?php else: ?>
-                                                <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
-                                                    <i class="fas fa-eye"></i> Detail & Nilai
+                                                <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
+                                                    <i class="fas fa-eye"></i> Detail Task
                                                 </button><br>
                                             <?php endif; ?>
 
@@ -1554,6 +1558,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 var myId = parseInt(res.my_id, 10);
                 var canReview = (parseInt(t.id_pemberi, 10) === myId) || !!res.is_admin_reviewer;
 
+                var stInt = parseInt(t.status_task, 10) || 0;
+                if (stInt === 1 && (parseInt(t.progres, 10) >= 100 || !!t.tgl_submit)) {
+                    stInt = 2;
+                }
+                var statusBadgeHtml = '';
+                if (stInt === 4) {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-4"><i class="fas fa-check-circle"></i> Selesai & Dinilai</span>';
+                } else if (stInt === 2) {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>';
+                } else if (stInt === 3) {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-3"><i class="fas fa-redo"></i> Perlu Revisi</span>';
+                } else if (stInt === 1) {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-1"><i class="fas fa-spinner fa-spin"></i> Sedang Dikerjakan</span>';
+                } else {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-0"><i class="far fa-clock"></i> Baru / Belum Mulai</span>';
+                }
+                $('#dt_status_badge').html(statusBadgeHtml);
+
                 $('#dt_kode_task').text(t.kode_task);
                 $('#dt_nama_proyek').text(t.nama_proyek || 'Umum');
                 $('#dt_jenis').text(t.jenis || 'Task Harian');
@@ -1650,7 +1672,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sub_bukti_selesai').val(t.bukti_selesai || '');
 
                 var isPenerima = (parseInt(t.id_penerima, 10) === myId);
-                var canEditChecklist = isPenerima && parseInt(t.status_task, 10) < 4;
+                var canEditChecklist = isPenerima && stInt < 4 && stInt !== 2;
 
                 // Render Checklist untuk Penerima Task (Bisa tambah, edit, hapus & centang)
                 var chkHtml = '';
@@ -1691,7 +1713,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Tampilkan / sembunyikan panel sesuai status & role
-                // Form Update Progres & Submit Selesai HANYA untuk Karyawan Penerima Tugas (Pelaksana) jika belum tuntas
+                // Form Update Progres & Submit Selesai HANYA untuk Karyawan Penerima Tugas (Pelaksana) jika belum disubmit / belum tuntas
                 if (canEditChecklist) {
                     $('#panelBawahanProgres').show();
                     $('#panelBawahanSubmit').show();
@@ -1700,7 +1722,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#panelBawahanSubmit').hide();
                 }
 
-                // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya siap dinilai (2) atau sudah dinilai (4)
+                // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya Menunggu Penilaian (2) serta BELUM pernah diberi bintang
+                var isAlreadyRated = (stInt === 4 && parseInt(t.rating_bintang, 10) > 0);
                 window.currentTaskMaxStar = isLate ? 1 : 5;
                 if (isLate) {
                     $('#lblOverdueDays').text(hariTelat);
@@ -1716,12 +1739,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#starPickerWidget .star-btn').css({ opacity: 1, cursor: 'pointer' });
                 }
 
-                if (canReview && (parseInt(t.status_task, 10) === 2 || parseInt(t.status_task, 10) === 4)) {
+                if (canReview && stInt === 2 && !isAlreadyRated) {
                     $('#panelAtasanReview').show();
-                    var initStar = parseInt(t.rating_bintang, 10) || 5;
+                    var initStar = 5;
                     if (isLate) initStar = 1;
                     setStarPickerValue(initStar);
-                    $('#rev_ulasan_atasan').val(t.ulasan_atasan || '');
+                    $('#rev_ulasan_atasan').val('');
                 } else {
                     $('#panelAtasanReview').hide();
                 }

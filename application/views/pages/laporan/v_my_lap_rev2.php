@@ -788,9 +788,9 @@ foreach ($data_detail as $row) {
                                             <span class="badge badge-success px-2 py-1" style="border-radius: 6px; font-size: 11px;">
                                                 <i class="fas fa-check-double mr-1"></i> Selesai
                                             </span>
-                                        <?php elseif ((int)$t->status_task === 2): ?>
+                                        <?php elseif ((int)$t->status_task === 2 || ((int)$t->status_task === 1 && ((int)$t->progres >= 100 || !empty($t->tgl_submit)))): ?>
                                             <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 11px;">
-                                                <i class="fas fa-hourglass-half mr-1"></i> Review
+                                                <i class="fas fa-hourglass-half mr-1"></i> Menunggu Penilaian
                                             </span>
                                         <?php elseif ((int)$t->status_task === 3): ?>
                                             <span class="badge badge-danger px-2 py-1" style="border-radius: 6px; font-size: 11px;">

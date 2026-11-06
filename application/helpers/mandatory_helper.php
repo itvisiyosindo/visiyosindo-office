@@ -847,6 +847,17 @@ if (!function_exists('normalizeDummyTaskProyekData')) {
 			}
 		}
 
+		// Pastikan task yang sudah disubmit atau progresnya sudah 100% berstatus Menunggu Penilaian (status_task = 2), bukan Sedang Dikerjakan (1)
+		@$CI->db->query("
+			UPDATE task_proyek
+			SET status_task = 2,
+			    progres = 100,
+			    tgl_submit = COALESCE(tgl_submit, updated_at, NOW())
+			WHERE is_deleted = 0
+			  AND status_task IN (0, 1)
+			  AND (progres >= 100 OR tgl_submit IS NOT NULL OR (catatan_bawahan IS NOT NULL AND TRIM(catatan_bawahan) != ''))
+		");
+
 		// Sinkronkan juga catatan log di task_proyek_log jika masih tertulis kalimat dummy
 		if ($CI->db->table_exists('task_proyek_log')) {
 			@$CI->db->where('catatan', ';lmnk')->update('task_proyek_log', [

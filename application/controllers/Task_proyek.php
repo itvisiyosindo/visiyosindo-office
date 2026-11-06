@@ -724,26 +724,40 @@ class Task_proyek extends CI_Controller
         }
 
         $newStatus = (int)$task->status_task;
-        if ($newStatus === 0 || $newStatus === 3) {
-            $newStatus = 1; // In Progress
+        if ($newStatus === 4) {
+            ajaxReturnDie('error', 'Task ini sudah selesai dinilai oleh Atasan dan tidak dapat diubah lagi.', FALSE);
+            return;
+        }
+        if ($progres >= 100) {
+            $progres   = 100;
+            $newStatus = 2; // Menunggu Penilaian
+        } elseif ($newStatus === 0 || $newStatus === 3 || $newStatus === 2) {
+            $newStatus = 1; // Sedang Dikerjakan
             if ($progres === 0 && empty($checklist)) $progres = 10;
         }
 
-        $this->db->where('id_task', $id_task)->update('task_proyek', [
+        $updTask = [
             'progres'        => $progres,
             'status_task'    => $newStatus,
             'checklist_json' => !empty($checklist) ? json_encode($checklist, JSON_UNESCAPED_UNICODE) : null
-        ]);
+        ];
+        if ($newStatus === 2 && empty($task->tgl_submit)) {
+            $updTask['tgl_submit'] = date('Y-m-d H:i:s');
+        }
+        $this->db->where('id_task', $id_task)->update('task_proyek', $updTask);
 
         $checklistInfo = !empty($checklist) ? ' [Checklist: ' . $doneCount . '/' . count($checklist) . ' selesai]' : '';
         $this->db->insert('task_proyek_log', [
             'id_task'     => $id_task,
             'id_pengguna' => $myId,
-            'aksi'        => 'Update Progres (' . $progres . '%)',
+            'aksi'        => ($newStatus === 2 ? 'Submit Selesai - Menunggu Penilaian (100%)' : 'Update Progres (' . $progres . '%)'),
             'catatan'     => ($catatan !== '' ? $catatan : 'Memperbarui progres pengerjaan menjadi ' . $progres . '%.') . $checklistInfo
         ]);
 
-        ajaxReturnDie('success', 'Checklist & progres pengerjaan berhasil diperbarui (' . $progres . '%)!', TRUE);
+        $msgOut = ($newStatus === 2)
+            ? 'Progres 100% selesai! Status task kini Menunggu Penilaian Atasan.'
+            : 'Checklist & progres pengerjaan berhasil diperbarui (' . $progres . '%)!';
+        ajaxReturnDie('success', $msgOut, TRUE);
     }
 
     /**
@@ -859,6 +873,11 @@ class Task_proyek extends CI_Controller
 
         if ((int)$task->id_pemberi !== $myId && !$this->_canViewAllTasks($myId)) {
             ajaxReturnDie('error', 'Hanya Atasan pemberi tugas atau Direksi/Admin yang dapat menilai task ini.', FALSE);
+            return;
+        }
+
+        if ((int)$task->status_task === 4 && !empty($task->rating_bintang)) {
+            ajaxReturnDie('error', 'Task ini sudah dinilai (' . (int)$task->rating_bintang . ' Bintang) dan penilaian tidak dapat diubah lagi.', FALSE);
             return;
         }
 
