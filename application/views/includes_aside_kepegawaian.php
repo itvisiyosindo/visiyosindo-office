@@ -237,12 +237,12 @@
 						<ul class="nav nav-children">
 							<li class="<?= $page_name == 'task_proyek/v_task_proyek' ? 'nav-active' : '' ?>">
 								<a class="nav-link" href="<?= base_url('task_proyek') ?>">
-									<i class="fas fa-star text-warning mr-1"></i> Task & Proyek Kerja <strong>(★5)</strong>
+									Task & Proyek Kerja <strong>(★5)</strong>
 								</a>
 							</li>
 							<li class="<?= $page_name == 'evaluasi_lisan/v_evaluasi_lisan' ? 'nav-active' : '' ?>">
 								<a class="nav-link" href="<?= base_url('evaluasi_lisan') ?>">
-									<i class="fas fa-comments text-info mr-1"></i> Evaluasi Lisan & Konseling
+									Evaluasi Lisan & Konseling
 								</a>
 							</li>
 
@@ -293,8 +293,7 @@
 								<!-- MENU AUDIT KARYAWAN & ASET PBOK/PPA KHUSUS USER ID 107, 58, 69, 54, 33, 23, 1 -->
 								<li class="<?= $page_name == 'v_audit_karyawan' ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('audit/index.html') ?>">
-										<i class="fas fa-clipboard-check text-info" aria-hidden="true"></i>
-										<span>Audit Karyawan & Aset</span>
+										Audit Karyawan & Aset
 									</a>
 								</li>
 							<?php } else { ?>
