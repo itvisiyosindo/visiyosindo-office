@@ -63,6 +63,10 @@ class Task_proyek extends CI_Controller
 
         @$this->db->query($sql1);
         @$this->db->query($sql2);
+
+        if (function_exists('ensureTaskProyekSpColumns')) {
+            ensureTaskProyekSpColumns();
+        }
     }
 
     private function _canViewAllTasks($myId)
@@ -197,6 +201,9 @@ class Task_proyek extends CI_Controller
         $kpi_my_stars_sum = 0;
         $kpi_my_stars_cnt = 0;
         foreach ($tugas_saya as $ts) {
+            if (function_exists('evaluateTaskDeadlineAndSp')) {
+                evaluateTaskDeadlineAndSp($ts, true);
+            }
             if ((int)$ts->status_task < 4) {
                 $kpi_my_active++;
                 if ((int)$ts->status_task === 2) {
@@ -216,6 +223,9 @@ class Task_proyek extends CI_Controller
         $kpi_given_active = 0;
         $kpi_given_done   = 0;
         foreach ($tugas_atasan as $ta) {
+            if (function_exists('evaluateTaskDeadlineAndSp')) {
+                evaluateTaskDeadlineAndSp($ta, true);
+            }
             if ((int)$ta->status_task === 2) {
                 $kpi_need_review++;
             }
@@ -275,8 +285,8 @@ class Task_proyek extends CI_Controller
                     SUM(CASE WHEN t.status_task = 4 THEN 1 ELSE 0 END) AS task_selesai,
                     SUM(CASE WHEN t.status_task < 4 THEN 1 ELSE 0 END) AS task_aktif,
                     SUM(CASE WHEN t.status_task = 4 AND (t.tgl_deadline IS NULL OR DATE(COALESCE(t.tgl_submit, t.tgl_dinilai)) <= t.tgl_deadline) THEN 1 ELSE 0 END) AS task_ontime,
-                    ROUND(AVG(CASE WHEN t.status_task = 4 AND t.rating_bintang IS NOT NULL THEN t.rating_bintang ELSE NULL END), 2) AS avg_bintang,
-                    SUM(CASE WHEN t.status_task = 4 AND t.rating_bintang = 5 THEN 1 ELSE 0 END) AS bintang_5
+                    ROUND(AVG(CASE WHEN t.status_task = 4 AND t.rating_bintang IS NOT NULL THEN (CASE WHEN t.tgl_deadline IS NOT NULL AND DATE(COALESCE(t.tgl_submit, t.tgl_dinilai)) > t.tgl_deadline THEN 1 ELSE t.rating_bintang END) ELSE NULL END), 2) AS avg_bintang,
+                    SUM(CASE WHEN t.status_task = 4 AND t.rating_bintang = 5 AND (t.tgl_deadline IS NULL OR DATE(COALESCE(t.tgl_submit, t.tgl_dinilai)) <= t.tgl_deadline) THEN 1 ELSE 0 END) AS bintang_5
                 FROM task_proyek t
                 WHERE t.is_deleted = 0 {$wherePeriodeTask}
                 GROUP BY t.id_penerima
@@ -633,7 +643,11 @@ class Task_proyek extends CI_Controller
         $task->checklist = !empty($task->checklist_json) ? json_decode($task->checklist_json, true) : [];
         $task->tgl_mulai_fmt = !empty($task->tgl_mulai) ? date('d-m-Y', strtotime($task->tgl_mulai)) : '-';
         $task->tgl_deadline_fmt = !empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-';
-        $task->is_overdue = (!empty($task->tgl_deadline) && (int)$task->status_task < 4 && date('Y-m-d') > $task->tgl_deadline);
+        if (function_exists('evaluateTaskDeadlineAndSp')) {
+            evaluateTaskDeadlineAndSp($task, true);
+        }
+        $task->is_overdue = (!empty($task->is_late) || (!empty($task->tgl_deadline) && (int)$task->status_task < 4 && date('Y-m-d') > $task->tgl_deadline));
+        $task->hrd_jadwal_tgl_fmt = !empty($task->hrd_jadwal_tgl) ? date('d-m-Y', strtotime($task->hrd_jadwal_tgl)) : '';
 
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
@@ -857,21 +871,35 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        $starText = str_repeat('⭐', $rating_bintang) . ' (' . $rating_bintang . '/5)';
+        // Evaluasi keterlambatan: jika lewat deadline, maksimal bintang adalah 1 walaupun selesai
+        $eval = function_exists('evaluateTaskDeadlineAndSp') ? evaluateTaskDeadlineAndSp($task, false) : ['is_late' => false, 'sp_level' => 0];
+        if (!empty($eval['is_late']) && $rating_bintang > 1) {
+            $rating_bintang = 1;
+        }
 
-        $this->db->where('id_task', $id_task)->update('task_proyek', [
+        $starText = str_repeat('⭐', $rating_bintang) . ' (' . $rating_bintang . '/5)';
+        $defaultUlasan = !empty($eval['is_late'])
+            ? 'Pekerjaan selesai melewati batas deadline (Maksimal 1 Bintang).'
+            : 'Pekerjaan selesai dengan baik.';
+
+        $updateData = [
             'status_task'    => 4, // Selesai & Dinilai
             'progres'        => 100,
             'rating_bintang' => $rating_bintang,
-            'ulasan_atasan'  => $ulasan_atasan !== '' ? $ulasan_atasan : 'Pekerjaan selesai dengan baik.',
+            'ulasan_atasan'  => $ulasan_atasan !== '' ? $ulasan_atasan : $defaultUlasan,
             'tgl_dinilai'    => date('Y-m-d H:i:s')
-        ]);
+        ];
+        if (!empty($eval['sp_level'])) {
+            $updateData['sp_level'] = (int)$eval['sp_level'];
+        }
+
+        $this->db->where('id_task', $id_task)->update('task_proyek', $updateData);
 
         $this->db->insert('task_proyek_log', [
             'id_task'     => $id_task,
             'id_pengguna' => $myId,
             'aksi'        => 'Memberi Penilaian ' . $starText,
-            'catatan'     => $ulasan_atasan !== '' ? $ulasan_atasan : 'Pekerjaan disetujui dengan rating ' . $rating_bintang . ' bintang.'
+            'catatan'     => $ulasan_atasan !== '' ? $ulasan_atasan : $defaultUlasan
         ]);
 
         try {
@@ -925,5 +953,130 @@ class Task_proyek extends CI_Controller
 
         $this->db->where('id_task', $id_task)->update('task_proyek', ['is_deleted' => 1]);
         ajaxReturnDie('success', 'Task berhasil dihapus.', TRUE);
+    }
+
+    /**
+     * Penjadwalan Pertemuan dengan HRD saat Task / Proyek terkena SP 3 (Telat >= 3 Minggu)
+     */
+    public function jadwalkan_hrd()
+    {
+        grantAccessFor('all');
+        if (function_exists('ensureTaskProyekSpColumns')) {
+            ensureTaskProyekSpColumns();
+        }
+
+        $myId       = (int)sessPenggunaId();
+        $id_task    = (int)$this->input->post('id_task', TRUE);
+        $tgl_jadwal = trim((string)$this->input->post('hrd_jadwal_tgl', TRUE));
+        $jam_jadwal = trim((string)$this->input->post('hrd_jadwal_jam', TRUE));
+        $metode     = trim((string)$this->input->post('hrd_jadwal_metode', TRUE)) ?: 'Tatap Muka';
+        $lokasi     = trim((string)$this->input->post('hrd_jadwal_lokasi', TRUE));
+        $catatan    = trim((string)$this->input->post('hrd_jadwal_catatan', FALSE));
+
+        if ($id_task <= 0 || $tgl_jadwal === '' || $jam_jadwal === '') {
+            ajaxReturnDie('error', 'Tanggal dan Jam Pertemuan dengan HRD wajib diisi!', FALSE);
+            return;
+        }
+
+        $task = $this->db->get_where('task_proyek', ['id_task' => $id_task, 'is_deleted' => 0])->row();
+        if (!$task) {
+            ajaxReturnDie('error', 'Data Task tidak ditemukan.', FALSE);
+            return;
+        }
+
+        $eval = function_exists('evaluateTaskDeadlineAndSp') ? evaluateTaskDeadlineAndSp($task, false) : ['sp_level' => (int)($task->sp_level ?? 0)];
+        if ((int)$eval['sp_level'] < 3 && (int)($task->sp_level ?? 0) < 3) {
+            ajaxReturnDie('error', 'Penjadwalan pertemuan HRD ini dikhususkan untuk Task yang telah mencapai status SP 3 (terlambat >= 3 minggu).', FALSE);
+            return;
+        }
+
+        if ($lokasi === '') {
+            $lokasi = ($metode === 'Tatap Muka') ? 'Ruang HRD' : 'Link Online / Menyusul';
+        }
+
+        $this->db->where('id_task', $id_task)->update('task_proyek', [
+            'sp_level'          => 3,
+            'hrd_jadwal_tgl'    => date('Y-m-d', strtotime($tgl_jadwal)),
+            'hrd_jadwal_jam'    => $jam_jadwal,
+            'hrd_jadwal_metode' => $metode,
+            'hrd_jadwal_lokasi' => $lokasi,
+            'hrd_jadwal_catatan'=> $catatan !== '' ? $catatan : 'Evaluasi keterlambatan proyek (SP 3) bersama HRD.',
+            'hrd_jadwal_status' => 'Terjadwal',
+            'hrd_jadwal_by'     => $myId
+        ]);
+
+        $jadwalSummary = 'Pertemuan HRD (SP 3) dijadwalkan pada ' . date('d-m-Y', strtotime($tgl_jadwal)) . ' pukul ' . $jam_jadwal . ' WIB (' . $metode . ' - ' . $lokasi . ').' . ($catatan !== '' ? ' Catatan: ' . $catatan : '');
+        $this->db->insert('task_proyek_log', [
+            'id_task'     => $id_task,
+            'id_pengguna' => $myId,
+            'aksi'        => 'Penjadwalan Pertemuan HRD (SP 3)',
+            'catatan'     => $jadwalSummary
+        ]);
+
+        // Sinkronkan juga ke tabel evaluasi_lisan (jika tabel tersedia) agar muncul di menu Evaluasi Lisan & Konseling HRD
+        if ($this->db->table_exists('evaluasi_lisan')) {
+            try {
+                $kodeEval = 'EVL-SP3-' . $id_task;
+                $existingEval = $this->db->get_where('evaluasi_lisan', ['kode_evaluasi' => $kodeEval, 'is_deleted' => 0])->row();
+                $penjadwal = $this->db->select('nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+                $dataEval = [
+                    'kode_evaluasi'         => $kodeEval,
+                    'id_pengguna'           => (int)$task->id_penerima,
+                    'tanggal_evaluasi'      => date('Y-m-d'),
+                    'masukan_pekerjaan'     => 'Keterlambatan penyelesaian Task/Proyek [' . $task->kode_task . '] "' . $task->judul . '" telah melewati batas 3 minggu (Status SP 3).',
+                    'butuh_konseling'       => 1,
+                    'tgl_usulan_konseling'  => date('Y-m-d', strtotime($tgl_jadwal)),
+                    'jam_usulan_konseling'  => $jam_jadwal,
+                    'metode_konseling'      => $metode,
+                    'topik_konseling'       => 'Evaluasi SP 3 Keterlambatan Task/Proyek: ' . $task->kode_task . ' - ' . $task->judul,
+                    'status_evaluasi'       => 'Ditanggapi',
+                    'status_konseling'      => 'Dijadwalkan',
+                    'tgl_jadwal_konseling'  => date('Y-m-d', strtotime($tgl_jadwal)),
+                    'jam_jadwal_konseling'  => $jam_jadwal,
+                    'lokasi_konseling'      => $lokasi,
+                    'pic_konseling_id'      => $myId,
+                    'pic_konseling_nama'    => $penjadwal ? $penjadwal->nama : 'HRD / Manajemen',
+                    'tanggapan_manajemen'   => $catatan !== '' ? $catatan : 'Pemanggilan Evaluasi SP 3 terkait keterlambatan proyek.',
+                    'updated_by'            => $myId
+                ];
+                if ($existingEval) {
+                    $this->db->where('id_evaluasi_lisan', $existingEval->id_evaluasi_lisan)->update('evaluasi_lisan', $dataEval);
+                } else {
+                    $this->db->insert('evaluasi_lisan', $dataEval);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        // Kirim notifikasi WhatsApp ke Karyawan & HRD
+        try {
+            $bawahan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
+            $hrdUser = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', 744)->get()->row();
+            $pesanWa = "*🛑 JADWAL PERTEMUAN HRD - EVALUASI SP 3 PROYEK*" .
+                "%0A%0AKaryawan: *" . ($bawahan ? $bawahan->nama : '-') . "*" .
+                "%0AKode Task: *" . $task->kode_task . "*" .
+                "%0AJudul Proyek: *" . $task->judul . "*" .
+                "%0AStatus: *SP 3 (Terlambat >= 3 Minggu)*" .
+                "%0A%0A📅 *Tanggal Pertemuan*: " . date('d-m-Y', strtotime($tgl_jadwal)) .
+                "%0A⏰ *Waktu*: " . $jam_jadwal . " WIB" .
+                "%0A🤝 *Metode*: " . $metode .
+                "%0A📍 *Lokasi/Link*: " . $lokasi .
+                ($catatan !== '' ? "%0A📝 *Catatan*: " . $catatan : "") .
+                "%0A%0AMohon hadir tepat waktu untuk evaluasi penyelesaian pekerjaan bersama HRD.";
+
+            if (function_exists('sendWa')) {
+                $noHpBawahan = ($bawahan && !empty($bawahan->no_hp)) ? $bawahan->no_hp : (($bawahan && !empty($bawahan->nohp)) ? $bawahan->nohp : '');
+                if (!empty($noHpBawahan)) {
+                    @sendWa(['devId' => hostWa('2'), 'penerima' => $noHpBawahan, 'pesan' => $pesanWa]);
+                }
+                $noHpHrd = ($hrdUser && !empty($hrdUser->no_hp)) ? $hrdUser->no_hp : (($hrdUser && !empty($hrdUser->nohp)) ? $hrdUser->nohp : '');
+                if (!empty($noHpHrd) && $noHpHrd !== $noHpBawahan) {
+                    @sendWa(['devId' => hostWa('2'), 'penerima' => $noHpHrd, 'pesan' => $pesanWa]);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
+        ajaxReturnDie('success', 'Jadwal pertemuan evaluasi SP 3 dengan HRD berhasil disimpan!', TRUE);
     }
 }

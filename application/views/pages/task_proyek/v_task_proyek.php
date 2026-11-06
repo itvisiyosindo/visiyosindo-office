@@ -574,8 +574,28 @@ $namaBulanList = [
                                                 <i class="far fa-calendar-check text-muted"></i>
                                                 <?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
-                                            <?php if ($isOverdue): ?>
+                                            <?php if (!empty($row->is_late)): ?>
+                                                <span class="badge badge-danger mt-1" title="Melewati batas deadline (Maksimal Rating Bintang 1)">
+                                                    <i class="fas fa-exclamation-circle"></i> Terlambat H+<?= (int)$row->hari_telat ?> (Maks ⭐1)
+                                                </span>
+                                            <?php elseif ($isOverdue): ?>
                                                 <span class="badge badge-danger mt-1">Terlambat / Overdue</span>
+                                            <?php endif; ?>
+                                            <?php if ((int)($row->sp_level ?? 0) >= 1): ?>
+                                                <div class="mt-1">
+                                                    <span class="badge <?= htmlspecialchars($row->sp_badge_cls ?? 'badge-danger') ?> px-2 py-1" style="font-size: 11px;">
+                                                        <i class="fas fa-gavel mr-1"></i> <?= htmlspecialchars($row->sp_label ?? ('SP ' . (int)$row->sp_level)) ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($row->hrd_jadwal_tgl)): ?>
+                                                <div class="mt-1 p-1 rounded small" style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; font-size:10.5px;">
+                                                    <strong><i class="fas fa-handshake"></i> Jadwal HRD:</strong><br>
+                                                    <?= date('d-m-Y', strtotime($row->hrd_jadwal_tgl)) ?> <?= !empty($row->hrd_jadwal_jam) ? htmlspecialchars($row->hrd_jadwal_jam) . ' WIB' : '' ?>
+                                                    <?php if (!empty($row->hrd_jadwal_lokasi)): ?>
+                                                        <br><span class="text-muted"><?= htmlspecialchars($row->hrd_jadwal_metode ?: 'Tatap Muka') ?> - <?= htmlspecialchars($row->hrd_jadwal_lokasi) ?></span>
+                                                    <?php endif; ?>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -588,9 +608,15 @@ $namaBulanList = [
                                         <td>
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
+                                                <?php if (!empty($row->is_late)): ?>
+                                                    <div class="badge badge-light-danger text-danger mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                <?php endif; ?>
                                                 <?php if (!empty($row->ulasan_atasan)): ?>
                                                     <div class="small text-muted mt-1" style="max-width:200px; white-space:normal;">"<?= htmlspecialchars($row->ulasan_atasan) ?>"</div>
                                                 <?php endif; ?>
+                                            <?php elseif (!empty($row->is_late)): ?>
+                                                <span class="badge badge-danger" style="font-size:10.5px;"><i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5</span>
+                                                <div class="text-muted small mt-1"><em>Lewat deadline H+<?= (int)$row->hari_telat ?></em></div>
                                             <?php else: ?>
                                                 <span class="text-muted small"><em>Belum dinilai</em></span>
                                             <?php endif; ?>
@@ -601,8 +627,24 @@ $namaBulanList = [
                                             </button>
                                             <?php if ((int)$row->status_task < 4 && (int)$row->status_task !== 2): ?>
                                                 <br>
-                                                <button type="button" class="btn btn-xs btn-success btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="submit">
+                                                <button type="button" class="btn btn-xs btn-success mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="submit">
                                                     <i class="fas fa-check"></i> Submit Selesai
+                                                </button>
+                                            <?php endif; ?>
+                                            <?php if ((int)($row->sp_level ?? 0) >= 3): ?>
+                                                <br>
+                                                <button type="button" class="btn btn-xs btn-danger font-weight-bold btn-jadwal-hrd-sp3"
+                                                    data-id="<?= (int)$row->id_task ?>"
+                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                    data-judul="<?= htmlspecialchars($row->judul) ?>"
+                                                    data-karyawan="<?= htmlspecialchars($row->nama_penerima ?: ($me->nama ?? '-')) ?>"
+                                                    data-telat="<?= (int)($row->hari_telat ?? 21) ?>"
+                                                    data-tgl="<?= htmlspecialchars($row->hrd_jadwal_tgl ?? '') ?>"
+                                                    data-jam="<?= htmlspecialchars($row->hrd_jadwal_jam ?? '10:00') ?>"
+                                                    data-metode="<?= htmlspecialchars($row->hrd_jadwal_metode ?? 'Tatap Muka (Offline)') ?>"
+                                                    data-lokasi="<?= htmlspecialchars($row->hrd_jadwal_lokasi ?? 'Ruang HRD') ?>"
+                                                    data-catatan="<?= htmlspecialchars($row->hrd_jadwal_catatan ?? '') ?>">
+                                                    <i class="fas fa-calendar-check"></i> <?= !empty($row->hrd_jadwal_tgl) ? 'Ubah Jadwal HRD' : 'Jadwalkan HRD (SP 3)' ?>
                                                 </button>
                                             <?php endif; ?>
                                         </td>
@@ -684,8 +726,28 @@ $namaBulanList = [
                                             <div class="small mt-1">
                                                 <?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
-                                            <?php if ($isOverdue): ?>
+                                            <?php if (!empty($row->is_late)): ?>
+                                                <span class="badge badge-danger mt-1" title="Melewati batas deadline (Maksimal Rating Bintang 1)">
+                                                    <i class="fas fa-exclamation-circle"></i> H+<?= (int)$row->hari_telat ?> (Maks ⭐1)
+                                                </span>
+                                            <?php elseif ($isOverdue): ?>
                                                 <span class="badge badge-danger mt-1">Overdue</span>
+                                            <?php endif; ?>
+                                            <?php if ((int)($row->sp_level ?? 0) >= 1): ?>
+                                                <div class="mt-1">
+                                                    <span class="badge <?= htmlspecialchars($row->sp_badge_cls ?? 'badge-danger') ?> px-2 py-1" style="font-size: 11px;">
+                                                        <i class="fas fa-gavel mr-1"></i> <?= htmlspecialchars($row->sp_label ?? ('SP ' . (int)$row->sp_level)) ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($row->hrd_jadwal_tgl)): ?>
+                                                <div class="mt-1 p-1 rounded small" style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; font-size:10.5px;">
+                                                    <strong><i class="fas fa-handshake"></i> Jadwal HRD:</strong><br>
+                                                    <?= date('d-m-Y', strtotime($row->hrd_jadwal_tgl)) ?> <?= !empty($row->hrd_jadwal_jam) ? htmlspecialchars($row->hrd_jadwal_jam) . ' WIB' : '' ?>
+                                                    <?php if (!empty($row->hrd_jadwal_lokasi)): ?>
+                                                        <br><span class="text-muted"><?= htmlspecialchars($row->hrd_jadwal_metode ?: 'Tatap Muka') ?> - <?= htmlspecialchars($row->hrd_jadwal_lokasi) ?></span>
+                                                    <?php endif; ?>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -698,11 +760,19 @@ $namaBulanList = [
                                         <td>
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
+                                                <?php if (!empty($row->is_late)): ?>
+                                                    <div class="badge badge-light-danger text-danger mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                <?php endif; ?>
                                                 <?php if (!empty($row->ulasan_atasan)): ?>
                                                     <div class="small text-muted mt-1" style="max-width:180px; white-space:normal;">"<?= htmlspecialchars($row->ulasan_atasan) ?>"</div>
                                                 <?php endif; ?>
                                             <?php elseif ((int)$row->status_task === 2): ?>
                                                 <span class="badge badge-warning"><i class="fas fa-star"></i> Siap Dinilai</span>
+                                                <?php if (!empty($row->is_late)): ?>
+                                                    <div class="badge badge-danger mt-1" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</div>
+                                                <?php endif; ?>
+                                            <?php elseif (!empty($row->is_late)): ?>
+                                                <span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</span>
                                             <?php else: ?>
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>
@@ -715,6 +785,22 @@ $namaBulanList = [
                                             <?php else: ?>
                                                 <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
                                                     <i class="fas fa-eye"></i> Detail & Nilai
+                                                </button><br>
+                                            <?php endif; ?>
+
+                                            <?php if ((int)($row->sp_level ?? 0) >= 3): ?>
+                                                <button type="button" class="btn btn-xs btn-danger font-weight-bold mb-1 btn-jadwal-hrd-sp3"
+                                                    data-id="<?= (int)$row->id_task ?>"
+                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                    data-judul="<?= htmlspecialchars($row->judul) ?>"
+                                                    data-karyawan="<?= htmlspecialchars($row->nama_penerima ?: '-') ?>"
+                                                    data-telat="<?= (int)($row->hari_telat ?? 21) ?>"
+                                                    data-tgl="<?= htmlspecialchars($row->hrd_jadwal_tgl ?? '') ?>"
+                                                    data-jam="<?= htmlspecialchars($row->hrd_jadwal_jam ?? '10:00') ?>"
+                                                    data-metode="<?= htmlspecialchars($row->hrd_jadwal_metode ?? 'Tatap Muka (Offline)') ?>"
+                                                    data-lokasi="<?= htmlspecialchars($row->hrd_jadwal_lokasi ?? 'Ruang HRD') ?>"
+                                                    data-catatan="<?= htmlspecialchars($row->hrd_jadwal_catatan ?? '') ?>">
+                                                    <i class="fas fa-calendar-check"></i> <?= !empty($row->hrd_jadwal_tgl) ? 'Jadwal HRD' : 'Jadwalkan HRD (SP 3)' ?>
                                                 </button><br>
                                             <?php endif; ?>
 
@@ -1055,6 +1141,7 @@ $namaBulanList = [
                         <strong><i class="fas fa-redo"></i> Catatan Permintaan Revisi dari Atasan:</strong>
                         <div id="dt_catatan_revisi"></div>
                     </div>
+                    <div id="dt_sp_alert_wrap" class="mt-2" style="display:none;"></div>
                 </div>
 
                 <!-- HASIL PENILAIAN BINTANG 5 (TAMPIL JIKA SUDAH DINILAI) -->
@@ -1153,6 +1240,10 @@ $namaBulanList = [
 
                             <!-- PILIH BINTANG 1 - 5 INTERAKTIF -->
                             <div id="wrapStarPicker" class="p-3 mb-3 rounded text-center" style="background:#fffbeb; border:1px dashed #f59e0b;">
+                                <div id="wrapOverdueMaxStarAlert" class="alert alert-danger py-2 px-3 mb-2 text-left small" style="display:none;">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <strong>Melewati Batas Deadline (<span id="lblOverdueDays">0</span> hari):</strong> Sesuai aturan kedisiplinan, task/proyek yang selesai melewati tanggal deadline <strong>maksimal mendapatkan Rating Bintang 1 (⭐ 1/5)</strong>.
+                                </div>
                                 <div class="small font-weight-bold text-uppercase mb-1" style="color:#b45309;">Klik Bintang untuk Memberikan Nilai Kualitas Kerja Karyawan:</div>
                                 <div class="star-rating-picker my-1" id="starPickerWidget">
                                     <i class="fas fa-star star-btn active" data-val="1" title="1 Bintang - Kurang Memuaskan"></i>
@@ -1234,6 +1325,65 @@ $namaBulanList = [
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary font-weight-bold" id="btnSimpanAtasanSaya">
                         <i class="fas fa-save mr-1"></i> Simpan Atasan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 4: JADWALKAN PERTEMUAN HRD (SAAT TASK KENA SP 3) -->
+<div class="modal fade" id="modalJadwalHrdSp3" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formJadwalHrdSp3">
+                <input type="hidden" name="id_task" id="jhrd_id_task">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-gavel mr-1"></i> Penjadwalan Pertemuan HRD (Tindak Lanjut SP 3)
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger py-2 px-3 mb-3 small">
+                        <strong><i class="fas fa-exclamation-triangle mr-1"></i> Peringatan Eskalasi SP 3:</strong><br>
+                        Task <strong id="jhrd_kode_task">-</strong> (<span id="jhrd_judul_task">-</span>) untuk karyawan <strong id="jhrd_nama_karyawan">-</strong> telah melewati deadline selama <strong id="jhrd_hari_telat">21</strong> hari (&ge; 3 minggu). Silakan atur jadwal pertemuan evaluasi dengan HRD.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7 form-group">
+                            <label class="font-weight-bold small">Tanggal Pertemuan HRD <span class="text-danger">*</span></label>
+                            <input type="date" name="hrd_jadwal_tgl" id="jhrd_tgl" class="form-control" required value="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+                        </div>
+                        <div class="col-md-5 form-group">
+                            <label class="font-weight-bold small">Jam Pertemuan <span class="text-danger">*</span></label>
+                            <input type="time" name="hrd_jadwal_jam" id="jhrd_jam" class="form-control" required value="10:00">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="font-weight-bold small">Metode Pertemuan</label>
+                            <select name="hrd_jadwal_metode" id="jhrd_metode" class="form-control">
+                                <option value="Tatap Muka (Offline)">Tatap Muka (Offline)</option>
+                                <option value="Online (Zoom / Google Meet)">Online (Zoom / Google Meet)</option>
+                                <option value="Telepon / WhatsApp Call">Telepon / WhatsApp Call</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="font-weight-bold small">Lokasi / Link Meeting <span class="text-danger">*</span></label>
+                            <input type="text" name="hrd_jadwal_lokasi" id="jhrd_lokasi" class="form-control" required placeholder="Ruang HRD / Link Meet" value="Ruang HRD">
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold small">Agenda / Catatan Pemanggilan HRD</label>
+                        <textarea name="hrd_jadwal_catatan" id="jhrd_catatan" rows="2" class="form-control" placeholder="Evaluasi keterlambatan penyelesaian task proyek & pembinaan disiplin SP 3..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger font-weight-bold" id="btnSubmitJadwalHrdSp3">
+                        <i class="fas fa-calendar-check mr-1"></i> Simpan Jadwal & Kirim Notifikasi WA
                     </button>
                 </div>
             </form>
@@ -1438,6 +1588,54 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#dt_revisi_wrap').hide();
                 }
 
+                // Tampilkan info keterlambatan, SP 1/2/3 & jadwal pertemuan HRD
+                var spLevel = parseInt(t.sp_level, 10) || 0;
+                var hariTelat = parseInt(t.hari_telat, 10) || 0;
+                var isLate = !!t.is_late || (parseInt(t.max_bintang, 10) === 1);
+                if (isLate || spLevel >= 1) {
+                    var spHtml = '<div class="alert ' + (spLevel >= 1 ? 'alert-danger' : 'alert-warning') + ' py-2 px-3 mb-0 small">';
+                    spHtml += '<div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">';
+                    spHtml += '<div>';
+                    if (spLevel >= 1) {
+                        spHtml += '<span class="badge badge-danger mr-1" style="font-size:11.5px;"><i class="fas fa-gavel mr-1"></i> STATUS SANKSI: ' + (t.sp_label || ('SP ' + spLevel)) + '</span> ';
+                    }
+                    spHtml += '<strong>Terlambat H+' + hariTelat + ' hari dari deadline (' + (t.tgl_deadline_fmt || '-') + ').</strong> ';
+                    spHtml += 'Maksimal nilai bintang terkunci pada <strong>⭐ 1/5</strong>.';
+                    if (t.sp_desc) {
+                        spHtml += '<div class="mt-1">' + $('<div>').text(t.sp_desc).html() + '</div>';
+                    }
+                    if (t.hrd_jadwal_tgl) {
+                        spHtml += '<div class="mt-1 p-1 px-2 rounded bg-white text-dark border border-danger">' +
+                            '<strong><i class="fas fa-handshake text-danger mr-1"></i> Jadwal Pertemuan HRD:</strong> ' +
+                            (t.hrd_jadwal_tgl_fmt || t.hrd_jadwal_tgl) + ' pukul ' + (t.hrd_jadwal_jam || '10:00') + ' WIB — ' +
+                            $('<div>').text((t.hrd_jadwal_metode || 'Tatap Muka') + ' (' + (t.hrd_jadwal_lokasi || 'Ruang HRD') + ')').html() +
+                            (t.hrd_jadwal_catatan ? '<br><em>Catatan: ' + $('<div>').text(t.hrd_jadwal_catatan).html() + '</em>' : '') +
+                            '</div>';
+                    }
+                    spHtml += '</div>';
+                    if (spLevel >= 3) {
+                        spHtml += '<div>' +
+                            '<button type="button" class="btn btn-xs btn-danger font-weight-bold btn-jadwal-hrd-sp3" ' +
+                            'data-id="' + t.id_task + '" ' +
+                            'data-kode="' + $('<div>').text(t.kode_task || '').html() + '" ' +
+                            'data-judul="' + $('<div>').text(t.judul || '').html() + '" ' +
+                            'data-karyawan="' + $('<div>').text(t.nama_penerima || '').html() + '" ' +
+                            'data-telat="' + hariTelat + '" ' +
+                            'data-tgl="' + (t.hrd_jadwal_tgl || '') + '" ' +
+                            'data-jam="' + (t.hrd_jadwal_jam || '10:00') + '" ' +
+                            'data-metode="' + $('<div>').text(t.hrd_jadwal_metode || 'Tatap Muka (Offline)').html() + '" ' +
+                            'data-lokasi="' + $('<div>').text(t.hrd_jadwal_lokasi || 'Ruang HRD').html() + '" ' +
+                            'data-catatan="' + $('<div>').text(t.hrd_jadwal_catatan || '').html() + '">' +
+                            '<i class="fas fa-calendar-check mr-1"></i> ' + (t.hrd_jadwal_tgl ? 'Ubah Jadwal HRD' : 'Jadwalkan Pertemuan HRD') +
+                            '</button>' +
+                            '</div>';
+                    }
+                    spHtml += '</div></div>';
+                    $('#dt_sp_alert_wrap').html(spHtml).show();
+                } else {
+                    $('#dt_sp_alert_wrap').hide().empty();
+                }
+
                 // Tampilkan kotak hasil rating jika sudah dinilai
                 if (parseInt(t.status_task, 10) === 4 && t.rating_bintang) {
                     $('#dt_rating_stars_html').html(buildStarsJs(t.rating_bintang));
@@ -1490,9 +1688,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya siap dinilai (2) atau sudah dinilai (4)
+                window.currentTaskMaxStar = isLate ? 1 : 5;
+                if (isLate) {
+                    $('#lblOverdueDays').text(hariTelat);
+                    $('#wrapOverdueMaxStarAlert').show();
+                    $('#starPickerWidget .star-btn').each(function() {
+                        var sVal = parseInt($(this).data('val'), 10);
+                        if (sVal > 1) {
+                            $(this).css({ opacity: 0.25, cursor: 'not-allowed' }).attr('title', 'Terkunci: Maksimal Bintang 1 karena melewati deadline');
+                        }
+                    });
+                } else {
+                    $('#wrapOverdueMaxStarAlert').hide();
+                    $('#starPickerWidget .star-btn').css({ opacity: 1, cursor: 'pointer' });
+                }
+
                 if (canReview && (parseInt(t.status_task, 10) === 2 || parseInt(t.status_task, 10) === 4)) {
                     $('#panelAtasanReview').show();
                     var initStar = parseInt(t.rating_bintang, 10) || 5;
+                    if (isLate) initStar = 1;
                     setStarPickerValue(initStar);
                     $('#rev_ulasan_atasan').val(t.ulasan_atasan || '');
                 } else {
@@ -1613,6 +1827,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setStarPickerValue(val) {
         val = parseInt(val, 10) || 5;
+        var maxAllowed = parseInt(window.currentTaskMaxStar, 10) || 5;
+        if (val > maxAllowed) {
+            val = maxAllowed;
+        }
         $('#rev_rating_bintang').val(val);
         $('#starPickerWidget .star-btn').each(function() {
             var sVal = parseInt($(this).data('val'), 10);
@@ -1622,11 +1840,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 $(this).removeClass('active');
             }
         });
-        $('#starPickerLabel').text(starDescriptions[val] || '');
+        if (maxAllowed === 1) {
+            $('#starPickerLabel').text('⭐ (1 / 5 — Maksimal Bintang 1 karena melewati batas Deadline)');
+        } else {
+            $('#starPickerLabel').text(starDescriptions[val] || '');
+        }
     }
 
     $(document).on('click', '#starPickerWidget .star-btn', function() {
-        var val = $(this).data('val');
+        var val = parseInt($(this).data('val'), 10) || 1;
+        var maxAllowed = parseInt(window.currentTaskMaxStar, 10) || 5;
+        if (val > maxAllowed) {
+            setStarPickerValue(1);
+            return;
+        }
         setStarPickerValue(val);
     });
 
@@ -1673,6 +1900,61 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             error: function() {
                 $btn.prop('disabled', false).html(origHtml);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+    });
+
+    // Buka Modal Jadwalkan Pertemuan HRD (SP 3)
+    $(document).on('click', '.btn-jadwal-hrd-sp3', function() {
+        var $b = $(this);
+        $('#jhrd_id_task').val($b.data('id'));
+        $('#jhrd_kode_task').text($b.data('kode') || '-');
+        $('#jhrd_judul_task').text($b.data('judul') || '-');
+        $('#jhrd_nama_karyawan').text($b.data('karyawan') || '-');
+        $('#jhrd_hari_telat').text($b.data('telat') || '21');
+        var tgl = $b.data('tgl');
+        if (tgl) {
+            $('#jhrd_tgl').val(tgl);
+        }
+        $('#jhrd_jam').val($b.data('jam') || '10:00');
+        $('#jhrd_metode').val($b.data('metode') || 'Tatap Muka (Offline)');
+        $('#jhrd_lokasi').val($b.data('lokasi') || 'Ruang HRD');
+        $('#jhrd_catatan').val($b.data('catatan') || '');
+        $('#modalDetailTask').modal('hide');
+        setTimeout(function() {
+            $('#modalJadwalHrdSp3').modal('show');
+        }, 200);
+    });
+
+    $('#formJadwalHrdSp3').on('submit', function(e) {
+        e.preventDefault();
+        var $btn = $('#btnSubmitJadwalHrdSp3');
+        var orig = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan Jadwal...');
+        var formData = $(this).serializeArray();
+        formData.push({ name: csrfName, value: getCsrfHash() });
+        $.ajax({
+            url: baseUrl + 'task_proyek/jadwalkan_hrd',
+            type: 'POST',
+            data: $.param(formData),
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(orig);
+                if (res && res.status === 'success') {
+                    $('#modalJadwalHrdSp3').modal('hide');
+                    if (window.swal) {
+                        swal('Terjadwal!', res.msg, 'success').then(function() { window.location.reload(); });
+                    } else {
+                        alert(res.msg);
+                        window.location.reload();
+                    }
+                } else {
+                    alert((res && res.msg) ? res.msg : 'Gagal menyimpan jadwal pertemuan HRD.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(orig);
                 alert('Terjadi kesalahan jaringan.');
             }
         });

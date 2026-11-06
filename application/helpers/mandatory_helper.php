@@ -700,3 +700,141 @@ function img_to_base64($relativePath)
 
 	return $relativePath;
 }
+
+if (!function_exists('ensureTaskProyekSpColumns')) {
+	function ensureTaskProyekSpColumns()
+	{
+		static $checked = false;
+		if ($checked) {
+			return;
+		}
+		$checked = true;
+
+		$CI =& get_instance();
+		if (!isset($CI->db) || !$CI->db->table_exists('task_proyek')) {
+			return;
+		}
+
+		$chk = @$CI->db->query("SHOW COLUMNS FROM `task_proyek` LIKE 'sp_level'");
+		if ($chk && $chk->num_rows() === 0) {
+			@$CI->db->query("ALTER TABLE `task_proyek`
+				ADD COLUMN `sp_level` TINYINT(1) NOT NULL DEFAULT 0 AFTER `tgl_dinilai`,
+				ADD COLUMN `hrd_jadwal_tgl` DATE DEFAULT NULL AFTER `sp_level`,
+				ADD COLUMN `hrd_jadwal_jam` VARCHAR(20) DEFAULT NULL AFTER `hrd_jadwal_tgl`,
+				ADD COLUMN `hrd_jadwal_metode` VARCHAR(50) DEFAULT NULL AFTER `hrd_jadwal_jam`,
+				ADD COLUMN `hrd_jadwal_lokasi` VARCHAR(255) DEFAULT NULL AFTER `hrd_jadwal_metode`,
+				ADD COLUMN `hrd_jadwal_catatan` TEXT DEFAULT NULL AFTER `hrd_jadwal_lokasi`,
+				ADD COLUMN `hrd_jadwal_status` VARCHAR(30) DEFAULT NULL AFTER `hrd_jadwal_catatan`,
+				ADD COLUMN `hrd_jadwal_by` INT(11) DEFAULT NULL AFTER `hrd_jadwal_status`
+			");
+		}
+	}
+}
+
+if (!function_exists('evaluateTaskDeadlineAndSp')) {
+	/**
+	 * Evaluasi keterlambatan task terhadap tgl_deadline:
+	 * - Lewat deadline >= 1 hari (misal deadline tgl 5, masuk tgl 6):
+	 *   is_late = true, max_bintang = 1 (walaupun task selesai)
+	 * - Telat >= 7 hari (1 minggu setelah deadline belum selesai): SP 1
+	 * - Telat >= 14 hari (2 minggu setelah deadline belum selesai): SP 2
+	 * - Telat >= 21 hari (3 minggu setelah deadline belum selesai): SP 3 + Penjadwalan Pertemuan HRD
+	 */
+	function evaluateTaskDeadlineAndSp($t, $autoSyncDb = true)
+	{
+		$res = [
+			'is_late'          => false,
+			'hari_telat'       => 0,
+			'max_bintang'      => 5,
+			'sp_level'         => isset($t->sp_level) ? (int)$t->sp_level : 0,
+			'sp_label'         => '',
+			'sp_desc'          => '',
+			'sp_badge_cls'     => '',
+			'can_schedule_hrd' => false
+		];
+
+		if (!$t || empty($t->tgl_deadline)) {
+			return $res;
+		}
+
+		$deadlineDate = date('Y-m-d', strtotime($t->tgl_deadline));
+		$statusTask   = isset($t->status_task) ? (int)$t->status_task : 0;
+
+		// Jika sudah disubmit (2) atau selesai (4), tanggal acuan adalah tanggal submit/dinilai.
+		// Jika belum selesai (0 = Baru, 1 = Dikerjakan, 3 = Revisi), tanggal acuan adalah hari ini.
+		if (($statusTask === 2 || $statusTask === 4) && (!empty($t->tgl_submit) || !empty($t->tgl_dinilai))) {
+			$refRaw  = !empty($t->tgl_submit) ? $t->tgl_submit : $t->tgl_dinilai;
+			$refDate = date('Y-m-d', strtotime($refRaw));
+		} else {
+			$refDate = date('Y-m-d');
+		}
+
+		$diffSec  = strtotime($refDate) - strtotime($deadlineDate);
+		$diffDays = (int)floor($diffSec / 86400);
+
+		if ($diffDays >= 1) {
+			$res['is_late']     = true;
+			$res['hari_telat']  = $diffDays;
+			$res['max_bintang'] = 1;
+
+			$spCalc = 0;
+			if ($diffDays >= 21) {
+				$spCalc = 3;
+			} elseif ($diffDays >= 14) {
+				$spCalc = 2;
+			} elseif ($diffDays >= 7) {
+				$spCalc = 1;
+			}
+
+			if ($spCalc > $res['sp_level']) {
+				$res['sp_level'] = $spCalc;
+			}
+		}
+
+		if ($res['sp_level'] >= 3) {
+			$res['sp_level']         = 3;
+			$res['sp_label']         = 'SP 3';
+			$res['sp_desc']          = 'Terlambat >= 3 Minggu (Wajib Konseling HRD)';
+			$res['sp_badge_cls']     = 'badge-danger';
+			$res['can_schedule_hrd'] = true;
+		} elseif ($res['sp_level'] === 2) {
+			$res['sp_label']     = 'SP 2';
+			$res['sp_desc']      = 'Terlambat >= 2 Minggu';
+			$res['sp_badge_cls'] = 'badge-danger';
+		} elseif ($res['sp_level'] === 1) {
+			$res['sp_label']     = 'SP 1';
+			$res['sp_desc']      = 'Terlambat >= 1 Minggu';
+			$res['sp_badge_cls'] = 'badge-warning text-dark';
+		}
+
+		if ($autoSyncDb && !empty($t->id_task)) {
+			ensureTaskProyekSpColumns();
+			$CI =& get_instance();
+			$updates = [];
+			$dbSp = isset($t->sp_level) ? (int)$t->sp_level : 0;
+			if ($res['sp_level'] > $dbSp) {
+				$updates['sp_level'] = $res['sp_level'];
+			}
+			if ($res['is_late'] && !empty($t->rating_bintang) && (int)$t->rating_bintang > 1) {
+				$updates['rating_bintang'] = 1;
+				$t->rating_bintang = 1;
+			}
+			if (!empty($updates) && isset($CI->db)) {
+				@$CI->db->where('id_task', (int)$t->id_task)->update('task_proyek', $updates);
+			}
+		}
+
+		if (is_object($t)) {
+			$t->is_late          = $res['is_late'];
+			$t->hari_telat       = $res['hari_telat'];
+			$t->max_bintang      = $res['max_bintang'];
+			$t->sp_level         = $res['sp_level'];
+			$t->sp_label         = $res['sp_label'];
+			$t->sp_desc          = $res['sp_desc'];
+			$t->sp_badge_cls     = $res['sp_badge_cls'];
+			$t->can_schedule_hrd = $res['can_schedule_hrd'];
+		}
+
+		return $res;
+	}
+}

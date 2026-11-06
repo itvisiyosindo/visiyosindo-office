@@ -714,19 +714,41 @@ if (!function_exists('lap_limit_text')) {
 		<!-- PROJECT & TASK YANG DISELESAIKAN (SINKRON TASK & PROYEK) -->
 		<div class="card laporan-card mb-4">
 			<div class="card-body p-3 p-md-4">
+				<?php
+				$cnt_selesai_ps = 0;
+				$cnt_aktif_ps = 0;
+				$cnt_sp_ps = 0;
+				if (!empty($data_project_selesai)) {
+					foreach ($data_project_selesai as $_tp) {
+						if ((int)$_tp->status_task === 4) $cnt_selesai_ps++;
+						else $cnt_aktif_ps++;
+						if ((int)($_tp->sp_level ?? 0) >= 1) $cnt_sp_ps++;
+					}
+				}
+				?>
 				<div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
 					<div>
 						<h5 class="font-weight-bold text-dark mb-1" style="font-size: 14.5px;">
-							<i class="fas fa-tasks text-primary mr-1"></i> Project & Task yang Diselesaikan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+							<i class="fas fa-tasks text-primary mr-1"></i> Project & Task (Aktif & Diselesaikan): <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
 						</h5>
 						<div class="text-muted small">
-							<i class="fas fa-sync-alt mr-1 text-success"></i> Terisi otomatis & sinkron dengan menu <strong>Task & Proyek</strong>
+							<i class="fas fa-sync-alt mr-1 text-success"></i> Task/Proyek yang belum selesai akan tetap tampil otomatis. Lewat deadline maks ⭐1; telat &ge;1 mgg <strong>SP 1</strong>, &ge;2 mgg <strong>SP 2</strong>, &ge;3 mgg <strong>SP 3 + Jadwal HRD</strong>.
 						</div>
 					</div>
-					<div class="d-flex align-items-center" style="gap: 8px;">
+					<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+						<?php if ($cnt_aktif_ps > 0): ?>
+							<span class="badge badge-light-warning text-warning font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
+								<i class="fas fa-spinner mr-1"></i> <?= $cnt_aktif_ps ?> Belum Selesai
+							</span>
+						<?php endif; ?>
 						<span class="badge badge-light-success font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
-							<i class="fas fa-check-circle mr-1"></i> <?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> Selesai
+							<i class="fas fa-check-circle mr-1"></i> <?= $cnt_selesai_ps ?> Selesai
 						</span>
+						<?php if ($cnt_sp_ps > 0): ?>
+							<span class="badge badge-danger font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
+								<i class="fas fa-gavel mr-1"></i> <?= $cnt_sp_ps ?> Terkena SP
+							</span>
+						<?php endif; ?>
 						<a href="<?= base_url('task_proyek') ?>" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm" style="border-radius: 8px; font-weight: 600; padding: 6px 14px;">
 							<i class="fas fa-external-link-alt mr-1"></i> Menu Task & Proyek
 						</a>
@@ -734,7 +756,7 @@ if (!function_exists('lap_limit_text')) {
 				</div>
 				
 				<div class="table-responsive">
-                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_project_selesai" style="min-width: 1050px; width: 100%;">
+                    <table class="table table-bordered table-hover table-modern mb-0" id="kt_table_project_selesai" style="min-width: 1080px; width: 100%;">
                         <thead>
                             <tr>
                                 <th style="width: 45px; text-align: center;">No</th>
@@ -742,10 +764,10 @@ if (!function_exists('lap_limit_text')) {
                                 <th style="min-width: 220px; text-align: left;">Judul & Deskripsi</th>
                                 <th style="width: 150px; text-align: left;">Proyek / Jenis</th>
                                 <th style="width: 140px; text-align: left;">Pemberi Tugas</th>
-                                <th style="width: 120px; text-align: center;">Tgl Selesai</th>
+                                <th style="width: 145px; text-align: center;">Deadline & Tgl Selesai</th>
                                 <th style="width: 150px; text-align: left;">Hasil / Bukti</th>
-                                <th style="width: 140px; text-align: center;">Rating & Ulasan</th>
-                                <th style="width: 110px; text-align: center;">Status</th>
+                                <th style="width: 150px; text-align: center;">Rating & Ulasan</th>
+                                <th style="width: 135px; text-align: center;">Status & Sanksi SP</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -759,8 +781,9 @@ if (!function_exists('lap_limit_text')) {
                                     if ($t->prioritas === 'Urgent') $prio_badge = 'badge-danger';
                                     elseif ($t->prioritas === 'High') $prio_badge = 'badge-warning text-dark';
                                     elseif ($t->prioritas === 'Medium') $prio_badge = 'badge-info';
+                                    $sp_lvl = (int)($t->sp_level ?? 0);
                             ?>
-                                <tr>
+                                <tr <?= $sp_lvl >= 1 ? 'style="background-color: #fff5f5;"' : '' ?>>
                                     <td style="text-align:center; font-weight: 600; color: #475569;"><?= $no_ps++ ?></td>
                                     <td style="text-align:center;">
                                         <div class="font-weight-bold text-dark" style="font-size: 12px;"><?= htmlspecialchars($t->kode_task) ?></div>
@@ -784,8 +807,24 @@ if (!function_exists('lap_limit_text')) {
                                             <div class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($t->jabatan_pemberi) ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td style="text-align:center; white-space: nowrap; font-size: 12px;">
-                                        <i class="far fa-calendar-check text-success mr-1"></i><?= date('d-m-Y', strtotime($tgl_selesai)) ?>
+                                    <td style="text-align:center; white-space: nowrap; font-size: 11.5px;">
+                                        <div class="text-muted small">
+                                            <i class="far fa-calendar-alt mr-1"></i>DL: <strong><?= !empty($t->tgl_deadline) ? date('d-m-Y', strtotime($t->tgl_deadline)) : '-' ?></strong>
+                                        </div>
+                                        <?php if ((int)$t->status_task >= 2 && !empty($tgl_selesai)): ?>
+                                            <div class="text-success font-weight-bold mt-1">
+                                                <i class="far fa-calendar-check mr-1"></i><?= date('d-m-Y', strtotime($tgl_selesai)) ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="text-warning font-weight-bold mt-1">
+                                                <i class="fas fa-hourglass-half mr-1"></i>Belum Selesai
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($t->is_late)): ?>
+                                            <span class="badge badge-danger mt-1" style="font-size: 10px;">
+                                                Telat H+<?= (int)$t->hari_telat ?> (Maks ⭐1)
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php 
@@ -816,9 +855,17 @@ if (!function_exists('lap_limit_text')) {
                                                 <?php endfor; ?>
                                                 <span class="font-weight-bold text-dark ml-1" style="font-size: 12px;"><?= $t->rating_bintang ?>/5</span>
                                             </div>
+                                            <?php if (!empty($t->is_late)): ?>
+                                                <div class="badge badge-light-danger text-danger mb-1" style="font-size: 9.5px;">Maks ⭐1 (Lewat Deadline)</div>
+                                            <?php endif; ?>
                                             <?php if (!empty($t->ulasan_atasan)): ?>
                                                 <div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(lap_limit_text($t->ulasan_atasan, 60)) ?>"</div>
                                             <?php endif; ?>
+                                        <?php elseif (!empty($t->is_late)): ?>
+                                            <span class="badge badge-danger px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
+                                                <i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5
+                                            </span>
+                                            <div class="text-muted small mt-1" style="font-size: 10.5px;">Lewat deadline</div>
                                         <?php else: ?>
                                             <span class="badge badge-light-warning text-warning small px-2 py-1" style="border-radius: 6px;">
                                                 <i class="far fa-clock mr-1"></i> Menunggu Rating
@@ -834,10 +881,49 @@ if (!function_exists('lap_limit_text')) {
                                             <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 11px;">
                                                 <i class="fas fa-hourglass-half mr-1"></i> Review
                                             </span>
-                                        <?php else: ?>
-                                            <span class="badge badge-info px-2 py-1" style="border-radius: 6px; font-size: 11px;">
-                                                <?= (int)$t->progres ?>%
+                                        <?php elseif ((int)$t->status_task === 3): ?>
+                                            <span class="badge badge-danger px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <i class="fas fa-redo mr-1"></i> Revisi
                                             </span>
+                                        <?php elseif ((int)$t->status_task === 1): ?>
+                                            <span class="badge badge-info px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                <i class="fas fa-spinner mr-1"></i> Proses (<?= (int)$t->progres ?>%)
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-secondary px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+                                                Baru (<?= (int)$t->progres ?>%)
+                                            </span>
+                                        <?php endif; ?>
+
+                                        <?php if ($sp_lvl >= 1): ?>
+                                            <div class="mt-1">
+                                                <span class="badge badge-danger px-2 py-1 font-weight-bold" style="font-size: 10.5px; border-radius: 6px;" title="<?= htmlspecialchars($t->sp_desc ?? '') ?>">
+                                                    <i class="fas fa-gavel mr-1"></i> <?= htmlspecialchars($t->sp_label ?? ('SP ' . $sp_lvl)) ?>
+                                                </span>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php if ($sp_lvl >= 3): ?>
+                                            <?php if (!empty($t->hrd_jadwal_tgl)): ?>
+                                                <div class="mt-1 p-1 rounded text-left" style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; font-size:10px; line-height:1.3;">
+                                                    <strong><i class="fas fa-handshake"></i> Jadwal HRD:</strong><br>
+                                                    <?= date('d-m-Y', strtotime($t->hrd_jadwal_tgl)) ?> <?= !empty($t->hrd_jadwal_jam) ? htmlspecialchars($t->hrd_jadwal_jam) : '' ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <button type="button" class="btn btn-xs btn-danger font-weight-bold mt-1 btn-jadwal-hrd-sp3"
+                                                style="border-radius: 5px; font-size: 10px; padding: 2px 6px;"
+                                                data-id="<?= (int)$t->id_task ?>"
+                                                data-kode="<?= htmlspecialchars($t->kode_task) ?>"
+                                                data-judul="<?= htmlspecialchars($t->judul) ?>"
+                                                data-karyawan="<?= htmlspecialchars($data_job->nama ?? '-') ?>"
+                                                data-telat="<?= (int)($t->hari_telat ?? 21) ?>"
+                                                data-tgl="<?= htmlspecialchars($t->hrd_jadwal_tgl ?? '') ?>"
+                                                data-jam="<?= htmlspecialchars($t->hrd_jadwal_jam ?? '10:00') ?>"
+                                                data-metode="<?= htmlspecialchars($t->hrd_jadwal_metode ?? 'Tatap Muka (Offline)') ?>"
+                                                data-lokasi="<?= htmlspecialchars($t->hrd_jadwal_lokasi ?? 'Ruang HRD') ?>"
+                                                data-catatan="<?= htmlspecialchars($t->hrd_jadwal_catatan ?? '') ?>">
+                                                <i class="fas fa-calendar-check"></i> <?= !empty($t->hrd_jadwal_tgl) ? 'Ubah Jadwal HRD' : 'Jadwalkan HRD' ?>
+                                            </button>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -849,8 +935,8 @@ if (!function_exists('lap_limit_text')) {
                                     <td colspan="9" class="text-center text-muted py-4" style="background: #fafbfc;">
                                         <div class="my-2">
                                             <i class="fas fa-clipboard-check text-muted fa-2x d-block mb-2" style="opacity: 0.5;"></i>
-                                            <span class="font-weight-bold text-dark">Belum ada project atau task yang diselesaikan pada periode minggu ini.</span><br>
-                                            <small class="text-muted">Task atau proyek yang diselesaikan oleh karyawan di menu <a href="<?= base_url('task_proyek') ?>" target="_blank" class="font-weight-bold">Task & Proyek</a> akan otomatis sinkron dan muncul di sini.</small>
+                                            <span class="font-weight-bold text-dark">Belum ada project atau task aktif maupun selesai pada periode minggu ini.</span><br>
+                                            <small class="text-muted">Task atau proyek karyawan di menu <a href="<?= base_url('task_proyek') ?>" target="_blank" class="font-weight-bold">Task & Proyek</a> akan otomatis tampil di sini hingga selesai.</small>
                                         </div>
                                     </td>
                                 </tr>
@@ -1591,3 +1677,110 @@ if (!function_exists('lap_limit_text')) {
 		</div>
 	</div>
 </div>
+
+<!-- MODAL JADWALKAN PERTEMUAN HRD (SP 3) -->
+<div class="modal fade" id="modalJadwalHrdSp3" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formJadwalHrdSp3">
+                <input type="hidden" name="id_task" id="jhrd_id_task">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-gavel mr-1"></i> Penjadwalan Pertemuan HRD (Tindak Lanjut SP 3)
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger py-2 px-3 mb-3 small">
+                        <strong><i class="fas fa-exclamation-triangle mr-1"></i> Peringatan Eskalasi SP 3:</strong><br>
+                        Task <strong id="jhrd_kode_task">-</strong> (<span id="jhrd_judul_task">-</span>) untuk karyawan <strong id="jhrd_nama_karyawan">-</strong> telah melewati deadline selama <strong id="jhrd_hari_telat">21</strong> hari (&ge; 3 minggu). Silakan atur jadwal pertemuan evaluasi dengan HRD.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7 form-group">
+                            <label class="font-weight-bold small">Tanggal Pertemuan HRD <span class="text-danger">*</span></label>
+                            <input type="date" name="hrd_jadwal_tgl" id="jhrd_tgl" class="form-control" required value="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+                        </div>
+                        <div class="col-md-5 form-group">
+                            <label class="font-weight-bold small">Jam Pertemuan <span class="text-danger">*</span></label>
+                            <input type="time" name="hrd_jadwal_jam" id="jhrd_jam" class="form-control" required value="10:00">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="font-weight-bold small">Metode Pertemuan</label>
+                            <select name="hrd_jadwal_metode" id="jhrd_metode" class="form-control">
+                                <option value="Tatap Muka (Offline)">Tatap Muka (Offline)</option>
+                                <option value="Online (Zoom / Google Meet)">Online (Zoom / Google Meet)</option>
+                                <option value="Telepon / WhatsApp Call">Telepon / WhatsApp Call</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="font-weight-bold small">Lokasi / Link Meeting <span class="text-danger">*</span></label>
+                            <input type="text" name="hrd_jadwal_lokasi" id="jhrd_lokasi" class="form-control" required placeholder="Ruang HRD / Link Meet" value="Ruang HRD">
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold small">Agenda / Catatan Pemanggilan HRD</label>
+                        <textarea name="hrd_jadwal_catatan" id="jhrd_catatan" rows="2" class="form-control" placeholder="Evaluasi keterlambatan penyelesaian task proyek & pembinaan disiplin SP 3..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger btn-sm font-weight-bold" id="btnSubmitJadwalHrdSp3">
+                        <i class="fas fa-calendar-check mr-1"></i> Simpan Jadwal & Kirim Notifikasi WA
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var $ = window.jQuery;
+    if (!$) return;
+    $(document).on('click', '.btn-jadwal-hrd-sp3', function() {
+        var $b = $(this);
+        $('#jhrd_id_task').val($b.data('id'));
+        $('#jhrd_kode_task').text($b.data('kode') || '-');
+        $('#jhrd_judul_task').text($b.data('judul') || '-');
+        $('#jhrd_nama_karyawan').text($b.data('karyawan') || '-');
+        $('#jhrd_hari_telat').text($b.data('telat') || '21');
+        if ($b.data('tgl')) $('#jhrd_tgl').val($b.data('tgl'));
+        $('#jhrd_jam').val($b.data('jam') || '10:00');
+        $('#jhrd_metode').val($b.data('metode') || 'Tatap Muka (Offline)');
+        $('#jhrd_lokasi').val($b.data('lokasi') || 'Ruang HRD');
+        $('#jhrd_catatan').val($b.data('catatan') || '');
+        $('#modalJadwalHrdSp3').modal('show');
+    });
+    $('#formJadwalHrdSp3').on('submit', function(e) {
+        e.preventDefault();
+        var $btn = $('#btnSubmitJadwalHrdSp3');
+        var orig = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+        var formData = $(this).serializeArray();
+        formData.push({ name: '<?= $this->security->get_csrf_token_name() ?>', value: '<?= $this->security->get_csrf_hash() ?>' });
+        $.ajax({
+            url: '<?= base_url('task_proyek/jadwalkan_hrd') ?>',
+            type: 'POST',
+            data: $.param(formData),
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(orig);
+                if (res && res.status === 'success') {
+                    $('#modalJadwalHrdSp3').modal('hide');
+                    alert(res.msg);
+                    window.location.reload();
+                } else {
+                    alert((res && res.msg) ? res.msg : 'Gagal menyimpan jadwal HRD.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(orig);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+    });
+});
+</script>

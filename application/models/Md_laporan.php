@@ -701,28 +701,12 @@ class Md_laporan extends CI_Model
             return [];
         }
 
+        if (function_exists('ensureTaskProyekSpColumns')) {
+            ensureTaskProyekSpColumns();
+        }
+
         $this->db->select('
-            t.id_task,
-            t.kode_task,
-            t.judul,
-            t.nama_proyek,
-            t.jenis,
-            t.prioritas,
-            t.deskripsi,
-            t.id_pemberi,
-            t.id_penerima,
-            t.tgl_mulai,
-            t.tgl_deadline,
-            t.progres,
-            t.status_task,
-            t.catatan_bawahan,
-            t.bukti_selesai,
-            t.tgl_submit,
-            t.rating_bintang,
-            t.ulasan_atasan,
-            t.tgl_dinilai,
-            t.created_at,
-            t.updated_at,
+            t.*,
             p_beri.nama AS nama_pemberi,
             p_beri.jabatan AS jabatan_pemberi,
             p_terima.nama AS nama_penerima,
@@ -733,28 +717,49 @@ class Md_laporan extends CI_Model
         $this->db->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left');
         $this->db->where('t.is_deleted', 0);
         $this->db->where('t.id_penerima', $id_pengguna);
-        $this->db->group_start();
-            $this->db->where_in('t.status_task', [2, 4]);
-            $this->db->or_where('t.progres >=', 100);
-        $this->db->group_end();
 
+        // Selama belum selesai (status_task < 4), task tetap tampil terus sejak tgl_mulai/created_at.
+        // Jika sudah selesai (status_task = 4), tampil pada minggu task tersebut selesai/berjalan.
         $this->db->group_start();
-            $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) >=", $start_date);
-            $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) <=", $end_date);
-            $this->db->or_group_start();
-                $this->db->where("DATE(t.tgl_submit) >=", $start_date);
-                $this->db->where("DATE(t.tgl_submit) <=", $end_date);
+            $this->db->group_start();
+                $this->db->where('t.status_task <', 4);
+                $this->db->where("DATE(COALESCE(t.tgl_mulai, t.created_at)) <=", $end_date);
             $this->db->group_end();
             $this->db->or_group_start();
-                $this->db->where("DATE(t.tgl_dinilai) >=", $start_date);
-                $this->db->where("DATE(t.tgl_dinilai) <=", $end_date);
+                $this->db->where('t.status_task', 4);
+                $this->db->group_start();
+                    $this->db->group_start();
+                        $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) >=", $start_date);
+                        $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) <=", $end_date);
+                    $this->db->group_end();
+                    $this->db->or_group_start();
+                        $this->db->where("DATE(t.tgl_submit) >=", $start_date);
+                        $this->db->where("DATE(t.tgl_submit) <=", $end_date);
+                    $this->db->group_end();
+                    $this->db->or_group_start();
+                        $this->db->where("DATE(t.tgl_dinilai) >=", $start_date);
+                        $this->db->where("DATE(t.tgl_dinilai) <=", $end_date);
+                    $this->db->group_end();
+                    $this->db->or_group_start();
+                        $this->db->where("DATE(COALESCE(t.tgl_mulai, t.created_at)) <=", $end_date);
+                        $this->db->where("DATE(COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at)) >=", $start_date);
+                    $this->db->group_end();
+                $this->db->group_end();
             $this->db->group_end();
         $this->db->group_end();
 
-        $this->db->order_by('COALESCE(t.tgl_dinilai, t.tgl_submit, t.updated_at) DESC', '', FALSE);
+        $this->db->order_by('FIELD(t.status_task, 3, 1, 0, 2, 4)', '', FALSE);
+        $this->db->order_by('COALESCE(t.tgl_dinilai, t.tgl_submit, t.tgl_deadline, t.updated_at) DESC', '', FALSE);
         $this->db->order_by('t.id_task', 'DESC');
 
-        return $this->db->get()->result();
+        $rows = $this->db->get()->result();
+        if (!empty($rows) && function_exists('evaluateTaskDeadlineAndSp')) {
+            foreach ($rows as $r) {
+                evaluateTaskDeadlineAndSp($r, true);
+            }
+        }
+
+        return $rows;
     }
 
     public function saveOrUpdateNilaiAdm($data)

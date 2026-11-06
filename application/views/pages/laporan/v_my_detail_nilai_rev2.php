@@ -477,15 +477,15 @@ if (!function_exists('lap_limit_text')) {
 				<div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 10px;">
 					<div>
 						<h5 class="font-weight-bold text-dark mb-1" style="font-size: 15px;">
-							<i class="fas fa-tasks text-primary mr-1"></i> Project &amp; Task yang Diselesaikan: <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
+							<i class="fas fa-tasks text-primary mr-1"></i> Project &amp; Task (Aktif &amp; Diselesaikan): <span class="text-primary font-weight-bold"><?= $startDate ?></span> s/d <span class="text-primary font-weight-bold"><?= $endDate ?></span>
 						</h5>
 						<div class="text-muted small">
-							<i class="fas fa-sync-alt mr-1 text-success"></i> Terisi otomatis &amp; sinkron dengan menu <strong>Task &amp; Proyek</strong>
+							<i class="fas fa-sync-alt mr-1 text-success"></i> Task yang belum selesai tetap tampil otomatis. Lewat deadline maks ⭐1; telat &ge;1 mgg <strong>SP 1</strong>, &ge;2 mgg <strong>SP 2</strong>, &ge;3 mgg <strong>SP 3 + Jadwal HRD</strong>.
 						</div>
 					</div>
 					<div class="d-flex align-items-center" style="gap: 8px;">
 						<span class="badge badge-success font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
-							<i class="fas fa-check-circle mr-1"></i> <?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> Selesai
+							<i class="fas fa-check-circle mr-1"></i> <?= !empty($data_project_selesai) ? count($data_project_selesai) : 0 ?> Task
 						</span>
 						<a href="<?= base_url('task_proyek') ?>" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-size: 12px; font-weight: 600; padding: 6px 12px;">
 							<i class="fas fa-external-link-alt mr-1"></i> Menu Task &amp; Proyek
@@ -502,10 +502,10 @@ if (!function_exists('lap_limit_text')) {
 								<th style="min-width: 200px;">JUDUL &amp; DESKRIPSI</th>
 								<th style="min-width: 160px;">PROYEK / JENIS</th>
 								<th style="width: 150px;">PEMBERI TUGAS</th>
-								<th style="width: 120px; text-align: center;">TGL SELESAI</th>
+								<th style="width: 140px; text-align: center;">DEADLINE &amp; SELESAI</th>
 								<th style="min-width: 140px;">HASIL / BUKTI</th>
-								<th style="width: 120px; text-align: center;">RATING &amp; ULASAN</th>
-								<th style="width: 90px; text-align: center;">STATUS</th>
+								<th style="width: 130px; text-align: center;">RATING &amp; ULASAN</th>
+								<th style="width: 115px; text-align: center;">STATUS &amp; SP</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -513,9 +513,13 @@ if (!function_exists('lap_limit_text')) {
 							if (!empty($data_project_selesai)):
 								$no_task = 1;
 								foreach ($data_project_selesai as $t):
-									$tgl_selesai = !empty($t->tanggal_selesai) ? $t->tanggal_selesai : $t->created_at;
+									$tgl_selesai = !empty($t->tgl_dinilai) ? $t->tgl_dinilai : (!empty($t->tgl_submit) ? $t->tgl_submit : (!empty($t->tanggal_selesai) ? $t->tanggal_selesai : $t->updated_at));
+									$judul_task = !empty($t->judul) ? $t->judul : ($t->nama_task ?? '-');
+									$desk_task = !empty($t->deskripsi) ? $t->deskripsi : ($t->keterangan ?? '');
+									$jenis_task = !empty($t->jenis) ? $t->jenis : ($t->nama_jenis_task ?? 'Task');
+									$sp_lvl = (int)($t->sp_level ?? 0);
 							?>
-								<tr>
+								<tr <?= $sp_lvl >= 1 ? 'style="background-color: #fff5f5;"' : '' ?>>
 									<td style="text-align:center;"><?= $no_task++ ?></td>
 									<td style="text-align:center;">
 										<span class="badge badge-light-primary px-2 py-1" style="font-family: monospace; font-size: 11px;">
@@ -523,15 +527,15 @@ if (!function_exists('lap_limit_text')) {
 										</span>
 									</td>
 									<td>
-										<div class="font-weight-bold text-dark"><?= htmlspecialchars($t->nama_task) ?></div>
-										<?php if (!empty($t->keterangan)): ?>
-											<div class="text-muted small mt-1" style="line-height: 1.3;"><?= htmlspecialchars(lap_limit_text($t->keterangan, 120)) ?></div>
+										<div class="font-weight-bold text-dark"><?= htmlspecialchars($judul_task) ?></div>
+										<?php if (!empty($desk_task)): ?>
+											<div class="text-muted small mt-1" style="line-height: 1.3;"><?= htmlspecialchars(lap_limit_text($desk_task, 120)) ?></div>
 										<?php endif; ?>
 									</td>
 									<td>
 										<span class="font-weight-600 text-dark small"><?= htmlspecialchars($t->nama_proyek ?: '-') ?></span>
-										<?php if (!empty($t->nama_jenis_task)): ?>
-											<br><span class="badge badge-secondary" style="font-size: 10px;"><?= htmlspecialchars($t->nama_jenis_task) ?></span>
+										<?php if (!empty($jenis_task)): ?>
+											<br><span class="badge badge-secondary" style="font-size: 10px;"><?= htmlspecialchars($jenis_task) ?></span>
 										<?php endif; ?>
 									</td>
 									<td>
@@ -540,8 +544,16 @@ if (!function_exists('lap_limit_text')) {
 											<div class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($t->jabatan_pemberi) ?></div>
 										<?php endif; ?>
 									</td>
-									<td style="text-align:center; white-space: nowrap; font-size: 12px;">
-										<i class="far fa-calendar-check text-success mr-1"></i><?= date('d-m-Y', strtotime($tgl_selesai)) ?>
+									<td style="text-align:center; white-space: nowrap; font-size: 11.5px;">
+										<div class="text-muted small">DL: <strong><?= !empty($t->tgl_deadline) ? date('d-m-Y', strtotime($t->tgl_deadline)) : '-' ?></strong></div>
+										<?php if ((int)$t->status_task >= 2 && !empty($tgl_selesai)): ?>
+											<div class="text-success font-weight-bold mt-1"><i class="far fa-calendar-check mr-1"></i><?= date('d-m-Y', strtotime($tgl_selesai)) ?></div>
+										<?php else: ?>
+											<div class="text-warning font-weight-bold mt-1">Belum Selesai</div>
+										<?php endif; ?>
+										<?php if (!empty($t->is_late)): ?>
+											<span class="badge badge-danger mt-1" style="font-size:10px;">Telat H+<?= (int)$t->hari_telat ?> (Maks ⭐1)</span>
+										<?php endif; ?>
 									</td>
 									<td>
 										<?php 
@@ -572,9 +584,16 @@ if (!function_exists('lap_limit_text')) {
 												<?php endfor; ?>
 												<span class="font-weight-bold text-dark ml-1" style="font-size: 12px;"><?= $t->rating_bintang ?>/5</span>
 											</div>
+											<?php if (!empty($t->is_late)): ?>
+												<div class="badge badge-danger mb-1" style="font-size:9.5px;">Maks ⭐1</div>
+											<?php endif; ?>
 											<?php if (!empty($t->ulasan_atasan)): ?>
 												<div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(lap_limit_text($t->ulasan_atasan, 60)) ?>"</div>
 											<?php endif; ?>
+										<?php elseif (!empty($t->is_late)): ?>
+											<span class="badge badge-danger small px-2 py-1" style="border-radius: 6px;">
+												<i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5
+											</span>
 										<?php else: ?>
 											<span class="badge badge-warning text-dark small px-2 py-1" style="border-radius: 6px;">
 												<i class="far fa-clock mr-1"></i> Menunggu Rating
@@ -590,10 +609,26 @@ if (!function_exists('lap_limit_text')) {
 											<span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 11px;">
 												<i class="fas fa-hourglass-half mr-1"></i> Review
 											</span>
+										<?php elseif ((int)$t->status_task === 3): ?>
+											<span class="badge badge-danger px-2 py-1" style="border-radius: 6px; font-size: 11px;">
+												<i class="fas fa-redo mr-1"></i> Revisi
+											</span>
 										<?php else: ?>
 											<span class="badge badge-info px-2 py-1" style="border-radius: 6px; font-size: 11px;">
-												<?= (int)$t->progres ?>%
+												Proses <?= (int)$t->progres ?>%
 											</span>
+										<?php endif; ?>
+										<?php if ($sp_lvl >= 1): ?>
+											<div class="mt-1">
+												<span class="badge badge-danger px-2 py-1 font-weight-bold" style="font-size: 10px;">
+													<i class="fas fa-gavel mr-1"></i> <?= htmlspecialchars($t->sp_label ?? ('SP ' . $sp_lvl)) ?>
+												</span>
+											</div>
+										<?php endif; ?>
+										<?php if (!empty($t->hrd_jadwal_tgl)): ?>
+											<div class="mt-1 small text-danger font-weight-bold" style="font-size:10px;">
+												HRD: <?= date('d-m-Y', strtotime($t->hrd_jadwal_tgl)) ?>
+											</div>
 										<?php endif; ?>
 									</td>
 								</tr>

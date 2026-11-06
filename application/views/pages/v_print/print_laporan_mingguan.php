@@ -384,23 +384,24 @@
     </table>
 
     <?php if (!empty($data_project_selesai)): ?>
-        <div class="section-title">II. PROJECT &amp; TASK YANG DISELESAIKAN (SINKRON TASK &amp; PROYEK)</div>
+        <div class="section-title">II. PROJECT &amp; TASK (AKTIF &amp; DISELESAIKAN — SINKRON TASK &amp; PROYEK)</div>
         <table class="content-table">
             <thead>
                 <tr>
                     <th width="4%">No</th>
                     <th width="12%">Kode Task</th>
-                    <th width="28%">Judul &amp; Deskripsi</th>
+                    <th width="26%">Judul &amp; Deskripsi</th>
                     <th width="14%">Proyek / Jenis</th>
-                    <th width="14%">Pemberi Tugas</th>
-                    <th width="10%">Tgl Selesai</th>
-                    <th width="10%">Rating</th>
-                    <th width="8%">Status</th>
+                    <th width="13%">Pemberi Tugas</th>
+                    <th width="12%">Deadline &amp; Selesai</th>
+                    <th width="9%">Rating</th>
+                    <th width="10%">Status &amp; SP</th>
                 </tr>
             </thead>
             <tbody>
                 <?php $no_ps = 1; foreach ($data_project_selesai as $t): 
                     $tgl_selesai = !empty($t->tgl_dinilai) ? $t->tgl_dinilai : (!empty($t->tgl_submit) ? $t->tgl_submit : $t->updated_at);
+                    $sp_lvl = (int)($t->sp_level ?? 0);
                 ?>
                     <tr>
                         <td class="text-center"><?= $no_ps++ ?></td>
@@ -419,12 +420,32 @@
                             <small><?= htmlspecialchars($t->jenis ?: 'Task') ?></small>
                         </td>
                         <td><?= htmlspecialchars($t->nama_pemberi ?: '-') ?></td>
-                        <td class="text-center"><?= date('d-m-Y', strtotime($tgl_selesai)) ?></td>
                         <td class="text-center">
-                            <?= !empty($t->rating_bintang) ? $t->rating_bintang . '/5 &#9733;' : '-' ?>
+                            <small>DL: <?= !empty($t->tgl_deadline) ? date('d-m-Y', strtotime($t->tgl_deadline)) : '-' ?></small><br>
+                            <?php if ((int)$t->status_task >= 2 && !empty($tgl_selesai)): ?>
+                                <strong><?= date('d-m-Y', strtotime($tgl_selesai)) ?></strong>
+                            <?php else: ?>
+                                <em style="color:#b45309;">Belum Selesai</em>
+                            <?php endif; ?>
+                            <?php if (!empty($t->is_late)): ?>
+                                <br><small style="color:#c00; font-weight:bold;">Telat H+<?= (int)$t->hari_telat ?> (Maks 1&#9733;)</small>
+                            <?php endif; ?>
                         </td>
                         <td class="text-center">
-                            <small><?= (int)$t->status_task === 4 ? 'Selesai' : 'Review' ?></small>
+                            <?= !empty($t->rating_bintang) ? $t->rating_bintang . '/5 &#9733;' : (!empty($t->is_late) ? 'Maks 1/5 &#9733;' : '-') ?>
+                        </td>
+                        <td class="text-center">
+                            <small>
+                                <?php
+                                if ((int)$t->status_task === 4) echo 'Selesai';
+                                elseif ((int)$t->status_task === 2) echo 'Review';
+                                elseif ((int)$t->status_task === 3) echo 'Revisi';
+                                else echo 'Proses (' . (int)$t->progres . '%)';
+                                ?>
+                            </small>
+                            <?php if ($sp_lvl >= 1): ?>
+                                <br><strong style="color:#c00; font-size:9px;"><?= htmlspecialchars($t->sp_label ?? ('SP ' . $sp_lvl)) ?></strong>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
