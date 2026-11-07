@@ -181,6 +181,19 @@ class Md_vym_bi extends CI_Model
         $top_customers = $this->buildCustomerBreakdown($orders['rows'], $invoices['rows']);
         $recent_ledger = $this->buildUnifiedAuditLedger($orders['rows'], $invoices['rows'], $tagihan['rows'], $payroll['rows']);
 
+        // Build Phase 3 Deep-Dive Financial Intelligence Payload (Submodules 2, 3, 4, 5)
+        $fin_intel = $this->buildFinancialIntelligencePayload(
+            $start_date,
+            $end_date,
+            $orders,
+            $invoices,
+            $taxes,
+            $tagihan,
+            $payroll,
+            $invoiced_po_map,
+            $cogs_status
+        );
+
         // Compute Validated Ratios
         $order_total       = $orders['total_nominal'];
         $invoice_total     = $invoices['total_nominal'];
@@ -324,9 +337,10 @@ class Md_vym_bi extends CI_Model
                     'accounting_note'=> 'Sesuai Prinsip Akuntansi VYM BI: Laba Bersih (Net Profit) tidak dihitung secara semu karena HPP (COGS) per batch barang keluar belum terhubung penuh di tabel transaksi.'
                 ]
             ],
-            'time_series'       => $buckets,
-            'top_customers'     => $top_customers,
-            'recent_ledger'     => $recent_ledger
+            'time_series'            => $buckets,
+            'top_customers'          => $top_customers,
+            'recent_ledger'          => $recent_ledger,
+            'financial_intelligence' => $fin_intel
         ];
     }
 
@@ -1061,5 +1075,391 @@ class Md_vym_bi extends CI_Model
         });
 
         return array_slice($ledger, 0, 25);
+    }
+
+    // =========================================================================
+    // PHASE 3: FINANCIAL INTELLIGENCE DEEP-DIVE ANALYTICS ENGINE
+    // (Submodules 2: Financial Performance, 3: Revenue, 4: Profitability, 5: Cashflow)
+    // =========================================================================
+
+    private function buildFinancialIntelligencePayload($start_date, $end_date, $orders, $invoices, $taxes, $tagihan, $payroll, $invoiced_po_map, $cogs_status)
+    {
+        // 1. Monthly Comparative Financial Statement (Submodule 2: Financial Performance)
+        $m_map = [];
+        $makeMonth = function ($ym) {
+            return [
+                'ym'                     => $ym,
+                'label'                  => date('M Y', strtotime($ym . '-01')),
+                'orders_gross'           => 0.0,
+                'orders_cnt'             => 0,
+                'invoices_gross'         => 0.0,
+                'invoices_dpp'           => 0.0,
+                'invoices_ongkir'        => 0.0,
+                'invoices_cnt'           => 0,
+                'verified_dp_cash'       => 0.0,
+                'paid_freight'           => 0.0,
+                'paid_payroll'           => 0.0,
+                'unpaid_obligations'     => 0.0,
+                'operating_contribution' => 0.0,
+                'mom_billing_pct'        => 0.0
+            ];
+        };
+
+        foreach ($orders['rows'] as $r) {
+            $ym = substr((string)$r['tgl'], 0, 7);
+            if (strlen($ym) !== 7) continue;
+            if (!isset($m_map[$ym])) $m_map[$ym] = $makeMonth($ym);
+            $tot = max(0.0, (float)$r['nominal_total']);
+            $dp  = max(0.0, (float)$r['dp_nominal']);
+            $sts = strtolower(trim((string)$r['status_po']));
+            $pay = strtoupper(trim((string)$r['sistem_pembayaran']));
+            $m_map[$ym]['orders_gross'] += $tot;
+            $m_map[$ym]['orders_cnt']++;
+            if ($dp > 0) {
+                $m_map[$ym]['verified_dp_cash'] += $dp;
+            } elseif (in_array($pay, ['CASH', 'COD'], true) && $sts === 'disetujui') {
+                $m_map[$ym]['verified_dp_cash'] += $tot;
+            }
+        }
+
+        foreach ($invoices['rows'] as $r) {
+            $ym = substr((string)$r['tgl'], 0, 7);
+            if (strlen($ym) !== 7) continue;
+            if (!isset($m_map[$ym])) $m_map[$ym] = $makeMonth($ym);
+            $m_map[$ym]['invoices_gross']  += max(0.0, (float)$r['nominal_total']);
+            $m_map[$ym]['invoices_dpp']    += max(0.0, (float)$r['nominal_dpp']);
+            $m_map[$ym]['invoices_ongkir'] += max(0.0, (float)$r['nominal_ongkir']);
+            $m_map[$ym]['invoices_cnt']++;
+        }
+
+        foreach ($tagihan['rows'] as $r) {
+            $ym = substr((string)$r['tgl'], 0, 7);
+            if (strlen($ym) !== 7) continue;
+            if (!isset($m_map[$ym])) $m_map[$ym] = $makeMonth($ym);
+            $val = max(0.0, (float)$r['nominal_total']);
+            if (strtolower(trim((string)$r['status_bayar'])) === 'sudah_dibayar') {
+                $m_map[$ym]['paid_freight'] += $val;
+            } else {
+                $m_map[$ym]['unpaid_obligations'] += $val;
+            }
+        }
+
+        foreach ($payroll['rows'] as $r) {
+            $ym = substr((string)$r['tgl'], 0, 7);
+            if (strlen($ym) !== 7) continue;
+            if (!isset($m_map[$ym])) $m_map[$ym] = $makeMonth($ym);
+            $m_map[$ym]['paid_payroll'] += max(0.0, (float)$r['nominal_total']);
+        }
+
+        ksort($m_map);
+        $monthly_statement = [];
+        $prev_inv = null;
+        foreach ($m_map as $ym => $m) {
+            $m['orders_gross']           = round($m['orders_gross'], 2);
+            $m['invoices_gross']         = round($m['invoices_gross'], 2);
+            $m['invoices_dpp']           = round($m['invoices_dpp'], 2);
+            $m['invoices_ongkir']        = round($m['invoices_ongkir'], 2);
+            $m['verified_dp_cash']       = round($m['verified_dp_cash'], 2);
+            $m['paid_freight']           = round($m['paid_freight'], 2);
+            $m['paid_payroll']           = round($m['paid_payroll'], 2);
+            $m['unpaid_obligations']     = round($m['unpaid_obligations'], 2);
+            $m['operating_contribution'] = round($m['invoices_dpp'] - ($m['paid_freight'] + $m['paid_payroll']), 2);
+            if ($prev_inv !== null && $prev_inv > 0) {
+                $m['mom_billing_pct'] = round((($m['invoices_gross'] - $prev_inv) / $prev_inv) * 100, 1);
+            }
+            if ($m['invoices_gross'] > 0) {
+                $prev_inv = $m['invoices_gross'];
+            }
+            $monthly_statement[] = $m;
+        }
+        $monthly_statement = array_reverse($monthly_statement); // Terbaru di atas untuk tabel laporan
+
+        // 2. Revenue Analytics: Payment Terms, Sales Attribution & Unbilled PO List (Submodule 3)
+        $payment_terms = [];
+        $sales_map     = [];
+        $unbilled_list = [];
+
+        foreach ($orders['rows'] as $r) {
+            $tot  = max(0.0, (float)$r['nominal_total']);
+            $dp   = max(0.0, (float)$r['dp_nominal']);
+            $term = strtoupper(trim((string)($r['sistem_pembayaran'] ?: 'LAINNYA')));
+            if (!isset($payment_terms[$term])) {
+                $payment_terms[$term] = [
+                    'term'          => $term,
+                    'order_count'   => 0,
+                    'order_nominal' => 0.0,
+                    'dp_nominal'    => 0.0
+                ];
+            }
+            $payment_terms[$term]['order_count']++;
+            $payment_terms[$term]['order_nominal'] += $tot;
+            $payment_terms[$term]['dp_nominal']    += $dp;
+
+            $sales_name = trim((string)($r['nama_sales'] ?: 'Office / Direct'));
+            $s_key      = strtolower($sales_name);
+            if (!isset($sales_map[$s_key])) {
+                $sales_map[$s_key] = [
+                    'sales_nama'    => $sales_name,
+                    'order_count'   => 0,
+                    'order_nominal' => 0.0,
+                    'inv_count'     => 0,
+                    'inv_nominal'   => 0.0
+                ];
+            }
+            $sales_map[$s_key]['order_count']++;
+            $sales_map[$s_key]['order_nominal'] += $tot;
+
+            $norm_po = strtolower(trim((string)($r['no_po'] ?? '')));
+            $is_billed = ($norm_po !== '' && isset($invoiced_po_map[$norm_po]));
+            if (!$is_billed && count($unbilled_list) < 20) {
+                $unbilled_list[] = [
+                    'tgl'               => $r['tgl'],
+                    'no_po'             => $r['no_po'] ?: ('PO-' . $r['id_po']),
+                    'customer_nama'     => $r['customer_nama'] ?: '-',
+                    'nama_sales'        => $sales_name,
+                    'sistem_pembayaran' => $r['sistem_pembayaran'] ?: '-',
+                    'status_po'         => strtoupper((string)$r['status_po']),
+                    'nominal_total'     => round($tot, 2)
+                ];
+            }
+        }
+
+        foreach ($invoices['rows'] as $r) {
+            $tot = max(0.0, (float)$r['nominal_total']);
+            $mkt = trim((string)($r['marketing_nama'] ?: 'Office / Direct'));
+            $s_key = strtolower($mkt);
+            if (!isset($sales_map[$s_key])) {
+                $sales_map[$s_key] = [
+                    'sales_nama'    => $mkt,
+                    'order_count'   => 0,
+                    'order_nominal' => 0.0,
+                    'inv_count'     => 0,
+                    'inv_nominal'   => 0.0
+                ];
+            }
+            $sales_map[$s_key]['inv_count']++;
+            $sales_map[$s_key]['inv_nominal'] += $tot;
+        }
+
+        $sales_list = array_values($sales_map);
+        usort($sales_list, function ($a, $b) {
+            $mA = max($a['order_nominal'], $a['inv_nominal']);
+            $mB = max($b['order_nominal'], $b['inv_nominal']);
+            return ($mB <=> $mA);
+        });
+
+        $revenue_funnel = [
+            [
+                'stage'          => '1. Customer Orders (PO Masuk)',
+                'classification' => 'ACTUAL • CONTRACTED ORDER',
+                'count'          => $orders['count'],
+                'nominal'        => round($orders['total_nominal'], 2),
+                'pct_of_top'     => 100.0
+            ],
+            [
+                'stage'          => '2. Approved Orders (Kroscek Disetujui)',
+                'classification' => 'ACTUAL • APPROVED ORDER',
+                'count'          => $orders['approved_count'],
+                'nominal'        => round($orders['approved_nominal'], 2),
+                'pct_of_top'     => ($orders['total_nominal'] > 0) ? round(($orders['approved_nominal'] / $orders['total_nominal']) * 100, 1) : 0.0
+            ],
+            [
+                'stage'          => '3. Issued Invoices (Penagihan Terbit / AR)',
+                'classification' => 'ACTUAL • BILLED RECEIVABLE',
+                'count'          => $invoices['count'],
+                'nominal'        => round($invoices['total_nominal'], 2),
+                'pct_of_top'     => ($orders['total_nominal'] > 0) ? round(($invoices['total_nominal'] / $orders['total_nominal']) * 100, 1) : 0.0
+            ],
+            [
+                'stage'          => '4. Approved Faktur Pajak (DPP + PPN)',
+                'classification' => 'ACTUAL • TAX RECOGNIZED',
+                'count'          => $taxes['approved_count'],
+                'nominal'        => round($taxes['approved_dpp'] + $taxes['approved_ppn'], 2),
+                'pct_of_top'     => ($orders['total_nominal'] > 0) ? round((($taxes['approved_dpp'] + $taxes['approved_ppn']) / $orders['total_nominal']) * 100, 1) : 0.0
+            ],
+            [
+                'stage'          => '5. Verified Down Payments & Cash/COD PO',
+                'classification' => 'ACTUAL • RECORDED DP/CASH',
+                'count'          => $orders['cash_or_dp_count'],
+                'nominal'        => round($orders['verified_dp_nominal'], 2),
+                'pct_of_top'     => ($orders['total_nominal'] > 0) ? round(($orders['verified_dp_nominal'] / $orders['total_nominal']) * 100, 1) : 0.0
+            ]
+        ];
+
+        // 3. Profitability Analysis: Pre-COGS Waterfall & Top Billed SKUs (Submodule 4)
+        $inv_gross    = round($invoices['total_nominal'], 2);
+        $inv_ongkir   = round($invoices['total_ongkir'], 2);
+        $inv_dpp      = round($invoices['total_dpp'], 2);
+        $paid_freight = round($tagihan['paid_nominal'], 2);
+        $paid_payroll = round($payroll['total_nominal'], 2);
+        $op_contrib   = round($inv_dpp - ($paid_freight + $paid_payroll), 2);
+
+        $profitability_waterfall = [
+            [
+                'step'           => '1. Gross Billed Revenue (Total Invoice)',
+                'type'           => 'inflow',
+                'classification' => 'ACTUAL • invoice.total_keseluruhan',
+                'nominal'        => $inv_gross,
+                'pct_of_gross'   => 100.0
+            ],
+            [
+                'step'           => '2. (-) Billed Shipping Pass-Through (Ongkir Invoice)',
+                'type'           => 'deduction',
+                'classification' => 'ACTUAL • invoice.ongkir',
+                'nominal'        => -$inv_ongkir,
+                'pct_of_gross'   => ($inv_gross > 0) ? round(($inv_ongkir / $inv_gross) * 100, 1) : 0.0
+            ],
+            [
+                'step'           => '3. (=) Net Billed Revenue (DPP Penjualan)',
+                'type'           => 'subtotal',
+                'classification' => 'ACTUAL • invoice.total',
+                'nominal'        => $inv_dpp,
+                'pct_of_gross'   => ($inv_gross > 0) ? round(($inv_dpp / $inv_gross) * 100, 1) : 0.0
+            ],
+            [
+                'step'           => '4. (-) Settled Logistics & Freight Expense (Lunas)',
+                'type'           => 'deduction',
+                'classification' => 'ACTUAL • tagihan_ekspedisi (sudah_dibayar)',
+                'nominal'        => -$paid_freight,
+                'pct_of_gross'   => ($inv_gross > 0) ? round(($paid_freight / $inv_gross) * 100, 1) : 0.0
+            ],
+            [
+                'step'           => '5. (-) Closed SDM Payroll Expense (Gaji & Tunjangan)',
+                'type'           => 'deduction',
+                'classification' => 'ACTUAL • salary_history',
+                'nominal'        => -$paid_payroll,
+                'pct_of_gross'   => ($inv_gross > 0) ? round(($paid_payroll / $inv_gross) * 100, 1) : 0.0
+            ],
+            [
+                'step'           => '6. (=) Verified Operating Contribution (Pre-Unit COGS)',
+                'type'           => 'total',
+                'classification' => 'GUARDRAIL • EXCLUDES UNVERIFIED UNIT COGS',
+                'nominal'        => $op_contrib,
+                'pct_of_gross'   => ($inv_gross > 0) ? round(($op_contrib / $inv_gross) * 100, 1) : 0.0
+            ]
+        ];
+
+        $top_skus = $this->fetchTopBilledSkus($start_date, $end_date);
+
+        // 4. Cashflow Intelligence: Unpaid Payables Aging Watchlist & Burn Rate (Submodule 5)
+        $payables_watchlist = [];
+        $today_ts = time();
+        foreach ($tagihan['rows'] as $r) {
+            if (strtolower(trim((string)$r['status_bayar'])) === 'sudah_dibayar') continue;
+            $inv_ts = strtotime($r['tgl']);
+            $days   = $inv_ts ? max(0, (int)floor(($today_ts - $inv_ts) / 86400)) : 0;
+            $payables_watchlist[] = [
+                'tgl'             => $r['tgl'],
+                'no_dokumen'      => $r['no_dokumen'],
+                'vendor_nama'     => $r['vendor_nama'],
+                'status_approval' => ((int)$r['status_approval'] === 5) ? 'APPROVED (SIAP BAYAR)' : ('PROSES LEVEL ' . (int)$r['status_approval']),
+                'days_aging'      => $days,
+                'aging_bucket'    => ($days > 60) ? '> 60 Hari (Kritis)' : (($days > 30) ? '31–60 Hari (Overdue)' : '0–30 Hari (Current)'),
+                'nominal_total'   => round((float)$r['nominal_total'], 2)
+            ];
+        }
+        usort($payables_watchlist, function ($a, $b) {
+            return ($b['days_aging'] <=> $a['days_aging']);
+        });
+
+        return [
+            'monthly_statement'       => $monthly_statement,
+            'revenue_funnel'          => $revenue_funnel,
+            'payment_terms_breakdown' => array_values($payment_terms),
+            'sales_attribution'       => array_slice($sales_list, 0, 12),
+            'unbilled_orders_list'    => $unbilled_list,
+            'profitability_waterfall' => $profitability_waterfall,
+            'top_billed_skus'         => $top_skus,
+            'cogs_audit'              => $cogs_status,
+            'payables_watchlist'      => array_slice($payables_watchlist, 0, 20)
+        ];
+    }
+
+    /**
+     * Fetch Top Billed Products / SKUs from detail_barang_invoice (with po_masuk_item fallback)
+     */
+    private function fetchTopBilledSkus($start_date, $end_date)
+    {
+        $skus = [];
+
+        if ($this->db->table_exists('detail_barang_invoice') && $this->db->table_exists('invoice')) {
+            $sql = "
+                SELECT
+                    COALESCE(b.kode_barang, CONCAT('SKU-', dbi.id_barang)) AS kode_barang,
+                    COALESCE(b.nama_barang, 'Item Invoice') AS nama_barang,
+                    SUM(CAST(REPLACE(REPLACE(dbi.qty, '.', ''), ',', '') AS DECIMAL(18,2))) AS total_qty,
+                    SUM(CAST(REPLACE(REPLACE(dbi.harga_total, '.', ''), ',', '') AS DECIMAL(18,2))) AS total_nominal,
+                    COUNT(DISTINCT inv.id_invoice) AS doc_count,
+                    'detail_barang_invoice' AS source_table
+                FROM detail_barang_invoice dbi
+                INNER JOIN invoice inv ON inv.id_invoice = dbi.id_invoice
+                LEFT JOIN barang b ON b.id_barang = dbi.id_barang
+                WHERE inv.status = 1
+                  AND dbi.status = 1
+                  AND inv.tgl_invoice >= " . $this->db->escape($start_date) . "
+                  AND inv.tgl_invoice <= " . $this->db->escape($end_date) . "
+                GROUP BY dbi.id_barang, b.kode_barang, b.nama_barang
+                HAVING total_nominal > 0
+                ORDER BY total_nominal DESC
+                LIMIT 15
+            ";
+            $q = $this->db->query($sql);
+            if ($q) {
+                foreach ($q->result_array() as $r) {
+                    $qty = max(1.0, (float)$r['total_qty']);
+                    $nom = max(0.0, (float)$r['total_nominal']);
+                    $skus[] = [
+                        'kode_barang'   => $r['kode_barang'],
+                        'nama_barang'   => $r['nama_barang'],
+                        'total_qty'     => round($qty, 2),
+                        'avg_price'     => round($nom / $qty, 2),
+                        'total_nominal' => round($nom, 2),
+                        'doc_count'     => (int)$r['doc_count'],
+                        'source_table'  => $r['source_table']
+                    ];
+                }
+            }
+        }
+
+        // Fallback atau pelengkap dari po_masuk_item jika detail_barang_invoice kosong pada periode tersebut
+        if (empty($skus) && $this->db->table_exists('po_masuk_item') && $this->db->table_exists('po_masuk')) {
+            $sql_po = "
+                SELECT
+                    COALESCE(NULLIF(i.tipe_barang, ''), CONCAT('ITEM-', COALESCE(i.id_barang, 0))) AS kode_barang,
+                    i.nama_barang,
+                    SUM(COALESCE(i.qty, 0)) AS total_qty,
+                    SUM(COALESCE(i.total_harga, 0)) AS total_nominal,
+                    COUNT(DISTINCT p.id_po) AS doc_count,
+                    'po_masuk_item' AS source_table
+                FROM po_masuk_item i
+                INNER JOIN po_masuk p ON p.id_po = i.id_po
+                WHERE p.deleted = 0
+                  AND p.status != 'ditolak'
+                  AND p.tanggal_po >= " . $this->db->escape($start_date) . "
+                  AND p.tanggal_po <= " . $this->db->escape($end_date) . "
+                GROUP BY i.nama_barang, i.tipe_barang, i.id_barang
+                HAVING total_nominal > 0
+                ORDER BY total_nominal DESC
+                LIMIT 15
+            ";
+            $q_po = $this->db->query($sql_po);
+            if ($q_po) {
+                foreach ($q_po->result_array() as $r) {
+                    $qty = max(1.0, (float)$r['total_qty']);
+                    $nom = max(0.0, (float)$r['total_nominal']);
+                    $skus[] = [
+                        'kode_barang'   => $r['kode_barang'],
+                        'nama_barang'   => $r['nama_barang'],
+                        'total_qty'     => round($qty, 2),
+                        'avg_price'     => round($nom / $qty, 2),
+                        'total_nominal' => round($nom, 2),
+                        'doc_count'     => (int)$r['doc_count'],
+                        'source_table'  => $r['source_table']
+                    ];
+                }
+            }
+        }
+
+        return $skus;
     }
 }

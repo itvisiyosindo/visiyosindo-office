@@ -61,7 +61,7 @@ class Vym_bi extends CI_Controller
                 'title'    => 'Financial Performance',
                 'subtitle' => 'Comparative Period Financial Statements, DPP/PPN Tax Reconciliation & Operating Ratios',
                 'icon'     => 'fas fa-balance-scale',
-                'phase'    => 'PHASE 3 • READY'
+                'phase'    => 'PHASE 3 • ACTIVE'
             ],
             'revenue_analytics' => [
                 'no'       => '03',
@@ -70,7 +70,7 @@ class Vym_bi extends CI_Controller
                 'title'    => 'Revenue Analytics',
                 'subtitle' => 'Customer Order-to-Invoice Conversion Funnel, Unbilled Backlog & Billing Velocity',
                 'icon'     => 'fas fa-chart-line',
-                'phase'    => 'PHASE 3 • READY'
+                'phase'    => 'PHASE 3 • ACTIVE'
             ],
             'profitability_analysis' => [
                 'no'       => '04',
@@ -79,7 +79,7 @@ class Vym_bi extends CI_Controller
                 'title'    => 'Profitability Analysis',
                 'subtitle' => 'Operating Contribution Margin, Supplier Price Catalog Audit & COGS Reliability Guardrails',
                 'icon'     => 'fas fa-percentage',
-                'phase'    => 'PHASE 3 • READY'
+                'phase'    => 'PHASE 3 • ACTIVE'
             ],
             'cashflow_intelligence' => [
                 'no'       => '05',
@@ -88,7 +88,7 @@ class Vym_bi extends CI_Controller
                 'title'    => 'Cashflow Intelligence',
                 'subtitle' => 'Verified Down Payments, Settled Freight & Payroll Outflows vs Unpaid Vendor Obligations',
                 'icon'     => 'fas fa-exchange-alt',
-                'phase'    => 'PHASE 3 • READY'
+                'phase'    => 'PHASE 3 • ACTIVE'
             ],
             'business_performance' => [
                 'no'       => '06',

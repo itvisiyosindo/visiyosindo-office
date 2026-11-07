@@ -4,8 +4,18 @@ defined('BASEPATH') or exit('No direct script access allowed');
 $kpis          = $bi_initial_data['kpis'] ?? [];
 $top_customers = $bi_initial_data['top_customers'] ?? [];
 $recent_ledger = $bi_initial_data['recent_ledger'] ?? [];
+$fin_intel     = $bi_initial_data['financial_intelligence'] ?? [];
 $active_sub    = $bi_active_sub ?? 'executive_overview';
 $active_meta   = $bi_active_meta ?? [];
+
+$default_series_mode = 'ALL_LAYERS';
+if ($active_sub === 'revenue_analytics') {
+    $default_series_mode = 'ORDER_VS_INVOICE';
+} elseif ($active_sub === 'profitability_analysis') {
+    $default_series_mode = 'BILLED_VS_CASHOUT';
+} elseif ($active_sub === 'cashflow_intelligence') {
+    $default_series_mode = 'OBLIGATIONS_VS_PAID';
+}
 ?>
 
 <!-- TradingView Lightweight Charts (jsDelivr CDN + unpkg Fallback) -->
@@ -488,14 +498,14 @@ $active_meta   = $bi_active_meta ?? [];
     </div>
 
     <?php if ($active_sub !== 'executive_overview'): ?>
-        <!-- Submodule Contextual Banner for Submodules 2–8 (Foundation Ready in Phase 2, Deep-Dive in Phases 3–5) -->
+        <!-- Submodule Contextual Banner -->
         <div style="background: rgba(2, 132, 199, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
             <div style="font-size: 12px; color: #e2e8f0;">
-                <i class="fas fa-info-circle text-info mr-1"></i>
+                <i class="fas fa-bolt text-info mr-1"></i>
                 <strong>Submodul Aktif: [<?= htmlspecialchars($active_meta['no']) ?>] <?= htmlspecialchars($active_meta['title']) ?></strong>
-                — Kerangka fondasi & integrasi data aktual telah aktif (Phase 2). Gunakan filter waktu dan matriks audit di bawah untuk inspeksi lintas tabel.
+                — <?= htmlspecialchars($active_meta['subtitle'] ?? 'Laporan & kalkulasi tervalidasi dari tabel transaksi sumber.') ?>
             </div>
-            <span class="badge badge-info vym-mono"><?= htmlspecialchars($active_meta['phase'] ?? 'PHASE 2') ?></span>
+            <span class="badge badge-info vym-mono"><?= htmlspecialchars($active_meta['phase'] ?? 'PHASE 3 • ACTIVE') ?></span>
         </div>
     <?php endif; ?>
 
@@ -812,10 +822,10 @@ $active_meta   = $bi_active_meta ?? [];
             </h3>
             <div class="d-flex flex-wrap align-items-center" style="gap: 6px;">
                 <div class="vym-btn-group" id="vym-series-mode-group">
-                    <button type="button" class="vym-btn active" data-mode="ALL_LAYERS">Semua Lapisan (4 Kurva)</button>
-                    <button type="button" class="vym-btn" data-mode="ORDER_VS_INVOICE">Order (PO) vs Invoice</button>
-                    <button type="button" class="vym-btn" data-mode="BILLED_VS_CASHOUT">Billed AR vs Paid Outflow</button>
-                    <button type="button" class="vym-btn" data-mode="OBLIGATIONS_VS_PAID">Unpaid AP vs Paid Outflow</button>
+                    <button type="button" class="vym-btn <?= ($default_series_mode === 'ALL_LAYERS') ? 'active' : '' ?>" data-mode="ALL_LAYERS">Semua Lapisan (4 Kurva)</button>
+                    <button type="button" class="vym-btn <?= ($default_series_mode === 'ORDER_VS_INVOICE') ? 'active' : '' ?>" data-mode="ORDER_VS_INVOICE">Order (PO) vs Invoice</button>
+                    <button type="button" class="vym-btn <?= ($default_series_mode === 'BILLED_VS_CASHOUT') ? 'active' : '' ?>" data-mode="BILLED_VS_CASHOUT">Billed AR vs Paid Outflow</button>
+                    <button type="button" class="vym-btn <?= ($default_series_mode === 'OBLIGATIONS_VS_PAID') ? 'active' : '' ?>" data-mode="OBLIGATIONS_VS_PAID">Unpaid AP vs Paid Outflow</button>
                 </div>
                 <button type="button" class="vym-btn" id="vym-btn-fit-chart" style="border: 1px solid #334155;">
                     <i class="fas fa-compress-arrows-alt mr-1"></i> Fit Scale
@@ -833,6 +843,425 @@ $active_meta   = $bi_active_meta ?? [];
                 </div>
             </div>
             <div id="vym-bi-tv-chart" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         5B. PHASE 3 — FINANCIAL INTELLIGENCE VALIDATED REPORTS SUITE
+         Covers Submodules:
+           [02] Financial Performance (Monthly Comparative Statement)
+           [03] Revenue Analytics (Conversion Funnel, Payment Terms, Sales Attribution, Unbilled PO Backlog)
+           [04] Profitability Analysis (Pre-COGS Operating Contribution Waterfall & Top Billed SKUs)
+           [05] Cashflow Intelligence (Verified Inflow vs Outflow & AP Payables Aging Watchlist)
+         ========================================================================= -->
+    <?php
+    $fi_monthly    = $fin_intel['monthly_statement'] ?? [];
+    $fi_funnel     = $fin_intel['revenue_funnel'] ?? [];
+    $fi_pay_terms  = $fin_intel['payment_terms_breakdown'] ?? [];
+    $fi_sales_attr = $fin_intel['sales_attribution'] ?? [];
+    $fi_unbilled   = $fin_intel['unbilled_orders_list'] ?? [];
+    $fi_waterfall  = $fin_intel['profitability_waterfall'] ?? [];
+    $fi_top_skus   = $fin_intel['top_billed_skus'] ?? [];
+    $fi_payables   = $fin_intel['payables_watchlist'] ?? [];
+
+    $default_fi_tab = 'FIN_PERF';
+    if ($active_sub === 'revenue_analytics') {
+        $default_fi_tab = 'REV_ANALYTICS';
+    } elseif ($active_sub === 'profitability_analysis') {
+        $default_fi_tab = 'PROFIT_ANALYSIS';
+    } elseif ($active_sub === 'cashflow_intelligence') {
+        $default_fi_tab = 'CASHFLOW_INTEL';
+    }
+    ?>
+    <div class="vym-panel">
+        <div class="vym-panel-head">
+            <h3 class="vym-panel-title">
+                <i class="fas fa-microchip text-info"></i>
+                PHASE 3 FINANCIAL INTELLIGENCE DECK — VALIDATED STATEMENTS &amp; SUBMODULE REPORTS
+            </h3>
+            <div class="vym-btn-group" id="vym-fi-tab-group">
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'FIN_PERF') ? 'active' : '' ?>" data-fitab="FIN_PERF">
+                    [02] Financial Performance
+                </button>
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'REV_ANALYTICS') ? 'active' : '' ?>" data-fitab="REV_ANALYTICS">
+                    [03] Revenue Analytics
+                </button>
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'PROFIT_ANALYSIS') ? 'active' : '' ?>" data-fitab="PROFIT_ANALYSIS">
+                    [04] Profitability Analysis
+                </button>
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'CASHFLOW_INTEL') ? 'active' : '' ?>" data-fitab="CASHFLOW_INTEL">
+                    [05] Cashflow Intelligence
+                </button>
+                <button type="button" class="vym-btn" data-fitab="ALL_FI">
+                    Tampilkan Semua Laporan
+                </button>
+            </div>
+        </div>
+
+        <div class="vym-panel-body">
+            <!-- TAB [02]: FINANCIAL PERFORMANCE — MONTHLY COMPARATIVE STATEMENT -->
+            <div class="vym-fi-pane" data-fipane="FIN_PERF" style="<?= ($default_fi_tab === 'FIN_PERF') ? '' : 'display:none;' ?>">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                    <div>
+                        <strong style="color:#f8fafc; font-size:12.5px;">
+                            <i class="fas fa-balance-scale text-info mr-1"></i>
+                            [02] MONTHLY COMPARATIVE FINANCIAL PERFORMANCE STATEMENT (ORDERS vs BILLED vs SETTLED CASHFLOW)
+                        </strong>
+                        <div style="font-size:11px; color:#94a3b8;">
+                            Rekonsiliasi bulanan tervalidasi antara PO Masuk (`po_masuk`), Penagihan Faktur (`invoice`), Kas Keluar Lunas (`tagihan_ekspedisi` + `salary_history`), dan Kewajiban Belum Bayar.
+                        </div>
+                    </div>
+                    <span class="vym-class-badge vym-class-actual">ACTUAL • MULTI-TABLE RECONCILIATION</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="vym-table" id="vym-fi-monthly-table">
+                        <thead>
+                            <tr>
+                                <th>Periode</th>
+                                <th class="text-right">Contracted Orders (PO)</th>
+                                <th class="text-right">Issued Invoices (Gross)</th>
+                                <th class="text-right">Net Billed DPP</th>
+                                <th class="text-right">MoM Billing</th>
+                                <th class="text-right">Verified DP/Cash</th>
+                                <th class="text-right">Paid Freight</th>
+                                <th class="text-right">Closed Payroll</th>
+                                <th class="text-right">Unpaid AP</th>
+                                <th class="text-right">Operating Contrib. (Excl. COGS)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($fi_monthly)): ?>
+                                <?php foreach ($fi_monthly as $m):
+                                    $mom = $m['mom_billing_pct'];
+                                    $mom_html = '<span class="text-muted">-</span>';
+                                    if ($mom !== null) {
+                                        $mom_col = ($mom >= 0) ? '#34d399' : '#f87171';
+                                        $mom_sign = ($mom >= 0) ? '+' : '';
+                                        $mom_html = '<span style="color:' . $mom_col . ';font-weight:700;">' . $mom_sign . $mom . '%</span>';
+                                    }
+                                    $oc = (float)$m['operating_contribution'];
+                                ?>
+                                    <tr>
+                                        <td class="vym-mono font-weight-bold" style="color:#f8fafc;"><?= htmlspecialchars($m['label']) ?></td>
+                                        <td class="text-right vym-mono" style="color:#38bdf8;">Rp <?= number_format($m['orders_gross'], 0, ',', '.') ?> <small class="text-muted">(<?= $m['orders_cnt'] ?>)</small></td>
+                                        <td class="text-right vym-mono" style="color:#10b981;">Rp <?= number_format($m['invoices_gross'], 0, ',', '.') ?> <small class="text-muted">(<?= $m['invoices_cnt'] ?>)</small></td>
+                                        <td class="text-right vym-mono">Rp <?= number_format($m['invoices_dpp'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono"><?= $mom_html ?></td>
+                                        <td class="text-right vym-mono" style="color:#2dd4bf;">Rp <?= number_format($m['verified_dp_cash'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono" style="color:#f87171;">Rp <?= number_format($m['paid_freight'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono" style="color:#fca5a5;">Rp <?= number_format($m['paid_payroll'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono" style="color:#fb923c;">Rp <?= number_format($m['unpaid_obligations'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono font-weight-bold" style="color:<?= ($oc >= 0) ? '#c084fc' : '#f87171' ?>;">
+                                            Rp <?= number_format($oc, 0, ',', '.') ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="10" class="text-center py-3 text-muted">Tidak ada data bulanan pada periode ini.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB [03]: REVENUE ANALYTICS — FUNNEL, PAYMENT TERMS, SALES ATTRIBUTION, UNBILLED PO BACKLOG -->
+            <div class="vym-fi-pane" data-fipane="REV_ANALYTICS" style="<?= ($default_fi_tab === 'REV_ANALYTICS') ? '' : 'display:none;' ?>">
+                <div class="row">
+                    <!-- Funnel & Payment Terms -->
+                    <div class="col-lg-6 col-12 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-filter text-info mr-1"></i>
+                                [03A] ORDER-TO-BILLING-TO-TAX CONVERSION FUNNEL
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • PIPELINE</span>
+                        </div>
+                        <div class="table-responsive mb-3">
+                            <table class="vym-table" id="vym-fi-funnel-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tahap Konversi</th>
+                                        <th>Klasifikasi</th>
+                                        <th class="text-right">Dokumen</th>
+                                        <th class="text-right">Nominal (IDR)</th>
+                                        <th class="text-right">% thd PO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($fi_funnel as $f): ?>
+                                        <tr>
+                                            <td>
+                                                <strong style="color:#f8fafc;"><?= htmlspecialchars($f['stage']) ?></strong>
+                                                <div style="font-size:10px; color:#64748b;">Sumber: <code><?= htmlspecialchars($f['source']) ?></code></div>
+                                            </td>
+                                            <td><span class="vym-class-badge vym-class-actual"><?= htmlspecialchars($f['classification']) ?></span></td>
+                                            <td class="text-right vym-mono"><?= number_format($f['doc_count'], 0, ',', '.') ?></td>
+                                            <td class="text-right vym-mono font-weight-bold" style="color:#38bdf8;">Rp <?= number_format($f['nominal'], 0, ',', '.') ?></td>
+                                            <td class="text-right vym-mono" style="color:#34d399;"><?= $f['pct_of_top'] ?>%</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-credit-card text-success mr-1"></i>
+                                [03B] ORDER BOOK BREAKDOWN BY PAYMENT TERMS (`po_masuk.sistem_pembayaran`)
+                            </strong>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="vym-table" id="vym-fi-payterms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sistem Pembayaran</th>
+                                        <th class="text-right">Jumlah PO</th>
+                                        <th class="text-right">Total Nilai PO</th>
+                                        <th class="text-right">DP Terverifikasi</th>
+                                        <th class="text-right">Porsi (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($fi_pay_terms)): ?>
+                                        <?php foreach ($fi_pay_terms as $pt): ?>
+                                            <tr>
+                                                <td><strong style="color:#f8fafc;"><?= htmlspecialchars($pt['term']) ?></strong></td>
+                                                <td class="text-right vym-mono"><?= number_format($pt['po_count'], 0, ',', '.') ?> PO</td>
+                                                <td class="text-right vym-mono" style="color:#38bdf8;">Rp <?= number_format($pt['order_nominal'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono" style="color:#2dd4bf;">Rp <?= number_format($pt['dp_nominal'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono"><?= $pt['share_pct'] ?>%</td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada data skema pembayaran.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Sales Attribution & Unbilled Backlog Action List -->
+                    <div class="col-lg-6 col-12 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-user-tie text-warning mr-1"></i>
+                                [03C] SALES REPRESENTATIVE ATTRIBUTION (PO vs BILLED REALIZATION)
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • SALES</span>
+                        </div>
+                        <div class="table-responsive mb-3">
+                            <table class="vym-table" id="vym-fi-sales-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sales / Marketing</th>
+                                        <th class="text-right">Orders (PO)</th>
+                                        <th class="text-right">Issued Invoices</th>
+                                        <th class="text-right">Rasio Tagih</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($fi_sales_attr)): ?>
+                                        <?php foreach ($fi_sales_attr as $sa): ?>
+                                            <tr>
+                                                <td><strong style="color:#f8fafc;"><?= htmlspecialchars($sa['sales_nama']) ?></strong></td>
+                                                <td class="text-right vym-mono" style="color:#38bdf8;">Rp <?= number_format($sa['order_nominal'], 0, ',', '.') ?> <small class="text-muted">(<?= $sa['po_count'] ?>)</small></td>
+                                                <td class="text-right vym-mono" style="color:#34d399;">Rp <?= number_format($sa['billed_nominal'], 0, ',', '.') ?> <small class="text-muted">(<?= $sa['inv_count'] ?>)</small></td>
+                                                <td class="text-right vym-mono" style="color:#fbbf24;"><?= $sa['realization_pct'] ?>%</td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="4" class="text-center py-3 text-muted">Tidak ada data atribusi sales.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-exclamation-circle text-warning mr-1"></i>
+                                [03D] ACTIONABLE UNBILLED PO BACKLOG (PO BELUM TERBIT INVOICE)
+                            </strong>
+                        </div>
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-fi-unbilled-table">
+                                <thead>
+                                    <tr>
+                                        <th>No. PO</th>
+                                        <th>Tgl PO</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Usia</th>
+                                        <th class="text-right">Nominal PO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($fi_unbilled)): ?>
+                                        <?php foreach ($fi_unbilled as $ub): ?>
+                                            <tr>
+                                                <td class="vym-mono font-weight-bold" style="color:#fbbf24;"><?= htmlspecialchars($ub['no_po']) ?></td>
+                                                <td class="vym-mono"><?= date('d/m/Y', strtotime($ub['tanggal'])) ?></td>
+                                                <td><?= htmlspecialchars($ub['customer_nama']) ?></td>
+                                                <td class="vym-mono" style="font-size:10px;"><?= htmlspecialchars($ub['status_label']) ?></td>
+                                                <td class="text-right vym-mono"><?= $ub['days_open'] ?> hr</td>
+                                                <td class="text-right vym-mono font-weight-bold">Rp <?= number_format($ub['nominal'], 0, ',', '.') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="6" class="text-center py-3 text-muted">Seluruh PO pada periode ini telah diterbitkan Invoice.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB [04]: PROFITABILITY ANALYSIS — OPERATING WATERFALL & TOP BILLED SKUs -->
+            <div class="vym-fi-pane" data-fipane="PROFIT_ANALYSIS" style="<?= ($default_fi_tab === 'PROFIT_ANALYSIS') ? '' : 'display:none;' ?>">
+                <div class="row">
+                    <!-- Left: Validated Operating Contribution Waterfall -->
+                    <div class="col-lg-6 col-12 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-percentage text-info mr-1"></i>
+                                [04A] VALIDATED PRE-COGS OPERATING CONTRIBUTION WATERFALL
+                            </strong>
+                            <span class="vym-class-badge vym-class-estimated">SECTION 5 COGS GUARDRAIL</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="vym-table" id="vym-fi-waterfall-table">
+                                <thead>
+                                    <tr>
+                                        <th>Komponen Struktur Kontribusi</th>
+                                        <th>Rumus &amp; Sumber</th>
+                                        <th class="text-right">Nominal (IDR)</th>
+                                        <th class="text-right">% Gross Inv</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($fi_waterfall as $wf):
+                                        $wf_col = '#e2e8f0';
+                                        if ($wf['type'] === 'BASE') $wf_col = '#10b981';
+                                        elseif ($wf['type'] === 'SUBTOTAL') $wf_col = '#38bdf8';
+                                        elseif ($wf['type'] === 'DEDUCTION') $wf_col = '#f87171';
+                                        elseif ($wf['type'] === 'RESULT') $wf_col = '#c084fc';
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <strong style="color:<?= $wf_col ?>;"><?= htmlspecialchars($wf['step']) ?></strong>
+                                                <div><span class="vym-class-badge vym-class-actual"><?= htmlspecialchars($wf['classification']) ?></span></div>
+                                            </td>
+                                            <td class="vym-mono" style="font-size:10.5px; color:#94a3b8;"><?= htmlspecialchars($wf['formula']) ?></td>
+                                            <td class="text-right vym-mono font-weight-bold" style="color:<?= $wf_col ?>;">
+                                                Rp <?= number_format($wf['nominal'], 0, ',', '.') ?>
+                                            </td>
+                                            <td class="text-right vym-mono"><?= $wf['pct_of_gross'] ?>%</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right: Top Billed Products / SKUs -->
+                    <div class="col-lg-6 col-12 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-boxes text-success mr-1"></i>
+                                [04B] TOP BILLED PRODUCTS / SKUs (`detail_barang_invoice`)
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • SKU MIX</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-fi-sku-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nama Produk / Item Alat Kesehatan</th>
+                                        <th class="text-right">Qty Terfaktur</th>
+                                        <th class="text-right">Faktur</th>
+                                        <th class="text-right">Total Nilai Terfaktur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($fi_top_skus)): ?>
+                                        <?php foreach ($fi_top_skus as $s_idx => $sku): ?>
+                                            <tr>
+                                                <td class="vym-mono text-muted"><?= $s_idx + 1 ?></td>
+                                                <td>
+                                                    <strong style="color:#f8fafc;"><?= htmlspecialchars($sku['item_nama']) ?></strong>
+                                                    <div style="font-size:10px; color:#64748b;">Sumber: <code><?= htmlspecialchars($sku['source']) ?></code></div>
+                                                </td>
+                                                <td class="text-right vym-mono"><?= number_format($sku['qty_billed'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono"><?= number_format($sku['doc_count'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono font-weight-bold" style="color:#34d399;">
+                                                    Rp <?= number_format($sku['gross_billed'], 0, ',', '.') ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada rincian produk terfaktur pada periode ini.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB [05]: CASHFLOW INTELLIGENCE — UNPAID VENDOR/FREIGHT PAYABLES AGING WATCHLIST -->
+            <div class="vym-fi-pane" data-fipane="CASHFLOW_INTEL" style="<?= ($default_fi_tab === 'CASHFLOW_INTEL') ? '' : 'display:none;' ?>">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                    <div>
+                        <strong style="color:#f8fafc; font-size:12.5px;">
+                            <i class="fas fa-money-bill-wave text-warning mr-1"></i>
+                            [05] CASHFLOW INTELLIGENCE &amp; UNPAID VENDOR/FREIGHT PAYABLES AGING WATCHLIST (`tagihan_ekspedisi`)
+                        </strong>
+                        <div style="font-size:11px; color:#94a3b8;">
+                            Daftar kewajiban vendor/ekspedisi aktual yang berstatus <code>belum_dibayar</code> diurutkan berdasarkan umur tagihan (aging days) untuk manajemen likuiditas kas keluar.
+                        </div>
+                    </div>
+                    <span class="vym-class-badge vym-class-actual">ACTUAL • AP AGING WATCHLIST</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="vym-table" id="vym-fi-payables-table">
+                        <thead>
+                            <tr>
+                                <th>No. Invoice Ekspedisi</th>
+                                <th>Tgl Invoice</th>
+                                <th>Vendor Ekspedisi</th>
+                                <th>No. SJ / Surat Jalan</th>
+                                <th>Status Approval</th>
+                                <th>Bucket Umur</th>
+                                <th class="text-right">Usia Tagihan</th>
+                                <th class="text-right">Nominal Hutang (IDR)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($fi_payables)): ?>
+                                <?php foreach ($fi_payables as $ap):
+                                    $b_col = ($ap['days_aging'] > 60) ? 'vym-badge-rose' : (($ap['days_aging'] > 30) ? 'vym-badge-amber' : 'vym-badge-cyan');
+                                ?>
+                                    <tr>
+                                        <td class="vym-mono font-weight-bold" style="color:#f8fafc;"><?= htmlspecialchars($ap['nomor_invoice']) ?></td>
+                                        <td class="vym-mono"><?= date('d/m/Y', strtotime($ap['tanggal_invoice'])) ?></td>
+                                        <td><strong><?= htmlspecialchars($ap['nama_ekspedisi']) ?></strong></td>
+                                        <td class="vym-mono text-muted"><?= htmlspecialchars($ap['nomor_sj']) ?></td>
+                                        <td class="vym-mono"><?= htmlspecialchars($ap['status_approval']) ?></td>
+                                        <td><span class="<?= $b_col ?>"><?= htmlspecialchars($ap['aging_bucket']) ?></span></td>
+                                        <td class="text-right vym-mono font-weight-bold"><?= $ap['days_aging'] ?> Hari</td>
+                                        <td class="text-right vym-mono font-weight-bold" style="color:#fb923c;">
+                                            Rp <?= number_format($ap['nominal'], 0, ',', '.') ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="8" class="text-center py-3 text-muted">Tidak ada hutang tagihan ekspedisi yang belum dibayar pada periode ini.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1027,7 +1456,7 @@ $active_meta   = $bi_active_meta ?? [];
         startDate: <?= json_encode($bi_filter['start_date'] ?? date('Y-01-01')) ?>,
         endDate: <?= json_encode($bi_filter['end_date'] ?? date('Y-m-d')) ?>,
         interval: <?= json_encode($bi_interval ?? '1M') ?>,
-        seriesMode: 'ALL_LAYERS',
+        seriesMode: <?= json_encode($default_series_mode) ?>,
         data: <?= json_encode($bi_initial_data) ?>
     };
 
@@ -1287,6 +1716,174 @@ $active_meta   = $bi_active_meta ?? [];
             }
             $('#vym-ledger-table tbody').html(ledHtml);
 
+            // Rebuild Phase 3 Financial Intelligence Tables
+            var fi = resp.financial_intelligence || {};
+
+            // [02] Monthly Statement
+            var ms = fi.monthly_statement || [];
+            var msHtml = '';
+            if (ms.length > 0) {
+                for (var mIdx = 0; mIdx < ms.length; mIdx++) {
+                    var mRow = ms[mIdx];
+                    var momVal = mRow.mom_billing_pct;
+                    var momHtml = '<span class="text-muted">-</span>';
+                    if (momVal !== null && typeof momVal !== 'undefined') {
+                        var momCol = (momVal >= 0) ? '#34d399' : '#f87171';
+                        var momSign = (momVal >= 0) ? '+' : '';
+                        momHtml = '<span style="color:' + momCol + ';font-weight:700;">' + momSign + momVal + '%</span>';
+                    }
+                    var ocVal = parseFloat(mRow.operating_contribution) || 0;
+                    msHtml += '<tr>' +
+                        '<td class="vym-mono font-weight-bold" style="color:#f8fafc;">' + $('<div>').text(mRow.label).html() + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#38bdf8;">' + fmtRpFull(mRow.orders_gross) + ' <small class="text-muted">(' + mRow.orders_cnt + ')</small></td>' +
+                        '<td class="text-right vym-mono" style="color:#10b981;">' + fmtRpFull(mRow.invoices_gross) + ' <small class="text-muted">(' + mRow.invoices_cnt + ')</small></td>' +
+                        '<td class="text-right vym-mono">' + fmtRpFull(mRow.invoices_dpp) + '</td>' +
+                        '<td class="text-right vym-mono">' + momHtml + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#2dd4bf;">' + fmtRpFull(mRow.verified_dp_cash) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#f87171;">' + fmtRpFull(mRow.paid_freight) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#fca5a5;">' + fmtRpFull(mRow.paid_payroll) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#fb923c;">' + fmtRpFull(mRow.unpaid_obligations) + '</td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:' + (ocVal >= 0 ? '#c084fc' : '#f87171') + ';">' + fmtRpFull(ocVal) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                msHtml = '<tr><td colspan="10" class="text-center py-3 text-muted">Tidak ada data bulanan pada periode ini.</td></tr>';
+            }
+            $('#vym-fi-monthly-table tbody').html(msHtml);
+
+            // [03A] Revenue Funnel
+            var rf = fi.revenue_funnel || [];
+            var rfHtml = '';
+            for (var rIdx = 0; rIdx < rf.length; rIdx++) {
+                var fRow = rf[rIdx];
+                rfHtml += '<tr>' +
+                    '<td><strong style="color:#f8fafc;">' + $('<div>').text(fRow.stage).html() + '</strong><div style="font-size:10px; color:#64748b;">Sumber: <code>' + $('<div>').text(fRow.source).html() + '</code></div></td>' +
+                    '<td><span class="vym-class-badge vym-class-actual">' + $('<div>').text(fRow.classification).html() + '</span></td>' +
+                    '<td class="text-right vym-mono">' + fRow.doc_count + '</td>' +
+                    '<td class="text-right vym-mono font-weight-bold" style="color:#38bdf8;">' + fmtRpFull(fRow.nominal) + '</td>' +
+                    '<td class="text-right vym-mono" style="color:#34d399;">' + fRow.pct_of_top + '%</td>' +
+                    '</tr>';
+            }
+            $('#vym-fi-funnel-table tbody').html(rfHtml);
+
+            // [03B] Payment Terms
+            var pt = fi.payment_terms_breakdown || [];
+            var ptHtml = '';
+            if (pt.length > 0) {
+                for (var pIdx = 0; pIdx < pt.length; pIdx++) {
+                    var pRow = pt[pIdx];
+                    ptHtml += '<tr>' +
+                        '<td><strong style="color:#f8fafc;">' + $('<div>').text(pRow.term).html() + '</strong></td>' +
+                        '<td class="text-right vym-mono">' + pRow.po_count + ' PO</td>' +
+                        '<td class="text-right vym-mono" style="color:#38bdf8;">' + fmtRpFull(pRow.order_nominal) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#2dd4bf;">' + fmtRpFull(pRow.dp_nominal) + '</td>' +
+                        '<td class="text-right vym-mono">' + pRow.share_pct + '%</td>' +
+                        '</tr>';
+                }
+            } else {
+                ptHtml = '<tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada data skema pembayaran.</td></tr>';
+            }
+            $('#vym-fi-payterms-table tbody').html(ptHtml);
+
+            // [03C] Sales Attribution
+            var sa = fi.sales_attribution || [];
+            var saHtml = '';
+            if (sa.length > 0) {
+                for (var sIdx = 0; sIdx < sa.length; sIdx++) {
+                    var sRow = sa[sIdx];
+                    saHtml += '<tr>' +
+                        '<td><strong style="color:#f8fafc;">' + $('<div>').text(sRow.sales_nama).html() + '</strong></td>' +
+                        '<td class="text-right vym-mono" style="color:#38bdf8;">' + fmtRpFull(sRow.order_nominal) + ' <small class="text-muted">(' + sRow.po_count + ')</small></td>' +
+                        '<td class="text-right vym-mono" style="color:#34d399;">' + fmtRpFull(sRow.billed_nominal) + ' <small class="text-muted">(' + sRow.inv_count + ')</small></td>' +
+                        '<td class="text-right vym-mono" style="color:#fbbf24;">' + sRow.realization_pct + '%</td>' +
+                        '</tr>';
+                }
+            } else {
+                saHtml = '<tr><td colspan="4" class="text-center py-3 text-muted">Tidak ada data atribusi sales.</td></tr>';
+            }
+            $('#vym-fi-sales-table tbody').html(saHtml);
+
+            // [03D] Unbilled PO Backlog
+            var ub = fi.unbilled_orders_list || [];
+            var ubHtml = '';
+            if (ub.length > 0) {
+                for (var uIdx = 0; uIdx < ub.length; uIdx++) {
+                    var uRow = ub[uIdx];
+                    ubHtml += '<tr>' +
+                        '<td class="vym-mono font-weight-bold" style="color:#fbbf24;">' + $('<div>').text(uRow.no_po).html() + '</td>' +
+                        '<td class="vym-mono">' + $('<div>').text(uRow.tanggal).html() + '</td>' +
+                        '<td>' + $('<div>').text(uRow.customer_nama).html() + '</td>' +
+                        '<td class="vym-mono" style="font-size:10px;">' + $('<div>').text(uRow.status_label).html() + '</td>' +
+                        '<td class="text-right vym-mono">' + uRow.days_open + ' hr</td>' +
+                        '<td class="text-right vym-mono font-weight-bold">' + fmtRpFull(uRow.nominal) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                ubHtml = '<tr><td colspan="6" class="text-center py-3 text-muted">Seluruh PO pada periode ini telah diterbitkan Invoice.</td></tr>';
+            }
+            $('#vym-fi-unbilled-table tbody').html(ubHtml);
+
+            // [04A] Profitability Waterfall
+            var wf = fi.profitability_waterfall || [];
+            var wfHtml = '';
+            for (var wIdx = 0; wIdx < wf.length; wIdx++) {
+                var wRow = wf[wIdx];
+                var wfCol = '#e2e8f0';
+                if (wRow.type === 'BASE') wfCol = '#10b981';
+                else if (wRow.type === 'SUBTOTAL') wfCol = '#38bdf8';
+                else if (wRow.type === 'DEDUCTION') wfCol = '#f87171';
+                else if (wRow.type === 'RESULT') wfCol = '#c084fc';
+                wfHtml += '<tr>' +
+                    '<td><strong style="color:' + wfCol + ';">' + $('<div>').text(wRow.step).html() + '</strong><div><span class="vym-class-badge vym-class-actual">' + $('<div>').text(wRow.classification).html() + '</span></div></td>' +
+                    '<td class="vym-mono" style="font-size:10.5px; color:#94a3b8;">' + $('<div>').text(wRow.formula).html() + '</td>' +
+                    '<td class="text-right vym-mono font-weight-bold" style="color:' + wfCol + ';">' + fmtRpFull(wRow.nominal) + '</td>' +
+                    '<td class="text-right vym-mono">' + wRow.pct_of_gross + '%</td>' +
+                    '</tr>';
+            }
+            $('#vym-fi-waterfall-table tbody').html(wfHtml);
+
+            // [04B] Top Billed SKUs
+            var skus = fi.top_billed_skus || [];
+            var skuHtml = '';
+            if (skus.length > 0) {
+                for (var kIdx = 0; kIdx < skus.length; kIdx++) {
+                    var kRow = skus[kIdx];
+                    skuHtml += '<tr>' +
+                        '<td class="vym-mono text-muted">' + (kIdx + 1) + '</td>' +
+                        '<td><strong style="color:#f8fafc;">' + $('<div>').text(kRow.item_nama).html() + '</strong><div style="font-size:10px; color:#64748b;">Sumber: <code>' + $('<div>').text(kRow.source).html() + '</code></div></td>' +
+                        '<td class="text-right vym-mono">' + Math.round(kRow.qty_billed).toLocaleString('id-ID') + '</td>' +
+                        '<td class="text-right vym-mono">' + kRow.doc_count + '</td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:#34d399;">' + fmtRpFull(kRow.gross_billed) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                skuHtml = '<tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada rincian produk terfaktur pada periode ini.</td></tr>';
+            }
+            $('#vym-fi-sku-table tbody').html(skuHtml);
+
+            // [05] Payables Watchlist
+            var ap = fi.payables_watchlist || [];
+            var apHtml = '';
+            if (ap.length > 0) {
+                for (var aIdx = 0; aIdx < ap.length; aIdx++) {
+                    var aRow = ap[aIdx];
+                    var bCol = (aRow.days_aging > 60) ? 'vym-badge-rose' : ((aRow.days_aging > 30) ? 'vym-badge-amber' : 'vym-badge-cyan');
+                    apHtml += '<tr>' +
+                        '<td class="vym-mono font-weight-bold" style="color:#f8fafc;">' + $('<div>').text(aRow.nomor_invoice).html() + '</td>' +
+                        '<td class="vym-mono">' + $('<div>').text(aRow.tanggal_invoice).html() + '</td>' +
+                        '<td><strong>' + $('<div>').text(aRow.nama_ekspedisi).html() + '</strong></td>' +
+                        '<td class="vym-mono text-muted">' + $('<div>').text(aRow.nomor_sj).html() + '</td>' +
+                        '<td class="vym-mono">' + $('<div>').text(aRow.status_approval).html() + '</td>' +
+                        '<td><span class="' + bCol + '">' + $('<div>').text(aRow.aging_bucket).html() + '</span></td>' +
+                        '<td class="text-right vym-mono font-weight-bold">' + aRow.days_aging + ' Hari</td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:#fb923c;">' + fmtRpFull(aRow.nominal) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                apHtml = '<tr><td colspan="8" class="text-center py-3 text-muted">Tidak ada hutang tagihan ekspedisi yang belum dibayar pada periode ini.</td></tr>';
+            }
+            $('#vym-fi-payables-table tbody').html(apHtml);
+
             renderVymSeries();
         }
 
@@ -1337,6 +1934,18 @@ $active_meta   = $bi_active_meta ?? [];
             $(this).addClass('active');
             vymBiState.seriesMode = $(this).data('mode');
             renderVymSeries();
+        });
+
+        $('#vym-fi-tab-group .vym-btn').on('click', function() {
+            $('#vym-fi-tab-group .vym-btn').removeClass('active');
+            $(this).addClass('active');
+            var tabKey = $(this).data('fitab');
+            if (tabKey === 'ALL_FI') {
+                $('.vym-fi-pane').show();
+            } else {
+                $('.vym-fi-pane').hide();
+                $('.vym-fi-pane[data-fipane="' + tabKey + '"]').show();
+            }
         });
 
         $('#vym-btn-fit-chart').on('click', function() {
