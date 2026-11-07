@@ -104,18 +104,18 @@ class Vym_bi extends CI_Controller
                 'slug'     => 'risk_forecasting',
                 'code'     => 'VYM:RISK_FCST',
                 'title'    => 'Risk & Forecasting',
-                'subtitle' => 'Receivable & Payable Aging Exposure, Approval Bottlenecks & Quantitative Trend Projection',
+                'subtitle' => 'Quantitative 3-Month Forward Projection (FORECAST), Statistical Anomaly Z-Score & Enterprise Risk Radar',
                 'icon'     => 'fas fa-shield-alt',
-                'phase'    => 'PHASE 5 • READY'
+                'phase'    => 'PHASE 5 • ACTIVE'
             ],
             'ai_business_analyst' => [
                 'no'       => '08',
                 'slug'     => 'ai_business_analyst',
                 'code'     => 'VYM:AI_ANALYST',
                 'title'    => 'AI Business Analyst',
-                'subtitle' => 'Automated Institutional Financial Commentary, Anomaly Detection & Strategic Diagnostics',
+                'subtitle' => 'Automated Institutional Financial Commentary, Strategic Diagnostics & Interactive Natural-Language Terminal',
                 'icon'     => 'fas fa-robot',
-                'phase'    => 'PHASE 5 • READY'
+                'phase'    => 'PHASE 5 • ACTIVE'
             ]
         ];
     }

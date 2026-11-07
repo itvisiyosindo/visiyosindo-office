@@ -203,6 +203,22 @@ class Md_vym_bi extends CI_Model
             $tagihan
         );
 
+        // Build Phase 5 Predictive Intelligence Payload (Submodules 7 & 8: Risk, Forecasting, Anomalies & AI Business Analyst)
+        $pred_intel = $this->buildPredictiveIntelligencePayload(
+            $start_date,
+            $end_date,
+            $orders,
+            $invoices,
+            $taxes,
+            $tagihan,
+            $payroll,
+            $unbilled_po_nominal,
+            $unbilled_po_count,
+            $cogs_status,
+            $fin_intel,
+            $biz_analytics
+        );
+
         // Compute Validated Ratios
         $order_total       = $orders['total_nominal'];
         $invoice_total     = $invoices['total_nominal'];
@@ -346,11 +362,12 @@ class Md_vym_bi extends CI_Model
                     'accounting_note'=> 'Sesuai Prinsip Akuntansi VYM BI: Laba Bersih (Net Profit) tidak dihitung secara semu karena HPP (COGS) per batch barang keluar belum terhubung penuh di tabel transaksi.'
                 ]
             ],
-            'time_series'            => $buckets,
-            'top_customers'          => $top_customers,
-            'recent_ledger'          => $recent_ledger,
-            'financial_intelligence' => $fin_intel,
-            'business_analytics'     => $biz_analytics
+            'time_series'             => $buckets,
+            'top_customers'           => $top_customers,
+            'recent_ledger'           => $recent_ledger,
+            'financial_intelligence'  => $fin_intel,
+            'business_analytics'      => $biz_analytics,
+            'predictive_intelligence' => $pred_intel
         ];
     }
 
@@ -2013,5 +2030,357 @@ class Md_vym_bi extends CI_Model
         }
 
         return $res;
+    }
+
+    /**
+     * =========================================================================
+     * PHASE 5 — PREDICTIVE INTELLIGENCE (SUBMODULES 7 & 8)
+     *   [07] Risk & Forecasting (3-Month Statistical Forecast, Risk Radar & Anomaly Detector)
+     *   [08] AI Business Analyst (Automated Institutional Commentary & Q&A Diagnostics)
+     * Strictly separates ACTUAL vs ESTIMATED vs FORECAST per Section 5.
+     * =========================================================================
+     */
+    private function buildPredictiveIntelligencePayload(
+        $start_date,
+        $end_date,
+        $orders,
+        $invoices,
+        $taxes,
+        $tagihan,
+        $payroll,
+        $unbilled_po_nominal,
+        $unbilled_po_count,
+        $cogs_status,
+        $fin_intel,
+        $biz_analytics
+    ) {
+        $monthly_asc = array_reverse($fin_intel['monthly_statement'] ?? []);
+        $n_months    = count($monthly_asc);
+
+        // 1. 3-MONTH QUANTITATIVE FORWARD PROJECTION (FORECAST • WMA + LINEAR REGRESSION + BACKLOG)
+        $ord_series  = [];
+        $inv_series  = [];
+        $out_series  = [];
+        foreach ($monthly_asc as $m) {
+            if ($m['orders_gross'] > 0 || $m['invoices_gross'] > 0 || ($m['paid_freight'] + $m['paid_payroll']) > 0) {
+                $ord_series[] = (float)$m['orders_gross'];
+                $inv_series[] = (float)$m['invoices_gross'];
+                $out_series[] = (float)($m['paid_freight'] + $m['paid_payroll']);
+            }
+        }
+
+        $computeForecastStep = function ($arr, $step) {
+            $cnt = count($arr);
+            if ($cnt === 0) return 0.0;
+            if ($cnt === 1) return max(0.0, $arr[0]);
+
+            // Weighted Moving Average of up to last 3 active months
+            $tail = array_slice($arr, -3);
+            $t_cnt = count($tail);
+            $w_sum = 0.0;
+            $w_tot = 0.0;
+            for ($i = 0; $i < $t_cnt; $i++) {
+                $w = ($i + 1);
+                $w_sum += $tail[$i] * $w;
+                $w_tot += $w;
+            }
+            $wma = ($w_tot > 0) ? ($w_sum / $w_tot) : 0.0;
+
+            // Damped linear slope
+            $first = $tail[0];
+            $last  = $tail[$t_cnt - 1];
+            $slope = ($t_cnt > 1) ? (($last - $first) / ($t_cnt - 1)) : 0.0;
+            $damped_slope = $slope * 0.35; // Conservative institutional damping
+
+            return max(0.0, $wma + ($damped_slope * $step));
+        };
+
+        $conv_rate = ($orders['total_nominal'] > 0)
+            ? min(1.0, max(0.25, $invoices['total_nominal'] / $orders['total_nominal']))
+            : 0.65;
+
+        // Backlog realization injection into M+1 (50%) and M+2 (30%)
+        $backlog_m1 = $unbilled_po_nominal * $conv_rate * 0.45;
+        $backlog_m2 = $unbilled_po_nominal * $conv_rate * 0.25;
+        $backlog_m3 = $unbilled_po_nominal * $conv_rate * 0.15;
+
+        $base_ts = strtotime(date('Y-m-01', strtotime($end_date)));
+        if (!$base_ts || $base_ts <= 0) {
+            $base_ts = strtotime(date('Y-m-01'));
+        }
+
+        $forward_projections = [];
+        $backlog_schedule = [1 => $backlog_m1, 2 => $backlog_m2, 3 => $backlog_m3];
+        for ($h = 1; $h <= 3; $h++) {
+            $f_ts    = strtotime("+{$h} month", $base_ts);
+            $f_ord   = round($computeForecastStep($ord_series, $h), 2);
+            $f_inv_w = $computeForecastStep($inv_series, $h);
+            $f_inv   = round(($f_inv_w * 0.75) + ($backlog_schedule[$h] ?? 0.0), 2);
+            $f_out   = round($computeForecastStep($out_series, $h), 2);
+            $f_net   = round($f_inv - $f_out, 2);
+
+            $forward_projections[] = [
+                'horizon'             => 'M+' . $h,
+                'period_label'        => date('M Y', $f_ts),
+                'classification'      => 'FORECAST • STATISTICAL MODEL',
+                'model_method'        => '3M Weighted Moving Average + Damped Trend + Unbilled PO Realization',
+                'projected_orders'    => $f_ord,
+                'projected_invoices'  => $f_inv,
+                'projected_cash_out'  => $f_out,
+                'projected_net_contr' => $f_net,
+                'bear_case_invoices'  => round($f_inv * 0.82, 2),
+                'bull_case_invoices'  => round($f_inv * 1.18, 2)
+            ];
+        }
+
+        // 2. ENTERPRISE 5-DIMENSION RISK RADAR (ACTUAL EXPOSURE SCORING)
+        $c_sum    = $biz_analytics['customer_intelligence']['summary'] ?? [];
+        $hhi      = (int)($c_sum['hhi_index'] ?? 0);
+        $top3_pct = (float)($c_sum['top3_share_pct'] ?? 0.0);
+
+        $r1_score = min(100, (int)round(($hhi / 3500) * 100));
+        $r1_sev   = ($r1_score >= 75) ? 'CRITICAL' : (($r1_score >= 50) ? 'HIGH' : (($r1_score >= 30) ? 'MODERATE' : 'LOW'));
+
+        $unbilled_pct = ($orders['total_nominal'] > 0)
+            ? round(($unbilled_po_nominal / $orders['total_nominal']) * 100, 1)
+            : 0.0;
+        $r2_score = min(100, (int)round($unbilled_pct * 1.25));
+        $r2_sev   = ($r2_score >= 70) ? 'HIGH' : (($r2_score >= 40) ? 'MODERATE' : 'LOW');
+
+        $overdue_cnt = (int)$tagihan['overdue_count'];
+        $unpaid_ap   = (float)$tagihan['unpaid_nominal'];
+        $r3_score    = min(100, ($overdue_cnt * 12) + ($unpaid_ap > 0 ? 20 : 0));
+        $r3_sev      = ($r3_score >= 70) ? 'CRITICAL' : (($r3_score >= 45) ? 'HIGH' : (($r3_score >= 25) ? 'MODERATE' : 'LOW'));
+
+        $r4_score = $cogs_status['has_unit_cogs'] ? 15 : 68;
+        $r4_sev   = $cogs_status['has_unit_cogs'] ? 'LOW' : 'HIGH';
+
+        $tax_tot_cnt = $taxes['approved_count'] + $taxes['pending_count'];
+        $tax_pend_pct = ($tax_tot_cnt > 0) ? round(($taxes['pending_count'] / $tax_tot_cnt) * 100, 1) : 0.0;
+        $r5_score = min(100, (int)round($tax_pend_pct));
+        $r5_sev   = ($r5_score >= 60) ? 'HIGH' : (($r5_score >= 30) ? 'MODERATE' : 'LOW');
+
+        $risk_matrix = [
+            [
+                'code'           => 'RISK:CUST_CONC',
+                'dimension'      => '1. Customer Concentration & Revenue Dependency',
+                'classification' => 'ACTUAL • HHI EXPOSURE',
+                'score'          => $r1_score,
+                'severity'       => $r1_sev,
+                'metric_value'   => "HHI {$hhi} • Top-3 Share: {$top3_pct}%",
+                'formula'        => 'SUM((Customer_Billed_i / Total_Billed)^2) [Herfindahl-Hirschman Index]',
+                'source_tables'  => 'po_masuk, invoice, customer',
+                'mitigation'     => ($r1_score >= 50)
+                    ? 'Diversifikasi akuisisi RS/Instansi baru untuk menurunkan ketergantungan pada 3 pelanggan utama.'
+                    : 'Struktur portofolio pelanggan cukup terdiversifikasi; pertahankan retensi akun utama.'
+            ],
+            [
+                'code'           => 'RISK:UNBILLED_LAG',
+                'dimension'      => '2. Unbilled Order Backlog Stagnation',
+                'classification' => 'ACTUAL • PIPELINE LAG',
+                'score'          => $r2_score,
+                'severity'       => $r2_sev,
+                'metric_value'   => "{$unbilled_po_count} PO Belum Tagih ({$unbilled_pct}% Order Book)",
+                'formula'        => 'Unbilled_PO_Nominal / Total_Contracted_Orders * 100',
+                'source_tables'  => 'po_masuk LEFT JOIN invoice ON no_po',
+                'mitigation'     => ($unbilled_po_count > 0)
+                    ? 'Prioritaskan penerbitan Surat Jalan & Faktur untuk ' . $unbilled_po_count . ' PO yang belum terbit Invoice.'
+                    : 'Tidak ada antrean PO yang tertahan; konversi PO ke Invoice berjalan optimal.'
+            ],
+            [
+                'code'           => 'RISK:AP_OVERDUE',
+                'dimension'      => '3. Vendor & Freight Payables Aging Exposure',
+                'classification' => 'ACTUAL • AP LIQUIDITY',
+                'score'          => $r3_score,
+                'severity'       => $r3_sev,
+                'metric_value'   => "{$overdue_cnt} Tagihan > 30 Hari • Total AP: Rp " . number_format($unpaid_ap, 0, ',', '.'),
+                'formula'        => 'COUNT(tagihan_ekspedisi WHERE status_bayar != "sudah_dibayar" AND DATEDIFF(NOW(), tanggal_invoice) > 30)',
+                'source_tables'  => 'tagihan_ekspedisi, ekspedisi',
+                'mitigation'     => ($overdue_cnt > 0)
+                    ? 'Jadwalkan penyelesaian bertahap atas ' . $overdue_cnt . ' tagihan ekspedisi > 30 hari agar SLA pengiriman tidak terhambat.'
+                    : 'Seluruh kewajiban tagihan vendor/ekspedisi berada dalam batas umur normal (< 30 hari).'
+            ],
+            [
+                'code'           => 'RISK:COGS_BLINDSPOT',
+                'dimension'      => '4. Unit COGS & Gross Margin Traceability Gap',
+                'classification' => 'GUARDRAIL • SCHEMA AUDIT',
+                'score'          => $r4_score,
+                'severity'       => $r4_sev,
+                'metric_value'   => $cogs_status['status_label'] . ' (' . $cogs_status['supplier_price_rows'] . ' Dok Pemasok)',
+                'formula'        => 'Schema Audit: detail_barang_invoice vs acc_pemasok_harga batch linkage',
+                'source_tables'  => 'detail_barang_invoice, acc_pemasok_harga',
+                'mitigation'     => 'Pertahankan COGS Guardrail (Prinsip #5) hingga harga beli batch terhubung langsung ke setiap baris item invoice.'
+            ],
+            [
+                'code'           => 'RISK:TAX_VERIF',
+                'dimension'      => '5. Tax Faktur Verification & Compliance Queue',
+                'classification' => 'ACTUAL • TAX QUEUE',
+                'score'          => $r5_score,
+                'severity'       => $r5_sev,
+                'metric_value'   => "{$taxes['pending_count']} Pending / {$taxes['approved_count']} Approved ({$tax_pend_pct}% Pending)",
+                'formula'        => 'Pending_Faktur_Count / Total_Faktur_Submissions * 100',
+                'source_tables'  => 'approval_faktur_pajak',
+                'mitigation'     => ($taxes['pending_count'] > 0)
+                    ? 'Selesaikan verifikasi ' . $taxes['pending_count'] . ' pengajuan Faktur Pajak yang masih berstatus proses.'
+                    : 'Seluruh pengajuan Faktur Pajak pada periode ini telah disetujui.'
+            ]
+        ];
+
+        // 3. STATISTICAL ANOMALY & OUTLIER DETECTOR (Z-SCORE + OPERATIONAL RULES)
+        $anomaly_alerts = [];
+
+        // 3A. Invoice Z-Score Outliers (> Mean + 1.8 * StdDev)
+        $inv_vals = [];
+        foreach ($invoices['rows'] as $r) {
+            if ((float)$r['nominal_total'] > 0) {
+                $inv_vals[] = (float)$r['nominal_total'];
+            }
+        }
+        if (count($inv_vals) >= 3) {
+            $mean = array_sum($inv_vals) / count($inv_vals);
+            $var  = 0.0;
+            foreach ($inv_vals as $v) {
+                $var += ($v - $mean) * ($v - $mean);
+            }
+            $std = sqrt($var / count($inv_vals));
+            if ($std > 0) {
+                foreach ($invoices['rows'] as $r) {
+                    $v = (float)$r['nominal_total'];
+                    $z = ($v - $mean) / $std;
+                    if ($z >= 1.85 && count($anomaly_alerts) < 6) {
+                        $anomaly_alerts[] = [
+                            'tgl'            => $r['tgl'],
+                            'kode_dok'       => $r['no_invoice'],
+                            'type'           => 'STATISTICAL OUTLIER (Z = +' . round($z, 2) . 'σ)',
+                            'severity'       => 'HIGH VALUE',
+                            'badge'          => 'emerald',
+                            'entitas'        => $r['customer_nama'],
+                            'source_table'   => 'invoice',
+                            'nominal'        => round($v, 2),
+                            'explanation'    => 'Nilai faktur melampaui rata-rata historis (Rp ' . number_format($mean, 0, ',', '.') . ') sebesar +' . round($z, 2) . ' standar deviasi.'
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3B. Stagnant Unbilled High-Value POs (> 30 Days Open without Invoice)
+        foreach (($fin_intel['unbilled_orders_list'] ?? []) as $ub) {
+            if ($ub['days_open'] >= 30 && count($anomaly_alerts) < 12) {
+                $anomaly_alerts[] = [
+                    'tgl'            => $ub['tanggal'],
+                    'kode_dok'       => $ub['no_po'],
+                    'type'           => 'UNBILLED PO STAGNATION (' . $ub['days_open'] . ' Hari)',
+                    'severity'       => 'WARNING',
+                    'badge'          => 'amber',
+                    'entitas'        => $ub['customer_nama'],
+                    'source_table'   => 'po_masuk',
+                    'nominal'        => $ub['nominal'],
+                    'explanation'    => 'PO pelanggan berusia ' . $ub['days_open'] . ' hari belum memiliki pencatatan nomor PO yang sama pada tabel invoice.'
+                ];
+            }
+        }
+
+        // 3C. Critically Aged Unpaid Freight Bills (> 45 Days Unpaid)
+        foreach (($fin_intel['payables_watchlist'] ?? []) as $ap) {
+            if ($ap['days_aging'] >= 45 && count($anomaly_alerts) < 16) {
+                $anomaly_alerts[] = [
+                    'tgl'            => $ap['tanggal_invoice'],
+                    'kode_dok'       => $ap['nomor_invoice'],
+                    'type'           => 'OVERDUE PAYABLE (' . $ap['days_aging'] . ' Hari)',
+                    'severity'       => 'CRITICAL AP',
+                    'badge'          => 'rose',
+                    'entitas'        => $ap['nama_ekspedisi'],
+                    'source_table'   => 'tagihan_ekspedisi',
+                    'nominal'        => $ap['nominal'],
+                    'explanation'    => 'Tagihan vendor ekspedisi berstatus belum_dibayar melewati 45 hari sejak tanggal invoice.'
+                ];
+            }
+        }
+
+        // 4. AI BUSINESS ANALYST — AUTOMATED INSTITUTIONAL BRIEFING & DETERMINISTIC Q&A ENGINE
+        $ord_tot_fmt  = 'Rp ' . number_format($orders['total_nominal'], 0, ',', '.');
+        $inv_tot_fmt  = 'Rp ' . number_format($invoices['total_nominal'], 0, ',', '.');
+        $dpp_tot_fmt  = 'Rp ' . number_format($invoices['total_dpp'], 0, ',', '.');
+        $unb_tot_fmt  = 'Rp ' . number_format($unbilled_po_nominal, 0, ',', '.');
+        $dp_tot_fmt   = 'Rp ' . number_format($orders['verified_dp_nominal'], 0, ',', '.');
+        $out_tot_fmt  = 'Rp ' . number_format($tagihan['paid_nominal'] + $payroll['total_nominal'], 0, ',', '.');
+        $ap_tot_fmt   = 'Rp ' . number_format($tagihan['unpaid_nominal'], 0, ',', '.');
+        $oc_val       = $invoices['total_dpp'] - ($tagihan['paid_nominal'] + $payroll['total_nominal']);
+        $oc_tot_fmt   = 'Rp ' . number_format($oc_val, 0, ',', '.');
+        $m1_proj_fmt  = isset($forward_projections[0]) ? ('Rp ' . number_format($forward_projections[0]['projected_invoices'], 0, ',', '.')) : 'Rp 0';
+        $top_cust_str = ($c_sum['top1_name'] ?? '-') . ' (' . ($c_sum['top1_share_pct'] ?? 0) . '%)';
+
+        $executive_briefing = [
+            [
+                'code'           => 'AI:THESIS_REV',
+                'title'          => '1. Order Book & Billing Realization Diagnostics',
+                'classification' => 'ACTUAL • VERIFIED TELEMETRY',
+                'headline'       => "Konversi PO ke Faktur mencapai {$fin_intel['revenue_funnel'][2]['pct_of_top']}% dengan Backlog Belum Tertagih {$unb_tot_fmt}.",
+                'body'           => "Pada periode {$start_date} s/d {$end_date}, perusahaan membukukan komitmen pesanan pelanggan (Contracted Order Book dari tabel po_masuk) sebesar {$ord_tot_fmt} ({$orders['count']} PO). Dari nilai tersebut, tagihan resmi yang telah diterbitkan pada tabel invoice mencapai {$inv_tot_fmt} ({$invoices['count']} faktur, Net DPP {$dpp_tot_fmt}). Terdapat {$unbilled_po_count} dokumen PO senilai {$unb_tot_fmt} yang belum terbit faktur dan menjadi katalis penagihan jangka pendek."
+            ],
+            [
+                'code'           => 'AI:THESIS_CASH',
+                'title'          => '2. Cashflow Discipline, Verified DP & Payables Liquidity',
+                'classification' => 'ACTUAL • STRICT SEPARATION',
+                'headline'       => "Kas Keluar Aktual tercatat {$out_tot_fmt}; Kewajiban Ekspedisi Belum Bayar {$ap_tot_fmt}.",
+                'body'           => "Sesuai Prinsip #5 VYM BI, komitmen PO dan faktur terbit tidak diklaim sebagai kas masuk lunas. Penerimaan uang muka (DP cicilan) & PO Cash/COD terverifikasi tercatat sebesar {$dp_tot_fmt}. Di sisi pengeluaran aktual, beban ekspedisi lunas (tagihan_ekspedisi.status_bayar = sudah_dibayar) ditambah tutup buku gaji SDM (salary_history) mencapai {$out_tot_fmt}, sementara hutang ekspedisi belum dibayar tercatat {$ap_tot_fmt} ({$tagihan['unpaid_count']} tagihan, {$overdue_cnt} di antaranya berusia > 30 hari)."
+            ],
+            [
+                'code'           => 'AI:THESIS_MARGIN',
+                'title'          => '3. Operating Contribution, COGS Guardrail & Concentration Risk',
+                'classification' => 'GUARDRAIL • HHI & COGS',
+                'headline'       => "Kontribusi Operasional (Excl. COGS) tercatat {$oc_tot_fmt} • Indeks HHI Pelanggan {$hhi}.",
+                'body'           => "Selisih antara Net Billed DPP ({$dpp_tot_fmt}) dan Kas Keluar Operasional Terverifikasi ({$out_tot_fmt}) menghasilkan Kontribusi Operasional Pra-HPP sebesar {$oc_tot_fmt}. Laba Bersih tidak dipublikasikan secara semu karena HPP per batch keluar belum terhubung langsung ke detail_barang_invoice (tersedia {$cogs_status['supplier_price_rows']} dokumen katalog harga pada acc_pemasok_harga). Dari sisi komersial, pelanggan terbesar adalah {$top_cust_str} dengan porsi Top-3 mencapai {$top3_pct}%."
+            ],
+            [
+                'code'           => 'AI:THESIS_OUTLOOK',
+                'title'          => '4. Quantitative Outlook & Prioritized Management Actions',
+                'classification' => 'FORECAST • STRATEGIC PLAN',
+                'headline'       => "Proyeksi Penagihan Bulan Depan (M+1) diestimasikan {$m1_proj_fmt} (Model WMA + Realisasi Backlog).",
+                'body'           => "Prioritas eksekusi manajemen: (1) Percepat pengiriman & penerbitan faktur atas {$unbilled_po_count} PO unbilled senilai {$unb_tot_fmt}; (2) Selesaikan {$overdue_cnt} tagihan ekspedisi yang telah melewati 30 hari; (3) Tuntaskan verifikasi {$taxes['pending_count']} antrean Faktur Pajak pada approval_faktur_pajak."
+            ]
+        ];
+
+        $preset_qa = [
+            [
+                'q_id'     => 'QA_REVENUE',
+                'question' => 'Bagaimana perbandingan PO Masuk vs Invoice Terbit dan berapa PO yang belum ditagih?',
+                'answer'   => "Berdasarkan tabel `po_masuk` dan `invoice` pada periode ini:\n• **Contracted Customer Orders (PO Masuk)**: {$ord_tot_fmt} ({$orders['count']} dokumen PO; {$orders['approved_count']} disetujui, {$orders['pending_count']} proses kroscek).\n• **Issued Invoices (Billed AR)**: {$inv_tot_fmt} ({$invoices['count']} faktur; Net DPP excl. ongkir sebesar {$dpp_tot_fmt}).\n• **Unbilled Order Backlog**: {$unb_tot_fmt} ({$unbilled_po_count} PO belum memiliki faktur di tabel `invoice`).\n• **Prinsip Akuntansi**: Nilai PO tidak diakui sebagai kas masuk, dan faktur terbit diklasifikasikan sebagai piutang tertagih (Billed Receivable)."
+            ],
+            [
+                'q_id'     => 'QA_CASHFLOW',
+                'question' => 'Bagaimana posisi arus kas aktual, DP pelanggan, dan hutang vendor ekspedisi yang jatuh tempo?',
+                'answer'   => "Rekonsiliasi kas & kewajiban (`po_masuk`, `tagihan_ekspedisi`, `salary_history`):\n• **Verified Customer DP & Cash/COD PO**: {$dp_tot_fmt} ({$orders['cash_or_dp_count']} transaksi terverifikasi).\n• **Settled Cash Expenditures (Lunas)**: {$out_tot_fmt} (terdiri dari ekspedisi `sudah_dibayar` Rp " . number_format($tagihan['paid_nominal'], 0, ',', '.') . " dan payroll SDM Rp " . number_format($payroll['total_nominal'], 0, ',', '.') . ").\n• **Unpaid Vendor/Freight Obligations (AP)**: {$ap_tot_fmt} ({$tagihan['unpaid_count']} dokumen `belum_dibayar`, dengan {$overdue_cnt} dokumen berusia > 30 hari)."
+            ],
+            [
+                'q_id'     => 'QA_PROFIT_COGS',
+                'question' => 'Berapa kontribusi operasional perusahaan dan mengapa Net Profit menggunakan COGS Guardrail?',
+                'answer'   => "Audit Profitabilitas & HPP (`invoice`, `tagihan_ekspedisi`, `salary_history`, `acc_pemasok_harga`):\n• **Net Billed DPP**: {$dpp_tot_fmt}\n• **Verified Settled OpEx (Freight + Payroll)**: {$out_tot_fmt}\n• **Pre-COGS Operating Contribution**: {$oc_tot_fmt}\n• **Alasan COGS Guardrail**: Tabel `detail_barang_invoice` belum menyimpan kolom `harga_beli` / HPP per batch keluar (meskipun terdapat {$cogs_status['supplier_price_rows']} dokumen katalog harga di `acc_pemasok_harga`). Sesuai Prinsip #5 VYM BI, sistem menolak mengarang persentase margin kotor fiktif."
+            ],
+            [
+                'q_id'     => 'QA_CUSTOMER_HHI',
+                'question' => 'Siapa pelanggan dengan kontribusi terbesar dan bagaimana tingkat risiko konsentrasi pelanggan (HHI)?',
+                'answer'   => "Analisis Konsentrasi Pelanggan (`po_masuk` & `invoice`):\n• **Total Entitas Pelanggan Aktif**: " . ($c_sum['active_customers'] ?? 0) . " institusi/pelanggan.\n• **Pelanggan Terbesar (Top-1)**: {$top_cust_str}.\n• **Porsi Top-3 Pelanggan**: {$top3_pct}% dari total nilai transaksi.\n• **Indeks HHI**: {$hhi} (" . ($c_sum['concentration_risk'] ?? '-') . ").\n• **Rata-rata Nilai Pesanan (AOV)**: Rp " . number_format($c_sum['avg_order_value'] ?? 0, 0, ',', '.') . " per PO."
+            ],
+            [
+                'q_id'     => 'QA_FORECAST',
+                'question' => 'Bagaimana proyeksi (Forecast) penagihan dan arus kas 3 bulan ke depan?',
+                'answer'   => "Proyeksi Kuantitatif 3 Bulan (`FORECAST • STATISTICAL MODEL` menggunakan 3M Weighted Moving Average + Damped Trend + Konversi Unbilled Backlog):\n" .
+                    (isset($forward_projections[0]) ? "• **{$forward_projections[0]['period_label']} (M+1)**: Proyeksi Invoice Rp " . number_format($forward_projections[0]['projected_invoices'], 0, ',', '.') . " | Proyeksi Kas Keluar Rp " . number_format($forward_projections[0]['projected_cash_out'], 0, ',', '.') . "\n" : "") .
+                    (isset($forward_projections[1]) ? "• **{$forward_projections[1]['period_label']} (M+2)**: Proyeksi Invoice Rp " . number_format($forward_projections[1]['projected_invoices'], 0, ',', '.') . " | Proyeksi Kas Keluar Rp " . number_format($forward_projections[1]['projected_cash_out'], 0, ',', '.') . "\n" : "") .
+                    (isset($forward_projections[2]) ? "• **{$forward_projections[2]['period_label']} (M+3)**: Proyeksi Invoice Rp " . number_format($forward_projections[2]['projected_invoices'], 0, ',', '.') . " | Proyeksi Kas Keluar Rp " . number_format($forward_projections[2]['projected_cash_out'], 0, ',', '.') : "")
+            ]
+        ];
+
+        return [
+            'forward_projections' => $forward_projections,
+            'risk_matrix'         => $risk_matrix,
+            'anomaly_alerts'      => $anomaly_alerts,
+            'ai_analyst'          => [
+                'executive_briefing' => $executive_briefing,
+                'preset_qa'          => $preset_qa
+            ]
+        ];
     }
 }

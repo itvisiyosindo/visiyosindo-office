@@ -6,6 +6,7 @@ $top_customers = $bi_initial_data['top_customers'] ?? [];
 $recent_ledger = $bi_initial_data['recent_ledger'] ?? [];
 $fin_intel     = $bi_initial_data['financial_intelligence'] ?? [];
 $biz_analytics = $bi_initial_data['business_analytics'] ?? [];
+$pred_intel    = $bi_initial_data['predictive_intelligence'] ?? [];
 $active_sub    = $bi_active_sub ?? 'executive_overview';
 $active_meta   = $bi_active_meta ?? [];
 
@@ -874,20 +875,29 @@ if ($active_sub === 'revenue_analytics') {
         $default_fi_tab = 'CASHFLOW_INTEL';
     } elseif ($active_sub === 'business_performance') {
         $default_fi_tab = 'BIZ_PERF';
+    } elseif ($active_sub === 'risk_forecasting') {
+        $default_fi_tab = 'RISK_FCST';
+    } elseif ($active_sub === 'ai_business_analyst') {
+        $default_fi_tab = 'AI_ANALYST';
     }
 
     $ba_cust = $biz_analytics['customer_intelligence'] ?? [];
     $ba_prod = $biz_analytics['product_intelligence'] ?? [];
     $ba_supp = $biz_analytics['supplier_logistics_intelligence'] ?? [];
     $ba_ops  = $biz_analytics['operational_intelligence'] ?? [];
+
+    $pi_fcst = $pred_intel['forward_projections'] ?? [];
+    $pi_risk = $pred_intel['risk_matrix'] ?? [];
+    $pi_anom = $pred_intel['anomaly_alerts'] ?? [];
+    $pi_ai   = $pred_intel['ai_analyst'] ?? [];
     ?>
     <div class="vym-panel">
         <div class="vym-panel-head">
             <h3 class="vym-panel-title">
                 <i class="fas fa-microchip text-info"></i>
-                PHASE 3 &amp; 4 INTELLIGENCE DECK — FINANCIAL STATEMENTS &amp; BUSINESS ANALYTICS
+                VYM BI INSTITUTIONAL INTELLIGENCE DECK — SUBMODULES [02] TO [08]
             </h3>
-            <div class="vym-btn-group" id="vym-fi-tab-group">
+            <div class="vym-btn-group" id="vym-fi-tab-group" style="flex-wrap: wrap;">
                 <button type="button" class="vym-btn <?= ($default_fi_tab === 'FIN_PERF') ? 'active' : '' ?>" data-fitab="FIN_PERF">
                     [02] Financial Performance
                 </button>
@@ -902,6 +912,12 @@ if ($active_sub === 'revenue_analytics') {
                 </button>
                 <button type="button" class="vym-btn <?= ($default_fi_tab === 'BIZ_PERF') ? 'active' : '' ?>" data-fitab="BIZ_PERF">
                     [06] Business Performance
+                </button>
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'RISK_FCST') ? 'active' : '' ?>" data-fitab="RISK_FCST">
+                    [07] Risk &amp; Forecasting
+                </button>
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'AI_ANALYST') ? 'active' : '' ?>" data-fitab="AI_ANALYST">
+                    [08] AI Business Analyst
                 </button>
                 <button type="button" class="vym-btn" data-fitab="ALL_FI">
                     Tampilkan Semua
@@ -1502,6 +1518,220 @@ if ($active_sub === 'revenue_analytics') {
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB [07]: PHASE 5 RISK & FORECASTING — 3M FORWARD PROJECTION, RISK RADAR & ANOMALY Z-SCORE -->
+            <div class="vym-fi-pane" data-fipane="RISK_FCST" style="<?= ($default_fi_tab === 'RISK_FCST') ? '' : 'display:none;' ?>">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                    <div>
+                        <strong style="color:#f8fafc; font-size:12.5px;">
+                            <i class="fas fa-chart-line text-warning mr-1"></i>
+                            [07A] 3-MONTH QUANTITATIVE FORWARD PROJECTION (WMA + DAMPED TREND + UNBILLED BACKLOG REALIZATION)
+                        </strong>
+                        <div style="font-size:11px; color:#94a3b8;">
+                            Sesuai Prinsip #5 VYM BI: Angka di bawah berlabel tegas <code>FORECAST • STATISTICAL MODEL</code> dan terpisah dari pembukuan transaksi aktual.
+                        </div>
+                    </div>
+                    <span class="vym-class-badge vym-class-forecast">FORECAST • STATISTICAL MODEL</span>
+                </div>
+                <div class="table-responsive mb-3">
+                    <table class="vym-table" id="vym-pi-fcst-table">
+                        <thead>
+                            <tr>
+                                <th>Horizon</th>
+                                <th>Periode Proyeksi</th>
+                                <th>Klasifikasi</th>
+                                <th class="text-right">Projected Orders (PO)</th>
+                                <th class="text-right">Projected Invoices (Base)</th>
+                                <th class="text-right">Bear Case (-18%)</th>
+                                <th class="text-right">Bull Case (+18%)</th>
+                                <th class="text-right">Projected Cash Out</th>
+                                <th class="text-right">Projected Operating Contrib.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($pi_fcst)): ?>
+                                <?php foreach ($pi_fcst as $fc): ?>
+                                    <tr>
+                                        <td class="vym-mono font-weight-bold" style="color:#c084fc;"><?= htmlspecialchars($fc['horizon']) ?></td>
+                                        <td class="vym-mono font-weight-bold" style="color:#f8fafc;"><?= htmlspecialchars($fc['period_label']) ?></td>
+                                        <td><span class="vym-class-badge vym-class-forecast"><?= htmlspecialchars($fc['classification']) ?></span></td>
+                                        <td class="text-right vym-mono" style="color:#38bdf8;">Rp <?= number_format($fc['projected_orders'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono font-weight-bold" style="color:#10b981;">Rp <?= number_format($fc['projected_invoices'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono text-muted">Rp <?= number_format($fc['bear_case_invoices'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono" style="color:#34d399;">Rp <?= number_format($fc['bull_case_invoices'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono" style="color:#f87171;">Rp <?= number_format($fc['projected_cash_out'], 0, ',', '.') ?></td>
+                                        <td class="text-right vym-mono font-weight-bold" style="color:#c084fc;">Rp <?= number_format($fc['projected_net_contr'], 0, ',', '.') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="9" class="text-center py-3 text-muted">Data historis belum mencukupi untuk proyeksi.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <!-- [07B] Enterprise 5-Dimension Risk Radar -->
+                    <div class="col-lg-6 col-12 mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-shield-alt text-danger mr-1"></i>
+                                [07B] ENTERPRISE 5-DIMENSION RISK RADAR &amp; MITIGATION MATRIX
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • RISK EXPOSURE</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-pi-risk-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dimensi Risiko &amp; Mitigasi</th>
+                                        <th>Metrik Aktual</th>
+                                        <th class="text-right">Skor</th>
+                                        <th>Severity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pi_risk as $rk):
+                                        $s_cls = 'vym-badge-cyan';
+                                        if ($rk['severity'] === 'CRITICAL' || $rk['severity'] === 'HIGH') $s_cls = 'vym-badge-rose';
+                                        elseif ($rk['severity'] === 'MODERATE') $s_cls = 'vym-badge-amber';
+                                        else $s_cls = 'vym-badge-emerald';
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <strong style="color:#f8fafc;"><?= htmlspecialchars($rk['dimension']) ?></strong>
+                                                <div style="font-size:10.5px; color:#94a3b8; margin-top:2px;"><?= htmlspecialchars($rk['mitigation']) ?></div>
+                                                <div style="font-size:9.5px; color:#64748b;">Tabel: <code><?= htmlspecialchars($rk['source_tables']) ?></code></div>
+                                            </td>
+                                            <td class="vym-mono" style="font-size:11px; color:#cbd5e1;"><?= htmlspecialchars($rk['metric_value']) ?></td>
+                                            <td class="text-right vym-mono font-weight-bold" style="color:#f8fafc;"><?= (int)$rk['score'] ?>/100</td>
+                                            <td><span class="<?= $s_cls ?>"><?= htmlspecialchars($rk['severity']) ?></span></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- [07C] Statistical Anomaly & Outlier Watchlist -->
+                    <div class="col-lg-6 col-12 mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-radiation text-warning mr-1"></i>
+                                [07C] STATISTICAL ANOMALY (Z-SCORE &gt; +1.85σ) &amp; OPERATIONAL OUTLIER DETECTOR
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • ANOMALY SCAN</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-pi-anom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tgl / Dokumen</th>
+                                        <th>Tipe Anomali &amp; Penjelasan</th>
+                                        <th>Entitas</th>
+                                        <th class="text-right">Nominal (IDR)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($pi_anom)): ?>
+                                        <?php foreach ($pi_anom as $an):
+                                            $ab_cls = 'vym-badge-' . ($an['badge'] ?? 'amber');
+                                        ?>
+                                            <tr>
+                                                <td class="vym-mono">
+                                                    <strong style="color:#f8fafc;"><?= htmlspecialchars($an['kode_dok']) ?></strong>
+                                                    <div style="font-size:10px; color:#64748b;"><?= htmlspecialchars($an['tgl']) ?> • <code><?= htmlspecialchars($an['source_table']) ?></code></div>
+                                                </td>
+                                                <td>
+                                                    <span class="<?= $ab_cls ?>"><?= htmlspecialchars($an['type']) ?></span>
+                                                    <div style="font-size:10.5px; color:#cbd5e1; margin-top:3px;"><?= htmlspecialchars($an['explanation']) ?></div>
+                                                </td>
+                                                <td><?= htmlspecialchars($an['entitas']) ?></td>
+                                                <td class="text-right vym-mono font-weight-bold">Rp <?= number_format($an['nominal'], 0, ',', '.') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="4" class="text-center py-3 text-muted">Tidak terdeteksi anomali ekstrem pada periode ini.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB [08]: PHASE 5 AI BUSINESS ANALYST — AUTOMATED INSTITUTIONAL BRIEFING & INTERACTIVE Q&A -->
+            <?php
+            $ai_brief = $pi_ai['executive_briefing'] ?? [];
+            $ai_qa    = $pi_ai['preset_qa'] ?? [];
+            ?>
+            <div class="vym-fi-pane" data-fipane="AI_ANALYST" style="<?= ($default_fi_tab === 'AI_ANALYST') ? '' : 'display:none;' ?>">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                    <div>
+                        <strong style="color:#f8fafc; font-size:13px;">
+                            <i class="fas fa-robot text-info mr-1"></i>
+                            [08] VYM AI BUSINESS ANALYST — AUTOMATED INSTITUTIONAL FINANCIAL COMMENTARY &amp; DIAGNOSTIC TERMINAL
+                        </strong>
+                        <div style="font-size:11px; color:#94a3b8;">
+                            Seluruh sintesis analisis di bawah dihitung secara deterministik dari tabel transaksi sumber tanpa fabrikasi angka.
+                        </div>
+                    </div>
+                    <span class="vym-class-badge vym-class-actual">VERIFIED DB GROUNDED AI</span>
+                </div>
+
+                <!-- 4 Institutional Briefing Cards -->
+                <div class="row mb-3" id="vym-ai-briefing-grid">
+                    <?php foreach ($ai_brief as $bf): ?>
+                        <div class="col-lg-6 col-12 mb-2">
+                            <div style="background:#08101e; border:1px solid #1e293b; border-left:3px solid #00e5ff; border-radius:6px; padding:12px 14px; height:100%;">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="vym-mono" style="font-size:10.5px; color:#38bdf8; font-weight:700;"><?= htmlspecialchars($bf['code']) ?> // <?= htmlspecialchars($bf['title']) ?></span>
+                                    <span class="vym-class-badge vym-class-actual"><?= htmlspecialchars($bf['classification']) ?></span>
+                                </div>
+                                <div style="font-size:12.5px; font-weight:800; color:#f8fafc; margin-bottom:5px;">
+                                    <?= htmlspecialchars($bf['headline']) ?>
+                                </div>
+                                <div style="font-size:11.5px; color:#cbd5e1; line-height:1.55;">
+                                    <?= htmlspecialchars($bf['body']) ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Interactive AI Analyst Query Console -->
+                <div style="background:#070d19; border:1px solid #1e3a5f; border-radius:8px; padding:14px;">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap:8px;">
+                        <strong style="color:#00e5ff; font-size:12px;" class="vym-mono">
+                            <i class="fas fa-terminal mr-1"></i> VYM:AI_ANALYST_PROMPT // INTERACTIVE FINANCIAL QUERY CONSOLE
+                        </strong>
+                        <span style="font-size:10.5px; color:#94a3b8;">Pilih pertanyaan diagnostik cepat atau ketik pertanyaan keuangan Anda:</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap mb-3" style="gap:6px;" id="vym-ai-preset-btns">
+                        <?php foreach ($ai_qa as $q_idx => $qa): ?>
+                            <button type="button" class="vym-btn vym-ai-qbtn <?= ($q_idx === 0) ? 'active' : '' ?>" data-qidx="<?= $q_idx ?>" style="border:1px solid #1e293b; text-align:left;">
+                                <i class="fas fa-bolt text-info mr-1"></i> <?= htmlspecialchars($qa['question']) ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-3" style="gap:8px;">
+                        <input type="text" id="vym-ai-custom-input" class="vym-date-input" style="width:100%; height:34px !important; font-size:12px !important;"
+                               placeholder="Ketik pertanyaan analisis (misal: Bagaimana arus kas & hutang ekspedisi? Siapa customer terbesar? Berapa forecast 3 bulan ke depan?)">
+                        <button type="button" id="vym-ai-ask-btn" class="vym-btn active" style="height:34px; padding:0 16px; white-space:nowrap;">
+                            <i class="fas fa-paper-plane mr-1"></i> Analisis Sekarang
+                        </button>
+                    </div>
+
+                    <div style="background:#0b1324; border:1px solid #1e293b; border-radius:6px; padding:12px 14px;">
+                        <div class="vym-mono" style="font-size:11px; color:#38bdf8; font-weight:700; margin-bottom:4px;" id="vym-ai-ans-q">
+                            Q: <?= htmlspecialchars($ai_qa[0]['question'] ?? 'Ringkasan Eksekutif') ?>
+                        </div>
+                        <div style="font-size:12px; color:#e2e8f0; line-height:1.65; white-space:pre-line;" id="vym-ai-ans-body"><?= htmlspecialchars($ai_qa[0]['answer'] ?? '-') ?></div>
                     </div>
                 </div>
             </div>
@@ -2234,6 +2464,90 @@ if ($active_sub === 'revenue_analytics') {
             }
             $('#vym-ba-ops-table tbody').html(opsHtml);
 
+            // Rebuild Phase 5 Predictive Intelligence (Forecast, Risk Radar, Anomaly & AI Analyst)
+            var pi = resp.predictive_intelligence || {};
+            var piFcst = pi.forward_projections || [];
+            var fcstHtml = '';
+            if (piFcst.length > 0) {
+                for (var fIdx = 0; fIdx < piFcst.length; fIdx++) {
+                    var fc = piFcst[fIdx];
+                    fcstHtml += '<tr>' +
+                        '<td class="vym-mono font-weight-bold" style="color:#c084fc;">' + $('<div>').text(fc.horizon).html() + '</td>' +
+                        '<td class="vym-mono font-weight-bold" style="color:#f8fafc;">' + $('<div>').text(fc.period_label).html() + '</td>' +
+                        '<td><span class="vym-class-badge vym-class-forecast">' + $('<div>').text(fc.classification).html() + '</span></td>' +
+                        '<td class="text-right vym-mono" style="color:#38bdf8;">' + fmtRpFull(fc.projected_orders) + '</td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:#10b981;">' + fmtRpFull(fc.projected_invoices) + '</td>' +
+                        '<td class="text-right vym-mono text-muted">' + fmtRpFull(fc.bear_case_invoices) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#34d399;">' + fmtRpFull(fc.bull_case_invoices) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#f87171;">' + fmtRpFull(fc.projected_cash_out) + '</td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:#c084fc;">' + fmtRpFull(fc.projected_net_contr) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                fcstHtml = '<tr><td colspan="9" class="text-center py-3 text-muted">Data historis belum mencukupi untuk proyeksi.</td></tr>';
+            }
+            $('#vym-pi-fcst-table tbody').html(fcstHtml);
+
+            var piRisk = pi.risk_matrix || [];
+            var riskHtml = '';
+            for (var rkIdx = 0; rkIdx < piRisk.length; rkIdx++) {
+                var rk = piRisk[rkIdx];
+                var sCls = 'vym-badge-emerald';
+                if (rk.severity === 'CRITICAL' || rk.severity === 'HIGH') sCls = 'vym-badge-rose';
+                else if (rk.severity === 'MODERATE') sCls = 'vym-badge-amber';
+                riskHtml += '<tr>' +
+                    '<td><strong style="color:#f8fafc;">' + $('<div>').text(rk.dimension).html() + '</strong>' +
+                    '<div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">' + $('<div>').text(rk.mitigation).html() + '</div>' +
+                    '<div style="font-size:9.5px; color:#64748b;">Tabel: <code>' + $('<div>').text(rk.source_tables).html() + '</code></div></td>' +
+                    '<td class="vym-mono" style="font-size:11px; color:#cbd5e1;">' + $('<div>').text(rk.metric_value).html() + '</td>' +
+                    '<td class="text-right vym-mono font-weight-bold" style="color:#f8fafc;">' + rk.score + '/100</td>' +
+                    '<td><span class="' + sCls + '">' + $('<div>').text(rk.severity).html() + '</span></td>' +
+                    '</tr>';
+            }
+            $('#vym-pi-risk-table tbody').html(riskHtml);
+
+            var piAnom = pi.anomaly_alerts || [];
+            var anomHtml = '';
+            if (piAnom.length > 0) {
+                for (var anIdx = 0; anIdx < piAnom.length; anIdx++) {
+                    var an = piAnom[anIdx];
+                    var abCls = 'vym-badge-' + (an.badge || 'amber');
+                    anomHtml += '<tr>' +
+                        '<td class="vym-mono"><strong style="color:#f8fafc;">' + $('<div>').text(an.kode_dok).html() + '</strong>' +
+                        '<div style="font-size:10px; color:#64748b;">' + $('<div>').text(an.tgl).html() + ' • <code>' + $('<div>').text(an.source_table).html() + '</code></div></td>' +
+                        '<td><span class="' + abCls + '">' + $('<div>').text(an.type).html() + '</span>' +
+                        '<div style="font-size:10.5px; color:#cbd5e1; margin-top:3px;">' + $('<div>').text(an.explanation).html() + '</div></td>' +
+                        '<td>' + $('<div>').text(an.entitas).html() + '</td>' +
+                        '<td class="text-right vym-mono font-weight-bold">' + fmtRpFull(an.nominal) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                anomHtml = '<tr><td colspan="4" class="text-center py-3 text-muted">Tidak terdeteksi anomali ekstrem pada periode ini.</td></tr>';
+            }
+            $('#vym-pi-anom-table tbody').html(anomHtml);
+
+            var piAi = pi.ai_analyst || {};
+            var aiBrief = piAi.executive_briefing || [];
+            var briefHtml = '';
+            for (var bIdx = 0; bIdx < aiBrief.length; bIdx++) {
+                var bf = aiBrief[bIdx];
+                briefHtml += '<div class="col-lg-6 col-12 mb-2">' +
+                    '<div style="background:#08101e; border:1px solid #1e293b; border-left:3px solid #00e5ff; border-radius:6px; padding:12px 14px; height:100%;">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<span class="vym-mono" style="font-size:10.5px; color:#38bdf8; font-weight:700;">' + $('<div>').text(bf.code + ' // ' + bf.title).html() + '</span>' +
+                    '<span class="vym-class-badge vym-class-actual">' + $('<div>').text(bf.classification).html() + '</span></div>' +
+                    '<div style="font-size:12.5px; font-weight:800; color:#f8fafc; margin-bottom:5px;">' + $('<div>').text(bf.headline).html() + '</div>' +
+                    '<div style="font-size:11.5px; color:#cbd5e1; line-height:1.55;">' + $('<div>').text(bf.body).html() + '</div>' +
+                    '</div></div>';
+            }
+            $('#vym-ai-briefing-grid').html(briefHtml);
+
+            var aiQa = piAi.preset_qa || [];
+            if (aiQa.length > 0) {
+                $('#vym-ai-ans-q').text('Q: ' + aiQa[0].question);
+                $('#vym-ai-ans-body').text(aiQa[0].answer);
+            }
+
             renderVymSeries();
         }
 
@@ -2295,6 +2609,60 @@ if ($active_sub === 'revenue_analytics') {
             } else {
                 $('.vym-fi-pane').hide();
                 $('.vym-fi-pane[data-fipane="' + tabKey + '"]').show();
+            }
+        });
+
+        // AI Business Analyst Preset & Custom Natural-Language Query Engine
+        $(document).on('click', '.vym-ai-qbtn', function() {
+            $('.vym-ai-qbtn').removeClass('active');
+            $(this).addClass('active');
+            var qIdx = parseInt($(this).data('qidx'), 10) || 0;
+            var qaList = (vymBiState.data && vymBiState.data.predictive_intelligence && vymBiState.data.predictive_intelligence.ai_analyst)
+                ? (vymBiState.data.predictive_intelligence.ai_analyst.preset_qa || [])
+                : [];
+            if (qaList[qIdx]) {
+                $('#vym-ai-ans-q').text('Q: ' + qaList[qIdx].question);
+                $('#vym-ai-ans-body').text(qaList[qIdx].answer);
+            }
+        });
+
+        function executeVymAiNaturalQuery() {
+            var qRaw = $.trim($('#vym-ai-custom-input').val() || '');
+            if (!qRaw) return;
+            var qLow = qRaw.toLowerCase();
+            var d = vymBiState.data || {};
+            var qaList = (d.predictive_intelligence && d.predictive_intelligence.ai_analyst)
+                ? (d.predictive_intelligence.ai_analyst.preset_qa || [])
+                : [];
+
+            var matchedIdx = 0;
+            if (qLow.indexOf('kas') !== -1 || qLow.indexOf('cash') !== -1 || qLow.indexOf('hutang') !== -1 || qLow.indexOf('ekspedisi') !== -1 || qLow.indexOf('dp') !== -1 || qLow.indexOf('gaji') !== -1) {
+                matchedIdx = 1;
+            } else if (qLow.indexOf('profit') !== -1 || qLow.indexOf('laba') !== -1 || qLow.indexOf('cogs') !== -1 || qLow.indexOf('hpp') !== -1 || qLow.indexOf('margin') !== -1) {
+                matchedIdx = 2;
+            } else if (qLow.indexOf('customer') !== -1 || qLow.indexOf('pelanggan') !== -1 || qLow.indexOf('hhi') !== -1 || qLow.indexOf('konsentrasi') !== -1 || qLow.indexOf('top') !== -1) {
+                matchedIdx = 3;
+            } else if (qLow.indexOf('forecast') !== -1 || qLow.indexOf('proyeksi') !== -1 || qLow.indexOf('prediksi') !== -1 || qLow.indexOf('depan') !== -1) {
+                matchedIdx = 4;
+            }
+
+            $('.vym-ai-qbtn').removeClass('active');
+            $('.vym-ai-qbtn[data-qidx="' + matchedIdx + '"]').addClass('active');
+
+            if (qaList[matchedIdx]) {
+                $('#vym-ai-ans-q').text('Q [Custom Query]: ' + qRaw);
+                $('#vym-ai-ans-body').text(qaList[matchedIdx].answer);
+            }
+        }
+
+        $('#vym-ai-ask-btn').on('click', function() {
+            executeVymAiNaturalQuery();
+        });
+
+        $('#vym-ai-custom-input').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                executeVymAiNaturalQuery();
             }
         });
 
