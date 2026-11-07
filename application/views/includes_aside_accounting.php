@@ -39,60 +39,6 @@
 						</a>
 					</li>
 
-					<?php
-					$cur_page_str = isset($page_name) ? (string)$page_name : '';
-					$is_vym_bi    = ($this->uri->segment(1) === 'vym_bi' || $this->uri->segment(1) === 'business_intelligence' || strpos($cur_page_str, 'vym_bi/') === 0);
-					$bi_sub       = isset($bi_active_sub) ? (string)$bi_active_sub : ($this->uri->segment(2) ? (string)$this->uri->segment(2) : 'executive_overview');
-					?>
-					<li class="nav-parent <?= $is_vym_bi ? 'nav-active nav-expanded' : '' ?>">
-						<a class="nav-link" href="#">
-							<i class="fas fa-chart-line" aria-hidden="true" style="color: #38bdf8;"></i>
-							<span>Business Intelligence <span class="badge badge-info ml-1" style="font-size: 9px; padding: 2px 5px; background: #0284c7;">VYM BI</span></span>
-						</a>
-						<ul class="nav nav-children">
-							<li class="<?= ($is_vym_bi && in_array($bi_sub, ['index', 'executive_overview', ''])) ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/executive_overview') ?>">
-									1. Executive Overview
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'financial_performance') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/financial_performance') ?>">
-									2. Financial Performance
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'revenue_analytics') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/revenue_analytics') ?>">
-									3. Revenue Analytics
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'profitability_analysis') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/profitability_analysis') ?>">
-									4. Profitability Analysis
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'cashflow_intelligence') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/cashflow_intelligence') ?>">
-									5. Cashflow Intelligence
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'business_performance') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/business_performance') ?>">
-									6. Business Performance
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'risk_forecasting') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/risk_forecasting') ?>">
-									7. Risk &amp; Forecasting
-								</a>
-							</li>
-							<li class="<?= ($is_vym_bi && $bi_sub === 'ai_business_analyst') ? 'nav-active' : '' ?>">
-								<a class="nav-link" href="<?= base_url('vym_bi/ai_business_analyst') ?>">
-									8. AI Business Analyst
-								</a>
-							</li>
-						</ul>
-					</li>
-
 					<li class="<?= in_array($page_name, ['acc_pemasok/v_data_pemasok', 'acc_pemasok/v_detail_pemasok']) ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('acc_pemasok') ?>">
 							<i class="fas fa-truck-loading" aria-hidden="true"></i>
