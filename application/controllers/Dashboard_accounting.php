@@ -330,11 +330,14 @@ class Dashboard_accounting extends CI_Controller
                 ? "AND YEAR(inv.tgl_invoice) = " . (int)$tahun
                 : "";
 
+            $no_po_col = isset($inv_fields['no_po']) ? "inv.no_po" : "''";
+
             $sql_inv = "
                 SELECT 
                     inv.tgl_invoice AS tgl,
                     {$inv_nom_expr} AS nominal,
                     inv.no_invoice AS kode_dok,
+                    {$no_po_col} AS no_po_ref,
                     COALESCE(c.nama_customer, '-') AS customer_nama
                 FROM invoice inv
                 LEFT JOIN customer c ON inv.id_customer = c.id_customer
@@ -456,10 +459,12 @@ class Dashboard_accounting extends CI_Controller
 
         $makeEmptyBucket = function () {
             return [
-                'po_val'   => 0.0, 'po_cnt'   => 0,
-                'inv_val'  => 0.0, 'inv_cnt'  => 0,
-                'out_val'  => 0.0, 'out_cnt'  => 0,
-                'top_docs' => []
+                'po_val'             => 0.0, 'po_cnt'             => 0,
+                'inv_val'            => 0.0, 'inv_cnt'            => 0,
+                'inv_standalone_val' => 0.0, 'inv_standalone_cnt' => 0,
+                'out_val'            => 0.0, 'out_cnt'            => 0,
+                'out_ekspedisi_val'  => 0.0, 'out_payroll_val'    => 0.0,
+                'top_docs'           => []
             ];
         };
 
@@ -486,9 +491,10 @@ class Dashboard_accounting extends CI_Controller
             }
         }
 
-        // Masukkan data PO ke dalam bucket
+        // Masukkan data PO ke dalam bucket & catat daftar no_po untuk mencegah double-counting dengan Invoice
         $total_po_nominal = 0.0;
         $total_po_count   = 0;
+        $po_no_set        = [];
         foreach ($po_rows as $r) {
             $k = $getBucketDate($r['tgl']);
             if (!$k) continue;
@@ -496,6 +502,12 @@ class Dashboard_accounting extends CI_Controller
             if (!isset($buckets[$k])) $buckets[$k] = $makeEmptyBucket();
             $buckets[$k]['po_val'] += $val;
             $buckets[$k]['po_cnt'] += 1;
+            if (!empty($r['kode_dok'])) {
+                $norm_po = strtolower(trim($r['kode_dok']));
+                if ($norm_po !== '' && $norm_po !== '-') {
+                    $po_no_set[$norm_po] = true;
+                }
+            }
             if (count($buckets[$k]['top_docs']) < 3) {
                 $buckets[$k]['top_docs'][] = 'PO: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['customer_nama'] ?: '-') . ')';
             }
@@ -503,9 +515,11 @@ class Dashboard_accounting extends CI_Controller
             $total_po_count++;
         }
 
-        // Masukkan data Invoice ke dalam bucket
-        $total_inv_nominal = 0.0;
-        $total_inv_count   = 0;
+        // Masukkan data Invoice ke dalam bucket (pisahkan Invoice yang sudah punya PO di po_masuk agar tidak terhitung ganda pada Total Inflow)
+        $total_inv_nominal            = 0.0;
+        $total_inv_count              = 0;
+        $total_inv_standalone_nominal = 0.0;
+        $total_inv_standalone_count   = 0;
         foreach ($inv_rows as $r) {
             $k = $getBucketDate($r['tgl']);
             if (!$k) continue;
@@ -513,6 +527,16 @@ class Dashboard_accounting extends CI_Controller
             if (!isset($buckets[$k])) $buckets[$k] = $makeEmptyBucket();
             $buckets[$k]['inv_val'] += $val;
             $buckets[$k]['inv_cnt'] += 1;
+
+            $ref_po = isset($r['no_po_ref']) ? strtolower(trim((string)$r['no_po_ref'])) : '';
+            $is_already_in_po = ($ref_po !== '' && $ref_po !== '-' && isset($po_no_set[$ref_po]));
+            if (!$is_already_in_po) {
+                $buckets[$k]['inv_standalone_val'] += $val;
+                $buckets[$k]['inv_standalone_cnt'] += 1;
+                $total_inv_standalone_nominal      += $val;
+                $total_inv_standalone_count++;
+            }
+
             if (count($buckets[$k]['top_docs']) < 3) {
                 $buckets[$k]['top_docs'][] = 'INV: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['customer_nama'] ?: '-') . ')';
             }
@@ -521,8 +545,10 @@ class Dashboard_accounting extends CI_Controller
         }
 
         // Masukkan data Outflow (Ekspedisi/SPP & Payroll) ke dalam bucket
-        $total_out_nominal = 0.0;
-        $total_out_count   = 0;
+        $total_out_nominal   = 0.0;
+        $total_out_count     = 0;
+        $total_ekspedisi_nom = 0.0;
+        $total_payroll_nom   = 0.0;
         foreach ($out_rows as $r) {
             $k = $getBucketDate($r['tgl']);
             if (!$k) continue;
@@ -531,6 +557,13 @@ class Dashboard_accounting extends CI_Controller
             if (!isset($buckets[$k])) $buckets[$k] = $makeEmptyBucket();
             $buckets[$k]['out_val'] += $val;
             $buckets[$k]['out_cnt'] += 1;
+            if (isset($r['kategori_out']) && strpos($r['kategori_out'], 'Payroll') !== false) {
+                $buckets[$k]['out_payroll_val'] += $val;
+                $total_payroll_nom += $val;
+            } else {
+                $buckets[$k]['out_ekspedisi_val'] += $val;
+                $total_ekspedisi_nom += $val;
+            }
             if (count($buckets[$k]['top_docs']) < 3) {
                 $buckets[$k]['top_docs'][] = 'OUT: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['kategori_out'] ?: '-') . ')';
             }
@@ -571,10 +604,11 @@ class Dashboard_accounting extends CI_Controller
         foreach ($buckets as $dateKey => $b) {
             $po_v     = round($b['po_val'], 2);
             $inv_v    = round($b['inv_val'], 2);
-            // Gunakan nilai terbesar antara PO Masuk & Invoice atau gabungan sesuai mode
-            $inflow_v = round($po_v + $inv_v, 2);
+            // Total Inflow tanpa double-counting: PO Masuk + Invoice yang belum tercatat di PO Masuk
+            $inflow_v = round($po_v + $b['inv_standalone_val'], 2);
             $out_v    = round($b['out_val'], 2);
             $net_v    = round($inflow_v - $out_v, 2);
+            $inflow_c = $b['po_cnt'] + $b['inv_standalone_cnt'];
 
             if ($source === 'PO') {
                 $raw_val = $po_v;
@@ -587,11 +621,11 @@ class Dashboard_accounting extends CI_Controller
                 $vol_cnt = $b['out_cnt'];
             } elseif ($source === 'NET_CASHFLOW') {
                 $raw_val = $net_v;
-                $vol_cnt = $b['po_cnt'] + $b['inv_cnt'] + $b['out_cnt'];
+                $vol_cnt = $inflow_c + $b['out_cnt'];
             } else {
                 // INFLOW atau CUMULATIVE
                 $raw_val = $inflow_v;
-                $vol_cnt = $b['po_cnt'] + $b['inv_cnt'];
+                $vol_cnt = $inflow_c;
             }
 
             $cum_val = round($cum_val + ($source === 'CUMULATIVE' ? $net_v : $raw_val), 2);
@@ -634,19 +668,21 @@ class Dashboard_accounting extends CI_Controller
             ];
 
             $tooltip_meta[$dateKey] = [
-                'inflow_val'  => $inflow_v,
-                'outflow_val' => $out_v,
-                'net_val'     => $net_v,
-                'po_val'      => $po_v,
-                'po_cnt'      => $b['po_cnt'],
-                'inv_val'     => $inv_v,
-                'inv_cnt'     => $b['inv_cnt'],
-                'out_cnt'     => $b['out_cnt'],
-                'vol_cnt'     => $vol_cnt,
-                'cum_val'     => $cum_val,
-                'prev_val'    => $prev_val,
-                'is_forecast' => false,
-                'top_docs'    => $b['top_docs']
+                'inflow_val'    => $inflow_v,
+                'outflow_val'   => $out_v,
+                'net_val'       => $net_v,
+                'po_val'        => $po_v,
+                'po_cnt'        => $b['po_cnt'],
+                'inv_val'       => $inv_v,
+                'inv_cnt'       => $b['inv_cnt'],
+                'ekspedisi_val' => round($b['out_ekspedisi_val'], 2),
+                'payroll_val'   => round($b['out_payroll_val'], 2),
+                'out_cnt'       => $b['out_cnt'],
+                'vol_cnt'       => $vol_cnt,
+                'cum_val'       => $cum_val,
+                'prev_val'      => $prev_val,
+                'is_forecast'   => false,
+                'top_docs'      => $b['top_docs']
             ];
 
             $prev_val = $val;
@@ -775,7 +811,9 @@ class Dashboard_accounting extends CI_Controller
             }
         }
 
-        $total_inflow_nominal = $total_po_nominal + $total_inv_nominal;
+        // Total Inflow bebas hitung ganda: PO Masuk + Invoice mandiri (yang no_po-nya belum ada di po_masuk)
+        $total_inflow_nominal = $total_po_nominal + $total_inv_standalone_nominal;
+        $total_inflow_count   = $total_po_count + $total_inv_standalone_count;
         $total_net_cashflow   = $total_inflow_nominal - $total_out_nominal;
         $cashflow_ratio       = ($total_out_nominal > 0) ? round($total_inflow_nominal / $total_out_nominal, 2) : ($total_inflow_nominal > 0 ? 99.9 : 0.0);
         $conversion_rate_pct  = ($total_po_nominal > 0) ? round(($total_inv_nominal / $total_po_nominal) * 100, 1) : 0.0;
@@ -810,10 +848,10 @@ class Dashboard_accounting extends CI_Controller
             $total_active_count   = $total_out_count;
         } elseif ($source === 'NET_CASHFLOW') {
             $total_active_nominal = $total_net_cashflow;
-            $total_active_count   = $total_po_count + $total_inv_count + $total_out_count;
+            $total_active_count   = $total_inflow_count + $total_out_count;
         } else {
             $total_active_nominal = $total_inflow_nominal;
-            $total_active_count   = $total_po_count + $total_inv_count;
+            $total_active_count   = $total_inflow_count;
         }
 
         echo json_encode([
@@ -837,7 +875,10 @@ class Dashboard_accounting extends CI_Controller
             'summary'               => [
                 'total_nominal'        => round($total_active_nominal, 2),
                 'total_inflow_nominal' => round($total_inflow_nominal, 2),
+                'total_inflow_count'   => $total_inflow_count,
                 'total_outflow_nominal'=> round($total_out_nominal, 2),
+                'total_ekspedisi_nom'  => round($total_ekspedisi_nom, 2),
+                'total_payroll_nom'    => round($total_payroll_nom, 2),
                 'total_net_cashflow'   => round($total_net_cashflow, 2),
                 'total_po_nominal'     => round($total_po_nominal, 2),
                 'total_inv_nominal'    => round($total_inv_nominal, 2),

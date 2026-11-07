@@ -1295,11 +1295,14 @@
 				$('#tv-leg-inflow').text(formatRupiahShort(meta.inflow_val || 0));
 				$('#tv-leg-outflow').text(formatRupiahShort(meta.outflow_val || 0));
 				$('#tv-leg-vol').text((meta.vol_cnt || 0) + ' Dok');
-				if (meta.top_docs && meta.top_docs.length > 0) {
-					$('#tv-leg-docs').text(meta.top_docs.join(' | '));
-				} else {
-					$('#tv-leg-docs').text('');
+				var breakdownParts = [];
+				if (meta.po_val > 0 || meta.inv_val > 0) {
+					breakdownParts.push('PO: ' + formatRupiahShort(meta.po_val || 0) + ' (' + (meta.po_cnt || 0) + ') • Inv: ' + formatRupiahShort(meta.inv_val || 0) + ' (' + (meta.inv_cnt || 0) + ')');
 				}
+				if (meta.top_docs && meta.top_docs.length > 0) {
+					breakdownParts.push(meta.top_docs.join(' | '));
+				}
+				$('#tv-leg-docs').text(breakdownParts.join(' — '));
 			}
 		}
 
@@ -1557,7 +1560,7 @@
 				.removeClass('tv-up-color tv-down-color')
 				.addClass(netVal >= 0 ? 'tv-up-color' : 'tv-down-color');
 
-			var inCnt = (parseInt(sum.total_po_count || 0, 10) + parseInt(sum.total_inv_count || 0, 10));
+			var inCnt = parseInt(sum.total_inflow_count || (parseInt(sum.total_po_count || 0, 10) + parseInt(sum.total_inv_count || 0, 10)), 10);
 			$('#tv-stat-inflow').html(formatRupiahShort(sum.total_inflow_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + inCnt + ' Dok)</small>');
 			$('#tv-stat-outflow').html(formatRupiahShort(sum.total_outflow_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + (sum.total_out_count || 0) + ' Dok)</small>');
 			$('#tv-stat-forecast').text(formatRupiahShort(sum.next_forecast_val || 0));
