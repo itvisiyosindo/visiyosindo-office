@@ -946,9 +946,14 @@
 
 <!-- Chart.js & TradingView Lightweight Charts for Accounting Dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script>
-	$(document).ready(function() {
+	if (typeof LightweightCharts === 'undefined') {
+		document.write('<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"><\/script>');
+	}
+</script>
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
 		var chartMonthly = null;
 		var chartDonut = null;
 
@@ -1348,6 +1353,13 @@
 
 					// Jika saat pertama kali buka PO tahun ini kosong tapi Invoice ada data, atau All-Time ada data, otomatis pilih yang memiliki transaksi aktif
 					if (autoFallback && resp.summary) {
+						if (resp.summary.total_po_nominal <= 0 && resp.summary.total_inv_nominal <= 0 && tvState.scope === 'YEAR') {
+							tvState.scope = 'ALL';
+							$('#tv-scope-group .tv-btn').removeClass('active');
+							$('#tv-scope-group .tv-btn[data-scope="ALL"]').addClass('active');
+							loadTradingViewData(true);
+							return;
+						}
 						if (resp.summary.total_po_nominal <= 0 && resp.summary.total_inv_nominal > 0 && tvState.source === 'PO') {
 							tvState.source = 'ALL';
 							$('#tv-source-group .tv-btn').removeClass('active');

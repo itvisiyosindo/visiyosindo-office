@@ -241,7 +241,9 @@ class Dashboard_accounting extends CI_Controller
      */
     public function tradingview_financial_data()
     {
-        $tahun    = trim($this->input->get('tahun') ?: date('Y'));
+        $this->output->set_content_type('application/json');
+
+        $tahun    = strtoupper(trim($this->input->get('tahun') ?: date('Y')));
         $interval = strtoupper(trim($this->input->get('interval') ?: '1M')); // 1D, 1W, 1M
         $source   = strtoupper(trim($this->input->get('source') ?: 'PO'));   // PO, INV, ALL, CUMULATIVE
 
@@ -249,44 +251,73 @@ class Dashboard_accounting extends CI_Controller
             $interval = '1M';
         }
 
-        $has_po  = $this->db->table_exists('po_masuk');
-        $has_inv = $this->db->table_exists('invoice');
+        $has_po       = $this->db->table_exists('po_masuk');
+        $has_po_item  = $this->db->table_exists('po_masuk_item');
+        $has_inv      = $this->db->table_exists('invoice');
+        $has_inv_item = $this->db->table_exists('detail_barang_invoice');
 
-        // 1. Ambil transaksi PO Masuk
+        // 1. Ambil transaksi PO Masuk secara aman (cek ketersediaan kolom)
         $po_rows = [];
         if ($has_po) {
+            $po_fields = array_flip($this->db->list_fields('po_masuk'));
+            $nom_parts = [];
+            if (isset($po_fields['nominal_total_akhir'])) $nom_parts[] = "NULLIF(p.nominal_total_akhir, 0)";
+            if (isset($po_fields['nominal_po']))          $nom_parts[] = "NULLIF(p.nominal_po, 0)";
+            if (isset($po_fields['nominal_subtotal']))    $nom_parts[] = "NULLIF(p.nominal_subtotal, 0)";
+            if ($has_po_item) {
+                $nom_parts[] = "(SELECT COALESCE(SUM(i.total_harga), 0) FROM po_masuk_item i WHERE i.id_po = p.id_po)";
+            }
+            $nom_parts[] = "0";
+            $po_nom_expr = "COALESCE(" . implode(", ", $nom_parts) . ")";
+
             $where_year_po = ($tahun !== 'ALL' && is_numeric($tahun))
                 ? "AND YEAR(p.tanggal_po) = " . (int)$tahun
                 : "";
 
+            $where_del = isset($po_fields['deleted']) ? "AND p.deleted = 0" : "";
+            $where_sts = isset($po_fields['status']) ? "AND p.status != 'ditolak'" : "";
+
             $sql_po = "
                 SELECT 
                     p.tanggal_po AS tgl,
-                    COALESCE(
-                        NULLIF(p.nominal_total_akhir, 0),
-                        NULLIF(p.nominal_po, 0),
-                        NULLIF(p.nominal_subtotal, 0),
-                        (SELECT COALESCE(SUM(i.total_harga), 0) FROM po_masuk_item i WHERE i.id_po = p.id_po),
-                        0
-                    ) AS nominal,
+                    {$po_nom_expr} AS nominal,
                     p.no_po AS kode_dok,
-                    COALESCE(NULLIF(p.nama_customer, ''), c.nama_customer, pl.identitas_pelanggan, '-') AS customer_nama
+                    COALESCE(NULLIF(p.nama_customer, ''), c.nama_customer, '-') AS customer_nama
                 FROM po_masuk p
                 LEFT JOIN customer c ON p.id_customer = c.id_customer
-                LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
-                WHERE p.deleted = 0
-                  AND p.status != 'ditolak'
-                  AND p.tanggal_po IS NOT NULL
+                WHERE p.tanggal_po IS NOT NULL
                   AND p.tanggal_po != '0000-00-00'
+                  {$where_del}
+                  {$where_sts}
                   {$where_year_po}
                 ORDER BY p.tanggal_po ASC, p.id_po ASC
             ";
-            $po_rows = $this->db->query($sql_po)->result_array();
+            $q_po = $this->db->query($sql_po);
+            if ($q_po) {
+                $po_rows = $q_po->result_array();
+            }
         }
 
-        // 2. Ambil transaksi Invoice
+        // 2. Ambil transaksi Invoice secara aman (cek ketersediaan kolom)
         $inv_rows = [];
         if ($has_inv) {
+            $inv_fields = array_flip($this->db->list_fields('invoice'));
+            $inv_parts = [];
+            if (isset($inv_fields['total_keseluruhan'])) {
+                $inv_parts[] = "NULLIF(CAST(REPLACE(REPLACE(inv.total_keseluruhan, '.', ''), ',', '') AS DECIMAL(18,2)), 0)";
+            }
+            if (isset($inv_fields['total'])) {
+                $inv_parts[] = "NULLIF(CAST(REPLACE(REPLACE(inv.total, '.', ''), ',', '') AS DECIMAL(18,2)), 0)";
+            }
+            if (isset($inv_fields['sub_total'])) {
+                $inv_parts[] = "NULLIF(CAST(REPLACE(REPLACE(inv.sub_total, '.', ''), ',', '') AS DECIMAL(18,2)), 0)";
+            }
+            if ($has_inv_item) {
+                $inv_parts[] = "(SELECT COALESCE(SUM(CAST(REPLACE(REPLACE(dbi.harga_total, '.', ''), ',', '') AS DECIMAL(18,2))), 0) FROM detail_barang_invoice dbi WHERE dbi.id_invoice = inv.id_invoice AND dbi.status = 1)";
+            }
+            $inv_parts[] = "0";
+            $inv_nom_expr = "COALESCE(" . implode(", ", $inv_parts) . ")";
+
             $where_year_inv = ($tahun !== 'ALL' && is_numeric($tahun))
                 ? "AND YEAR(inv.tgl_invoice) = " . (int)$tahun
                 : "";
@@ -294,15 +325,7 @@ class Dashboard_accounting extends CI_Controller
             $sql_inv = "
                 SELECT 
                     inv.tgl_invoice AS tgl,
-                    COALESCE(
-                        NULLIF(CAST(REPLACE(inv.total_keseluruhan, '.', '') AS DECIMAL(18,2)), 0),
-                        NULLIF(CAST(REPLACE(inv.total, '.', '') AS DECIMAL(18,2)), 0),
-                        NULLIF(CAST(REPLACE(inv.sub_total, '.', '') AS DECIMAL(18,2)), 0),
-                        (SELECT COALESCE(SUM(CAST(REPLACE(dbi.harga_total, '.', '') AS DECIMAL(18,2))), 0) 
-                         FROM detail_barang_invoice dbi 
-                         WHERE dbi.id_invoice = inv.id_invoice AND dbi.status = 1),
-                        0
-                    ) AS nominal,
+                    {$inv_nom_expr} AS nominal,
                     inv.no_invoice AS kode_dok,
                     COALESCE(c.nama_customer, '-') AS customer_nama
                 FROM invoice inv
@@ -313,7 +336,10 @@ class Dashboard_accounting extends CI_Controller
                   {$where_year_inv}
                 ORDER BY inv.tgl_invoice ASC, inv.id_invoice ASC
             ";
-            $inv_rows = $this->db->query($sql_inv)->result_array();
+            $q_inv = $this->db->query($sql_inv);
+            if ($q_inv) {
+                $inv_rows = $q_inv->result_array();
+            }
         }
 
         // Helper untuk memetakan tanggal ke bucket key (YYYY-MM-DD) sesuai interval TradingView
