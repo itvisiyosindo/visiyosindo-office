@@ -5,6 +5,7 @@ $kpis          = $bi_initial_data['kpis'] ?? [];
 $top_customers = $bi_initial_data['top_customers'] ?? [];
 $recent_ledger = $bi_initial_data['recent_ledger'] ?? [];
 $fin_intel     = $bi_initial_data['financial_intelligence'] ?? [];
+$biz_analytics = $bi_initial_data['business_analytics'] ?? [];
 $active_sub    = $bi_active_sub ?? 'executive_overview';
 $active_meta   = $bi_active_meta ?? [];
 
@@ -871,13 +872,20 @@ if ($active_sub === 'revenue_analytics') {
         $default_fi_tab = 'PROFIT_ANALYSIS';
     } elseif ($active_sub === 'cashflow_intelligence') {
         $default_fi_tab = 'CASHFLOW_INTEL';
+    } elseif ($active_sub === 'business_performance') {
+        $default_fi_tab = 'BIZ_PERF';
     }
+
+    $ba_cust = $biz_analytics['customer_intelligence'] ?? [];
+    $ba_prod = $biz_analytics['product_intelligence'] ?? [];
+    $ba_supp = $biz_analytics['supplier_logistics_intelligence'] ?? [];
+    $ba_ops  = $biz_analytics['operational_intelligence'] ?? [];
     ?>
     <div class="vym-panel">
         <div class="vym-panel-head">
             <h3 class="vym-panel-title">
                 <i class="fas fa-microchip text-info"></i>
-                PHASE 3 FINANCIAL INTELLIGENCE DECK — VALIDATED STATEMENTS &amp; SUBMODULE REPORTS
+                PHASE 3 &amp; 4 INTELLIGENCE DECK — FINANCIAL STATEMENTS &amp; BUSINESS ANALYTICS
             </h3>
             <div class="vym-btn-group" id="vym-fi-tab-group">
                 <button type="button" class="vym-btn <?= ($default_fi_tab === 'FIN_PERF') ? 'active' : '' ?>" data-fitab="FIN_PERF">
@@ -892,8 +900,11 @@ if ($active_sub === 'revenue_analytics') {
                 <button type="button" class="vym-btn <?= ($default_fi_tab === 'CASHFLOW_INTEL') ? 'active' : '' ?>" data-fitab="CASHFLOW_INTEL">
                     [05] Cashflow Intelligence
                 </button>
+                <button type="button" class="vym-btn <?= ($default_fi_tab === 'BIZ_PERF') ? 'active' : '' ?>" data-fitab="BIZ_PERF">
+                    [06] Business Performance
+                </button>
                 <button type="button" class="vym-btn" data-fitab="ALL_FI">
-                    Tampilkan Semua Laporan
+                    Tampilkan Semua
                 </button>
             </div>
         </div>
@@ -1260,6 +1271,238 @@ if ($active_sub === 'revenue_analytics') {
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- TAB [06]: PHASE 4 BUSINESS PERFORMANCE — CUSTOMER HHI, PRODUCT MATRIX, SUPPLIERS & OPERATIONAL SLA -->
+            <?php
+            $c_sum = $ba_cust['summary'] ?? [];
+            $c_mat = $ba_cust['matrix'] ?? [];
+            $p_sum = $ba_prod['summary'] ?? [];
+            $p_mat = $ba_prod['matrix'] ?? [];
+            $f_vnd = $ba_supp['freight_vendors'] ?? [];
+            $p_sup = $ba_supp['principal_suppliers']['rows'] ?? [];
+            $p_st  = $ba_supp['principal_suppliers']['stats'] ?? [];
+            $o_kpi = $ba_ops['kpis'] ?? [];
+            $o_pip = $ba_ops['pipeline_breakdown'] ?? [];
+            ?>
+            <div class="vym-fi-pane" data-fipane="BIZ_PERF" style="<?= ($default_fi_tab === 'BIZ_PERF') ? '' : 'display:none;' ?>">
+                <!-- 4 Operational & Concentration Summary Strip -->
+                <div class="row mb-3">
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <div style="background:#08101e; border:1px solid #1e293b; border-left:3px solid #38bdf8; border-radius:6px; padding:10px 12px;">
+                            <div style="font-size:10px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Customer Concentration (HHI)</div>
+                            <div class="vym-mono" style="font-size:16px; font-weight:800; color:#38bdf8;" id="ba-hhi-val">
+                                HHI <?= number_format($c_sum['hhi_index'] ?? 0, 0, ',', '.') ?> • Top-3: <?= $c_sum['top3_share_pct'] ?? 0 ?>%
+                            </div>
+                            <div style="font-size:10.5px; color:#cbd5e1;" id="ba-hhi-tier">
+                                <?= htmlspecialchars($c_sum['concentration_risk'] ?? '-') ?> (<?= $c_sum['active_customers'] ?? 0 ?> Entitas)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <div style="background:#08101e; border:1px solid #1e293b; border-left:3px solid #10b981; border-radius:6px; padding:10px 12px;">
+                            <div style="font-size:10px; color:#94a3b8; font-weight:700; text-transform:uppercase;">SKU &amp; Unit Fulfillment</div>
+                            <div class="vym-mono" style="font-size:16px; font-weight:800; color:#10b981;" id="ba-sku-val">
+                                <?= number_format($p_sum['distinct_skus_billed'] ?? 0, 0, ',', '.') ?> Billed / <?= number_format($p_sum['distinct_skus_ordered'] ?? 0, 0, ',', '.') ?> Ordered SKU
+                            </div>
+                            <div style="font-size:10.5px; color:#cbd5e1;" id="ba-sku-sub">
+                                Realisasi Unit: <?= $p_sum['unit_fulfillment_pct'] ?? 0 ?>% (<?= number_format($p_sum['total_units_billed'] ?? 0, 0, ',', '.') ?> Unit)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <div style="background:#08101e; border:1px solid #1e293b; border-left:3px solid #f59e0b; border-radius:6px; padding:10px 12px;">
+                            <div style="font-size:10px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Principal Suppliers &amp; Catalog</div>
+                            <div class="vym-mono" style="font-size:16px; font-weight:800; color:#fbbf24;">
+                                <?= number_format($p_st['active_suppliers'] ?? 0, 0, ',', '.') ?> Aktif / <?= number_format($p_st['total_suppliers'] ?? 0, 0, ',', '.') ?> Pemasok
+                            </div>
+                            <div style="font-size:10.5px; color:#cbd5e1;">
+                                Katalog Harga: <?= number_format($p_st['price_catalog_docs'] ?? 0, 0, ',', '.') ?> Dok • LoA/Agrmt: <?= number_format($p_st['agreement_docs'] ?? 0, 0, ',', '.') ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <div style="background:#08101e; border:1px solid #1e293b; border-left:3px solid #c084fc; border-radius:6px; padding:10px 12px;">
+                            <div style="font-size:10px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Operational Fulfillment SLA</div>
+                            <div class="vym-mono" style="font-size:16px; font-weight:800; color:#c084fc;" id="ba-ops-val">
+                                Lead Time: <?= $o_kpi['avg_po_to_invoice_days'] ?? 0 ?> Hari
+                            </div>
+                            <div style="font-size:10.5px; color:#cbd5e1;" id="ba-ops-sub">
+                                Approval PO: <?= $o_kpi['order_approval_rate_pct'] ?? 0 ?>% • Dispatch Inv: <?= $o_kpi['invoice_dispatch_rate_pct'] ?? 0 ?>%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- [06A] Customer Pareto & Concentration Matrix -->
+                    <div class="col-lg-6 col-12 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-hospital-user text-info mr-1"></i>
+                                [06A] CUSTOMER PARETO, SHARE OF WALLET &amp; AOV MATRIX
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • HHI PARETO</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 310px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-ba-cust-table">
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th class="text-right">Orders (PO)</th>
+                                        <th class="text-right">Billed (Inv)</th>
+                                        <th class="text-right">Porsi (%)</th>
+                                        <th class="text-right">Rata2 Order (AOV)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($c_mat)): ?>
+                                        <?php foreach ($c_mat as $cm): ?>
+                                            <tr>
+                                                <td>
+                                                    <strong style="color:#f8fafc;"><?= htmlspecialchars($cm['customer_nama']) ?></strong>
+                                                    <div style="font-size:10px; color:#64748b;">Realisasi Tagih: <?= $cm['realization_pct'] ?>% • Akhir: <?= htmlspecialchars($cm['last_tx_date']) ?></div>
+                                                </td>
+                                                <td class="text-right vym-mono" style="color:#38bdf8;">Rp <?= number_format($cm['order_nominal'], 0, ',', '.') ?> <small class="text-muted">(<?= $cm['order_count'] ?>)</small></td>
+                                                <td class="text-right vym-mono" style="color:#34d399;">Rp <?= number_format($cm['inv_nominal'], 0, ',', '.') ?> <small class="text-muted">(<?= $cm['inv_count'] ?>)</small></td>
+                                                <td class="text-right vym-mono font-weight-bold" style="color:#fbbf24;"><?= $cm['share_of_billed_pct'] ?>%</td>
+                                                <td class="text-right vym-mono">Rp <?= number_format($cm['avg_order_val'], 0, ',', '.') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada data pelanggan pada periode ini.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- [06B] Product / SKU Commercial Velocity Matrix -->
+                    <div class="col-lg-6 col-12 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-cubes text-success mr-1"></i>
+                                [06B] PRODUCT / SKU ORDERED vs BILLED VELOCITY (`po_masuk_item` vs `detail_barang_invoice`)
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • SKU ANALYTICS</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 310px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-ba-prod-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item / Alat Kesehatan</th>
+                                        <th class="text-right">Qty PO</th>
+                                        <th class="text-right">Qty Inv</th>
+                                        <th class="text-right">Nilai Billed (Inv)</th>
+                                        <th class="text-right">ASP (Harga Rata2)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($p_mat)): ?>
+                                        <?php foreach ($p_mat as $pm): ?>
+                                            <tr>
+                                                <td>
+                                                    <strong style="color:#f8fafc;"><?= htmlspecialchars($pm['nama_barang']) ?></strong>
+                                                    <div style="font-size:10px; color:#64748b;">Kode: <code><?= htmlspecialchars($pm['kode_barang']) ?></code> • Fulfill: <?= $pm['fulfillment_pct'] ?>%</div>
+                                                </td>
+                                                <td class="text-right vym-mono" style="color:#38bdf8;"><?= number_format($pm['ordered_qty'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono" style="color:#34d399;"><?= number_format($pm['billed_qty'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono font-weight-bold" style="color:#10b981;">
+                                                    Rp <?= number_format($pm['billed_nominal'] > 0 ? $pm['billed_nominal'] : $pm['ordered_nominal'], 0, ',', '.') ?>
+                                                </td>
+                                                <td class="text-right vym-mono">Rp <?= number_format($pm['avg_unit_price'], 0, ',', '.') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada rincian produk pada periode ini.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- [06C] Logistics / Freight Vendor Performance & Principal Suppliers -->
+                    <div class="col-lg-6 col-12 mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-truck-loading text-warning mr-1"></i>
+                                [06C] LOGISTICS VENDOR SCORECARD (`tagihan_ekspedisi` &amp; `ekspedisi`)
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • VENDOR SLA</span>
+                        </div>
+                        <div class="table-responsive mb-3" style="max-height: 220px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-ba-vendor-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vendor Ekspedisi</th>
+                                        <th class="text-right">Dokumen</th>
+                                        <th class="text-right">Paid (Lunas)</th>
+                                        <th class="text-right">Unpaid (AP)</th>
+                                        <th class="text-right">Rata2 / Kirim</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($f_vnd)): ?>
+                                        <?php foreach ($f_vnd as $fv): ?>
+                                            <tr>
+                                                <td><strong style="color:#f8fafc;"><?= htmlspecialchars($fv['vendor_nama']) ?></strong></td>
+                                                <td class="text-right vym-mono"><?= number_format($fv['doc_count'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono" style="color:#34d399;">Rp <?= number_format($fv['paid_nominal'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono" style="color:#fb923c;">Rp <?= number_format($fv['unpaid_nominal'], 0, ',', '.') ?></td>
+                                                <td class="text-right vym-mono">Rp <?= number_format($fv['avg_shipment_cost'], 0, ',', '.') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada tagihan ekspedisi pada periode ini.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- [06D] Principal Suppliers & Operational Pipeline -->
+                    <div class="col-lg-6 col-12 mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="color:#f8fafc; font-size:12px;">
+                                <i class="fas fa-industry text-info mr-1"></i>
+                                [06D] PRINCIPAL MEDICAL SUPPLIERS (`acc_pemasok`) &amp; OPERATIONAL PIPELINE
+                            </strong>
+                            <span class="vym-class-badge vym-class-actual">ACTUAL • SUPPLIER &amp; OPS</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                            <table class="vym-table" id="vym-ba-ops-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tahap Operasional / Pemasok Principal</th>
+                                        <th>Sumber / Negara</th>
+                                        <th class="text-right">Volume / Dokumen</th>
+                                        <th class="text-right">Nilai / Katalog</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($o_pip as $op): ?>
+                                        <tr>
+                                            <td><strong style="color:#38bdf8;"><?= htmlspecialchars($op['stage']) ?></strong></td>
+                                            <td><code><?= htmlspecialchars($op['source']) ?></code></td>
+                                            <td class="text-right vym-mono"><?= number_format($op['doc_count'], 0, ',', '.') ?> Dok</td>
+                                            <td class="text-right vym-mono font-weight-bold">Rp <?= number_format($op['nominal'], 0, ',', '.') ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    <?php foreach (array_slice($p_sup, 0, 8) as $ps): ?>
+                                        <tr>
+                                            <td><strong style="color:#f8fafc;">SUPPLIER: <?= htmlspecialchars($ps['nama_pemasok']) ?></strong></td>
+                                            <td><?= htmlspecialchars($ps['negara']) ?> (<?= htmlspecialchars($ps['tipe_nama']) ?>)</td>
+                                            <td class="text-right vym-mono"><?= (int)$ps['product_count'] ?> Produk</td>
+                                            <td class="text-right vym-mono" style="color:#fbbf24;"><?= (int)$ps['harga_doc_count'] ?> Katalog Harga</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1883,6 +2126,113 @@ if ($active_sub === 'revenue_analytics') {
                 apHtml = '<tr><td colspan="8" class="text-center py-3 text-muted">Tidak ada hutang tagihan ekspedisi yang belum dibayar pada periode ini.</td></tr>';
             }
             $('#vym-fi-payables-table tbody').html(apHtml);
+
+            // Rebuild Phase 4 Business Analytics Tables & Summary
+            var ba = resp.business_analytics || {};
+            var baCust = ba.customer_intelligence || {};
+            var baProd = ba.product_intelligence || {};
+            var baSupp = ba.supplier_logistics_intelligence || {};
+            var baOps  = ba.operational_intelligence || {};
+
+            if (baCust.summary) {
+                var cs = baCust.summary;
+                $('#ba-hhi-val').text('HHI ' + cs.hhi_index + ' • Top-3: ' + cs.top3_share_pct + '%');
+                $('#ba-hhi-tier').text((cs.concentration_risk || '-') + ' (' + cs.active_customers + ' Entitas)');
+            }
+            if (baProd.summary) {
+                var ps = baProd.summary;
+                $('#ba-sku-val').text(ps.distinct_skus_billed + ' Billed / ' + ps.distinct_skus_ordered + ' Ordered SKU');
+                $('#ba-sku-sub').text('Realisasi Unit: ' + ps.unit_fulfillment_pct + '% (' + Math.round(ps.total_units_billed || 0).toLocaleString('id-ID') + ' Unit)');
+            }
+            if (baOps.kpis) {
+                var ok = baOps.kpis;
+                $('#ba-ops-val').text('Lead Time: ' + ok.avg_po_to_invoice_days + ' Hari');
+                $('#ba-ops-sub').text('Approval PO: ' + ok.order_approval_rate_pct + '% • Dispatch Inv: ' + ok.invoice_dispatch_rate_pct + '%');
+            }
+
+            // [06A] Customer Pareto Matrix
+            var cMat = baCust.matrix || [];
+            var cMatHtml = '';
+            if (cMat.length > 0) {
+                for (var cmIdx = 0; cmIdx < cMat.length; cmIdx++) {
+                    var cm = cMat[cmIdx];
+                    cMatHtml += '<tr>' +
+                        '<td><strong style="color:#f8fafc;">' + $('<div>').text(cm.customer_nama).html() + '</strong>' +
+                        '<div style="font-size:10px; color:#64748b;">Realisasi Tagih: ' + cm.realization_pct + '% • Akhir: ' + $('<div>').text(cm.last_tx_date).html() + '</div></td>' +
+                        '<td class="text-right vym-mono" style="color:#38bdf8;">' + fmtRpFull(cm.order_nominal) + ' <small class="text-muted">(' + cm.order_count + ')</small></td>' +
+                        '<td class="text-right vym-mono" style="color:#34d399;">' + fmtRpFull(cm.inv_nominal) + ' <small class="text-muted">(' + cm.inv_count + ')</small></td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:#fbbf24;">' + cm.share_of_billed_pct + '%</td>' +
+                        '<td class="text-right vym-mono">' + fmtRpFull(cm.avg_order_val) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                cMatHtml = '<tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada data pelanggan pada periode ini.</td></tr>';
+            }
+            $('#vym-ba-cust-table tbody').html(cMatHtml);
+
+            // [06B] Product Velocity Matrix
+            var pMat = baProd.matrix || [];
+            var pMatHtml = '';
+            if (pMat.length > 0) {
+                for (var pmIdx = 0; pmIdx < pMat.length; pmIdx++) {
+                    var pm = pMat[pmIdx];
+                    var valDisp = (parseFloat(pm.billed_nominal) > 0) ? pm.billed_nominal : pm.ordered_nominal;
+                    pMatHtml += '<tr>' +
+                        '<td><strong style="color:#f8fafc;">' + $('<div>').text(pm.nama_barang).html() + '</strong>' +
+                        '<div style="font-size:10px; color:#64748b;">Kode: <code>' + $('<div>').text(pm.kode_barang).html() + '</code> • Fulfill: ' + pm.fulfillment_pct + '%</div></td>' +
+                        '<td class="text-right vym-mono" style="color:#38bdf8;">' + Math.round(pm.ordered_qty || 0).toLocaleString('id-ID') + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#34d399;">' + Math.round(pm.billed_qty || 0).toLocaleString('id-ID') + '</td>' +
+                        '<td class="text-right vym-mono font-weight-bold" style="color:#10b981;">' + fmtRpFull(valDisp) + '</td>' +
+                        '<td class="text-right vym-mono">' + fmtRpFull(pm.avg_unit_price) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                pMatHtml = '<tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada rincian produk pada periode ini.</td></tr>';
+            }
+            $('#vym-ba-prod-table tbody').html(pMatHtml);
+
+            // [06C] Freight Vendors
+            var fVnd = baSupp.freight_vendors || [];
+            var fVndHtml = '';
+            if (fVnd.length > 0) {
+                for (var fvIdx = 0; fvIdx < fVnd.length; fvIdx++) {
+                    var fv = fVnd[fvIdx];
+                    fVndHtml += '<tr>' +
+                        '<td><strong style="color:#f8fafc;">' + $('<div>').text(fv.vendor_nama).html() + '</strong></td>' +
+                        '<td class="text-right vym-mono">' + fv.doc_count + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#34d399;">' + fmtRpFull(fv.paid_nominal) + '</td>' +
+                        '<td class="text-right vym-mono" style="color:#fb923c;">' + fmtRpFull(fv.unpaid_nominal) + '</td>' +
+                        '<td class="text-right vym-mono">' + fmtRpFull(fv.avg_shipment_cost) + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                fVndHtml = '<tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada tagihan ekspedisi pada periode ini.</td></tr>';
+            }
+            $('#vym-ba-vendor-table tbody').html(fVndHtml);
+
+            // [06D] Operational Pipeline & Principal Suppliers
+            var oPip = baOps.pipeline_breakdown || [];
+            var pSup = (baSupp.principal_suppliers && baSupp.principal_suppliers.rows) ? baSupp.principal_suppliers.rows : [];
+            var opsHtml = '';
+            for (var opIdx = 0; opIdx < oPip.length; opIdx++) {
+                var op = oPip[opIdx];
+                opsHtml += '<tr>' +
+                    '<td><strong style="color:#38bdf8;">' + $('<div>').text(op.stage).html() + '</strong></td>' +
+                    '<td><code>' + $('<div>').text(op.source).html() + '</code></td>' +
+                    '<td class="text-right vym-mono">' + op.doc_count + ' Dok</td>' +
+                    '<td class="text-right vym-mono font-weight-bold">' + fmtRpFull(op.nominal) + '</td>' +
+                    '</tr>';
+            }
+            for (var psIdx = 0; psIdx < Math.min(8, pSup.length); psIdx++) {
+                var psRow = pSup[psIdx];
+                opsHtml += '<tr>' +
+                    '<td><strong style="color:#f8fafc;">SUPPLIER: ' + $('<div>').text(psRow.nama_pemasok).html() + '</strong></td>' +
+                    '<td>' + $('<div>').text(psRow.negara + ' (' + psRow.tipe_nama + ')').html() + '</td>' +
+                    '<td class="text-right vym-mono">' + psRow.product_count + ' Produk</td>' +
+                    '<td class="text-right vym-mono" style="color:#fbbf24;">' + psRow.harga_doc_count + ' Katalog Harga</td>' +
+                    '</tr>';
+            }
+            $('#vym-ba-ops-table tbody').html(opsHtml);
 
             renderVymSeries();
         }

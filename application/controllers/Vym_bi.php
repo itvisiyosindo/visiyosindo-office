@@ -95,9 +95,9 @@ class Vym_bi extends CI_Controller
                 'slug'     => 'business_performance',
                 'code'     => 'VYM:BIZ_PERF',
                 'title'    => 'Business Performance',
-                'subtitle' => 'Customer Concentration, Sales/Marketing Attribution, SKU Velocity & Logistics SLA',
+                'subtitle' => 'Customer Concentration (HHI), SKU Commercial Velocity, Principal Supplier Catalog & Operational SLA',
                 'icon'     => 'fas fa-briefcase',
-                'phase'    => 'PHASE 4 • READY'
+                'phase'    => 'PHASE 4 • ACTIVE'
             ],
             'risk_forecasting' => [
                 'no'       => '07',
