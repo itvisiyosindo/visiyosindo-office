@@ -392,6 +392,73 @@
 		font-size: 11px;
 		font-weight: 700;
 	}
+
+	.tv-badge-forecast {
+		background: rgba(168, 85, 247, 0.20);
+		color: #c084fc;
+		border: 1px solid rgba(168, 85, 247, 0.45);
+		padding: 2px 7px;
+		border-radius: 5px;
+		font-size: 11px;
+		font-weight: 700;
+	}
+
+	.tv-tech-footer {
+		background: #0b1120;
+		border-top: 1px solid #1e293b;
+		padding: 14px 18px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-tech-footer {
+		background: #f8fafc;
+		border-top-color: #e2e8f0;
+	}
+
+	.tv-signal-box {
+		background: rgba(30, 41, 59, 0.55);
+		border: 1px solid #1e293b;
+		border-radius: 10px;
+		padding: 10px 14px;
+		height: 100%;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-signal-box {
+		background: #ffffff;
+		border-color: #e2e8f0;
+	}
+
+	.tv-signal-title {
+		font-size: 10.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: #64748b;
+		margin-bottom: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.tv-signal-main {
+		font-size: 13.5px;
+		font-weight: 800;
+		color: #f8fafc;
+		margin-bottom: 2px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-signal-main {
+		color: #0f172a;
+	}
+
+	.tv-signal-sub {
+		font-size: 11px;
+		color: #94a3b8;
+		line-height: 1.35;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-signal-sub {
+		color: #64748b;
+	}
 </style>
 
 <div class="row">
@@ -526,7 +593,7 @@
 		</a>
 	</div>
 
-	<!-- 2.5. TradingView Financial Market Terminal (Omzet Penjualan PO Masuk & Invoice) -->
+	<!-- 2.5. TradingView Financial Technical Analysis & Forecasting Terminal -->
 	<div class="col-12">
 		<div class="tv-terminal-card" id="tv-terminal-card">
 			<!-- Ticker Header Bar -->
@@ -537,33 +604,33 @@
 					</div>
 					<div>
 						<h4 class="tv-symbol-name">
-							<span id="tv-ticker-code">VSI:OMZET_PO</span>
-							<span class="badge badge-dark" style="font-size: 10px; background: #1e293b; color: #38bdf8; border: 1px solid #334155;">IDR • RUPIAH</span>
+							<span id="tv-ticker-code">VSI:NET_CASHFLOW</span>
+							<span class="badge badge-dark" style="font-size: 10px; background: #1e293b; color: #38bdf8; border: 1px solid #334155;">IDR • TECHNICAL</span>
 							<span id="tv-growth-badge" class="tv-badge-up"><i class="fas fa-caret-up mr-1"></i>0.00%</span>
 						</h4>
-						<p class="tv-symbol-sub" id="tv-ticker-desc">Arus Masuk Purchase Order (PO Masuk Customer) & Realisasi Penjualan</p>
+						<p class="tv-symbol-sub" id="tv-ticker-desc">Analisis Teknikal Arus Kas Bersih (Pemasukan PO/Invoice vs Pengeluaran Ekspedisi & Payroll) + Proyeksi 3 Periode</p>
 					</div>
 				</div>
 
 				<div class="tv-metrics-strip">
 					<div class="tv-metric-item">
-						<span class="tv-metric-label">Total Periode (<span id="tv-label-year"><?= $tahun_sekarang ?></span>)</span>
-						<span class="tv-metric-val tv-up-color" id="tv-stat-total">Rp 0</span>
+						<span class="tv-metric-label">Arus Kas Bersih (<span id="tv-label-year"><?= $tahun_sekarang ?></span>)</span>
+						<span class="tv-metric-val tv-up-color" id="tv-stat-net">Rp 0</span>
 					</div>
 					<div class="tv-metric-item">
-						<span class="tv-metric-label">Total PO Masuk</span>
-						<span class="tv-metric-val" id="tv-stat-po">Rp 0 <small style="font-size: 10.5px; color: #64748b; font-weight: 600;" id="tv-stat-po-cnt">(0 PO)</small></span>
+						<span class="tv-metric-label">Total Pemasukan (Inflow)</span>
+						<span class="tv-metric-val tv-up-color" id="tv-stat-inflow">Rp 0 <small style="font-size: 10.5px; color: #64748b; font-weight: 600;" id="tv-stat-inflow-cnt">(0 Dok)</small></span>
 					</div>
 					<div class="tv-metric-item">
-						<span class="tv-metric-label">Total Invoice</span>
-						<span class="tv-metric-val" id="tv-stat-inv">Rp 0 <small style="font-size: 10.5px; color: #64748b; font-weight: 600;" id="tv-stat-inv-cnt">(0 Inv)</small></span>
+						<span class="tv-metric-label">Total Pengeluaran (Outflow)</span>
+						<span class="tv-metric-val tv-down-color" id="tv-stat-outflow">Rp 0 <small style="font-size: 10.5px; color: #64748b; font-weight: 600;" id="tv-stat-outflow-cnt">(0 Dok)</small></span>
 					</div>
 					<div class="tv-metric-item">
-						<span class="tv-metric-label">Baseline (Rata-rata)</span>
-						<span class="tv-metric-val" style="color: #fbbf24;" id="tv-stat-baseline">Rp 0</span>
+						<span class="tv-metric-label">Proyeksi +1 Periode</span>
+						<span class="tv-metric-val" style="color: #c084fc;" id="tv-stat-forecast">Rp 0</span>
 					</div>
 					<div class="tv-metric-item">
-						<span class="tv-metric-label">Tertinggi (High)</span>
+						<span class="tv-metric-label">Puncak (Resistance)</span>
 						<span class="tv-metric-val" id="tv-stat-high">Rp 0</span>
 					</div>
 				</div>
@@ -574,17 +641,23 @@
 				<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
 					<!-- Source / Instrumen Data -->
 					<div class="tv-btn-group" id="tv-source-group">
-						<button type="button" class="tv-btn active" data-source="PO" title="Tampilkan Omzet PO Masuk">
-							<i class="fas fa-file-signature text-success"></i> PO Masuk
+						<button type="button" class="tv-btn active" data-source="NET_CASHFLOW" title="Analisis Arus Kas Bersih (Total Inflow dikurangi Total Outflow)">
+							<i class="fas fa-balance-scale-right text-success"></i> Net Cashflow
 						</button>
-						<button type="button" class="tv-btn" data-source="INV" title="Tampilkan Realisasi Invoice">
-							<i class="fas fa-file-invoice-dollar text-info"></i> Invoice
+						<button type="button" class="tv-btn" data-source="INFLOW" title="Total Pemasukan Gabungan (PO Masuk + Invoice)">
+							<i class="fas fa-arrow-trend-up text-info"></i> Pemasukan (Inflow)
 						</button>
-						<button type="button" class="tv-btn" data-source="ALL" title="Gabungan PO Masuk + Invoice">
-							<i class="fas fa-layer-group text-warning"></i> Gabungan
+						<button type="button" class="tv-btn" data-source="OUTFLOW" title="Total Pengeluaran (Tagihan Ekspedisi/SPP + Payroll Gaji)">
+							<i class="fas fa-arrow-trend-down text-danger"></i> Pengeluaran (Outflow)
 						</button>
-						<button type="button" class="tv-btn" data-source="CUMULATIVE" title="Kurva Pertumbuhan Akumulasi (Cumulative Equity)">
-							<i class="fas fa-chart-area text-primary"></i> Akumulasi YTD
+						<button type="button" class="tv-btn" data-source="PO" title="Omzet PO Masuk Customer">
+							<i class="fas fa-file-signature" style="color: #34d399;"></i> PO Masuk
+						</button>
+						<button type="button" class="tv-btn" data-source="INV" title="Realisasi Penagihan Invoice">
+							<i class="fas fa-file-invoice-dollar" style="color: #38bdf8;"></i> Invoice
+						</button>
+						<button type="button" class="tv-btn" data-source="CUMULATIVE" title="Akumulasi Pertumbuhan Kas Berjalan (Equity Curve)">
+							<i class="fas fa-chart-area text-warning"></i> Akumulasi YTD
 						</button>
 					</div>
 
@@ -605,24 +678,30 @@
 				<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
 					<!-- Mode Grafik TradingView -->
 					<div class="tv-btn-group" id="tv-chart-type-group">
-						<button type="button" class="tv-btn active" data-type="baseline" title="Baseline Chart: Hijau di atas rata-rata, Merah di bawah rata-rata">
-							<i class="fas fa-water"></i> Baseline (Hijau/Merah)
+						<button type="button" class="tv-btn active" data-type="baseline" title="Baseline Chart: Hijau saat Surplus / Di atas Rata-rata, Merah saat Defisit / Di bawah Rata-rata">
+							<i class="fas fa-water"></i> Baseline (Surplus/Defisit)
+						</button>
+						<button type="button" class="tv-btn" data-type="cashflow_compare" title="Bandingkan Kurva Pemasukan (Hijau) vs Pengeluaran (Merah)">
+							<i class="fas fa-exchange-alt"></i> Inflow vs Outflow
+						</button>
+						<button type="button" class="tv-btn" data-type="compare" title="Bandingkan Garis PO Masuk vs Invoice">
+							<i class="fas fa-random"></i> PO vs Invoice
 						</button>
 						<button type="button" class="tv-btn" data-type="area" title="Area Gradient Chart">
 							<i class="fas fa-mountain"></i> Area
-						</button>
-						<button type="button" class="tv-btn" data-type="compare" title="Bandingkan Garis PO Masuk vs Invoice">
-							<i class="fas fa-random"></i> Compare (PO vs Inv)
 						</button>
 						<button type="button" class="tv-btn" data-type="candlestick" title="Candlestick OHLC">
 							<i class="fas fa-sliders-h"></i> Candles
 						</button>
 					</div>
 
-					<!-- Moving Average & Utility -->
+					<!-- Forecasting, Moving Average & Utility -->
 					<div class="tv-btn-group">
-						<button type="button" class="tv-btn active" id="tv-toggle-ma" title="Tampilkan/Sembunyikan Garis Indikator Moving Average (MA-3)">
-							<i class="fas fa-wave-square" style="color: #f59e0b;"></i> MA(3)
+						<button type="button" class="tv-btn active" id="tv-toggle-forecast" title="Tampilkan/Sembunyikan Proyeksi Forecasting 3 Periode ke Depan (Regresi Tren + Confidence Band)">
+							<i class="fas fa-wand-magic-sparkles" style="color: #c084fc;"></i> Forecast (+3)
+						</button>
+						<button type="button" class="tv-btn active" id="tv-toggle-ma" title="Tampilkan/Sembunyikan Garis Indikator Moving Average Crossover (MA-3 & MA-6)">
+							<i class="fas fa-wave-square" style="color: #f59e0b;"></i> MA(3/6)
 						</button>
 						<button type="button" class="tv-btn" id="tv-btn-fit" title="Reset Zoom / Fit Content">
 							<i class="fas fa-compress-arrows-alt"></i> Reset
@@ -643,10 +722,10 @@
 						<span style="font-size: 10.5px; font-weight: 700;" id="tv-leg-status" class="tv-badge-up">LIVE</span>
 					</div>
 					<div style="font-size: 17px; font-weight: 800; margin: 2px 0; font-family: 'Consolas', monospace;" id="tv-leg-val">Rp 0</div>
-					<div class="d-flex flex-wrap align-items-center" style="gap: 10px; font-size: 11px; color: #94a3b8;" id="tv-leg-detail">
-						<span>PO: <strong style="color: #10b981;" id="tv-leg-po">Rp 0</strong></span>
+					<div class="d-flex flex-wrap align-items-center" style="gap: 8px; font-size: 11px; color: #94a3b8;" id="tv-leg-detail">
+						<span>Inflow: <strong style="color: #10b981;" id="tv-leg-inflow">Rp 0</strong></span>
 						<span>•</span>
-						<span>Inv: <strong style="color: #38bdf8;" id="tv-leg-inv">Rp 0</strong></span>
+						<span>Outflow: <strong style="color: #ef4444;" id="tv-leg-outflow">Rp 0</strong></span>
 						<span>•</span>
 						<span>Vol: <strong style="color: #fbbf24;" id="tv-leg-vol">0 Dok</strong></span>
 					</div>
@@ -655,6 +734,52 @@
 
 				<!-- Lightweight Charts DOM Target -->
 				<div id="tv-lightweight-chart" style="width: 100%; height: 100%;"></div>
+			</div>
+
+			<!-- Executive Financial Technical Analysis Signal Bar -->
+			<div class="tv-tech-footer">
+				<div class="row">
+					<div class="col-xl-3 col-md-6 mb-2 mb-xl-0">
+						<div class="tv-signal-box">
+							<div class="tv-signal-title">
+								<span><i class="fas fa-satellite-dish mr-1 text-info"></i> Sinyal Tren Teknikal</span>
+								<span id="tv-sig-badge" class="tv-badge-up">BULLISH</span>
+							</div>
+							<div class="tv-signal-main" id="tv-sig-label">MENunggu DATA...</div>
+							<div class="tv-signal-sub" id="tv-sig-desc">Menganalisis pergerakan rata-rata & momentum arus kas...</div>
+						</div>
+					</div>
+					<div class="col-xl-3 col-md-6 mb-2 mb-xl-0">
+						<div class="tv-signal-box">
+							<div class="tv-signal-title">
+								<span><i class="fas fa-scale-balanced mr-1 text-success"></i> Rasio Cakupan Kas (Inflow/Outflow)</span>
+								<span class="badge badge-dark" style="font-size: 10px;" id="tv-sig-ratio">0.00x</span>
+							</div>
+							<div class="tv-signal-main" id="tv-sig-burn">Burn Rate: Rp 0 / periode</div>
+							<div class="tv-signal-sub">Perbandingan total pemasukan (PO/Invoice) terhadap beban pengeluaran otomatis.</div>
+						</div>
+					</div>
+					<div class="col-xl-3 col-md-6 mb-2 mb-md-0">
+						<div class="tv-signal-box">
+							<div class="tv-signal-title">
+								<span><i class="fas fa-wand-magic-sparkles mr-1" style="color: #c084fc;"></i> Proyeksi Regresi (+1 Periode)</span>
+								<span class="tv-badge-forecast">FORECAST</span>
+							</div>
+							<div class="tv-signal-main" style="color: #c084fc;" id="tv-sig-forecast-val">Rp 0</div>
+							<div class="tv-signal-sub" id="tv-sig-forecast-range">Estimasi berbasis Linear Regression & Weighted Moving Average (WMA).</div>
+						</div>
+					</div>
+					<div class="col-xl-3 col-md-6">
+						<div class="tv-signal-box">
+							<div class="tv-signal-title">
+								<span><i class="fas fa-file-invoice-dollar mr-1 text-warning"></i> Realisasi PO → Invoice</span>
+								<span class="badge badge-info" style="font-size: 10px;" id="tv-sig-conv-pct">0%</span>
+							</div>
+							<div class="tv-signal-main" id="tv-sig-unbilled">Unbilled PO: Rp 0</div>
+							<div class="tv-signal-sub">Potensi piutang / pesanan PO masuk yang belum terbit penagihan Invoice.</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -958,15 +1083,16 @@
 		var chartDonut = null;
 
 		// =========================================================================
-		// A. TRADINGVIEW LIGHTWEIGHT CHARTS ENGINE (OMZET PO MASUK & INVOICE)
+		// A. TRADINGVIEW TECHNICAL ANALYSIS & FORECASTING ENGINE
 		// =========================================================================
 		var tvContainer = document.getElementById('tv-lightweight-chart');
 		var tvChart = null;
 		var tvState = {
-			source: 'PO',       // PO, INV, ALL, CUMULATIVE
-			interval: '1M',     // 1D, 1W, 1M
-			scope: 'YEAR',      // YEAR, ALL
-			chartType: 'baseline', // baseline, area, compare, candlestick
+			source: 'NET_CASHFLOW', // NET_CASHFLOW, INFLOW, OUTFLOW, PO, INV, CUMULATIVE
+			interval: '1M',         // 1D, 1W, 1M
+			scope: 'YEAR',          // YEAR, ALL
+			chartType: 'baseline',  // baseline, cashflow_compare, compare, area, candlestick
+			showForecast: true,
 			showMA: true,
 			isLight: false,
 			rawData: null
@@ -990,7 +1116,8 @@
 
 		function formatRupiahFull(val) {
 			var num = Math.round(parseFloat(val) || 0);
-			return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+			var sign = num < 0 ? '- ' : '';
+			return sign + 'Rp ' + Math.abs(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 		}
 
 		function formatTvDate(dateStr, interval) {
@@ -1073,7 +1200,7 @@
 				timeScale: {
 					borderColor: borderCol,
 					timeVisible: false,
-					rightOffset: 3,
+					rightOffset: 4,
 					barSpacing: 28,
 					fixLeftEdge: false
 				},
@@ -1102,7 +1229,6 @@
 				var baseline = parseFloat(tvState.rawData.baseline_value || 0);
 
 				if (!param || !param.time || !param.point || param.point.x < 0 || param.point.y < 0) {
-					// Tampilkan data titik terakhir saat kursor di luar chart
 					var mainArr = tvState.rawData.series_main || [];
 					if (mainArr.length > 0) {
 						var lastItem = mainArr[mainArr.length - 1];
@@ -1118,10 +1244,21 @@
 				var meta = metaMap[dateKey];
 				var foundVal = 0;
 				var mainSeries = tvState.rawData.series_main || [];
+				var fcastSeries = tvState.rawData.series_forecast || [];
+				var found = false;
 				for (var i = 0; i < mainSeries.length; i++) {
 					if (mainSeries[i].time === dateKey) {
 						foundVal = mainSeries[i].value;
+						found = true;
 						break;
+					}
+				}
+				if (!found) {
+					for (var j = 0; j < fcastSeries.length; j++) {
+						if (fcastSeries[j].time === dateKey) {
+							foundVal = fcastSeries[j].value;
+							break;
+						}
 					}
 				}
 				updateFloatingLegend(dateKey, foundVal, meta, baseline);
@@ -1129,28 +1266,37 @@
 		}
 
 		function updateFloatingLegend(dateKey, val, meta, baseline) {
-			$('#tv-leg-date').text('Periode: ' + formatTvDate(dateKey, tvState.interval));
+			var isForecast = (meta && meta.is_forecast);
+			$('#tv-leg-date').text((isForecast ? 'Proyeksi: ' : 'Periode: ') + formatTvDate(dateKey, tvState.interval));
 			$('#tv-leg-val').text(formatRupiahFull(val));
 
-			var isAbove = (val >= baseline && val > 0);
+			var isAbove = (tvState.source === 'NET_CASHFLOW') ? (val >= 0) : (val >= baseline);
 			$('#tv-leg-val')
 				.removeClass('tv-up-color tv-down-color')
-				.addClass(isAbove ? 'tv-up-color' : (val > 0 ? 'tv-down-color' : ''));
+				.addClass(isAbove ? 'tv-up-color' : 'tv-down-color');
 
-			if (val <= 0) {
+			if (isForecast) {
+				$('#tv-leg-status').attr('class', 'tv-badge-forecast').html('<i class="fas fa-wand-magic-sparkles mr-1"></i>FORECAST AI');
+			} else if (val === 0 && (!meta || meta.vol_cnt === 0)) {
 				$('#tv-leg-status').attr('class', 'badge badge-secondary').text('BELUM ADA TRANSAKSI');
+			} else if (tvState.source === 'NET_CASHFLOW') {
+				if (val >= 0) {
+					$('#tv-leg-status').attr('class', 'tv-badge-up').html('<i class="fas fa-arrow-up mr-1"></i>SURPLUS KAS');
+				} else {
+					$('#tv-leg-status').attr('class', 'tv-badge-down').html('<i class="fas fa-arrow-down mr-1"></i>DEFISIT KAS');
+				}
 			} else if (isAbove) {
-				$('#tv-leg-status').attr('class', 'tv-badge-up').html('<i class="fas fa-arrow-up mr-1"></i>DI ATAS RATA-RATA');
+				$('#tv-leg-status').attr('class', 'tv-badge-up').html('<i class="fas fa-arrow-up mr-1"></i>DI ATAS BASELINE');
 			} else {
-				$('#tv-leg-status').attr('class', 'tv-badge-down').html('<i class="fas fa-arrow-down mr-1"></i>DI BAWAH RATA-RATA');
+				$('#tv-leg-status').attr('class', 'tv-badge-down').html('<i class="fas fa-arrow-down mr-1"></i>DI BAWAH BASELINE');
 			}
 
 			if (meta) {
-				$('#tv-leg-po').text(formatRupiahShort(meta.po_val) + ' (' + meta.po_cnt + ')');
-				$('#tv-leg-inv').text(formatRupiahShort(meta.inv_val) + ' (' + meta.inv_cnt + ')');
-				$('#tv-leg-vol').text(meta.vol_cnt + ' Dokumen');
+				$('#tv-leg-inflow').text(formatRupiahShort(meta.inflow_val || 0));
+				$('#tv-leg-outflow').text(formatRupiahShort(meta.outflow_val || 0));
+				$('#tv-leg-vol').text((meta.vol_cnt || 0) + ' Dok');
 				if (meta.top_docs && meta.top_docs.length > 0) {
-					$('#tv-leg-docs').text('Dokumen: ' + meta.top_docs.join(' | '));
+					$('#tv-leg-docs').text(meta.top_docs.join(' | '));
 				} else {
 					$('#tv-leg-docs').text('');
 				}
@@ -1160,7 +1306,6 @@
 		function renderTvSeries() {
 			if (!tvChart || !tvState.rawData) return;
 
-			// Bersihkan series sebelumnya
 			for (var i = 0; i < activeSeriesList.length; i++) {
 				try {
 					tvChart.removeSeries(activeSeriesList[i]);
@@ -1168,24 +1313,30 @@
 			}
 			activeSeriesList = [];
 
-			var resp     = tvState.rawData;
-			var mainData = resp.series_main || [];
-			var poData   = resp.series_po || [];
-			var invData  = resp.series_inv || [];
-			var volData  = resp.series_volume || [];
-			var ohlcData = resp.series_ohlc || [];
-			var baseline = parseFloat(resp.baseline_value || 0);
+			var resp        = tvState.rawData;
+			var mainData    = resp.series_main || [];
+			var inflowData  = resp.series_inflow || [];
+			var outflowData = resp.series_outflow || [];
+			var poData      = resp.series_po || [];
+			var invData     = resp.series_inv || [];
+			var volData     = resp.series_volume || [];
+			var ohlcData    = resp.series_ohlc || [];
+			var fcastData   = resp.series_forecast || [];
+			var fcastUpper  = resp.series_forecast_upper || [];
+			var fcastLower  = resp.series_forecast_lower || [];
+			var baseline    = parseFloat(resp.baseline_value || 0);
+			var burnRate    = parseFloat(resp.avg_outflow_burn || 0);
 
 			// 1. Render Main Series sesuai mode pilihan
 			if (tvState.chartType === 'baseline') {
 				var baseSeries = tvChart.addBaselineSeries({
 					baseValue: { type: 'price', price: baseline },
 					topLineColor: '#10b981',
-					topFillColor1: 'rgba(16, 185, 129, 0.40)',
+					topFillColor1: 'rgba(16, 185, 129, 0.42)',
 					topFillColor2: 'rgba(16, 185, 129, 0.04)',
 					bottomLineColor: '#ef4444',
 					bottomFillColor1: 'rgba(239, 68, 68, 0.04)',
-					bottomFillColor2: 'rgba(239, 68, 68, 0.38)',
+					bottomFillColor2: 'rgba(239, 68, 68, 0.40)',
 					lineWidth: 3,
 					crosshairMarkerVisible: true,
 					crosshairMarkerRadius: 5,
@@ -1194,40 +1345,49 @@
 				});
 				baseSeries.setData(mainData);
 
-				// Garis putus-putus penanda nilai Baseline (Rata-rata)
-				if (baseline > 0) {
+				baseSeries.createPriceLine({
+					price: baseline,
+					color: tvState.source === 'NET_CASHFLOW' ? '#94a3b8' : '#f59e0b',
+					lineWidth: 1,
+					lineStyle: LightweightCharts.LineStyle.Dashed,
+					axisLabelVisible: true,
+					title: tvState.source === 'NET_CASHFLOW' ? 'Break-Even (Rp 0)' : 'Rata-rata (Baseline)'
+				});
+
+				if (tvState.source === 'INFLOW' && burnRate > 0) {
 					baseSeries.createPriceLine({
-						price: baseline,
-						color: '#f59e0b',
+						price: burnRate,
+						color: '#ef4444',
 						lineWidth: 1,
-						lineStyle: LightweightCharts.LineStyle.Dashed,
+						lineStyle: LightweightCharts.LineStyle.Dotted,
 						axisLabelVisible: true,
-						title: 'Rata-rata (Baseline)'
+						title: 'Avg Burn Rate (Outflow)'
 					});
 				}
 				activeSeriesList.push(baseSeries);
 
-			} else if (tvState.chartType === 'area') {
-				var areaSeries = tvChart.addAreaSeries({
-					lineColor: '#38bdf8',
-					topColor: 'rgba(56, 189, 248, 0.42)',
-					bottomColor: 'rgba(56, 189, 248, 0.02)',
+			} else if (tvState.chartType === 'cashflow_compare') {
+				// Kurva 1: Total Pemasukan / Inflow (Hijau Emerald)
+				var inSeries = tvChart.addAreaSeries({
+					lineColor: '#10b981',
+					topColor: 'rgba(16, 185, 129, 0.34)',
+					bottomColor: 'rgba(16, 185, 129, 0.02)',
 					lineWidth: 3,
-					crosshairMarkerVisible: true,
-					crosshairMarkerRadius: 5
+					title: 'Inflow (Pemasukan)'
 				});
-				areaSeries.setData(mainData);
-				if (baseline > 0) {
-					areaSeries.createPriceLine({
-						price: baseline,
-						color: '#10b981',
-						lineWidth: 1,
-						lineStyle: LightweightCharts.LineStyle.Dashed,
-						axisLabelVisible: true,
-						title: 'Avg Baseline'
-					});
-				}
-				activeSeriesList.push(areaSeries);
+				inSeries.setData(inflowData);
+				activeSeriesList.push(inSeries);
+
+				// Kurva 2: Total Pengeluaran / Outflow (Merah Crimson)
+				var outSeries = tvChart.addAreaSeries({
+					lineColor: '#ef4444',
+					topColor: 'rgba(239, 68, 68, 0.30)',
+					bottomColor: 'rgba(239, 68, 68, 0.02)',
+					lineWidth: 3,
+					title: 'Outflow (Pengeluaran)'
+				});
+				outSeries.setData(outflowData);
+				activeSeriesList.push(outSeries);
 
 			} else if (tvState.chartType === 'compare') {
 				// Garis 1: PO Masuk (Emerald Green)
@@ -1250,6 +1410,18 @@
 				invSeries.setData(invData);
 				activeSeriesList.push(invSeries);
 
+			} else if (tvState.chartType === 'area') {
+				var areaSeries = tvChart.addAreaSeries({
+					lineColor: '#38bdf8',
+					topColor: 'rgba(56, 189, 248, 0.42)',
+					bottomColor: 'rgba(56, 189, 248, 0.02)',
+					lineWidth: 3,
+					crosshairMarkerVisible: true,
+					crosshairMarkerRadius: 5
+				});
+				areaSeries.setData(mainData);
+				activeSeriesList.push(areaSeries);
+
 			} else if (tvState.chartType === 'candlestick') {
 				var candleSeries = tvChart.addCandlestickSeries({
 					upColor: '#10b981',
@@ -1262,23 +1434,82 @@
 				activeSeriesList.push(candleSeries);
 			}
 
-			// 2. Render Indikator Moving Average (MA-3) jika aktif
-			if (tvState.showMA && tvState.chartType !== 'compare' && mainData.length >= 3) {
-				var maData = computeSMA(mainData, 3);
-				var maSeries = tvChart.addLineSeries({
-					color: '#f59e0b',
-					lineWidth: 2,
-					lineStyle: LightweightCharts.LineStyle.Solid,
-					title: 'MA(3)',
+			// 2. Render Indikator Moving Average Crossover (MA-3 Fast & MA-6 Slow)
+			if (tvState.showMA && tvState.chartType !== 'compare' && tvState.chartType !== 'cashflow_compare') {
+				if (mainData.length >= 3) {
+					var ma3Data = computeSMA(mainData, 3);
+					var ma3Series = tvChart.addLineSeries({
+						color: '#f59e0b',
+						lineWidth: 2,
+						lineStyle: LightweightCharts.LineStyle.Solid,
+						title: 'MA(3)',
+						crosshairMarkerVisible: false,
+						lastValueVisible: false,
+						priceLineVisible: false
+					});
+					ma3Series.setData(ma3Data);
+					activeSeriesList.push(ma3Series);
+				}
+				if (mainData.length >= 6) {
+					var ma6Data = computeSMA(mainData, 6);
+					var ma6Series = tvChart.addLineSeries({
+						color: '#38bdf8',
+						lineWidth: 2,
+						lineStyle: LightweightCharts.LineStyle.Dashed,
+						title: 'MA(6)',
+						crosshairMarkerVisible: false,
+						lastValueVisible: false,
+						priceLineVisible: false
+					});
+					ma6Series.setData(ma6Data);
+					activeSeriesList.push(ma6Series);
+				}
+			}
+
+			// 3. Render Proyeksi Forecasting (+3 Periode ke Depan + Confidence Bands)
+			if (tvState.showForecast && fcastData.length >= 2 && tvState.chartType !== 'compare' && tvState.chartType !== 'cashflow_compare') {
+				// Upper Optimistic Band
+				var upperSeries = tvChart.addLineSeries({
+					color: 'rgba(192, 132, 252, 0.45)',
+					lineWidth: 1,
+					lineStyle: LightweightCharts.LineStyle.Dotted,
+					title: 'Optimis (+1σ)',
 					crosshairMarkerVisible: false,
 					lastValueVisible: false,
 					priceLineVisible: false
 				});
-				maSeries.setData(maData);
-				activeSeriesList.push(maSeries);
+				upperSeries.setData(fcastUpper);
+				activeSeriesList.push(upperSeries);
+
+				// Lower Conservative Band
+				var lowerSeries = tvChart.addLineSeries({
+					color: 'rgba(192, 132, 252, 0.45)',
+					lineWidth: 1,
+					lineStyle: LightweightCharts.LineStyle.Dotted,
+					title: 'Konservatif (-1σ)',
+					crosshairMarkerVisible: false,
+					lastValueVisible: false,
+					priceLineVisible: false
+				});
+				lowerSeries.setData(fcastLower);
+				activeSeriesList.push(lowerSeries);
+
+				// Main Forecast Trendline
+				var fcastSeries = tvChart.addLineSeries({
+					color: '#c084fc',
+					lineWidth: 3,
+					lineStyle: LightweightCharts.LineStyle.Dashed,
+					title: 'Forecast (+3)',
+					crosshairMarkerVisible: true,
+					crosshairMarkerRadius: 5,
+					lastValueVisible: true,
+					priceLineVisible: false
+				});
+				fcastSeries.setData(fcastData);
+				activeSeriesList.push(fcastSeries);
 			}
 
-			// 3. Render Volume Histogram (Jumlah Dokumen Transaksi) di bagian bawah
+			// 4. Render Volume Histogram (Frekuensi Dokumen Transaksi) di bagian bawah
 			var volSeries = tvChart.addHistogramSeries({
 				color: '#26a69a',
 				priceFormat: {
@@ -1299,7 +1530,6 @@
 
 			tvChart.timeScale().fitContent();
 
-			// Update legend awal dengan titik terakhir
 			if (mainData.length > 0) {
 				var lastPt = mainData[mainData.length - 1];
 				updateFloatingLegend(lastPt.time, lastPt.value, (resp.tooltip_meta || {})[lastPt.time], baseline);
@@ -1309,20 +1539,28 @@
 		function updateTickerHeader(resp) {
 			var sum = resp.summary || {};
 			var tickerMeta = {
-				'PO':         { code: 'VSI:OMZET_PO',   desc: 'Arus Masuk Purchase Order (PO Masuk Customer) — Real-Time Database' },
-				'INV':        { code: 'VSI:INVOICE',    desc: 'Realisasi Penagihan Invoice Customer — Real-Time Database' },
-				'ALL':        { code: 'VSI:ARUS_MASUK', desc: 'Total Arus Masuk Gabungan (PO Masuk + Invoice)' },
-				'CUMULATIVE': { code: 'VSI:YTD_EQUITY', desc: 'Kurva Akumulasi Pertumbuhan Omzet Berjalan (Cumulative Revenue)' }
+				'NET_CASHFLOW': { code: 'VSI:NET_CASHFLOW', desc: 'Analisis Arus Kas Bersih (Total Pemasukan PO/Invoice dikurangi Pengeluaran Ekspedisi & Payroll)' },
+				'INFLOW':       { code: 'VSI:TOTAL_INFLOW', desc: 'Total Arus Kas Masuk Gabungan (Omzet PO Masuk + Realisasi Invoice Customer)' },
+				'OUTFLOW':      { code: 'VSI:TOTAL_OUTFLOW',desc: 'Total Arus Kas Keluar (Tagihan Ekspedisi/SPP + Beban Gaji Payroll SDM)' },
+				'PO':           { code: 'VSI:OMZET_PO',     desc: 'Arus Masuk Purchase Order (PO Masuk Customer) — Real-Time Database' },
+				'INV':          { code: 'VSI:INVOICE',      desc: 'Realisasi Penagihan Invoice Customer — Real-Time Database' },
+				'CUMULATIVE':   { code: 'VSI:YTD_EQUITY',   desc: 'Kurva Akumulasi Pertumbuhan Kas Berjalan (Cumulative Equity Curve)' }
 			};
-			var info = tickerMeta[tvState.source] || tickerMeta['PO'];
+			var info = tickerMeta[tvState.source] || tickerMeta['NET_CASHFLOW'];
 			$('#tv-ticker-code').text(info.code);
 			$('#tv-ticker-desc').text(info.desc);
 			$('#tv-label-year').text(resp.tahun === 'ALL' ? 'All-Time' : resp.tahun);
 
-			$('#tv-stat-total').text(formatRupiahShort(sum.total_nominal || 0));
-			$('#tv-stat-po').html(formatRupiahShort(sum.total_po_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + (sum.total_po_count || 0) + ' PO)</small>');
-			$('#tv-stat-inv').html(formatRupiahShort(sum.total_inv_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + (sum.total_inv_count || 0) + ' Inv)</small>');
-			$('#tv-stat-baseline').text(formatRupiahShort(sum.baseline_avg || 0));
+			var netVal = parseFloat(sum.total_net_cashflow || 0);
+			$('#tv-stat-net')
+				.text(formatRupiahShort(netVal))
+				.removeClass('tv-up-color tv-down-color')
+				.addClass(netVal >= 0 ? 'tv-up-color' : 'tv-down-color');
+
+			var inCnt = (parseInt(sum.total_po_count || 0, 10) + parseInt(sum.total_inv_count || 0, 10));
+			$('#tv-stat-inflow').html(formatRupiahShort(sum.total_inflow_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + inCnt + ' Dok)</small>');
+			$('#tv-stat-outflow').html(formatRupiahShort(sum.total_outflow_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + (sum.total_out_count || 0) + ' Dok)</small>');
+			$('#tv-stat-forecast').text(formatRupiahShort(sum.next_forecast_val || 0));
 			$('#tv-stat-high').text(formatRupiahShort(sum.high_nominal || 0));
 
 			var g = parseFloat(sum.growth_pct || 0);
@@ -1335,6 +1573,25 @@
 					.attr('class', 'tv-badge-down')
 					.html('<i class="fas fa-caret-down mr-1"></i>' + g.toFixed(2) + '%');
 			}
+
+			// Update 4 Kartu Sinyal Analisis Teknikal di Footer Terminal
+			var sigStatus = sum.signal_status || 'NEUTRAL';
+			$('#tv-sig-badge')
+				.attr('class', sigStatus === 'BEARISH' ? 'tv-badge-down' : 'tv-badge-up')
+				.text(sigStatus);
+			$('#tv-sig-label').text(sum.signal_label || '-');
+			$('#tv-sig-desc').text(sum.signal_desc || '-');
+
+			$('#tv-sig-ratio').text((sum.cashflow_ratio || 0) + 'x Coverage');
+			$('#tv-sig-burn').text('Burn Rate: ' + formatRupiahShort(resp.avg_outflow_burn || 0) + ' / periode');
+
+			$('#tv-sig-forecast-val').text(formatRupiahFull(sum.next_forecast_val || 0));
+			var fUpper = (resp.series_forecast_upper && resp.series_forecast_upper.length > 1) ? resp.series_forecast_upper[1].value : 0;
+			var fLower = (resp.series_forecast_lower && resp.series_forecast_lower.length > 1) ? resp.series_forecast_lower[1].value : 0;
+			$('#tv-sig-forecast-range').text('Rentang: ' + formatRupiahShort(fLower) + ' s/d ' + formatRupiahShort(fUpper));
+
+			$('#tv-sig-conv-pct').text((sum.conversion_rate_pct || 0) + '% Tertagih');
+			$('#tv-sig-unbilled').text('Unbilled PO: ' + formatRupiahShort(sum.unbilled_po_nominal || 0));
 		}
 
 		function loadTradingViewData(autoFallback) {
@@ -1351,19 +1608,12 @@
 				success: function(resp) {
 					if (!resp || resp.status !== 'success') return;
 
-					// Jika saat pertama kali buka PO tahun ini kosong tapi Invoice ada data, atau All-Time ada data, otomatis pilih yang memiliki transaksi aktif
+					// Jika tahun terpilih belum memiliki transaksi sama sekali, otomatis tampilkan All-Time
 					if (autoFallback && resp.summary) {
-						if (resp.summary.total_po_nominal <= 0 && resp.summary.total_inv_nominal <= 0 && tvState.scope === 'YEAR') {
+						if (resp.summary.total_inflow_nominal <= 0 && resp.summary.total_outflow_nominal <= 0 && tvState.scope === 'YEAR') {
 							tvState.scope = 'ALL';
 							$('#tv-scope-group .tv-btn').removeClass('active');
 							$('#tv-scope-group .tv-btn[data-scope="ALL"]').addClass('active');
-							loadTradingViewData(true);
-							return;
-						}
-						if (resp.summary.total_po_nominal <= 0 && resp.summary.total_inv_nominal > 0 && tvState.source === 'PO') {
-							tvState.source = 'ALL';
-							$('#tv-source-group .tv-btn').removeClass('active');
-							$('#tv-source-group .tv-btn[data-source="ALL"]').addClass('active');
 							loadTradingViewData(false);
 							return;
 						}
@@ -1405,6 +1655,12 @@
 			$('#tv-chart-type-group .tv-btn').removeClass('active');
 			$(this).addClass('active');
 			tvState.chartType = $(this).data('type');
+			renderTvSeries();
+		});
+
+		$('#tv-toggle-forecast').on('click', function() {
+			tvState.showForecast = !tvState.showForecast;
+			$(this).toggleClass('active', tvState.showForecast);
 			renderTvSeries();
 		});
 

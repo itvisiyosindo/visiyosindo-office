@@ -237,7 +237,10 @@ class Dashboard_accounting extends CI_Controller
     }
 
     /**
-     * Endpoint JSON untuk Grafik TradingView Financial Analytics (Omzet PO Masuk & Invoice)
+     * Endpoint JSON untuk Terminal Analisis Teknikal Keuangan & Forecasting (TradingView)
+     * Menggunakan 100% data otomatis dari database:
+     * - Inflow  : po_masuk (+ po_masuk_item), invoice (+ detail_barang_invoice)
+     * - Outflow : tagihan_ekspedisi (SPP/Logistik), salary_history (Payroll SDM)
      */
     public function tradingview_financial_data()
     {
@@ -245,18 +248,23 @@ class Dashboard_accounting extends CI_Controller
 
         $tahun    = strtoupper(trim($this->input->get('tahun') ?: date('Y')));
         $interval = strtoupper(trim($this->input->get('interval') ?: '1M')); // 1D, 1W, 1M
-        $source   = strtoupper(trim($this->input->get('source') ?: 'PO'));   // PO, INV, ALL, CUMULATIVE
+        $source   = strtoupper(trim($this->input->get('source') ?: 'NET_CASHFLOW')); // NET_CASHFLOW, INFLOW, OUTFLOW, PO, INV, CUMULATIVE
 
         if (!in_array($interval, ['1D', '1W', '1M'], true)) {
             $interval = '1M';
+        }
+        if ($source === 'ALL') {
+            $source = 'INFLOW';
         }
 
         $has_po       = $this->db->table_exists('po_masuk');
         $has_po_item  = $this->db->table_exists('po_masuk_item');
         $has_inv      = $this->db->table_exists('invoice');
         $has_inv_item = $this->db->table_exists('detail_barang_invoice');
+        $has_tagihan  = $this->db->table_exists('tagihan_ekspedisi');
+        $has_salary   = $this->db->table_exists('salary_history');
 
-        // 1. Ambil transaksi PO Masuk secara aman (cek ketersediaan kolom)
+        // 1. INFLOW A: Ambil transaksi PO Masuk secara aman
         $po_rows = [];
         if ($has_po) {
             $po_fields = array_flip($this->db->list_fields('po_masuk'));
@@ -298,7 +306,7 @@ class Dashboard_accounting extends CI_Controller
             }
         }
 
-        // 2. Ambil transaksi Invoice secara aman (cek ketersediaan kolom)
+        // 2. INFLOW B: Ambil transaksi Invoice secara aman
         $inv_rows = [];
         if ($has_inv) {
             $inv_fields = array_flip($this->db->list_fields('invoice'));
@@ -342,6 +350,95 @@ class Dashboard_accounting extends CI_Controller
             }
         }
 
+        // 3. OUTFLOW A: Ambil Pengeluaran Tagihan Ekspedisi / SPP secara aman
+        $out_rows = [];
+        if ($has_tagihan) {
+            $tg_fields = array_flip($this->db->list_fields('tagihan_ekspedisi'));
+            $tg_nom_parts = [];
+            if (isset($tg_fields['total_tagihan'])) {
+                $tg_nom_parts[] = "NULLIF(tg.total_tagihan, 0)";
+            }
+            if (isset($tg_fields['nilai_tagihan'])) {
+                $asuransi_part = isset($tg_fields['biaya_asuransi']) ? "COALESCE(tg.biaya_asuransi, 0)" : "0";
+                $tg_nom_parts[] = "NULLIF(COALESCE(tg.nilai_tagihan, 0) + {$asuransi_part}, 0)";
+            }
+            $tg_nom_parts[] = "0";
+            $tg_nom_expr = "COALESCE(" . implode(", ", $tg_nom_parts) . ")";
+
+            $tg_date_expr = isset($tg_fields['tanggal_invoice']) && isset($tg_fields['created_at'])
+                ? "COALESCE(NULLIF(tg.tanggal_invoice, '0000-00-00'), DATE(tg.created_at))"
+                : (isset($tg_fields['tanggal_invoice']) ? "tg.tanggal_invoice" : "DATE(tg.created_at)");
+
+            $where_year_tg = ($tahun !== 'ALL' && is_numeric($tahun))
+                ? "AND YEAR({$tg_date_expr}) = " . (int)$tahun
+                : "";
+            $where_app_tg = isset($tg_fields['status_approval']) ? "AND tg.status_approval != 99" : "";
+
+            $sql_tg = "
+                SELECT 
+                    {$tg_date_expr} AS tgl,
+                    {$tg_nom_expr} AS nominal,
+                    COALESCE(tg.no_invoice, 'Tagihan Ekspedisi') AS kode_dok,
+                    'Ekspedisi / Logistik' AS kategori_out
+                FROM tagihan_ekspedisi tg
+                WHERE {$tg_date_expr} IS NOT NULL
+                  AND {$tg_date_expr} != '0000-00-00'
+                  {$where_app_tg}
+                  {$where_year_tg}
+                ORDER BY {$tg_date_expr} ASC
+            ";
+            $q_tg = $this->db->query($sql_tg);
+            if ($q_tg) {
+                foreach ($q_tg->result_array() as $tr) {
+                    $out_rows[] = $tr;
+                }
+            }
+        }
+
+        // 4. OUTFLOW B: Ambil Pengeluaran Payroll / Gaji (salary_history) secara aman
+        if ($has_salary) {
+            $sal_fields = array_flip($this->db->list_fields('salary_history'));
+            $sal_add = [];
+            foreach (['gajipokok', 'tunjangankonsumsi', 'tunjangankinerja', 'tunjangankomunikasi', 'tunjangantransport', 'tunjanganjabatan', 'bonus'] as $col) {
+                if (isset($sal_fields[$col])) {
+                    $sal_add[] = "COALESCE(CAST(sh.{$col} AS DECIMAL(18,2)), 0)";
+                }
+            }
+            if (!empty($sal_add)) {
+                $sal_sub = isset($sal_fields['potonganlainnya']) ? "COALESCE(CAST(sh.potonganlainnya AS DECIMAL(18,2)), 0)" : "0";
+                $sal_nom_expr = "(" . implode(" + ", $sal_add) . " - {$sal_sub})";
+
+                $sal_date_expr = (isset($sal_fields['tahun']) && isset($sal_fields['bulan']))
+                    ? "STR_TO_DATE(CONCAT(sh.tahun, '-', LPAD(sh.bulan, 2, '0'), '-25'), '%Y-%m-%d')"
+                    : "DATE(sh.created_at)";
+
+                $where_year_sal = ($tahun !== 'ALL' && is_numeric($tahun))
+                    ? (isset($sal_fields['tahun']) ? "AND sh.tahun = " . (int)$tahun : "AND YEAR(sh.created_at) = " . (int)$tahun)
+                    : "";
+
+                $sql_sal = "
+                    SELECT 
+                        {$sal_date_expr} AS tgl,
+                        SUM({$sal_nom_expr}) AS nominal,
+                        CONCAT('Payroll ', COUNT(*), ' Pegawai') AS kode_dok,
+                        'Payroll / Gaji' AS kategori_out
+                    FROM salary_history sh
+                    WHERE 1=1 {$where_year_sal}
+                    GROUP BY {$sal_date_expr}
+                    HAVING nominal > 0
+                    ORDER BY tgl ASC
+                ";
+                $q_sal = $this->db->query($sql_sal);
+                if ($q_sal) {
+                    foreach ($q_sal->result_array() as $sr) {
+                        if (!empty($sr['tgl']) && $sr['tgl'] !== '0000-00-00') {
+                            $out_rows[] = $sr;
+                        }
+                    }
+                }
+            }
+        }
+
         // Helper untuk memetakan tanggal ke bucket key (YYYY-MM-DD) sesuai interval TradingView
         $getBucketDate = function ($dateStr) use ($interval) {
             $ts = strtotime($dateStr);
@@ -349,7 +446,6 @@ class Dashboard_accounting extends CI_Controller
             if ($interval === '1M') {
                 return date('Y-m-01', $ts);
             } elseif ($interval === '1W') {
-                // Senin pada minggu tersebut
                 $dow = (int)date('N', $ts); // 1 (Mon) .. 7 (Sun)
                 $monday = strtotime('-' . ($dow - 1) . ' days', $ts);
                 return date('Y-m-d', $monday);
@@ -358,19 +454,24 @@ class Dashboard_accounting extends CI_Controller
             }
         };
 
+        $makeEmptyBucket = function () {
+            return [
+                'po_val'   => 0.0, 'po_cnt'   => 0,
+                'inv_val'  => 0.0, 'inv_cnt'  => 0,
+                'out_val'  => 0.0, 'out_cnt'  => 0,
+                'top_docs' => []
+            ];
+        };
+
         // Siapkan kerangka waktu dasar agar timeline kontinyu & rapi di TradingView
         $buckets = [];
         if ($tahun !== 'ALL' && is_numeric($tahun)) {
             $yr = (int)$tahun;
-            $max_month = ($yr == (int)date('Y')) ? (int)date('n') : 12;
+            $max_m = ($yr == (int)date('Y')) ? (int)date('n') : 12;
             if ($interval === '1M') {
-                for ($m = 1; $m <= 12; $m++) {
+                for ($m = 1; $m <= $max_m; $m++) {
                     $k = sprintf('%04d-%02d-01', $yr, $m);
-                    $buckets[$k] = [
-                        'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
-                        'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
-                        'top_docs' => []
-                    ];
+                    $buckets[$k] = $makeEmptyBucket();
                 }
             } elseif ($interval === '1W') {
                 $startTs = strtotime("$yr-01-01");
@@ -379,11 +480,7 @@ class Dashboard_accounting extends CI_Controller
                 $cur = strtotime('-' . ($dow - 1) . ' days', $startTs);
                 while ($cur <= $endTs) {
                     $k = date('Y-m-d', $cur);
-                    $buckets[$k] = [
-                        'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
-                        'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
-                        'top_docs' => []
-                    ];
+                    $buckets[$k] = $makeEmptyBucket();
                     $cur = strtotime('+7 days', $cur);
                 }
             }
@@ -396,16 +493,9 @@ class Dashboard_accounting extends CI_Controller
             $k = $getBucketDate($r['tgl']);
             if (!$k) continue;
             $val = max(0, (float)$r['nominal']);
-            if (!isset($buckets[$k])) {
-                $buckets[$k] = [
-                    'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
-                    'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
-                    'top_docs' => []
-                ];
-            }
+            if (!isset($buckets[$k])) $buckets[$k] = $makeEmptyBucket();
             $buckets[$k]['po_val'] += $val;
             $buckets[$k]['po_cnt'] += 1;
-            $buckets[$k]['po_vals'][] = $val;
             if (count($buckets[$k]['top_docs']) < 3) {
                 $buckets[$k]['top_docs'][] = 'PO: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['customer_nama'] ?: '-') . ')';
             }
@@ -420,16 +510,9 @@ class Dashboard_accounting extends CI_Controller
             $k = $getBucketDate($r['tgl']);
             if (!$k) continue;
             $val = max(0, (float)$r['nominal']);
-            if (!isset($buckets[$k])) {
-                $buckets[$k] = [
-                    'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
-                    'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
-                    'top_docs' => []
-                ];
-            }
+            if (!isset($buckets[$k])) $buckets[$k] = $makeEmptyBucket();
             $buckets[$k]['inv_val'] += $val;
             $buckets[$k]['inv_cnt'] += 1;
-            $buckets[$k]['inv_vals'][] = $val;
             if (count($buckets[$k]['top_docs']) < 3) {
                 $buckets[$k]['top_docs'][] = 'INV: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['customer_nama'] ?: '-') . ')';
             }
@@ -437,17 +520,31 @@ class Dashboard_accounting extends CI_Controller
             $total_inv_count++;
         }
 
-        // Jika interval 1D dan hanya ada sedikit titik, tambahkan tanggal awal bulan agar garis tetap terbentuk rapi
-        if ($interval === '1D' && count($buckets) < 2) {
+        // Masukkan data Outflow (Ekspedisi/SPP & Payroll) ke dalam bucket
+        $total_out_nominal = 0.0;
+        $total_out_count   = 0;
+        foreach ($out_rows as $r) {
+            $k = $getBucketDate($r['tgl']);
+            if (!$k) continue;
+            $val = max(0, (float)$r['nominal']);
+            if ($val <= 0) continue;
+            if (!isset($buckets[$k])) $buckets[$k] = $makeEmptyBucket();
+            $buckets[$k]['out_val'] += $val;
+            $buckets[$k]['out_cnt'] += 1;
+            if (count($buckets[$k]['top_docs']) < 3) {
+                $buckets[$k]['top_docs'][] = 'OUT: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['kategori_out'] ?: '-') . ')';
+            }
+            $total_out_nominal += $val;
+            $total_out_count++;
+        }
+
+        if (count($buckets) < 2) {
             $yr = ($tahun !== 'ALL' && is_numeric($tahun)) ? (int)$tahun : (int)date('Y');
-            for ($m = 1; $m <= 12; $m++) {
+            $max_m = ($yr == (int)date('Y')) ? max(3, (int)date('n')) : 12;
+            for ($m = 1; $m <= $max_m; $m++) {
                 $k = sprintf('%04d-%02d-01', $yr, $m);
                 if (!isset($buckets[$k])) {
-                    $buckets[$k] = [
-                        'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
-                        'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
-                        'top_docs' => []
-                    ];
+                    $buckets[$k] = $makeEmptyBucket();
                 }
             }
         }
@@ -455,22 +552,29 @@ class Dashboard_accounting extends CI_Controller
         ksort($buckets);
 
         $series_main    = [];
+        $series_inflow  = [];
+        $series_outflow = [];
         $series_po      = [];
         $series_inv     = [];
         $series_volume  = [];
         $series_ohlc    = [];
         $tooltip_meta   = [];
 
-        $cum_val  = 0.0;
-        $prev_val = 0.0;
-        $non_zero_vals = [];
-        $max_val = 0.0;
-        $min_val = null;
+        $cum_val       = 0.0;
+        $prev_val      = 0.0;
+        $active_vals   = [];
+        $inflow_vals   = [];
+        $outflow_vals  = [];
+        $max_val       = null;
+        $min_val       = null;
 
         foreach ($buckets as $dateKey => $b) {
-            $po_v  = round($b['po_val'], 2);
-            $inv_v = round($b['inv_val'], 2);
-            $all_v = round($po_v + $inv_v, 2);
+            $po_v     = round($b['po_val'], 2);
+            $inv_v    = round($b['inv_val'], 2);
+            // Gunakan nilai terbesar antara PO Masuk & Invoice atau gabungan sesuai mode
+            $inflow_v = round($po_v + $inv_v, 2);
+            $out_v    = round($b['out_val'], 2);
+            $net_v    = round($inflow_v - $out_v, 2);
 
             if ($source === 'PO') {
                 $raw_val = $po_v;
@@ -478,37 +582,36 @@ class Dashboard_accounting extends CI_Controller
             } elseif ($source === 'INV') {
                 $raw_val = $inv_v;
                 $vol_cnt = $b['inv_cnt'];
+            } elseif ($source === 'OUTFLOW') {
+                $raw_val = $out_v;
+                $vol_cnt = $b['out_cnt'];
+            } elseif ($source === 'NET_CASHFLOW') {
+                $raw_val = $net_v;
+                $vol_cnt = $b['po_cnt'] + $b['inv_cnt'] + $b['out_cnt'];
             } else {
-                // ALL atau CUMULATIVE
-                $raw_val = $all_v;
+                // INFLOW atau CUMULATIVE
+                $raw_val = $inflow_v;
                 $vol_cnt = $b['po_cnt'] + $b['inv_cnt'];
             }
 
-            $cum_val = round($cum_val + $raw_val, 2);
+            $cum_val = round($cum_val + ($source === 'CUMULATIVE' ? $net_v : $raw_val), 2);
             $val     = ($source === 'CUMULATIVE') ? $cum_val : $raw_val;
 
-            if ($val > 0) {
-                $non_zero_vals[] = $val;
-                if ($val > $max_val) $max_val = $val;
+            if ($vol_cnt > 0 || $val != 0) {
+                $active_vals[] = $val;
+                if ($max_val === null || $val > $max_val) $max_val = $val;
                 if ($min_val === null || $val < $min_val) $min_val = $val;
             }
+            if ($inflow_v > 0) $inflow_vals[] = $inflow_v;
+            if ($out_v > 0)    $outflow_vals[] = $out_v;
 
-            $is_up = ($val >= $prev_val);
+            $is_up = ($source === 'NET_CASHFLOW') ? ($val >= 0) : ($val >= $prev_val);
 
-            $series_main[] = [
-                'time'  => $dateKey,
-                'value' => $val
-            ];
-
-            $series_po[] = [
-                'time'  => $dateKey,
-                'value' => $po_v
-            ];
-
-            $series_inv[] = [
-                'time'  => $dateKey,
-                'value' => $inv_v
-            ];
+            $series_main[]    = ['time' => $dateKey, 'value' => $val];
+            $series_inflow[]  = ['time' => $dateKey, 'value' => $inflow_v];
+            $series_outflow[] = ['time' => $dateKey, 'value' => $out_v];
+            $series_po[]      = ['time' => $dateKey, 'value' => $po_v];
+            $series_inv[]     = ['time' => $dateKey, 'value' => $inv_v];
 
             $series_volume[] = [
                 'time'  => $dateKey,
@@ -516,11 +619,11 @@ class Dashboard_accounting extends CI_Controller
                 'color' => $is_up ? 'rgba(16, 185, 129, 0.45)' : 'rgba(239, 68, 68, 0.45)'
             ];
 
-            // Bentuk Candlestick OHLC dari pergerakan periode sebelumnya ke periode saat ini
-            $open  = $prev_val > 0 ? $prev_val : ($val > 0 ? round($val * 0.85, 2) : 0);
+            $open  = ($prev_val != 0) ? $prev_val : round($val * 0.85, 2);
             $close = $val;
-            $high  = max($open, $close, round(max($open, $close) * ($vol_cnt > 1 ? 1.08 : 1.02), 2));
-            $low   = min($open, $close) > 0 ? round(min($open, $close) * 0.94, 2) : 0;
+            $span  = max(abs($close - $open) * 0.25, abs($close) * 0.05);
+            $high  = round(max($open, $close) + $span, 2);
+            $low   = round(min($open, $close) - $span, 2);
 
             $series_ohlc[] = [
                 'time'  => $dateKey,
@@ -531,68 +634,228 @@ class Dashboard_accounting extends CI_Controller
             ];
 
             $tooltip_meta[$dateKey] = [
-                'po_val'   => $po_v,
-                'po_cnt'   => $b['po_cnt'],
-                'inv_val'  => $inv_v,
-                'inv_cnt'  => $b['inv_cnt'],
-                'vol_cnt'  => $vol_cnt,
-                'cum_val'  => $cum_val,
-                'prev_val' => $prev_val,
-                'top_docs' => $b['top_docs']
+                'inflow_val'  => $inflow_v,
+                'outflow_val' => $out_v,
+                'net_val'     => $net_v,
+                'po_val'      => $po_v,
+                'po_cnt'      => $b['po_cnt'],
+                'inv_val'     => $inv_v,
+                'inv_cnt'     => $b['inv_cnt'],
+                'out_cnt'     => $b['out_cnt'],
+                'vol_cnt'     => $vol_cnt,
+                'cum_val'     => $cum_val,
+                'prev_val'    => $prev_val,
+                'is_forecast' => false,
+                'top_docs'    => $b['top_docs']
             ];
 
             $prev_val = $val;
         }
 
-        // Hitung Baseline (Rata-rata periode aktif) untuk fitur warna Hijau/Merah otomatis ala TradingView Baseline Series
-        $baseline_value = 0.0;
-        if (!empty($non_zero_vals)) {
-            $baseline_value = round(array_sum($non_zero_vals) / count($non_zero_vals), 2);
-        }
+        // Hitung Baseline: Untuk NET_CASHFLOW, baseline adalah Rp 0 (Surplus vs Defisit).
+        // Untuk mode lain, baseline adalah rata-rata periode aktif.
+        $avg_active = !empty($active_vals) ? round(array_sum($active_vals) / count($active_vals), 2) : 0.0;
+        $baseline_value = ($source === 'NET_CASHFLOW') ? 0.0 : $avg_active;
+        $avg_outflow_burn = !empty($outflow_vals) ? round(array_sum($outflow_vals) / count($outflow_vals), 2) : 0.0;
 
-        // Hitung persentase pertumbuhan antara 2 periode aktif terakhir
-        $growth_pct = 0.0;
-        $cnt_nz = count($non_zero_vals);
-        if ($cnt_nz >= 2) {
-            $last_nz = $non_zero_vals[$cnt_nz - 1];
-            $prev_nz = $non_zero_vals[$cnt_nz - 2];
-            if ($prev_nz > 0) {
-                $growth_pct = round((($last_nz - $prev_nz) / $prev_nz) * 100, 2);
+        // =========================================================================
+        // 5. FITUR FORECASTING / PROYEKSI 3 PERIODE KE DEPAN (LINEAR REGRESSION + WMA)
+        // =========================================================================
+        $series_forecast       = [];
+        $series_forecast_upper = [];
+        $series_forecast_lower = [];
+        $next_forecast_val     = 0.0;
+
+        $n_pts = count($series_main);
+        if ($n_pts >= 2) {
+            // Ambil maksimal 8 titik terakhir untuk regresi tren & deviasi standar
+            $window = array_slice($series_main, max(0, $n_pts - 8));
+            $m_cnt  = count($window);
+
+            $sumX = 0; $sumY = 0; $sumXY = 0; $sumX2 = 0;
+            $wma_num = 0; $wma_den = 0;
+            for ($i = 0; $i < $m_cnt; $i++) {
+                $x = $i + 1;
+                $y = (float)$window[$i]['value'];
+                $sumX  += $x;
+                $sumY  += $y;
+                $sumXY += ($x * $y);
+                $sumX2 += ($x * $x);
+
+                $weight   = $x;
+                $wma_num += ($y * $weight);
+                $wma_den += $weight;
+            }
+
+            $denom = ($m_cnt * $sumX2) - ($sumX * $sumX);
+            $slope = ($denom != 0) ? (($m_cnt * $sumXY) - ($sumX * $sumY)) / $denom : 0.0;
+            $intercept = ($sumY - ($slope * $sumX)) / $m_cnt;
+            $wma_val = ($wma_den > 0) ? ($wma_num / $wma_den) : ($sumY / $m_cnt);
+
+            // Hitung Standard Deviation (Volatilitas) untuk Confidence Band Atas & Bawah
+            $variance = 0.0;
+            for ($i = 0; $i < $m_cnt; $i++) {
+                $diff = (float)$window[$i]['value'] - ($sumY / $m_cnt);
+                $variance += ($diff * $diff);
+            }
+            $std_dev = sqrt($variance / max(1, $m_cnt));
+            if ($std_dev <= 0) {
+                $std_dev = abs($wma_val) * 0.12;
+            }
+
+            // Titik jangkar (anchor) dari titik aktual terakhir agar garis proyeksi menyambung mulus
+            $last_actual = $series_main[$n_pts - 1];
+            $series_forecast[]       = ['time' => $last_actual['time'], 'value' => $last_actual['value']];
+            $series_forecast_upper[] = ['time' => $last_actual['time'], 'value' => $last_actual['value']];
+            $series_forecast_lower[] = ['time' => $last_actual['time'], 'value' => $last_actual['value']];
+
+            $cur_ts = strtotime($last_actual['time']);
+            for ($step = 1; $step <= 3; $step++) {
+                if ($interval === '1M') {
+                    $cur_ts = strtotime('+1 month', $cur_ts);
+                    $next_date = date('Y-m-01', $cur_ts);
+                } elseif ($interval === '1W') {
+                    $cur_ts = strtotime('+7 days', $cur_ts);
+                    $next_date = date('Y-m-d', $cur_ts);
+                } else {
+                    $cur_ts = strtotime('+1 day', $cur_ts);
+                    $next_date = date('Y-m-d', $cur_ts);
+                }
+
+                // Kombinasi 60% Linear Regression + 40% Weighted Moving Average + Drift
+                $reg_pred = $intercept + ($slope * ($m_cnt + $step));
+                $wma_pred = $wma_val + ($slope * $step * 0.65);
+                $pred_val = round((0.6 * $reg_pred) + (0.4 * $wma_pred), 2);
+
+                // Jika bukan NET_CASHFLOW, pastikan proyeksi omzet tidak negatif
+                if ($source !== 'NET_CASHFLOW') {
+                    $pred_val = max(0, $pred_val);
+                }
+
+                $band_width = round($std_dev * (0.75 + ($step * 0.25)), 2);
+                $upper_val  = round($pred_val + $band_width, 2);
+                $lower_val  = ($source !== 'NET_CASHFLOW') ? max(0, round($pred_val - $band_width, 2)) : round($pred_val - $band_width, 2);
+
+                if ($step === 1) {
+                    $next_forecast_val = $pred_val;
+                }
+
+                $series_forecast[]       = ['time' => $next_date, 'value' => $pred_val];
+                $series_forecast_upper[] = ['time' => $next_date, 'value' => $upper_val];
+                $series_forecast_lower[] = ['time' => $next_date, 'value' => $lower_val];
+
+                $tooltip_meta[$next_date] = [
+                    'inflow_val'   => ($source === 'OUTFLOW') ? 0 : $pred_val,
+                    'outflow_val'  => ($source === 'OUTFLOW') ? $pred_val : $avg_outflow_burn,
+                    'net_val'      => ($source === 'NET_CASHFLOW') ? $pred_val : ($pred_val - $avg_outflow_burn),
+                    'po_val'       => 0,
+                    'po_cnt'       => 0,
+                    'inv_val'      => 0,
+                    'inv_cnt'      => 0,
+                    'out_cnt'      => 0,
+                    'vol_cnt'      => 0,
+                    'cum_val'      => $cum_val,
+                    'prev_val'     => $last_actual['value'],
+                    'is_forecast'  => true,
+                    'upper_bound'  => $upper_val,
+                    'lower_bound'  => $lower_val,
+                    'top_docs'     => ['Proyeksi AI / Regresi Tren (+' . $step . ' Periode) | Rentang: Rp ' . number_format($lower_val, 0, ',', '.') . ' s/d Rp ' . number_format($upper_val, 0, ',', '.')]
+                ];
             }
         }
 
-        $total_active_nominal = ($source === 'PO')
-            ? $total_po_nominal
-            : (($source === 'INV') ? $total_inv_nominal : ($total_po_nominal + $total_inv_nominal));
+        // Hitung persentase pertumbuhan & Sinyal Analisis Teknikal
+        $growth_pct = 0.0;
+        $cnt_act = count($active_vals);
+        if ($cnt_act >= 2) {
+            $last_v = $active_vals[$cnt_act - 1];
+            $prev_v = $active_vals[$cnt_act - 2];
+            if (abs($prev_v) > 0) {
+                $growth_pct = round((($last_v - $prev_v) / abs($prev_v)) * 100, 2);
+            }
+        }
 
-        $total_active_count = ($source === 'PO')
-            ? $total_po_count
-            : (($source === 'INV') ? $total_inv_count : ($total_po_count + $total_inv_count));
+        $total_inflow_nominal = $total_po_nominal + $total_inv_nominal;
+        $total_net_cashflow   = $total_inflow_nominal - $total_out_nominal;
+        $cashflow_ratio       = ($total_out_nominal > 0) ? round($total_inflow_nominal / $total_out_nominal, 2) : ($total_inflow_nominal > 0 ? 99.9 : 0.0);
+        $conversion_rate_pct  = ($total_po_nominal > 0) ? round(($total_inv_nominal / $total_po_nominal) * 100, 1) : 0.0;
+        $unbilled_po_nominal  = max(0, $total_po_nominal - $total_inv_nominal);
 
-        header('Content-Type: application/json');
+        // Penentuan Sinyal Teknikal Otomatis (Bullish / Neutral / Bearish)
+        $signal_status = 'NEUTRAL';
+        $signal_label  = 'NEUTRAL • KONSOLIDASI';
+        $signal_desc   = 'Arus kas bergerak stabil di sekitar rata-rata historis.';
+        if ($total_net_cashflow > 0 && $growth_pct >= 0) {
+            $signal_status = 'BULLISH';
+            $signal_label  = 'STRONG BULLISH • SURPLUS & EKSPANSI';
+            $signal_desc   = 'Arus kas masuk melampaui beban pengeluaran dengan momentum pertumbuhan positif.';
+        } elseif ($total_net_cashflow > 0 && $growth_pct < 0) {
+            $signal_status = 'BULLISH';
+            $signal_label  = 'MODERATE BULLISH • SURPLUS MELAMBAT';
+            $signal_desc   = 'Kas bersih masih surplus, namun laju pertumbuhan periode terakhir mengalami koreksi.';
+        } elseif ($total_net_cashflow < 0) {
+            $signal_status = 'BEARISH';
+            $signal_label  = 'BEARISH WARNING • DEFISIT ARUS KAS';
+            $signal_desc   = 'Beban pengeluaran melampaui arus masuk pada periode ini. Percepat penagihan Invoice/PO.';
+        }
+
+        if ($source === 'PO') {
+            $total_active_nominal = $total_po_nominal;
+            $total_active_count   = $total_po_count;
+        } elseif ($source === 'INV') {
+            $total_active_nominal = $total_inv_nominal;
+            $total_active_count   = $total_inv_count;
+        } elseif ($source === 'OUTFLOW') {
+            $total_active_nominal = $total_out_nominal;
+            $total_active_count   = $total_out_count;
+        } elseif ($source === 'NET_CASHFLOW') {
+            $total_active_nominal = $total_net_cashflow;
+            $total_active_count   = $total_po_count + $total_inv_count + $total_out_count;
+        } else {
+            $total_active_nominal = $total_inflow_nominal;
+            $total_active_count   = $total_po_count + $total_inv_count;
+        }
+
         echo json_encode([
-            'status'         => 'success',
-            'tahun'          => $tahun,
-            'interval'       => $interval,
-            'source'         => $source,
-            'series_main'    => $series_main,
-            'series_po'      => $series_po,
-            'series_inv'     => $series_inv,
-            'series_volume'  => $series_volume,
-            'series_ohlc'    => $series_ohlc,
-            'tooltip_meta'   => $tooltip_meta,
-            'baseline_value' => $baseline_value,
-            'summary'        => [
-                'total_nominal'     => round($total_active_nominal, 2),
-                'total_po_nominal'  => round($total_po_nominal, 2),
-                'total_inv_nominal' => round($total_inv_nominal, 2),
-                'total_count'       => $total_active_count,
-                'total_po_count'    => $total_po_count,
-                'total_inv_count'   => $total_inv_count,
-                'baseline_avg'      => $baseline_value,
-                'high_nominal'      => round($max_val, 2),
-                'low_nominal'       => round($min_val ?? 0, 2),
-                'growth_pct'        => $growth_pct
+            'status'                => 'success',
+            'tahun'                 => $tahun,
+            'interval'              => $interval,
+            'source'                => $source,
+            'series_main'           => $series_main,
+            'series_inflow'         => $series_inflow,
+            'series_outflow'        => $series_outflow,
+            'series_po'             => $series_po,
+            'series_inv'            => $series_inv,
+            'series_volume'         => $series_volume,
+            'series_ohlc'           => $series_ohlc,
+            'series_forecast'       => $series_forecast,
+            'series_forecast_upper' => $series_forecast_upper,
+            'series_forecast_lower' => $series_forecast_lower,
+            'tooltip_meta'          => $tooltip_meta,
+            'baseline_value'        => $baseline_value,
+            'avg_outflow_burn'      => $avg_outflow_burn,
+            'summary'               => [
+                'total_nominal'        => round($total_active_nominal, 2),
+                'total_inflow_nominal' => round($total_inflow_nominal, 2),
+                'total_outflow_nominal'=> round($total_out_nominal, 2),
+                'total_net_cashflow'   => round($total_net_cashflow, 2),
+                'total_po_nominal'     => round($total_po_nominal, 2),
+                'total_inv_nominal'    => round($total_inv_nominal, 2),
+                'unbilled_po_nominal'  => round($unbilled_po_nominal, 2),
+                'conversion_rate_pct'  => $conversion_rate_pct,
+                'cashflow_ratio'       => $cashflow_ratio,
+                'total_count'          => $total_active_count,
+                'total_po_count'       => $total_po_count,
+                'total_inv_count'      => $total_inv_count,
+                'total_out_count'      => $total_out_count,
+                'baseline_avg'         => $avg_active,
+                'high_nominal'         => round($max_val ?? 0, 2),
+                'low_nominal'          => round($min_val ?? 0, 2),
+                'growth_pct'           => $growth_pct,
+                'next_forecast_val'    => $next_forecast_val,
+                'signal_status'        => $signal_status,
+                'signal_label'         => $signal_label,
+                'signal_desc'          => $signal_desc
             ]
         ]);
     }
