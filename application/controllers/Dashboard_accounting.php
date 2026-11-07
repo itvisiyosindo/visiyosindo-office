@@ -235,4 +235,339 @@ class Dashboard_accounting extends CI_Controller
         header('Content-Type: application/json');
         echo json_encode($response);
     }
+
+    /**
+     * Endpoint JSON untuk Grafik TradingView Financial Analytics (Omzet PO Masuk & Invoice)
+     */
+    public function tradingview_financial_data()
+    {
+        $tahun    = trim($this->input->get('tahun') ?: date('Y'));
+        $interval = strtoupper(trim($this->input->get('interval') ?: '1M')); // 1D, 1W, 1M
+        $source   = strtoupper(trim($this->input->get('source') ?: 'PO'));   // PO, INV, ALL, CUMULATIVE
+
+        if (!in_array($interval, ['1D', '1W', '1M'], true)) {
+            $interval = '1M';
+        }
+
+        $has_po  = $this->db->table_exists('po_masuk');
+        $has_inv = $this->db->table_exists('invoice');
+
+        // 1. Ambil transaksi PO Masuk
+        $po_rows = [];
+        if ($has_po) {
+            $where_year_po = ($tahun !== 'ALL' && is_numeric($tahun))
+                ? "AND YEAR(p.tanggal_po) = " . (int)$tahun
+                : "";
+
+            $sql_po = "
+                SELECT 
+                    p.tanggal_po AS tgl,
+                    COALESCE(
+                        NULLIF(p.nominal_total_akhir, 0),
+                        NULLIF(p.nominal_po, 0),
+                        NULLIF(p.nominal_subtotal, 0),
+                        (SELECT COALESCE(SUM(i.total_harga), 0) FROM po_masuk_item i WHERE i.id_po = p.id_po),
+                        0
+                    ) AS nominal,
+                    p.no_po AS kode_dok,
+                    COALESCE(NULLIF(p.nama_customer, ''), c.nama_customer, pl.identitas_pelanggan, '-') AS customer_nama
+                FROM po_masuk p
+                LEFT JOIN customer c ON p.id_customer = c.id_customer
+                LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+                WHERE p.deleted = 0
+                  AND p.status != 'ditolak'
+                  AND p.tanggal_po IS NOT NULL
+                  AND p.tanggal_po != '0000-00-00'
+                  {$where_year_po}
+                ORDER BY p.tanggal_po ASC, p.id_po ASC
+            ";
+            $po_rows = $this->db->query($sql_po)->result_array();
+        }
+
+        // 2. Ambil transaksi Invoice
+        $inv_rows = [];
+        if ($has_inv) {
+            $where_year_inv = ($tahun !== 'ALL' && is_numeric($tahun))
+                ? "AND YEAR(inv.tgl_invoice) = " . (int)$tahun
+                : "";
+
+            $sql_inv = "
+                SELECT 
+                    inv.tgl_invoice AS tgl,
+                    COALESCE(
+                        NULLIF(CAST(REPLACE(inv.total_keseluruhan, '.', '') AS DECIMAL(18,2)), 0),
+                        NULLIF(CAST(REPLACE(inv.total, '.', '') AS DECIMAL(18,2)), 0),
+                        NULLIF(CAST(REPLACE(inv.sub_total, '.', '') AS DECIMAL(18,2)), 0),
+                        (SELECT COALESCE(SUM(CAST(REPLACE(dbi.harga_total, '.', '') AS DECIMAL(18,2))), 0) 
+                         FROM detail_barang_invoice dbi 
+                         WHERE dbi.id_invoice = inv.id_invoice AND dbi.status = 1),
+                        0
+                    ) AS nominal,
+                    inv.no_invoice AS kode_dok,
+                    COALESCE(c.nama_customer, '-') AS customer_nama
+                FROM invoice inv
+                LEFT JOIN customer c ON inv.id_customer = c.id_customer
+                WHERE inv.status = 1
+                  AND inv.tgl_invoice IS NOT NULL
+                  AND inv.tgl_invoice != '0000-00-00'
+                  {$where_year_inv}
+                ORDER BY inv.tgl_invoice ASC, inv.id_invoice ASC
+            ";
+            $inv_rows = $this->db->query($sql_inv)->result_array();
+        }
+
+        // Helper untuk memetakan tanggal ke bucket key (YYYY-MM-DD) sesuai interval TradingView
+        $getBucketDate = function ($dateStr) use ($interval) {
+            $ts = strtotime($dateStr);
+            if (!$ts || $ts <= 0) return null;
+            if ($interval === '1M') {
+                return date('Y-m-01', $ts);
+            } elseif ($interval === '1W') {
+                // Senin pada minggu tersebut
+                $dow = (int)date('N', $ts); // 1 (Mon) .. 7 (Sun)
+                $monday = strtotime('-' . ($dow - 1) . ' days', $ts);
+                return date('Y-m-d', $monday);
+            } else {
+                return date('Y-m-d', $ts);
+            }
+        };
+
+        // Siapkan kerangka waktu dasar agar timeline kontinyu & rapi di TradingView
+        $buckets = [];
+        if ($tahun !== 'ALL' && is_numeric($tahun)) {
+            $yr = (int)$tahun;
+            $max_month = ($yr == (int)date('Y')) ? (int)date('n') : 12;
+            if ($interval === '1M') {
+                for ($m = 1; $m <= 12; $m++) {
+                    $k = sprintf('%04d-%02d-01', $yr, $m);
+                    $buckets[$k] = [
+                        'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
+                        'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
+                        'top_docs' => []
+                    ];
+                }
+            } elseif ($interval === '1W') {
+                $startTs = strtotime("$yr-01-01");
+                $endTs   = ($yr == (int)date('Y')) ? time() : strtotime("$yr-12-31");
+                $dow = (int)date('N', $startTs);
+                $cur = strtotime('-' . ($dow - 1) . ' days', $startTs);
+                while ($cur <= $endTs) {
+                    $k = date('Y-m-d', $cur);
+                    $buckets[$k] = [
+                        'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
+                        'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
+                        'top_docs' => []
+                    ];
+                    $cur = strtotime('+7 days', $cur);
+                }
+            }
+        }
+
+        // Masukkan data PO ke dalam bucket
+        $total_po_nominal = 0.0;
+        $total_po_count   = 0;
+        foreach ($po_rows as $r) {
+            $k = $getBucketDate($r['tgl']);
+            if (!$k) continue;
+            $val = max(0, (float)$r['nominal']);
+            if (!isset($buckets[$k])) {
+                $buckets[$k] = [
+                    'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
+                    'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
+                    'top_docs' => []
+                ];
+            }
+            $buckets[$k]['po_val'] += $val;
+            $buckets[$k]['po_cnt'] += 1;
+            $buckets[$k]['po_vals'][] = $val;
+            if (count($buckets[$k]['top_docs']) < 3) {
+                $buckets[$k]['top_docs'][] = 'PO: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['customer_nama'] ?: '-') . ')';
+            }
+            $total_po_nominal += $val;
+            $total_po_count++;
+        }
+
+        // Masukkan data Invoice ke dalam bucket
+        $total_inv_nominal = 0.0;
+        $total_inv_count   = 0;
+        foreach ($inv_rows as $r) {
+            $k = $getBucketDate($r['tgl']);
+            if (!$k) continue;
+            $val = max(0, (float)$r['nominal']);
+            if (!isset($buckets[$k])) {
+                $buckets[$k] = [
+                    'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
+                    'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
+                    'top_docs' => []
+                ];
+            }
+            $buckets[$k]['inv_val'] += $val;
+            $buckets[$k]['inv_cnt'] += 1;
+            $buckets[$k]['inv_vals'][] = $val;
+            if (count($buckets[$k]['top_docs']) < 3) {
+                $buckets[$k]['top_docs'][] = 'INV: ' . ($r['kode_dok'] ?: '-') . ' (' . ($r['customer_nama'] ?: '-') . ')';
+            }
+            $total_inv_nominal += $val;
+            $total_inv_count++;
+        }
+
+        // Jika interval 1D dan hanya ada sedikit titik, tambahkan tanggal awal bulan agar garis tetap terbentuk rapi
+        if ($interval === '1D' && count($buckets) < 2) {
+            $yr = ($tahun !== 'ALL' && is_numeric($tahun)) ? (int)$tahun : (int)date('Y');
+            for ($m = 1; $m <= 12; $m++) {
+                $k = sprintf('%04d-%02d-01', $yr, $m);
+                if (!isset($buckets[$k])) {
+                    $buckets[$k] = [
+                        'po_val' => 0.0, 'po_cnt' => 0, 'po_vals' => [],
+                        'inv_val' => 0.0, 'inv_cnt' => 0, 'inv_vals' => [],
+                        'top_docs' => []
+                    ];
+                }
+            }
+        }
+
+        ksort($buckets);
+
+        $series_main    = [];
+        $series_po      = [];
+        $series_inv     = [];
+        $series_volume  = [];
+        $series_ohlc    = [];
+        $tooltip_meta   = [];
+
+        $cum_val  = 0.0;
+        $prev_val = 0.0;
+        $non_zero_vals = [];
+        $max_val = 0.0;
+        $min_val = null;
+
+        foreach ($buckets as $dateKey => $b) {
+            $po_v  = round($b['po_val'], 2);
+            $inv_v = round($b['inv_val'], 2);
+            $all_v = round($po_v + $inv_v, 2);
+
+            if ($source === 'PO') {
+                $raw_val = $po_v;
+                $vol_cnt = $b['po_cnt'];
+            } elseif ($source === 'INV') {
+                $raw_val = $inv_v;
+                $vol_cnt = $b['inv_cnt'];
+            } else {
+                // ALL atau CUMULATIVE
+                $raw_val = $all_v;
+                $vol_cnt = $b['po_cnt'] + $b['inv_cnt'];
+            }
+
+            $cum_val = round($cum_val + $raw_val, 2);
+            $val     = ($source === 'CUMULATIVE') ? $cum_val : $raw_val;
+
+            if ($val > 0) {
+                $non_zero_vals[] = $val;
+                if ($val > $max_val) $max_val = $val;
+                if ($min_val === null || $val < $min_val) $min_val = $val;
+            }
+
+            $is_up = ($val >= $prev_val);
+
+            $series_main[] = [
+                'time'  => $dateKey,
+                'value' => $val
+            ];
+
+            $series_po[] = [
+                'time'  => $dateKey,
+                'value' => $po_v
+            ];
+
+            $series_inv[] = [
+                'time'  => $dateKey,
+                'value' => $inv_v
+            ];
+
+            $series_volume[] = [
+                'time'  => $dateKey,
+                'value' => $vol_cnt,
+                'color' => $is_up ? 'rgba(16, 185, 129, 0.45)' : 'rgba(239, 68, 68, 0.45)'
+            ];
+
+            // Bentuk Candlestick OHLC dari pergerakan periode sebelumnya ke periode saat ini
+            $open  = $prev_val > 0 ? $prev_val : ($val > 0 ? round($val * 0.85, 2) : 0);
+            $close = $val;
+            $high  = max($open, $close, round(max($open, $close) * ($vol_cnt > 1 ? 1.08 : 1.02), 2));
+            $low   = min($open, $close) > 0 ? round(min($open, $close) * 0.94, 2) : 0;
+
+            $series_ohlc[] = [
+                'time'  => $dateKey,
+                'open'  => $open,
+                'high'  => $high,
+                'low'   => $low,
+                'close' => $close
+            ];
+
+            $tooltip_meta[$dateKey] = [
+                'po_val'   => $po_v,
+                'po_cnt'   => $b['po_cnt'],
+                'inv_val'  => $inv_v,
+                'inv_cnt'  => $b['inv_cnt'],
+                'vol_cnt'  => $vol_cnt,
+                'cum_val'  => $cum_val,
+                'prev_val' => $prev_val,
+                'top_docs' => $b['top_docs']
+            ];
+
+            $prev_val = $val;
+        }
+
+        // Hitung Baseline (Rata-rata periode aktif) untuk fitur warna Hijau/Merah otomatis ala TradingView Baseline Series
+        $baseline_value = 0.0;
+        if (!empty($non_zero_vals)) {
+            $baseline_value = round(array_sum($non_zero_vals) / count($non_zero_vals), 2);
+        }
+
+        // Hitung persentase pertumbuhan antara 2 periode aktif terakhir
+        $growth_pct = 0.0;
+        $cnt_nz = count($non_zero_vals);
+        if ($cnt_nz >= 2) {
+            $last_nz = $non_zero_vals[$cnt_nz - 1];
+            $prev_nz = $non_zero_vals[$cnt_nz - 2];
+            if ($prev_nz > 0) {
+                $growth_pct = round((($last_nz - $prev_nz) / $prev_nz) * 100, 2);
+            }
+        }
+
+        $total_active_nominal = ($source === 'PO')
+            ? $total_po_nominal
+            : (($source === 'INV') ? $total_inv_nominal : ($total_po_nominal + $total_inv_nominal));
+
+        $total_active_count = ($source === 'PO')
+            ? $total_po_count
+            : (($source === 'INV') ? $total_inv_count : ($total_po_count + $total_inv_count));
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status'         => 'success',
+            'tahun'          => $tahun,
+            'interval'       => $interval,
+            'source'         => $source,
+            'series_main'    => $series_main,
+            'series_po'      => $series_po,
+            'series_inv'     => $series_inv,
+            'series_volume'  => $series_volume,
+            'series_ohlc'    => $series_ohlc,
+            'tooltip_meta'   => $tooltip_meta,
+            'baseline_value' => $baseline_value,
+            'summary'        => [
+                'total_nominal'     => round($total_active_nominal, 2),
+                'total_po_nominal'  => round($total_po_nominal, 2),
+                'total_inv_nominal' => round($total_inv_nominal, 2),
+                'total_count'       => $total_active_count,
+                'total_po_count'    => $total_po_count,
+                'total_inv_count'   => $total_inv_count,
+                'baseline_avg'      => $baseline_value,
+                'high_nominal'      => round($max_val, 2),
+                'low_nominal'       => round($min_val ?? 0, 2),
+                'growth_pct'        => $growth_pct
+            ]
+        ]);
+    }
 }

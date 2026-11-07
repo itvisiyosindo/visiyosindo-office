@@ -152,6 +152,246 @@
 		background-color: #e2e8f0;
 		color: #1e293b;
 	}
+
+	/* TradingView Terminal Custom Styles */
+	.tv-terminal-card {
+		background: #0f172a;
+		border-radius: 14px;
+		border: 1px solid #1e293b;
+		box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+		overflow: hidden;
+		margin-bottom: 24px;
+		transition: background 0.25s ease, border-color 0.25s ease;
+	}
+
+	.tv-terminal-card.tv-light-mode {
+		background: #ffffff;
+		border-color: #e2e8f0;
+		box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+	}
+
+	.tv-ticker-header {
+		padding: 14px 20px;
+		background: rgba(15, 23, 42, 0.95);
+		border-bottom: 1px solid #1e293b;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 14px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-ticker-header {
+		background: #f8fafc;
+		border-bottom-color: #e2e8f0;
+	}
+
+	.tv-symbol-box {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.tv-symbol-logo {
+		width: 42px;
+		height: 42px;
+		border-radius: 10px;
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: #ffffff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 18px;
+		font-weight: 800;
+		box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+		flex-shrink: 0;
+	}
+
+	.tv-symbol-name {
+		font-size: 16px;
+		font-weight: 800;
+		color: #f8fafc;
+		letter-spacing: 0.4px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-symbol-name {
+		color: #0f172a;
+	}
+
+	.tv-symbol-sub {
+		font-size: 11.5px;
+		color: #94a3b8;
+		margin: 2px 0 0 0;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-symbol-sub {
+		color: #64748b;
+	}
+
+	.tv-metrics-strip {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 18px;
+	}
+
+	.tv-metric-item {
+		display: flex;
+		flex-direction: column;
+		border-left: 1px solid #1e293b;
+		padding-left: 14px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-metric-item {
+		border-left-color: #e2e8f0;
+	}
+
+	.tv-metric-label {
+		font-size: 10.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: #64748b;
+		margin-bottom: 2px;
+	}
+
+	.tv-metric-val {
+		font-size: 14px;
+		font-weight: 800;
+		color: #f1f5f9;
+		font-family: 'Consolas', 'Monaco', monospace;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-metric-val {
+		color: #0f172a;
+	}
+
+	.tv-toolbar {
+		padding: 8px 16px;
+		background: #131c31;
+		border-bottom: 1px solid #1e293b;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-toolbar {
+		background: #f1f5f9;
+		border-bottom-color: #e2e8f0;
+	}
+
+	.tv-btn-group {
+		display: inline-flex;
+		align-items: center;
+		background: #0f172a;
+		padding: 3px;
+		border-radius: 8px;
+		border: 1px solid #1e293b;
+		gap: 2px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-btn-group {
+		background: #ffffff;
+		border-color: #cbd5e1;
+	}
+
+	.tv-btn {
+		background: transparent;
+		border: none;
+		color: #94a3b8;
+		font-size: 11.5px;
+		font-weight: 700;
+		padding: 4px 10px;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.15s ease;
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-btn {
+		color: #475569;
+	}
+
+	.tv-btn:hover {
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.07);
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-btn:hover {
+		color: #0f172a;
+		background: #f1f5f9;
+	}
+
+	.tv-btn.active {
+		background: #2563eb;
+		color: #ffffff !important;
+		box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+	}
+
+	.tv-canvas-wrap {
+		position: relative;
+		width: 100%;
+		height: 430px;
+	}
+
+	.tv-floating-legend {
+		position: absolute;
+		top: 12px;
+		left: 16px;
+		z-index: 10;
+		pointer-events: none;
+		background: rgba(15, 23, 42, 0.82);
+		backdrop-filter: blur(6px);
+		border: 1px solid rgba(51, 65, 85, 0.7);
+		border-radius: 10px;
+		padding: 8px 14px;
+		color: #f8fafc;
+		max-width: 460px;
+		box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+	}
+
+	.tv-terminal-card.tv-light-mode .tv-floating-legend {
+		background: rgba(255, 255, 255, 0.9);
+		border-color: #cbd5e1;
+		color: #0f172a;
+		box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+	}
+
+	.tv-up-color {
+		color: #10b981 !important;
+	}
+
+	.tv-down-color {
+		color: #ef4444 !important;
+	}
+
+	.tv-badge-up {
+		background: rgba(16, 185, 129, 0.16);
+		color: #10b981;
+		border: 1px solid rgba(16, 185, 129, 0.35);
+		padding: 2px 7px;
+		border-radius: 5px;
+		font-size: 11px;
+		font-weight: 700;
+	}
+
+	.tv-badge-down {
+		background: rgba(239, 68, 68, 0.16);
+		color: #ef4444;
+		border: 1px solid rgba(239, 68, 68, 0.35);
+		padding: 2px 7px;
+		border-radius: 5px;
+		font-size: 11px;
+		font-weight: 700;
+	}
 </style>
 
 <div class="row">
@@ -284,6 +524,139 @@
 				</div>
 			</div>
 		</a>
+	</div>
+
+	<!-- 2.5. TradingView Financial Market Terminal (Omzet Penjualan PO Masuk & Invoice) -->
+	<div class="col-12">
+		<div class="tv-terminal-card" id="tv-terminal-card">
+			<!-- Ticker Header Bar -->
+			<div class="tv-ticker-header">
+				<div class="tv-symbol-box">
+					<div class="tv-symbol-logo" id="tv-symbol-logo">
+						<i class="fas fa-chart-line"></i>
+					</div>
+					<div>
+						<h4 class="tv-symbol-name">
+							<span id="tv-ticker-code">VSI:OMZET_PO</span>
+							<span class="badge badge-dark" style="font-size: 10px; background: #1e293b; color: #38bdf8; border: 1px solid #334155;">IDR • RUPIAH</span>
+							<span id="tv-growth-badge" class="tv-badge-up"><i class="fas fa-caret-up mr-1"></i>0.00%</span>
+						</h4>
+						<p class="tv-symbol-sub" id="tv-ticker-desc">Arus Masuk Purchase Order (PO Masuk Customer) & Realisasi Penjualan</p>
+					</div>
+				</div>
+
+				<div class="tv-metrics-strip">
+					<div class="tv-metric-item">
+						<span class="tv-metric-label">Total Periode (<span id="tv-label-year"><?= $tahun_sekarang ?></span>)</span>
+						<span class="tv-metric-val tv-up-color" id="tv-stat-total">Rp 0</span>
+					</div>
+					<div class="tv-metric-item">
+						<span class="tv-metric-label">Total PO Masuk</span>
+						<span class="tv-metric-val" id="tv-stat-po">Rp 0 <small style="font-size: 10.5px; color: #64748b; font-weight: 600;" id="tv-stat-po-cnt">(0 PO)</small></span>
+					</div>
+					<div class="tv-metric-item">
+						<span class="tv-metric-label">Total Invoice</span>
+						<span class="tv-metric-val" id="tv-stat-inv">Rp 0 <small style="font-size: 10.5px; color: #64748b; font-weight: 600;" id="tv-stat-inv-cnt">(0 Inv)</small></span>
+					</div>
+					<div class="tv-metric-item">
+						<span class="tv-metric-label">Baseline (Rata-rata)</span>
+						<span class="tv-metric-val" style="color: #fbbf24;" id="tv-stat-baseline">Rp 0</span>
+					</div>
+					<div class="tv-metric-item">
+						<span class="tv-metric-label">Tertinggi (High)</span>
+						<span class="tv-metric-val" id="tv-stat-high">Rp 0</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- TradingView Control Toolbar -->
+			<div class="tv-toolbar">
+				<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+					<!-- Source / Instrumen Data -->
+					<div class="tv-btn-group" id="tv-source-group">
+						<button type="button" class="tv-btn active" data-source="PO" title="Tampilkan Omzet PO Masuk">
+							<i class="fas fa-file-signature text-success"></i> PO Masuk
+						</button>
+						<button type="button" class="tv-btn" data-source="INV" title="Tampilkan Realisasi Invoice">
+							<i class="fas fa-file-invoice-dollar text-info"></i> Invoice
+						</button>
+						<button type="button" class="tv-btn" data-source="ALL" title="Gabungan PO Masuk + Invoice">
+							<i class="fas fa-layer-group text-warning"></i> Gabungan
+						</button>
+						<button type="button" class="tv-btn" data-source="CUMULATIVE" title="Kurva Pertumbuhan Akumulasi (Cumulative Equity)">
+							<i class="fas fa-chart-area text-primary"></i> Akumulasi YTD
+						</button>
+					</div>
+
+					<!-- Timeframe Interval -->
+					<div class="tv-btn-group" id="tv-interval-group">
+						<button type="button" class="tv-btn" data-interval="1D" title="Timeframe Harian (Daily)">1D</button>
+						<button type="button" class="tv-btn" data-interval="1W" title="Timeframe Mingguan (Weekly)">1W</button>
+						<button type="button" class="tv-btn active" data-interval="1M" title="Timeframe Bulanan (Monthly)">1M</button>
+					</div>
+
+					<!-- Cakupan Tahun -->
+					<div class="tv-btn-group" id="tv-scope-group">
+						<button type="button" class="tv-btn active" data-scope="YEAR" title="Sesuai Filter Tahun Dashboard">Tahun Terpilih</button>
+						<button type="button" class="tv-btn" data-scope="ALL" title="Tampilkan Seluruh Riwayat Lintas Tahun (All-Time)">All-Time</button>
+					</div>
+				</div>
+
+				<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+					<!-- Mode Grafik TradingView -->
+					<div class="tv-btn-group" id="tv-chart-type-group">
+						<button type="button" class="tv-btn active" data-type="baseline" title="Baseline Chart: Hijau di atas rata-rata, Merah di bawah rata-rata">
+							<i class="fas fa-water"></i> Baseline (Hijau/Merah)
+						</button>
+						<button type="button" class="tv-btn" data-type="area" title="Area Gradient Chart">
+							<i class="fas fa-mountain"></i> Area
+						</button>
+						<button type="button" class="tv-btn" data-type="compare" title="Bandingkan Garis PO Masuk vs Invoice">
+							<i class="fas fa-random"></i> Compare (PO vs Inv)
+						</button>
+						<button type="button" class="tv-btn" data-type="candlestick" title="Candlestick OHLC">
+							<i class="fas fa-sliders-h"></i> Candles
+						</button>
+					</div>
+
+					<!-- Moving Average & Utility -->
+					<div class="tv-btn-group">
+						<button type="button" class="tv-btn active" id="tv-toggle-ma" title="Tampilkan/Sembunyikan Garis Indikator Moving Average (MA-3)">
+							<i class="fas fa-wave-square" style="color: #f59e0b;"></i> MA(3)
+						</button>
+						<button type="button" class="tv-btn" id="tv-btn-fit" title="Reset Zoom / Fit Content">
+							<i class="fas fa-compress-arrows-alt"></i> Reset
+						</button>
+						<button type="button" class="tv-btn" id="tv-btn-theme" title="Ganti Tema Dark / Light Mode">
+							<i class="fas fa-sun"></i> Tema
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- TradingView Interactive Chart Container -->
+			<div class="tv-canvas-wrap">
+				<!-- Floating Crosshair Legend -->
+				<div class="tv-floating-legend" id="tv-floating-legend">
+					<div class="d-flex align-items-center justify-content-between" style="gap: 12px;">
+						<span style="font-size: 11.5px; font-weight: 700; color: #38bdf8;" id="tv-leg-date">Arahkan kursor pada grafik</span>
+						<span style="font-size: 10.5px; font-weight: 700;" id="tv-leg-status" class="tv-badge-up">LIVE</span>
+					</div>
+					<div style="font-size: 17px; font-weight: 800; margin: 2px 0; font-family: 'Consolas', monospace;" id="tv-leg-val">Rp 0</div>
+					<div class="d-flex flex-wrap align-items-center" style="gap: 10px; font-size: 11px; color: #94a3b8;" id="tv-leg-detail">
+						<span>PO: <strong style="color: #10b981;" id="tv-leg-po">Rp 0</strong></span>
+						<span>•</span>
+						<span>Inv: <strong style="color: #38bdf8;" id="tv-leg-inv">Rp 0</strong></span>
+						<span>•</span>
+						<span>Vol: <strong style="color: #fbbf24;" id="tv-leg-vol">0 Dok</strong></span>
+					</div>
+					<div style="font-size: 10.5px; color: #94a3b8; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="tv-leg-docs"></div>
+				</div>
+
+				<!-- Lightweight Charts DOM Target -->
+				<div id="tv-lightweight-chart" style="width: 100%; height: 100%;"></div>
+			</div>
+		</div>
 	</div>
 
 	<!-- 3. Analytics Charts Section -->
@@ -571,13 +944,491 @@
 	</div>
 </div>
 
-<!-- Chart.js and Custom Script for Accounting Dashboard -->
+<!-- Chart.js & TradingView Lightweight Charts for Accounting Dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script>
 	$(document).ready(function() {
 		var chartMonthly = null;
 		var chartDonut = null;
 
+		// =========================================================================
+		// A. TRADINGVIEW LIGHTWEIGHT CHARTS ENGINE (OMZET PO MASUK & INVOICE)
+		// =========================================================================
+		var tvContainer = document.getElementById('tv-lightweight-chart');
+		var tvChart = null;
+		var tvState = {
+			source: 'PO',       // PO, INV, ALL, CUMULATIVE
+			interval: '1M',     // 1D, 1W, 1M
+			scope: 'YEAR',      // YEAR, ALL
+			chartType: 'baseline', // baseline, area, compare, candlestick
+			showMA: true,
+			isLight: false,
+			rawData: null
+		};
+
+		var activeSeriesList = [];
+
+		function formatRupiahShort(val) {
+			var num = parseFloat(val) || 0;
+			var abs = Math.abs(num);
+			var sign = num < 0 ? '-' : '';
+			if (abs >= 1000000000) {
+				return sign + 'Rp ' + (abs / 1000000000).toFixed(2).replace('.', ',') + ' M';
+			} else if (abs >= 1000000) {
+				return sign + 'Rp ' + (abs / 1000000).toFixed(1).replace('.', ',') + ' Jt';
+			} else if (abs >= 1000) {
+				return sign + 'Rp ' + (abs / 1000).toFixed(0) + ' Rb';
+			}
+			return sign + 'Rp ' + Math.round(abs).toLocaleString('id-ID');
+		}
+
+		function formatRupiahFull(val) {
+			var num = Math.round(parseFloat(val) || 0);
+			return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+		}
+
+		function formatTvDate(dateStr, interval) {
+			if (!dateStr) return '-';
+			var parts = String(dateStr).split('-');
+			if (parts.length < 3) return dateStr;
+			var bulanNama = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+			var y = parts[0];
+			var m = parseInt(parts[1], 10) - 1;
+			var d = parts[2];
+			if (interval === '1M') {
+				return (bulanNama[m] || parts[1]) + ' ' + y;
+			}
+			return d + ' ' + (bulanNama[m] || parts[1]) + ' ' + y;
+		}
+
+		function computeSMA(data, period) {
+			var result = [];
+			for (var i = 0; i < data.length; i++) {
+				if (i < period - 1) continue;
+				var sum = 0;
+				for (var j = 0; j < period; j++) {
+					sum += parseFloat(data[i - j].value || 0);
+				}
+				result.push({
+					time: data[i].time,
+					value: Math.round((sum / period) * 100) / 100
+				});
+			}
+			return result;
+		}
+
+		function initTvChart() {
+			if (!tvContainer || typeof LightweightCharts === 'undefined') return;
+			if (tvChart) {
+				tvChart.remove();
+				tvChart = null;
+			}
+
+			var bgColor   = tvState.isLight ? '#ffffff' : '#0f172a';
+			var textColor = tvState.isLight ? '#334155' : '#94a3b8';
+			var gridColor = tvState.isLight ? 'rgba(226, 232, 240, 0.8)' : 'rgba(30, 41, 59, 0.75)';
+			var borderCol = tvState.isLight ? '#cbd5e1' : '#1e293b';
+
+			tvChart = LightweightCharts.createChart(tvContainer, {
+				width: tvContainer.clientWidth,
+				height: tvContainer.clientHeight || 430,
+				layout: {
+					background: { type: 'solid', color: bgColor },
+					textColor: textColor,
+					fontFamily: "'Inter', 'Segoe UI', Roboto, sans-serif",
+					fontSize: 11.5
+				},
+				grid: {
+					vertLines: { color: gridColor, style: 1 },
+					horzLines: { color: gridColor, style: 1 }
+				},
+				crosshair: {
+					mode: LightweightCharts.CrosshairMode.Normal,
+					vertLine: {
+						width: 1,
+						color: tvState.isLight ? '#64748b' : '#475569',
+						style: 2,
+						labelBackgroundColor: '#2563eb'
+					},
+					horzLine: {
+						width: 1,
+						color: tvState.isLight ? '#64748b' : '#475569',
+						style: 2,
+						labelBackgroundColor: '#2563eb'
+					}
+				},
+				rightPriceScale: {
+					borderColor: borderCol,
+					scaleMargins: {
+						top: 0.12,
+						bottom: 0.25
+					}
+				},
+				timeScale: {
+					borderColor: borderCol,
+					timeVisible: false,
+					rightOffset: 3,
+					barSpacing: 28,
+					fixLeftEdge: false
+				},
+				localization: {
+					priceFormatter: function(price) {
+						return formatRupiahShort(price);
+					}
+				},
+				handleScroll: {
+					mouseWheel: true,
+					pressedMouseMove: true,
+					horzTouchDrag: true,
+					vertTouchDrag: false
+				},
+				handleScale: {
+					axisPressedMouseMove: true,
+					mouseWheel: true,
+					pinch: true
+				}
+			});
+
+			// Subscribe Crosshair Move untuk update Floating Legend real-time
+			tvChart.subscribeCrosshairMove(function(param) {
+				if (!tvState.rawData) return;
+				var metaMap = tvState.rawData.tooltip_meta || {};
+				var baseline = parseFloat(tvState.rawData.baseline_value || 0);
+
+				if (!param || !param.time || !param.point || param.point.x < 0 || param.point.y < 0) {
+					// Tampilkan data titik terakhir saat kursor di luar chart
+					var mainArr = tvState.rawData.series_main || [];
+					if (mainArr.length > 0) {
+						var lastItem = mainArr[mainArr.length - 1];
+						updateFloatingLegend(lastItem.time, lastItem.value, metaMap[lastItem.time], baseline);
+					}
+					return;
+				}
+
+				var dateKey = typeof param.time === 'string'
+					? param.time
+					: (param.time.year + '-' + String(param.time.month).padStart(2, '0') + '-' + String(param.time.day).padStart(2, '0'));
+
+				var meta = metaMap[dateKey];
+				var foundVal = 0;
+				var mainSeries = tvState.rawData.series_main || [];
+				for (var i = 0; i < mainSeries.length; i++) {
+					if (mainSeries[i].time === dateKey) {
+						foundVal = mainSeries[i].value;
+						break;
+					}
+				}
+				updateFloatingLegend(dateKey, foundVal, meta, baseline);
+			});
+		}
+
+		function updateFloatingLegend(dateKey, val, meta, baseline) {
+			$('#tv-leg-date').text('Periode: ' + formatTvDate(dateKey, tvState.interval));
+			$('#tv-leg-val').text(formatRupiahFull(val));
+
+			var isAbove = (val >= baseline && val > 0);
+			$('#tv-leg-val')
+				.removeClass('tv-up-color tv-down-color')
+				.addClass(isAbove ? 'tv-up-color' : (val > 0 ? 'tv-down-color' : ''));
+
+			if (val <= 0) {
+				$('#tv-leg-status').attr('class', 'badge badge-secondary').text('BELUM ADA TRANSAKSI');
+			} else if (isAbove) {
+				$('#tv-leg-status').attr('class', 'tv-badge-up').html('<i class="fas fa-arrow-up mr-1"></i>DI ATAS RATA-RATA');
+			} else {
+				$('#tv-leg-status').attr('class', 'tv-badge-down').html('<i class="fas fa-arrow-down mr-1"></i>DI BAWAH RATA-RATA');
+			}
+
+			if (meta) {
+				$('#tv-leg-po').text(formatRupiahShort(meta.po_val) + ' (' + meta.po_cnt + ')');
+				$('#tv-leg-inv').text(formatRupiahShort(meta.inv_val) + ' (' + meta.inv_cnt + ')');
+				$('#tv-leg-vol').text(meta.vol_cnt + ' Dokumen');
+				if (meta.top_docs && meta.top_docs.length > 0) {
+					$('#tv-leg-docs').text('Dokumen: ' + meta.top_docs.join(' | '));
+				} else {
+					$('#tv-leg-docs').text('');
+				}
+			}
+		}
+
+		function renderTvSeries() {
+			if (!tvChart || !tvState.rawData) return;
+
+			// Bersihkan series sebelumnya
+			for (var i = 0; i < activeSeriesList.length; i++) {
+				try {
+					tvChart.removeSeries(activeSeriesList[i]);
+				} catch (e) {}
+			}
+			activeSeriesList = [];
+
+			var resp     = tvState.rawData;
+			var mainData = resp.series_main || [];
+			var poData   = resp.series_po || [];
+			var invData  = resp.series_inv || [];
+			var volData  = resp.series_volume || [];
+			var ohlcData = resp.series_ohlc || [];
+			var baseline = parseFloat(resp.baseline_value || 0);
+
+			// 1. Render Main Series sesuai mode pilihan
+			if (tvState.chartType === 'baseline') {
+				var baseSeries = tvChart.addBaselineSeries({
+					baseValue: { type: 'price', price: baseline },
+					topLineColor: '#10b981',
+					topFillColor1: 'rgba(16, 185, 129, 0.40)',
+					topFillColor2: 'rgba(16, 185, 129, 0.04)',
+					bottomLineColor: '#ef4444',
+					bottomFillColor1: 'rgba(239, 68, 68, 0.04)',
+					bottomFillColor2: 'rgba(239, 68, 68, 0.38)',
+					lineWidth: 3,
+					crosshairMarkerVisible: true,
+					crosshairMarkerRadius: 5,
+					priceLineVisible: true,
+					lastValueVisible: true
+				});
+				baseSeries.setData(mainData);
+
+				// Garis putus-putus penanda nilai Baseline (Rata-rata)
+				if (baseline > 0) {
+					baseSeries.createPriceLine({
+						price: baseline,
+						color: '#f59e0b',
+						lineWidth: 1,
+						lineStyle: LightweightCharts.LineStyle.Dashed,
+						axisLabelVisible: true,
+						title: 'Rata-rata (Baseline)'
+					});
+				}
+				activeSeriesList.push(baseSeries);
+
+			} else if (tvState.chartType === 'area') {
+				var areaSeries = tvChart.addAreaSeries({
+					lineColor: '#38bdf8',
+					topColor: 'rgba(56, 189, 248, 0.42)',
+					bottomColor: 'rgba(56, 189, 248, 0.02)',
+					lineWidth: 3,
+					crosshairMarkerVisible: true,
+					crosshairMarkerRadius: 5
+				});
+				areaSeries.setData(mainData);
+				if (baseline > 0) {
+					areaSeries.createPriceLine({
+						price: baseline,
+						color: '#10b981',
+						lineWidth: 1,
+						lineStyle: LightweightCharts.LineStyle.Dashed,
+						axisLabelVisible: true,
+						title: 'Avg Baseline'
+					});
+				}
+				activeSeriesList.push(areaSeries);
+
+			} else if (tvState.chartType === 'compare') {
+				// Garis 1: PO Masuk (Emerald Green)
+				var poSeries = tvChart.addAreaSeries({
+					lineColor: '#10b981',
+					topColor: 'rgba(16, 185, 129, 0.30)',
+					bottomColor: 'rgba(16, 185, 129, 0.0)',
+					lineWidth: 3,
+					title: 'PO Masuk'
+				});
+				poSeries.setData(poData);
+				activeSeriesList.push(poSeries);
+
+				// Garis 2: Invoice (Sky Blue)
+				var invSeries = tvChart.addLineSeries({
+					color: '#38bdf8',
+					lineWidth: 3,
+					title: 'Invoice'
+				});
+				invSeries.setData(invData);
+				activeSeriesList.push(invSeries);
+
+			} else if (tvState.chartType === 'candlestick') {
+				var candleSeries = tvChart.addCandlestickSeries({
+					upColor: '#10b981',
+					downColor: '#ef4444',
+					borderVisible: false,
+					wickUpColor: '#10b981',
+					wickDownColor: '#ef4444'
+				});
+				candleSeries.setData(ohlcData);
+				activeSeriesList.push(candleSeries);
+			}
+
+			// 2. Render Indikator Moving Average (MA-3) jika aktif
+			if (tvState.showMA && tvState.chartType !== 'compare' && mainData.length >= 3) {
+				var maData = computeSMA(mainData, 3);
+				var maSeries = tvChart.addLineSeries({
+					color: '#f59e0b',
+					lineWidth: 2,
+					lineStyle: LightweightCharts.LineStyle.Solid,
+					title: 'MA(3)',
+					crosshairMarkerVisible: false,
+					lastValueVisible: false,
+					priceLineVisible: false
+				});
+				maSeries.setData(maData);
+				activeSeriesList.push(maSeries);
+			}
+
+			// 3. Render Volume Histogram (Jumlah Dokumen Transaksi) di bagian bawah
+			var volSeries = tvChart.addHistogramSeries({
+				color: '#26a69a',
+				priceFormat: {
+					type: 'volume'
+				},
+				priceScaleId: 'vol_scale',
+				lastValueVisible: false,
+				priceLineVisible: false
+			});
+			tvChart.priceScale('vol_scale').applyOptions({
+				scaleMargins: {
+					top: 0.80,
+					bottom: 0
+				}
+			});
+			volSeries.setData(volData);
+			activeSeriesList.push(volSeries);
+
+			tvChart.timeScale().fitContent();
+
+			// Update legend awal dengan titik terakhir
+			if (mainData.length > 0) {
+				var lastPt = mainData[mainData.length - 1];
+				updateFloatingLegend(lastPt.time, lastPt.value, (resp.tooltip_meta || {})[lastPt.time], baseline);
+			}
+		}
+
+		function updateTickerHeader(resp) {
+			var sum = resp.summary || {};
+			var tickerMeta = {
+				'PO':         { code: 'VSI:OMZET_PO',   desc: 'Arus Masuk Purchase Order (PO Masuk Customer) — Real-Time Database' },
+				'INV':        { code: 'VSI:INVOICE',    desc: 'Realisasi Penagihan Invoice Customer — Real-Time Database' },
+				'ALL':        { code: 'VSI:ARUS_MASUK', desc: 'Total Arus Masuk Gabungan (PO Masuk + Invoice)' },
+				'CUMULATIVE': { code: 'VSI:YTD_EQUITY', desc: 'Kurva Akumulasi Pertumbuhan Omzet Berjalan (Cumulative Revenue)' }
+			};
+			var info = tickerMeta[tvState.source] || tickerMeta['PO'];
+			$('#tv-ticker-code').text(info.code);
+			$('#tv-ticker-desc').text(info.desc);
+			$('#tv-label-year').text(resp.tahun === 'ALL' ? 'All-Time' : resp.tahun);
+
+			$('#tv-stat-total').text(formatRupiahShort(sum.total_nominal || 0));
+			$('#tv-stat-po').html(formatRupiahShort(sum.total_po_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + (sum.total_po_count || 0) + ' PO)</small>');
+			$('#tv-stat-inv').html(formatRupiahShort(sum.total_inv_nominal || 0) + ' <small style="font-size: 10.5px; color: #64748b; font-weight: 600;">(' + (sum.total_inv_count || 0) + ' Inv)</small>');
+			$('#tv-stat-baseline').text(formatRupiahShort(sum.baseline_avg || 0));
+			$('#tv-stat-high').text(formatRupiahShort(sum.high_nominal || 0));
+
+			var g = parseFloat(sum.growth_pct || 0);
+			if (g >= 0) {
+				$('#tv-growth-badge')
+					.attr('class', 'tv-badge-up')
+					.html('<i class="fas fa-caret-up mr-1"></i>+' + g.toFixed(2) + '%');
+			} else {
+				$('#tv-growth-badge')
+					.attr('class', 'tv-badge-down')
+					.html('<i class="fas fa-caret-down mr-1"></i>' + g.toFixed(2) + '%');
+			}
+		}
+
+		function loadTradingViewData(autoFallback) {
+			var selectedYear = (tvState.scope === 'ALL') ? 'ALL' : ($('#filter_year').val() || '<?= $tahun_sekarang ?>');
+			$.ajax({
+				url: '<?= base_url("dashboard_accounting/tradingview_financial_data") ?>',
+				type: 'GET',
+				data: {
+					tahun: selectedYear,
+					interval: tvState.interval,
+					source: tvState.source
+				},
+				dataType: 'json',
+				success: function(resp) {
+					if (!resp || resp.status !== 'success') return;
+
+					// Jika saat pertama kali buka PO tahun ini kosong tapi Invoice ada data, atau All-Time ada data, otomatis pilih yang memiliki transaksi aktif
+					if (autoFallback && resp.summary) {
+						if (resp.summary.total_po_nominal <= 0 && resp.summary.total_inv_nominal > 0 && tvState.source === 'PO') {
+							tvState.source = 'ALL';
+							$('#tv-source-group .tv-btn').removeClass('active');
+							$('#tv-source-group .tv-btn[data-source="ALL"]').addClass('active');
+							loadTradingViewData(false);
+							return;
+						}
+					}
+
+					tvState.rawData = resp;
+					updateTickerHeader(resp);
+					if (!tvChart) {
+						initTvChart();
+					}
+					renderTvSeries();
+				}
+			});
+		}
+
+		// Event Listeners untuk Toolbar TradingView
+		$('#tv-source-group .tv-btn').on('click', function() {
+			$('#tv-source-group .tv-btn').removeClass('active');
+			$(this).addClass('active');
+			tvState.source = $(this).data('source');
+			loadTradingViewData(false);
+		});
+
+		$('#tv-interval-group .tv-btn').on('click', function() {
+			$('#tv-interval-group .tv-btn').removeClass('active');
+			$(this).addClass('active');
+			tvState.interval = $(this).data('interval');
+			loadTradingViewData(false);
+		});
+
+		$('#tv-scope-group .tv-btn').on('click', function() {
+			$('#tv-scope-group .tv-btn').removeClass('active');
+			$(this).addClass('active');
+			tvState.scope = $(this).data('scope');
+			loadTradingViewData(false);
+		});
+
+		$('#tv-chart-type-group .tv-btn').on('click', function() {
+			$('#tv-chart-type-group .tv-btn').removeClass('active');
+			$(this).addClass('active');
+			tvState.chartType = $(this).data('type');
+			renderTvSeries();
+		});
+
+		$('#tv-toggle-ma').on('click', function() {
+			tvState.showMA = !tvState.showMA;
+			$(this).toggleClass('active', tvState.showMA);
+			renderTvSeries();
+		});
+
+		$('#tv-btn-fit').on('click', function() {
+			if (tvChart) {
+				tvChart.timeScale().fitContent();
+			}
+		});
+
+		$('#tv-btn-theme').on('click', function() {
+			tvState.isLight = !tvState.isLight;
+			$('#tv-terminal-card').toggleClass('tv-light-mode', tvState.isLight);
+			$(this).find('i').attr('class', tvState.isLight ? 'fas fa-moon' : 'fas fa-sun');
+			initTvChart();
+			renderTvSeries();
+		});
+
+		$(window).on('resize', function() {
+			if (tvChart && tvContainer) {
+				tvChart.applyOptions({ width: tvContainer.clientWidth });
+			}
+		});
+
+		// Load pertama kali TradingView Chart
+		initTvChart();
+		loadTradingViewData(true);
+
+		// =========================================================================
+		// B. EXISTING DONUT & MONTHLY PAJAK CHARTS (CHART.JS)
+		// =========================================================================
 		// 1. Initial Donut Chart
 		var donutCtx = document.getElementById('chart-accounting-donut').getContext('2d');
 		chartDonut = new Chart(donutCtx, {
@@ -681,6 +1532,9 @@
 			var yr = $(this).val();
 			if (yr) {
 				loadMonthlyChart(yr);
+				if (tvState.scope === 'YEAR') {
+					loadTradingViewData(false);
+				}
 			}
 		});
 	});
