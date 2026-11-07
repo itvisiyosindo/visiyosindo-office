@@ -1,0 +1,1065 @@
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+
+/**
+ * Md_vym_bi — Dedicated Read-Only Financial & Business Intelligence Model
+ * Product: VYM Business Intelligence (VYM BI)
+ *
+ * Strictly enforces Section 5 Financial Data Principles:
+ * 1. Customer Orders (PO Masuk)       != Cash Inflow / Recognized Revenue
+ * 2. Issued Invoices (Penagihan)      != Completed Cash Payment (Treated as Billed Receivable)
+ * 3. Recognized Tax Basis (DPP/PPN)   = Verified from approval_faktur_pajak & invoice
+ * 4. Supplier/Freight Obligations     = Unpaid tagihan_ekspedisi (Accounts Payable)
+ * 5. Actual Cash Expenditures         = Paid tagihan_ekspedisi (sudah_dibayar) + Closed Payroll (salary_history)
+ * 6. Profitability Guardrail          = Never fabricates net profit without verified COGS
+ */
+class Md_vym_bi extends CI_Model
+{
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * Resolve date range filter into [start_date, end_date, label, preset]
+     */
+    public function resolveDateFilter($preset = 'YTD', $start_custom = null, $end_custom = null)
+    {
+        $preset = strtoupper(trim((string)$preset ?: 'YTD'));
+        $today  = date('Y-m-d');
+        $year   = (int)date('Y');
+        $month  = (int)date('n');
+
+        if ($preset === 'CUSTOM' && !empty($start_custom) && !empty($end_custom)) {
+            $s = date('Y-m-d', strtotime($start_custom));
+            $e = date('Y-m-d', strtotime($end_custom));
+            if ($s > $e) {
+                $tmp = $s;
+                $s   = $e;
+                $e   = $tmp;
+            }
+            return [
+                'preset'     => 'CUSTOM',
+                'start_date' => $s,
+                'end_date'   => $e,
+                'label'      => date('d M Y', strtotime($s)) . ' – ' . date('d M Y', strtotime($e))
+            ];
+        }
+
+        if ($preset === 'MTD') {
+            $s = sprintf('%04d-%02d-01', $year, $month);
+            return [
+                'preset'     => 'MTD',
+                'start_date' => $s,
+                'end_date'   => $today,
+                'label'      => 'Month-to-Date (' . date('M Y') . ')'
+            ];
+        }
+
+        if ($preset === 'QTD') {
+            $q_start_month = (floor(($month - 1) / 3) * 3) + 1;
+            $s = sprintf('%04d-%02d-01', $year, $q_start_month);
+            $q_num = ceil($month / 3);
+            return [
+                'preset'     => 'QTD',
+                'start_date' => $s,
+                'end_date'   => $today,
+                'label'      => "Quarter-to-Date (Q{$q_num} {$year})"
+            ];
+        }
+
+        if ($preset === '1Y' || $preset === 'L12M') {
+            $s = date('Y-m-d', strtotime('-365 days'));
+            return [
+                'preset'     => '1Y',
+                'start_date' => $s,
+                'end_date'   => $today,
+                'label'      => 'Trailing 12 Months (' . date('d M Y', strtotime($s)) . ' – ' . date('d M Y') . ')'
+            ];
+        }
+
+        if ($preset === 'PREV_YEAR') {
+            $prev_y = $year - 1;
+            return [
+                'preset'     => 'PREV_YEAR',
+                'start_date' => "{$prev_y}-01-01",
+                'end_date'   => "{$prev_y}-12-31",
+                'label'      => "Full Year {$prev_y}"
+            ];
+        }
+
+        if ($preset === 'ALL') {
+            return [
+                'preset'     => 'ALL',
+                'start_date' => '2018-01-01',
+                'end_date'   => $today,
+                'label'      => 'All-Time Historical Records'
+            ];
+        }
+
+        // Default: YTD
+        return [
+            'preset'     => 'YTD',
+            'start_date' => "{$year}-01-01",
+            'end_date'   => $today,
+            'label'      => "Year-to-Date (FY {$year})"
+        ];
+    }
+
+    /**
+     * Master Executive Overview Dataset (Phase 2 Foundation + Strict Accounting Separation)
+     */
+    public function getExecutiveOverviewData($start_date, $end_date, $interval = '1M')
+    {
+        $interval = in_array($interval, ['1D', '1W', '1M'], true) ? $interval : '1M';
+
+        $orders      = $this->fetchCustomerOrders($start_date, $end_date);
+        $invoices    = $this->fetchIssuedInvoices($start_date, $end_date);
+        $taxes       = $this->fetchTaxRecognitions($start_date, $end_date);
+        $tagihan     = $this->fetchFreightObligationsAndPayments($start_date, $end_date);
+        $payroll     = $this->fetchPayrollExpenditures($start_date, $end_date);
+        $cogs_status = $this->inspectCogsCoverage();
+
+        // Fallback otomatis ke All-Time jika periode terpilih (misal awal tahun) belum memiliki catatan transaksi
+        $used_fallback_all = false;
+        if (
+            empty($orders['rows']) &&
+            empty($invoices['rows']) &&
+            empty($tagihan['rows']) &&
+            empty($payroll['rows']) &&
+            $start_date > '2020-01-01'
+        ) {
+            $used_fallback_all = true;
+            $start_date  = '2018-01-01';
+            $end_date    = date('Y-m-d');
+            $orders      = $this->fetchCustomerOrders($start_date, $end_date);
+            $invoices    = $this->fetchIssuedInvoices($start_date, $end_date);
+            $taxes       = $this->fetchTaxRecognitions($start_date, $end_date);
+            $tagihan     = $this->fetchFreightObligationsAndPayments($start_date, $end_date);
+            $payroll     = $this->fetchPayrollExpenditures($start_date, $end_date);
+        }
+
+        // Cross-reference PO Masuk vs Issued Invoices via normalized no_po
+        $invoiced_po_map = [];
+        foreach ($invoices['rows'] as $inv) {
+            $norm_po = strtolower(trim((string)($inv['no_po'] ?? '')));
+            if ($norm_po !== '' && $norm_po !== '-') {
+                if (!isset($invoiced_po_map[$norm_po])) {
+                    $invoiced_po_map[$norm_po] = 0.0;
+                }
+                $invoiced_po_map[$norm_po] += (float)$inv['nominal_total'];
+            }
+        }
+
+        $unbilled_po_nominal = 0.0;
+        $unbilled_po_count   = 0;
+        $billed_po_count     = 0;
+
+        foreach ($orders['rows'] as $po) {
+            $norm_po = strtolower(trim((string)($po['no_po'] ?? '')));
+            $po_val  = (float)$po['nominal_total'];
+            if ($norm_po !== '' && isset($invoiced_po_map[$norm_po])) {
+                $billed_po_count++;
+            } else {
+                $unbilled_po_nominal += $po_val;
+                $unbilled_po_count++;
+            }
+        }
+
+        // Build Time-Series Buckets for Bloomberg Multi-Layer Financial Chart
+        $buckets = $this->buildTimeSeriesBuckets(
+            $start_date,
+            $end_date,
+            $interval,
+            $orders['rows'],
+            $invoices['rows'],
+            $tagihan['rows'],
+            $payroll['rows']
+        );
+
+        // Build Top Customers & Recent Institutional Ledger
+        $top_customers = $this->buildCustomerBreakdown($orders['rows'], $invoices['rows']);
+        $recent_ledger = $this->buildUnifiedAuditLedger($orders['rows'], $invoices['rows'], $tagihan['rows'], $payroll['rows']);
+
+        // Compute Validated Ratios
+        $order_total       = $orders['total_nominal'];
+        $invoice_total     = $invoices['total_nominal'];
+        $invoice_dpp       = $invoices['total_dpp'];
+        $verified_dp_cash  = $orders['verified_dp_nominal'];
+        $obligations_unpaid= $tagihan['unpaid_nominal'];
+        $cash_out_paid     = $tagihan['paid_nominal'] + $payroll['total_nominal'];
+
+        $order_to_billing_pct = ($order_total > 0)
+            ? round(($invoice_total / $order_total) * 100, 1)
+            : 0.0;
+
+        // Operating Cash Coverage: Billed Receivable vs Actual Cash Outflow
+        $billing_to_cashout_ratio = ($cash_out_paid > 0)
+            ? round($invoice_total / $cash_out_paid, 2)
+            : 0.0;
+
+        return [
+            'status'            => 'success',
+            'used_fallback_all' => $used_fallback_all,
+            'filter'            => [
+                'start_date' => $start_date,
+                'end_date'   => $end_date,
+                'interval'   => $interval
+            ],
+            'kpis'              => [
+                'customer_orders' => [
+                    'code'           => 'VYM:ORDER_BOOK',
+                    'title'          => 'Customer Orders (PO Masuk)',
+                    'classification' => 'ACTUAL • CONTRACTED ORDER',
+                    'badge_type'     => 'actual',
+                    'nominal'        => round($order_total, 2),
+                    'dpp_subtotal'   => round($orders['total_subtotal'], 2),
+                    'ppn_nominal'    => round($orders['total_ppn'], 2),
+                    'ongkir_nominal' => round($orders['total_ongkir'], 2),
+                    'approved_nom'   => round($orders['approved_nominal'], 2),
+                    'pending_nom'    => round($orders['pending_nominal'], 2),
+                    'count'          => $orders['count'],
+                    'approved_count' => $orders['approved_count'],
+                    'pending_count'  => $orders['pending_count'],
+                    'formula'        => 'SUM(COALESCE(NULLIF(nominal_total_akhir,0), NULLIF(nominal_po,0), nominal_subtotal)) WHERE deleted = 0 AND status != "ditolak"',
+                    'source_tables'  => 'po_masuk, po_masuk_item',
+                    'accounting_note'=> 'Pesanan kontrak dari pelanggan (Order Book). Bukan kas masuk aktual dan belum diakui sebagai penagihan lunas.'
+                ],
+                'issued_invoices' => [
+                    'code'           => 'VYM:BILLED_AR',
+                    'title'          => 'Issued Invoices (Penagihan)',
+                    'classification' => 'ACTUAL • BILLED RECEIVABLE',
+                    'badge_type'     => 'actual',
+                    'nominal'        => round($invoice_total, 2),
+                    'net_dpp'        => round($invoice_dpp, 2),
+                    'ongkir_nominal' => round($invoices['total_ongkir'], 2),
+                    'count'          => $invoices['count'],
+                    'shipped_count'  => $invoices['shipped_count'],
+                    'conversion_pct' => $order_to_billing_pct,
+                    'formula'        => 'SUM(COALESCE(NULLIF(total_keseluruhan,0), NULLIF(total,0), sub_total)) WHERE invoice.status = 1',
+                    'source_tables'  => 'invoice, detail_barang_invoice',
+                    'accounting_note'=> 'Faktur tagihan resmi yang telah diterbitkan ke pelanggan (Piutang Usaha / Billed Revenue). Tidak diklaim sebagai pembayaran lunas.'
+                ],
+                'unbilled_backlog' => [
+                    'code'           => 'VYM:UNBILLED_PO',
+                    'title'          => 'Unbilled Order Backlog',
+                    'classification' => 'ACTUAL • PIPELINE',
+                    'badge_type'     => 'actual',
+                    'nominal'        => round($unbilled_po_nominal, 2),
+                    'count'          => $unbilled_po_count,
+                    'billed_po_cnt'  => $billed_po_count,
+                    'formula'        => 'SUM(po_masuk.nominal_total_akhir) WHERE LOWER(TRIM(po_masuk.no_po)) NOT IN (SELECT LOWER(TRIM(invoice.no_po)) FROM invoice WHERE status = 1)',
+                    'source_tables'  => 'po_masuk LEFT JOIN invoice ON no_po',
+                    'accounting_note'=> 'Nilai PO pelanggan yang masih dalam tahap pemenuhan/kroscek dan belum diterbitkan dokumen Invoice.'
+                ],
+                'recognized_tax' => [
+                    'code'           => 'VYM:TAX_BASIS',
+                    'title'          => 'Approved Tax Basis (DPP & PPN)',
+                    'classification' => 'ACTUAL • TAX RECOGNIZED',
+                    'badge_type'     => 'actual',
+                    'dpp_nominal'    => round($taxes['approved_dpp'], 2),
+                    'ppn_nominal'    => round($taxes['approved_ppn'], 2),
+                    'nominal'        => round($taxes['approved_dpp'] + $taxes['approved_ppn'], 2),
+                    'approved_count' => $taxes['approved_count'],
+                    'pending_count'  => $taxes['pending_count'],
+                    'formula'        => 'SUM(dpp), SUM(ppn) FROM approval_faktur_pajak WHERE status = 4 (Approved)',
+                    'source_tables'  => 'approval_faktur_pajak, acc_bukti_lapor_pajak',
+                    'accounting_note'=> 'Dasar Pengenaan Pajak (DPP) dan PPN Keluaran yang telah melewati verifikasi dan mendapatkan persetujuan Faktur Pajak.'
+                ],
+                'verified_customer_cash' => [
+                    'code'           => 'VYM:VERIFIED_DP_CASH',
+                    'title'          => 'Verified Down Payments & Cash PO',
+                    'classification' => 'ACTUAL • RECORDED DP/CASH',
+                    'badge_type'     => 'actual',
+                    'nominal'        => round($verified_dp_cash, 2),
+                    'dp_nominal'     => round($orders['cicilan_dp_only'], 2),
+                    'cash_po_nominal'=> round($orders['cash_approved_only'], 2),
+                    'count'          => $orders['cash_or_dp_count'],
+                    'formula'        => 'SUM(cicilan_dp_nominal) + SUM(nominal_total_akhir WHERE sistem_pembayaran IN ("Cash","COD") AND status = "disetujui")',
+                    'source_tables'  => 'po_masuk (cicilan_dp_nominal, sistem_pembayaran)',
+                    'accounting_note'=> 'Tabel invoice belum memiliki kolom tanggal pelunasan kas; metrik ini hanya menghitung DP cicilan & PO Cash/COD yang sudah disetujui.'
+                ],
+                'supplier_obligations' => [
+                    'code'           => 'VYM:AP_OBLIGATION',
+                    'title'          => 'Freight & Vendor Obligations (Unpaid)',
+                    'classification' => 'ACTUAL • PAYABLE OBLIGATION',
+                    'badge_type'     => 'actual',
+                    'nominal'        => round($obligations_unpaid, 2),
+                    'approved_unpaid'=> round($tagihan['approved_unpaid_nominal'], 2),
+                    'waiting_review' => round($tagihan['waiting_unpaid_nominal'], 2),
+                    'count'          => $tagihan['unpaid_count'],
+                    'overdue_count'  => $tagihan['overdue_count'],
+                    'formula'        => 'SUM(COALESCE(NULLIF(total_tagihan,0), nilai_tagihan + biaya_asuransi)) WHERE status_approval != 99 AND status_bayar != "sudah_dibayar"',
+                    'source_tables'  => 'tagihan_ekspedisi, ekspedisi',
+                    'accounting_note'=> 'Kewajiban tagihan vendor/ekspedisi yang belum dibayar (Accounts Payable). Dipisahkan dari pengeluaran kas aktual.'
+                ],
+                'actual_cash_outflow' => [
+                    'code'           => 'VYM:ACTUAL_CASH_OUT',
+                    'title'          => 'Actual Cash Expenditures (Paid)',
+                    'classification' => 'ACTUAL • SETTLED OUTFLOW',
+                    'badge_type'     => 'actual',
+                    'nominal'        => round($cash_out_paid, 2),
+                    'paid_freight'   => round($tagihan['paid_nominal'], 2),
+                    'paid_payroll'   => round($payroll['total_nominal'], 2),
+                    'count'          => $tagihan['paid_count'] + $payroll['slip_count'],
+                    'paid_freight_cnt'=> $tagihan['paid_count'],
+                    'payroll_months' => $payroll['month_count'],
+                    'payroll_slips'  => $payroll['slip_count'],
+                    'formula'        => 'SUM(tagihan_ekspedisi WHERE status_bayar = "sudah_dibayar") + SUM(salary_history net take-home pay)',
+                    'source_tables'  => 'tagihan_ekspedisi (status_bayar="sudah_dibayar"), salary_history',
+                    'accounting_note'=> 'Pengeluaran kas aktual yang telah dibayarkan (tagihan ekspedisi berstatus sudah_dibayar + realisasi tutup buku gaji karyawan).'
+                ],
+                'profitability_guard' => [
+                    'code'           => 'VYM:PROFIT_GUARD',
+                    'title'          => 'Operating Contribution & COGS Status',
+                    'classification' => $cogs_status['has_unit_cogs'] ? 'ACTUAL • VERIFIED' : 'GUARDRAIL • COGS INCOMPLETE',
+                    'badge_type'     => 'estimated',
+                    'nominal'        => round($invoice_dpp - $cash_out_paid, 2),
+                    'invoice_dpp'    => round($invoice_dpp, 2),
+                    'verified_opex'  => round($cash_out_paid, 2),
+                    'coverage_ratio' => $billing_to_cashout_ratio,
+                    'cogs_status'    => $cogs_status,
+                    'formula'        => 'Billed Net DPP (invoice.total) - Verified Settled Outflow (Paid Freight + Closed Payroll) [Excludes Unverified Unit COGS]',
+                    'source_tables'  => 'invoice, tagihan_ekspedisi, salary_history, acc_pemasok_harga',
+                    'accounting_note'=> 'Sesuai Prinsip Akuntansi VYM BI: Laba Bersih (Net Profit) tidak dihitung secara semu karena HPP (COGS) per batch barang keluar belum terhubung penuh di tabel transaksi.'
+                ]
+            ],
+            'time_series'       => $buckets,
+            'top_customers'     => $top_customers,
+            'recent_ledger'     => $recent_ledger
+        ];
+    }
+
+    /**
+     * 1. Fetch Customer Orders (po_masuk) — Contracted Order Book
+     */
+    public function fetchCustomerOrders($start_date, $end_date)
+    {
+        $res = [
+            'total_nominal'     => 0.0,
+            'total_subtotal'    => 0.0,
+            'total_ppn'         => 0.0,
+            'total_ongkir'      => 0.0,
+            'approved_nominal'  => 0.0,
+            'pending_nominal'   => 0.0,
+            'verified_dp_nominal'=> 0.0,
+            'cicilan_dp_only'   => 0.0,
+            'cash_approved_only'=> 0.0,
+            'count'             => 0,
+            'approved_count'    => 0,
+            'pending_count'     => 0,
+            'cash_or_dp_count'  => 0,
+            'rows'              => []
+        ];
+
+        if (!$this->db->table_exists('po_masuk')) {
+            return $res;
+        }
+
+        $fields   = array_flip($this->db->list_fields('po_masuk'));
+        $has_item = $this->db->table_exists('po_masuk_item');
+
+        $nom_parts = [];
+        if (isset($fields['nominal_total_akhir'])) $nom_parts[] = "NULLIF(p.nominal_total_akhir, 0)";
+        if (isset($fields['nominal_po']))          $nom_parts[] = "NULLIF(p.nominal_po, 0)";
+        if (isset($fields['nominal_subtotal']))    $nom_parts[] = "NULLIF(p.nominal_subtotal, 0)";
+        if ($has_item) {
+            $nom_parts[] = "(SELECT COALESCE(SUM(i.total_harga), 0) FROM po_masuk_item i WHERE i.id_po = p.id_po)";
+        }
+        $nom_parts[] = "0";
+        $nom_expr = "COALESCE(" . implode(", ", $nom_parts) . ")";
+
+        $sub_expr    = isset($fields['nominal_subtotal']) ? "COALESCE(NULLIF(p.nominal_subtotal, 0), {$nom_expr})" : $nom_expr;
+        $ppn_expr    = isset($fields['nominal_ppn']) ? "COALESCE(p.nominal_ppn, 0)" : "0";
+        $ongkir_expr = isset($fields['nominal_ongkir']) ? "COALESCE(p.nominal_ongkir, 0)" : "0";
+        $dp_expr     = isset($fields['cicilan_dp_nominal']) ? "COALESCE(p.cicilan_dp_nominal, 0)" : "0";
+        $pay_expr    = isset($fields['sistem_pembayaran']) ? "COALESCE(p.sistem_pembayaran, 'Cash')" : "'Cash'";
+        $sts_expr    = isset($fields['status']) ? "COALESCE(p.status, 'menunggu_kroscek')" : "'disetujui'";
+        $prs_expr    = isset($fields['status_proses']) ? "COALESCE(p.status_proses, '-')" : "'-'";
+        $sls_expr    = isset($fields['nama_sales']) ? "COALESCE(NULLIF(p.nama_sales, ''), u.nama, '-')" : "COALESCE(u.nama, '-')";
+
+        $where_del = isset($fields['deleted']) ? "AND p.deleted = 0" : "";
+        $where_sts = isset($fields['status']) ? "AND p.status != 'ditolak'" : "";
+
+        $sql = "
+            SELECT
+                p.id_po,
+                p.no_po,
+                p.tanggal_po AS tgl,
+                {$nom_expr} AS nominal_total,
+                {$sub_expr} AS nominal_subtotal,
+                {$ppn_expr} AS nominal_ppn,
+                {$ongkir_expr} AS nominal_ongkir,
+                {$dp_expr} AS dp_nominal,
+                {$pay_expr} AS sistem_pembayaran,
+                {$sts_expr} AS status_po,
+                {$prs_expr} AS status_proses,
+                {$sls_expr} AS nama_sales,
+                COALESCE(NULLIF(p.nama_customer, ''), c.nama_customer, pl.identitas_pelanggan, '-') AS customer_nama
+            FROM po_masuk p
+            LEFT JOIN customer c ON p.id_customer = c.id_customer
+            LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+            LEFT JOIN pengguna u ON p.created_by = u.pengguna_id
+            WHERE p.tanggal_po IS NOT NULL
+              AND p.tanggal_po != '0000-00-00'
+              AND p.tanggal_po >= " . $this->db->escape($start_date) . "
+              AND p.tanggal_po <= " . $this->db->escape($end_date) . "
+              {$where_del}
+              {$where_sts}
+            ORDER BY p.tanggal_po DESC, p.id_po DESC
+        ";
+
+        $q = $this->db->query($sql);
+        if (!$q) {
+            return $res;
+        }
+
+        foreach ($q->result_array() as $r) {
+            $tot = max(0.0, (float)$r['nominal_total']);
+            $sub = max(0.0, (float)$r['nominal_subtotal']);
+            $ppn = max(0.0, (float)$r['nominal_ppn']);
+            $ong = max(0.0, (float)$r['nominal_ongkir']);
+            $dp  = max(0.0, (float)$r['dp_nominal']);
+            $sts = strtolower(trim((string)$r['status_po']));
+            $pay = strtoupper(trim((string)$r['sistem_pembayaran']));
+
+            $res['total_nominal']  += $tot;
+            $res['total_subtotal'] += $sub;
+            $res['total_ppn']      += $ppn;
+            $res['total_ongkir']   += $ong;
+            $res['count']++;
+
+            if ($sts === 'disetujui') {
+                $res['approved_nominal'] += $tot;
+                $res['approved_count']++;
+            } else {
+                $res['pending_nominal'] += $tot;
+                $res['pending_count']++;
+            }
+
+            if ($dp > 0) {
+                $res['verified_dp_nominal'] += $dp;
+                $res['cicilan_dp_only']     += $dp;
+                $res['cash_or_dp_count']++;
+            } elseif (in_array($pay, ['CASH', 'COD'], true) && $sts === 'disetujui') {
+                $res['verified_dp_nominal'] += $tot;
+                $res['cash_approved_only']  += $tot;
+                $res['cash_or_dp_count']++;
+            }
+
+            $res['rows'][] = $r;
+        }
+
+        return $res;
+    }
+
+    /**
+     * 2. Fetch Issued Customer Invoices (invoice) — Billed Receivables
+     */
+    public function fetchIssuedInvoices($start_date, $end_date)
+    {
+        $res = [
+            'total_nominal' => 0.0,
+            'total_dpp'     => 0.0,
+            'total_ongkir'  => 0.0,
+            'count'         => 0,
+            'shipped_count' => 0,
+            'rows'          => []
+        ];
+
+        if (!$this->db->table_exists('invoice')) {
+            return $res;
+        }
+
+        $fields   = array_flip($this->db->list_fields('invoice'));
+        $has_item = $this->db->table_exists('detail_barang_invoice');
+
+        $tot_parts = [];
+        if (isset($fields['total_keseluruhan'])) {
+            $tot_parts[] = "NULLIF(CAST(REPLACE(REPLACE(inv.total_keseluruhan, '.', ''), ',', '') AS DECIMAL(18,2)), 0)";
+        }
+        if (isset($fields['total'])) {
+            $tot_parts[] = "NULLIF(CAST(REPLACE(REPLACE(inv.total, '.', ''), ',', '') AS DECIMAL(18,2)), 0)";
+        }
+        if (isset($fields['sub_total'])) {
+            $tot_parts[] = "NULLIF(CAST(REPLACE(REPLACE(inv.sub_total, '.', ''), ',', '') AS DECIMAL(18,2)), 0)";
+        }
+        if ($has_item) {
+            $tot_parts[] = "(SELECT COALESCE(SUM(CAST(REPLACE(REPLACE(dbi.harga_total, '.', ''), ',', '') AS DECIMAL(18,2))), 0) FROM detail_barang_invoice dbi WHERE dbi.id_invoice = inv.id_invoice AND dbi.status = 1)";
+        }
+        $tot_parts[] = "0";
+        $tot_expr = "COALESCE(" . implode(", ", $tot_parts) . ")";
+
+        $dpp_expr = isset($fields['total'])
+            ? "COALESCE(NULLIF(CAST(REPLACE(REPLACE(inv.total, '.', ''), ',', '') AS DECIMAL(18,2)), 0), {$tot_expr})"
+            : $tot_expr;
+
+        $ong_expr = isset($fields['ongkir'])
+            ? "COALESCE(CAST(REPLACE(REPLACE(inv.ongkir, '.', ''), ',', '') AS DECIMAL(18,2)), 0)"
+            : "0";
+
+        $nopo_expr = isset($fields['no_po']) ? "COALESCE(inv.no_po, '')" : "''";
+        $brg_expr  = isset($fields['status_barang_keluar']) ? "COALESCE(inv.status_barang_keluar, 'belum_keluar')" : "'belum_keluar'";
+
+        $sql = "
+            SELECT
+                inv.id_invoice,
+                inv.no_invoice,
+                inv.tgl_invoice AS tgl,
+                {$nopo_expr} AS no_po,
+                {$tot_expr} AS nominal_total,
+                {$dpp_expr} AS nominal_dpp,
+                {$ong_expr} AS nominal_ongkir,
+                {$brg_expr} AS status_barang_keluar,
+                COALESCE(c.nama_customer, '-') AS customer_nama,
+                COALESCE(p.nama, '-') AS marketing_nama
+            FROM invoice inv
+            LEFT JOIN customer c ON inv.id_customer = c.id_customer
+            LEFT JOIN pengguna p ON inv.id_marketing = p.pengguna_id
+            WHERE inv.status = 1
+              AND inv.tgl_invoice IS NOT NULL
+              AND inv.tgl_invoice != '0000-00-00'
+              AND inv.tgl_invoice >= " . $this->db->escape($start_date) . "
+              AND inv.tgl_invoice <= " . $this->db->escape($end_date) . "
+            ORDER BY inv.tgl_invoice DESC, inv.id_invoice DESC
+        ";
+
+        $q = $this->db->query($sql);
+        if (!$q) {
+            return $res;
+        }
+
+        foreach ($q->result_array() as $r) {
+            $tot = max(0.0, (float)$r['nominal_total']);
+            $dpp = max(0.0, (float)$r['nominal_dpp']);
+            $ong = max(0.0, (float)$r['nominal_ongkir']);
+
+            $res['total_nominal'] += $tot;
+            $res['total_dpp']     += $dpp;
+            $res['total_ongkir']  += $ong;
+            $res['count']++;
+
+            if ($r['status_barang_keluar'] === 'sudah_keluar') {
+                $res['shipped_count']++;
+            }
+
+            $res['rows'][] = $r;
+        }
+
+        return $res;
+    }
+
+    /**
+     * 3. Fetch Tax Recognition (approval_faktur_pajak)
+     */
+    public function fetchTaxRecognitions($start_date, $end_date)
+    {
+        $res = [
+            'approved_dpp'   => 0.0,
+            'approved_ppn'   => 0.0,
+            'pending_dpp'    => 0.0,
+            'pending_ppn'    => 0.0,
+            'approved_count' => 0,
+            'pending_count'  => 0
+        ];
+
+        if (!$this->db->table_exists('approval_faktur_pajak')) {
+            return $res;
+        }
+
+        $fields = array_flip($this->db->list_fields('approval_faktur_pajak'));
+        $dpp_expr = isset($fields['dpp'])
+            ? "COALESCE(CAST(REPLACE(REPLACE(dpp, '.', ''), ',', '') AS DECIMAL(18,2)), 0)"
+            : "0";
+        $ppn_expr = isset($fields['ppn'])
+            ? "COALESCE(CAST(REPLACE(REPLACE(ppn, '.', ''), ',', '') AS DECIMAL(18,2)), 0)"
+            : "0";
+
+        $sql = "
+            SELECT
+                status,
+                {$dpp_expr} AS dpp_val,
+                {$ppn_expr} AS ppn_val
+            FROM approval_faktur_pajak
+            WHERE tanggal IS NOT NULL
+              AND tanggal != '0000-00-00'
+              AND tanggal >= " . $this->db->escape($start_date) . "
+              AND tanggal <= " . $this->db->escape($end_date) . "
+        ";
+
+        $q = $this->db->query($sql);
+        if (!$q) {
+            return $res;
+        }
+
+        foreach ($q->result_array() as $r) {
+            $sts = (int)$r['status'];
+            $dpp = max(0.0, (float)$r['dpp_val']);
+            $ppn = max(0.0, (float)$r['ppn_val']);
+
+            if ($sts === 4) {
+                $res['approved_dpp'] += $dpp;
+                $res['approved_ppn'] += $ppn;
+                $res['approved_count']++;
+            } elseif (in_array($sts, [0, 1, 2, 3], true)) {
+                $res['pending_dpp'] += $dpp;
+                $res['pending_ppn'] += $ppn;
+                $res['pending_count']++;
+            }
+        }
+
+        return $res;
+    }
+
+    /**
+     * 4. Fetch Supplier / Freight Obligations vs Settled Payments (tagihan_ekspedisi)
+     */
+    public function fetchFreightObligationsAndPayments($start_date, $end_date)
+    {
+        $res = [
+            'paid_nominal'            => 0.0,
+            'unpaid_nominal'          => 0.0,
+            'approved_unpaid_nominal' => 0.0,
+            'waiting_unpaid_nominal'  => 0.0,
+            'paid_count'              => 0,
+            'unpaid_count'            => 0,
+            'overdue_count'           => 0,
+            'rows'                    => []
+        ];
+
+        if (!$this->db->table_exists('tagihan_ekspedisi')) {
+            return $res;
+        }
+
+        $fields = array_flip($this->db->list_fields('tagihan_ekspedisi'));
+
+        $nom_parts = [];
+        if (isset($fields['total_tagihan'])) {
+            $nom_parts[] = "NULLIF(tg.total_tagihan, 0)";
+        }
+        if (isset($fields['nilai_tagihan'])) {
+            $asu = isset($fields['biaya_asuransi']) ? "COALESCE(tg.biaya_asuransi, 0)" : "0";
+            $nom_parts[] = "NULLIF(COALESCE(tg.nilai_tagihan, 0) + {$asu}, 0)";
+        }
+        $nom_parts[] = "0";
+        $nom_expr = "COALESCE(" . implode(", ", $nom_parts) . ")";
+
+        $date_expr = (isset($fields['tanggal_invoice']) && isset($fields['created_at']))
+            ? "COALESCE(NULLIF(tg.tanggal_invoice, '0000-00-00'), DATE(tg.created_at))"
+            : (isset($fields['tanggal_invoice']) ? "tg.tanggal_invoice" : "DATE(tg.created_at)");
+
+        $where_app = isset($fields['status_approval']) ? "AND tg.status_approval != 99" : "";
+        $byr_expr  = isset($fields['status_bayar']) ? "COALESCE(tg.status_bayar, 'belum_dibayar')" : "'belum_dibayar'";
+        $app_expr  = isset($fields['status_approval']) ? "COALESCE(tg.status_approval, 1)" : "5";
+
+        $sql = "
+            SELECT
+                tg.id_tagihan,
+                COALESCE(tg.no_invoice, CONCAT('TAG-', tg.id_tagihan)) AS no_dokumen,
+                {$date_expr} AS tgl,
+                {$nom_expr} AS nominal_total,
+                {$byr_expr} AS status_bayar,
+                {$app_expr} AS status_approval,
+                COALESCE(e.nama_ekspedisi, 'Vendor Ekspedisi') AS vendor_nama
+            FROM tagihan_ekspedisi tg
+            LEFT JOIN tracking_barang t ON tg.id_tracking = t.id_tracking
+            LEFT JOIN ekspedisi e ON t.id_ekspedisi = e.id_ekspedisi
+            WHERE {$date_expr} IS NOT NULL
+              AND {$date_expr} != '0000-00-00'
+              AND {$date_expr} >= " . $this->db->escape($start_date) . "
+              AND {$date_expr} <= " . $this->db->escape($end_date) . "
+              {$where_app}
+            ORDER BY {$date_expr} DESC, tg.id_tagihan DESC
+        ";
+
+        $q = $this->db->query($sql);
+        if (!$q) {
+            return $res;
+        }
+
+        $today_ts = time();
+        foreach ($q->result_array() as $r) {
+            $nom = max(0.0, (float)$r['nominal_total']);
+            if ($nom <= 0) continue;
+
+            $is_paid = (strtolower(trim((string)$r['status_bayar'])) === 'sudah_dibayar');
+            $app_sts = (int)$r['status_approval'];
+
+            if ($is_paid) {
+                $res['paid_nominal'] += $nom;
+                $res['paid_count']++;
+            } else {
+                $res['unpaid_nominal'] += $nom;
+                $res['unpaid_count']++;
+                if ($app_sts === 5) {
+                    $res['approved_unpaid_nominal'] += $nom;
+                } else {
+                    $res['waiting_unpaid_nominal'] += $nom;
+                }
+                $inv_ts = strtotime($r['tgl']);
+                if ($inv_ts && (($today_ts - $inv_ts) / 86400) > 30) {
+                    $res['overdue_count']++;
+                }
+            }
+
+            $res['rows'][] = $r;
+        }
+
+        return $res;
+    }
+
+    /**
+     * 5. Fetch Actual Payroll Expenditures (salary_history)
+     */
+    public function fetchPayrollExpenditures($start_date, $end_date)
+    {
+        $res = [
+            'total_nominal' => 0.0,
+            'month_count'   => 0,
+            'slip_count'    => 0,
+            'rows'          => []
+        ];
+
+        if (!$this->db->table_exists('salary_history')) {
+            return $res;
+        }
+
+        $fields = array_flip($this->db->list_fields('salary_history'));
+        $add_cols = [];
+        foreach (['gajipokok', 'tunjangankonsumsi', 'tunjangankinerja', 'tunjangankomunikasi', 'tunjangantransport', 'tunjanganjabatan', 'bonus'] as $col) {
+            if (isset($fields[$col])) {
+                $add_cols[] = "COALESCE(CAST(sh.{$col} AS DECIMAL(18,2)), 0)";
+            }
+        }
+        if (empty($add_cols)) {
+            return $res;
+        }
+
+        $sub_col  = isset($fields['potonganlainnya']) ? "COALESCE(CAST(sh.potonganlainnya AS DECIMAL(18,2)), 0)" : "0";
+        $nom_expr = "(" . implode(" + ", $add_cols) . " - {$sub_col})";
+
+        $date_expr = (isset($fields['tahun']) && isset($fields['bulan']))
+            ? "STR_TO_DATE(CONCAT(sh.tahun, '-', LPAD(sh.bulan, 2, '0'), '-25'), '%Y-%m-%d')"
+            : "DATE(sh.created_at)";
+
+        $sql = "
+            SELECT
+                {$date_expr} AS tgl,
+                SUM({$nom_expr}) AS nominal_total,
+                COUNT(*) AS slip_cnt
+            FROM salary_history sh
+            WHERE {$date_expr} IS NOT NULL
+              AND {$date_expr} >= " . $this->db->escape($start_date) . "
+              AND {$date_expr} <= " . $this->db->escape($end_date) . "
+            GROUP BY {$date_expr}
+            HAVING nominal_total > 0
+            ORDER BY tgl DESC
+        ";
+
+        $q = $this->db->query($sql);
+        if (!$q) {
+            return $res;
+        }
+
+        foreach ($q->result_array() as $r) {
+            $nom = max(0.0, (float)$r['nominal_total']);
+            $cnt = (int)$r['slip_cnt'];
+            $res['total_nominal'] += $nom;
+            $res['month_count']++;
+            $res['slip_count'] += $cnt;
+            $res['rows'][] = [
+                'tgl'           => $r['tgl'],
+                'nominal_total' => $nom,
+                'slip_cnt'      => $cnt,
+                'no_dokumen'    => 'PAYROLL-' . date('Ym', strtotime($r['tgl'])),
+                'vendor_nama'   => "Gaji SDM ({$cnt} Pegawai)"
+            ];
+        }
+
+        return $res;
+    }
+
+    /**
+     * 6. Inspect COGS (Harga Pokok Penjualan) Data Coverage
+     */
+    public function inspectCogsCoverage()
+    {
+        $supplier_price_cnt = 0;
+        if ($this->db->table_exists('acc_pemasok_harga')) {
+            $supplier_price_cnt = (int)$this->db->count_all_results('acc_pemasok_harga');
+        }
+
+        $has_detail_barang_hpp = false;
+        if ($this->db->table_exists('detail_barang')) {
+            $db_fields = array_flip($this->db->list_fields('detail_barang'));
+            $has_detail_barang_hpp = (isset($db_fields['harga_beli']) || isset($db_fields['hpp']));
+        }
+
+        return [
+            'has_unit_cogs'       => $has_detail_barang_hpp,
+            'supplier_price_rows' => $supplier_price_cnt,
+            'status_label'        => $has_detail_barang_hpp ? 'VERIFIED BATCH COGS' : 'PARTIAL (SUPPLIER CATALOG ONLY)',
+            'explanation'         => 'Tabel detail_barang_keluar & detail_barang_invoice belum menyimpan HPP per batch keluar secara langsung. Katalog harga pemasok tercatat sebanyak ' . $supplier_price_cnt . ' dokumen di acc_pemasok_harga.'
+        ];
+    }
+
+    /**
+     * Build Time-Series Buckets for TradingView / Bloomberg Terminal Chart
+     */
+    private function buildTimeSeriesBuckets($start_date, $end_date, $interval, $po_rows, $inv_rows, $tagihan_rows, $payroll_rows)
+    {
+        $getBucketKey = function ($dateStr) use ($interval) {
+            $ts = strtotime($dateStr);
+            if (!$ts || $ts <= 0) return null;
+            if ($interval === '1M') {
+                return date('Y-m-01', $ts);
+            } elseif ($interval === '1W') {
+                $dow = (int)date('N', $ts);
+                return date('Y-m-d', strtotime('-' . ($dow - 1) . ' days', $ts));
+            }
+            return date('Y-m-d', $ts);
+        };
+
+        $makeBucket = function () {
+            return [
+                'order_val'      => 0.0,
+                'order_cnt'      => 0,
+                'invoice_val'    => 0.0,
+                'invoice_cnt'    => 0,
+                'cash_out_val'   => 0.0,
+                'cash_out_cnt'   => 0,
+                'obligation_val' => 0.0,
+                'obligation_cnt' => 0
+            ];
+        };
+
+        $buckets = [];
+
+        // Pre-seed monthly buckets if range is within 36 months for continuous chart rendering
+        if ($interval === '1M') {
+            $s_ts = strtotime(date('Y-m-01', strtotime($start_date)));
+            $e_ts = strtotime(date('Y-m-01', strtotime($end_date)));
+            $months_diff = (($e_ts - $s_ts) / (86400 * 30));
+            if ($months_diff >= 0 && $months_diff <= 36) {
+                $cur = $s_ts;
+                while ($cur <= $e_ts) {
+                    $buckets[date('Y-m-01', $cur)] = $makeBucket();
+                    $cur = strtotime('+1 month', $cur);
+                }
+            }
+        }
+
+        foreach ($po_rows as $r) {
+            $k = $getBucketKey($r['tgl']);
+            if (!$k) continue;
+            if (!isset($buckets[$k])) $buckets[$k] = $makeBucket();
+            $buckets[$k]['order_val'] += max(0.0, (float)$r['nominal_total']);
+            $buckets[$k]['order_cnt']++;
+        }
+
+        foreach ($inv_rows as $r) {
+            $k = $getBucketKey($r['tgl']);
+            if (!$k) continue;
+            if (!isset($buckets[$k])) $buckets[$k] = $makeBucket();
+            $buckets[$k]['invoice_val'] += max(0.0, (float)$r['nominal_total']);
+            $buckets[$k]['invoice_cnt']++;
+        }
+
+        foreach ($tagihan_rows as $r) {
+            $k = $getBucketKey($r['tgl']);
+            if (!$k) continue;
+            if (!isset($buckets[$k])) $buckets[$k] = $makeBucket();
+            $val = max(0.0, (float)$r['nominal_total']);
+            if (strtolower(trim((string)$r['status_bayar'])) === 'sudah_dibayar') {
+                $buckets[$k]['cash_out_val'] += $val;
+                $buckets[$k]['cash_out_cnt']++;
+            } else {
+                $buckets[$k]['obligation_val'] += $val;
+                $buckets[$k]['obligation_cnt']++;
+            }
+        }
+
+        foreach ($payroll_rows as $r) {
+            $k = $getBucketKey($r['tgl']);
+            if (!$k) continue;
+            if (!isset($buckets[$k])) $buckets[$k] = $makeBucket();
+            $buckets[$k]['cash_out_val'] += max(0.0, (float)$r['nominal_total']);
+            $buckets[$k]['cash_out_cnt'] += (int)$r['slip_cnt'];
+        }
+
+        ksort($buckets);
+
+        $series_orders      = [];
+        $series_invoices    = [];
+        $series_cash_out    = [];
+        $series_obligations = [];
+        $series_volume      = [];
+        $meta_by_date       = [];
+
+        foreach ($buckets as $dateKey => $b) {
+            $ord_v = round($b['order_val'], 2);
+            $inv_v = round($b['invoice_val'], 2);
+            $out_v = round($b['cash_out_val'], 2);
+            $obl_v = round($b['obligation_val'], 2);
+            $vol_c = $b['order_cnt'] + $b['invoice_cnt'] + $b['cash_out_cnt'] + $b['obligation_cnt'];
+
+            $series_orders[]      = ['time' => $dateKey, 'value' => $ord_v];
+            $series_invoices[]    = ['time' => $dateKey, 'value' => $inv_v];
+            $series_cash_out[]    = ['time' => $dateKey, 'value' => $out_v];
+            $series_obligations[] = ['time' => $dateKey, 'value' => $obl_v];
+            $series_volume[]      = [
+                'time'  => $dateKey,
+                'value' => $vol_c,
+                'color' => ($inv_v >= $out_v) ? 'rgba(16, 185, 129, 0.40)' : 'rgba(239, 68, 68, 0.40)'
+            ];
+
+            $meta_by_date[$dateKey] = [
+                'order_val'      => $ord_v,
+                'order_cnt'      => $b['order_cnt'],
+                'invoice_val'    => $inv_v,
+                'invoice_cnt'    => $b['invoice_cnt'],
+                'cash_out_val'   => $out_v,
+                'cash_out_cnt'   => $b['cash_out_cnt'],
+                'obligation_val' => $obl_v,
+                'obligation_cnt' => $b['obligation_cnt'],
+                'vol_cnt'        => $vol_c
+            ];
+        }
+
+        return [
+            'orders'      => $series_orders,
+            'invoices'    => $series_invoices,
+            'cash_out'    => $series_cash_out,
+            'obligations' => $series_obligations,
+            'volume'      => $series_volume,
+            'meta'        => $meta_by_date
+        ];
+    }
+
+    /**
+     * Build Top Customers Breakdown (Contracted Orders vs Billed Invoices)
+     */
+    private function buildCustomerBreakdown($po_rows, $inv_rows)
+    {
+        $map = [];
+
+        foreach ($po_rows as $r) {
+            $name = trim((string)($r['customer_nama'] ?? '-'));
+            if ($name === '' || $name === '-') $name = 'Pelanggan Umum / Lainnya';
+            $key = strtolower($name);
+            if (!isset($map[$key])) {
+                $map[$key] = [
+                    'customer_nama' => $name,
+                    'order_nominal' => 0.0,
+                    'order_count'   => 0,
+                    'inv_nominal'   => 0.0,
+                    'inv_count'     => 0
+                ];
+            }
+            $map[$key]['order_nominal'] += max(0.0, (float)$r['nominal_total']);
+            $map[$key]['order_count']++;
+        }
+
+        foreach ($inv_rows as $r) {
+            $name = trim((string)($r['customer_nama'] ?? '-'));
+            if ($name === '' || $name === '-') $name = 'Pelanggan Umum / Lainnya';
+            $key = strtolower($name);
+            if (!isset($map[$key])) {
+                $map[$key] = [
+                    'customer_nama' => $name,
+                    'order_nominal' => 0.0,
+                    'order_count'   => 0,
+                    'inv_nominal'   => 0.0,
+                    'inv_count'     => 0
+                ];
+            }
+            $map[$key]['inv_nominal'] += max(0.0, (float)$r['nominal_total']);
+            $map[$key]['inv_count']++;
+        }
+
+        $list = array_values($map);
+        usort($list, function ($a, $b) {
+            $maxA = max($a['order_nominal'], $a['inv_nominal']);
+            $maxB = max($b['order_nominal'], $b['inv_nominal']);
+            if ($maxA == $maxB) return 0;
+            return ($maxA > $maxB) ? -1 : 1;
+        });
+
+        return array_slice($list, 0, 8);
+    }
+
+    /**
+     * Build Unified Institutional Audit Ledger (Latest 25 Cross-Table Records with Strict Classification)
+     */
+    private function buildUnifiedAuditLedger($po_rows, $inv_rows, $tagihan_rows, $payroll_rows)
+    {
+        $ledger = [];
+
+        foreach (array_slice($po_rows, 0, 12) as $r) {
+            $ledger[] = [
+                'tgl'            => $r['tgl'],
+                'kode_dok'       => $r['no_po'] ?: ('PO-' . $r['id_po']),
+                'kategori'       => 'CUSTOMER ORDER (PO)',
+                'klasifikasi'    => 'ACTUAL • ORDER BOOK',
+                'badge_color'    => 'cyan',
+                'entitas'        => $r['customer_nama'] ?: '-',
+                'status_dok'     => strtoupper($r['status_po'] ?: '-'),
+                'nominal'        => round((float)$r['nominal_total'], 2),
+                'sumber_tabel'   => 'po_masuk',
+                'arah_kas'       => 'NON-CASH (CONTRACT)'
+            ];
+        }
+
+        foreach (array_slice($inv_rows, 0, 12) as $r) {
+            $ledger[] = [
+                'tgl'            => $r['tgl'],
+                'kode_dok'       => $r['no_invoice'] ?: ('INV-' . $r['id_invoice']),
+                'kategori'       => 'ISSUED INVOICE',
+                'klasifikasi'    => 'ACTUAL • BILLED AR',
+                'badge_color'    => 'emerald',
+                'entitas'        => $r['customer_nama'] ?: '-',
+                'status_dok'     => strtoupper(str_replace('_', ' ', $r['status_barang_keluar'] ?: 'TERBIT')),
+                'nominal'        => round((float)$r['nominal_total'], 2),
+                'sumber_tabel'   => 'invoice',
+                'arah_kas'       => 'RECEIVABLE (BILLED)'
+            ];
+        }
+
+        foreach (array_slice($tagihan_rows, 0, 12) as $r) {
+            $is_paid = (strtolower(trim((string)$r['status_bayar'])) === 'sudah_dibayar');
+            $ledger[] = [
+                'tgl'            => $r['tgl'],
+                'kode_dok'       => $r['no_dokumen'],
+                'kategori'       => $is_paid ? 'PAID FREIGHT BILL' : 'VENDOR OBLIGATION',
+                'klasifikasi'    => $is_paid ? 'ACTUAL • CASH OUTFLOW' : 'ACTUAL • PAYABLE AP',
+                'badge_color'    => $is_paid ? 'rose' : 'amber',
+                'entitas'        => $r['vendor_nama'],
+                'status_dok'     => $is_paid ? 'SUDAH DIBAYAR' : 'BELUM DIBAYAR',
+                'nominal'        => round((float)$r['nominal_total'], 2),
+                'sumber_tabel'   => 'tagihan_ekspedisi',
+                'arah_kas'       => $is_paid ? 'CASH OUTFLOW (-)' : 'LIABILITY (UNPAID)'
+            ];
+        }
+
+        foreach (array_slice($payroll_rows, 0, 6) as $r) {
+            $ledger[] = [
+                'tgl'            => $r['tgl'],
+                'kode_dok'       => $r['no_dokumen'],
+                'kategori'       => 'CLOSED PAYROLL SDM',
+                'klasifikasi'    => 'ACTUAL • CASH OUTFLOW',
+                'badge_color'    => 'rose',
+                'entitas'        => $r['vendor_nama'],
+                'status_dok'     => 'TUTUP BUKU GAJI',
+                'nominal'        => round((float)$r['nominal_total'], 2),
+                'sumber_tabel'   => 'salary_history',
+                'arah_kas'       => 'CASH OUTFLOW (-)'
+            ];
+        }
+
+        usort($ledger, function ($a, $b) {
+            return strcmp($b['tgl'], $a['tgl']);
+        });
+
+        return array_slice($ledger, 0, 25);
+    }
+}
