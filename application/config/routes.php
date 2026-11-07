@@ -152,6 +152,14 @@ $route['reminder'] = 'Reminder/index';
 $route['reminder/(:any)'] = 'Reminder/$1';
 $route['reminder/(:any)/(:any)'] = 'Reminder/$1/$2';
 
+// VYM Business Intelligence (VYM BI) Routes
+$route['vym_bi'] = 'Vym_bi/index';
+$route['vym_bi/(:any)'] = 'Vym_bi/$1';
+$route['vym_bi/(:any)/(:any)'] = 'Vym_bi/$1/$2';
+$route['business_intelligence'] = 'Vym_bi/index';
+$route['business_intelligence/(:any)'] = 'Vym_bi/$1';
+$route['business_intelligence/(:any)/(:any)'] = 'Vym_bi/$1/$2';
+
 
 
 
