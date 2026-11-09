@@ -1513,15 +1513,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (res.jobdesks && res.jobdesks.length > 0) {
                             var currentGroup = '';
                             $.each(res.jobdesks, function(i, it) {
-                                var groupTitle = it.posisi ? it.posisi : (it.divisi ? 'Divisi ' + it.divisi : 'Jobdesk Terkait');
+                                var groupTitle = it.posisi ? it.posisi : (it.divisi ? 'Divisi ' + it.divisi : 'Jobdesk Karyawan');
                                 if (groupTitle !== currentGroup) {
                                     if (currentGroup !== '') {
                                         html += '</optgroup>';
                                     }
                                     currentGroup = groupTitle;
-                                    html += '<optgroup label="Posisi: ' + escapeHtml(currentGroup) + '">';
+                                    html += '<optgroup label="Jobdesk Resmi: ' + escapeHtml(currentGroup) + '">';
                                 }
-                                var noLabel = it.no ? it.no + '. ' : '';
+                                var noLabel = (i + 1) + '. ';
                                 html += '<option value="' + it.id + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' + noLabel + escapeHtml(it.jobdesk) + '</option>';
                             });
                             if (currentGroup !== '') {

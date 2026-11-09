@@ -603,134 +603,123 @@ class Task_proyek extends CI_Controller
         $jobdesks  = [];
         $addedJobs = [];
 
-        // 1. Cocokkan dari Master Template Sasaran Mutu dengan skoring
+        // 1. CARI EXACT MATCH POSISI TERLEBIH DAHULU
+        $exactMatches = [];
         foreach ($master as $m) {
             $mPos = isset($m['posisi']) ? $m['posisi'] : '';
-            $mDiv = isset($m['divisi']) ? $m['divisi'] : '';
-            $normMPos = $normalizeText($mPos);
-            $normMDiv = $normalizeText($mDiv);
-
-            $score = 0;
-
-            // A. Exact match posisi
-            if (!empty($normJabatan) && $normJabatan === $normMPos) {
-                $score += 100;
-            }
-            // B. Substring match posisi
-            else if (!empty($normJabatan) && !empty($normMPos) && (strpos($normMPos, $normJabatan) !== false || strpos($normJabatan, $normMPos) !== false)) {
-                $score += 80;
-            }
-            // C. Word overlap posisi
-            else if (!empty($wordsJabatan) && !empty($normMPos)) {
-                $mWords = $extractWords($mPos);
-                $common = array_intersect($wordsJabatan, $mWords);
-                if (!empty($common)) {
-                    $score += (count($common) * 25);
-                }
-            }
-
-            // D. Divisi match
-            if (!empty($normDivisi) && !empty($normMDiv)) {
-                if ($normDivisi === $normMDiv) {
-                    $score += 30;
-                } else if (strpos($normMDiv, $normDivisi) !== false || strpos($normDivisi, $normMDiv) !== false) {
-                    $score += 20;
-                } else if (!empty($wordsDivisi)) {
-                    $mDivWords = $extractWords($mDiv);
-                    $commonDiv = array_intersect($wordsDivisi, $mDivWords);
-                    if (!empty($commonDiv)) {
-                        $score += (count($commonDiv) * 10);
-                    }
-                }
-            }
-
-            if ($score > 0) {
-                $jobKey = md5($m['jobdesk']);
-                if (!isset($addedJobs[$jobKey])) {
-                    $addedJobs[$jobKey] = true;
-                    $jobdesks[] = [
-                        'id'            => $m['id'],
-                        'no'            => $m['no'],
-                        'posisi'        => $m['posisi'],
-                        'divisi'        => $m['divisi'],
-                        'jobdesk'       => $m['jobdesk'],
-                        'detail_proyek' => $m['detail_proyek'],
-                        'sasaran_mutu'  => $m['sasaran_mutu'],
-                        'score'         => $score
-                    ];
+            if ($normalizeText($mPos) === $normJabatan) {
+                // Abaikan baris header kosong (ALL CAPS tanpa detail proyek & sasaran mutu)
+                $isHeaderOnly = (empty(trim($m['detail_proyek'])) && empty(trim($m['sasaran_mutu'])) && empty(trim($m['implementasi'])) && mb_strtoupper(trim($m['jobdesk'])) === trim($m['jobdesk']));
+                if (!$isHeaderOnly) {
+                    $exactMatches[] = $m;
                 }
             }
         }
 
-        // 2. Muat juga override atau custom jobdesk yang ditambahkan langsung di sistem untuk tahun berjalan
+        // Jika ada exact match posisi karyawan (seperti "IT Support & Development"),
+        // HANYA GUNAKAN POSISI KARYAWAN TERSEBUT! JANGAN campur posisi orang lain (seperti "Technical Support")!
+        if (!empty($exactMatches)) {
+            $targetItems = $exactMatches;
+        } else {
+            // 2. Jika tidak ada exact match posisi, cari posisi dengan kemiripan substring (BUKAN overlap kata terpisah)
+            $subMatches = [];
+            foreach ($master as $m) {
+                $normMPos = $normalizeText($m['posisi']);
+                if (!empty($normMPos) && !empty($normJabatan)) {
+                    if (strpos($normMPos, $normJabatan) !== false || strpos($normJabatan, $normMPos) !== false) {
+                        $isHeaderOnly = (empty(trim($m['detail_proyek'])) && empty(trim($m['sasaran_mutu'])) && empty(trim($m['implementasi'])) && mb_strtoupper(trim($m['jobdesk'])) === trim($m['jobdesk']));
+                        if (!$isHeaderOnly) {
+                            $subMatches[$m['posisi']][] = $m;
+                        }
+                    }
+                }
+            }
+            if (!empty($subMatches)) {
+                $firstPos = array_keys($subMatches)[0];
+                $targetItems = $subMatches[$firstPos];
+            } else {
+                // 3. Fallback jika posisi tidak cocok sama sekali: cari berdasarkan divisi
+                $divMatches = [];
+                foreach ($master as $m) {
+                    $normMDiv = $normalizeText($m['divisi']);
+                    if (!empty($normMDiv) && !empty($normDivisi) && ($normMDiv === $normDivisi || strpos($normMDiv, $normDivisi) !== false)) {
+                        $isHeaderOnly = (empty(trim($m['detail_proyek'])) && empty(trim($m['sasaran_mutu'])) && empty(trim($m['implementasi'])) && mb_strtoupper(trim($m['jobdesk'])) === trim($m['jobdesk']));
+                        if (!$isHeaderOnly) {
+                            $divMatches[] = $m;
+                        }
+                    }
+                }
+                $targetItems = !empty($divMatches) ? $divMatches : [];
+            }
+        }
+
+        // Susun daftar jobdesk dengan penomoran urut rapi (1, 2, 3...)
+        $seqNo = 1;
+        foreach ($targetItems as $m) {
+            $cleanJob = trim($m['jobdesk']);
+            $jobKey = md5(strtolower($cleanJob));
+            if (!isset($addedJobs[$jobKey])) {
+                $addedJobs[$jobKey] = true;
+                $jobdesks[] = [
+                    'id'            => $m['id'],
+                    'no'            => $seqNo++,
+                    'posisi'        => $m['posisi'],
+                    'divisi'        => $m['divisi'],
+                    'jobdesk'       => $cleanJob,
+                    'detail_proyek' => trim($m['detail_proyek']),
+                    'sasaran_mutu'  => trim($m['sasaran_mutu'])
+                ];
+            }
+        }
+
+        // Muat juga custom item yang ditambahkan khusus tahun ini untuk posisi karyawan tersebut
         $curYear = (int)date('Y');
         $overrides = $this->md_audit_system->loadSasaranMutuOverrides($curYear);
         if (!empty($overrides)) {
             foreach ($overrides as $ovId => $ov) {
                 $ovPos = isset($ov['posisi']) ? trim($ov['posisi']) : '';
-                $ovDiv = isset($ov['divisi']) ? trim($ov['divisi']) : '';
                 $ovJob = isset($ov['jobdesk']) ? trim($ov['jobdesk']) : '';
-
                 if (empty($ovJob)) continue;
 
                 $normOvPos = $normalizeText($ovPos);
-                $normOvDiv = $normalizeText($ovDiv);
-                $score = 0;
-
-                if (!empty($normJabatan) && ($normJabatan === $normOvPos || strpos($normOvPos, $normJabatan) !== false || strpos($normJabatan, $normOvPos) !== false)) {
-                    $score += 80;
-                } else if (!empty($normDivisi) && ($normDivisi === $normOvDiv || strpos($normOvDiv, $normDivisi) !== false)) {
-                    $score += 30;
-                }
-
-                if ($score > 0) {
-                    $jobKey = md5($ovJob);
+                if ($normOvPos === $normJabatan) {
+                    $cleanJob = trim($ovJob);
+                    $jobKey = md5(strtolower($cleanJob));
                     if (!isset($addedJobs[$jobKey])) {
                         $addedJobs[$jobKey] = true;
                         $jobdesks[] = [
                             'id'            => $ovId,
-                            'no'            => isset($ov['no']) ? $ov['no'] : (count($jobdesks) + 1),
-                            'posisi'        => $ovPos ?: 'Custom',
-                            'divisi'        => $ovDiv ?: 'General',
-                            'jobdesk'       => $ovJob,
-                            'detail_proyek' => isset($ov['detail_proyek']) ? $ov['detail_proyek'] : '',
-                            'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : '',
-                            'score'         => $score
+                            'no'            => $seqNo++,
+                            'posisi'        => $ovPos ?: $rawJabatan,
+                            'divisi'        => isset($ov['divisi']) ? $ov['divisi'] : $rawDivisi,
+                            'jobdesk'       => $cleanJob,
+                            'detail_proyek' => isset($ov['detail_proyek']) ? trim($ov['detail_proyek']) : '',
+                            'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? trim($ov['sasaran_mutu']) : ''
                         ];
                     }
                 }
             }
         }
 
-        // 3. Fallback jika tidak ada jobdesk yang cocok: sertakan master template agar dropdown tidak pernah kosong
+        // Fallback cadangan jika master benar-benar kosong
         if (empty($jobdesks) && !empty($master)) {
             foreach ($master as $m) {
                 if (empty($m['jobdesk'])) continue;
-                $jobKey = md5($m['jobdesk']);
+                $cleanJob = trim($m['jobdesk']);
+                $jobKey = md5(strtolower($cleanJob));
                 if (!isset($addedJobs[$jobKey])) {
                     $addedJobs[$jobKey] = true;
                     $jobdesks[] = [
                         'id'            => $m['id'],
-                        'no'            => isset($m['no']) ? $m['no'] : '',
+                        'no'            => $seqNo++,
                         'posisi'        => isset($m['posisi']) ? $m['posisi'] : 'General',
                         'divisi'        => isset($m['divisi']) ? $m['divisi'] : 'General',
-                        'jobdesk'       => $m['jobdesk'],
-                        'detail_proyek' => isset($m['detail_proyek']) ? $m['detail_proyek'] : '',
-                        'sasaran_mutu'  => isset($m['sasaran_mutu']) ? $m['sasaran_mutu'] : '',
-                        'score'         => 1
+                        'jobdesk'       => $cleanJob,
+                        'detail_proyek' => isset($m['detail_proyek']) ? trim($m['detail_proyek']) : '',
+                        'sasaran_mutu'  => isset($m['sasaran_mutu']) ? trim($m['sasaran_mutu']) : ''
                     ];
                 }
             }
-        }
-
-        // Urutkan berdasarkan skor relevansi tertinggi
-        if (!empty($jobdesks)) {
-            usort($jobdesks, function($a, $b) {
-                if ($b['score'] === $a['score']) {
-                    return (int)$a['no'] - (int)$b['no'];
-                }
-                return $b['score'] - $a['score'];
-            });
         }
 
         header('Content-Type: application/json; charset=utf-8');
