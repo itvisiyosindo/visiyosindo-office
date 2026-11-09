@@ -1462,6 +1462,16 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#select_penerima_task').val(allIds).trigger('change');
     });
 
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     // Handle Dropdown Jobdesk Sasaran Mutu berdasarkan penerima tugas
     $('#select_penerima_task').on('change', function() {
         var selected = $(this).val() || [];
@@ -1492,35 +1502,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#jobdesk_loading').hide();
                 $('#select_jobdesk_karyawan').prop('disabled', false);
 
-                if (res && res.status === 'success') {
-                    if (res.karyawan) {
-                        var kInfo = res.karyawan.nama + ' (' + (res.karyawan.jabatan || res.karyawan.divisi) + ')';
-                        $('#nama_karyawan_terpilih').text(kInfo);
-                    }
-
-                    var html = '<option value="">-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --</option>';
-                    if (res.jobdesks && res.jobdesks.length > 0) {
-                        var currentGroup = '';
-                        $.each(res.jobdesks, function(i, it) {
-                            var groupTitle = it.posisi ? it.posisi : (it.divisi ? 'Divisi ' + it.divisi : 'Jobdesk Terkait');
-                            if (groupTitle !== currentGroup) {
-                                if (currentGroup !== '') {
-                                    html += '</optgroup>';
-                                }
-                                currentGroup = groupTitle;
-                                html += '<optgroup label="Posisi: ' + escapeHtml(currentGroup) + '">';
-                            }
-                            var noLabel = it.no ? it.no + '. ' : '';
-                            html += '<option value="' + it.id + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' + noLabel + escapeHtml(it.jobdesk) + '</option>';
-                        });
-                        if (currentGroup !== '') {
-                            html += '</optgroup>';
+                try {
+                    if (res && res.status === 'success') {
+                        if (res.karyawan) {
+                            var kInfo = res.karyawan.nama + ' (' + (res.karyawan.jabatan || res.karyawan.divisi) + ')';
+                            $('#nama_karyawan_terpilih').text(kInfo);
                         }
+
+                        var html = '<option value="">-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --</option>';
+                        if (res.jobdesks && res.jobdesks.length > 0) {
+                            var currentGroup = '';
+                            $.each(res.jobdesks, function(i, it) {
+                                var groupTitle = it.posisi ? it.posisi : (it.divisi ? 'Divisi ' + it.divisi : 'Jobdesk Terkait');
+                                if (groupTitle !== currentGroup) {
+                                    if (currentGroup !== '') {
+                                        html += '</optgroup>';
+                                    }
+                                    currentGroup = groupTitle;
+                                    html += '<optgroup label="Posisi: ' + escapeHtml(currentGroup) + '">';
+                                }
+                                var noLabel = it.no ? it.no + '. ' : '';
+                                html += '<option value="' + it.id + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' + noLabel + escapeHtml(it.jobdesk) + '</option>';
+                            });
+                            if (currentGroup !== '') {
+                                html += '</optgroup>';
+                            }
+                        } else {
+                            html += '<option value="SM_CUSTOM_TASK" data-nama="Tugas & Tanggung Jawab Operasional Tambahan">Tugas & Tanggung Jawab Operasional Tambahan</option>';
+                        }
+                        $('#select_jobdesk_karyawan').html(html);
                     } else {
-                        html += '<option value="SM_CUSTOM_TASK" data-nama="Tugas & Tanggung Jawab Operasional Tambahan">Tugas & Tanggung Jawab Operasional Tambahan</option>';
+                        $('#select_jobdesk_karyawan').html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
                     }
-                    $('#select_jobdesk_karyawan').html(html);
-                } else {
+                } catch (renderErr) {
+                    console.error('Error rendering jobdesks:', renderErr);
                     $('#select_jobdesk_karyawan').html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
                 }
             },
