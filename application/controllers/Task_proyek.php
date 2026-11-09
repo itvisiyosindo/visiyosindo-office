@@ -656,7 +656,7 @@ class Task_proyek extends CI_Controller
         // Susun daftar jobdesk dengan penomoran urut rapi (1, 2, 3...)
         $seqNo = 1;
         foreach ($targetItems as $m) {
-            $cleanJob = trim($m['jobdesk']);
+            $cleanJob = rtrim(trim($m['jobdesk']), '; ');
             $jobKey = md5(strtolower($cleanJob));
             if (!isset($addedJobs[$jobKey])) {
                 $addedJobs[$jobKey] = true;
@@ -683,7 +683,7 @@ class Task_proyek extends CI_Controller
 
                 $normOvPos = $normalizeText($ovPos);
                 if ($normOvPos === $normJabatan) {
-                    $cleanJob = trim($ovJob);
+                    $cleanJob = rtrim(trim($ovJob), '; ');
                     $jobKey = md5(strtolower($cleanJob));
                     if (!isset($addedJobs[$jobKey])) {
                         $addedJobs[$jobKey] = true;

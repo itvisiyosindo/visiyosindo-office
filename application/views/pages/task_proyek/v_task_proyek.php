@@ -111,6 +111,93 @@
         font-weight: 600;
         padding: 12px 18px;
     }
+
+    /* ==========================================================
+       Select2 Jobdesk Sasaran Mutu (Anti-Kepotong & Multiline Wrap)
+       ========================================================== */
+    .select2-dropdown-jobdesk {
+        z-index: 100050 !important;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
+        border: 1.5px solid #10b981 !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+    }
+    .select2-dropdown-jobdesk .select2-search {
+        padding: 8px !important;
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    .select2-dropdown-jobdesk .select2-search input {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 7px 10px !important;
+        font-size: 13px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .select2-dropdown-jobdesk .select2-results__options {
+        max-height: 350px !important;
+        padding: 4px 0 !important;
+    }
+    .select2-dropdown-jobdesk .select2-results__group {
+        background: #ecfdf5 !important;
+        color: #065f46 !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        padding: 8px 14px !important;
+        border-top: 1px solid #d1fae5 !important;
+        border-bottom: 1px solid #d1fae5 !important;
+        letter-spacing: 0.3px !important;
+        text-align: left !important;
+    }
+    .select2-dropdown-jobdesk .select2-results__option {
+        white-space: normal !important;
+        word-break: break-word !important;
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        padding: 9px 14px !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        color: #1e293b !important;
+        text-align: left !important;
+    }
+    .select2-dropdown-jobdesk .select2-results__option--highlighted {
+        background-color: #059669 !important;
+        color: #ffffff !important;
+    }
+    #container_jobdesk_karyawan .select2-container--default .select2-selection--single {
+        height: auto !important;
+        min-height: 42px !important;
+        padding: 6px 12px !important;
+        border: 1.5px solid #86efac !important;
+        border-radius: 6px !important;
+        background-color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    #container_jobdesk_karyawan .select2-container--default.select2-container--open .select2-selection--single,
+    #container_jobdesk_karyawan .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+    }
+    #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__rendered {
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.45 !important;
+        color: #1e293b !important;
+        font-size: 13px !important;
+        padding-left: 0 !important;
+        padding-right: 25px !important;
+        margin: 0 !important;
+        text-align: left !important;
+    }
+    #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__arrow {
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        right: 10px !important;
+    }
+    #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #64748b !important;
+    }
 </style>
 
 <?php
@@ -1472,17 +1559,36 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, '&#039;');
     }
 
+    // Helper inisialisasi Select2 untuk Jobdesk Sasaran Mutu
+    function initSelect2Jobdesk() {
+        if ($.fn.select2) {
+            try {
+                if ($('#select_jobdesk_karyawan').hasClass('select2-hidden-accessible')) {
+                    $('#select_jobdesk_karyawan').select2('destroy');
+                }
+                $('#select_jobdesk_karyawan').select2({
+                    dropdownParent: $('#modalBuatTask'),
+                    placeholder: '-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownCssClass: 'select2-dropdown-jobdesk'
+                });
+            } catch (e) {
+                console.warn('Select2 init error:', e);
+            }
+        }
+    }
+
     // Handle Dropdown Jobdesk Sasaran Mutu berdasarkan penerima tugas
     $('#select_penerima_task').on('change', function() {
         var selected = $(this).val() || [];
         if (selected.length === 1) {
             var empId = selected[0];
             $('#container_jobdesk_karyawan').slideDown(200);
-            $('#select_jobdesk_karyawan').prop('required', true);
             loadJobdeskKaryawan(empId);
         } else {
             $('#container_jobdesk_karyawan').slideUp(200);
-            $('#select_jobdesk_karyawan').prop('required', false).val('').trigger('change');
+            $('#select_jobdesk_karyawan').val('').trigger('change');
             $('#input_nama_jobdesk').val('');
             $('#jobdesk_detail_preview').hide();
         }
@@ -1490,8 +1596,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadJobdeskKaryawan(empId) {
         $('#jobdesk_loading').show();
-        $('#select_jobdesk_karyawan').prop('disabled', true).html('<option value="">-- Memuat daftar jobdesk... --</option>');
         $('#jobdesk_detail_preview').hide();
+        $('#select_jobdesk_karyawan').prop('disabled', true).html('<option value="">-- Memuat daftar jobdesk... --</option>');
+        initSelect2Jobdesk();
 
         $.ajax({
             url: baseUrl + 'task_proyek/get_karyawan_jobdesks',
@@ -1538,10 +1645,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error rendering jobdesks:', renderErr);
                     $('#select_jobdesk_karyawan').html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
                 }
+
+                initSelect2Jobdesk();
             },
             error: function() {
                 $('#jobdesk_loading').hide();
                 $('#select_jobdesk_karyawan').prop('disabled', false).html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
+                initSelect2Jobdesk();
             }
         });
     }
@@ -1609,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php endif; ?>
         $('#formBuatTask')[0].reset();
         $('#container_jobdesk_karyawan').hide();
-        $('#select_jobdesk_karyawan').prop('required', false).val('');
+        $('#select_jobdesk_karyawan').val('').trigger('change');
         $('#input_nama_jobdesk').val('');
         $('#jobdesk_detail_preview').hide();
         if ($.fn.select2) {
@@ -1647,6 +1757,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 swal('Perhatian', 'Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!', 'warning');
             } else {
                 alert('Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!');
+            }
+            if ($.fn.select2 && $('#select_jobdesk_karyawan').hasClass('select2-hidden-accessible')) {
+                $('#select_jobdesk_karyawan').select2('open');
             }
             return false;
         }
