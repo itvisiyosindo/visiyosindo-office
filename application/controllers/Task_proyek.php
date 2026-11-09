@@ -297,7 +297,7 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (40% Task Proyek : 30% Laporan Mingguan : 30% Pencapaian)
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (Solusi A: 80% Mutu Kualitas + 20% Volume Produktivitas)
         $wherePeriodeTask = "";
         if (!empty($filterBulan)) {
             $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
@@ -474,50 +474,72 @@ class Task_proyek extends CI_Controller
             $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
             $skorPenc = $hasPenc ? round((float)$lb->avg_nilai_pencapaian, 1) : null;
 
+            // Target Bulanan Volume Kuantitas Wajar (Baseline Produktivitas)
+            // Task: min 2 task selesai | Laporan: min 120 poin | Pencapaian: min 10 item
+            $volTask = min(100.0, ((int)$lb->task_selesai / 2) * 100.0);
+            $volLap  = min(100.0, ((int)$lb->total_poin_laporan / 120) * 100.0);
+            $volPenc = min(100.0, ((int)$lb->total_pencapaian / 10) * 100.0);
+
+            // 1. Hitung Skor Mutu (Kualitas Rata-rata) & Skor Produktivitas (Volume)
             if ($hasTask && $hasLap && $hasPenc) {
-                // Evaluasi Lengkap 3 Pilar: 40% Task Proyek + 30% Laporan Mingguan + 30% Pencapaian
-                $skorAkhir = round(($skorTask * 0.40) + ($skorLap * 0.30) + ($skorPenc * 0.30), 1);
+                // Lengkap 3 Pilar: 40% Task + 30% Lap + 30% Penc
+                $skorMutu = round(($skorTask * 0.40) + ($skorLap * 0.30) + ($skorPenc * 0.30), 1);
+                $skorProd = round(($volTask * 0.40) + ($volLap * 0.30) + ($volPenc * 0.30), 1);
                 $komposisi = '40% Task + 30% Lap + 30% Penc';
                 $statusNilai = 'lengkap';
                 $isEligiblePodium = true;
             } elseif ($hasTask && $hasLap && !$hasPenc) {
-                // Task (40) + Lap (30) -> Bobot relatif 57% : 43%
-                $skorAkhir = round((($skorTask * 0.40) + ($skorLap * 0.30)) / 0.70, 1);
+                // Task + Lap (Parsial 2 Pilar)
+                $skorMutu = round((($skorTask * 0.40) + ($skorLap * 0.30)) / 0.70, 1);
+                $skorProd = round((($volTask * 0.40) + ($volLap * 0.30)) / 0.70, 1);
                 $komposisi = 'Task + Lap (Parsial)';
                 $statusNilai = 'parsial_2';
                 $isEligiblePodium = false;
             } elseif ($hasTask && !$hasLap && $hasPenc) {
-                // Task (40) + Penc (30) -> Bobot relatif 57% : 43%
-                $skorAkhir = round((($skorTask * 0.40) + ($skorPenc * 0.30)) / 0.70, 1);
+                // Task + Penc (Parsial 2 Pilar)
+                $skorMutu = round((($skorTask * 0.40) + ($skorPenc * 0.30)) / 0.70, 1);
+                $skorProd = round((($volTask * 0.40) + ($volPenc * 0.30)) / 0.70, 1);
                 $komposisi = 'Task + Penc (Parsial)';
                 $statusNilai = 'parsial_2';
                 $isEligiblePodium = false;
             } elseif (!$hasTask && $hasLap && $hasPenc) {
-                // Lap (30) + Penc (30) -> Bobot seimbang 50% : 50%
-                $skorAkhir = round(($skorLap * 0.50) + ($skorPenc * 0.50), 1);
+                // Lap + Penc (Parsial 2 Pilar)
+                $skorMutu = round(($skorLap * 0.50) + ($skorPenc * 0.50), 1);
+                $skorProd = round(($volLap * 0.50) + ($volPenc * 0.50), 1);
                 $komposisi = '50% Lap + 50% Penc (Parsial)';
                 $statusNilai = 'parsial_2';
                 $isEligiblePodium = false;
             } elseif ($hasTask && !$hasLap && !$hasPenc) {
-                $skorAkhir = $skorTask;
+                $skorMutu = $skorTask;
+                $skorProd = round($volTask, 1);
                 $komposisi = '100% Task (Parsial)';
                 $statusNilai = 'parsial_1';
                 $isEligiblePodium = false;
             } elseif (!$hasTask && $hasLap && !$hasPenc) {
-                $skorAkhir = $skorLap;
+                $skorMutu = $skorLap;
+                $skorProd = round($volLap, 1);
                 $komposisi = '100% Laporan (Parsial)';
                 $statusNilai = 'parsial_1';
                 $isEligiblePodium = false;
             } elseif (!$hasTask && !$hasLap && $hasPenc) {
-                $skorAkhir = $skorPenc;
+                $skorMutu = $skorPenc;
+                $skorProd = round($volPenc, 1);
                 $komposisi = '100% Pencapaian (Parsial)';
                 $statusNilai = 'parsial_1';
                 $isEligiblePodium = false;
             } else {
-                $skorAkhir = null;
+                $skorMutu = null;
+                $skorProd = null;
                 $komposisi = 'Belum Ada Nilai';
                 $statusNilai = 'belum_dinilai';
                 $isEligiblePodium = false;
+            }
+
+            // 2. SOLUSI A: SKOR AKHIR = 80% KUALITAS MUTU + 20% PRODUKTIVITAS VOLUME
+            if ($skorMutu !== null) {
+                $skorAkhir = round(($skorMutu * 0.80) + ($skorProd * 0.20), 1);
+            } else {
+                $skorAkhir = null;
             }
 
             $ratingAgregat = $skorAkhir !== null ? round(($skorAkhir / 100) * 5, 2) : 0;
@@ -552,6 +574,8 @@ class Task_proyek extends CI_Controller
             $lb->skor_task          = $skorTask;
             $lb->skor_lap           = $skorLap;
             $lb->skor_penc          = $skorPenc;
+            $lb->skor_mutu          = $skorMutu;
+            $lb->skor_prod          = $skorProd;
             $lb->total_pencapaian   = (int)$lb->total_pencapaian;
             $lb->skor_akhir         = $skorAkhir;
             $lb->rating_agregat     = $ratingAgregat;
@@ -570,12 +594,12 @@ class Task_proyek extends CI_Controller
             $leaderboard[] = $lb;
         }
 
-        // Urutkan Leaderboard berdasarkan aturan Opsi 1 (3 Pilar KPI):
+        // Urutkan Leaderboard berdasarkan aturan Solusi A (Mutu 80% + Produktivitas 20%):
         // 1. Evaluasi Lengkap 3 Pilar ('lengkap') diprioritaskan di puncak (Eligible Juara 1, 2, 3)
         // 2. Evaluasi 2 Pilar di atas 1 Pilar
         // 3. Skor Akhir tertinggi (NULL paling bawah)
-        // 4. Task selesai terbanyak
-        // 5. Total task terbanyak
+        // 4. Skor Produktivitas tertinggi
+        // 5. Task selesai terbanyak
         // 6. Total pencapaian terbanyak
         // 7. Total poin laporan terbanyak
         usort($leaderboard, function($a, $b) {
@@ -597,16 +621,16 @@ class Task_proyek extends CI_Controller
             }
 
             if ($a->skor_akhir == $b->skor_akhir) {
-                if ($a->task_selesai == $b->task_selesai) {
-                    if ($a->total_task == $b->total_task) {
+                if ($a->skor_prod == $b->skor_prod) {
+                    if ($a->task_selesai == $b->task_selesai) {
                         if ($a->total_pencapaian == $b->total_pencapaian) {
                             return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
                         }
                         return (int)$b->total_pencapaian <=> (int)$a->total_pencapaian;
                     }
-                    return (int)$b->total_task <=> (int)$a->total_task;
+                    return (int)$b->task_selesai <=> (int)$a->task_selesai;
                 }
-                return (int)$b->task_selesai <=> (int)$a->task_selesai;
+                return ($b->skor_prod < $a->skor_prod) ? -1 : 1;
             }
             return ($b->skor_akhir < $a->skor_akhir) ? -1 : 1;
         });

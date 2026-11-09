@@ -971,7 +971,7 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu 3 Pilar):</strong> Integrasi bobot <strong>40% Penugasan Task Proyek</strong> (konversi rating bintang 1–5 ⭐) + <strong>30% Laporan Rutin / Jobdesk</strong> + <strong>30% Pencapaian Mingguan</strong>. Karyawan dengan <em>Evaluasi Lengkap 3 Pilar</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
+                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu Mutu & Produktivitas):</strong> Integrasi <strong>80% Kualitas Mutu</strong> (40% Task Proyek + 30% Laporan Rutin + 30% Pencapaian) + <strong>20% Volume Produktivitas</strong> (keaktifan jumlah output kerja). Karyawan dengan <em>Evaluasi Lengkap 3 Pilar</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
                             <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
@@ -990,19 +990,19 @@ $namaBulanList = [
                                     <th class="align-middle">Jabatan</th>
                                     <th class="text-center align-middle" style="min-width: 125px;">
                                         <div>Task Proyek</div>
-                                        <small class="badge badge-primary" style="font-size: 10px;">Bobot 40%</small>
+                                        <small class="badge badge-primary" style="font-size: 10px;">Mutu 40%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 125px;">
                                         <div>Laporan Mingguan</div>
-                                        <small class="badge badge-info" style="font-size: 10px;">Bobot 30%</small>
+                                        <small class="badge badge-info" style="font-size: 10px;">Mutu 30%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 125px;">
                                         <div>Pencapaian</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Bobot 30%</small>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 30%</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 110px; background: #f0fdf4;">
+                                    <th class="text-center align-middle" style="min-width: 125px; background: #f0fdf4;">
                                         <div class="text-success font-weight-bold">Skor Akhir</div>
-                                        <small class="text-muted" style="font-size: 10px;">Skala 100</small>
+                                        <small class="text-muted" style="font-size: 10px;">80% Mutu + 20% Vol</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 140px;">Rating Agregat</th>
                                     <th class="text-center align-middle" width="125">Grade Kinerja</th>
@@ -1069,11 +1069,11 @@ $namaBulanList = [
                                                 <div class="font-weight-bold" style="font-size: 17px; color: <?= $lb->grade_color ?>;"><?= number_format($lb->skor_akhir, 1) ?></div>
                                                 <?php if ($lb->status_nilai === 'lengkap'): ?>
                                                     <div class="small font-weight-bold text-success" style="font-size: 10px;">
-                                                        <i class="fas fa-check-circle text-success mr-1"></i><?= htmlspecialchars($lb->komposisi) ?>
+                                                        <i class="fas fa-check-circle text-success mr-1"></i>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
                                                     </div>
                                                 <?php else: ?>
                                                     <div class="small text-muted" style="font-size: 10px;">
-                                                        <span class="badge badge-warning text-dark py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Parsial</span><?= htmlspecialchars($lb->komposisi) ?>
+                                                        <span class="badge badge-warning text-dark py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Parsial</span>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
                                                     </div>
                                                 <?php endif; ?>
                                             <?php else: ?>
