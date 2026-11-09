@@ -157,18 +157,18 @@ $route['reminder/(:any)/(:any)'] = 'Reminder/$1/$2';
 
 
 // Routes for Sasaran Mutu
-$route['sasaran_mutu'] = 'Sasaran_mutu/index';
-$route['sasaran_mutu/(:any)'] = 'Sasaran_mutu/$1';
-$route['sasaran-mutu'] = 'Sasaran_mutu/index';
-$route['sasaran-mutu/(:any)'] = 'Sasaran_mutu/$1';
+$route['sasaran_mutu'] = 'sasaran_mutu/index';
+$route['sasaran_mutu/(:any)'] = 'sasaran_mutu/$1';
+$route['sasaran-mutu'] = 'sasaran_mutu/index';
+$route['sasaran-mutu/(:any)'] = 'sasaran_mutu/$1';
 
 // Routes for Audit (Audit Kinerja & Audit Keuangan)
-$route['audit'] = 'Audit/kinerja';
-$route['audit/kinerja'] = 'Audit/kinerja';
-$route['audit/keuangan'] = 'Audit/keuangan';
-$route['audit/save_kinerja'] = 'Audit/save_kinerja';
-$route['audit/save_keuangan'] = 'Audit/save_keuangan';
-$route['audit_kinerja'] = 'Audit/kinerja';
-$route['audit_kinerja/(:any)'] = 'Audit/kinerja';
-$route['audit_keuangan'] = 'Audit/keuangan';
-$route['audit_keuangan/(:any)'] = 'Audit/keuangan';
+$route['audit'] = 'audit/kinerja';
+$route['audit/kinerja'] = 'audit/kinerja';
+$route['audit/keuangan'] = 'audit/keuangan';
+$route['audit/save_kinerja'] = 'audit/save_kinerja';
+$route['audit/save_keuangan'] = 'audit/save_keuangan';
+$route['audit_kinerja'] = 'audit/kinerja';
+$route['audit_kinerja/(:any)'] = 'audit/kinerja';
+$route['audit_keuangan'] = 'audit/keuangan';
+$route['audit_keuangan/(:any)'] = 'audit/keuangan';

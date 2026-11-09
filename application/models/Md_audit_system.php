@@ -36,6 +36,27 @@ class Md_audit_system extends CI_Model
     }
 
     /**
+     * Cek apakah suatu tabel ada di database secara aman tanpa crash
+     */
+    public function hasTable($tableName)
+    {
+        static $cache = [];
+        if (isset($cache[$tableName])) {
+            return $cache[$tableName];
+        }
+        if (!$this->db->conn_id) {
+            return false;
+        }
+        $orig = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+        $q = @$this->db->query("SHOW TABLES LIKE '{$tableName}'");
+        $res = ($q && $q->num_rows() > 0);
+        $this->db->db_debug = $orig;
+        $cache[$tableName] = $res;
+        return $res;
+    }
+
+    /**
      * Inisialisasi tabel pendukung jika belum ada
      */
     public function initTables()
@@ -44,8 +65,11 @@ class Md_audit_system extends CI_Model
             return;
         }
 
+        $orig = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+
         // Tabel untuk override / pengisian Sasaran Mutu tahunan langsung di web
-        $this->db->query("CREATE TABLE IF NOT EXISTS sasaran_mutu_records (
+        @$this->db->query("CREATE TABLE IF NOT EXISTS sasaran_mutu_records (
             id INT AUTO_INCREMENT PRIMARY KEY,
             year INT NOT NULL,
             item_id VARCHAR(100) NOT NULL,
@@ -62,10 +86,10 @@ class Md_audit_system extends CI_Model
             updated_by_name VARCHAR(150),
             updated_at DATETIME,
             UNIQUE KEY uq_year_item (year, item_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
 
         // Tabel untuk Audit Kinerja & link dokumen pekerjaan
-        $this->db->query("CREATE TABLE IF NOT EXISTS audit_kinerja_records (
+        @$this->db->query("CREATE TABLE IF NOT EXISTS audit_kinerja_records (
             id INT AUTO_INCREMENT PRIMARY KEY,
             year INT NOT NULL,
             item_id VARCHAR(100) NOT NULL,
@@ -76,10 +100,10 @@ class Md_audit_system extends CI_Model
             audited_by_name VARCHAR(150),
             updated_at DATETIME,
             UNIQUE KEY uq_kinerja (year, item_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
 
         // Tabel untuk Audit Keuangan (verifikasi PBOK & Invoice)
-        $this->db->query("CREATE TABLE IF NOT EXISTS audit_keuangan_records (
+        @$this->db->query("CREATE TABLE IF NOT EXISTS audit_keuangan_records (
             id INT AUTO_INCREMENT PRIMARY KEY,
             id_pbok INT NOT NULL,
             status_audit VARCHAR(50) DEFAULT 'Belum Diverifikasi',
@@ -89,7 +113,9 @@ class Md_audit_system extends CI_Model
             audited_by_name VARCHAR(150),
             updated_at DATETIME,
             UNIQUE KEY uq_pbok (id_pbok)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+
+        $this->db->db_debug = $orig;
     }
 
     /**
@@ -153,20 +179,24 @@ class Md_audit_system extends CI_Model
             $orig_debug = $this->db->db_debug;
             $this->db->db_debug = FALSE;
 
-            $qLap = @$this->db->select('l.id, l.tanggal, l.id_pengaju, l.jobdesc, l.progress, l.link, l.ket_hasil, l.keterangan')
-                ->where('YEAR(l.tanggal)', $year)
-                ->where('l.status !=', 3)
-                ->get('laporan l');
-            if ($qLap && $qLap->num_rows() > 0) {
-                $yearLaporan = $qLap->result_array();
+            if ($this->hasTable('laporan')) {
+                $qLap = @$this->db->select('id, tanggal, id_pengaju, jobdesc, progress, link, ket_hasil, keterangan')
+                    ->where('YEAR(tanggal)', $year)
+                    ->where('status !=', 3)
+                    ->get('laporan');
+                if ($qLap && $qLap->num_rows() > 0) {
+                    $yearLaporan = $qLap->result_array();
+                }
             }
 
-            $qTask = @$this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.id_penerima, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai')
-                ->where('t.is_deleted', 0)
-                ->where("(YEAR(t.created_at) = {$year} OR (t.tgl_submit IS NOT NULL AND YEAR(t.tgl_submit) = {$year}))")
-                ->get('task_proyek t');
-            if ($qTask && $qTask->num_rows() > 0) {
-                $yearTasks = $qTask->result_array();
+            if ($this->hasTable('task_proyek')) {
+                $qTask = @$this->db->select('id_task, kode_task, judul, nama_proyek, id_penerima, progres, status_task, catatan_bawahan, bukti_selesai')
+                    ->where('is_deleted', 0)
+                    ->where("(YEAR(created_at) = {$year} OR (tgl_submit IS NOT NULL AND YEAR(tgl_submit) = {$year}))")
+                    ->get('task_proyek');
+                if ($qTask && $qTask->num_rows() > 0) {
+                    $yearTasks = $qTask->result_array();
+                }
             }
 
             $this->db->db_debug = $orig_debug;
@@ -382,48 +412,6 @@ class Md_audit_system extends CI_Model
             }
         }
 
-                if ($divisi && $divisi !== 'all' && strcasecmp($itemDiv, $divisi) !== 0) {
-                    continue;
-                }
-                if ($posisi && $posisi !== 'all' && strcasecmp($itemPos, $posisi) !== 0) {
-                    continue;
-                }
-
-                $row = [
-                    'id'                     => $ovId,
-                    'year'                   => $year,
-                    'divisi'                 => $itemDiv,
-                    'divisi_key'             => str_replace([' ', ','], '_', $itemDiv),
-                    'posisi'                 => $itemPos,
-                    'no'                     => isset($ov['no']) ? $ov['no'] : '',
-                    'jobdesk'                => isset($ov['jobdesk']) ? $ov['jobdesk'] : '',
-                    'detail_proyek'          => isset($ov['detail_proyek']) ? $ov['detail_proyek'] : '',
-                    'implementasi'           => isset($ov['implementasi']) ? $ov['implementasi'] : '',
-                    'sasaran_mutu'           => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : '',
-                    'metode_pengukuran'      => isset($ov['metode_pengukuran']) ? $ov['metode_pengukuran'] : '',
-                    'indikator_keberhasilan' => isset($ov['indikator_keberhasilan']) ? $ov['indikator_keberhasilan'] : '',
-                    'keterangan'             => isset($ov['keterangan']) ? $ov['keterangan'] : '',
-                    'link_dokumen'           => isset($kinerjaRecords[$ovId]['link_dokumen']) ? $kinerjaRecords[$ovId]['link_dokumen'] : '',
-                    'updated_by_name'        => isset($ov['updated_by_name']) ? $ov['updated_by_name'] : '',
-                    'updated_at'             => isset($ov['updated_at']) ? $ov['updated_at'] : '',
-                    'is_custom'              => true
-                ];
-
-                if ($search) {
-                    $sLower = strtolower($search);
-                    $haystack = strtolower($row['divisi'] . ' ' . $row['posisi'] . ' ' . $row['jobdesk'] . ' ' . $row['detail_proyek'] . ' ' . $row['implementasi']);
-                    if (strpos($haystack, $sLower) === false) continue;
-                }
-
-                $totalItems++;
-                if (!empty($row['keterangan']) || !empty($row['implementasi'])) {
-                    $filledCount++;
-                }
-
-                $results[] = $row;
-            }
-        }
-
         // Hitung progres pengisian per divisi untuk monitoring HR
         $divProgress = [];
         foreach ($results as $r) {
@@ -459,14 +447,17 @@ class Md_audit_system extends CI_Model
     {
         $overrides = [];
 
-        // 1. Coba baca dari database
-        if ($this->db->conn_id) {
-            $q = $this->db->get_where('sasaran_mutu_records', ['year' => $year]);
+        // 1. Coba baca dari database jika tabel tersedia
+        if ($this->hasTable('sasaran_mutu_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $q = @$this->db->get_where('sasaran_mutu_records', ['year' => $year]);
             if ($q && $q->num_rows() > 0) {
                 foreach ($q->result_array() as $r) {
                     $overrides[$r['item_id']] = $r;
                 }
             }
+            $this->db->db_debug = $orig;
         }
 
         // 2. Baca dari JSON fallback jika ada
@@ -511,14 +502,17 @@ class Md_audit_system extends CI_Model
             'updated_at'             => $now
         ];
 
-        // 1. Simpan ke database
-        if ($this->db->conn_id) {
-            $exist = $this->db->get_where('sasaran_mutu_records', ['year' => $year, 'item_id' => $itemId])->row();
+        // 1. Simpan ke database jika tabel tersedia
+        if ($this->hasTable('sasaran_mutu_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $exist = @$this->db->get_where('sasaran_mutu_records', ['year' => $year, 'item_id' => $itemId])->row();
             if ($exist) {
-                $this->db->where('id', $exist->id)->update('sasaran_mutu_records', $record);
+                @$this->db->where('id', $exist->id)->update('sasaran_mutu_records', $record);
             } else {
-                $this->db->insert('sasaran_mutu_records', $record);
+                @$this->db->insert('sasaran_mutu_records', $record);
             }
+            $this->db->db_debug = $orig;
         }
 
         // 2. Simpan ke JSON file agar permanen
@@ -613,26 +607,82 @@ class Md_audit_system extends CI_Model
             $keywords = $this->extractKeywords($jobdeskText);
 
             // 1. Ambil Laporan Mingguan dari tabel `laporan`
-            $this->db->select('l.id, l.tanggal, l.id_pengaju, l.jobdesc, l.jenis, l.progress, l.status_pekerjaan, l.link, l.ket_hasil, l.keterangan, p.nama, p.jabatan')
-                ->from('laporan l')
-                ->join('pengguna p', 'p.pengguna_id = l.id_pengaju', 'left')
-                ->where('YEAR(l.tanggal)', $year)
-                ->where('l.status !=', 3);
+            if ($this->hasTable('laporan')) {
+                $this->db->select('l.id, l.tanggal, l.id_pengaju, l.jobdesc, l.jenis, l.progress, l.status_pekerjaan, l.link, l.ket_hasil, l.keterangan, p.nama, p.jabatan')
+                    ->from('laporan l')
+                    ->join('pengguna p', 'p.pengguna_id = l.id_pengaju', 'left')
+                    ->where('YEAR(l.tanggal)', $year)
+                    ->where('l.status !=', 3);
 
-            if (!empty($userId)) {
-                $this->db->where('l.id_pengaju', $userId);
-            }
+                if (!empty($userId)) {
+                    $this->db->where('l.id_pengaju', $userId);
+                }
 
-            $laporanRows = $this->db->order_by('l.tanggal', 'DESC')->get()->result_array();
+                $laporanQ = @$this->db->order_by('l.tanggal', 'DESC')->get();
+                $laporanRows = ($laporanQ && $laporanQ->num_rows() > 0) ? $laporanQ->result_array() : [];
 
-            if (!empty($laporanRows)) {
-                foreach ($laporanRows as $lap) {
-                    $isMatch = false;
-                    if (!empty($userId) && $lap['id_pengaju'] == $userId) {
-                        if (!empty($keywords)) {
-                            $lapText = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil'] . ' ' . $lap['keterangan']);
+                if (!empty($laporanRows)) {
+                    foreach ($laporanRows as $lap) {
+                        $isMatch = false;
+                        if (!empty($userId) && $lap['id_pengaju'] == $userId) {
+                            if (!empty($keywords)) {
+                                $lapText = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil'] . ' ' . $lap['keterangan']);
+                                foreach ($keywords as $kw) {
+                                    if (strlen($kw) >= 4 && strpos($lapText, $kw) !== false) {
+                                        $isMatch = true;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                $isMatch = true;
+                            }
+                        } else if (!empty($keywords)) {
+                            $lapText = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
                             foreach ($keywords as $kw) {
                                 if (strlen($kw) >= 4 && strpos($lapText, $kw) !== false) {
+                                    $isMatch = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ($isMatch) {
+                            $laporanList[] = $lap;
+                            if (!empty($lap['link'])) {
+                                $links[] = $lap['link'];
+                            }
+                            $cleanProg = preg_replace('/[^0-9.]/', '', (string)$lap['progress']);
+                            if ($cleanProg !== '' && is_numeric($cleanProg)) {
+                                $totalProgress += (float)$cleanProg;
+                                $progressCount++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Ambil Task dari tabel `task_proyek`
+            if ($this->hasTable('task_proyek')) {
+                $this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.jenis, t.deskripsi, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai, t.rating_bintang, t.created_at, t.tgl_submit, p_beri.nama as nama_atasan')
+                    ->from('task_proyek t')
+                    ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
+                    ->where('t.is_deleted', 0)
+                    ->where("(YEAR(t.created_at) = {$year} OR (t.tgl_submit IS NOT NULL AND YEAR(t.tgl_submit) = {$year}))");
+
+                if (!empty($userId)) {
+                    $this->db->where('t.id_penerima', $userId);
+                }
+
+                $taskQ = @$this->db->order_by('t.id_task', 'DESC')->get();
+                $taskRows = ($taskQ && $taskQ->num_rows() > 0) ? $taskQ->result_array() : [];
+
+                if (!empty($taskRows)) {
+                    foreach ($taskRows as $task) {
+                        $isMatch = false;
+                        if (!empty($keywords)) {
+                            $taskText = strtolower($task['judul'] . ' ' . $task['nama_proyek'] . ' ' . $task['deskripsi'] . ' ' . $task['catatan_bawahan']);
+                            foreach ($keywords as $kw) {
+                                if (strlen($kw) >= 4 && strpos($taskText, $kw) !== false) {
                                     $isMatch = true;
                                     break;
                                 }
@@ -640,66 +690,16 @@ class Md_audit_system extends CI_Model
                         } else {
                             $isMatch = true;
                         }
-                    } else if (!empty($keywords)) {
-                        $lapText = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
-                        foreach ($keywords as $kw) {
-                            if (strlen($kw) >= 4 && strpos($lapText, $kw) !== false) {
-                                $isMatch = true;
-                                break;
+
+                        if ($isMatch) {
+                            $taskList[] = $task;
+                            if (!empty($task['bukti_selesai'])) {
+                                $links[] = $task['bukti_selesai'];
                             }
-                        }
-                    }
-
-                    if ($isMatch) {
-                        $laporanList[] = $lap;
-                        if (!empty($lap['link'])) {
-                            $links[] = $lap['link'];
-                        }
-                        $cleanProg = preg_replace('/[^0-9.]/', '', (string)$lap['progress']);
-                        if ($cleanProg !== '' && is_numeric($cleanProg)) {
-                            $totalProgress += (float)$cleanProg;
-                            $progressCount++;
-                        }
-                    }
-                }
-            }
-
-            // 2. Ambil Task dari tabel `task_proyek`
-            $this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.jenis, t.deskripsi, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai, t.rating_bintang, t.created_at, t.tgl_submit, p_beri.nama as nama_atasan')
-                ->from('task_proyek t')
-                ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
-                ->where('t.is_deleted', 0)
-                ->where("(YEAR(t.created_at) = {$year} OR (t.tgl_submit IS NOT NULL AND YEAR(t.tgl_submit) = {$year}))");
-
-            if (!empty($userId)) {
-                $this->db->where('t.id_penerima', $userId);
-            }
-
-            $taskRows = $this->db->order_by('t.id_task', 'DESC')->get()->result_array();
-
-            if (!empty($taskRows)) {
-                foreach ($taskRows as $task) {
-                    $isMatch = false;
-                    if (!empty($keywords)) {
-                        $taskText = strtolower($task['judul'] . ' ' . $task['nama_proyek'] . ' ' . $task['deskripsi'] . ' ' . $task['catatan_bawahan']);
-                        foreach ($keywords as $kw) {
-                            if (strlen($kw) >= 4 && strpos($taskText, $kw) !== false) {
-                                $isMatch = true;
-                                break;
+                            if (is_numeric($task['progres'])) {
+                                $totalProgress += (float)$task['progres'];
+                                $progressCount++;
                             }
-                        }
-                    } else {
-                        $isMatch = true;
-                    }
-
-                    if ($isMatch) {
-                        $taskList[] = $task;
-                        if (!empty($task['bukti_selesai'])) {
-                            $links[] = $task['bukti_selesai'];
-                        }
-                        if (is_numeric($task['progres'])) {
-                            $totalProgress += (float)$task['progres'];
-                            $progressCount++;
                         }
                     }
                 }
@@ -800,8 +800,11 @@ class Md_audit_system extends CI_Model
 
         $jabatan = '';
         if ($this->db->conn_id) {
-            $u = $this->db->select('jabatan')->where('pengguna_id', $userId)->get('pengguna')->row();
+            $orig_debug = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $u = @$this->db->select('jabatan')->where('pengguna_id', $userId)->get('pengguna')->row();
             if ($u) $jabatan = $u->jabatan;
+            $this->db->db_debug = $orig_debug;
         }
 
         $smData = $this->getSasaranMutuData($year);
@@ -897,13 +900,16 @@ class Md_audit_system extends CI_Model
     private function loadAuditKinerjaRecords($year)
     {
         $records = [];
-        if ($this->db->conn_id) {
-            $q = $this->db->get_where('audit_kinerja_records', ['year' => $year]);
+        if ($this->hasTable('audit_kinerja_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $q = @$this->db->get_where('audit_kinerja_records', ['year' => $year]);
             if ($q && $q->num_rows() > 0) {
                 foreach ($q->result_array() as $r) {
                     $records[$r['item_id']] = $r;
                 }
             }
+            $this->db->db_debug = $orig;
         }
 
         if (file_exists($this->kinerjaFilePath)) {
@@ -945,14 +951,17 @@ class Md_audit_system extends CI_Model
             'updated_at'      => $now
         ];
 
-        // 1. Simpan DB
-        if ($this->db->conn_id) {
-            $exist = $this->db->get_where('audit_kinerja_records', ['year' => $year, 'item_id' => $itemId])->row();
+        // 1. Simpan DB jika tabel tersedia
+        if ($this->hasTable('audit_kinerja_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $exist = @$this->db->get_where('audit_kinerja_records', ['year' => $year, 'item_id' => $itemId])->row();
             if ($exist) {
-                $this->db->where('id', $exist->id)->update('audit_kinerja_records', $record);
+                @$this->db->where('id', $exist->id)->update('audit_kinerja_records', $record);
             } else {
-                $this->db->insert('audit_kinerja_records', $record);
+                @$this->db->insert('audit_kinerja_records', $record);
             }
+            $this->db->db_debug = $orig;
         }
 
         // 2. Simpan JSON
@@ -990,7 +999,10 @@ class Md_audit_system extends CI_Model
         // Ambil audit verifikasi keuangan dari DB / JSON
         $keuanganAuditMap = $this->loadAuditKeuanganRecords();
 
-        if ($this->db->conn_id) {
+        if ($this->hasTable('surat_pbok')) {
+            $orig_debug = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+
             $this->db->select('
                 pbok.id_pbok as idPbok,
                 pbok.kode_pbok as kode,
@@ -1032,19 +1044,19 @@ class Md_audit_system extends CI_Model
                     ->group_end();
             }
 
-            $query = $this->db->get();
+            $query = @$this->db->get();
             if ($query && $query->num_rows() > 0) {
                 $pbokList = $query->result_array();
                 $idList = array_column($pbokList, 'idPbok');
 
                 // Ambil seluruh detail item PBOK yang ada
                 $detailsByPbok = [];
-                if (!empty($idList)) {
+                if (!empty($idList) && $this->hasTable('surat_pbok_detail')) {
                     $this->db->select('id, id_pbok, kode_detail, keterangan, estimasi, qty, total, catatan, mata_uang')
                         ->from('surat_pbok_detail')
                         ->where_in('id_pbok', $idList)
                         ->order_by('id', 'ASC');
-                    $detailQuery = $this->db->get();
+                    $detailQuery = @$this->db->get();
                     if ($detailQuery && $detailQuery->num_rows() > 0) {
                         foreach ($detailQuery->result_array() as $det) {
                             $detailsByPbok[$det['id_pbok']][] = $det;
@@ -1114,6 +1126,7 @@ class Md_audit_system extends CI_Model
                     ];
                 }
             }
+            $this->db->db_debug = $orig_debug;
         }
 
         return [
@@ -1128,13 +1141,16 @@ class Md_audit_system extends CI_Model
     private function loadAuditKeuanganRecords()
     {
         $records = [];
-        if ($this->db->conn_id) {
-            $q = $this->db->get('audit_keuangan_records');
+        if ($this->hasTable('audit_keuangan_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $q = @$this->db->get('audit_keuangan_records');
             if ($q && $q->num_rows() > 0) {
                 foreach ($q->result_array() as $r) {
                     $records[(int)$r['id_pbok']] = $r;
                 }
             }
+            $this->db->db_debug = $orig;
         }
 
         if (file_exists($this->keuanganFilePath)) {
@@ -1175,14 +1191,17 @@ class Md_audit_system extends CI_Model
             'updated_at'           => $now
         ];
 
-        // 1. Simpan DB
-        if ($this->db->conn_id) {
-            $exist = $this->db->get_where('audit_keuangan_records', ['id_pbok' => $idPbok])->row();
+        // 1. Simpan DB jika tabel tersedia
+        if ($this->hasTable('audit_keuangan_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $exist = @$this->db->get_where('audit_keuangan_records', ['id_pbok' => $idPbok])->row();
             if ($exist) {
-                $this->db->where('id', $exist->id)->update('audit_keuangan_records', $record);
+                @$this->db->where('id', $exist->id)->update('audit_keuangan_records', $record);
             } else {
-                $this->db->insert('audit_keuangan_records', $record);
+                @$this->db->insert('audit_keuangan_records', $record);
             }
+            $this->db->db_debug = $orig;
         }
 
         // 2. Simpan JSON

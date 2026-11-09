@@ -41,10 +41,13 @@ class Sasaran_mutu extends CI_Controller
         $user_jabatan = '';
         $user_id = sessPenggunaId();
         if ($user_id && $this->db->conn_id) {
-            $u = $this->db->select('jabatan')->where('pengguna_id', $user_id)->get('pengguna')->row();
+            $orig_db_debug = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $u = @$this->db->select('jabatan')->where('pengguna_id', $user_id)->get('pengguna')->row();
             if ($u && !empty($u->jabatan)) {
                 $user_jabatan = $u->jabatan;
             }
+            $this->db->db_debug = $orig_db_debug;
         }
 
         $page_data['switch']            = 'kepegawaian';
