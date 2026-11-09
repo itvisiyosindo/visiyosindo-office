@@ -290,12 +290,7 @@
 										Product Knowledge
 									</a>
 								</li>
-								<!-- MENU AUDIT KARYAWAN & ASET PBOK/PPA KHUSUS USER ID 107, 58, 69, 54, 33, 23, 1 -->
-								<li class="<?= $page_name == 'v_audit_karyawan' ? 'nav-active' : '' ?>">
-									<a class="nav-link" href="<?= base_url('audit/index.html') ?>">
-										Audit Karyawan & Aset
-									</a>
-								</li>
+
 							<?php } else { ?>
 								<!--<li class="<?= in_array($page_name, ['jobdesc/v_my_job']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('jobdesc/show/list/my_data') ?>">
@@ -359,6 +354,36 @@
 						<a class="nav-link" href="<?= base_url('evaluasi_lisan') ?>">
 							<i class="fas fa-comments text-info" aria-hidden="true"></i>
 							<span>Evaluasi Lisan & Konseling</span>
+						</a>
+					</li>
+
+					<!-- Menu Audit (Audit Kinerja & Audit Keuangan) -->
+					<li class="nav-parent <?= in_array($page_name, ['audit/v_audit_kinerja', 'audit/v_audit_keuangan', 'v_audit_kinerja', 'v_audit_keuangan']) ? 'nav-active nav-expanded' : ''; ?>">
+						<a class="nav-link" href="#">
+							<i class="fas fa-clipboard-check text-primary" aria-hidden="true"></i>
+							<span>Audit</span>
+						</a>
+						<ul class="nav nav-children">
+							<li class="<?= in_array($page_name, ['audit/v_audit_kinerja', 'v_audit_kinerja']) ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('audit/kinerja') ?>">
+									<i class="fas fa-user-check text-info mr-1" aria-hidden="true"></i>
+									<span>Audit Kinerja</span>
+								</a>
+							</li>
+							<li class="<?= in_array($page_name, ['audit/v_audit_keuangan', 'v_audit_keuangan']) ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('audit/keuangan') ?>">
+									<i class="fas fa-file-invoice-dollar text-success mr-1" aria-hidden="true"></i>
+									<span>Audit Keuangan</span>
+								</a>
+							</li>
+						</ul>
+					</li>
+
+					<!-- Menu Sasaran Mutu -->
+					<li class="<?= in_array($page_name, ['sasaran_mutu/v_sasaran_mutu', 'v_sasaran_mutu']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('sasaran_mutu') ?>">
+							<i class="fas fa-bullseye text-warning" aria-hidden="true"></i>
+							<span>Sasaran Mutu</span>
 						</a>
 					</li>
 

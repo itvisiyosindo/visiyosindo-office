@@ -216,6 +216,15 @@ $rate_kehadiran = $total_karyawan_aktif > 0 ? min(100, round(($total_hadir / $to
 						<span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 600; padding: 6px 12px; border-radius: 9999px; font-size: 12px;">
 							<i class="fas fa-calendar-day mr-1"></i> <?= date('d M Y') ?>
 						</span>
+						<a href="<?= base_url('sasaran_mutu') ?>" class="btn btn-sm btn-warning text-dark font-weight-bold" style="font-size: 12px; padding: 5px 12px; border-radius: 6px;">
+							<i class="fas fa-bullseye mr-1"></i> Sasaran Mutu
+						</a>
+						<a href="<?= base_url('audit/kinerja') ?>" class="btn btn-sm btn-primary" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+							<i class="fas fa-user-check mr-1"></i> Audit Kinerja
+						</a>
+						<a href="<?= base_url('audit/keuangan') ?>" class="btn btn-sm btn-success" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+							<i class="fas fa-file-invoice-dollar mr-1"></i> Audit Keuangan
+						</a>
 						<?php if (isAdmin() || isHrd() || isGa()) { ?>
 							<a href="<?= base_url('dashboard_kepegawaian/sisa_cuti_karyawan') ?>" class="btn btn-sm btn-info" style="font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
 								<i class="fas fa-calendar-check mr-1"></i> Sisa Cuti
