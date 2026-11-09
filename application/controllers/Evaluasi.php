@@ -65,6 +65,24 @@ class Evaluasi extends CI_Controller
 
                 // Ambil data utama dulu
                 $data_job_sekarang = $this->md_evaluasi->getEvById($id_evaluasi);
+                // Auto-sync status: jika status masih < 4 tetapi sudah ada nilai yang masuk,
+                // pastikan status menjadi 4 (Nilai Diinput) agar tampilan hasil penilaian tidak tertutup
+                if ($data_job_sekarang && (int)$data_job_sekarang->status < 4) {
+                    $hasScore = $this->db->where('id_evaluasi', $id_evaluasi)
+                        ->group_start()
+                            ->where('nilaia IS NOT NULL')
+                            ->or_where('nilaib IS NOT NULL')
+                            ->or_where('nilaic IS NOT NULL')
+                            ->or_where('nilaid IS NOT NULL')
+                            ->or_where('nilaie IS NOT NULL')
+                            ->or_where('nilaif IS NOT NULL')
+                        ->group_end()
+                        ->count_all_results('evaluasi_detail') > 0;
+                    if ($hasScore) {
+                        $this->md_evaluasi->update(['id' => $id_evaluasi], ['status' => 4]);
+                        $data_job_sekarang->status = 4;
+                    }
+                }
 
                 $page_data['switch']          = $this->id_navbar();
                 //$page_data['list_nama']     = $this->md_surat_part_two->getBywhereActive();
@@ -303,8 +321,31 @@ class Evaluasi extends CI_Controller
             }
         }
 
-        $data['status'] = 3;
-        $this->md_evaluasi->update(['id' => $id], $data);
+        // Ambil data evaluasi saat ini
+        $currEv = $this->md_evaluasi->getEvById($id);
+
+        // Periksa apakah sudah ada nilai yang masuk di evaluasi_detail
+        $hasScore = $this->db->where('id_evaluasi', $id)
+            ->group_start()
+                ->where('nilaia IS NOT NULL')
+                ->or_where('nilaib IS NOT NULL')
+                ->or_where('nilaic IS NOT NULL')
+                ->or_where('nilaid IS NOT NULL')
+                ->or_where('nilaie IS NOT NULL')
+                ->or_where('nilaif IS NOT NULL')
+            ->group_end()
+            ->count_all_results('evaluasi_detail') > 0;
+
+        if ($hasScore) {
+            // Jika sudah ada nilai yang masuk, pastikan status tetap minimal 4 (Nilai Diinput)
+            if ($currEv && (int)$currEv->status < 4) {
+                $this->md_evaluasi->update(['id' => $id], ['status' => 4]);
+            }
+        } else if ($currEv && (int)$currEv->status < 3) {
+            // Hanya ubah ke status 3 (Notifikasi Dikirim) jika sebelumnya berstatus 1 atau 2
+            $data['status'] = 3;
+            $this->md_evaluasi->update(['id' => $id], $data);
+        }
 
         /** LOG */
         addLog('Evaluasi', 'Send Notif ID ' . $id . ' ke ' . $sentCount . ' penilai');

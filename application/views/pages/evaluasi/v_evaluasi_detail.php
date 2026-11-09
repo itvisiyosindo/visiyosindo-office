@@ -58,8 +58,19 @@
 		<div class="card-body">
 			<div class="table-responsive">
 
+				<?php
+				$has_nilai = false;
+				if (!empty($data_detail2)) {
+					foreach ($data_detail2 as $d_chk) {
+						if ($d_chk->nilaia !== null || $d_chk->nilaib !== null || $d_chk->nilaic !== null || $d_chk->nilaid !== null || $d_chk->nilaie !== null || $d_chk->nilaif !== null) {
+							$has_nilai = true;
+							break;
+						}
+					}
+				}
+				?>
 				<!-- Status 1, 2, 3: Form Edit Penilai -->
-				<?php if (in_array($data_job->status, [1, 2, 3])) { ?>
+				<?php if (in_array($data_job->status, [1, 2, 3]) && !$has_nilai) { ?>
 					<table id="kt_table_2" style="font-family: Times New Roman; color:black; font-size:15px;" border="1" width="100%">
 						<thead>
 							<tr>
@@ -138,7 +149,7 @@
 					</table>
 
 					<!-- Status 4, 5: Tampilan Hasil Penilaian -->
-				<?php } elseif (in_array($data_job->status, [4, 5])) { ?>
+				<?php } elseif (in_array($data_job->status, [4, 5]) || $has_nilai) { ?>
 					<div style="overflow-x: auto; white-space: nowrap; max-width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width:thin;">
 						<?php
 						// Perhitungan rata-rata per penilai
@@ -311,7 +322,7 @@
 						</a>
 					<?php endif; ?>
 
-					<?php if (in_array($data_job->status, [1, 2, 3])): ?>
+					<?php if (in_array($data_job->status, [1, 2, 3]) && !$has_nilai): ?>
 						<button type="button" class="btn btn-success btn-save float-right">Simpan</button>
 					<?php endif; ?>
 
