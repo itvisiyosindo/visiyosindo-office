@@ -147,6 +147,11 @@ class Md_tiket extends CI_Model
         if ($this->input->post('filter_subject'))
             $this->datatables->like('t.subject', $this->input->post('filter_subject'));
 
+        $tahun = $this->input->post('tahun');
+        if (!empty($tahun) && $tahun !== 'all') {
+            $this->datatables->where('YEAR(t.created_at)', (int)$tahun);
+        }
+
         $this->db->order_by('t.id_tiket', 'DESC');
         return $this->datatables
             ->select('

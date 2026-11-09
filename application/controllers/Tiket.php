@@ -55,6 +55,14 @@ class Tiket extends CI_Controller
         } else {
             $page_data['pengguna']    = $this->md_pengguna->getByWhere(['p.is_active' => 1, 'p.status' => 1, 'p.level !=' => 'all', 'p.hirarki' => 4]);
         }
+        $page_data['list_tahun'] = $this->db->query("
+            SELECT DISTINCT YEAR(created_at) AS tahun 
+            FROM tiket 
+            WHERE created_at IS NOT NULL AND created_at != '0000-00-00 00:00:00' AND YEAR(created_at) > 2000 AND status_data = 1 
+            ORDER BY tahun DESC
+        ")->result();
+        $page_data['selected_tahun'] = $this->input->get('tahun', TRUE);
+
         $this->load->view('index', $page_data);
     }
 

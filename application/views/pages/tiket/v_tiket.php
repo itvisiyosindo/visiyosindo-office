@@ -33,6 +33,39 @@
 						</div>
 					</div>
 				</div>
+				<div class="col-md-2">
+					<small>Filter By Tahun:</small>
+					<div class="form-group">
+						<div class="input-group">
+							<select class="form-control" id="tahun" name="tahun">
+								<option value="">- Semua Tahun -</option>
+								<?php
+								$curr_year = (int)date('Y');
+								$available_years = [];
+								if (!empty($list_tahun)) {
+									foreach ($list_tahun as $lt) {
+										$y = is_object($lt) ? (int)$lt->tahun : (int)$lt;
+										if ($y > 2000) {
+											$available_years[] = $y;
+										}
+									}
+								}
+								for ($k = $curr_year; $k >= $curr_year - 4; $k--) {
+									$available_years[] = $k;
+								}
+								$available_years = array_unique($available_years);
+								rsort($available_years);
+
+								$sel_thn = isset($selected_tahun) ? $selected_tahun : '';
+								foreach ($available_years as $yr) {
+									$selected = ($sel_thn == $yr) ? 'selected' : '';
+									echo "<option value='{$yr}' {$selected}>{$yr}</option>";
+								}
+								?>
+							</select>
+						</div>
+					</div>
+				</div>
 
 
 				<div class="col-md-2">
@@ -325,6 +358,9 @@
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
 		$('#filter_subject, #filter_pelanggan').keyup(function() {
+			updateDatatable()
+		})
+		$('#tahun').change(function() {
 			updateDatatable()
 		})
 		table = $('#kt_table_1').DataTable({
