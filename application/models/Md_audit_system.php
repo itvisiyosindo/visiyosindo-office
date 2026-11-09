@@ -125,6 +125,11 @@ class Md_audit_system extends CI_Model
     {
         if (file_exists($this->masterFilePath)) {
             $json = file_get_contents($this->masterFilePath);
+            // Hapus UTF-8 BOM jika ada agar json_decode tidak return NULL
+            if (substr($json, 0, 3) === "\xEF\xBB\xBF") {
+                $json = substr($json, 3);
+            }
+            $json = trim($json);
             $data = json_decode($json, true);
             if (is_array($data)) {
                 return $data;
@@ -470,7 +475,11 @@ class Md_audit_system extends CI_Model
 
         // 2. Baca dari JSON fallback jika ada
         if (file_exists($this->overridesFilePath)) {
-            $fileData = json_decode(file_get_contents($this->overridesFilePath), true);
+            $json = file_get_contents($this->overridesFilePath);
+            if (substr($json, 0, 3) === "\xEF\xBB\xBF") {
+                $json = substr($json, 3);
+            }
+            $fileData = json_decode(trim($json), true);
             if (isset($fileData[$year]) && is_array($fileData[$year])) {
                 foreach ($fileData[$year] as $itemId => $r) {
                     if (!isset($overrides[$itemId])) {

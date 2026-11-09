@@ -477,7 +477,7 @@ class Task_proyek extends CI_Controller
         grantAccessFor('all');
         $this->db->db_debug = FALSE;
 
-        $id_pengguna = (int)($this->input->get('id_pengguna') ?: $this->input->post('id_pengguna'));
+        $id_pengguna = (int)($this->input->get('id_pengguna') ?: ($this->input->post('id_pengguna') ?: (isset($_GET['id_pengguna']) ? $_GET['id_pengguna'] : 0)));
         if ($id_pengguna <= 0) {
             echo json_encode(['status' => 'error', 'message' => 'ID pengguna tidak valid']);
             return;
@@ -625,6 +625,27 @@ class Task_proyek extends CI_Controller
                             'score'         => $score
                         ];
                     }
+                }
+            }
+        }
+
+        // 3. Fallback jika tidak ada jobdesk yang cocok: sertakan master template agar dropdown tidak pernah kosong
+        if (empty($jobdesks) && !empty($master)) {
+            foreach ($master as $m) {
+                if (empty($m['jobdesk'])) continue;
+                $jobKey = md5($m['jobdesk']);
+                if (!isset($addedJobs[$jobKey])) {
+                    $addedJobs[$jobKey] = true;
+                    $jobdesks[] = [
+                        'id'            => $m['id'],
+                        'no'            => isset($m['no']) ? $m['no'] : '',
+                        'posisi'        => isset($m['posisi']) ? $m['posisi'] : 'General',
+                        'divisi'        => isset($m['divisi']) ? $m['divisi'] : 'General',
+                        'jobdesk'       => $m['jobdesk'],
+                        'detail_proyek' => isset($m['detail_proyek']) ? $m['detail_proyek'] : '',
+                        'sasaran_mutu'  => isset($m['sasaran_mutu']) ? $m['sasaran_mutu'] : '',
+                        'score'         => 1
+                    ];
                 }
             }
         }
