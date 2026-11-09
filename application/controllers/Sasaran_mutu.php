@@ -27,21 +27,27 @@ class Sasaran_mutu extends CI_Controller
             $year = (int)$year;
         }
 
-        // Ambil info jabatan pengguna untuk filter "Pekerjaan Saya"
+        // Ambil info jabatan & divisi pengguna untuk filter "Pekerjaan Saya"
         $user_jabatan = '';
+        $user_divisi  = '';
         $user_id = (string)sessPenggunaId();
         if ($user_id && $this->db->conn_id) {
             $orig_db_debug = $this->db->db_debug;
             $this->db->db_debug = FALSE;
-            $u = @$this->db->select('jabatan')->where('pengguna_id', $user_id)->get('pengguna')->row();
-            if ($u && !empty($u->jabatan)) {
-                $user_jabatan = trim($u->jabatan);
+            $u = @$this->db->select('p.jabatan, d.nama as nama_divisi')
+                ->from('pengguna p')
+                ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
+                ->where('p.pengguna_id', $user_id)
+                ->get()->row();
+            if ($u) {
+                $user_jabatan = trim((string)$u->jabatan);
+                $user_divisi  = trim((string)$u->nama_divisi);
             }
             $this->db->db_debug = $orig_db_debug;
         }
 
         // Cocokkan nama jabatan user dengan master posisi sasaran mutu
-        $matchedPosition = $this->md_audit_system->resolveUserPosition($user_jabatan);
+        $matchedPosition = $this->md_audit_system->resolveUserPosition($user_jabatan, $user_divisi);
         $isManagementOrHrd = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
 
         // AUTO-FILTER: Tampilkan langsung sesuai punya mereka masing-masing jika tidak ada query eksplisit di URL

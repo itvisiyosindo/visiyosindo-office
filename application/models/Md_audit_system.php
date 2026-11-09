@@ -168,10 +168,11 @@ class Md_audit_system extends CI_Model
 
     /**
      * Deteksi dan cocokkan nama posisi karyawan dengan daftar master posisi Sasaran Mutu
+     * Menghindari false match (seperti Direktur lain malah mencocokkan Director of Corporate Planning)
      */
-    public function resolveUserPosition($userJabatan)
+    public function resolveUserPosition($userJabatan, $userDivisi = null)
     {
-        if (empty($userJabatan)) return null;
+        if (empty($userJabatan) && empty($userDivisi)) return null;
 
         $master = $this->getMasterTemplate();
         $positions = [];
@@ -188,37 +189,160 @@ class Md_audit_system extends CI_Model
         };
 
         $normUser = $norm($userJabatan);
+        $normDiv  = $norm($userDivisi);
+        $combined = trim($normUser . ' ' . $normDiv);
 
-        // 1. Exact match
+        // 1. Exact match langsung (case-insensitive & clean symbols)
         foreach ($positions as $p) {
             if ($norm($p) === $normUser) {
                 return $p;
             }
         }
 
-        // 2. Substring match
-        foreach ($positions as $p) {
-            $normP = $norm($p);
-            if (strpos($normP, $normUser) !== false || strpos($normUser, $normP) !== false) {
-                return $p;
+        // 2. Kamus Pemetaan Akurat (Domain Rules Spesifik Perusahaan)
+        // IT / Developer
+        if (preg_match('/\b(it|programmer|developer|software|web|edp|hardware|system)\b/', $combined)) {
+            return 'IT Support & Development';
+        }
+
+        // Akunting, Tax, Finance
+        if (preg_match('/\b(akunting|accounting|keuangan|finance)\b/', $combined)) {
+            if (preg_match('/\b(head|kepala|kabag|manager|manajer|spv|supervisor|lead)\b/', $normUser)) {
+                return 'Head of Accounting and Tax';
+            }
+            if (preg_match('/\b(tax|pajak)\b/', $normUser)) {
+                return 'Staff Tax';
+            }
+            return 'Staff Accounting';
+        }
+        if (preg_match('/\b(tax|pajak)\b/', $combined)) {
+            if (preg_match('/\b(head|kepala|kabag|manager|manajer|spv|supervisor|lead)\b/', $normUser)) {
+                return 'Head of Accounting and Tax';
+            }
+            return 'Staff Tax';
+        }
+
+        // Director of Corporate Planning and Business Management
+        // HANYA COCOK JIKA ADA KATA KUNCI "corporate planning" ATAU "business management"
+        if (preg_match('/\b(corporate planning|business management)\b/', $combined) || 
+            (preg_match('/\b(director|direktur)\b/', $normUser) && preg_match('/\b(corporate|planning|business)\b/', $combined))) {
+            return 'Director of Corporate Planning and Business Management';
+        }
+
+        // Direksi umum (Direktur Utama, Komisaris, Direktur Operasional) -> JANGAN DIPAKSA jadi Director of Corporate Planning!
+        if (preg_match('/\b(direktur utama|komisaris|direksi|owner)\b/', $normUser)) {
+            return null; // Bebas / Tanpa batas spesifik
+        }
+
+        // HR & Legal
+        if (preg_match('/\b(hr|hrd|legal|personalia|sdm|recruitment)\b/', $combined)) {
+            return 'HR & Legal';
+        }
+
+        // General Affair
+        if (preg_match('/\b(ga|general affair|general affairs|umum)\b/', $combined)) {
+            return 'General Affair';
+        }
+
+        // Gudang / Warehouse
+        if (preg_match('/\b(gudang|warehouse|logistik|pjt)\b/', $combined)) {
+            if (preg_match('/\b(pjt|penanggung jawab|kepala gudang)\b/', $combined)) {
+                return 'PJT & Warehouse';
+            }
+            if (preg_match('/\b(jogja|yogyakarta)\b/', $combined)) {
+                return 'Helper (Gudang Jogja)';
+            }
+            if (preg_match('/\b(helper)\b/', $combined)) {
+                return 'Helper (Gudang Pusat)';
+            }
+            return 'Admin Warehouse';
+        }
+
+        // Visilab / Laboratorium
+        if (preg_match('/\b(visilab|laboratorium|kalibrasi|pengujian)\b/', $combined)) {
+            if (preg_match('/\b(head|kepala|manajer|manager)\b/', $normUser)) {
+                return 'Head of Visilab';
+            }
+            if (preg_match('/\b(mutu)\b/', $combined)) {
+                return 'Staff Visilab (Staff Mutu)';
+            }
+            if (preg_match('/\b(teknis)\b/', $combined)) {
+                return 'Staff Visilab (Staff Teknis)';
+            }
+            if (preg_match('/\b(penguji|tester)\b/', $combined)) {
+                return 'Penguji Berkualifikasi';
+            }
+            return 'Staff Visilab (admin visilab)';
+        }
+
+        // Teknisi / Service / Medical Engineer
+        if (preg_match('/\b(teknisi|technician|service|elektromedis|electromedical|engineer)\b/', $combined)) {
+            if (preg_match('/\b(head|kepala|kabag|spv|supervisor|lead)\b/', $normUser)) {
+                return 'Head of Technician';
+            }
+            if (preg_match('/\b(elektro|electromedical)\b/', $combined)) {
+                return 'Electromedical Engineer';
+            }
+            if (preg_match('/\b(medis|medical)\b/', $combined)) {
+                return 'Medical Engineer';
+            }
+            return 'Technical Support';
+        }
+
+        // Sales & Marketing
+        if (preg_match('/\b(sgm)\b/', $combined)) {
+            return 'Head of SGM';
+        }
+        if (preg_match('/\b(gm|general manager)\b/', $normUser)) {
+            return 'General Manager';
+        }
+        if (preg_match('/\b(sales manager|manajer sales|manager sales)\b/', $normUser)) {
+            return 'Sales Manager';
+        }
+        if (preg_match('/\b(regulatory|import|ekspor|impor|izin edar)\b/', $combined)) {
+            return 'Regulatory & Import Officer';
+        }
+        if (preg_match('/\b(product specialist|aplikasi|specialist product|aplicant)\b/', $combined)) {
+            return 'Aplicant and Specialist Product';
+        }
+        if (preg_match('/\b(customer relationship|cro|customer service|cs|layanan pelanggan)\b/', $combined)) {
+            return 'Customer Relationship Officer';
+        }
+        if (preg_match('/\b(digital marketing|digimar)\b/', $combined)) {
+            return 'Digital Marketing';
+        }
+        if (preg_match('/\b(content creator|videografer|videographer|desain|grafis|animator)\b/', $combined)) {
+            return 'Content Creator';
+        }
+        if (preg_match('/\b(sales|marketing|medrep|representative)\b/', $combined)) {
+            return 'Medical Representative';
+        }
+
+        // 3. Substring match HANYA untuk kata yang spesifik (bukan kata umum seperti staff, head, director)
+        $genericWords = ['staff', 'staf', 'head', 'kepala', 'director', 'direktur', 'manager', 'manajer', 'admin', 'helper', 'officer', 'support', 'dan', 'and'];
+        if (strlen($normUser) >= 5 && !in_array($normUser, $genericWords)) {
+            foreach ($positions as $p) {
+                $normP = $norm($p);
+                if (strpos($normP, $normUser) !== false || strpos($normUser, $normP) !== false) {
+                    return $p;
+                }
             }
         }
 
-        // 3. Significant word overlap match
-        $stopWords = ['dan', 'and', 'or', 'staf', 'staff', 'bagian', 'pt', 'cv'];
-        $userWords = array_diff(explode(' ', $normUser), $stopWords);
+        // 4. Overlap token dengan proteksi ketat
+        $userWords = array_diff(explode(' ', $normUser), $genericWords);
         $bestMatch = null;
         $maxOverlap = 0;
         foreach ($positions as $p) {
-            $pWords = array_diff(explode(' ', $norm($p)), $stopWords);
+            $pWords = array_diff(explode(' ', $norm($p)), $genericWords);
             $overlap = count(array_intersect($userWords, $pWords));
-            if ($overlap > $maxOverlap && $overlap >= 1) {
+            if ($overlap >= 2 && $overlap > $maxOverlap) {
                 $maxOverlap = $overlap;
                 $bestMatch = $p;
             }
         }
 
-        return $bestMatch ?: $userJabatan;
+        return $bestMatch;
     }
 
     /**

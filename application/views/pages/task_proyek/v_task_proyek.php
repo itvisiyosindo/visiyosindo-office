@@ -1762,7 +1762,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     if (res && res.status === 'success') {
                         if (res.karyawan) {
-                            var kInfo = res.karyawan.nama + ' (' + (res.karyawan.jabatan || res.karyawan.divisi) + ')';
+                            var kInfo = res.karyawan.nama + ' (' + (res.karyawan.posisi_matched || res.karyawan.jabatan || res.karyawan.divisi) + ')';
                             $('#nama_karyawan_terpilih').text(kInfo);
                         }
 
