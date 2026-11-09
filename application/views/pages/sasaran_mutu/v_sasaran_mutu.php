@@ -33,17 +33,19 @@
 	.table-sasaran-mutu th {
 		background-color: #1e293b;
 		color: #ffffff;
-		font-size: 12px;
+		font-size: 11px;
 		font-weight: 600;
 		vertical-align: middle !important;
 		text-align: center;
 		border: 1px solid #334155 !important;
+		padding: 10px 8px;
 	}
 	.table-sasaran-mutu td {
 		font-size: 12px;
 		vertical-align: top !important;
 		border: 1px solid #e2e8f0 !important;
 		line-height: 1.5;
+		padding: 8px 10px;
 	}
 	.table-sasaran-mutu tr:hover {
 		background-color: #f8fafc;
@@ -81,6 +83,40 @@
 		background: linear-gradient(135deg, #059669 0%, #047857 100%);
 		color: #ffffff !important;
 	}
+	.div-progress-item {
+		border-radius: 8px;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		padding: 10px 14px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+	.div-progress-item:hover {
+		border-color: #3b82f6;
+		background: #f8fafc;
+		transform: translateY(-1px);
+	}
+	.div-progress-item.active {
+		border-color: #2563eb;
+		background: #eff6ff;
+	}
+	.doc-link-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 2px 8px;
+		border-radius: 4px;
+		font-size: 11px;
+		background-color: #ecfdf5;
+		color: #047857;
+		border: 1px solid #a7f3d0;
+		text-decoration: none;
+	}
+	.doc-link-pill:hover {
+		background-color: #d1fae5;
+		color: #065f46;
+		text-decoration: none;
+	}
 </style>
 
 <div class="row">
@@ -88,7 +124,7 @@
 		<!-- Summary Cards -->
 		<div class="row mb-3">
 			<div class="col-md-3 col-sm-6 mb-2">
-				<div class="stat-card-sm border-left-primary" style="border-left: 4px solid #3b82f6;">
+				<div class="stat-card-sm" style="border-left: 4px solid #3b82f6;">
 					<div class="text-muted small font-weight-bold text-uppercase">Total Item Jobdesk</div>
 					<div class="h3 font-weight-bold text-primary mb-0 mt-1"><?= count($items) ?></div>
 					<div class="small text-muted mt-1"><i class="fas fa-tasks"></i> 8 Divisi Perusahaan</div>
@@ -114,47 +150,126 @@
 			</div>
 			<div class="col-md-3 col-sm-6 mb-2">
 				<div class="stat-card-sm" style="border-left: 4px solid #8b5cf6;">
-					<div class="text-muted small font-weight-bold text-uppercase">Tahun Sasaran Mutu</div>
+					<div class="text-muted small font-weight-bold text-uppercase">Tahun Periode</div>
 					<div class="h3 font-weight-bold text-purple mb-0 mt-1" style="color: #8b5cf6;"><?= $selected_year ?></div>
 					<div class="small text-muted mt-1">
 						<?php if ($selected_year == 2026): ?>
-							<span class="badge badge-success"><i class="fas fa-check"></i> Data Terformat Excel</span>
+							<span class="badge badge-success"><i class="fas fa-file-excel"></i> Terformat dari Excel Master</span>
 						<?php else: ?>
-							<span class="badge badge-info"><i class="fas fa-edit"></i> Siap Diinput</span>
+							<span class="badge badge-primary"><i class="fas fa-sync-alt"></i> Tersinkron Langsung di Office</span>
 						<?php endif; ?>
 					</div>
 				</div>
 			</div>
 		</div>
 
-		<!-- Notification Banner Tahun -->
+		<!-- Notification Banner Tahun & Petunjuk Sinkronisasi -->
 		<?php if ($selected_year == 2026): ?>
-			<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-left: 4px solid #059669; background-color: #ecfdf5; color: #065f46;">
-				<i class="fas fa-info-circle mr-1"></i>
-				<strong>Tahun 2026:</strong> Data telah <strong>terformat langsung di sistem office</strong> sesuai yang diisi pada Google Spreadsheet master. Anda dapat melakukan penyesuaian kapan saja melalui tombol <strong>Edit</strong>.
-				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #059669; background-color: #ecfdf5; color: #065f46;">
+				<div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 10px;">
+					<div>
+						<i class="fas fa-check-circle mr-1 text-success fa-lg"></i>
+						<strong>Arsip Periode 2026:</strong> Data telah <strong>otomatis terformat di sistem Office</strong> sesuai yang diisi manual oleh karyawan pada Google Spreadsheet untuk audit HR. Anda tetap dapat melakukan penyesuaian jika ada revisi terbaru.
+					</div>
+					<div>
+						<a href="https://docs.google.com/spreadsheets/d/116hr1DHsrlX_spxVRvE8B7jrYmgsHTvQpED-xuW00ls/edit?gid=2070287268#gid=2070287268" target="_blank" class="btn btn-sm btn-outline-success font-weight-bold">
+							<i class="fas fa-external-link-alt mr-1"></i> Buka Spreadsheet Excel Asli 2026
+						</a>
+					</div>
+				</div>
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: #065f46;">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 		<?php else: ?>
-			<div class="alert alert-info alert-dismissible fade show" role="alert" style="border-left: 4px solid #0284c7; background-color: #f0f9ff; color: #075985;">
-				<i class="fas fa-info-circle mr-1"></i>
-				<strong>Tahun <?= $selected_year ?>:</strong> Template Jobdesk & Detail Proyek telah disiapkan secara otomatis. Bagian <strong>Implementasi Nyata Kegiatan</strong>, <strong>Sasaran Mutu</strong>, <strong>Metode Pengukuran</strong>, <strong>Indikator Keberhasilan</strong>, dan <strong>Keterangan</strong> dikosongkan untuk diisi oleh Karyawan dan Head masing-masing.
-				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<div class="alert alert-primary alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #2563eb; background-color: #eff6ff; color: #1e3a8a;">
+				<div class="d-flex align-items-start justify-content-between flex-wrap" style="gap: 12px;">
+					<div style="flex: 1; min-width: 280px;">
+						<div class="d-flex align-items-center mb-1">
+							<span class="badge badge-primary px-2 py-1 mr-2 font-weight-bold" style="background-color: #2563eb;">
+								<i class="fas fa-sync-alt fa-spin mr-1" style="animation-duration: 4s;"></i> Single Source of Truth
+							</span>
+							<strong class="h6 mb-0 font-weight-bold" style="color: #1e40af;">Periode <?= $selected_year ?>: Pengisian Tersinkronisasi Penuh di Sistem Office</strong>
+						</div>
+						<p class="mb-1 small" style="line-height: 1.5; color: #1e3a8a;">
+							Mulai tahun 2027 dan seterusnya, karyawan dan Head <strong>TIDAK LAGI mengisi manual di Excel</strong>. Seluruh proses input dan pembaruan sasaran mutu dilakukan secara langsung di sistem Office ini dan otomatis tersimpan untuk audit HR secara real-time.
+						</p>
+						<div class="d-flex flex-wrap mt-2" style="gap: 15px;">
+							<div class="small">
+								<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Karyawan</span>:
+								Mengisi <em>Detail Proyek</em>, <em>Implementasi Kegiatan</em> & <em>Link Dokumen Bukti</em>.
+							</div>
+							<div class="small">
+								<span class="badge-role-head"><i class="fas fa-user-tie"></i> Head / Karyawan</span>:
+								Mengisi <em>Sasaran Mutu</em>, <em>Metode Pengukuran</em>, <em>Indikator Keberhasilan</em> & <em>Keterangan Nilai</em>.
+							</div>
+						</div>
+					</div>
+					<div>
+						<button type="button" class="btn btn-sm btn-success font-weight-bold px-3 py-2 shadow-sm" data-toggle="modal" data-target="#modalAddJobdesk">
+							<i class="fas fa-plus-circle mr-1"></i> Tambah Jobdesk / Proyek Baru
+						</button>
+					</div>
+				</div>
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: #1e3a8a;">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 		<?php endif; ?>
 
+		<!-- Widget Rekap Progres Pengisian per Divisi (Monitoring Audit HR) -->
+		<div class="card border-0 shadow-sm mb-3" style="border-radius: 10px;">
+			<div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center" style="cursor: pointer;" data-toggle="collapse" data-target="#collapseDivProgress" aria-expanded="true">
+				<span class="font-weight-bold text-dark small">
+					<i class="fas fa-chart-pie text-primary mr-1"></i> Rekap Progres Pengisian per Divisi (Monitoring Audit HR Periode <?= $selected_year ?>)
+				</span>
+				<div class="small text-muted">
+					<span class="mr-2">Klik untuk memfilter per divisi</span>
+					<i class="fas fa-chevron-down"></i>
+				</div>
+			</div>
+			<div class="collapse show" id="collapseDivProgress">
+				<div class="card-body p-3 bg-light">
+					<div class="row">
+						<?php if (!empty($div_progress)): ?>
+							<?php foreach ($div_progress as $dName => $dp): ?>
+								<div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+									<div class="div-progress-item <?= $selected_div === $dName ? 'active' : '' ?>" onclick="filterByDivisi('<?= htmlspecialchars($dName) ?>');">
+										<div class="d-flex justify-content-between align-items-center mb-1">
+											<span class="font-weight-bold text-dark small text-truncate" title="<?= htmlspecialchars($dName) ?>">
+												<?= htmlspecialchars($dName) ?>
+											</span>
+											<span class="badge <?= $dp['pct'] >= 100 ? 'badge-success' : ($dp['pct'] > 0 ? 'badge-warning' : 'badge-secondary') ?> font-weight-bold" style="font-size: 10px;">
+												<?= $dp['pct'] ?>%
+											</span>
+										</div>
+										<div class="progress" style="height: 5px;">
+											<div class="progress-bar <?= $dp['pct'] >= 100 ? 'bg-success' : 'bg-primary' ?>" role="progressbar" style="width: <?= $dp['pct'] ?>%;"></div>
+										</div>
+										<div class="d-flex justify-content-between align-items-center mt-1">
+											<span class="text-muted" style="font-size: 10px;"><?= $dp['filled'] ?> dari <?= $dp['total'] ?> terisi</span>
+											<span class="text-primary font-weight-bold" style="font-size: 10px;">Lihat <i class="fas fa-arrow-right"></i></span>
+										</div>
+									</div>
+								</div>
+							<?php endforeach; ?>
+						<?php endif; ?>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<!-- Filter Bar -->
-		<div class="filter-card">
+		<div class="filter-card shadow-sm">
 			<form method="GET" action="<?= base_url('sasaran_mutu') ?>" id="formFilterSM">
 				<div class="row align-items-end">
 					<div class="col-md-2 col-sm-6 mb-2">
-						<label class="font-weight-bold small text-muted"><i class="far fa-calendar-alt"></i> Tahun</label>
+						<label class="font-weight-bold small text-muted"><i class="far fa-calendar-alt"></i> Tahun Periode</label>
 						<select name="tahun" id="filterTahun" class="form-control form-control-sm font-weight-bold" onchange="document.getElementById('formFilterSM').submit();">
 							<?php for ($y = 2026; $y <= 2030; $y++): ?>
-								<option value="<?= $y ?>" <?= $selected_year == $y ? 'selected' : '' ?>><?= $y ?><?= $y == 2026 ? ' (Excel 2026)' : '' ?></option>
+								<option value="<?= $y ?>" <?= $selected_year == $y ? 'selected' : '' ?>>
+									<?= $y ?><?= $y == 2026 ? ' (Excel Master)' : ' (Sync Online)' ?>
+								</option>
 							<?php endfor; ?>
 						</select>
 					</div>
@@ -188,30 +303,43 @@
 
 					<div class="col-md-2 col-sm-6 mb-2">
 						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari Kata Kunci</label>
-						<input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari jobdesk...">
+						<input type="text" name="q" id="filterQuery" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari jobdesk / kata...">
 					</div>
 
 					<div class="col-md-2 col-sm-6 mb-2 text-right">
 						<button type="submit" class="btn btn-sm btn-primary btn-block mb-1">
 							<i class="fas fa-filter"></i> Filter
 						</button>
-						<a href="<?= base_url('sasaran_mutu') ?>" class="btn btn-sm btn-light border btn-block">
-							<i class="fas fa-undo"></i> Reset
+						<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-light border btn-block">
+							<i class="fas fa-undo"></i> Reset Filter
 						</a>
 					</div>
 				</div>
 
 				<div class="row mt-2 pt-2 border-top">
 					<div class="col-md-8 d-flex align-items-center flex-wrap" style="gap: 8px;">
-						<span class="small font-weight-bold text-muted mr-1">Tautan Cepat:</span>
-						<a href="https://docs.google.com/spreadsheets/d/116hr1DHsrlX_spxVRvE8B7jrYmgsHTvQpED-xuW00ls/edit?gid=2070287268#gid=2070287268" target="_blank" class="btn btn-sm btn-sheet-link">
-							<i class="fas fa-external-link-alt mr-1"></i> Buka Spreadsheet Sasaran & Manajemen Mutu 2026
+						<!-- Tombol Pekerjaan Saya -->
+						<?php if (!empty($user_jabatan)): ?>
+							<button type="button" class="btn btn-sm btn-info font-weight-bold" onclick="filterMyWork('<?= htmlspecialchars($user_jabatan) ?>');" title="Filter langsung ke jabatan Anda: <?= htmlspecialchars($user_jabatan) ?>">
+								<i class="fas fa-user-check mr-1"></i> Pekerjaan Saya (<?= htmlspecialchars($user_jabatan) ?>)
+							</button>
+						<?php endif; ?>
+
+						<!-- Tombol Tambah Jobdesk Baru -->
+						<button type="button" class="btn btn-sm btn-success font-weight-bold" data-toggle="modal" data-target="#modalAddJobdesk">
+							<i class="fas fa-plus mr-1"></i> Tambah Jobdesk Baru
+						</button>
+
+						<a href="<?= base_url('sasaran_mutu/export_csv?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-outline-success">
+							<i class="fas fa-file-excel mr-1"></i> Export CSV
 						</a>
-						<a href="<?= base_url('sasaran_mutu/export_csv?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-success">
-							<i class="fas fa-file-excel mr-1"></i> Download CSV / Excel
+
+						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-primary">
+							<i class="fas fa-clipboard-check mr-1"></i> Ke Audit Kinerja
 						</a>
+
 						<button type="button" class="btn btn-sm btn-secondary" onclick="window.print();">
-							<i class="fas fa-print mr-1"></i> Cetak Halaman
+							<i class="fas fa-print mr-1"></i> Cetak
 						</button>
 					</div>
 					<div class="col-md-4 text-right">
@@ -225,48 +353,62 @@
 
 		<!-- Table Card -->
 		<div class="card border-0 shadow-sm" style="border-radius: 10px;">
-			<div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-				<h5 class="mb-0 font-weight-bold text-dark">
-					<i class="fas fa-list-alt text-primary mr-1"></i> Daftar Rincian Sasaran Mutu <?= $selected_year ?>
-					<?php if ($selected_div !== 'all'): ?>
-						— <span class="badge badge-info"><?= htmlspecialchars($selected_div) ?></span>
-					<?php endif; ?>
-				</h5>
-				<span class="badge badge-light border text-muted px-2 py-1 font-weight-normal">
-					Menampilkan <?= count($items) ?> data baris
-				</span>
+			<div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
+				<div>
+					<h5 class="mb-0 font-weight-bold text-dark">
+						<i class="fas fa-list-alt text-primary mr-1"></i> Rincian Sasaran & Manajemen Mutu <?= $selected_year ?>
+						<?php if ($selected_div !== 'all'): ?>
+							— <span class="badge badge-info"><?= htmlspecialchars($selected_div) ?></span>
+						<?php endif; ?>
+						<?php if ($selected_pos !== 'all'): ?>
+							<span class="badge badge-secondary"><?= htmlspecialchars($selected_pos) ?></span>
+						<?php endif; ?>
+					</h5>
+					<small class="text-muted">
+						<?= $selected_year == 2026 ? 'Terformat dari Excel master' : 'Tersinkronisasi langsung di sistem Office (tanpa isi Excel lagi)' ?>
+					</small>
+				</div>
+				<div class="d-flex align-items-center" style="gap: 8px;">
+					<span class="badge badge-light border text-muted px-2 py-1 font-weight-normal">
+						Total: <strong><?= count($items) ?></strong> baris
+					</span>
+				</div>
 			</div>
 			<div class="card-body p-0">
 				<div class="table-responsive" style="max-height: 75vh; overflow-y: auto;">
 					<table class="table table-bordered table-sasaran-mutu mb-0" id="tableSasaranMutu">
 						<thead>
 							<tr>
-								<th style="width: 40px;">No</th>
+								<th style="width: 35px;">No</th>
 								<th style="width: 140px;">Divisi & Posisi</th>
 								<th style="width: 200px;">Jobdesk</th>
 								<th style="width: 220px;">
 									<div>List Detail Proyek</div>
-									<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Diisi Karyawan</span>
+									<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Karyawan</span>
 								</th>
-								<th style="width: 240px;">
+								<th style="width: 230px;">
 									<div>Implementasi Nyata Kegiatan</div>
-									<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Diisi Karyawan</span>
-								</th>
-								<th style="width: 220px;">
-									<div>Sasaran Mutu</div>
-									<span class="badge-role-head"><i class="fas fa-user-tie"></i> Diisi Head / Karyawan</span>
+									<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Karyawan</span>
 								</th>
 								<th style="width: 200px;">
+									<div>Sasaran Mutu</div>
+									<span class="badge-role-head"><i class="fas fa-user-tie"></i> Head / Karyawan</span>
+								</th>
+								<th style="width: 180px;">
 									<div>Metode Pengukuran</div>
 									<span class="badge-role-head"><i class="fas fa-calculator"></i> Angka & Rumus</span>
 								</th>
-								<th style="width: 200px;">
+								<th style="width: 180px;">
 									<div>Indikator Keberhasilan</div>
 									<span class="badge-role-head"><i class="fas fa-flag-checkered"></i> Kriteria / Target</span>
 								</th>
-								<th style="width: 130px;">
+								<th style="width: 110px;">
 									<div>Keterangan</div>
 									<span class="badge badge-light border" style="font-size: 9px;">Nilai / Realisasi</span>
+								</th>
+								<th style="width: 110px;">
+									<div>Bukti Dokumen</div>
+									<span class="badge badge-light border" style="font-size: 9px;">Link Kerja</span>
 								</th>
 								<th style="width: 70px;">Aksi</th>
 							</tr>
@@ -274,7 +416,7 @@
 						<tbody>
 							<?php if (empty($items)): ?>
 								<tr>
-									<td colspan="10" class="text-center py-5 text-muted">
+									<td colspan="11" class="text-center py-5 text-muted">
 										<i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
 										Tidak ada data sasaran mutu yang sesuai filter.
 									</td>
@@ -286,6 +428,9 @@
 										<td>
 											<span class="badge badge-primary px-2 py-1 mb-1 d-inline-block"><?= htmlspecialchars($row['divisi']) ?></span>
 											<div class="font-weight-bold text-dark small"><?= htmlspecialchars($row['posisi']) ?></div>
+											<?php if (!empty($row['is_custom'])): ?>
+												<span class="badge badge-info px-1" style="font-size: 9px;"><i class="fas fa-plus"></i> Input Baru</span>
+											<?php endif; ?>
 										</td>
 										<td class="font-weight-600 text-dark">
 											<?= htmlspecialchars($row['jobdesk']) ?>
@@ -318,6 +463,15 @@
 												<span class="badge badge-light text-muted border font-weight-normal">-</span>
 											<?php endif; ?>
 										</td>
+										<td class="text-center" id="link_dokumen-<?= htmlspecialchars($row['id']) ?>">
+											<?php if (!empty($row['link_dokumen'])): ?>
+												<a href="<?= htmlspecialchars($row['link_dokumen']) ?>" target="_blank" class="doc-link-pill" title="<?= htmlspecialchars($row['link_dokumen']) ?>">
+													<i class="fas fa-external-link-alt"></i> Buka Bukti
+												</a>
+											<?php else: ?>
+												<span class="badge badge-light text-muted border font-weight-normal" style="font-size: 10px;">Belum ada link</span>
+											<?php endif; ?>
+										</td>
 										<td class="text-center">
 											<button type="button" class="btn btn-xs btn-outline-primary" title="Edit / Input Realisasi & Sasaran" onclick='openEditModal(<?= json_encode($row) ?>)'>
 												<i class="fas fa-edit"></i> Edit
@@ -340,7 +494,7 @@
 		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
 			<div class="modal-header bg-dark text-white">
 				<h5 class="modal-title font-weight-bold" id="modalEditSMLabel">
-					<i class="fas fa-edit text-warning mr-1"></i> Edit Realisasi & Sasaran Mutu (Tahun <span id="modalYearTitle">2026</span>)
+					<i class="fas fa-edit text-warning mr-1"></i> Edit Realisasi & Sasaran Mutu (Tahun <span id="modalYearTitle"><?= $selected_year ?></span>)
 				</h5>
 				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
@@ -355,7 +509,7 @@
 
 				<div class="modal-body p-4" style="background-color: #f8fafc; max-height: 75vh; overflow-y: auto;">
 					<!-- Info Divisi & Jobdesk -->
-					<div class="card p-3 mb-3 border bg-white">
+					<div class="card p-3 mb-3 border bg-white shadow-sm">
 						<div class="d-flex justify-content-between align-items-center mb-1">
 							<span class="badge badge-primary font-weight-bold px-2 py-1" id="badgeModalDivisi">HRGA</span>
 							<span class="text-muted small">Posisi: <strong id="textModalPosisi">HR & Legal</strong></span>
@@ -366,7 +520,7 @@
 					</div>
 
 					<div class="row">
-						<!-- Kolom Karyawan: List Detail Proyek & Implementasi Nyata Kegiatan -->
+						<!-- Kolom Karyawan: List Detail Proyek, Implementasi Nyata Kegiatan & Link Dokumen -->
 						<div class="col-md-6 mb-3">
 							<div class="card p-3 border-0 shadow-sm h-100" style="background-color: #ffffff; border-top: 3px solid #0284c7 !important;">
 								<div class="d-flex justify-content-between align-items-center mb-2">
@@ -382,12 +536,21 @@
 									<textarea name="detail_proyek" id="inputDetailProyek" class="form-control" rows="4" placeholder="Detail cara kerja / tahapan proyek..."></textarea>
 								</div>
 
-								<div class="form-group mb-0">
+								<div class="form-group mb-3">
 									<label class="small font-weight-bold text-dark">
 										Implementasi Nyata Kegiatan
 										<span class="text-muted font-weight-normal">(Realisasi pekerjaan atas jobdesc ini)</span>
 									</label>
-									<textarea name="implementasi" id="inputImplementasi" class="form-control" rows="5" placeholder="Tuliskan realisasi nyata pekerjaan yang telah/sedang dilaksanakan..."></textarea>
+									<textarea name="implementasi" id="inputImplementasi" class="form-control" rows="4" placeholder="Tuliskan realisasi nyata pekerjaan yang telah/sedang dilaksanakan..."></textarea>
+								</div>
+
+								<div class="form-group mb-0">
+									<label class="small font-weight-bold text-dark">
+										<i class="fas fa-link text-primary mr-1"></i> Link Dokumen Bukti Pekerjaan
+										<span class="text-muted font-weight-normal">(Google Drive / Link file bukti)</span>
+									</label>
+									<input type="text" name="link_dokumen" id="inputLinkDokumen" class="form-control" placeholder="https://drive.google.com/..." style="font-size: 12px;">
+									<small class="text-muted">Tersinkron otomatis dengan Audit Kinerja.</small>
 								</div>
 							</div>
 						</div>
@@ -427,7 +590,7 @@
 								<div class="form-group mb-0">
 									<label class="small font-weight-bold text-dark">
 										Keterangan
-										<span class="text-muted font-weight-normal">(Hasil nilai dari metode pengukuran / persentase realisasi)</span>
+										<span class="text-muted font-weight-normal">(Hasil nilai metode pengukuran / realisasi)</span>
 									</label>
 									<input type="text" name="keterangan" id="inputKeterangan" class="form-control font-weight-bold text-success" placeholder="Contoh: 100 %, 95 %, Terlaksana">
 								</div>
@@ -442,6 +605,105 @@
 					</button>
 					<button type="submit" id="btnSubmitSM" class="btn btn-primary btn-sm font-weight-bold px-4">
 						<i class="fas fa-save mr-1"></i> Simpan Perubahan
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Tambah Jobdesk Baru (Khusus 2027+) -->
+<div class="modal fade" id="modalAddJobdesk" tabindex="-1" role="dialog" aria-labelledby="modalAddJobdeskLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+			<div class="modal-header bg-success text-white">
+				<h5 class="modal-title font-weight-bold" id="modalAddJobdeskLabel">
+					<i class="fas fa-plus-circle mr-1"></i> Tambah Jobdesk & Sasaran Mutu Baru (Tahun <?= $selected_year ?>)
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formAddCustomSM" onsubmit="addCustomSMData(event);">
+				<input type="hidden" name="year" value="<?= $selected_year ?>">
+
+				<div class="modal-body p-4" style="background-color: #f8fafc; max-height: 75vh; overflow-y: auto;">
+					<div class="alert alert-info py-2 px-3 small mb-3">
+						<i class="fas fa-info-circle mr-1"></i>
+						Jobdesk baru ini akan langsung tersimpan di sistem Office dan tersinkronisasi otomatis untuk seluruh tim dan audit HR.
+					</div>
+
+					<div class="row mb-3">
+						<div class="col-md-6">
+							<label class="small font-weight-bold text-dark">Divisi <span class="text-danger">*</span></label>
+							<select name="divisi" id="addDivisiSelect" class="form-control form-control-sm" required onchange="updateAddPosisiOptions();">
+								<option value="">-- Pilih Divisi --</option>
+								<?php foreach ($div_tree as $divName => $posList): ?>
+									<option value="<?= htmlspecialchars($divName) ?>"><?= htmlspecialchars($divName) ?></option>
+								<?php endforeach; ?>
+							</select>
+						</div>
+						<div class="col-md-6">
+							<label class="small font-weight-bold text-dark">Posisi / Jabatan <span class="text-danger">*</span></label>
+							<input type="text" name="posisi" id="addPosisiInput" class="form-control form-control-sm" placeholder="Contoh: Staff HR, Warehouse Admin..." required list="posisiListSuggestions">
+							<datalist id="posisiListSuggestions"></datalist>
+						</div>
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="small font-weight-bold text-dark">Rincian Jobdesk <span class="text-danger">*</span></label>
+						<textarea name="jobdesk" class="form-control" rows="2" placeholder="Nama tugas atau deskripsi jobdesk..." required></textarea>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6 mb-3">
+							<div class="card p-3 border-0 shadow-sm h-100 bg-white" style="border-top: 3px solid #0284c7 !important;">
+								<h6 class="font-weight-bold text-primary mb-2">Bagian Karyawan</h6>
+								<div class="form-group mb-2">
+									<label class="small font-weight-bold text-dark">List Detail Proyek</label>
+									<textarea name="detail_proyek" class="form-control" rows="3" placeholder="Pendetailan tahapan atau cara kerja..."></textarea>
+								</div>
+								<div class="form-group mb-2">
+									<label class="small font-weight-bold text-dark">Implementasi Nyata Kegiatan</label>
+									<textarea name="implementasi" class="form-control" rows="3" placeholder="Realisasi nyata pekerjaan..."></textarea>
+								</div>
+								<div class="form-group mb-0">
+									<label class="small font-weight-bold text-dark">Link Dokumen Bukti Pekerjaan</label>
+									<input type="text" name="link_dokumen" class="form-control form-control-sm" placeholder="https://drive.google.com/...">
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-6 mb-3">
+							<div class="card p-3 border-0 shadow-sm h-100 bg-white" style="border-top: 3px solid #d97706 !important;">
+								<h6 class="font-weight-bold text-warning mb-2" style="color: #b45309 !important;">Bagian Head / Sasaran Mutu</h6>
+								<div class="form-group mb-2">
+									<label class="small font-weight-bold text-dark">Sasaran Mutu</label>
+									<textarea name="sasaran_mutu" class="form-control" rows="2" placeholder="Tujuan sasaran mutu..."></textarea>
+								</div>
+								<div class="form-group mb-2">
+									<label class="small font-weight-bold text-dark">Metode Pengukuran</label>
+									<textarea name="metode_pengukuran" class="form-control" rows="2" placeholder="Angka & rumus..."></textarea>
+								</div>
+								<div class="form-group mb-2">
+									<label class="small font-weight-bold text-dark">Indikator Keberhasilan</label>
+									<textarea name="indikator_keberhasilan" class="form-control" rows="2" placeholder="Target / standar capaian..."></textarea>
+								</div>
+								<div class="form-group mb-0">
+									<label class="small font-weight-bold text-dark">Keterangan (Hasil Nilai Realisasi)</label>
+									<input type="text" name="keterangan" class="form-control form-control-sm font-weight-bold text-success" placeholder="Contoh: 100%, Terlaksana">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="modal-footer bg-white border-top">
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+						<i class="fas fa-times"></i> Batal
+					</button>
+					<button type="submit" id="btnAddCustomSM" class="btn btn-success btn-sm font-weight-bold px-4">
+						<i class="fas fa-plus mr-1"></i> Simpan Jobdesk Baru
 					</button>
 				</div>
 			</form>
@@ -478,6 +740,33 @@
 		}
 	}
 
+	function updateAddPosisiOptions() {
+		const chosenDiv = document.getElementById('addDivisiSelect').value;
+		const datalist = document.getElementById('posisiListSuggestions');
+		datalist.innerHTML = '';
+		if (divTreeData[chosenDiv]) {
+			divTreeData[chosenDiv].forEach(pos => {
+				const opt = document.createElement('option');
+				opt.value = pos;
+				datalist.appendChild(opt);
+			});
+		}
+	}
+
+	function filterByDivisi(divName) {
+		const divSelect = document.getElementById('filterDivisi');
+		divSelect.value = divName;
+		updatePosisiDropdown();
+		document.getElementById('formFilterSM').submit();
+	}
+
+	function filterMyWork(jabatan) {
+		if (!jabatan) return;
+		const queryInput = document.getElementById('filterQuery');
+		queryInput.value = jabatan;
+		document.getElementById('formFilterSM').submit();
+	}
+
 	function openEditModal(row) {
 		document.getElementById('modalItemId').value = row.id;
 		document.getElementById('modalDivisi').value = row.divisi;
@@ -492,6 +781,7 @@
 
 		document.getElementById('inputDetailProyek').value = row.detail_proyek || '';
 		document.getElementById('inputImplementasi').value = row.implementasi || '';
+		document.getElementById('inputLinkDokumen').value = row.link_dokumen || '';
 		document.getElementById('inputSasaranMutu').value = row.sasaran_mutu || '';
 		document.getElementById('inputMetodePengukuran').value = row.metode_pengukuran || '';
 		document.getElementById('inputIndikatorKeberhasilan').value = row.indikator_keberhasilan || '';
@@ -546,6 +836,12 @@
 					ketEl.innerHTML = val ? '<span class="badge badge-success px-2 py-1 font-weight-bold" style="font-size: 11px;">' + escapeHtml(val) + '</span>' : '<span class="badge badge-light text-muted border font-weight-normal">-</span>';
 				}
 
+				const linkEl = document.getElementById('link_dokumen-' + itemId);
+				if (linkEl) {
+					const val = formData.get('link_dokumen');
+					linkEl.innerHTML = val ? '<a href="' + escapeHtml(val) + '" target="_blank" class="doc-link-pill"><i class="fas fa-external-link-alt"></i> Buka Bukti</a>' : '<span class="badge badge-light text-muted border font-weight-normal" style="font-size: 10px;">Belum ada link</span>';
+				}
+
 				$('#modalEditSM').modal('hide');
 
 				if (typeof Swal !== 'undefined') {
@@ -566,6 +862,52 @@
 		.catch(err => {
 			btn.disabled = false;
 			btn.innerHTML = '<i class="fas fa-save mr-1"></i> Simpan Perubahan';
+			console.error(err);
+			alert('Terjadi kesalahan koneksi.');
+		});
+	}
+
+	function addCustomSMData(e) {
+		e.preventDefault();
+		const btn = document.getElementById('btnAddCustomSM');
+		btn.disabled = true;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
+		const form = document.getElementById('formAddCustomSM');
+		const formData = new FormData(form);
+
+		fetch('<?= base_url('sasaran_mutu/add_custom_item') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(data => {
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fas fa-plus mr-1"></i> Simpan Jobdesk Baru';
+
+			if (data.status === 'success') {
+				$('#modalAddJobdesk').modal('hide');
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'success',
+						title: 'Berhasil Ditambahkan!',
+						text: data.message,
+						timer: 2000,
+						showConfirmButton: false
+					}).then(() => {
+						window.location.reload();
+					});
+				} else {
+					alert(data.message);
+					window.location.reload();
+				}
+			} else {
+				alert(data.message || 'Gagal menambahkan jobdesk baru.');
+			}
+		})
+		.catch(err => {
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fas fa-plus mr-1"></i> Simpan Jobdesk Baru';
 			console.error(err);
 			alert('Terjadi kesalahan koneksi.');
 		});

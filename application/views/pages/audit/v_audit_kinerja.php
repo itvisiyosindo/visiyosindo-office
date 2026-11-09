@@ -143,16 +143,37 @@
 
 					<div class="col-md-2 col-sm-6 mb-2">
 						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari Jobdesk / Bukti</label>
-						<input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari rincian...">
+						<input type="text" name="q" id="filterKinerjaQuery" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari rincian...">
 					</div>
 
 					<div class="col-md-2 col-sm-6 mb-2 text-right">
 						<button type="submit" class="btn btn-sm btn-primary btn-block mb-1">
 							<i class="fas fa-filter"></i> Terapkan
 						</button>
-						<a href="<?= base_url('audit/kinerja') ?>" class="btn btn-sm btn-light border btn-block">
+						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-light border btn-block">
 							<i class="fas fa-undo"></i> Reset
 						</a>
+					</div>
+				</div>
+
+				<div class="row mt-2 pt-2 border-top">
+					<div class="col-md-8 d-flex align-items-center flex-wrap" style="gap: 8px;">
+						<?php if (!empty($user_jabatan)): ?>
+							<button type="button" class="btn btn-sm btn-info font-weight-bold" onclick="filterMyWorkKinerja('<?= htmlspecialchars($user_jabatan) ?>');" title="Filter jabatan: <?= htmlspecialchars($user_jabatan) ?>">
+								<i class="fas fa-user-check mr-1"></i> Pekerjaan Saya (<?= htmlspecialchars($user_jabatan) ?>)
+							</button>
+						<?php endif; ?>
+						<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-warning">
+							<i class="fas fa-bullseye mr-1"></i> Buka Sasaran Mutu
+						</a>
+						<button type="button" class="btn btn-sm btn-secondary" onclick="window.print();">
+							<i class="fas fa-print mr-1"></i> Cetak Halaman
+						</button>
+					</div>
+					<div class="col-md-4 text-right">
+						<span class="small text-muted font-italic">
+							User: <strong><?= htmlspecialchars($current_user_name) ?></strong> (ID: <?= $current_user_id ?>)
+						</span>
 					</div>
 				</div>
 			</form>
@@ -489,6 +510,15 @@
 			console.error(err);
 			alert('Terjadi kesalahan koneksi.');
 		});
+	}
+
+	function filterMyWorkKinerja(jabatan) {
+		if (!jabatan) return;
+		const qInput = document.getElementById('filterKinerjaQuery');
+		if (qInput) {
+			qInput.value = jabatan;
+			document.getElementById('formFilterKinerja').submit();
+		}
 	}
 
 	function escapeHtml(text) {

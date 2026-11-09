@@ -4,7 +4,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * Model Md_audit_system
  * Mengelola data:
- * 1. Sasaran Mutu (terbagi sesuai divisi & tahun, 2026 otomatis terisi dari Excel, 2027+ kosong pada bagian realisasi & sasaran)
+ * 1. Sasaran Mutu (terbagi sesuai divisi & tahun, 2026 otomatis terisi dari Excel, 2027+ tersinkronisasi penuh langsung di sistem Office tanpa perlu mengisi Excel manual lagi)
  * 2. Audit Kinerja (jobdesk, detail proyek, implementasi nyata kinerja, link dokumen pekerjaan)
  * 3. Audit Keuangan (PBOK yang diajukan beserta detail barang & invoice/lampirannya)
  */
@@ -44,7 +44,7 @@ class Md_audit_system extends CI_Model
             return;
         }
 
-        // Tabel untuk override / pengisian Sasaran Mutu tahunan
+        // Tabel untuk override / pengisian Sasaran Mutu tahunan langsung di web
         $this->db->query("CREATE TABLE IF NOT EXISTS sasaran_mutu_records (
             id INT AUTO_INCREMENT PRIMARY KEY,
             year INT NOT NULL,
@@ -130,9 +130,10 @@ class Md_audit_system extends CI_Model
     /**
      * Mengambil data Sasaran Mutu per tahun
      * Rule:
-     * - Tahun 2026: Nilai diambil lengkap sesuai data Excel.
-     * - Tahun 2027 dan selanjutnya: Bagian implementasi, sasaran_mutu, metode_pengukuran,
-     *   indikator_keberhasilan, dan keterangan DIKOSONGKAN (template jobdesk & detail tetap ada).
+     * - Tahun 2026: Nilai diambil lengkap sesuai data Excel untuk keperluan audit HR.
+     * - Tahun 2027 dan selanjutnya: Seluruh pengisian langsung tersinkron di sistem office tanpa isi manual di Excel.
+     *   Template dasar jobdesk & detail proyek tersedia, realisasi, sasaran, metode, indikator, keterangan,
+     *   serta link dokumen diinput langsung oleh masing-masing karyawan dan head di sistem office.
      * - Merge dengan catatan/inputan yang tersimpan dari DB / File JSON.
      */
     public function getSasaranMutuData($year = 2026, $divisi = null, $posisi = null, $search = null)
@@ -142,13 +143,16 @@ class Md_audit_system extends CI_Model
 
         $master = $this->getMasterTemplate();
         $overrides = $this->loadSasaranMutuOverrides($year);
+        $kinerjaRecords = $this->loadAuditKinerjaRecords($year);
 
         $results = [];
         $totalItems = 0;
         $filledCount = 0;
+        $masterIds = [];
 
         foreach ($master as $item) {
             $itemId = $item['id'];
+            $masterIds[] = $itemId;
             $itemDiv = $item['divisi'];
             $itemPos = $item['posisi'];
 
@@ -178,9 +182,11 @@ class Md_audit_system extends CI_Model
                     'metode_pengukuran'      => $item['metode_pengukuran'],
                     'indikator_keberhasilan' => $item['indikator_keberhasilan'],
                     'keterangan'             => $item['keterangan'],
+                    'link_dokumen'           => '',
+                    'is_custom'              => false
                 ];
             } else {
-                // Tahun 2027 dan selanjutnya: dikosongkan realisasi & sasaran
+                // Tahun 2027 dan selanjutnya: dikosongkan realisasi & sasaran untuk diinput di web
                 $row = [
                     'id'                     => $itemId,
                     'year'                   => $year,
@@ -195,10 +201,12 @@ class Md_audit_system extends CI_Model
                     'metode_pengukuran'      => '',
                     'indikator_keberhasilan' => '',
                     'keterangan'             => '',
+                    'link_dokumen'           => '',
+                    'is_custom'              => false
                 ];
             }
 
-            // Timpa dengan data yang sudah diisi/disimpan jika ada
+            // Timpa dengan data yang sudah diisi langsung oleh karyawan/head di sistem Office
             if (isset($overrides[$itemId])) {
                 $ov = $overrides[$itemId];
                 if (isset($ov['detail_proyek']) && $ov['detail_proyek'] !== '') $row['detail_proyek'] = $ov['detail_proyek'];
@@ -209,6 +217,11 @@ class Md_audit_system extends CI_Model
                 if (isset($ov['keterangan'])) $row['keterangan'] = $ov['keterangan'];
                 if (isset($ov['updated_by_name'])) $row['updated_by_name'] = $ov['updated_by_name'];
                 if (isset($ov['updated_at'])) $row['updated_at'] = $ov['updated_at'];
+            }
+
+            // Sinkronisasi link dokumen dari Audit Kinerja jika ada
+            if (isset($kinerjaRecords[$itemId]) && !empty($kinerjaRecords[$itemId]['link_dokumen'])) {
+                $row['link_dokumen'] = $kinerjaRecords[$itemId]['link_dokumen'];
             }
 
             // Filter search jika ada
@@ -235,6 +248,70 @@ class Md_audit_system extends CI_Model
             $results[] = $row;
         }
 
+        // Sertakan juga jobdesk baru / custom yang ditambah langsung untuk tahun 2027+
+        foreach ($overrides as $ovId => $ov) {
+            if (!in_array($ovId, $masterIds)) {
+                $itemDiv = isset($ov['divisi']) ? $ov['divisi'] : '';
+                $itemPos = isset($ov['posisi']) ? $ov['posisi'] : '';
+
+                if ($divisi && $divisi !== 'all' && strcasecmp($itemDiv, $divisi) !== 0) {
+                    continue;
+                }
+                if ($posisi && $posisi !== 'all' && strcasecmp($itemPos, $posisi) !== 0) {
+                    continue;
+                }
+
+                $row = [
+                    'id'                     => $ovId,
+                    'year'                   => $year,
+                    'divisi'                 => $itemDiv,
+                    'divisi_key'             => str_replace([' ', ','], '_', $itemDiv),
+                    'posisi'                 => $itemPos,
+                    'no'                     => isset($ov['no']) ? $ov['no'] : '',
+                    'jobdesk'                => isset($ov['jobdesk']) ? $ov['jobdesk'] : '',
+                    'detail_proyek'          => isset($ov['detail_proyek']) ? $ov['detail_proyek'] : '',
+                    'implementasi'           => isset($ov['implementasi']) ? $ov['implementasi'] : '',
+                    'sasaran_mutu'           => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : '',
+                    'metode_pengukuran'      => isset($ov['metode_pengukuran']) ? $ov['metode_pengukuran'] : '',
+                    'indikator_keberhasilan' => isset($ov['indikator_keberhasilan']) ? $ov['indikator_keberhasilan'] : '',
+                    'keterangan'             => isset($ov['keterangan']) ? $ov['keterangan'] : '',
+                    'link_dokumen'           => isset($kinerjaRecords[$ovId]['link_dokumen']) ? $kinerjaRecords[$ovId]['link_dokumen'] : '',
+                    'updated_by_name'        => isset($ov['updated_by_name']) ? $ov['updated_by_name'] : '',
+                    'updated_at'             => isset($ov['updated_at']) ? $ov['updated_at'] : '',
+                    'is_custom'              => true
+                ];
+
+                if ($search) {
+                    $sLower = strtolower($search);
+                    $haystack = strtolower($row['divisi'] . ' ' . $row['posisi'] . ' ' . $row['jobdesk'] . ' ' . $row['detail_proyek'] . ' ' . $row['implementasi']);
+                    if (strpos($haystack, $sLower) === false) continue;
+                }
+
+                $totalItems++;
+                if (!empty($row['keterangan']) || !empty($row['implementasi'])) {
+                    $filledCount++;
+                }
+
+                $results[] = $row;
+            }
+        }
+
+        // Hitung progres pengisian per divisi untuk monitoring HR
+        $divProgress = [];
+        foreach ($results as $r) {
+            $d = $r['divisi'];
+            if (!isset($divProgress[$d])) {
+                $divProgress[$d] = ['total' => 0, 'filled' => 0];
+            }
+            $divProgress[$d]['total']++;
+            if (!empty($r['implementasi']) || !empty($r['keterangan'])) {
+                $divProgress[$d]['filled']++;
+            }
+        }
+        foreach ($divProgress as $d => $p) {
+            $divProgress[$d]['pct'] = $p['total'] > 0 ? round(($p['filled'] / $p['total']) * 100, 1) : 0;
+        }
+
         $persentase = $totalItems > 0 ? round(($filledCount / $totalItems) * 100, 1) : 0;
 
         return [
@@ -242,6 +319,7 @@ class Md_audit_system extends CI_Model
             'total_items'   => $totalItems,
             'filled_count'  => $filledCount,
             'persentase'    => $persentase,
+            'div_progress'  => $divProgress,
             'data'          => $results
         ];
     }
@@ -279,7 +357,7 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Simpan / update item Sasaran Mutu
+     * Simpan / update item Sasaran Mutu langsung dari sistem Office
      */
     public function saveSasaranMutuItem($year, $itemId, $payload)
     {
@@ -326,7 +404,26 @@ class Md_audit_system extends CI_Model
         $fileData[$year][$itemId] = $record;
         @file_put_contents($this->overridesFilePath, json_encode($fileData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
+        // 3. Sinkronisasi dua arah ke Audit Kinerja jika link_dokumen diisi
+        if (isset($payload['link_dokumen']) && $payload['link_dokumen'] !== '') {
+            $this->saveAuditKinerjaItem($year, $itemId, [
+                'link_dokumen' => $payload['link_dokumen'],
+                'implementasi' => $record['implementasi']
+            ]);
+        }
+
         return true;
+    }
+
+    /**
+     * Tambah item jobdesk baru untuk divisi/posisi di tahun 2027 dan seterusnya
+     */
+    public function addCustomJobdeskItem($year, $payload)
+    {
+        $year = (int)$year;
+        $divisiKey = isset($payload['divisi']) ? preg_replace('/[^a-zA-Z0-9]/', '', $payload['divisi']) : 'CUSTOM';
+        $itemId = 'SM_' . $divisiKey . '_CUSTOM_' . time();
+        return $this->saveSasaranMutuItem($year, $itemId, $payload);
     }
 
     /**
@@ -349,7 +446,7 @@ class Md_audit_system extends CI_Model
             $itemId = $item['id'];
             $auditInfo = isset($auditRecords[$itemId]) ? $auditRecords[$itemId] : [];
 
-            $linkDokumen = isset($auditInfo['link_dokumen']) ? $auditInfo['link_dokumen'] : '';
+            $linkDokumen = isset($auditInfo['link_dokumen']) ? $auditInfo['link_dokumen'] : (isset($item['link_dokumen']) ? $item['link_dokumen'] : '');
             $statusAudit = isset($auditInfo['status_audit']) && !empty($auditInfo['status_audit']) ? $auditInfo['status_audit'] : 'Belum Diaudit';
             $catatanAudit = isset($auditInfo['catatan_audit']) ? $auditInfo['catatan_audit'] : '';
             $auditedByName = isset($auditInfo['audited_by_name']) ? $auditInfo['audited_by_name'] : '';
@@ -388,6 +485,7 @@ class Md_audit_system extends CI_Model
             'verified_count'      => $verifiedCount,
             'need_evidence_count' => $needEvidenceCount,
             'pending_count'       => $pendingCount,
+            'div_progress'        => isset($smResult['div_progress']) ? $smResult['div_progress'] : [],
             'data'                => $list
         ];
     }
@@ -464,8 +562,8 @@ class Md_audit_system extends CI_Model
         $fileData[$year][$itemId] = $record;
         @file_put_contents($this->kinerjaFilePath, json_encode($fileData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        // Jika implementasi juga diupdate oleh user saat mengisi link dokumen
-        if (isset($payload['implementasi'])) {
+        // 3. Jika implementasi juga diupdate oleh user saat mengisi link dokumen, sinkronkan ke Sasaran Mutu
+        if (isset($payload['implementasi']) && $payload['implementasi'] !== '') {
             $this->saveSasaranMutuItem($year, $itemId, [
                 'implementasi' => $payload['implementasi']
             ]);

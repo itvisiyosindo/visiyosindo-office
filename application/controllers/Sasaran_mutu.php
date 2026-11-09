@@ -37,19 +37,31 @@ class Sasaran_mutu extends CI_Controller
         $smData = $this->md_audit_system->getSasaranMutuData($year, $divisi, $posisi, $search);
         $divTree = $this->md_audit_system->getDivisiAndPositions();
 
-        $page_data['switch']       = 'kepegawaian';
-        $page_data['page_name']    = 'sasaran_mutu/v_sasaran_mutu';
-        $page_data['page_title']   = 'Sasaran Mutu ' . $year;
-        $page_data['page_desc']    = 'Sasaran & Manajemen Mutu PT Visi Yosindo Medikal';
-        $page_data['selected_year'] = $year;
-        $page_data['selected_div']  = $divisi;
-        $page_data['selected_pos']  = $posisi;
-        $page_data['search_query']  = $search;
-        $page_data['sm_summary']   = $smData;
-        $page_data['items']        = $smData['data'];
-        $page_data['div_tree']     = $divTree;
+        // Ambil info jabatan pengguna untuk filter "Pekerjaan Saya"
+        $user_jabatan = '';
+        $user_id = sessPenggunaId();
+        if ($user_id && $this->db->conn_id) {
+            $u = $this->db->select('jabatan')->where('pengguna_id', $user_id)->get('pengguna')->row();
+            if ($u && !empty($u->jabatan)) {
+                $user_jabatan = $u->jabatan;
+            }
+        }
+
+        $page_data['switch']            = 'kepegawaian';
+        $page_data['page_name']         = 'sasaran_mutu/v_sasaran_mutu';
+        $page_data['page_title']        = 'Sasaran Mutu ' . $year;
+        $page_data['page_desc']         = 'Sasaran & Manajemen Mutu PT Visi Yosindo Medikal';
+        $page_data['selected_year']     = $year;
+        $page_data['selected_div']      = $divisi;
+        $page_data['selected_pos']      = $posisi;
+        $page_data['search_query']      = $search;
+        $page_data['sm_summary']        = $smData;
+        $page_data['items']             = $smData['data'];
+        $page_data['div_progress']      = isset($smData['div_progress']) ? $smData['div_progress'] : [];
+        $page_data['div_tree']          = $divTree;
         $page_data['current_user_name'] = sessNama();
         $page_data['current_user_id']   = sessPenggunaId();
+        $page_data['user_jabatan']      = $user_jabatan;
 
         $this->load->view('index', $page_data);
     }
@@ -102,14 +114,53 @@ class Sasaran_mutu extends CI_Controller
             'sasaran_mutu'           => $this->input->post('sasaran_mutu', TRUE),
             'metode_pengukuran'      => $this->input->post('metode_pengukuran', TRUE),
             'indikator_keberhasilan' => $this->input->post('indikator_keberhasilan', TRUE),
-            'keterangan'             => $this->input->post('keterangan', TRUE)
+            'keterangan'             => $this->input->post('keterangan', TRUE),
+            'link_dokumen'           => $this->input->post('link_dokumen', TRUE)
         ];
 
         $ok = $this->md_audit_system->saveSasaranMutuItem($year, $itemId, $payload);
         if ($ok) {
-            echo json_encode(['status' => 'success', 'message' => 'Data sasaran mutu berhasil disimpan']);
+            echo json_encode(['status' => 'success', 'message' => 'Data sasaran mutu berhasil disimpan dan tersinkronisasi']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data']);
+        }
+    }
+
+    /**
+     * Tambah item Jobdesk baru (untuk 2027 dan seterusnya langsung di Office)
+     */
+    public function add_custom_item()
+    {
+        grantAccessFor('all');
+
+        $year    = (int)($this->input->post('year') ?: 2027);
+        $divisi  = $this->input->post('divisi', TRUE);
+        $posisi  = $this->input->post('posisi', TRUE);
+        $jobdesk = $this->input->post('jobdesk', TRUE);
+
+        if (empty($divisi) || empty($posisi) || empty($jobdesk)) {
+            echo json_encode(['status' => 'error', 'message' => 'Divisi, Posisi, dan Rincian Jobdesk wajib diisi']);
+            return;
+        }
+
+        $payload = [
+            'divisi'                 => $divisi,
+            'posisi'                 => $posisi,
+            'jobdesk'                => $jobdesk,
+            'detail_proyek'          => $this->input->post('detail_proyek', TRUE),
+            'implementasi'           => $this->input->post('implementasi', TRUE),
+            'sasaran_mutu'           => $this->input->post('sasaran_mutu', TRUE),
+            'metode_pengukuran'      => $this->input->post('metode_pengukuran', TRUE),
+            'indikator_keberhasilan' => $this->input->post('indikator_keberhasilan', TRUE),
+            'keterangan'             => $this->input->post('keterangan', TRUE),
+            'link_dokumen'           => $this->input->post('link_dokumen', TRUE)
+        ];
+
+        $ok = $this->md_audit_system->addCustomJobdeskItem($year, $payload);
+        if ($ok) {
+            echo json_encode(['status' => 'success', 'message' => 'Jobdesk baru berhasil ditambahkan dan tersinkronisasi ke sistem Office']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menambahkan jobdesk baru']);
         }
     }
 

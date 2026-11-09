@@ -47,6 +47,15 @@ class Audit extends CI_Controller
         $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
         $divTree   = $this->md_audit_system->getDivisiAndPositions();
 
+        $user_jabatan = '';
+        $user_id = sessPenggunaId();
+        if ($user_id && $this->db->conn_id) {
+            $u = $this->db->select('jabatan')->where('pengguna_id', $user_id)->get('pengguna')->row();
+            if ($u && !empty($u->jabatan)) {
+                $user_jabatan = $u->jabatan;
+            }
+        }
+
         $page_data['switch']        = 'kepegawaian';
         $page_data['page_name']     = 'audit/v_audit_kinerja';
         $page_data['page_title']    = 'Audit Kinerja Karyawan';
@@ -60,6 +69,7 @@ class Audit extends CI_Controller
         $page_data['div_tree']      = $divTree;
         $page_data['current_user_name'] = sessNama();
         $page_data['current_user_id']   = sessPenggunaId();
+        $page_data['user_jabatan']  = $user_jabatan;
 
         $this->load->view('index', $page_data);
     }
