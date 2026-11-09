@@ -297,7 +297,7 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (50% Task Proyek : 50% Laporan Mingguan)
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (40% Task Proyek : 30% Laporan Mingguan : 30% Pencapaian)
         $wherePeriodeTask = "";
         if (!empty($filterBulan)) {
             $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
@@ -357,7 +357,9 @@ class Task_proyek extends CI_Controller
                 tsk.avg_bintang,
                 COALESCE(tsk.bintang_5, 0) AS bintang_5,
                 COALESCE(np.avg_nilai_point, lap.avg_nilai_lap) AS avg_nilai_laporan,
-                COALESCE(np.total_poin_laporan, lap.total_poin_lap, 0) AS total_poin_laporan
+                COALESCE(np.total_poin_laporan, lap.total_poin_lap, 0) AS total_poin_laporan,
+                COALESCE(penc.avg_nilai_pencapaian, lap_penc.avg_nilai_lap_penc) AS avg_nilai_pencapaian,
+                COALESCE(penc.total_pencapaian, lap_penc.total_lap_penc, 0) AS total_pencapaian
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
             LEFT JOIN (
@@ -412,7 +414,52 @@ class Task_proyek extends CI_Controller
                 WHERE status != 3 {$wherePeriodeLap}
                 GROUP BY {$caseLap}
             ) lap ON lap.id_pengaju = p.pengguna_id
-            WHERE p.status = 1 {$excludeMergedSql} AND (tsk.total_task > 0 OR np.avg_nilai_point IS NOT NULL OR lap.avg_nilai_lap IS NOT NULL)
+            LEFT JOIN (
+                SELECT 
+                    {$caseNp} AS id_pengguna,
+                    COUNT(*) AS total_pencapaian,
+                    ROUND(AVG(
+                        CASE 
+                            WHEN (nilai_a IS NOT NULL AND nilai_a > 0 AND nilai_a <= 100) 
+                                 AND (nilai_b IS NOT NULL AND nilai_b > 0 AND nilai_b <= 100) 
+                            THEN (CAST(nilai_a AS DECIMAL(5,2)) + CAST(nilai_b AS DECIMAL(5,2))) / 2
+                            WHEN (nilai_b IS NOT NULL AND nilai_b > 0 AND nilai_b <= 100) 
+                            THEN CAST(nilai_b AS DECIMAL(5,2))
+                            WHEN (nilai_a IS NOT NULL AND nilai_a > 0 AND nilai_a <= 100) 
+                            THEN CAST(nilai_a AS DECIMAL(5,2))
+                            ELSE NULL 
+                        END
+                    ), 1) AS avg_nilai_pencapaian
+                FROM pencapaian
+                WHERE 1=1 {$wherePeriodeLap}
+                GROUP BY {$caseNp}
+            ) penc ON penc.id_pengguna = p.pengguna_id
+            LEFT JOIN (
+                SELECT 
+                    {$caseLap} AS id_pengaju,
+                    COUNT(*) AS total_lap_penc,
+                    ROUND(AVG(
+                        CASE 
+                            WHEN (nilai_pencapaian_a > 0 AND nilai_pencapaian_a <= 100) AND (nilai_pencapaian_b > 0 AND nilai_pencapaian_b <= 100) 
+                            THEN (CAST(nilai_pencapaian_a AS DECIMAL(5,2)) + CAST(nilai_pencapaian_b AS DECIMAL(5,2))) / 2
+                            WHEN (nilai_pencapaian_b > 0 AND nilai_pencapaian_b <= 100) 
+                            THEN CAST(nilai_pencapaian_b AS DECIMAL(5,2))
+                            WHEN (nilai_pencapaian_a > 0 AND nilai_pencapaian_a <= 100) 
+                            THEN CAST(nilai_pencapaian_a AS DECIMAL(5,2))
+                            ELSE NULL 
+                        END
+                    ), 1) AS avg_nilai_lap_penc
+                FROM laporan
+                WHERE status != 3 AND (nilai_pencapaian_a > 0 OR nilai_pencapaian_b > 0) {$wherePeriodeLap}
+                GROUP BY {$caseLap}
+            ) lap_penc ON lap_penc.id_pengaju = p.pengguna_id
+            WHERE p.status = 1 {$excludeMergedSql} AND (
+                tsk.total_task > 0 
+                OR np.avg_nilai_point IS NOT NULL 
+                OR lap.avg_nilai_lap IS NOT NULL 
+                OR penc.avg_nilai_pencapaian IS NOT NULL
+                OR lap_penc.avg_nilai_lap_penc IS NOT NULL
+            )
         ")->result();
 
         $leaderboard = [];
@@ -421,25 +468,50 @@ class Task_proyek extends CI_Controller
         foreach ($raw_leaderboard as $lb) {
             $hasTask = ($lb->avg_bintang !== null && (int)$lb->task_selesai > 0);
             $hasLap  = ($lb->avg_nilai_laporan !== null);
+            $hasPenc = ($lb->avg_nilai_pencapaian !== null);
 
             $skorTask = $hasTask ? round(((float)$lb->avg_bintang / 5) * 100, 1) : null;
             $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
+            $skorPenc = $hasPenc ? round((float)$lb->avg_nilai_pencapaian, 1) : null;
 
-            if ($hasTask && $hasLap) {
-                // Bobot: 50% Task Proyek + 50% Laporan Mingguan (Evaluasi Lengkap / Prioritas Utama Juara)
-                $skorAkhir = round(($skorTask * 0.50) + ($skorLap * 0.50), 1);
-                $komposisi = '50% Task + 50% Laporan';
+            if ($hasTask && $hasLap && $hasPenc) {
+                // Evaluasi Lengkap 3 Pilar: 40% Task Proyek + 30% Laporan Mingguan + 30% Pencapaian
+                $skorAkhir = round(($skorTask * 0.40) + ($skorLap * 0.30) + ($skorPenc * 0.30), 1);
+                $komposisi = '40% Task + 30% Lap + 30% Penc';
                 $statusNilai = 'lengkap';
                 $isEligiblePodium = true;
-            } elseif ($hasTask && !$hasLap) {
+            } elseif ($hasTask && $hasLap && !$hasPenc) {
+                // Task (40) + Lap (30) -> Bobot relatif 57% : 43%
+                $skorAkhir = round((($skorTask * 0.40) + ($skorLap * 0.30)) / 0.70, 1);
+                $komposisi = 'Task + Lap (Parsial)';
+                $statusNilai = 'parsial_2';
+                $isEligiblePodium = false;
+            } elseif ($hasTask && !$hasLap && $hasPenc) {
+                // Task (40) + Penc (30) -> Bobot relatif 57% : 43%
+                $skorAkhir = round((($skorTask * 0.40) + ($skorPenc * 0.30)) / 0.70, 1);
+                $komposisi = 'Task + Penc (Parsial)';
+                $statusNilai = 'parsial_2';
+                $isEligiblePodium = false;
+            } elseif (!$hasTask && $hasLap && $hasPenc) {
+                // Lap (30) + Penc (30) -> Bobot seimbang 50% : 50%
+                $skorAkhir = round(($skorLap * 0.50) + ($skorPenc * 0.50), 1);
+                $komposisi = '50% Lap + 50% Penc (Parsial)';
+                $statusNilai = 'parsial_2';
+                $isEligiblePodium = false;
+            } elseif ($hasTask && !$hasLap && !$hasPenc) {
                 $skorAkhir = $skorTask;
                 $komposisi = '100% Task (Parsial)';
-                $statusNilai = 'task_only';
+                $statusNilai = 'parsial_1';
                 $isEligiblePodium = false;
-            } elseif (!$hasTask && $hasLap) {
+            } elseif (!$hasTask && $hasLap && !$hasPenc) {
                 $skorAkhir = $skorLap;
                 $komposisi = '100% Laporan (Parsial)';
-                $statusNilai = 'laporan_only';
+                $statusNilai = 'parsial_1';
+                $isEligiblePodium = false;
+            } elseif (!$hasTask && !$hasLap && $hasPenc) {
+                $skorAkhir = $skorPenc;
+                $komposisi = '100% Pencapaian (Parsial)';
+                $statusNilai = 'parsial_1';
                 $isEligiblePodium = false;
             } else {
                 $skorAkhir = null;
@@ -479,6 +551,8 @@ class Task_proyek extends CI_Controller
 
             $lb->skor_task          = $skorTask;
             $lb->skor_lap           = $skorLap;
+            $lb->skor_penc          = $skorPenc;
+            $lb->total_pencapaian   = (int)$lb->total_pencapaian;
             $lb->skor_akhir         = $skorAkhir;
             $lb->rating_agregat     = $ratingAgregat;
             $lb->grade              = $grade;
@@ -496,29 +570,39 @@ class Task_proyek extends CI_Controller
             $leaderboard[] = $lb;
         }
 
-        // Urutkan Leaderboard berdasarkan:
-        // 1. Prioritas Kelengkapan Evaluasi: Karyawan dengan evaluasi 'lengkap' (Task + Laporan)
-        //    berada di kelompok utama (Eligible Juara 1, 2, 3) di atas evaluasi parsial
-        // 2. Skor Akhir tertinggi (NULL paling bawah)
-        // 3. Task selesai terbanyak
-        // 4. Total task terbanyak
-        // 5. Total poin laporan terbanyak
+        // Urutkan Leaderboard berdasarkan aturan Opsi 1 (3 Pilar KPI):
+        // 1. Evaluasi Lengkap 3 Pilar ('lengkap') diprioritaskan di puncak (Eligible Juara 1, 2, 3)
+        // 2. Evaluasi 2 Pilar di atas 1 Pilar
+        // 3. Skor Akhir tertinggi (NULL paling bawah)
+        // 4. Task selesai terbanyak
+        // 5. Total task terbanyak
+        // 6. Total pencapaian terbanyak
+        // 7. Total poin laporan terbanyak
         usort($leaderboard, function($a, $b) {
             if ($a->skor_akhir === null && $b->skor_akhir === null) return 0;
             if ($a->skor_akhir === null) return 1;
             if ($b->skor_akhir === null) return -1;
 
-            $aLengkap = ($a->status_nilai === 'lengkap') ? 1 : 0;
-            $bLengkap = ($b->status_nilai === 'lengkap') ? 1 : 0;
+            $prioMap = [
+                'lengkap'       => 3,
+                'parsial_2'     => 2,
+                'parsial_1'     => 1,
+                'belum_dinilai' => 0
+            ];
+            $prioA = isset($prioMap[$a->status_nilai]) ? $prioMap[$a->status_nilai] : 0;
+            $prioB = isset($prioMap[$b->status_nilai]) ? $prioMap[$b->status_nilai] : 0;
 
-            if ($aLengkap !== $bLengkap) {
-                return $bLengkap <=> $aLengkap; // Evaluasi lengkap diurutkan lebih dulu
+            if ($prioA !== $prioB) {
+                return $prioB <=> $prioA; // Lengkap 3 pilar paling atas, disusul 2 pilar, lalu 1 pilar
             }
 
             if ($a->skor_akhir == $b->skor_akhir) {
                 if ($a->task_selesai == $b->task_selesai) {
                     if ($a->total_task == $b->total_task) {
-                        return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
+                        if ($a->total_pencapaian == $b->total_pencapaian) {
+                            return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
+                        }
+                        return (int)$b->total_pencapaian <=> (int)$a->total_pencapaian;
                     }
                     return (int)$b->total_task <=> (int)$a->total_task;
                 }
