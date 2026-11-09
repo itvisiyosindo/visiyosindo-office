@@ -3615,8 +3615,47 @@ function sendWa($dataSend)
 		}
 	}
 
-	// 0.1 Pengiriman Normal WhaCenter (Bebas kirim ke nomor pribadi dan grup 24 jam)
-	// (Restriksi sesi 24-jam Convia/Cloud API dinonaktifkan agar notifikasi sistem ke karyawan dapat masuk normal)
+	// 0.1 Aturan 24-Hour Messaging Window (Khusus Nomor Pribadi):
+	// Pesan ke GRUP WhatsApp (@g.us / nama grup) bebas dikirim 24/7 tanpa batas.
+	// Pesan ke NOMOR PRIBADI hanya diizinkan jika nomor tujuan ada chat masuk dalam 24 jam terakhir (sesi aktif).
+	$rawPenerimaTarget = trim((string)($dataSend['penerima'] ?? ''));
+	$isGroupTarget = (
+		!empty($dataSend['is_group']) ||
+		!empty($dataSend['group']) ||
+		strpos($rawPenerimaTarget, '@g.us') !== false ||
+		in_array($rawPenerimaTarget, [
+			'MARKETING PT. VYM',
+			'TEKNISI MEDIKAL PT. VYM',
+			'Gudang PT. VYM',
+			'Notifikasi tes',
+			'Visilab',
+			'VISILAB'
+		]) ||
+		in_array(urldecode($rawPenerimaTarget), [
+			'MARKETING PT. VYM',
+			'TEKNISI MEDIKAL PT. VYM',
+			'Gudang PT. VYM',
+			'Notifikasi tes',
+			'Visilab',
+			'VISILAB'
+		])
+	);
+
+	if (!$isGroupTarget && empty($dataSend['bypass_24h'])) {
+		if (function_exists('get_instance')) {
+			$ci = &get_instance();
+			if (!isset($ci->Md_whatsapp_session)) {
+				$ci->load->model('Md_whatsapp_session');
+			}
+			if (isset($ci->Md_whatsapp_session)) {
+				if (!$ci->Md_whatsapp_session->is_session_active($rawPenerimaTarget)) {
+					// Abaikan pengiriman pesan pribadi karena sesi 24 jam tidak aktif
+					log_message('debug', 'WhatsApp sendWa dibatalkan: Sesi 24 jam nomor ' . $rawPenerimaTarget . ' tidak aktif.');
+					return false;
+				}
+			}
+		}
+	}
 
 	// Pastikan link dalam pesan selalu mengarah ke domain publik yang bisa dibuka dari HP
 	if (isset($dataSend['pesan'])) {

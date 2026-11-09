@@ -10,6 +10,34 @@ class Md_whatsapp_session extends CI_Model
         parent::__construct();
         date_default_timezone_set('Asia/Jakarta');
         $this->load->database();
+        $this->ensure_table();
+    }
+
+    /**
+     * Pastikan tabel tbl_whatsapp_sessions tersedia
+     */
+    public function ensure_table()
+    {
+        if (!isset($this->db)) {
+            return false;
+        }
+        $sql = "CREATE TABLE IF NOT EXISTS `{$this->table}` (
+            `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `phone_number` VARCHAR(30) NOT NULL,
+            `pengguna_id` INT(11) DEFAULT NULL,
+            `nama` VARCHAR(150) DEFAULT NULL,
+            `last_incoming_at` DATETIME NOT NULL,
+            `last_message_text` TEXT DEFAULT NULL,
+            `reminder_sent` TINYINT(1) DEFAULT 0,
+            `last_reminder_at` DATETIME DEFAULT NULL,
+            `created_at` DATETIME NOT NULL,
+            `updated_at` DATETIME NOT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uniq_phone` (`phone_number`),
+            KEY `idx_last_incoming` (`last_incoming_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        @$this->db->query($sql);
+        return true;
     }
 
     /**
@@ -43,14 +71,15 @@ class Md_whatsapp_session extends CI_Model
         if (empty($normalizedPhone)) {
             return false;
         }
+        $phone0 = (substr($normalizedPhone, 0, 2) === '62') ? ('0' . substr($normalizedPhone, 2)) : $normalizedPhone;
 
         $sql = "SELECT id FROM {$this->table}
-                WHERE phone_number = ?
+                WHERE (phone_number = ? OR phone_number = ? OR phone_number = ?)
                   AND last_incoming_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
                 LIMIT 1";
 
-        $query = $this->db->query($sql, [$normalizedPhone]);
-        return ($query->num_rows() > 0);
+        $query = $this->db->query($sql, [$normalizedPhone, $phone0, '+' . $normalizedPhone]);
+        return ($query && $query->num_rows() > 0);
     }
 
     /**

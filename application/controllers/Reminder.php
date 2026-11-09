@@ -290,6 +290,12 @@ class Reminder extends CI_Controller {
             }
             $seenPhones[$normPhone] = true;
 
+            // Pastikan nomor HP memiliki sesi chat 24 jam yang masih aktif
+            if (!$this->Md_whatsapp_session->is_session_active($phone)) {
+                $skippedSess++;
+                continue;
+            }
+
             $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
 
             $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
@@ -307,7 +313,7 @@ class Reminder extends CI_Controller {
                 'devId'        => hostWa('1'),
                 'penerima'     => $phone,
                 'pesan'        => urlencode($pesan),
-                'bypass_24h'   => true,
+                'bypass_24h'   => false,
                 'raw_chat'     => true,
                 'min_start_ts' => $targetStartTs
             ];
@@ -340,7 +346,7 @@ class Reminder extends CI_Controller {
             $pendingQueue = (int)($this->db->query("SELECT COUNT(*) AS cnt FROM `tbl_wa_queue` WHERE `status` = 'pending'")->row()->cnt ?? 0);
         }
 
-        $msg = "Pengiriman ucapan weekend selesai dimasukkan ke antrian (1-per-1). Total Karyawan Aktif: $terkirim, Gagal/No HP Kosong: $gagal.";
+        $msg = "Pengiriman ucapan weekend selesai (antrian 1-per-1). Terkirim/Antri: $terkirim, Skip (Sudah dikirim): $skipped, Skip (Sesi 24j Mati): $skippedSess, Gagal/No HP Kosong: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {
@@ -464,6 +470,12 @@ class Reminder extends CI_Controller {
             }
             $seenPhones[$normPhone] = true;
 
+            // Pastikan nomor HP memiliki sesi chat 24 jam yang masih aktif
+            if (!$this->Md_whatsapp_session->is_session_active($phone)) {
+                $skippedSess++;
+                continue;
+            }
+
             $friendly = $this->_get_friendly_name($karyawan['nama'], $karyawan['short_name']);
 
             $greeting = in_array(strtolower($friendly), ['admin', 'administrator', 'penanggung', 'staff'])
@@ -480,7 +492,7 @@ class Reminder extends CI_Controller {
                 'devId'      => hostWa('1'),
                 'penerima'   => $phone,
                 'pesan'      => urlencode($pesan),
-                'bypass_24h' => true,
+                'bypass_24h' => false,
                 'raw_chat'   => true
             ];
 
@@ -512,7 +524,7 @@ class Reminder extends CI_Controller {
             $pendingQueue = (int)($this->db->query("SELECT COUNT(*) AS cnt FROM `tbl_wa_queue` WHERE `status` = 'pending'")->row()->cnt ?? 0);
         }
 
-        $msg = "Pengiriman ucapan semangat Senin selesai dimasukkan ke antrian (1-per-1). Total Karyawan Aktif: $terkirim, Gagal/No HP Kosong: $gagal.";
+        $msg = "Pengiriman ucapan semangat Senin selesai (antrian 1-per-1). Terkirim/Antri: $terkirim, Skip (Sudah dikirim): $skipped, Skip (Sesi 24j Mati): $skippedSess, Gagal/No HP Kosong: $gagal.";
         if (is_cli()) {
             echo $msg . "\n";
         } else {
