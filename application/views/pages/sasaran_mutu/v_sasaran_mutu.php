@@ -364,10 +364,23 @@
 
 				<div class="row mt-2 pt-2 border-top">
 					<div class="col-md-9 d-flex align-items-center flex-wrap" style="gap: 8px;">
-						<!-- Tombol Pekerjaan Saya -->
-						<?php if (!empty($user_jabatan)): ?>
-							<button type="button" class="btn btn-sm btn-info font-weight-bold" onclick="filterMyWork('<?= htmlspecialchars($user_jabatan) ?>');" title="Filter langsung ke jabatan Anda: <?= htmlspecialchars($user_jabatan) ?>">
-								<i class="fas fa-user-check mr-1"></i> Pekerjaan Saya (<?= htmlspecialchars($user_jabatan) ?>)
+						<!-- Tombol Cepat Posisi Saya vs Semua Posisi -->
+						<?php if (!empty($matched_posisi)): ?>
+							<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year . '&posisi=' . urlencode($matched_posisi) . '&divisi=all') ?>" class="btn btn-sm <?= ($selected_pos === $matched_posisi) ? 'btn-info font-weight-bold shadow-sm' : 'btn-outline-info' ?>" title="Filter langsung ke jabatan Anda: <?= htmlspecialchars($matched_posisi) ?>">
+								<i class="fas fa-user-check mr-1"></i> Posisi Saya (<?= htmlspecialchars($matched_posisi) ?>)
+							</a>
+							<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year . '&posisi=all&divisi=all') ?>" class="btn btn-sm <?= ($selected_pos === 'all') ? 'btn-dark font-weight-bold shadow-sm' : 'btn-outline-secondary' ?>" title="Tampilkan semua posisi perusahaan">
+								<i class="fas fa-globe mr-1"></i> Semua Posisi Perusahaan
+							</a>
+						<?php endif; ?>
+
+						<!-- Tombol Baca dari Excel & Kosongkan Data (Admin, HRD, Manajemen) -->
+						<?php if (!empty($is_management)): ?>
+							<button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalImportExcel" title="Baca data dari Link Google Spreadsheet atau File Excel">
+								<i class="fas fa-file-excel mr-1"></i> Baca dari Excel / Google Sheet
+							</button>
+							<button type="button" class="btn btn-sm btn-outline-danger font-weight-bold" data-toggle="modal" data-target="#modalClearData" title="Kosongkan data sasaran mutu tahun <?= $selected_year ?>">
+								<i class="fas fa-trash-alt mr-1"></i> Kosongkan Data
 							</button>
 						<?php endif; ?>
 
@@ -377,12 +390,12 @@
 						</button>
 
 						<!-- Tombol Tambah Jobdesk Baru -->
-						<button type="button" class="btn btn-sm btn-success font-weight-bold" data-toggle="modal" data-target="#modalAddJobdesk">
+						<button type="button" class="btn btn-sm btn-outline-success font-weight-bold" data-toggle="modal" data-target="#modalAddJobdesk">
 							<i class="fas fa-plus mr-1"></i> Tambah Jobdesk Baru
 						</button>
 
 						<a href="<?= base_url('sasaran_mutu/export_csv?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-outline-success">
-							<i class="fas fa-file-excel mr-1"></i> Export CSV
+							<i class="fas fa-download mr-1"></i> Export CSV
 						</a>
 
 						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-secondary">
@@ -419,7 +432,16 @@
 						<?= $selected_year == 2026 ? 'Terformat dari Excel master historis' : 'Tersinkronisasi langsung dari Laporan Mingguan & Task Proyek' ?>
 					</small>
 				</div>
-				<div class="d-flex align-items-center" style="gap: 8px;">
+				<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+					<?php if (!empty($matched_posisi)): ?>
+						<?php if ($selected_pos === $matched_posisi): ?>
+							<span class="badge badge-success px-2 py-1 font-weight-bold"><i class="fas fa-check-circle mr-1"></i> Posisi Anda: <?= htmlspecialchars($matched_posisi) ?></span>
+						<?php else: ?>
+							<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year . '&posisi=' . urlencode($matched_posisi) . '&divisi=all') ?>" class="btn btn-xs btn-outline-info font-weight-bold">
+								<i class="fas fa-user-circle mr-1"></i> Lihat Posisi Saya Saja
+							</a>
+						<?php endif; ?>
+					<?php endif; ?>
 					<span class="badge badge-light border text-muted px-2 py-1 font-weight-normal">
 						Total: <strong><?= count($items) ?></strong> baris
 					</span>
@@ -915,6 +937,142 @@
 	</div>
 </div>
 
+<!-- Modal Import / Baca dari Excel dan Google Spreadsheet -->
+<div class="modal fade" id="modalImportExcel" tabindex="-1" role="dialog" aria-labelledby="modalImportExcelLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content" style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+			<div class="modal-header bg-success text-white">
+				<h5 class="modal-title font-weight-bold" id="modalImportExcelLabel">
+					<i class="fas fa-file-excel mr-2"></i> Baca / Import Data Sasaran Mutu dari Excel
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formImportExcel" onsubmit="submitImportExcel(event);" enctype="multipart/form-data">
+				<input type="hidden" name="year" value="<?= $selected_year ?>">
+				
+				<div class="modal-body p-4 bg-light">
+					<div class="card p-3 mb-3 border-0 shadow-sm bg-white">
+						<label class="font-weight-bold text-dark mb-2">Pilih Sumber Data:</label>
+						<div class="d-flex flex-wrap" style="gap: 20px;">
+							<div class="custom-control custom-radio">
+								<input type="radio" id="srcUrl" name="import_source" value="url" class="custom-control-input" checked onchange="toggleImportSource();">
+								<label class="custom-control-label font-weight-bold" for="srcUrl" style="cursor: pointer;">
+									<i class="fab fa-google text-success mr-1"></i> Link Google Spreadsheet / Online Excel
+								</label>
+							</div>
+							<div class="custom-control custom-radio">
+								<input type="radio" id="srcFile" name="import_source" value="file" class="custom-control-input" onchange="toggleImportSource();">
+								<label class="custom-control-label font-weight-bold" for="srcFile" style="cursor: pointer;">
+									<i class="fas fa-upload text-primary mr-1"></i> Unggah File Excel (.xlsx / .xls / .csv)
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<!-- Input URL Google Sheets / Online Excel -->
+					<div id="containerImportUrl" class="card p-3 mb-3 border bg-white">
+						<label class="font-weight-bold text-dark mb-1">
+							<i class="fab fa-google-drive text-success mr-1"></i> Link URL Google Spreadsheet <span class="text-danger">*</span>
+						</label>
+						<input type="url" name="excel_url" id="inputImportUrl" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/116hr1DHsrlX_spxVRvE8B7jrYmgsHTvQpED-xuW00ls/edit..." style="font-size: 13px;">
+						<div class="small text-muted mt-2" style="line-height: 1.4;">
+							<i class="fas fa-info-circle text-info"></i> Sistem akan langsung mengunduh dan membaca sheet secara otomatis. Pastikan setelan berbagi di spreadsheet telah diatur ke <strong>"Anyone with the link can view"</strong> (Siapa saja yang memiliki link dapat melihat).
+						</div>
+					</div>
+
+					<!-- Input Upload File Excel -->
+					<div id="containerImportFile" class="card p-3 mb-3 border bg-white" style="display: none;">
+						<label class="font-weight-bold text-dark mb-1">
+							<i class="fas fa-file-upload text-primary mr-1"></i> Pilih Berkas Excel dari Komputer <span class="text-danger">*</span>
+						</label>
+						<input type="file" name="file_excel" id="inputImportFile" class="form-control-file border p-2 rounded" accept=".xlsx, .xls, .csv">
+						<div class="small text-muted mt-2">
+							<i class="fas fa-info-circle text-info"></i> Format yang didukung: <strong>.xlsx, .xls, .csv</strong> (Format kolom: No, Divisi, Posisi, Jobdesk, Detail Proyek, Sasaran Mutu, Metode, Indikator, Keterangan).
+						</div>
+					</div>
+
+					<div class="alert alert-secondary py-2 px-3 small mb-0" style="border-radius: 6px;">
+						<strong>Format Kolom yang Dikenali Otomatis:</strong><br>
+						<code>No</code> | <code>Divisi</code> | <code>Posisi / Jabatan</code> | <code>Jobdesk</code> | <code>List Detail Proyek</code> | <code>Sasaran Mutu</code> | <code>Metode Pengukuran</code> | <code>Indikator Keberhasilan</code> | <code>Keterangan</code> | <code>Implementasi</code> | <code>Link Dokumen</code>
+					</div>
+				</div>
+
+				<div class="modal-footer bg-white border-top">
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+						<i class="fas fa-times mr-1"></i> Batal
+					</button>
+					<button type="submit" id="btnSubmitImportExcel" class="btn btn-success btn-sm font-weight-bold px-4">
+						<i class="fas fa-file-import mr-1"></i> Mulai Baca & Impor Data
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Kosongkan Data Sasaran Mutu -->
+<div class="modal fade" id="modalClearData" tabindex="-1" role="dialog" aria-labelledby="modalClearDataLabel" aria-hidden="true">
+	<div class="modal-dialog modal-md" role="document">
+		<div class="modal-content" style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+			<div class="modal-header bg-danger text-white">
+				<h5 class="modal-title font-weight-bold" id="modalClearDataLabel">
+					<i class="fas fa-trash-alt mr-2"></i> Kosongkan Data Sasaran Mutu (Tahun <?= $selected_year ?>)
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formClearData" onsubmit="submitClearData(event);">
+				<input type="hidden" name="year" value="<?= $selected_year ?>">
+				
+				<div class="modal-body p-4 bg-light">
+					<div class="alert alert-warning py-2 px-3 small mb-3">
+						<i class="fas fa-exclamation-triangle mr-1"></i> <strong>Perhatian:</strong> Tindakan ini akan menghapus data pada periode tahun <strong><?= $selected_year ?></strong>. Pastikan Anda telah memiliki cadangan jika diperlukan.
+					</div>
+
+					<div class="card p-3 mb-3 border bg-white">
+						<label class="font-weight-bold text-dark mb-2">Pilih Opsi Pengosongan:</label>
+						
+						<div class="custom-control custom-radio mb-2">
+							<input type="radio" id="modeRecords" name="mode" value="records_only" class="custom-control-input" checked>
+							<label class="custom-control-label" for="modeRecords" style="cursor: pointer;">
+								<strong>Kosongkan Isian Realisasi & Link Bukti Saja</strong>
+								<div class="small text-muted">Daftar jobdesk master tetap utuh, tetapi seluruh inputan implementasi, catatan, dan link bukti Drive dikosongkan kembali ke awal.</div>
+							</label>
+						</div>
+
+						<div class="custom-control custom-radio">
+							<input type="radio" id="modeFull" name="mode" value="full" class="custom-control-input">
+							<label class="custom-control-label text-danger" for="modeFull" style="cursor: pointer;">
+								<strong>Kosongkan Seluruh Data (Full Reset / Hapus Total)</strong>
+								<div class="small text-muted">Menghapus total seluruh baris sasaran mutu tahun <?= $selected_year ?> dari database & file JSON (bersih 0 baris, siap diimpor ulang dari file/link Excel).</div>
+							</label>
+						</div>
+					</div>
+
+					<div class="form-group mb-0">
+						<label class="font-weight-bold text-dark small mb-1">
+							Ketik kata <span class="text-danger font-weight-bold">KOSONGKAN</span> untuk konfirmasi:
+						</label>
+						<input type="text" id="confirmClearText" class="form-control form-control-sm" placeholder="Ketik KOSONGKAN di sini..." required autocomplete="off">
+					</div>
+				</div>
+
+				<div class="modal-footer bg-white border-top">
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+						<i class="fas fa-times mr-1"></i> Batal
+					</button>
+					<button type="submit" id="btnSubmitClearData" class="btn btn-danger btn-sm font-weight-bold px-4">
+						<i class="fas fa-trash-alt mr-1"></i> Kosongkan Sekarang
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
 	let currentQuickDriveRow = null;
 
@@ -1338,6 +1496,110 @@
 			btn.innerHTML = '<i class="fas fa-bolt mr-1"></i> Jalankan Sinkronisasi Otomatis';
 			console.error(err);
 			statusEl.innerHTML = '<span class="text-danger">Terjadi kesalahan koneksi.</span>';
+		});
+	}
+
+	function toggleImportSource() {
+		const isUrl = document.getElementById('srcUrl').checked;
+		document.getElementById('containerImportUrl').style.display = isUrl ? 'block' : 'none';
+		document.getElementById('containerImportFile').style.display = isUrl ? 'none' : 'block';
+	}
+
+	function submitImportExcel(e) {
+		e.preventDefault();
+		const btn = document.getElementById('btnSubmitImportExcel');
+		const originalHtml = btn.innerHTML;
+		btn.disabled = true;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Memproses Import...';
+
+		const form = document.getElementById('formImportExcel');
+		const formData = new FormData(form);
+
+		fetch('<?= base_url('sasaran_mutu/ajax_import_excel') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(res => {
+			btn.disabled = false;
+			btn.innerHTML = originalHtml;
+
+			if (res.status === 'success') {
+				$('#modalImportExcel').modal('hide');
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'success',
+						title: 'Import Berhasil!',
+						text: res.message,
+						confirmButtonText: 'Segarkan Halaman'
+					}).then(() => {
+						location.href = '<?= base_url('sasaran_mutu?tahun=' . $selected_year . '&posisi=all&divisi=all') ?>';
+					});
+				} else {
+					alert(res.message);
+					location.href = '<?= base_url('sasaran_mutu?tahun=' . $selected_year . '&posisi=all&divisi=all') ?>';
+				}
+			} else {
+				alert(res.message || 'Gagal mengimpor data.');
+			}
+		})
+		.catch(err => {
+			btn.disabled = false;
+			btn.innerHTML = originalHtml;
+			console.error(err);
+			alert('Terjadi kesalahan saat mengimpor data spreadsheet.');
+		});
+	}
+
+	function submitClearData(e) {
+		e.preventDefault();
+		const confirmInput = document.getElementById('confirmClearText').value.trim();
+		if (confirmInput !== 'KOSONGKAN') {
+			alert('Konfirmasi salah! Silakan ketik kata KOSONGKAN dengan huruf besar.');
+			return;
+		}
+
+		const btn = document.getElementById('btnSubmitClearData');
+		const originalHtml = btn.innerHTML;
+		btn.disabled = true;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Mengosongkan...';
+
+		const form = document.getElementById('formClearData');
+		const formData = new FormData(form);
+
+		fetch('<?= base_url('sasaran_mutu/ajax_clear_data') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(res => {
+			btn.disabled = false;
+			btn.innerHTML = originalHtml;
+
+			if (res.status === 'success') {
+				$('#modalClearData').modal('hide');
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'success',
+						title: 'Dikosongkan!',
+						text: res.message,
+						confirmButtonText: 'Segarkan Halaman'
+					}).then(() => {
+						location.reload();
+					});
+				} else {
+					alert(res.message);
+					location.reload();
+				}
+			} else {
+				alert(res.message || 'Gagal mengosongkan data.');
+			}
+		})
+		.catch(err => {
+			btn.disabled = false;
+			btn.innerHTML = originalHtml;
+			console.error(err);
+			alert('Terjadi kesalahan saat mengosongkan data.');
 		});
 	}
 

@@ -27,19 +27,9 @@ class Sasaran_mutu extends CI_Controller
             $year = (int)$year;
         }
 
-        if (empty($divisi)) {
-            $divisi = 'all';
-        }
-        if (empty($posisi)) {
-            $posisi = 'all';
-        }
-
-        $smData = $this->md_audit_system->getSasaranMutuData($year, $divisi, $posisi, $search);
-        $divTree = $this->md_audit_system->getDivisiAndPositions();
-
         // Ambil info jabatan pengguna untuk filter "Pekerjaan Saya"
         $user_jabatan = '';
-        $user_id = sessPenggunaId();
+        $user_id = (string)sessPenggunaId();
         if ($user_id && $this->db->conn_id) {
             $orig_db_debug = $this->db->db_debug;
             $this->db->db_debug = FALSE;
@@ -50,12 +40,14 @@ class Sasaran_mutu extends CI_Controller
             $this->db->db_debug = $orig_db_debug;
         }
 
-        // Cek apakah user adalah Manajemen / HRD / Auditor
-        $isManagementOrHrd = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array((string)$user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+        // Cocokkan nama jabatan user dengan master posisi sasaran mutu
+        $matchedPosition = $this->md_audit_system->resolveUserPosition($user_jabatan);
+        $isManagementOrHrd = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
 
-        // AUTO-FILTER: Jika staff biasa dan belum memilih filter secara manual, arahkan langsung ke jabatannya sendiri
-        if (!$isManagementOrHrd && empty($posisi) && empty($divisi) && !empty($user_jabatan) && empty($search)) {
-            $posisi = $user_jabatan;
+        // AUTO-FILTER: Tampilkan langsung sesuai punya mereka masing-masing jika tidak ada query eksplisit di URL
+        $isExplicitFilter = isset($_GET['posisi']) || isset($_GET['divisi']) || isset($_GET['q']);
+        if (!$isExplicitFilter && !empty($matchedPosition)) {
+            $posisi = $matchedPosition;
         }
 
         if (empty($divisi)) {
@@ -83,6 +75,8 @@ class Sasaran_mutu extends CI_Controller
         $page_data['current_user_name'] = sessNama();
         $page_data['current_user_id']   = sessPenggunaId();
         $page_data['user_jabatan']      = $user_jabatan;
+        $page_data['matched_posisi']    = $matchedPosition;
+        $page_data['is_explicit_filter'] = $isExplicitFilter;
         $page_data['is_management']     = $isManagementOrHrd;
 
         $this->load->view('index', $page_data);
@@ -337,5 +331,88 @@ class Sasaran_mutu extends CI_Controller
         }
         fclose($output);
         exit;
+    }
+
+    /**
+     * AJAX Mengosongkan Data Sasaran Mutu (Khusus Admin / HRD / Manajemen)
+     */
+    public function ajax_clear_data()
+    {
+        grantAccessFor('all');
+
+        $user_id = (string)sessPenggunaId();
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || in_array($user_id, ['1', '744', '29', '69', '58']));
+        if (!$isAllowed) {
+            echo json_encode(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses untuk mengosongkan data sasaran mutu.']);
+            return;
+        }
+
+        $year = (int)($this->input->post('year') ?: 2026);
+        $mode = $this->input->post('mode', TRUE) ?: 'records_only'; // 'records_only' atau 'full'
+
+        $this->md_audit_system->clearSasaranMutuData($year, $mode);
+
+        $msg = ($mode === 'full')
+            ? "Seluruh data master dan isian Sasaran Mutu tahun {$year} telah berhasil dikosongkan total."
+            : "Seluruh realisasi, implementasi, dan link bukti Sasaran Mutu tahun {$year} telah berhasil dikosongkan (kembali ke template awal).";
+
+        echo json_encode(['status' => 'success', 'message' => $msg]);
+    }
+
+    /**
+     * AJAX Membaca & Mengimpor Data dari File Excel (.xlsx/.xls/.csv) atau Link Google Sheets/Online
+     */
+    public function ajax_import_excel()
+    {
+        grantAccessFor('all');
+
+        $user_id = (string)sessPenggunaId();
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || in_array($user_id, ['1', '744', '29', '69', '58']));
+        if (!$isAllowed) {
+            echo json_encode(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses untuk mengimpor data sasaran mutu.']);
+            return;
+        }
+
+        $year = (int)($this->input->post('year') ?: 2026);
+        $importSource = $this->input->post('import_source', TRUE); // 'file' atau 'url'
+
+        $sheetData = null;
+
+        if ($importSource === 'url') {
+            $url = trim((string)$this->input->post('excel_url', TRUE));
+            if (empty($url)) {
+                echo json_encode(['status' => 'error', 'message' => 'Link URL Google Spreadsheet / Excel tidak boleh kosong']);
+                return;
+            }
+
+            $res = $this->md_audit_system->downloadAndParseSpreadsheetUrl($url);
+            if ($res['status'] !== 'success') {
+                echo json_encode($res);
+                return;
+            }
+            $sheetData = $res['data'];
+        } else {
+            // Import via File Upload
+            if (empty($_FILES['file_excel']['name']) || empty($_FILES['file_excel']['tmp_name'])) {
+                echo json_encode(['status' => 'error', 'message' => 'Silakan pilih file Excel (.xlsx / .xls / .csv) untuk diunggah']);
+                return;
+            }
+
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($_FILES['file_excel']['tmp_name']);
+                $sheetData = $spreadsheet->getActiveSheet()->toArray();
+            } catch (\Throwable $e) {
+                echo json_encode(['status' => 'error', 'message' => 'Gagal membaca file Excel: ' . $e->getMessage()]);
+                return;
+            }
+        }
+
+        if (empty($sheetData)) {
+            echo json_encode(['status' => 'error', 'message' => 'Data spreadsheet kosong']);
+            return;
+        }
+
+        $result = $this->md_audit_system->importSasaranMutuFromSpreadsheet($year, $sheetData);
+        echo json_encode($result);
     }
 }

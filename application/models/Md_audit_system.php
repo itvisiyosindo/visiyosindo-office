@@ -15,7 +15,7 @@ class Md_audit_system extends CI_Model
     private $kinerjaFilePath;
     private $keuanganFilePath;
 
-    private static $masterCache = null;
+    private static $masterCache = [];
     private static $overridesCache = [];
     private static $kinerjaCache = [];
     private static $tablesInitialized = false;
@@ -133,16 +133,25 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Ambil data master template 2026 dari JSON (dichache di RAM agar tidak re-read disk)
+     * Ambil data master template per tahun dari JSON (dichache di RAM agar tidak re-read disk)
      */
-    public function getMasterTemplate()
+    public function getMasterTemplate($year = 2026)
     {
-        if (self::$masterCache !== null) {
-            return self::$masterCache;
+        $year = (int)$year;
+        if (isset(self::$masterCache[$year])) {
+            return self::$masterCache[$year];
         }
 
-        if (file_exists($this->masterFilePath)) {
-            $json = file_get_contents($this->masterFilePath);
+        $targetFile = $this->masterFilePath;
+        if ($year > 0 && $year != 2026) {
+            $yearFile = APPPATH . "data/sasaran_mutu_master_{$year}.json";
+            if (file_exists($yearFile)) {
+                $targetFile = $yearFile;
+            }
+        }
+
+        if (file_exists($targetFile)) {
+            $json = file_get_contents($targetFile);
             // Hapus UTF-8 BOM jika ada agar json_decode tidak return NULL
             if (substr($json, 0, 3) === "\xEF\xBB\xBF") {
                 $json = substr($json, 3);
@@ -150,11 +159,340 @@ class Md_audit_system extends CI_Model
             $json = trim($json);
             $data = json_decode($json, true);
             if (is_array($data)) {
-                self::$masterCache = $data;
-                return self::$masterCache;
+                self::$masterCache[$year] = $data;
+                return self::$masterCache[$year];
             }
         }
         return [];
+    }
+
+    /**
+     * Deteksi dan cocokkan nama posisi karyawan dengan daftar master posisi Sasaran Mutu
+     */
+    public function resolveUserPosition($userJabatan)
+    {
+        if (empty($userJabatan)) return null;
+
+        $master = $this->getMasterTemplate();
+        $positions = [];
+        foreach ($master as $m) {
+            if (!empty($m['posisi']) && !in_array($m['posisi'], $positions)) {
+                $positions[] = $m['posisi'];
+            }
+        }
+
+        $norm = function($str) {
+            $s = html_entity_decode((string)$str, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $s = str_replace(['&amp;', '&', '+', '/', '\\', '-', '_', '(', ')', ',', '.', ':', ';', '[', ']'], ' ', $s);
+            return preg_replace('/\s+/', ' ', strtolower(trim($s)));
+        };
+
+        $normUser = $norm($userJabatan);
+
+        // 1. Exact match
+        foreach ($positions as $p) {
+            if ($norm($p) === $normUser) {
+                return $p;
+            }
+        }
+
+        // 2. Substring match
+        foreach ($positions as $p) {
+            $normP = $norm($p);
+            if (strpos($normP, $normUser) !== false || strpos($normUser, $normP) !== false) {
+                return $p;
+            }
+        }
+
+        // 3. Significant word overlap match
+        $stopWords = ['dan', 'and', 'or', 'staf', 'staff', 'bagian', 'pt', 'cv'];
+        $userWords = array_diff(explode(' ', $normUser), $stopWords);
+        $bestMatch = null;
+        $maxOverlap = 0;
+        foreach ($positions as $p) {
+            $pWords = array_diff(explode(' ', $norm($p)), $stopWords);
+            $overlap = count(array_intersect($userWords, $pWords));
+            if ($overlap > $maxOverlap && $overlap >= 1) {
+                $maxOverlap = $overlap;
+                $bestMatch = $p;
+            }
+        }
+
+        return $bestMatch ?: $userJabatan;
+    }
+
+    /**
+     * Kosongkan data Sasaran Mutu (Records saja atau Full Reset termasuk master)
+     */
+    public function clearSasaranMutuData($year = 2026, $mode = 'records_only')
+    {
+        $year = (int)$year;
+        $orig = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+
+        // 1. Kosongkan database records untuk tahun tersebut
+        if ($this->hasTable('sasaran_mutu_records')) {
+            @$this->db->where('year', $year)->delete('sasaran_mutu_records');
+        }
+
+        // 2. Kosongkan overrides JSON untuk tahun tersebut
+        if (file_exists($this->overridesFilePath)) {
+            $ov = json_decode(file_get_contents($this->overridesFilePath), true) ?: [];
+            $ov[$year] = [];
+            @file_put_contents($this->overridesFilePath, json_encode($ov, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($mode === 'full') {
+            // Kosongkan master data untuk tahun tersebut
+            $yearMasterPath = APPPATH . "data/sasaran_mutu_master_{$year}.json";
+            if (file_exists($yearMasterPath)) {
+                @file_put_contents($yearMasterPath, json_encode([], JSON_PRETTY_PRINT));
+            }
+            if ($year === 2026 && file_exists($this->masterFilePath)) {
+                @copy($this->masterFilePath, $this->masterFilePath . '.bak');
+                @file_put_contents($this->masterFilePath, json_encode([], JSON_PRETTY_PRINT));
+            }
+            if ($this->hasTable('audit_kinerja_records')) {
+                @$this->db->where('year', $year)->delete('audit_kinerja_records');
+            }
+        } else {
+            // Bersihkan link bukti & status di audit kinerja
+            if ($this->hasTable('audit_kinerja_records')) {
+                @$this->db->where('year', $year)->update('audit_kinerja_records', [
+                    'link_dokumen' => '',
+                    'status_audit' => 'Belum Diaudit',
+                    'catatan_audit' => ''
+                ]);
+            }
+        }
+
+        $this->db->db_debug = $orig;
+
+        // Reset cache in-memory
+        self::$masterCache = [];
+        self::$overridesCache = [];
+        self::$kinerjaCache = [];
+
+        return true;
+    }
+
+    /**
+     * Unduh dan parse spreadsheet dari URL (Mendukung link Google Spreadsheet & direct Excel URL)
+     */
+    public function downloadAndParseSpreadsheetUrl($url)
+    {
+        $url = trim($url);
+        if (empty($url)) {
+            return ['status' => 'error', 'message' => 'URL spreadsheet tidak boleh kosong'];
+        }
+
+        // 1. Deteksi Google Spreadsheet
+        if (strpos($url, 'docs.google.com/spreadsheets') !== false) {
+            if (preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $url, $m)) {
+                $sheetId = $m[1];
+                $gid = null;
+                if (preg_match('/[#&?]gid=([0-9]+)/', $url, $gm)) {
+                    $gid = $gm[1];
+                }
+                $exportUrl = "https://docs.google.com/spreadsheets/d/{$sheetId}/export?format=xlsx" . ($gid ? "&gid={$gid}" : "");
+            } else {
+                return ['status' => 'error', 'message' => 'Format link Google Spreadsheet tidak dikenali'];
+            }
+        } else {
+            $exportUrl = $url;
+        }
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'sm_import_');
+        $ctx = stream_context_create([
+            'http' => [
+                'timeout' => 30,
+                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false
+            ]
+        ]);
+
+        $fileContent = @file_get_contents($exportUrl, false, $ctx);
+        if (empty($fileContent) && function_exists('curl_init')) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $exportUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            $fileContent = curl_exec($ch);
+            curl_close($ch);
+        }
+
+        if (empty($fileContent)) {
+            @unlink($tempFile);
+            return [
+                'status' => 'error',
+                'message' => 'Gagal mengunduh file spreadsheet dari link yang diberikan. Pastikan Google Spreadsheet diatur ke "Anyone with the link can view" (Siapa saja yang memiliki link dapat melihat).'
+            ];
+        }
+
+        file_put_contents($tempFile, $fileContent);
+
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
+            $sheetData = $spreadsheet->getActiveSheet()->toArray();
+            @unlink($tempFile);
+            return ['status' => 'success', 'data' => $sheetData];
+        } catch (\Throwable $e) {
+            @unlink($tempFile);
+            return ['status' => 'error', 'message' => 'Gagal membaca format spreadsheet: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Parsing dan impor data spreadsheet ke dalam Master Sasaran Mutu
+     */
+    public function importSasaranMutuFromSpreadsheet($year, $sheetData)
+    {
+        if (empty($sheetData) || !is_array($sheetData)) {
+            return ['status' => 'error', 'message' => 'Data spreadsheet kosong atau tidak dapat dibaca'];
+        }
+
+        $headerRowIdx = -1;
+        $colMap = [];
+
+        $keywords = [
+            'divisi'                 => ['divisi', 'dept', 'departemen', 'bagian'],
+            'posisi'                 => ['posisi', 'jabatan', 'role'],
+            'jobdesk'                => ['jobdesk', 'job desc', 'uraian tugas', 'tugas', 'tanggung jawab'],
+            'detail_proyek'          => ['detail proyek', 'list detail', 'rincian proyek', 'proyek'],
+            'implementasi'           => ['implementasi', 'realisasi', 'catatan pekerjaan'],
+            'sasaran_mutu'           => ['sasaran mutu', 'sasaran', 'target mutu', 'target'],
+            'metode_pengukuran'      => ['metode pengukuran', 'pengukuran', 'cara ukur'],
+            'indikator_keberhasilan' => ['indikator keberhasilan', 'indikator', 'kpi', 'tolok ukur'],
+            'keterangan'             => ['keterangan', 'waktu pelaksanaan', 'periode', 'catatan'],
+            'link_dokumen'           => ['link dokumen', 'link drive', 'bukti pekerjaan', 'link bukti', 'url']
+        ];
+
+        for ($r = 0; $r < min(15, count($sheetData)); $r++) {
+            $row = $sheetData[$r];
+            $tempMap = [];
+
+            foreach ($row as $colIdx => $val) {
+                $cellVal = strtolower(trim((string)$val));
+                if (empty($cellVal)) continue;
+
+                foreach ($keywords as $field => $kwList) {
+                    if (isset($tempMap[$field])) continue;
+                    foreach ($kwList as $kw) {
+                        if (strpos($cellVal, $kw) !== false) {
+                            $tempMap[$field] = $colIdx;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (isset($tempMap['jobdesk']) || (isset($tempMap['posisi']) && isset($tempMap['sasaran_mutu']))) {
+                $headerRowIdx = $r;
+                $colMap = $tempMap;
+                break;
+            }
+        }
+
+        if ($headerRowIdx === -1) {
+            $headerRowIdx = 0;
+            $colMap = [
+                'no'                     => 0,
+                'divisi'                 => 1,
+                'posisi'                 => 2,
+                'jobdesk'                => 3,
+                'detail_proyek'          => 4,
+                'implementasi'           => 5,
+                'sasaran_mutu'           => 6,
+                'metode_pengukuran'      => 7,
+                'indikator_keberhasilan' => 8,
+                'keterangan'             => 9,
+                'link_dokumen'           => 10
+            ];
+        }
+
+        $items = [];
+        $curDivisi = 'UMUM';
+        $curPosisi = 'General';
+        $seq = 1;
+
+        for ($i = $headerRowIdx + 1; $i < count($sheetData); $i++) {
+            $row = $sheetData[$i];
+            
+            $jobdesk = isset($colMap['jobdesk']) && isset($row[$colMap['jobdesk']]) ? trim((string)$row[$colMap['jobdesk']]) : '';
+            if (empty($jobdesk)) {
+                continue;
+            }
+
+            if (strtolower($jobdesk) === 'jobdesk' || strtolower($jobdesk) === 'job description') {
+                continue;
+            }
+
+            $divVal = isset($colMap['divisi']) && isset($row[$colMap['divisi']]) ? trim((string)$row[$colMap['divisi']]) : '';
+            $posVal = isset($colMap['posisi']) && isset($row[$colMap['posisi']]) ? trim((string)$row[$colMap['posisi']]) : '';
+
+            if (!empty($divVal)) {
+                $curDivisi = $divVal;
+            }
+            if (!empty($posVal)) {
+                $curPosisi = $posVal;
+            }
+
+            $divKey = preg_replace('/[^a-zA-Z0-9]/', '', strtoupper($curDivisi));
+            if (empty($divKey)) $divKey = 'GEN';
+
+            $itemId = "SM_{$divKey}_{$seq}";
+
+            $detailProyek = isset($colMap['detail_proyek']) && isset($row[$colMap['detail_proyek']]) ? trim((string)$row[$colMap['detail_proyek']]) : '';
+            $implementasi = isset($colMap['implementasi']) && isset($row[$colMap['implementasi']]) ? trim((string)$row[$colMap['implementasi']]) : '';
+            $sasaranMutu  = isset($colMap['sasaran_mutu']) && isset($row[$colMap['sasaran_mutu']]) ? trim((string)$row[$colMap['sasaran_mutu']]) : '';
+            $metode       = isset($colMap['metode_pengukuran']) && isset($row[$colMap['metode_pengukuran']]) ? trim((string)$row[$colMap['metode_pengukuran']]) : '';
+            $indikator    = isset($colMap['indikator_keberhasilan']) && isset($row[$colMap['indikator_keberhasilan']]) ? trim((string)$row[$colMap['indikator_keberhasilan']]) : '';
+            $keterangan   = isset($colMap['keterangan']) && isset($row[$colMap['keterangan']]) ? trim((string)$row[$colMap['keterangan']]) : '';
+            $linkDokumen  = isset($colMap['link_dokumen']) && isset($row[$colMap['link_dokumen']]) ? trim((string)$row[$colMap['link_dokumen']]) : '';
+
+            $items[] = [
+                'id'                     => $itemId,
+                'divisi'                 => $curDivisi,
+                'divisi_key'             => $divKey,
+                'posisi'                 => $curPosisi,
+                'no'                     => $seq,
+                'jobdesk'                => $jobdesk,
+                'detail_proyek'          => $detailProyek,
+                'implementasi'           => $implementasi,
+                'sasaran_mutu'           => $sasaranMutu,
+                'metode_pengukuran'      => $metode,
+                'indikator_keberhasilan' => $indikator,
+                'keterangan'             => $keterangan,
+                'link_dokumen'           => $linkDokumen
+            ];
+            $seq++;
+        }
+
+        if (empty($items)) {
+            return ['status' => 'error', 'message' => 'Tidak ditemukan baris data jobdesk yang valid dari file spreadsheet'];
+        }
+
+        $yearFile = APPPATH . "data/sasaran_mutu_master_{$year}.json";
+        @file_put_contents($yearFile, json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        if ($year == 2026) {
+            @file_put_contents($this->masterFilePath, json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        self::$masterCache = [];
+        self::$overridesCache = [];
+        self::$kinerjaCache = [];
+
+        return [
+            'status'  => 'success',
+            'count'   => count($items),
+            'message' => 'Berhasil membaca dan mengimpor ' . count($items) . ' baris sasaran mutu ke tahun ' . $year . '!'
+        ];
     }
 
     /**
