@@ -843,7 +843,7 @@ $namaBulanList = [
                                 <tr style="background: #f8fafc;">
                                     <th width="50" class="text-center align-middle">Rank</th>
                                     <th class="align-middle">Nama Karyawan</th>
-                                    <th class="align-middle">Divisi & Jabatan</th>
+                                    <th class="align-middle">Jabatan</th>
                                     <th class="text-center align-middle" style="min-width: 130px;">
                                         <div>Task Proyek</div>
                                         <small class="badge badge-primary" style="font-size: 10px;">Bobot 50%</small>
@@ -884,8 +884,7 @@ $namaBulanList = [
                                             <?php endif; ?>
                                         </td>
                                         <td class="align-middle">
-                                            <span class="badge badge-light border"><?= htmlspecialchars($lb->nama_divisi ?: '-') ?></span>
-                                            <div class="small text-muted"><?= htmlspecialchars($lb->jabatan ?: '') ?></div>
+                                            <span><?= htmlspecialchars($lb->jabatan ?: '-') ?></span>
                                         </td>
                                         <td class="text-center align-middle">
                                             <?php if ($lb->skor_task !== null): ?>
