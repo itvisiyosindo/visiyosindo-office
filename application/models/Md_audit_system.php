@@ -134,6 +134,7 @@ class Md_audit_system extends CI_Model
      * - Tahun 2027 dan selanjutnya: Seluruh pengisian langsung tersinkron di sistem office tanpa isi manual di Excel.
      *   Template dasar jobdesk & detail proyek tersedia, realisasi, sasaran, metode, indikator, keterangan,
      *   serta link dokumen diinput langsung oleh masing-masing karyawan dan head di sistem office.
+     * - Tersinkronisasi secara langsung dengan Laporan Mingguan & Task yang Diberikan.
      * - Merge dengan catatan/inputan yang tersimpan dari DB / File JSON.
      */
     public function getSasaranMutuData($year = 2026, $divisi = null, $posisi = null, $search = null)
@@ -144,6 +145,32 @@ class Md_audit_system extends CI_Model
         $master = $this->getMasterTemplate();
         $overrides = $this->loadSasaranMutuOverrides($year);
         $kinerjaRecords = $this->loadAuditKinerjaRecords($year);
+
+        // Pre-fetch Laporan Mingguan & Task Proyek tahun ini untuk korelasi & sinkronisasi
+        $yearLaporan = [];
+        $yearTasks = [];
+        if ($this->db->conn_id) {
+            $orig_debug = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+
+            $qLap = @$this->db->select('l.id, l.tanggal, l.id_pengaju, l.jobdesc, l.progress, l.link, l.ket_hasil, l.keterangan')
+                ->where('YEAR(l.tanggal)', $year)
+                ->where('l.status !=', 3)
+                ->get('laporan l');
+            if ($qLap && $qLap->num_rows() > 0) {
+                $yearLaporan = $qLap->result_array();
+            }
+
+            $qTask = @$this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.id_penerima, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai')
+                ->where('t.is_deleted', 0)
+                ->where("(YEAR(t.created_at) = {$year} OR (t.tgl_submit IS NOT NULL AND YEAR(t.tgl_submit) = {$year}))")
+                ->get('task_proyek t');
+            if ($qTask && $qTask->num_rows() > 0) {
+                $yearTasks = $qTask->result_array();
+            }
+
+            $this->db->db_debug = $orig_debug;
+        }
 
         $results = [];
         $totalItems = 0;
@@ -166,6 +193,31 @@ class Md_audit_system extends CI_Model
                 continue;
             }
 
+            // Hitung korelasi Laporan Mingguan & Task yang cocok
+            $itemKws = $this->extractKeywords($item['jobdesk']);
+            $lapCount = 0;
+            $taskCount = 0;
+            if (!empty($itemKws)) {
+                foreach ($yearLaporan as $lap) {
+                    $lapTxt = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
+                    foreach ($itemKws as $kw) {
+                        if (strlen($kw) >= 4 && strpos($lapTxt, $kw) !== false) {
+                            $lapCount++;
+                            break;
+                        }
+                    }
+                }
+                foreach ($yearTasks as $tsk) {
+                    $tskTxt = strtolower($tsk['judul'] . ' ' . $tsk['nama_proyek'] . ' ' . $tsk['catatan_bawahan']);
+                    foreach ($itemKws as $kw) {
+                        if (strlen($kw) >= 4 && strpos($tskTxt, $kw) !== false) {
+                            $taskCount++;
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Tentukan nilai dasar berdasarkan tahun
             if ($year === 2026) {
                 $row = [
@@ -183,6 +235,9 @@ class Md_audit_system extends CI_Model
                     'indikator_keberhasilan' => $item['indikator_keberhasilan'],
                     'keterangan'             => $item['keterangan'],
                     'link_dokumen'           => '',
+                    'laporan_count'          => $lapCount,
+                    'task_count'             => $taskCount,
+                    'has_sync_data'          => ($lapCount > 0 || $taskCount > 0),
                     'is_custom'              => false
                 ];
             } else {
@@ -202,6 +257,9 @@ class Md_audit_system extends CI_Model
                     'indikator_keberhasilan' => '',
                     'keterangan'             => '',
                     'link_dokumen'           => '',
+                    'laporan_count'          => $lapCount,
+                    'task_count'             => $taskCount,
+                    'has_sync_data'          => ($lapCount > 0 || $taskCount > 0),
                     'is_custom'              => false
                 ];
             }
@@ -253,6 +311,76 @@ class Md_audit_system extends CI_Model
             if (!in_array($ovId, $masterIds)) {
                 $itemDiv = isset($ov['divisi']) ? $ov['divisi'] : '';
                 $itemPos = isset($ov['posisi']) ? $ov['posisi'] : '';
+                $itemJob = isset($ov['jobdesk']) ? $ov['jobdesk'] : '';
+
+                if ($divisi && $divisi !== 'all' && strcasecmp($itemDiv, $divisi) !== 0) {
+                    continue;
+                }
+                if ($posisi && $posisi !== 'all' && strcasecmp($itemPos, $posisi) !== 0) {
+                    continue;
+                }
+
+                $itemKws = $this->extractKeywords($itemJob);
+                $lapCount = 0;
+                $taskCount = 0;
+                if (!empty($itemKws)) {
+                    foreach ($yearLaporan as $lap) {
+                        $lapTxt = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
+                        foreach ($itemKws as $kw) {
+                            if (strlen($kw) >= 4 && strpos($lapTxt, $kw) !== false) {
+                                $lapCount++;
+                                break;
+                            }
+                        }
+                    }
+                    foreach ($yearTasks as $tsk) {
+                        $tskTxt = strtolower($tsk['judul'] . ' ' . $tsk['nama_proyek'] . ' ' . $tsk['catatan_bawahan']);
+                        foreach ($itemKws as $kw) {
+                            if (strlen($kw) >= 4 && strpos($tskTxt, $kw) !== false) {
+                                $taskCount++;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                $row = [
+                    'id'                     => $ovId,
+                    'year'                   => $year,
+                    'divisi'                 => $itemDiv,
+                    'divisi_key'             => str_replace([' ', ','], '_', $itemDiv),
+                    'posisi'                 => $itemPos,
+                    'no'                     => isset($ov['no']) ? $ov['no'] : '',
+                    'jobdesk'                => $itemJob,
+                    'detail_proyek'          => isset($ov['detail_proyek']) ? $ov['detail_proyek'] : '',
+                    'implementasi'           => isset($ov['implementasi']) ? $ov['implementasi'] : '',
+                    'sasaran_mutu'           => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : '',
+                    'metode_pengukuran'      => isset($ov['metode_pengukuran']) ? $ov['metode_pengukuran'] : '',
+                    'indikator_keberhasilan' => isset($ov['indikator_keberhasilan']) ? $ov['indikator_keberhasilan'] : '',
+                    'keterangan'             => isset($ov['keterangan']) ? $ov['keterangan'] : '',
+                    'link_dokumen'           => isset($kinerjaRecords[$ovId]['link_dokumen']) ? $kinerjaRecords[$ovId]['link_dokumen'] : '',
+                    'laporan_count'          => $lapCount,
+                    'task_count'             => $taskCount,
+                    'has_sync_data'          => ($lapCount > 0 || $taskCount > 0),
+                    'updated_by_name'        => isset($ov['updated_by_name']) ? $ov['updated_by_name'] : '',
+                    'updated_at'             => isset($ov['updated_at']) ? $ov['updated_at'] : '',
+                    'is_custom'              => true
+                ];
+
+                if ($search) {
+                    $sLower = strtolower($search);
+                    $haystack = strtolower($row['divisi'] . ' ' . $row['posisi'] . ' ' . $row['jobdesk'] . ' ' . $row['detail_proyek'] . ' ' . $row['implementasi']);
+                    if (strpos($haystack, $sLower) === false) continue;
+                }
+
+                $totalItems++;
+                if (!empty($row['keterangan']) || !empty($row['implementasi'])) {
+                    $filledCount++;
+                }
+
+                $results[] = $row;
+            }
+        }
 
                 if ($divisi && $divisi !== 'all' && strcasecmp($itemDiv, $divisi) !== 0) {
                     continue;
@@ -424,6 +552,282 @@ class Md_audit_system extends CI_Model
         $divisiKey = isset($payload['divisi']) ? preg_replace('/[^a-zA-Z0-9]/', '', $payload['divisi']) : 'CUSTOM';
         $itemId = 'SM_' . $divisiKey . '_CUSTOM_' . time();
         return $this->saveSasaranMutuItem($year, $itemId, $payload);
+    }
+
+    /**
+     * Ekstraksi kata kunci penting dari teks jobdesk
+     */
+    public function extractKeywords($text)
+    {
+        if (empty($text)) return [];
+        $clean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', strtolower($text));
+        $words = preg_split('/\s+/', $clean, -1, PREG_SPLIT_NO_EMPTY);
+        $stopWords = [
+            'dan', 'yang', 'dari', 'untuk', 'pada', 'atau', 'dengan', 'ke', 'di', 'ini', 'itu', 
+            'dalam', 'adalah', 'sebagai', 'secara', 'serta', 'oleh', 'atas', 'setiap', 'agar', 
+            'melakukan', 'membuat', 'melaporkan', 'mengelola', 'proses', 'kegiatan', 'rutin'
+        ];
+        $keywords = [];
+        foreach ($words as $w) {
+            if (strlen($w) >= 4 && !in_array($w, $stopWords) && !in_array($w, $keywords)) {
+                $keywords[] = $w;
+            }
+        }
+        return array_slice($keywords, 0, 8);
+    }
+
+    /**
+     * Ambil data ringkasan Laporan Mingguan dan Task yang relevan untuk suatu item Sasaran Mutu
+     */
+    public function getSyncDataForItem($year, $itemId, $userId = null, $jobdeskText = null, $posisi = null)
+    {
+        $year = (int)$year;
+        if ($year < 2020) $year = (int)date('Y');
+
+        if (empty($userId)) {
+            $userId = sessPenggunaId();
+        }
+
+        // Ambil item master/override jika teks belum diberikan
+        if (empty($jobdeskText) || empty($posisi)) {
+            $master = $this->getMasterTemplate();
+            foreach ($master as $m) {
+                if ($m['id'] === $itemId) {
+                    $jobdeskText = $m['jobdesk'];
+                    $posisi = $m['posisi'];
+                    break;
+                }
+            }
+        }
+
+        $laporanList = [];
+        $taskList = [];
+        $links = [];
+        $totalProgress = 0;
+        $progressCount = 0;
+
+        if ($this->db->conn_id) {
+            $orig_debug = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+
+            $keywords = $this->extractKeywords($jobdeskText);
+
+            // 1. Ambil Laporan Mingguan dari tabel `laporan`
+            $this->db->select('l.id, l.tanggal, l.id_pengaju, l.jobdesc, l.jenis, l.progress, l.status_pekerjaan, l.link, l.ket_hasil, l.keterangan, p.nama, p.jabatan')
+                ->from('laporan l')
+                ->join('pengguna p', 'p.pengguna_id = l.id_pengaju', 'left')
+                ->where('YEAR(l.tanggal)', $year)
+                ->where('l.status !=', 3);
+
+            if (!empty($userId)) {
+                $this->db->where('l.id_pengaju', $userId);
+            }
+
+            $laporanRows = $this->db->order_by('l.tanggal', 'DESC')->get()->result_array();
+
+            if (!empty($laporanRows)) {
+                foreach ($laporanRows as $lap) {
+                    $isMatch = false;
+                    if (!empty($userId) && $lap['id_pengaju'] == $userId) {
+                        if (!empty($keywords)) {
+                            $lapText = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil'] . ' ' . $lap['keterangan']);
+                            foreach ($keywords as $kw) {
+                                if (strlen($kw) >= 4 && strpos($lapText, $kw) !== false) {
+                                    $isMatch = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            $isMatch = true;
+                        }
+                    } else if (!empty($keywords)) {
+                        $lapText = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
+                        foreach ($keywords as $kw) {
+                            if (strlen($kw) >= 4 && strpos($lapText, $kw) !== false) {
+                                $isMatch = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($isMatch) {
+                        $laporanList[] = $lap;
+                        if (!empty($lap['link'])) {
+                            $links[] = $lap['link'];
+                        }
+                        $cleanProg = preg_replace('/[^0-9.]/', '', (string)$lap['progress']);
+                        if ($cleanProg !== '' && is_numeric($cleanProg)) {
+                            $totalProgress += (float)$cleanProg;
+                            $progressCount++;
+                        }
+                    }
+                }
+            }
+
+            // 2. Ambil Task dari tabel `task_proyek`
+            $this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.jenis, t.deskripsi, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai, t.rating_bintang, t.created_at, t.tgl_submit, p_beri.nama as nama_atasan')
+                ->from('task_proyek t')
+                ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
+                ->where('t.is_deleted', 0)
+                ->where("(YEAR(t.created_at) = {$year} OR (t.tgl_submit IS NOT NULL AND YEAR(t.tgl_submit) = {$year}))");
+
+            if (!empty($userId)) {
+                $this->db->where('t.id_penerima', $userId);
+            }
+
+            $taskRows = $this->db->order_by('t.id_task', 'DESC')->get()->result_array();
+
+            if (!empty($taskRows)) {
+                foreach ($taskRows as $task) {
+                    $isMatch = false;
+                    if (!empty($keywords)) {
+                        $taskText = strtolower($task['judul'] . ' ' . $task['nama_proyek'] . ' ' . $task['deskripsi'] . ' ' . $task['catatan_bawahan']);
+                        foreach ($keywords as $kw) {
+                            if (strlen($kw) >= 4 && strpos($taskText, $kw) !== false) {
+                                $isMatch = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        $isMatch = true;
+                    }
+
+                    if ($isMatch) {
+                        $taskList[] = $task;
+                        if (!empty($task['bukti_selesai'])) {
+                            $links[] = $task['bukti_selesai'];
+                        }
+                        if (is_numeric($task['progres'])) {
+                            $totalProgress += (float)$task['progres'];
+                            $progressCount++;
+                        }
+                    }
+                }
+            }
+
+            $this->db->db_debug = $orig_debug;
+        }
+
+        // Format sintesis Implementasi Nyata Kegiatan
+        $implLines = [];
+        if (!empty($laporanList)) {
+            $implLines[] = "[Realisasi Laporan Mingguan (" . count($laporanList) . " Laporan)]";
+            $maxLap = array_slice($laporanList, 0, 5);
+            foreach ($maxLap as $lap) {
+                $tgl = date('d/m/Y', strtotime($lap['tanggal']));
+                $desc = !empty($lap['ket_hasil']) ? $lap['ket_hasil'] : (!empty($lap['jobdesc']) ? $lap['jobdesc'] : 'Kegiatan terlaksana');
+                $prog = !empty($lap['progress']) ? " (Progress: {$lap['progress']})" : "";
+                $implLines[] = "• [{$tgl}] {$desc}{$prog}";
+            }
+            if (count($laporanList) > 5) {
+                $implLines[] = "• ...dan " . (count($laporanList) - 5) . " laporan mingguan lainnya.";
+            }
+        }
+
+        if (!empty($taskList)) {
+            if (!empty($implLines)) $implLines[] = "";
+            $implLines[] = "[Realisasi Task yang Diberikan Atasan (" . count($taskList) . " Task)]";
+            $maxTask = array_slice($taskList, 0, 5);
+            foreach ($maxTask as $task) {
+                $statusStr = $task['status_task'] == 3 ? 'SELESAI (100%)' : ($task['status_task'] == 2 ? 'MENUNGGU REVIEW' : "PROGRES {$task['progres']}%");
+                $catatan = !empty($task['catatan_bawahan']) ? " - " . $task['catatan_bawahan'] : "";
+                $implLines[] = "• [{$task['kode_task']}] {$task['judul']} ({$statusStr}){$catatan}";
+            }
+            if (count($taskList) > 5) {
+                $implLines[] = "• ...dan " . (count($taskList) - 5) . " task proyek lainnya.";
+            }
+        }
+
+        $avgProg = $progressCount > 0 ? round($totalProgress / $progressCount, 0) : 100;
+        $uniqueLinks = array_unique(array_filter($links));
+        $firstLink = !empty($uniqueLinks) ? reset($uniqueLinks) : '';
+
+        $keteranganStr = "";
+        if (!empty($laporanList) || !empty($taskList)) {
+            $keteranganStr = "{$avgProg}% (" . count($laporanList) . " Lap. Mingguan, " . count($taskList) . " Task)";
+        }
+
+        return [
+            'laporan_count'       => count($laporanList),
+            'task_count'          => count($taskList),
+            'laporan_items'       => $laporanList,
+            'task_items'          => $taskList,
+            'compiled_impl'       => implode("\n", $implLines),
+            'compiled_link'       => $firstLink,
+            'all_links'           => array_values($uniqueLinks),
+            'compiled_keterangan' => $keteranganStr,
+            'avg_progress'        => $avgProg
+        ];
+    }
+
+    /**
+     * Auto-sync satu item Sasaran Mutu dengan data Laporan Mingguan & Task
+     */
+    public function autoSyncItemWithActivities($year, $itemId, $userId = null)
+    {
+        $sync = $this->getSyncDataForItem($year, $itemId, $userId);
+        if ($sync['laporan_count'] === 0 && $sync['task_count'] === 0) {
+            return [
+                'status'  => 'empty',
+                'message' => 'Belum ada data Laporan Mingguan atau Task Proyek yang cocok dengan jobdesk ini pada periode ' . $year,
+                'sync'    => $sync
+            ];
+        }
+
+        $payload = [
+            'implementasi' => $sync['compiled_impl'],
+            'link_dokumen' => $sync['compiled_link'],
+            'keterangan'   => $sync['compiled_keterangan']
+        ];
+
+        $this->saveSasaranMutuItem($year, $itemId, $payload);
+
+        return [
+            'status'  => 'success',
+            'message' => 'Berhasil mensinkronkan ' . $sync['laporan_count'] . ' Laporan Mingguan dan ' . $sync['task_count'] . ' Task Proyek ke Sasaran Mutu',
+            'sync'    => $sync
+        ];
+    }
+
+    /**
+     * Auto-sync seluruh item Sasaran Mutu milik user dengan data Laporan Mingguan & Task
+     */
+    public function autoSyncAllItemsForUser($year, $userId = null)
+    {
+        if (empty($userId)) {
+            $userId = sessPenggunaId();
+        }
+
+        $jabatan = '';
+        if ($this->db->conn_id) {
+            $u = $this->db->select('jabatan')->where('pengguna_id', $userId)->get('pengguna')->row();
+            if ($u) $jabatan = $u->jabatan;
+        }
+
+        $smData = $this->getSasaranMutuData($year);
+        $syncedCount = 0;
+
+        foreach ($smData['data'] as $item) {
+            $isTarget = false;
+            if (!empty($jabatan) && (strcasecmp($item['posisi'], $jabatan) === 0 || stripos($item['posisi'], $jabatan) !== false || stripos($jabatan, $item['posisi']) !== false)) {
+                $isTarget = true;
+            } else if (!empty($item['laporan_count']) || !empty($item['task_count'])) {
+                $isTarget = true;
+            }
+
+            if ($isTarget) {
+                $res = $this->autoSyncItemWithActivities($year, $item['id'], $userId);
+                if ($res['status'] === 'success') {
+                    $syncedCount++;
+                }
+            }
+        }
+
+        return [
+            'status'       => 'success',
+            'synced_count' => $syncedCount,
+            'message'      => "Berhasil mensinkronkan {$syncedCount} item Sasaran Mutu dengan Laporan Mingguan & Task yang Diberikan!"
+        ];
     }
 
     /**

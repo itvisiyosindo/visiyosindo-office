@@ -165,6 +165,57 @@ class Sasaran_mutu extends CI_Controller
     }
 
     /**
+     * API AJAX untuk melihat preview data sinkronisasi dari Laporan Mingguan & Task
+     */
+    public function api_get_sync_preview()
+    {
+        grantAccessFor('all');
+        $year    = (int)($this->input->post('year') ?: $this->input->get('year') ?: 2027);
+        $itemId  = $this->input->post('item_id', TRUE) ?: $this->input->get('item_id', TRUE);
+        $jobdesk = $this->input->post('jobdesk', TRUE) ?: $this->input->get('jobdesk', TRUE);
+        $posisi  = $this->input->post('posisi', TRUE) ?: $this->input->get('posisi', TRUE);
+        $userId  = sessPenggunaId();
+
+        $data = $this->md_audit_system->getSyncDataForItem($year, $itemId, $userId, $jobdesk, $posisi);
+        echo json_encode([
+            'status' => 'success',
+            'data'   => $data
+        ]);
+    }
+
+    /**
+     * API AJAX untuk auto-sync 1 item dengan Laporan Mingguan & Task
+     */
+    public function api_auto_sync_item()
+    {
+        grantAccessFor('all');
+        $year   = (int)($this->input->post('year') ?: 2027);
+        $itemId = $this->input->post('item_id', TRUE);
+        $userId = sessPenggunaId();
+
+        if (empty($itemId)) {
+            echo json_encode(['status' => 'error', 'message' => 'Item ID tidak valid']);
+            return;
+        }
+
+        $res = $this->md_audit_system->autoSyncItemWithActivities($year, $itemId, $userId);
+        echo json_encode($res);
+    }
+
+    /**
+     * API AJAX untuk auto-sync seluruh item milik user dengan Laporan Mingguan & Task
+     */
+    public function api_auto_sync_all()
+    {
+        grantAccessFor('all');
+        $year   = (int)($this->input->post('year') ?: 2027);
+        $userId = sessPenggunaId();
+
+        $res = $this->md_audit_system->autoSyncAllItemsForUser($year, $userId);
+        echo json_encode($res);
+    }
+
+    /**
      * Export data ke CSV
      */
     public function export_csv()

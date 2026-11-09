@@ -117,6 +117,24 @@
 		color: #065f46;
 		text-decoration: none;
 	}
+	.badge-sync-lap {
+		background-color: #e0f2fe;
+		color: #0284c7;
+		border: 1px solid #bae6fd;
+		font-size: 10px;
+		font-weight: 600;
+		padding: 1px 6px;
+		border-radius: 4px;
+	}
+	.badge-sync-task {
+		background-color: #ede9fe;
+		color: #7c3aed;
+		border: 1px solid #ddd6fe;
+		font-size: 10px;
+		font-weight: 600;
+		padding: 1px 6px;
+		border-radius: 4px;
+	}
 </style>
 
 <div class="row">
@@ -156,14 +174,14 @@
 						<?php if ($selected_year == 2026): ?>
 							<span class="badge badge-success"><i class="fas fa-file-excel"></i> Terformat dari Excel Master</span>
 						<?php else: ?>
-							<span class="badge badge-primary"><i class="fas fa-sync-alt"></i> Tersinkron Langsung di Office</span>
+							<span class="badge badge-primary"><i class="fas fa-sync-alt"></i> Tersinkron Laporan & Task</span>
 						<?php endif; ?>
 					</div>
 				</div>
 			</div>
 		</div>
 
-		<!-- Notification Banner Tahun & Petunjuk Sinkronisasi -->
+		<!-- Notification Banner Tahun & Petunjuk Sinkronisasi Laporan & Task -->
 		<?php if ($selected_year == 2026): ?>
 			<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #059669; background-color: #ecfdf5; color: #065f46;">
 				<div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 10px;">
@@ -187,27 +205,32 @@
 					<div style="flex: 1; min-width: 280px;">
 						<div class="d-flex align-items-center mb-1">
 							<span class="badge badge-primary px-2 py-1 mr-2 font-weight-bold" style="background-color: #2563eb;">
-								<i class="fas fa-sync-alt fa-spin mr-1" style="animation-duration: 4s;"></i> Single Source of Truth
+								<i class="fas fa-sync-alt fa-spin mr-1" style="animation-duration: 4s;"></i> Single Source of Truth & Live Sync
 							</span>
-							<strong class="h6 mb-0 font-weight-bold" style="color: #1e40af;">Periode <?= $selected_year ?>: Pengisian Tersinkronisasi Penuh di Sistem Office</strong>
+							<strong class="h6 mb-0 font-weight-bold" style="color: #1e40af;">Periode <?= $selected_year ?>: Tersinkronisasi Otomatis dengan Laporan Mingguan & Task</strong>
 						</div>
 						<p class="mb-1 small" style="line-height: 1.5; color: #1e3a8a;">
-							Mulai tahun 2027 dan seterusnya, karyawan dan Head <strong>TIDAK LAGI mengisi manual di Excel</strong>. Seluruh proses input dan pembaruan sasaran mutu dilakukan secara langsung di sistem Office ini dan otomatis tersimpan untuk audit HR secara real-time.
+							Mulai tahun 2027 dan seterusnya, karyawan dan Head <strong>TIDAK LAGI mengisi manual di Excel</strong>. 
+							Isi dari <strong>Implementasi Nyata Kegiatan</strong>, <strong>Bukti Dokumen</strong>, dan <strong>Realisasi Capaian</strong> 
+							otomatis tersinkronisasi langsung dari <strong>Laporan Mingguan</strong> yang dikirimkan serta <strong>Task yang Diberikan oleh Atasan</strong>.
 						</p>
 						<div class="d-flex flex-wrap mt-2" style="gap: 15px;">
 							<div class="small">
 								<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Karyawan</span>:
-								Mengisi <em>Detail Proyek</em>, <em>Implementasi Kegiatan</em> & <em>Link Dokumen Bukti</em>.
+								Tarik realisasi pekerjaan langsung dari Laporan Mingguan & Task yang selesai dikerjakan.
 							</div>
 							<div class="small">
 								<span class="badge-role-head"><i class="fas fa-user-tie"></i> Head / Karyawan</span>:
-								Mengisi <em>Sasaran Mutu</em>, <em>Metode Pengukuran</em>, <em>Indikator Keberhasilan</em> & <em>Keterangan Nilai</em>.
+								Menetapkan Sasaran Mutu, Metode Pengukuran, Indikator Keberhasilan & verifikasi realisasi.
 							</div>
 						</div>
 					</div>
-					<div>
-						<button type="button" class="btn btn-sm btn-success font-weight-bold px-3 py-2 shadow-sm" data-toggle="modal" data-target="#modalAddJobdesk">
-							<i class="fas fa-plus-circle mr-1"></i> Tambah Jobdesk / Proyek Baru
+					<div class="d-flex flex-column align-items-end" style="gap: 6px;">
+						<button type="button" class="btn btn-sm btn-info font-weight-bold px-3 py-1 shadow-sm" onclick="openGlobalSyncModal();">
+							<i class="fas fa-sync-alt mr-1"></i> Sinkronkan dari Laporan & Task
+						</button>
+						<button type="button" class="btn btn-sm btn-success font-weight-bold px-3 py-1 shadow-sm" data-toggle="modal" data-target="#modalAddJobdesk">
+							<i class="fas fa-plus-circle mr-1"></i> Tambah Jobdesk Baru
 						</button>
 					</div>
 				</div>
@@ -317,13 +340,18 @@
 				</div>
 
 				<div class="row mt-2 pt-2 border-top">
-					<div class="col-md-8 d-flex align-items-center flex-wrap" style="gap: 8px;">
+					<div class="col-md-9 d-flex align-items-center flex-wrap" style="gap: 8px;">
 						<!-- Tombol Pekerjaan Saya -->
 						<?php if (!empty($user_jabatan)): ?>
 							<button type="button" class="btn btn-sm btn-info font-weight-bold" onclick="filterMyWork('<?= htmlspecialchars($user_jabatan) ?>');" title="Filter langsung ke jabatan Anda: <?= htmlspecialchars($user_jabatan) ?>">
 								<i class="fas fa-user-check mr-1"></i> Pekerjaan Saya (<?= htmlspecialchars($user_jabatan) ?>)
 							</button>
 						<?php endif; ?>
+
+						<!-- Tombol Sinkronkan Laporan & Task -->
+						<button type="button" class="btn btn-sm btn-outline-primary font-weight-bold" onclick="openGlobalSyncModal();" title="Sinkronkan implementasi & bukti dari Laporan Mingguan & Task Anda">
+							<i class="fas fa-sync-alt mr-1"></i> Sinkronkan dari Laporan & Task
+						</button>
 
 						<!-- Tombol Tambah Jobdesk Baru -->
 						<button type="button" class="btn btn-sm btn-success font-weight-bold" data-toggle="modal" data-target="#modalAddJobdesk">
@@ -334,7 +362,7 @@
 							<i class="fas fa-file-excel mr-1"></i> Export CSV
 						</a>
 
-						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-primary">
+						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-secondary">
 							<i class="fas fa-clipboard-check mr-1"></i> Ke Audit Kinerja
 						</a>
 
@@ -342,7 +370,7 @@
 							<i class="fas fa-print mr-1"></i> Cetak
 						</button>
 					</div>
-					<div class="col-md-4 text-right">
+					<div class="col-md-3 text-right">
 						<span class="small text-muted font-italic">
 							User: <strong><?= htmlspecialchars($current_user_name) ?></strong> (ID: <?= $current_user_id ?>)
 						</span>
@@ -365,7 +393,7 @@
 						<?php endif; ?>
 					</h5>
 					<small class="text-muted">
-						<?= $selected_year == 2026 ? 'Terformat dari Excel master' : 'Tersinkronisasi langsung di sistem Office (tanpa isi Excel lagi)' ?>
+						<?= $selected_year == 2026 ? 'Terformat dari Excel master historis' : 'Tersinkronisasi langsung dari Laporan Mingguan & Task Proyek' ?>
 					</small>
 				</div>
 				<div class="d-flex align-items-center" style="gap: 8px;">
@@ -381,8 +409,8 @@
 							<tr>
 								<th style="width: 35px;">No</th>
 								<th style="width: 140px;">Divisi & Posisi</th>
-								<th style="width: 200px;">Jobdesk</th>
-								<th style="width: 220px;">
+								<th style="width: 220px;">Jobdesk & Aktivitas Terkait</th>
+								<th style="width: 210px;">
 									<div>List Detail Proyek</div>
 									<span class="badge-role-karyawan"><i class="fas fa-user-edit"></i> Karyawan</span>
 								</th>
@@ -432,8 +460,25 @@
 												<span class="badge badge-info px-1" style="font-size: 9px;"><i class="fas fa-plus"></i> Input Baru</span>
 											<?php endif; ?>
 										</td>
-										<td class="font-weight-600 text-dark">
-											<?= htmlspecialchars($row['jobdesk']) ?>
+										<td>
+											<div class="font-weight-600 text-dark mb-1">
+												<?= htmlspecialchars($row['jobdesk']) ?>
+											</div>
+											<!-- Indikator Korelasi Laporan Mingguan & Task -->
+											<?php if (!empty($row['laporan_count']) || !empty($row['task_count'])): ?>
+												<div class="d-flex flex-wrap mt-1" style="gap: 4px;">
+													<?php if (!empty($row['laporan_count'])): ?>
+														<span class="badge-sync-lap" title="<?= $row['laporan_count'] ?> Laporan Mingguan terdata di tahun <?= $selected_year ?>">
+															<i class="fas fa-calendar-week mr-1"></i> <?= $row['laporan_count'] ?> Lap. Mingguan
+														</span>
+													<?php endif; ?>
+													<?php if (!empty($row['task_count'])): ?>
+														<span class="badge-sync-task" title="<?= $row['task_count'] ?> Task yang Diberikan terdata di tahun <?= $selected_year ?>">
+															<i class="fas fa-tasks mr-1"></i> <?= $row['task_count'] ?> Task Selesai
+														</span>
+													<?php endif; ?>
+												</div>
+											<?php endif; ?>
 										</td>
 										<td class="multiline-text text-secondary font-italic small" id="detail_proyek-<?= htmlspecialchars($row['id']) ?>">
 											<?= !empty($row['detail_proyek']) ? htmlspecialchars($row['detail_proyek']) : '<span class="text-muted small">Belum ada detail</span>' ?>
@@ -488,7 +533,7 @@
 	</div>
 </div>
 
-<!-- Modal Edit / Input Sasaran Mutu -->
+<!-- Modal Edit / Input Sasaran Mutu (Dengan Asisten Sinkronisasi Laporan & Task) -->
 <div class="modal fade" id="modalEditSM" tabindex="-1" role="dialog" aria-labelledby="modalEditSMLabel" aria-hidden="true">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
@@ -519,6 +564,32 @@
 						</div>
 					</div>
 
+					<!-- Asisten Sinkronisasi dari Laporan Mingguan & Task -->
+					<div class="card p-3 mb-3 border shadow-sm" style="background: #f0fdf4; border-color: #86efac !important;">
+						<div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 8px;">
+							<div>
+								<div class="d-flex align-items-center mb-1">
+									<span class="badge badge-success px-2 py-1 mr-2 font-weight-bold" style="font-size: 11px;">
+										<i class="fas fa-sync-alt mr-1"></i> Asisten Sinkronisasi
+									</span>
+									<strong class="text-dark small" id="syncStatusTitle">Memeriksa Laporan Mingguan & Task...</strong>
+								</div>
+								<div class="text-muted small" id="syncStatusDesc">
+									Menghubungkan aktivitas harian/mingguan dan task proyek ke jobdesk ini...
+								</div>
+							</div>
+							<div>
+								<button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnApplySync" onclick="applySyncToForm();" disabled>
+									<i class="fas fa-magic mr-1"></i> Tarik Realisasi dari Laporan & Task
+								</button>
+							</div>
+						</div>
+						<div id="syncPreviewBox" class="mt-2 pt-2 border-top small" style="display: none; max-height: 140px; overflow-y: auto;">
+							<div class="font-weight-bold text-success mb-1"><i class="fas fa-list-check mr-1"></i> Pratinjau Aktivitas yang Ditemukan:</div>
+							<div id="syncPreviewContent" class="text-secondary font-italic"></div>
+						</div>
+					</div>
+
 					<div class="row">
 						<!-- Kolom Karyawan: List Detail Proyek, Implementasi Nyata Kegiatan & Link Dokumen -->
 						<div class="col-md-6 mb-3">
@@ -541,7 +612,7 @@
 										Implementasi Nyata Kegiatan
 										<span class="text-muted font-weight-normal">(Realisasi pekerjaan atas jobdesc ini)</span>
 									</label>
-									<textarea name="implementasi" id="inputImplementasi" class="form-control" rows="4" placeholder="Tuliskan realisasi nyata pekerjaan yang telah/sedang dilaksanakan..."></textarea>
+									<textarea name="implementasi" id="inputImplementasi" class="form-control" rows="5" placeholder="Tuliskan realisasi nyata pekerjaan atau klik tombol Tarik dari Laporan & Task di atas..."></textarea>
 								</div>
 
 								<div class="form-group mb-0">
@@ -711,8 +782,52 @@
 	</div>
 </div>
 
+<!-- Modal Sinkronisasi Massal dari Laporan Mingguan & Task -->
+<div class="modal fade" id="modalGlobalSync" tabindex="-1" role="dialog" aria-labelledby="modalGlobalSyncLabel" aria-hidden="true">
+	<div class="modal-dialog modal-md" role="document">
+		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+			<div class="modal-header bg-primary text-white">
+				<h5 class="modal-title font-weight-bold" id="modalGlobalSyncLabel">
+					<i class="fas fa-sync-alt mr-1"></i> Sinkronisasi Laporan Mingguan & Task
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body p-4 bg-light">
+				<div class="card p-3 mb-3 border bg-white shadow-sm">
+					<h6 class="font-weight-bold text-dark mb-2">
+						<i class="fas fa-info-circle text-primary mr-1"></i> Bagaimana Sinkronisasi Bekerja?
+					</h6>
+					<p class="small text-muted mb-2" style="line-height: 1.5;">
+						Sistem akan memindai seluruh <strong>Laporan Mingguan</strong> yang Anda kirimkan dan <strong>Task Proyek yang Diberikan</strong> oleh atasan pada tahun <strong><?= $selected_year ?></strong>.
+					</p>
+					<ul class="small text-secondary pl-3 mb-0" style="line-height: 1.6;">
+						<li>Mencocokkan aktivitas kerja nyata dengan item Sasaran Mutu posisi Anda.</li>
+						<li>Mengisi <strong>Implementasi Nyata Kegiatan</strong> dengan ringkasan pencapaian mingguan & task.</li>
+						<li>Menghubungkan <strong>Link Dokumen Bukti Pekerjaan</strong> (Google Drive / file).</li>
+						<li>Menghitung persentase realisasi capaian secara otomatis.</li>
+					</ul>
+				</div>
+				<div class="text-center py-2" id="syncGlobalStatus">
+					<span class="text-muted small">Klik tombol di bawah untuk memulai sinkronisasi otomatis.</span>
+				</div>
+			</div>
+			<div class="modal-footer bg-white border-top">
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+					<i class="fas fa-times mr-1"></i> Tutup
+				</button>
+				<button type="button" id="btnRunGlobalSync" class="btn btn-primary btn-sm font-weight-bold px-4" onclick="runGlobalSync();">
+					<i class="fas fa-bolt mr-1"></i> Jalankan Sinkronisasi Otomatis
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
 	const divTreeData = <?= json_encode($div_tree) ?>;
+	let currentSyncData = null;
 
 	function updatePosisiDropdown() {
 		const divSelect = document.getElementById('filterDivisi');
@@ -768,6 +883,7 @@
 	}
 
 	function openEditModal(row) {
+		currentSyncData = null;
 		document.getElementById('modalItemId').value = row.id;
 		document.getElementById('modalDivisi').value = row.divisi;
 		document.getElementById('modalPosisi').value = row.posisi;
@@ -787,7 +903,92 @@
 		document.getElementById('inputIndikatorKeberhasilan').value = row.indikator_keberhasilan || '';
 		document.getElementById('inputKeterangan').value = row.keterangan || '';
 
+		// Reset & panggil AJAX sinkronisasi Laporan & Task
+		resetSyncAssistant();
+		loadSyncPreview(row);
+
 		$('#modalEditSM').modal('show');
+	}
+
+	function resetSyncAssistant() {
+		const btn = document.getElementById('btnApplySync');
+		btn.disabled = true;
+		document.getElementById('syncStatusTitle').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Memeriksa Laporan Mingguan & Task...';
+		document.getElementById('syncStatusDesc').textContent = 'Menghubungkan data aktivitas...';
+		document.getElementById('syncPreviewBox').style.display = 'none';
+		document.getElementById('syncPreviewContent').innerHTML = '';
+	}
+
+	function loadSyncPreview(row) {
+		const year = row.year || '<?= $selected_year ?>';
+		const params = new URLSearchParams({
+			year: year,
+			item_id: row.id,
+			jobdesk: row.jobdesk,
+			posisi: row.posisi
+		});
+
+		fetch('<?= base_url('sasaran_mutu/api_get_sync_preview') ?>?' + params.toString())
+			.then(res => res.json())
+			.then(resp => {
+				if (resp.status === 'success' && resp.data) {
+					currentSyncData = resp.data;
+					const lapCount = resp.data.laporan_count || 0;
+					const taskCount = resp.data.task_count || 0;
+
+					if (lapCount > 0 || taskCount > 0) {
+						document.getElementById('syncStatusTitle').innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Ditemukan: ${lapCount} Laporan Mingguan & ${taskCount} Task Proyek`;
+						document.getElementById('syncStatusDesc').textContent = 'Aktivitas kerja nyata tersedia. Klik tombol di kanan untuk menarik ke rincian implementasi & bukti.';
+						document.getElementById('btnApplySync').disabled = false;
+
+						// Tampilkan preview singkat
+						if (resp.data.compiled_impl) {
+							document.getElementById('syncPreviewBox').style.display = 'block';
+							document.getElementById('syncPreviewContent').innerHTML = escapeHtml(resp.data.compiled_impl).replace(/\n/g, '<br>');
+						}
+					} else {
+						document.getElementById('syncStatusTitle').innerHTML = '<i class="fas fa-info-circle text-muted mr-1"></i> Belum ada Laporan Mingguan / Task yang cocok';
+						document.getElementById('syncStatusDesc').textContent = 'Anda dapat mengisi implementasi dan bukti dokumen secara langsung di bawah.';
+						document.getElementById('btnApplySync').disabled = true;
+					}
+				}
+			})
+			.catch(err => {
+				console.error(err);
+				document.getElementById('syncStatusTitle').innerHTML = '<i class="fas fa-info-circle text-muted mr-1"></i> Sinkronisasi manual siap';
+				document.getElementById('syncStatusDesc').textContent = 'Silakan isi formulir implementasi di bawah.';
+			});
+	}
+
+	function applySyncToForm() {
+		if (!currentSyncData) return;
+
+		const currentImpl = document.getElementById('inputImplementasi').value.trim();
+		if (currentSyncData.compiled_impl) {
+			if (currentImpl !== '') {
+				document.getElementById('inputImplementasi').value = currentImpl + "\n\n" + currentSyncData.compiled_impl;
+			} else {
+				document.getElementById('inputImplementasi').value = currentSyncData.compiled_impl;
+			}
+		}
+
+		if (currentSyncData.compiled_link && !document.getElementById('inputLinkDokumen').value) {
+			document.getElementById('inputLinkDokumen').value = currentSyncData.compiled_link;
+		}
+
+		if (currentSyncData.compiled_keterangan && !document.getElementById('inputKeterangan').value) {
+			document.getElementById('inputKeterangan').value = currentSyncData.compiled_keterangan;
+		}
+
+		if (typeof Swal !== 'undefined') {
+			Swal.fire({
+				icon: 'success',
+				title: 'Tersinkronisasi!',
+				text: 'Realisasi dari Laporan Mingguan & Task berhasil diterapkan ke formulir.',
+				timer: 1600,
+				showConfirmButton: false
+			});
+		}
 	}
 
 	function saveSMData(e) {
@@ -818,7 +1019,7 @@
 				const impEl = document.getElementById('implementasi-' + itemId);
 				if (impEl) {
 					const val = formData.get('implementasi');
-					impEl.innerHTML = val ? '<span class="text-dark small">' + escapeHtml(val) + '</span>' : '<span class="badge badge-light text-muted border font-weight-normal"><i class="fas fa-pen"></i> Belum diisi</span>';
+					impEl.innerHTML = val ? '<span class="text-dark small">' + escapeHtml(val).replace(/\n/g, '<br>') + '</span>' : '<span class="badge badge-light text-muted border font-weight-normal"><i class="fas fa-pen"></i> Belum diisi</span>';
 				}
 
 				const smEl = document.getElementById('sasaran_mutu-' + itemId);
@@ -910,6 +1111,48 @@
 			btn.innerHTML = '<i class="fas fa-plus mr-1"></i> Simpan Jobdesk Baru';
 			console.error(err);
 			alert('Terjadi kesalahan koneksi.');
+		});
+	}
+
+	function openGlobalSyncModal() {
+		$('#modalGlobalSync').modal('show');
+	}
+
+	function runGlobalSync() {
+		const btn = document.getElementById('btnRunGlobalSync');
+		btn.disabled = true;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menyelaraskan...';
+
+		const statusEl = document.getElementById('syncGlobalStatus');
+		statusEl.innerHTML = '<span class="text-primary font-weight-bold"><i class="fas fa-sync-alt fa-spin mr-1"></i> Memindai Laporan Mingguan & Task tahun <?= $selected_year ?>...</span>';
+
+		const formData = new FormData();
+		formData.append('year', '<?= $selected_year ?>');
+
+		fetch('<?= base_url('sasaran_mutu/api_auto_sync_all') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(data => {
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fas fa-bolt mr-1"></i> Jalankan Sinkronisasi Otomatis';
+
+			if (data.status === 'success') {
+				statusEl.innerHTML = `<span class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i> ${data.message}</span>`;
+				setTimeout(() => {
+					$('#modalGlobalSync').modal('hide');
+					window.location.reload();
+				}, 1500);
+			} else {
+				statusEl.innerHTML = `<span class="text-danger">${data.message || 'Gagal melakukan sinkronisasi.'}</span>`;
+			}
+		})
+		.catch(err => {
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fas fa-bolt mr-1"></i> Jalankan Sinkronisasi Otomatis';
+			console.error(err);
+			statusEl.innerHTML = '<span class="text-danger">Terjadi kesalahan koneksi.</span>';
 		});
 	}
 
