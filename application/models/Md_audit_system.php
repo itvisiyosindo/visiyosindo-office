@@ -15,6 +15,11 @@ class Md_audit_system extends CI_Model
     private $kinerjaFilePath;
     private $keuanganFilePath;
 
+    private static $masterCache = null;
+    private static $overridesCache = [];
+    private static $kinerjaCache = [];
+    private static $tablesInitialized = false;
+
     public function __construct()
     {
         parent::__construct();
@@ -57,72 +62,85 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Inisialisasi tabel pendukung jika belum ada
+     * Inisialisasi tabel pendukung jika belum ada (dieksekusi 1x dengan fast check)
      */
     public function initTables()
     {
-        if (!$this->db->conn_id) {
+        if (self::$tablesInitialized || !$this->db->conn_id) {
+            return;
+        }
+        self::$tablesInitialized = true;
+
+        // Jika tabel sudah ada di DB, tidak perlu jalankan CREATE TABLE lagi (menghemat metadata locks)
+        if ($this->hasTable('sasaran_mutu_records') && $this->hasTable('audit_kinerja_records') && $this->hasTable('audit_keuangan_records')) {
             return;
         }
 
         $orig = $this->db->db_debug;
         $this->db->db_debug = FALSE;
 
-        // Tabel untuk override / pengisian Sasaran Mutu tahunan langsung di web
-        @$this->db->query("CREATE TABLE IF NOT EXISTS sasaran_mutu_records (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            year INT NOT NULL,
-            item_id VARCHAR(100) NOT NULL,
-            divisi VARCHAR(100) NOT NULL,
-            posisi VARCHAR(150) NOT NULL,
-            jobdesk TEXT,
-            detail_proyek TEXT,
-            implementasi TEXT,
-            sasaran_mutu TEXT,
-            metode_pengukuran TEXT,
-            indikator_keberhasilan TEXT,
-            keterangan TEXT,
-            updated_by INT,
-            updated_by_name VARCHAR(150),
-            updated_at DATETIME,
-            UNIQUE KEY uq_year_item (year, item_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        if (!$this->hasTable('sasaran_mutu_records')) {
+            @$this->db->query("CREATE TABLE IF NOT EXISTS sasaran_mutu_records (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                year INT NOT NULL,
+                item_id VARCHAR(100) NOT NULL,
+                divisi VARCHAR(100) NOT NULL,
+                posisi VARCHAR(150) NOT NULL,
+                jobdesk TEXT,
+                detail_proyek TEXT,
+                implementasi TEXT,
+                sasaran_mutu TEXT,
+                metode_pengukuran TEXT,
+                indikator_keberhasilan TEXT,
+                keterangan TEXT,
+                updated_by INT,
+                updated_by_name VARCHAR(150),
+                updated_at DATETIME,
+                UNIQUE KEY uq_year_item (year, item_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        }
 
-        // Tabel untuk Audit Kinerja & link dokumen pekerjaan
-        @$this->db->query("CREATE TABLE IF NOT EXISTS audit_kinerja_records (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            year INT NOT NULL,
-            item_id VARCHAR(100) NOT NULL,
-            link_dokumen TEXT,
-            status_audit VARCHAR(50) DEFAULT 'Belum Diaudit',
-            catatan_audit TEXT,
-            audited_by INT,
-            audited_by_name VARCHAR(150),
-            updated_at DATETIME,
-            UNIQUE KEY uq_kinerja (year, item_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        if (!$this->hasTable('audit_kinerja_records')) {
+            @$this->db->query("CREATE TABLE IF NOT EXISTS audit_kinerja_records (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                year INT NOT NULL,
+                item_id VARCHAR(100) NOT NULL,
+                link_dokumen TEXT,
+                status_audit VARCHAR(50) DEFAULT 'Belum Diaudit',
+                catatan_audit TEXT,
+                audited_by INT,
+                audited_by_name VARCHAR(150),
+                updated_at DATETIME,
+                UNIQUE KEY uq_kinerja (year, item_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        }
 
-        // Tabel untuk Audit Keuangan (verifikasi PBOK & Invoice)
-        @$this->db->query("CREATE TABLE IF NOT EXISTS audit_keuangan_records (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_pbok INT NOT NULL,
-            status_audit VARCHAR(50) DEFAULT 'Belum Diverifikasi',
-            catatan_audit TEXT,
-            kelengkapan_invoice VARCHAR(50) DEFAULT 'Lengkap',
-            audited_by INT,
-            audited_by_name VARCHAR(150),
-            updated_at DATETIME,
-            UNIQUE KEY uq_pbok (id_pbok)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        if (!$this->hasTable('audit_keuangan_records')) {
+            @$this->db->query("CREATE TABLE IF NOT EXISTS audit_keuangan_records (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_pbok INT NOT NULL,
+                status_audit VARCHAR(50) DEFAULT 'Belum Diverifikasi',
+                catatan_audit TEXT,
+                kelengkapan_invoice VARCHAR(50) DEFAULT 'Lengkap',
+                audited_by INT,
+                audited_by_name VARCHAR(150),
+                updated_at DATETIME,
+                UNIQUE KEY uq_pbok (id_pbok)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        }
 
         $this->db->db_debug = $orig;
     }
 
     /**
-     * Ambil data master template 2026 dari JSON
+     * Ambil data master template 2026 dari JSON (dichache di RAM agar tidak re-read disk)
      */
     public function getMasterTemplate()
     {
+        if (self::$masterCache !== null) {
+            return self::$masterCache;
+        }
+
         if (file_exists($this->masterFilePath)) {
             $json = file_get_contents($this->masterFilePath);
             // Hapus UTF-8 BOM jika ada agar json_decode tidak return NULL
@@ -132,7 +150,8 @@ class Md_audit_system extends CI_Model
             $json = trim($json);
             $data = json_decode($json, true);
             if (is_array($data)) {
-                return $data;
+                self::$masterCache = $data;
+                return self::$masterCache;
             }
         }
         return [];
@@ -168,7 +187,7 @@ class Md_audit_system extends CI_Model
      * - Tersinkronisasi secara langsung dengan Laporan Mingguan & Task yang Diberikan.
      * - Merge dengan catatan/inputan yang tersimpan dari DB / File JSON.
      */
-    public function getSasaranMutuData($year = 2026, $divisi = null, $posisi = null, $search = null)
+    public function getSasaranMutuData($year = 2026, $divisi = null, $posisi = null, $search = null, $includeSyncCounts = false)
     {
         $year = (int)$year;
         if ($year < 2020) $year = 2026;
@@ -177,30 +196,25 @@ class Md_audit_system extends CI_Model
         $overrides = $this->loadSasaranMutuOverrides($year);
         $kinerjaRecords = $this->loadAuditKinerjaRecords($year);
 
-        // Pre-fetch Laporan Mingguan & Task Proyek tahun ini untuk korelasi & sinkronisasi
-        $yearLaporan = [];
-        $yearTasks = [];
-        if ($this->db->conn_id) {
+        // Pre-index Task Proyek berdasarkan id_sasaran_mutu untuk lookup O(1) kilat tanpa nested loops
+        $tasksBySmId = [];
+        if ($this->db->conn_id && $this->hasTable('task_proyek')) {
             $orig_debug = $this->db->db_debug;
             $this->db->db_debug = FALSE;
 
-            if ($this->hasTable('laporan')) {
-                $qLap = @$this->db->select('id, tanggal, id_pengaju, jobdesc, progress, link, ket_hasil, keterangan')
-                    ->where('YEAR(tanggal)', $year)
-                    ->where('status !=', 3)
-                    ->get('laporan');
-                if ($qLap && $qLap->num_rows() > 0) {
-                    $yearLaporan = $qLap->result_array();
-                }
-            }
-
-            if ($this->hasTable('task_proyek')) {
-                $qTask = @$this->db->select('id_task, kode_task, judul, nama_proyek, id_penerima, progres, status_task, catatan_bawahan, bukti_selesai, id_sasaran_mutu, nama_jobdesk')
-                    ->where('is_deleted', 0)
-                    ->where("(YEAR(created_at) = {$year} OR (tgl_submit IS NOT NULL AND YEAR(tgl_submit) = {$year}))")
-                    ->get('task_proyek');
-                if ($qTask && $qTask->num_rows() > 0) {
-                    $yearTasks = $qTask->result_array();
+            $qTask = @$this->db->select('id_task, id_sasaran_mutu')
+                ->where('is_deleted', 0)
+                ->where('id_sasaran_mutu IS NOT NULL', null, false)
+                ->where('id_sasaran_mutu !=', '')
+                ->where("(YEAR(created_at) = {$year} OR (tgl_submit IS NOT NULL AND YEAR(tgl_submit) = {$year}))")
+                ->get('task_proyek');
+            if ($qTask && $qTask->num_rows() > 0) {
+                foreach ($qTask->result_array() as $tRow) {
+                    $smId = $tRow['id_sasaran_mutu'];
+                    if (!isset($tasksBySmId[$smId])) {
+                        $tasksBySmId[$smId] = 0;
+                    }
+                    $tasksBySmId[$smId]++;
                 }
             }
 
@@ -228,38 +242,9 @@ class Md_audit_system extends CI_Model
                 continue;
             }
 
-            // Hitung korelasi Laporan Mingguan & Task yang cocok
-            $itemKws = $this->extractKeywords($item['jobdesk']);
+            // Hitung korelasi Task yang cocok via index O(1) (instant tanpa delay)
+            $taskCount = isset($tasksBySmId[$itemId]) ? $tasksBySmId[$itemId] : 0;
             $lapCount = 0;
-            $taskCount = 0;
-            if (!empty($itemKws)) {
-                foreach ($yearLaporan as $lap) {
-                    $lapTxt = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
-                    foreach ($itemKws as $kw) {
-                        if (strlen($kw) >= 4 && strpos($lapTxt, $kw) !== false) {
-                            $lapCount++;
-                            break;
-                        }
-                    }
-                }
-                foreach ($yearTasks as $tsk) {
-                    $isTaskMatch = false;
-                    if (!empty($tsk['id_sasaran_mutu']) && $tsk['id_sasaran_mutu'] === $itemId) {
-                        $isTaskMatch = true;
-                    } else {
-                        $tskTxt = strtolower($tsk['judul'] . ' ' . $tsk['nama_proyek'] . ' ' . $tsk['catatan_bawahan']);
-                        foreach ($itemKws as $kw) {
-                            if (strlen($kw) >= 4 && strpos($tskTxt, $kw) !== false) {
-                                $isTaskMatch = true;
-                                break;
-                            }
-                        }
-                    }
-                    if ($isTaskMatch) {
-                        $taskCount++;
-                    }
-                }
-            }
 
             // Tentukan nilai dasar berdasarkan tahun
             if ($year === 2026) {
@@ -363,29 +348,8 @@ class Md_audit_system extends CI_Model
                     continue;
                 }
 
-                $itemKws = $this->extractKeywords($itemJob);
+                $taskCount = isset($tasksBySmId[$ovId]) ? $tasksBySmId[$ovId] : 0;
                 $lapCount = 0;
-                $taskCount = 0;
-                if (!empty($itemKws)) {
-                    foreach ($yearLaporan as $lap) {
-                        $lapTxt = strtolower($lap['jobdesc'] . ' ' . $lap['ket_hasil']);
-                        foreach ($itemKws as $kw) {
-                            if (strlen($kw) >= 4 && strpos($lapTxt, $kw) !== false) {
-                                $lapCount++;
-                                break;
-                            }
-                        }
-                    }
-                    foreach ($yearTasks as $tsk) {
-                        $tskTxt = strtolower($tsk['judul'] . ' ' . $tsk['nama_proyek'] . ' ' . $tsk['catatan_bawahan']);
-                        foreach ($itemKws as $kw) {
-                            if (strlen($kw) >= 4 && strpos($tskTxt, $kw) !== false) {
-                                $taskCount++;
-                                break;
-                            }
-                        }
-                    }
-                }
 
                 $row = [
                     'id'                     => $ovId,
@@ -454,10 +418,14 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Ambil catatan override Sasaran Mutu (dari DB atau JSON)
+     * Ambil catatan override Sasaran Mutu (dari DB atau JSON, dicache di RAM)
      */
     public function loadSasaranMutuOverrides($year)
     {
+        if (isset(self::$overridesCache[$year])) {
+            return self::$overridesCache[$year];
+        }
+
         $overrides = [];
 
         // 1. Coba baca dari database jika tabel tersedia
@@ -489,6 +457,7 @@ class Md_audit_system extends CI_Model
             }
         }
 
+        self::$overridesCache[$year] = $overrides;
         return $overrides;
     }
 
@@ -498,6 +467,7 @@ class Md_audit_system extends CI_Model
     public function saveSasaranMutuItem($year, $itemId, $payload)
     {
         $year = (int)$year;
+        unset(self::$overridesCache[$year]);
         $now = date('Y-m-d H:i:s');
         $userId = sessPenggunaId();
         $userName = sessNama();
@@ -858,7 +828,7 @@ class Md_audit_system extends CI_Model
      */
     public function getAuditKinerjaData($year = 2026, $divisi = null, $posisi = null, $search = null)
     {
-        $smResult = $this->getSasaranMutuData($year, $divisi, $posisi, $search);
+        $smResult = $this->getSasaranMutuData($year, $divisi, $posisi, $search, false);
         $smData = $smResult['data'];
 
         // Ambil data audit kinerja (link dokumen, status audit, catatan)
@@ -919,6 +889,10 @@ class Md_audit_system extends CI_Model
 
     private function loadAuditKinerjaRecords($year)
     {
+        if (isset(self::$kinerjaCache[$year])) {
+            return self::$kinerjaCache[$year];
+        }
+
         $records = [];
         if ($this->hasTable('audit_kinerja_records')) {
             $orig = $this->db->db_debug;
@@ -943,6 +917,7 @@ class Md_audit_system extends CI_Model
             }
         }
 
+        self::$kinerjaCache[$year] = $records;
         return $records;
     }
 
@@ -952,6 +927,7 @@ class Md_audit_system extends CI_Model
     public function saveAuditKinerjaItem($year, $itemId, $payload)
     {
         $year = (int)$year;
+        unset(self::$kinerjaCache[$year]);
         $now = date('Y-m-d H:i:s');
         $userId = sessPenggunaId();
         $userName = sessNama();
