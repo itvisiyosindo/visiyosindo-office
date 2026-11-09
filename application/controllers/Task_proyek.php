@@ -497,56 +497,99 @@ class Task_proyek extends CI_Controller
         $this->load->model('md_audit_system');
         $master = $this->md_audit_system->getMasterTemplate();
 
-        $jabatan   = trim((string)$user->jabatan);
-        $divisi    = trim((string)$user->nama_divisi);
+        $rawJabatan = trim((string)$user->jabatan);
+        $rawDivisi  = trim((string)$user->nama_divisi);
+
+        // Helper normalisasi teks: decode HTML entities, hapus simbol & spasi berlebih
+        $normalizeText = function($str) {
+            $s = html_entity_decode((string)$str, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $s = str_replace(['&amp;', '&', '+', '/', '\\', '-', '_', '(', ')', ',', '.', ':', ';', '[', ']'], ' ', $s);
+            $s = preg_replace('/\s+/', ' ', strtolower(trim($s)));
+            return $s;
+        };
+
+        // Helper ekstraksi kata kunci signifikan
+        $extractWords = function($str) use ($normalizeText) {
+            $norm = $normalizeText($str);
+            $words = preg_split('/\s+/', $norm, -1, PREG_SPLIT_NO_EMPTY);
+            $stop = ['dan', 'and', 'or', 'atau', 'dengan', 'with', 'di', 'ke', 'dari', 'pt', 'cv', 'bagian', 'staf', 'staff'];
+            $res = [];
+            foreach ($words as $w) {
+                if (strlen($w) >= 2 && !in_array($w, $stop) && !in_array($w, $res)) {
+                    $res[] = $w;
+                }
+            }
+            return $res;
+        };
+
+        $normJabatan  = $normalizeText($rawJabatan);
+        $normDivisi   = $normalizeText($rawDivisi);
+        $wordsJabatan = $extractWords($rawJabatan);
+        $wordsDivisi  = $extractWords($rawDivisi);
+
         $jobdesks  = [];
         $addedJobs = [];
 
-        // 1. Prioritaskan jobdesk yang posisi/jabatannya cocok dengan jabatan karyawan
-        if (!empty($jabatan)) {
-            foreach ($master as $m) {
-                $pos = trim($m['posisi']);
-                if (strcasecmp($pos, $jabatan) === 0 || stripos($pos, $jabatan) !== false || stripos($jabatan, $pos) !== false) {
-                    $jobKey = md5($m['jobdesk']);
-                    if (!isset($addedJobs[$jobKey])) {
-                        $addedJobs[$jobKey] = true;
-                        $jobdesks[] = [
-                            'id'            => $m['id'],
-                            'no'            => $m['no'],
-                            'posisi'        => $m['posisi'],
-                            'divisi'        => $m['divisi'],
-                            'jobdesk'       => $m['jobdesk'],
-                            'detail_proyek' => $m['detail_proyek'],
-                            'sasaran_mutu'  => $m['sasaran_mutu']
-                        ];
+        // 1. Cocokkan dari Master Template Sasaran Mutu dengan skoring
+        foreach ($master as $m) {
+            $mPos = isset($m['posisi']) ? $m['posisi'] : '';
+            $mDiv = isset($m['divisi']) ? $m['divisi'] : '';
+            $normMPos = $normalizeText($mPos);
+            $normMDiv = $normalizeText($mDiv);
+
+            $score = 0;
+
+            // A. Exact match posisi
+            if (!empty($normJabatan) && $normJabatan === $normMPos) {
+                $score += 100;
+            }
+            // B. Substring match posisi
+            else if (!empty($normJabatan) && !empty($normMPos) && (strpos($normMPos, $normJabatan) !== false || strpos($normJabatan, $normMPos) !== false)) {
+                $score += 80;
+            }
+            // C. Word overlap posisi
+            else if (!empty($wordsJabatan) && !empty($normMPos)) {
+                $mWords = $extractWords($mPos);
+                $common = array_intersect($wordsJabatan, $mWords);
+                if (!empty($common)) {
+                    $score += (count($common) * 25);
+                }
+            }
+
+            // D. Divisi match
+            if (!empty($normDivisi) && !empty($normMDiv)) {
+                if ($normDivisi === $normMDiv) {
+                    $score += 30;
+                } else if (strpos($normMDiv, $normDivisi) !== false || strpos($normDivisi, $normMDiv) !== false) {
+                    $score += 20;
+                } else if (!empty($wordsDivisi)) {
+                    $mDivWords = $extractWords($mDiv);
+                    $commonDiv = array_intersect($wordsDivisi, $mDivWords);
+                    if (!empty($commonDiv)) {
+                        $score += (count($commonDiv) * 10);
                     }
+                }
+            }
+
+            if ($score > 0) {
+                $jobKey = md5($m['jobdesk']);
+                if (!isset($addedJobs[$jobKey])) {
+                    $addedJobs[$jobKey] = true;
+                    $jobdesks[] = [
+                        'id'            => $m['id'],
+                        'no'            => $m['no'],
+                        'posisi'        => $m['posisi'],
+                        'divisi'        => $m['divisi'],
+                        'jobdesk'       => $m['jobdesk'],
+                        'detail_proyek' => $m['detail_proyek'],
+                        'sasaran_mutu'  => $m['sasaran_mutu'],
+                        'score'         => $score
+                    ];
                 }
             }
         }
 
-        // 2. Jika tidak ada yang cocok berdasarkan jabatan persis, ambil jobdesk berdasarkan divisinya
-        if (empty($jobdesks) && !empty($divisi)) {
-            foreach ($master as $m) {
-                $div = trim($m['divisi']);
-                if (strcasecmp($div, $divisi) === 0 || stripos($div, $divisi) !== false || stripos($divisi, $div) !== false) {
-                    $jobKey = md5($m['jobdesk']);
-                    if (!isset($addedJobs[$jobKey])) {
-                        $addedJobs[$jobKey] = true;
-                        $jobdesks[] = [
-                            'id'            => $m['id'],
-                            'no'            => $m['no'],
-                            'posisi'        => $m['posisi'],
-                            'divisi'        => $m['divisi'],
-                            'jobdesk'       => $m['jobdesk'],
-                            'detail_proyek' => $m['detail_proyek'],
-                            'sasaran_mutu'  => $m['sasaran_mutu']
-                        ];
-                    }
-                }
-            }
-        }
-
-        // 3. Muat juga override atau custom jobdesk yang ditambahkan langsung di sistem untuk tahun berjalan
+        // 2. Muat juga override atau custom jobdesk yang ditambahkan langsung di sistem untuk tahun berjalan
         $curYear = (int)date('Y');
         $overrides = $this->md_audit_system->loadSasaranMutuOverrides($curYear);
         if (!empty($overrides)) {
@@ -557,29 +600,43 @@ class Task_proyek extends CI_Controller
 
                 if (empty($ovJob)) continue;
 
-                $match = false;
-                if (!empty($jabatan) && (strcasecmp($ovPos, $jabatan) === 0 || stripos($ovPos, $jabatan) !== false)) {
-                    $match = true;
-                } else if (!empty($divisi) && (strcasecmp($ovDiv, $divisi) === 0 || stripos($ovDiv, $divisi) !== false)) {
-                    $match = true;
+                $normOvPos = $normalizeText($ovPos);
+                $normOvDiv = $normalizeText($ovDiv);
+                $score = 0;
+
+                if (!empty($normJabatan) && ($normJabatan === $normOvPos || strpos($normOvPos, $normJabatan) !== false || strpos($normJabatan, $normOvPos) !== false)) {
+                    $score += 80;
+                } else if (!empty($normDivisi) && ($normDivisi === $normOvDiv || strpos($normOvDiv, $normDivisi) !== false)) {
+                    $score += 30;
                 }
 
-                if ($match) {
+                if ($score > 0) {
                     $jobKey = md5($ovJob);
                     if (!isset($addedJobs[$jobKey])) {
                         $addedJobs[$jobKey] = true;
                         $jobdesks[] = [
                             'id'            => $ovId,
                             'no'            => isset($ov['no']) ? $ov['no'] : (count($jobdesks) + 1),
-                            'posisi'        => $ovPos,
-                            'divisi'        => $ovDiv,
+                            'posisi'        => $ovPos ?: 'Custom',
+                            'divisi'        => $ovDiv ?: 'General',
                             'jobdesk'       => $ovJob,
                             'detail_proyek' => isset($ov['detail_proyek']) ? $ov['detail_proyek'] : '',
-                            'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : ''
+                            'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : '',
+                            'score'         => $score
                         ];
                     }
                 }
             }
+        }
+
+        // Urutkan berdasarkan skor relevansi tertinggi
+        if (!empty($jobdesks)) {
+            usort($jobdesks, function($a, $b) {
+                if ($b['score'] === $a['score']) {
+                    return (int)$a['no'] - (int)$b['no'];
+                }
+                return $b['score'] - $a['score'];
+            });
         }
 
         header('Content-Type: application/json; charset=utf-8');

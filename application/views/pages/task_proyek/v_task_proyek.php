@@ -1500,10 +1500,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     var html = '<option value="">-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --</option>';
                     if (res.jobdesks && res.jobdesks.length > 0) {
+                        var currentGroup = '';
                         $.each(res.jobdesks, function(i, it) {
+                            var groupTitle = it.posisi ? it.posisi : (it.divisi ? 'Divisi ' + it.divisi : 'Jobdesk Terkait');
+                            if (groupTitle !== currentGroup) {
+                                if (currentGroup !== '') {
+                                    html += '</optgroup>';
+                                }
+                                currentGroup = groupTitle;
+                                html += '<optgroup label="Posisi: ' + escapeHtml(currentGroup) + '">';
+                            }
                             var noLabel = it.no ? it.no + '. ' : '';
                             html += '<option value="' + it.id + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' + noLabel + escapeHtml(it.jobdesk) + '</option>';
                         });
+                        if (currentGroup !== '') {
+                            html += '</optgroup>';
+                        }
                     } else {
                         html += '<option value="SM_CUSTOM_TASK" data-nama="Tugas & Tanggung Jawab Operasional Tambahan">Tugas & Tanggung Jawab Operasional Tambahan</option>';
                     }
