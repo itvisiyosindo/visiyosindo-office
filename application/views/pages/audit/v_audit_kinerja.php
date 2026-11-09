@@ -163,6 +163,12 @@
 								<i class="fas fa-user-check mr-1"></i> Pekerjaan Saya (<?= htmlspecialchars($user_jabatan) ?>)
 							</button>
 						<?php endif; ?>
+						<button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnSyncAllActivities" onclick="triggerSyncAllActivities();" title="Otomatis kumpulkan realisasi kerja dari Task Proyek & Laporan Mingguan ke Audit">
+							<i class="fas fa-sync-alt mr-1"></i> Tarik Sinkronisasi Task & Laporan
+						</button>
+						<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-outline-success font-weight-bold" title="Unduh data audit kinerja dalam format Excel resmi">
+							<i class="fas fa-file-excel mr-1"></i> Export ke Excel (.xlsx)
+						</a>
 						<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-warning">
 							<i class="fas fa-bullseye mr-1"></i> Buka Sasaran Mutu
 						</a>
@@ -186,6 +192,9 @@
 					<i class="fas fa-clipboard-check text-primary mr-1"></i> Data Audit Kinerja Karyawan (Tahun <?= $selected_year ?>)
 				</h5>
 				<div class="d-flex align-items-center" style="gap: 8px;">
+					<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-success font-weight-bold shadow-sm">
+						<i class="fas fa-file-excel mr-1"></i> Unduh Excel (.xlsx)
+					</a>
 					<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-warning">
 						<i class="fas fa-bullseye mr-1"></i> Ke Halaman Sasaran Mutu
 					</a>
@@ -334,9 +343,15 @@
 
 					<!-- Update Implementasi Realisasi Pekerjaan -->
 					<div class="card p-3 mb-3 border bg-white">
-						<label class="font-weight-bold text-dark mb-1">
-							<i class="fas fa-tasks text-success mr-1"></i> Implementasi Nyata Kinerja / Realisasi Pekerjaan
-						</label>
+						<div class="d-flex justify-content-between align-items-center flex-wrap mb-1" style="gap: 8px;">
+							<label class="font-weight-bold text-dark mb-0">
+								<i class="fas fa-tasks text-success mr-1"></i> Implementasi Nyata Kinerja / Realisasi Pekerjaan
+							</label>
+							<button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnFetchSyncModal" onclick="fetchSyncForKinerjaModal();" title="Otomatis ambil rangkuman task selesai & laporan mingguan karyawan">
+								<i class="fas fa-sync-alt mr-1"></i> Tarik Otomatis dari Task & Laporan
+							</button>
+						</div>
+						<div id="syncModalInfo" class="small text-muted mb-2 font-italic" style="display: none;"></div>
 						<textarea name="implementasi" id="kinerjaInputImplementasi" class="form-control" rows="4" placeholder="Uraian realisasi nyata pelaksanaan jobdesk..."></textarea>
 					</div>
 
@@ -378,6 +393,7 @@
 
 <script>
 	const divTreeData = <?= json_encode($div_tree) ?>;
+	let currentKinerjaRow = null;
 
 	function updatePosisiDropdown() {
 		const divSelect = document.getElementById('filterDivisi');
@@ -406,6 +422,7 @@
 	}
 
 	function openModalKinerja(row) {
+		currentKinerjaRow = row;
 		document.getElementById('kinerjaItemId').value = row.id;
 		document.getElementById('kinerjaYear').value = row.year || '<?= $selected_year ?>';
 
@@ -418,7 +435,122 @@
 		document.getElementById('kinerjaSelectStatus').value = row.status_audit || 'Belum Diaudit';
 		document.getElementById('kinerjaInputCatatan').value = row.catatan_audit || '';
 
+		const syncInfo = document.getElementById('syncModalInfo');
+		if (syncInfo) {
+			syncInfo.style.display = 'none';
+			syncInfo.textContent = '';
+		}
+
 		$('#modalAuditKinerja').modal('show');
+	}
+
+	function fetchSyncForKinerjaModal() {
+		if (!currentKinerjaRow) return;
+		const btn = document.getElementById('btnFetchSyncModal');
+		const syncInfo = document.getElementById('syncModalInfo');
+		const originalText = btn.innerHTML;
+		btn.disabled = true;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menarik Data...';
+
+		const formData = new FormData();
+		formData.append('tahun', currentKinerjaRow.year || '<?= $selected_year ?>');
+		formData.append('item_id', currentKinerjaRow.id);
+		formData.append('jobdesk', currentKinerjaRow.jobdesk || '');
+		formData.append('posisi', currentKinerjaRow.posisi || '');
+
+		fetch('<?= base_url('sasaran_mutu/ajax_sync_item') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(res => {
+			btn.disabled = false;
+			btn.innerHTML = originalText;
+			if (res.status === 'success' && res.data) {
+				const impEl = document.getElementById('kinerjaInputImplementasi');
+				const linkEl = document.getElementById('kinerjaInputLink');
+
+				if (res.data.compiled_impl) {
+					if (!impEl.value.trim()) {
+						impEl.value = res.data.compiled_impl;
+					} else if (!impEl.value.includes(res.data.compiled_impl.substring(0, 30))) {
+						impEl.value = impEl.value + "\n\n" + res.data.compiled_impl;
+					}
+				}
+
+				if (res.data.compiled_link && !linkEl.value.trim()) {
+					linkEl.value = res.data.compiled_link;
+				}
+
+				if (syncInfo) {
+					syncInfo.style.display = 'block';
+					syncInfo.innerHTML = `<span class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i> Ditemukan ${res.data.task_count} Task Selesai & ${res.data.laporan_count} Laporan Mingguan Terkait. Data berhasil ditarik ke form!</span>`;
+				}
+			} else {
+				if (syncInfo) {
+					syncInfo.style.display = 'block';
+					syncInfo.innerHTML = `<span class="text-warning"><i class="fas fa-info-circle mr-1"></i> Belum ada rekam jejak task / laporan terkait untuk jobdesk ini.</span>`;
+				}
+			}
+		})
+		.catch(err => {
+			btn.disabled = false;
+			btn.innerHTML = originalText;
+			alert('Gagal mengambil data sinkronisasi.');
+		});
+	}
+
+	function triggerSyncAllActivities() {
+		if (!confirm('Apakah Anda yakin ingin menarik data implementasi dan link dokumen dari semua Task Proyek & Laporan Mingguan secara massal ke Audit Kinerja?')) {
+			return;
+		}
+
+		const btn = document.getElementById('btnSyncAllActivities');
+		if (btn) {
+			btn.disabled = true;
+			btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Mensinkronkan...';
+		}
+
+		const formData = new FormData();
+		formData.append('tahun', '<?= $selected_year ?>');
+		formData.append('divisi', '<?= $selected_div ?>');
+		formData.append('posisi', '<?= $selected_pos ?>');
+
+		fetch('<?= base_url('audit/sync_all_activities') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(res => {
+			if (btn) {
+				btn.disabled = false;
+				btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Tarik Sinkronisasi Task & Laporan';
+			}
+			if (res.status === 'success') {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'success',
+						title: 'Sinkronisasi Selesai!',
+						text: res.message,
+						confirmButtonText: 'Segarkan Halaman'
+					}).then(() => {
+						location.reload();
+					});
+				} else {
+					alert(res.message);
+					location.reload();
+				}
+			} else {
+				alert(res.message || 'Gagal melakukan sinkronisasi.');
+			}
+		})
+		.catch(err => {
+			if (btn) {
+				btn.disabled = false;
+				btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Tarik Sinkronisasi Task & Laporan';
+			}
+			alert('Terjadi kesalahan saat memproses sinkronisasi massal.');
+		});
 	}
 
 	function saveKinerjaData(e) {

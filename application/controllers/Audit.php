@@ -164,4 +164,151 @@ class Audit extends CI_Controller
             echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan verifikasi']);
         }
     }
+
+    /**
+     * AJAX Sinkronisasi Massal Semua Task Proyek & Laporan Mingguan ke Audit Kinerja
+     */
+    public function sync_all_activities()
+    {
+        grantAccessFor('all');
+
+        $year   = (int)($this->input->post('tahun') ?: 2026);
+        $divisi = $this->input->post('divisi', TRUE) ?: 'all';
+        $posisi = $this->input->post('posisi', TRUE) ?: 'all';
+
+        $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi);
+        $items = $auditData['data'];
+
+        $syncedCount = 0;
+        foreach ($items as $item) {
+            $sync = $this->md_audit_system->getSyncDataForItem($year, $item['id'], null, $item['jobdesk'], $item['posisi']);
+            if ($sync && ($sync['laporan_count'] > 0 || $sync['task_count'] > 0)) {
+                $payload = [
+                    'implementasi' => $sync['compiled_impl'],
+                    'link_dokumen' => !empty($item['link_dokumen']) ? $item['link_dokumen'] : $sync['compiled_link']
+                ];
+                $this->md_audit_system->saveAuditKinerjaItem($year, $item['id'], $payload);
+                $syncedCount++;
+            }
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => "Berhasil mensinkronkan {$syncedCount} item audit kinerja secara otomatis dari rekam jejak task & laporan kerja."
+        ]);
+    }
+
+    /**
+     * Export Hasil Audit Kinerja ke Format Excel (.xlsx) Resmi
+     */
+    public function export_excel()
+    {
+        grantAccessFor('all');
+
+        $year   = (int)($this->input->get('tahun') ?: 2026);
+        $divisi = $this->input->get('divisi') ?: 'all';
+        $posisi = $this->input->get('posisi') ?: 'all';
+        $search = $this->input->get('q') ?: null;
+
+        $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
+        $items = $auditData['data'];
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Audit Kinerja ' . $year);
+
+        // Header Dokumen
+        $sheet->setCellValue('A1', 'AUDIT KINERJA KARYAWAN - PT VISI YOSINDO MEDIKAL');
+        $sheet->setCellValue('A2', 'Tahun Periode: ' . $year . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s'));
+        $sheet->mergeCells('A1:J1');
+        $sheet->mergeCells('A2:J2');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10);
+
+        // Judul Kolom Tabel
+        $headers = [
+            'A4' => 'No',
+            'B4' => 'Divisi',
+            'C4' => 'Posisi / Jabatan',
+            'D4' => 'Jobdesk',
+            'E4' => 'List Detail Proyek',
+            'F4' => 'Implementasi Nyata Kinerja (Sinkronisasi)',
+            'G4' => 'Sasaran Mutu',
+            'H4' => 'Link Dokumen Bukti Pekerjaan',
+            'I4' => 'Status Audit HR',
+            'J4' => 'Catatan Auditor'
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+        }
+
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1E293B']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
+        ];
+        $sheet->getStyle('A4:J4')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(4)->setRowHeight(32);
+
+        $rowNum = 5;
+        $no = 1;
+        foreach ($items as $it) {
+            $sheet->setCellValue('A' . $rowNum, $no++);
+            $sheet->setCellValue('B' . $rowNum, $it['divisi']);
+            $sheet->setCellValue('C' . $rowNum, $it['posisi']);
+            $sheet->setCellValue('D' . $rowNum, $it['jobdesk']);
+            $sheet->setCellValue('E' . $rowNum, $it['detail_proyek']);
+            $sheet->setCellValue('F' . $rowNum, $it['implementasi']);
+            $sheet->setCellValue('G' . $rowNum, $it['sasaran_mutu']);
+            $sheet->setCellValue('H' . $rowNum, $it['link_dokumen']);
+            $sheet->setCellValue('I' . $rowNum, $it['status_audit']);
+            $sheet->setCellValue('J' . $rowNum, $it['catatan_audit']);
+
+            // Set link jika ada URL
+            if (!empty($it['link_dokumen']) && filter_var($it['link_dokumen'], FILTER_VALIDATE_URL)) {
+                $sheet->getCell('H' . $rowNum)->getHyperlink()->setUrl($it['link_dokumen']);
+                $sheet->getStyle('H' . $rowNum)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF1D4ED8'))->setUnderline(true);
+            }
+
+            // Styling baris & wrap text
+            $sheet->getStyle('A' . $rowNum . ':J' . $rowNum)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP)->setWrapText(true);
+            $sheet->getStyle('A' . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('I' . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A' . $rowNum . ':J' . $rowNum)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
+
+            $rowNum++;
+        }
+
+        // Lebar kolom optimal
+        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('B')->setWidth(20);
+        $sheet->getColumnDimension('C')->setWidth(24);
+        $sheet->getColumnDimension('D')->setWidth(35);
+        $sheet->getColumnDimension('E')->setWidth(35);
+        $sheet->getColumnDimension('F')->setWidth(40);
+        $sheet->getColumnDimension('G')->setWidth(30);
+        $sheet->getColumnDimension('H')->setWidth(30);
+        $sheet->getColumnDimension('I')->setWidth(22);
+        $sheet->getColumnDimension('J')->setWidth(25);
+
+        $filename = "Audit_Kinerja_Karyawan_{$year}_" . date('Ymd_His') . ".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
 }

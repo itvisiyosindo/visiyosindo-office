@@ -1305,6 +1305,66 @@ class Task_proyek extends CI_Controller
         } catch (\Throwable $e) {
         }
 
+        // =========================================================================
+        // SINKRONISASI OTOMATIS KE SASARAN MUTU & AUDIT KINERJA KARYAWAN
+        // =========================================================================
+        if (!empty($task->id_sasaran_mutu)) {
+            try {
+                $taskYear = (int)date('Y', strtotime($task->created_at ?: 'now'));
+                $taskLink = !empty($task->bukti_selesai) ? $task->bukti_selesai : (!empty($task->lampiran_atasan) ? $task->lampiran_atasan : '');
+
+                // Cari link di catatan bawahan jika ada URL
+                if (empty($taskLink) && !empty($task->catatan_bawahan)) {
+                    if (preg_match('/https?:\/\/[^\s]+/', $task->catatan_bawahan, $match)) {
+                        $taskLink = $match[0];
+                    }
+                }
+
+                $tglFormatted = date('d/m/Y');
+                $logImpl = "• [Task Selesai {$tglFormatted} ({$starText})]: " . $task->judul . " ({$task->kode_task})";
+                if (!empty($ulasan_atasan)) {
+                    $logImpl .= " — Catatan Atasan: " . $ulasan_atasan;
+                }
+
+                $this->load->model('md_audit_system');
+                $existingAudit = $this->md_audit_system->getAuditKinerjaData($taskYear);
+                $currentImpl = '';
+                $currentLink = '';
+                if (!empty($existingAudit['data'])) {
+                    foreach ($existingAudit['data'] as $aud) {
+                        if ($aud['id'] === $task->id_sasaran_mutu) {
+                            $currentImpl = $aud['implementasi'];
+                            $currentLink = $aud['link_dokumen'];
+                            break;
+                        }
+                    }
+                }
+
+                // Gabungkan tanpa duplikasi kode task
+                if (empty($currentImpl)) {
+                    $newImpl = $logImpl;
+                } else if (strpos($currentImpl, $task->kode_task) === false) {
+                    $newImpl = $currentImpl . "\n" . $logImpl;
+                } else {
+                    $newImpl = $currentImpl;
+                }
+
+                $newLink = !empty($currentLink) ? $currentLink : $taskLink;
+
+                // Simpan ke Audit Kinerja & Sasaran Mutu
+                $this->md_audit_system->saveAuditKinerjaItem($taskYear, $task->id_sasaran_mutu, [
+                    'implementasi' => $newImpl,
+                    'link_dokumen' => $newLink
+                ]);
+                $this->md_audit_system->saveSasaranMutuItem($taskYear, $task->id_sasaran_mutu, [
+                    'implementasi' => $newImpl,
+                    'link_dokumen' => $newLink
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', 'Auto sync task to sasaran mutu error: ' . $e->getMessage());
+            }
+        }
+
         ajaxReturnDie('success', 'Penilaian ' . $starText . ' berhasil disimpan!', TRUE);
     }
 
