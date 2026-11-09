@@ -107,9 +107,79 @@
         background: #f8fafc;
         border-radius: 0 8px 8px 0;
     }
-    .nav-tabs-tp > li > a {
-        font-weight: 600;
-        padding: 12px 18px;
+    /* Modern high-contrast styling for Workspace Tabs */
+    .nav-tabs-tp {
+        border-bottom: 2px solid #e2e8f0 !important;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        background: transparent;
+    }
+    .nav-tabs-tp > li {
+        margin-bottom: 0;
+    }
+    .nav-tabs-tp > li > a,
+    .nav-tabs-tp .nav-link {
+        font-weight: 600 !important;
+        font-size: 13.5px !important;
+        color: #475569 !important; /* High contrast dark slate */
+        background: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        border-radius: 8px 8px 0 0 !important;
+        padding: 11px 18px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease-in-out;
+    }
+    .nav-tabs-tp > li > a:hover,
+    .nav-tabs-tp .nav-link:hover {
+        background: #e2e8f0 !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+    }
+    .nav-tabs-tp > li.active > a,
+    .nav-tabs-tp > li.active > a:hover,
+    .nav-tabs-tp > li.active > a:focus,
+    .nav-tabs-tp .nav-link.active,
+    .nav-tabs-tp .nav-link.active:hover,
+    .nav-tabs-tp .nav-link.active:focus {
+        background: #ffffff !important;
+        color: #0f172a !important; /* Bold high contrast dark slate */
+        font-weight: 700 !important;
+        border-top: 3px solid #0088cc !important;
+        border-left: 1px solid #cbd5e1 !important;
+        border-right: 1px solid #cbd5e1 !important;
+        border-bottom: 2px solid #ffffff !important;
+        margin-bottom: -2px !important;
+        box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.05) !important;
+    }
+    .nav-tabs-tp .badge {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        padding: 4px 10px !important;
+        border-radius: 999px !important;
+        line-height: 1.2 !important;
+        letter-spacing: 0.2px;
+        vertical-align: middle;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 8px !important;
+    }
+    .nav-tabs-tp .badge-primary {
+        background-color: #0088cc !important;
+        color: #ffffff !important;
+    }
+    .nav-tabs-tp .badge-warning {
+        background-color: #f59e0b !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 4px rgba(245, 158, 11, 0.35);
+    }
+    .nav-tabs-tp .badge-secondary {
+        background-color: #64748b !important;
+        color: #ffffff !important;
     }
 
     /* =========================================================================
@@ -566,27 +636,27 @@ $namaBulanList = [
             <ul class="nav nav-tabs nav-tabs-tp" role="tablist">
                 <li class="nav-item <?= !$openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= !$openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_saya" data-toggle="tab" role="tab">
-                        <i class="fas fa-inbox text-primary mr-1"></i> Tugas Saya (Karyawan)
+                        <i class="fas fa-inbox text-primary mr-2"></i> Tugas Saya (Karyawan)
                         <?php if ($kpi['my_active'] > 0): ?>
-                            <span class="badge badge-primary ml-1"><?= (int)$kpi['my_active'] ?></span>
+                            <span class="badge badge-primary ml-2"><?= (int)$kpi['my_active'] ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
                 <?php if ($canGiveTask || count($tugas_atasan) > 0): ?>
                 <li class="nav-item <?= $openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
-                        <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Karyawan
+                        <i class="fas fa-paper-plane text-success mr-2"></i> Penugasan ke Karyawan
                         <?php if ($kpi['need_review'] > 0): ?>
-                            <span class="badge badge-warning ml-1" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
+                            <span class="badge badge-warning ml-2" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
                         <?php else: ?>
-                            <span class="badge badge-secondary ml-1" id="badge_need_review"><?= count($tugas_atasan) ?></span>
+                            <span class="badge badge-secondary ml-2" id="badge_need_review"><?= count($tugas_atasan) ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
                 <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link" href="#tab_leaderboard" data-toggle="tab" role="tab">
-                        <i class="fas fa-trophy text-warning mr-1"></i> Leaderboard KPI & Evaluasi Karyawan
+                        <i class="fas fa-trophy text-warning mr-2"></i> Leaderboard KPI & Evaluasi Karyawan
                     </a>
                 </li>
             </ul>
