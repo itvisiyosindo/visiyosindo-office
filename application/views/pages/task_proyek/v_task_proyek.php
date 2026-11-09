@@ -113,93 +113,77 @@
     }
 
     /* =========================================================================
-       SELECT2 & DROPDOWN JOBDESK: ANTI-TERPOTONG (MULTI-LINE WRAP DI SEMUA TEMA)
+       CUSTOM JOBDESK PICKER (MULTI-LINE WRAP, CLEAN SEARCHABLE, ANTI-TERPOTONG)
        ========================================================================= */
-    .select2-container--bootstrap .select2-results__option,
-    .select2-container--default .select2-results__option,
-    .select2-dropdown .select2-results__option,
-    .select2-results__option,
-    .select2-dropdown-jobdesk .select2-results__option {
-        white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
-        line-height: 1.5 !important;
-        font-size: 13px !important;
-        padding: 9px 14px !important;
-        text-align: left !important;
-        text-overflow: clip !important;
-        border-bottom: 1px solid #f1f5f9 !important;
+    #dropdown_jobdesk_container {
+        position: relative;
+        width: 100%;
     }
-
-    .select2-container--bootstrap .select2-results__group,
-    .select2-container--default .select2-results__group,
-    .select2-results__group,
-    .select2-dropdown-jobdesk .select2-results__group {
-        background: #f0fdf4 !important;
-        color: #166534 !important;
-        font-weight: 700 !important;
-        font-size: 12px !important;
-        padding: 8px 14px !important;
-        border-top: 1px solid #bbf7d0 !important;
-        border-bottom: 1px solid #bbf7d0 !important;
-        white-space: normal !important;
-        text-align: left !important;
+    #btn_toggle_jobdesk {
+        white-space: normal;
+        min-height: 44px;
+        padding: 9px 14px;
+        border: 1.5px solid #86efac;
+        border-radius: 6px;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        text-align: left;
+        transition: all 0.2s ease;
     }
-
-    .select2-container--bootstrap .select2-results__option--highlighted[aria-selected],
-    .select2-container--default .select2-results__option--highlighted[aria-selected],
-    .select2-dropdown-jobdesk .select2-results__option--highlighted {
-        background-color: #059669 !important;
-        color: #ffffff !important;
+    #btn_toggle_jobdesk:hover,
+    #btn_toggle_jobdesk:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        outline: none;
+        background: #fff;
     }
-
-    #container_jobdesk_karyawan .select2-container,
-    #container_jobdesk_karyawan .select2-container--bootstrap,
-    #container_jobdesk_karyawan .select2-container--default {
-        width: 100% !important;
+    #menu_jobdesk_list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        min-width: 100%;
+        max-height: 380px;
+        border: 1.5px solid #10b981;
+        border-radius: 8px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+        z-index: 100050;
+        margin-top: 4px;
+        background: #ffffff;
+        display: none;
     }
-
-    #container_jobdesk_karyawan .select2-selection--single,
-    #container_jobdesk_karyawan .select2-container--bootstrap .select2-selection--single,
-    #container_jobdesk_karyawan .select2-container--default .select2-selection--single {
-        height: auto !important;
-        min-height: 42px !important;
-        white-space: normal !important;
-        padding: 6px 12px !important;
-        border: 1.5px solid #86efac !important;
-        border-radius: 6px !important;
-        background-color: #ffffff !important;
+    .jobdesk-choice-item {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        line-height: 1.5;
+        font-size: 13px;
+        color: #1e293b;
+        text-align: left;
+        word-break: break-word;
+        white-space: normal;
+        transition: background-color 0.15s ease, color 0.15s ease;
     }
-
-    #container_jobdesk_karyawan .select2-selection__rendered,
-    #container_jobdesk_karyawan .select2-container--bootstrap .select2-selection--single .select2-selection__rendered,
-    #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__rendered {
-        white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
-        text-overflow: clip !important;
-        line-height: 1.45 !important;
-        color: #1e293b !important;
-        font-size: 13px !important;
-        padding-right: 25px !important;
-        padding-left: 0 !important;
-        height: auto !important;
-        text-align: left !important;
+    .jobdesk-choice-item:hover {
+        background-color: #ecfdf5 !important;
+        color: #065f46 !important;
     }
-
-    #container_jobdesk_karyawan .select2-selection__arrow,
-    #container_jobdesk_karyawan .select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        right: 10px !important;
-    }
-
-    .select2-container--bootstrap .select2-dropdown,
-    .select2-container--default .select2-dropdown,
-    .select2-dropdown {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        z-index: 100050 !important;
+    .jobdesk-group-header {
+        background: #f0fdf4;
+        color: #166534;
+        font-weight: 700;
+        font-size: 11.5px;
+        padding: 7px 14px;
+        border-top: 1px solid #bbf7d0;
+        border-bottom: 1px solid #bbf7d0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
     }
 </style>
 
@@ -1097,13 +1081,39 @@ $namaBulanList = [
                         <small class="text-muted d-block mb-2">
                             <i class="fas fa-sync-alt text-primary mr-1"></i> Penugasan ini akan otomatis terhubung ke jobdesk karyawan terkait dan disinkronkan ke <strong>Sasaran Mutu</strong> serta <strong>Audit Kinerja</strong>.
                         </small>
-                        <select name="id_sasaran_mutu" id="select_jobdesk_karyawan" class="form-control" style="width: 100%;">
-                            <option value="">-- Pilih Jobdesk Sasaran Mutu Terkait --</option>
-                        </select>
+
+                        <!-- Input Hidden untuk form submission -->
+                        <input type="hidden" name="id_sasaran_mutu" id="select_jobdesk_karyawan" value="">
                         <input type="hidden" name="nama_jobdesk" id="input_nama_jobdesk" value="">
 
-                        <div id="jobdesk_loading" class="text-muted small mt-2" style="display: none;">
-                            <i class="fas fa-spinner fa-spin text-success mr-1"></i> Memuat daftar jobdesk resmi karyawan...
+                        <!-- Custom Searchable Dropdown Picker -->
+                        <div class="dropdown" id="dropdown_jobdesk_container">
+                            <button type="button" class="btn btn-default" id="btn_toggle_jobdesk">
+                                <span id="label_selected_jobdesk" style="font-size: 13px; color: #64748b; line-height: 1.45; word-break: break-word; text-align: left;">-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --</span>
+                                <i class="fas fa-chevron-down text-muted" style="font-size: 12px; flex-shrink: 0;"></i>
+                            </button>
+
+                            <div id="menu_jobdesk_list">
+                                <!-- Search Box -->
+                                <div class="p-2 border-bottom" style="background: #f8fafc;">
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                                        </div>
+                                        <input type="text" id="filter_jobdesk_search" class="form-control border-left-0" placeholder="Ketik kata kunci jobdesk...">
+                                    </div>
+                                </div>
+
+                                <!-- Loading Indicator -->
+                                <div id="jobdesk_loading" class="p-3 text-center text-muted small" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin text-success mr-1"></i> Memuat daftar jobdesk resmi karyawan...
+                                </div>
+
+                                <!-- Items List -->
+                                <div id="container_jobdesk_items" style="max-height: 290px; overflow-y: auto;">
+                                    <!-- Dynamic items -->
+                                </div>
+                            </div>
                         </div>
 
                         <div id="jobdesk_detail_preview" class="mt-2 small text-dark p-3 bg-white rounded border border-success" style="display: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -1564,37 +1574,65 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, '&#039;');
     }
 
-    // Helper inisialisasi Select2 untuk Jobdesk Sasaran Mutu
-    function initSelect2Jobdesk() {
-        if ($.fn.select2) {
-            try {
-                if ($('#select_jobdesk_karyawan').hasClass('select2-hidden-accessible')) {
-                    $('#select_jobdesk_karyawan').select2('destroy');
-                }
-                $('#select_jobdesk_karyawan').select2({
-                    theme: 'bootstrap',
-                    dropdownParent: $('#modalBuatTask'),
-                    placeholder: '-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --',
-                    allowClear: true,
-                    width: '100%',
-                    templateResult: function(data) {
-                        if (!data.id) return data.text;
-                        var $res = $('<div style="white-space: normal; word-break: break-word; line-height: 1.5; padding: 2px 0; text-align: left;"></div>');
-                        $res.text(data.text);
-                        return $res;
-                    },
-                    templateSelection: function(data) {
-                        if (!data.id) return data.text;
-                        var $res = $('<span style="white-space: normal; word-break: break-word; line-height: 1.4; text-align: left; display: inline-block;"></span>');
-                        $res.text(data.text);
-                        return $res;
-                    }
-                });
-            } catch (e) {
-                console.warn('Select2 init error:', e);
-            }
+    // Toggle Menu Dropdown Jobdesk
+    $('#btn_toggle_jobdesk').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#menu_jobdesk_list').toggle();
+        if ($('#menu_jobdesk_list').is(':visible')) {
+            $('#filter_jobdesk_search').val('').trigger('input').focus();
         }
-    }
+    });
+
+    // Cegah dropdown tertutup saat mengklik/mengetik di search box
+    $('#filter_jobdesk_search').on('click keydown keyup input', function(e) {
+        e.stopPropagation();
+        var q = $(this).val().toLowerCase().trim();
+        $('#container_jobdesk_items .jobdesk-choice-item').each(function() {
+            var text = $(this).text().toLowerCase();
+            $(this).toggle(text.indexOf(q) !== -1);
+        });
+        $('#container_jobdesk_items .jobdesk-group-header').each(function() {
+            var $groupItems = $(this).nextUntil('.jobdesk-group-header', '.jobdesk-choice-item:visible');
+            $(this).toggle($groupItems.length > 0);
+        });
+    });
+
+    // Tutup dropdown saat klik di luar
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#dropdown_jobdesk_container').length) {
+            $('#menu_jobdesk_list').hide();
+        }
+    });
+
+    // Saat salah satu opsi jobdesk diklik
+    $(document).on('click', '.jobdesk-choice-item', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        var nama = $(this).data('nama');
+        var detail = $(this).data('detail') || '';
+        var sasaran = $(this).data('sasaran') || '';
+
+        $('#select_jobdesk_karyawan').val(id);
+        $('#input_nama_jobdesk').val(nama);
+
+        $('#label_selected_jobdesk')
+            .html('<strong class="text-success mr-1"><i class="fas fa-check-circle"></i> Terpilih:</strong> ' + escapeHtml(nama))
+            .css('color', '#0f172a');
+
+        if (nama) {
+            $('#text_jobdesk_title').text(nama);
+            var detailText = '';
+            if (detail) detailText += '• Detail Proyek: ' + detail;
+            if (sasaran) detailText += (detailText ? '\n' : '') + '• Sasaran Mutu: ' + sasaran;
+            $('#text_jobdesk_detail').text(detailText || '(Tidak ada sasaran mutu khusus)');
+            $('#jobdesk_detail_preview').slideDown(150);
+        } else {
+            $('#jobdesk_detail_preview').hide();
+        }
+
+        $('#menu_jobdesk_list').hide();
+    });
 
     // Handle Dropdown Jobdesk Sasaran Mutu berdasarkan penerima tugas
     $('#select_penerima_task').on('change', function() {
@@ -1605,17 +1643,21 @@ document.addEventListener('DOMContentLoaded', function() {
             loadJobdeskKaryawan(empId);
         } else {
             $('#container_jobdesk_karyawan').slideUp(200);
-            $('#select_jobdesk_karyawan').val('').trigger('change');
+            $('#select_jobdesk_karyawan').val('');
             $('#input_nama_jobdesk').val('');
+            $('#label_selected_jobdesk').text('-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --').css('color', '#64748b');
             $('#jobdesk_detail_preview').hide();
+            $('#menu_jobdesk_list').hide();
         }
     });
 
     function loadJobdeskKaryawan(empId) {
         $('#jobdesk_loading').show();
+        $('#container_jobdesk_items').empty();
         $('#jobdesk_detail_preview').hide();
-        $('#select_jobdesk_karyawan').prop('disabled', true).html('<option value="">-- Memuat daftar jobdesk... --</option>');
-        initSelect2Jobdesk();
+        $('#select_jobdesk_karyawan').val('');
+        $('#input_nama_jobdesk').val('');
+        $('#label_selected_jobdesk').text('-- Memuat daftar jobdesk... --').css('color', '#94a3b8');
 
         $.ajax({
             url: baseUrl + 'task_proyek/get_karyawan_jobdesks',
@@ -1624,7 +1666,6 @@ document.addEventListener('DOMContentLoaded', function() {
             dataType: 'json',
             success: function(res) {
                 $('#jobdesk_loading').hide();
-                $('#select_jobdesk_karyawan').prop('disabled', false);
 
                 try {
                     if (res && res.status === 'success') {
@@ -1633,65 +1674,43 @@ document.addEventListener('DOMContentLoaded', function() {
                             $('#nama_karyawan_terpilih').text(kInfo);
                         }
 
-                        var html = '<option value="">-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --</option>';
+                        var itemsHtml = '';
                         if (res.jobdesks && res.jobdesks.length > 0) {
                             var currentGroup = '';
                             $.each(res.jobdesks, function(i, it) {
                                 var groupTitle = it.posisi ? it.posisi : (it.divisi ? 'Divisi ' + it.divisi : 'Jobdesk Karyawan');
                                 if (groupTitle !== currentGroup) {
-                                    if (currentGroup !== '') {
-                                        html += '</optgroup>';
-                                    }
                                     currentGroup = groupTitle;
-                                    html += '<optgroup label="Jobdesk Resmi: ' + escapeHtml(currentGroup) + '">';
+                                    itemsHtml += '<div class="jobdesk-group-header"><i class="fas fa-briefcase mr-1"></i> Jobdesk Resmi: ' + escapeHtml(currentGroup) + '</div>';
                                 }
-                                var noLabel = (i + 1) + '. ';
-                                html += '<option value="' + it.id + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' + noLabel + escapeHtml(it.jobdesk) + '</option>';
+                                itemsHtml += '<div class="jobdesk-choice-item" data-id="' + escapeHtml(it.id) + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' +
+                                    '<strong class="text-success mr-1">' + (i + 1) + '.</strong> ' + escapeHtml(it.jobdesk) +
+                                    '</div>';
                             });
-                            if (currentGroup !== '') {
-                                html += '</optgroup>';
-                            }
                         } else {
-                            html += '<option value="SM_CUSTOM_TASK" data-nama="Tugas & Tanggung Jawab Operasional Tambahan">Tugas & Tanggung Jawab Operasional Tambahan</option>';
+                            itemsHtml += '<div class="jobdesk-choice-item" data-id="SM_CUSTOM_TASK" data-nama="Tugas & Tanggung Jawab Operasional Tambahan">' +
+                                '<strong class="text-success mr-1">1.</strong> Tugas & Tanggung Jawab Operasional Tambahan' +
+                                '</div>';
                         }
-                        $('#select_jobdesk_karyawan').html(html);
+                        $('#container_jobdesk_items').html(itemsHtml);
+                        $('#label_selected_jobdesk').text('-- Klik untuk Memilih Jobdesk Terkait (Wajib) --').css('color', '#64748b');
                     } else {
-                        $('#select_jobdesk_karyawan').html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
+                        $('#container_jobdesk_items').html('<div class="p-3 text-muted small text-center">Tidak ada jobdesk khusus untuk posisi ini.</div>');
+                        $('#label_selected_jobdesk').text('-- Tidak ada jobdesk --').css('color', '#ef4444');
                     }
                 } catch (renderErr) {
                     console.error('Error rendering jobdesks:', renderErr);
-                    $('#select_jobdesk_karyawan').html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
+                    $('#container_jobdesk_items').html('<div class="jobdesk-choice-item" data-id="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan"><strong class="text-success mr-1">1.</strong> Tugas Operasional Karyawan</div>');
+                    $('#label_selected_jobdesk').text('-- Klik untuk Memilih Jobdesk Terkait --').css('color', '#64748b');
                 }
-
-                initSelect2Jobdesk();
             },
             error: function() {
                 $('#jobdesk_loading').hide();
-                $('#select_jobdesk_karyawan').prop('disabled', false).html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
-                initSelect2Jobdesk();
+                $('#container_jobdesk_items').html('<div class="jobdesk-choice-item" data-id="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan"><strong class="text-success mr-1">1.</strong> Tugas Operasional Karyawan</div>');
+                $('#label_selected_jobdesk').text('-- Klik untuk Memilih Jobdesk Terkait --').css('color', '#64748b');
             }
         });
     }
-
-    $('#select_jobdesk_karyawan').on('change', function() {
-        var $opt = $(this).find('option:selected');
-        var namaJob = $opt.attr('data-nama') || '';
-        var detail = $opt.attr('data-detail') || '';
-        var sasaran = $opt.attr('data-sasaran') || '';
-
-        $('#input_nama_jobdesk').val(namaJob);
-
-        if (namaJob) {
-            $('#text_jobdesk_title').text(namaJob);
-            var detailText = '';
-            if (detail) detailText += '• Detail Proyek: ' + detail;
-            if (sasaran) detailText += (detailText ? '\n' : '') + '• Sasaran Mutu: ' + sasaran;
-            $('#text_jobdesk_detail').text(detailText || '(Tidak ada sasaran mutu khusus)');
-            $('#jobdesk_detail_preview').slideDown(150);
-        } else {
-            $('#jobdesk_detail_preview').hide();
-        }
-    });
 
 
 
@@ -1737,9 +1756,11 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php endif; ?>
         $('#formBuatTask')[0].reset();
         $('#container_jobdesk_karyawan').hide();
-        $('#select_jobdesk_karyawan').val('').trigger('change');
+        $('#select_jobdesk_karyawan').val('');
         $('#input_nama_jobdesk').val('');
+        $('#label_selected_jobdesk').text('-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --').css('color', '#64748b');
         $('#jobdesk_detail_preview').hide();
+        $('#menu_jobdesk_list').hide();
         if ($.fn.select2) {
             $('#select_penerima_task').val(null).trigger('change');
         }
@@ -1776,9 +1797,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 alert('Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!');
             }
-            if ($.fn.select2 && $('#select_jobdesk_karyawan').hasClass('select2-hidden-accessible')) {
-                $('#select_jobdesk_karyawan').select2('open');
-            }
+            $('#menu_jobdesk_list').show();
+            $('#filter_jobdesk_search').focus();
             return false;
         }
 
