@@ -190,7 +190,7 @@ class Md_audit_system extends CI_Model
             }
 
             if ($this->hasTable('task_proyek')) {
-                $qTask = @$this->db->select('id_task, kode_task, judul, nama_proyek, id_penerima, progres, status_task, catatan_bawahan, bukti_selesai')
+                $qTask = @$this->db->select('id_task, kode_task, judul, nama_proyek, id_penerima, progres, status_task, catatan_bawahan, bukti_selesai, id_sasaran_mutu, nama_jobdesk')
                     ->where('is_deleted', 0)
                     ->where("(YEAR(created_at) = {$year} OR (tgl_submit IS NOT NULL AND YEAR(tgl_submit) = {$year}))")
                     ->get('task_proyek');
@@ -238,12 +238,20 @@ class Md_audit_system extends CI_Model
                     }
                 }
                 foreach ($yearTasks as $tsk) {
-                    $tskTxt = strtolower($tsk['judul'] . ' ' . $tsk['nama_proyek'] . ' ' . $tsk['catatan_bawahan']);
-                    foreach ($itemKws as $kw) {
-                        if (strlen($kw) >= 4 && strpos($tskTxt, $kw) !== false) {
-                            $taskCount++;
-                            break;
+                    $isTaskMatch = false;
+                    if (!empty($tsk['id_sasaran_mutu']) && $tsk['id_sasaran_mutu'] === $itemId) {
+                        $isTaskMatch = true;
+                    } else {
+                        $tskTxt = strtolower($tsk['judul'] . ' ' . $tsk['nama_proyek'] . ' ' . $tsk['catatan_bawahan']);
+                        foreach ($itemKws as $kw) {
+                            if (strlen($kw) >= 4 && strpos($tskTxt, $kw) !== false) {
+                                $isTaskMatch = true;
+                                break;
+                            }
                         }
+                    }
+                    if ($isTaskMatch) {
+                        $taskCount++;
                     }
                 }
             }
@@ -443,7 +451,7 @@ class Md_audit_system extends CI_Model
     /**
      * Ambil catatan override Sasaran Mutu (dari DB atau JSON)
      */
-    private function loadSasaranMutuOverrides($year)
+    public function loadSasaranMutuOverrides($year)
     {
         $overrides = [];
 
@@ -663,7 +671,7 @@ class Md_audit_system extends CI_Model
 
             // 2. Ambil Task dari tabel `task_proyek`
             if ($this->hasTable('task_proyek')) {
-                $this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.jenis, t.deskripsi, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai, t.rating_bintang, t.created_at, t.tgl_submit, p_beri.nama as nama_atasan')
+                $this->db->select('t.id_task, t.kode_task, t.judul, t.nama_proyek, t.jenis, t.deskripsi, t.progres, t.status_task, t.catatan_bawahan, t.bukti_selesai, t.rating_bintang, t.created_at, t.tgl_submit, t.id_sasaran_mutu, t.nama_jobdesk, p_beri.nama as nama_atasan')
                     ->from('task_proyek t')
                     ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
                     ->where('t.is_deleted', 0)
@@ -679,7 +687,9 @@ class Md_audit_system extends CI_Model
                 if (!empty($taskRows)) {
                     foreach ($taskRows as $task) {
                         $isMatch = false;
-                        if (!empty($keywords)) {
+                        if (!empty($task['id_sasaran_mutu']) && $task['id_sasaran_mutu'] === $itemId) {
+                            $isMatch = true;
+                        } else if (!empty($keywords)) {
                             $taskText = strtolower($task['judul'] . ' ' . $task['nama_proyek'] . ' ' . $task['deskripsi'] . ' ' . $task['catatan_bawahan']);
                             foreach ($keywords as $kw) {
                                 if (strlen($kw) >= 4 && strpos($taskText, $kw) !== false) {
@@ -731,7 +741,8 @@ class Md_audit_system extends CI_Model
             foreach ($maxTask as $task) {
                 $statusStr = $task['status_task'] == 3 ? 'SELESAI (100%)' : ($task['status_task'] == 2 ? 'MENUNGGU REVIEW' : "PROGRES {$task['progres']}%");
                 $catatan = !empty($task['catatan_bawahan']) ? " - " . $task['catatan_bawahan'] : "";
-                $implLines[] = "• [{$task['kode_task']}] {$task['judul']} ({$statusStr}){$catatan}";
+                $tagJob = !empty($task['nama_jobdesk']) ? " [Jobdesk: {$task['nama_jobdesk']}]" : "";
+                $implLines[] = "• [{$task['kode_task']}] {$task['judul']} ({$statusStr}){$tagJob}{$catatan}";
             }
             if (count($taskList) > 5) {
                 $implLines[] = "• ...dan " . (count($taskList) - 5) . " task proyek lainnya.";

@@ -729,6 +729,14 @@ if (!function_exists('ensureTaskProyekSpColumns')) {
 			");
 		}
 
+		$chkSm = @$CI->db->query("SHOW COLUMNS FROM `task_proyek` LIKE 'id_sasaran_mutu'");
+		if ($chkSm && $chkSm->num_rows() === 0) {
+			@$CI->db->query("ALTER TABLE `task_proyek`
+				ADD COLUMN `id_sasaran_mutu` VARCHAR(100) DEFAULT NULL AFTER `nama_proyek`,
+				ADD COLUMN `nama_jobdesk` VARCHAR(255) DEFAULT NULL AFTER `id_sasaran_mutu`
+			");
+		}
+
 		// Rapikan data contoh/dummy pada task_proyek menjadi data realistis (kecuali task yang berstatus SP 3 dibiarkan)
 		normalizeDummyTaskProyekData($CI);
 	}

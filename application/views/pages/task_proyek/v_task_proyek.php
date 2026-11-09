@@ -994,6 +994,34 @@ $namaBulanList = [
                         <?php endif; ?>
                     </div>
 
+                    <!-- Container Dropdown Jobdesk Sasaran Mutu (Hanya muncul jika 1 orang karyawan dipilih) -->
+                    <div id="container_jobdesk_karyawan" style="display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap mb-1" style="gap: 8px;">
+                            <label class="font-weight-bold text-success mb-0" style="font-size: 13px;">
+                                <i class="fas fa-bullseye text-success mr-1"></i> Hubungkan ke Jobdesk Sasaran Mutu <span class="text-danger">* (Wajib)</span>
+                            </label>
+                            <span class="badge badge-success px-2 py-1" id="badge_info_karyawan" style="font-size: 11px;">
+                                <i class="fas fa-user mr-1"></i> <span id="nama_karyawan_terpilih">-</span>
+                            </span>
+                        </div>
+                        <small class="text-muted d-block mb-2">
+                            <i class="fas fa-sync-alt text-primary mr-1"></i> Penugasan ini akan otomatis terhubung ke jobdesk karyawan terkait dan disinkronkan ke <strong>Sasaran Mutu</strong> serta <strong>Audit Kinerja</strong>.
+                        </small>
+                        <select name="id_sasaran_mutu" id="select_jobdesk_karyawan" class="form-control" style="width: 100%;">
+                            <option value="">-- Pilih Jobdesk Sasaran Mutu Terkait --</option>
+                        </select>
+                        <input type="hidden" name="nama_jobdesk" id="input_nama_jobdesk" value="">
+
+                        <div id="jobdesk_loading" class="text-muted small mt-2" style="display: none;">
+                            <i class="fas fa-spinner fa-spin text-success mr-1"></i> Memuat daftar jobdesk resmi karyawan...
+                        </div>
+
+                        <div id="jobdesk_detail_preview" class="mt-2 small text-dark p-2 bg-white rounded border border-success" style="display: none;">
+                            <div class="font-weight-bold text-success"><i class="fas fa-info-circle mr-1"></i> Detail Proyek & Sasaran Mutu:</div>
+                            <div id="text_jobdesk_detail" class="mt-1" style="white-space: pre-line; line-height: 1.4;">-</div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-5">
                             <div class="form-group">
@@ -1098,6 +1126,7 @@ $namaBulanList = [
                             <span class="badge badge-info" id="dt_nama_proyek">Proyek</span>
                             <span class="badge badge-secondary" id="dt_jenis">Jenis</span>
                             <span id="dt_prioritas_badge"></span>
+                            <span id="dt_jobdesk_badge" style="display:none;"></span>
                             <h4 class="font-weight-bold mt-2 mb-1" id="dt_judul" style="color:#0f172a;">-</h4>
                         </div>
                         <div class="text-right">
@@ -1433,6 +1462,82 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#select_penerima_task').val(allIds).trigger('change');
     });
 
+    // Handle Dropdown Jobdesk Sasaran Mutu berdasarkan penerima tugas
+    $('#select_penerima_task').on('change', function() {
+        var selected = $(this).val() || [];
+        if (selected.length === 1) {
+            var empId = selected[0];
+            $('#container_jobdesk_karyawan').slideDown(200);
+            $('#select_jobdesk_karyawan').prop('required', true);
+            loadJobdeskKaryawan(empId);
+        } else {
+            $('#container_jobdesk_karyawan').slideUp(200);
+            $('#select_jobdesk_karyawan').prop('required', false).val('').trigger('change');
+            $('#input_nama_jobdesk').val('');
+            $('#jobdesk_detail_preview').hide();
+        }
+    });
+
+    function loadJobdeskKaryawan(empId) {
+        $('#jobdesk_loading').show();
+        $('#select_jobdesk_karyawan').prop('disabled', true).html('<option value="">-- Memuat daftar jobdesk... --</option>');
+        $('#jobdesk_detail_preview').hide();
+
+        $.ajax({
+            url: baseUrl + 'task_proyek/get_karyawan_jobdesks',
+            type: 'GET',
+            data: { id_pengguna: empId },
+            dataType: 'json',
+            success: function(res) {
+                $('#jobdesk_loading').hide();
+                $('#select_jobdesk_karyawan').prop('disabled', false);
+
+                if (res && res.status === 'success') {
+                    if (res.karyawan) {
+                        var kInfo = res.karyawan.nama + ' (' + (res.karyawan.jabatan || res.karyawan.divisi) + ')';
+                        $('#nama_karyawan_terpilih').text(kInfo);
+                    }
+
+                    var html = '<option value="">-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --</option>';
+                    if (res.jobdesks && res.jobdesks.length > 0) {
+                        $.each(res.jobdesks, function(i, it) {
+                            var noLabel = it.no ? it.no + '. ' : '';
+                            html += '<option value="' + it.id + '" data-nama="' + escapeHtml(it.jobdesk) + '" data-detail="' + escapeHtml(it.detail_proyek || '') + '" data-sasaran="' + escapeHtml(it.sasaran_mutu || '') + '">' + noLabel + escapeHtml(it.jobdesk) + '</option>';
+                        });
+                    } else {
+                        html += '<option value="SM_CUSTOM_TASK" data-nama="Tugas & Tanggung Jawab Operasional Tambahan">Tugas & Tanggung Jawab Operasional Tambahan</option>';
+                    }
+                    $('#select_jobdesk_karyawan').html(html);
+                } else {
+                    $('#select_jobdesk_karyawan').html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
+                }
+            },
+            error: function() {
+                $('#jobdesk_loading').hide();
+                $('#select_jobdesk_karyawan').prop('disabled', false).html('<option value="SM_CUSTOM_TASK" data-nama="Tugas Operasional Karyawan">Tugas Operasional Karyawan</option>');
+            }
+        });
+    }
+
+    $('#select_jobdesk_karyawan').on('change', function() {
+        var $opt = $(this).find('option:selected');
+        var namaJob = $opt.attr('data-nama') || '';
+        var detail = $opt.attr('data-detail') || '';
+        var sasaran = $opt.attr('data-sasaran') || '';
+
+        $('#input_nama_jobdesk').val(namaJob);
+
+        if (detail || sasaran) {
+            var text = '';
+            if (detail) text += '• Detail: ' + detail;
+            if (sasaran) text += (text ? '\n' : '') + '• Sasaran: ' + sasaran;
+            $('#text_jobdesk_detail').text(text);
+            $('#jobdesk_detail_preview').show();
+        } else {
+            $('#jobdesk_detail_preview').hide();
+        }
+    });
+
 
 
     // Simpan Atasan Langsung Saya dari halaman Task Proyek
@@ -1476,6 +1581,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         <?php endif; ?>
         $('#formBuatTask')[0].reset();
+        $('#container_jobdesk_karyawan').hide();
+        $('#select_jobdesk_karyawan').prop('required', false).val('');
+        $('#input_nama_jobdesk').val('');
+        $('#jobdesk_detail_preview').hide();
         if ($.fn.select2) {
             $('#select_penerima_task').val(null).trigger('change');
         }
@@ -1504,6 +1613,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Submit Form Buat Task Baru
     $('#formBuatTask').on('submit', function(e) {
         e.preventDefault();
+
+        var selectedPenerima = $('#select_penerima_task').val() || [];
+        if (selectedPenerima.length === 1 && !$('#select_jobdesk_karyawan').val()) {
+            if (window.swal) {
+                swal('Perhatian', 'Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!', 'warning');
+            } else {
+                alert('Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!');
+            }
+            return false;
+        }
+
         var $btn = $('#btnSubmitBuatTask');
         var origHtml = $btn.html();
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
@@ -1590,6 +1710,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#dt_nama_proyek').text(t.nama_proyek || 'Umum');
                 $('#dt_jenis').text(t.jenis || 'Task Harian');
                 $('#dt_prioritas_badge').html('<span class="tp-priority-badge tp-prio-' + t.prioritas + '">' + t.prioritas + '</span>');
+                if (t.nama_jobdesk) {
+                    $('#dt_jobdesk_badge').html('<span class="badge badge-success px-2 py-1 ml-1" style="font-size:11.5px;"><i class="fas fa-bullseye mr-1"></i> Jobdesk: ' + $('<div>').text(t.nama_jobdesk).html() + '</span>').show();
+                } else {
+                    $('#dt_jobdesk_badge').hide().empty();
+                }
                 $('#dt_judul').text(t.judul);
                 $('#dt_deadline').text(t.tgl_deadline_fmt + (t.is_overdue ? ' (OVERDUE)' : ''));
                 $('#dt_pemberi').text((t.nama_pemberi || '-') + (t.jabatan_pemberi ? ' (' + t.jabatan_pemberi + ')' : ''));

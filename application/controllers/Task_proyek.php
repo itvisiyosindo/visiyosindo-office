@@ -22,6 +22,8 @@ class Task_proyek extends CI_Controller
           `kode_task` varchar(50) NOT NULL,
           `judul` varchar(255) NOT NULL,
           `nama_proyek` varchar(200) DEFAULT NULL,
+          `id_sasaran_mutu` varchar(100) DEFAULT NULL,
+          `nama_jobdesk` varchar(255) DEFAULT NULL,
           `jenis` varchar(50) DEFAULT 'Task Harian',
           `prioritas` varchar(20) DEFAULT 'Medium',
           `deskripsi` text DEFAULT NULL,
@@ -63,6 +65,14 @@ class Task_proyek extends CI_Controller
 
         @$this->db->query($sql1);
         @$this->db->query($sql2);
+
+        $chkSm = @$this->db->query("SHOW COLUMNS FROM `task_proyek` LIKE 'id_sasaran_mutu'");
+        if ($chkSm && $chkSm->num_rows() === 0) {
+            @$this->db->query("ALTER TABLE `task_proyek`
+                ADD COLUMN `id_sasaran_mutu` VARCHAR(100) DEFAULT NULL AFTER `nama_proyek`,
+                ADD COLUMN `nama_jobdesk` VARCHAR(255) DEFAULT NULL AFTER `id_sasaran_mutu`
+            ");
+        }
 
         if (function_exists('ensureTaskProyekSpColumns')) {
             ensureTaskProyekSpColumns();
@@ -460,6 +470,133 @@ class Task_proyek extends CI_Controller
     }
 
     /**
+     * Ambil daftar Jobdesk Sasaran Mutu untuk karyawan yang dipilih (berdasarkan jabatan & divisi)
+     */
+    public function get_karyawan_jobdesks()
+    {
+        grantAccessFor('all');
+        $this->db->db_debug = FALSE;
+
+        $id_pengguna = (int)($this->input->get('id_pengguna') ?: $this->input->post('id_pengguna'));
+        if ($id_pengguna <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'ID pengguna tidak valid']);
+            return;
+        }
+
+        $user = $this->db->select('p.pengguna_id, p.nama, p.jabatan, p.id_divisi, d.nama as nama_divisi')
+            ->from('pengguna p')
+            ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
+            ->where('p.pengguna_id', $id_pengguna)
+            ->get()->row();
+
+        if (!$user) {
+            echo json_encode(['status' => 'error', 'message' => 'Karyawan tidak ditemukan']);
+            return;
+        }
+
+        $this->load->model('md_audit_system');
+        $master = $this->md_audit_system->getMasterTemplate();
+
+        $jabatan   = trim((string)$user->jabatan);
+        $divisi    = trim((string)$user->nama_divisi);
+        $jobdesks  = [];
+        $addedJobs = [];
+
+        // 1. Prioritaskan jobdesk yang posisi/jabatannya cocok dengan jabatan karyawan
+        if (!empty($jabatan)) {
+            foreach ($master as $m) {
+                $pos = trim($m['posisi']);
+                if (strcasecmp($pos, $jabatan) === 0 || stripos($pos, $jabatan) !== false || stripos($jabatan, $pos) !== false) {
+                    $jobKey = md5($m['jobdesk']);
+                    if (!isset($addedJobs[$jobKey])) {
+                        $addedJobs[$jobKey] = true;
+                        $jobdesks[] = [
+                            'id'            => $m['id'],
+                            'no'            => $m['no'],
+                            'posisi'        => $m['posisi'],
+                            'divisi'        => $m['divisi'],
+                            'jobdesk'       => $m['jobdesk'],
+                            'detail_proyek' => $m['detail_proyek'],
+                            'sasaran_mutu'  => $m['sasaran_mutu']
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 2. Jika tidak ada yang cocok berdasarkan jabatan persis, ambil jobdesk berdasarkan divisinya
+        if (empty($jobdesks) && !empty($divisi)) {
+            foreach ($master as $m) {
+                $div = trim($m['divisi']);
+                if (strcasecmp($div, $divisi) === 0 || stripos($div, $divisi) !== false || stripos($divisi, $div) !== false) {
+                    $jobKey = md5($m['jobdesk']);
+                    if (!isset($addedJobs[$jobKey])) {
+                        $addedJobs[$jobKey] = true;
+                        $jobdesks[] = [
+                            'id'            => $m['id'],
+                            'no'            => $m['no'],
+                            'posisi'        => $m['posisi'],
+                            'divisi'        => $m['divisi'],
+                            'jobdesk'       => $m['jobdesk'],
+                            'detail_proyek' => $m['detail_proyek'],
+                            'sasaran_mutu'  => $m['sasaran_mutu']
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Muat juga override atau custom jobdesk yang ditambahkan langsung di sistem untuk tahun berjalan
+        $curYear = (int)date('Y');
+        $overrides = $this->md_audit_system->loadSasaranMutuOverrides($curYear);
+        if (!empty($overrides)) {
+            foreach ($overrides as $ovId => $ov) {
+                $ovPos = isset($ov['posisi']) ? trim($ov['posisi']) : '';
+                $ovDiv = isset($ov['divisi']) ? trim($ov['divisi']) : '';
+                $ovJob = isset($ov['jobdesk']) ? trim($ov['jobdesk']) : '';
+
+                if (empty($ovJob)) continue;
+
+                $match = false;
+                if (!empty($jabatan) && (strcasecmp($ovPos, $jabatan) === 0 || stripos($ovPos, $jabatan) !== false)) {
+                    $match = true;
+                } else if (!empty($divisi) && (strcasecmp($ovDiv, $divisi) === 0 || stripos($ovDiv, $divisi) !== false)) {
+                    $match = true;
+                }
+
+                if ($match) {
+                    $jobKey = md5($ovJob);
+                    if (!isset($addedJobs[$jobKey])) {
+                        $addedJobs[$jobKey] = true;
+                        $jobdesks[] = [
+                            'id'            => $ovId,
+                            'no'            => isset($ov['no']) ? $ov['no'] : (count($jobdesks) + 1),
+                            'posisi'        => $ovPos,
+                            'divisi'        => $ovDiv,
+                            'jobdesk'       => $ovJob,
+                            'detail_proyek' => isset($ov['detail_proyek']) ? $ov['detail_proyek'] : '',
+                            'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? $ov['sasaran_mutu'] : ''
+                        ];
+                    }
+                }
+            }
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status'   => 'success',
+            'karyawan' => [
+                'id'      => (int)$user->pengguna_id,
+                'nama'    => $user->nama,
+                'jabatan' => $user->jabatan,
+                'divisi'  => $user->nama_divisi ?: 'General'
+            ],
+            'total'    => count($jobdesks),
+            'jobdesks' => $jobdesks
+        ]);
+    }
+
+    /**
      * Buat Task / Proyek Baru (bisa untuk 1 atau banyak bawahan sekaligus)
      */
     public function add()
@@ -470,6 +607,8 @@ class Task_proyek extends CI_Controller
         $myId            = (int)sessPenggunaId();
         $judul           = trim((string)$this->input->post('judul', FALSE));
         $nama_proyek     = trim((string)$this->input->post('nama_proyek', FALSE));
+        $id_sasaran_mutu = trim((string)$this->input->post('id_sasaran_mutu', TRUE));
+        $nama_jobdesk    = trim((string)$this->input->post('nama_jobdesk', TRUE));
         $jenis           = trim((string)$this->input->post('jenis', TRUE)) ?: 'Task Harian';
         $prioritas       = trim((string)$this->input->post('prioritas', TRUE)) ?: 'Medium';
         $deskripsi       = trim((string)$this->input->post('deskripsi', FALSE));
@@ -488,6 +627,12 @@ class Task_proyek extends CI_Controller
 
         if (!is_array($penerima_list)) {
             $penerima_list = [$penerima_list];
+        }
+
+        // VALIDASI: Jika penerima tugas tepat 1 orang, Jobdesk Sasaran Mutu WAJIB dipilih!
+        if (count($penerima_list) === 1 && empty($id_sasaran_mutu)) {
+            ajaxReturnDie('error', 'Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan tersebut!', FALSE);
+            return;
         }
 
         $canAssignAll = $this->_canAssignAllTasks($myId);
@@ -547,6 +692,8 @@ class Task_proyek extends CI_Controller
                 'kode_task'       => $kode_task,
                 'judul'           => $judul,
                 'nama_proyek'     => $nama_proyek !== '' ? $nama_proyek : 'Umum',
+                'id_sasaran_mutu' => (count($penerima_list) === 1 && !empty($id_sasaran_mutu)) ? $id_sasaran_mutu : null,
+                'nama_jobdesk'    => (count($penerima_list) === 1 && !empty($nama_jobdesk)) ? $nama_jobdesk : null,
                 'jenis'           => $jenis,
                 'prioritas'       => $prioritas,
                 'deskripsi'       => $deskripsi,
