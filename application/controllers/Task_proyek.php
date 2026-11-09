@@ -783,6 +783,16 @@ class Task_proyek extends CI_Controller
             return;
         }
 
+        // Validasi: Cegah submit ulang jika status sudah Menunggu Penilaian atau sudah Selesai
+        if ((int)$task->status_task === 2) {
+            ajaxReturnDie('error', 'Hasil pekerjaan untuk task ini sudah terkirim sebelumnya dan saat ini sedang menunggu penilaian Atasan.', FALSE);
+            return;
+        }
+        if ((int)$task->status_task === 4) {
+            ajaxReturnDie('error', 'Task ini sudah selesai dan telah dinilai oleh Atasan.', FALSE);
+            return;
+        }
+
         // Tandai semua checklist selesai (ambil dari input terbaru jika ada, atau dari database)
         $checklist_items_raw = $this->input->post('checklist_items', FALSE);
         $checklist = [];
@@ -849,7 +859,17 @@ class Task_proyek extends CI_Controller
         } catch (\Throwable $e) {
         }
 
-        ajaxReturnDie('success', 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!', TRUE);
+        $responseData = [
+            'id_task'         => (int)$id_task,
+            'kode_task'       => $task->kode_task,
+            'judul'           => $task->judul,
+            'catatan_bawahan' => $catatan_bawahan,
+            'bukti_selesai'   => $bukti_selesai,
+            'progres'         => 100,
+            'status_task'     => 2
+        ];
+
+        ajaxReturnDie('success', 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!', $responseData);
     }
 
     /**

@@ -306,7 +306,7 @@ $namaBulanList = [
                 <div class="tp-kpi-card">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
-                        <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div style="font-size: 26px; font-weight: 800; color: #d97706;" id="kpi_need_review"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
                         <div class="small text-warning">Siap Diberi Rating Bintang ⭐</div>
                     </div>
                     <div class="tp-kpi-icon" style="background: #fef3c7; color: #d97706;">
@@ -427,7 +427,7 @@ $namaBulanList = [
                 <div class="tp-kpi-card">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
-                        <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
+                        <div style="font-size: 26px; font-weight: 800; color: #d97706;" id="kpi_need_review"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
                         <div class="small text-warning">Siap Diberi Rating Bintang ⭐</div>
                     </div>
                     <div class="tp-kpi-icon" style="background: #fef3c7; color: #d97706;">
@@ -503,9 +503,9 @@ $namaBulanList = [
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
                         <i class="fas fa-paper-plane text-success mr-1"></i> Penugasan ke Karyawan
                         <?php if ($kpi['need_review'] > 0): ?>
-                            <span class="badge badge-warning ml-1"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
+                            <span class="badge badge-warning ml-1" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
                         <?php else: ?>
-                            <span class="badge badge-secondary ml-1"><?= count($tugas_atasan) ?></span>
+                            <span class="badge badge-secondary ml-1" id="badge_need_review"><?= count($tugas_atasan) ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
@@ -544,7 +544,7 @@ $namaBulanList = [
                                 <?php $no = 1; foreach ($tugas_saya as $row):
                                     $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
                                 ?>
-                                    <tr>
+                                    <tr id="row_task_saya_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
                                         <td class="text-center"><?= $no++ ?></td>
                                         <td>
                                             <strong class="text-primary"><?= htmlspecialchars($row->kode_task) ?></strong><br>
@@ -694,7 +694,7 @@ $namaBulanList = [
                                 <?php $no = 1; foreach ($tugas_atasan as $row):
                                     $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
                                 ?>
-                                    <tr>
+                                    <tr id="row_task_atasan_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
                                         <td class="text-center"><?= $no++ ?></td>
                                         <td>
                                             <strong class="text-primary"><?= htmlspecialchars($row->kode_task) ?></strong><br>
@@ -1200,11 +1200,22 @@ $namaBulanList = [
                                 <input type="text" name="bukti_selesai" id="sub_bukti_selesai" class="form-control form-control-sm" placeholder="https://drive.google.com/...">
                             </div>
                             <div class="text-right">
-                                <button type="submit" class="btn btn-sm btn-success font-weight-bold">
+                                <button type="submit" id="btnSubmitSelesai" class="btn btn-sm btn-success font-weight-bold">
                                     <i class="fas fa-paper-plane mr-1"></i> Kirim Hasil Pekerjaan & Minta Rating ⭐
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- NOTIFIKASI VALIDASI SUDAH TERKIRIM (MENUNGGU PENILAIAN) -->
+                <div id="panelSudahDisubmitInfo" class="alert alert-success py-3 px-3 mb-3" style="display:none; border-left: 4px solid #10b981; background: #ecfdf5;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-hourglass-half fa-2x text-success mr-3"></i>
+                        <div>
+                            <h6 class="mb-1 font-weight-bold text-success"><i class="fas fa-check-circle mr-1"></i> Hasil Pekerjaan Sudah Terkirim!</h6>
+                            <div class="small text-muted">Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Penilaian / Rating Bintang ⭐ dari Atasan</strong>.</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1717,9 +1728,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (canEditChecklist) {
                     $('#panelBawahanProgres').show();
                     $('#panelBawahanSubmit').show();
+                    $('#panelSudahDisubmitInfo').hide();
                 } else {
                     $('#panelBawahanProgres').hide();
                     $('#panelBawahanSubmit').hide();
+                    if (isPenerima && stInt === 2) {
+                        $('#panelSudahDisubmitInfo').show();
+                    } else {
+                        $('#panelSudahDisubmitInfo').hide();
+                    }
                 }
 
                 // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya Menunggu Penilaian (2) serta BELUM pernah diberi bintang
@@ -1879,6 +1896,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Submit Selesai 100% (Bawahan -> Atasan)
     $('#formSubmitSelesai').on('submit', function(e) {
         e.preventDefault();
+
+        var idTask = $('#sub_id_task').val();
+        var catatan = $.trim($('#sub_catatan_bawahan').val());
+        if (!catatan) {
+            if (window.swal) {
+                swal('Perhatian', 'Harap isi ringkasan hasil pekerjaan / penyelesaian terlebih dahulu!', 'warning');
+            } else {
+                alert('Harap isi ringkasan hasil pekerjaan / penyelesaian terlebih dahulu!');
+            }
+            $('#sub_catatan_bawahan').focus();
+            return;
+        }
+
+        var $btn = $(this).find('button[type="submit"]');
+        var originalBtnHtml = $btn.html();
+
+        // Validasi: Cegah double click saat sedang proses kirim
+        if ($btn.prop('disabled')) {
+            return;
+        }
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengirim Laporan...');
+
         var formData = $(this).serializeArray();
         $('#dt_checklist_container .txt-subtask-item').each(function() {
             var v = $.trim($(this).val() || '');
@@ -1894,16 +1933,105 @@ document.addEventListener('DOMContentLoaded', function() {
             data: $.param(formData),
             dataType: 'json',
             success: function(res) {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+
                 if (res && res.status === 'success') {
+                    // 1. Tutup modal detail task
                     $('#modalDetailTask').modal('hide');
+
+                    // 2. Update langsung row di tabel Tugas Saya tanpa refresh Chrome
+                    if ($.fn.dataTable && $.fn.dataTable.isDataTable('#datatable_tugas_saya')) {
+                        var dtSaya = $('#datatable_tugas_saya').DataTable();
+                        var $trSaya = $('#datatable_tugas_saya').find('tr[data-id="' + idTask + '"], #row_task_saya_' + idTask);
+                        if ($trSaya.length) {
+                            // Kolom Progres (Index 5)
+                            $trSaya.find('td').eq(5).html(
+                                '<div class="progress progress-sm mb-1" style="height: 10px; border-radius: 8px;">' +
+                                '<div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>' +
+                                '</div>' +
+                                '<div class="text-center small font-weight-bold">100%</div>'
+                            );
+                            // Kolom Status (Index 6)
+                            $trSaya.find('td').eq(6).html(
+                                '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>'
+                            );
+                            // Kolom Aksi (Index 8) -> Hilangkan tombol submit selesai jika ada
+                            $trSaya.find('button[data-focus="submit"]').remove();
+
+                            // Re-index row DataTables tanpa mereset halaman / sorting
+                            dtSaya.row($trSaya).invalidate().draw(false);
+                        }
+                    }
+
+                    // 3. Update juga di tabel Penugasan ke Karyawan jika ada
+                    if ($.fn.dataTable && $.fn.dataTable.isDataTable('#datatable_tugas_atasan')) {
+                        var dtAtasan = $('#datatable_tugas_atasan').DataTable();
+                        var $trAtasan = $('#datatable_tugas_atasan').find('tr[data-id="' + idTask + '"], #row_task_atasan_' + idTask);
+                        if ($trAtasan.length) {
+                            // Kolom Progres (Index 6)
+                            $trAtasan.find('td').eq(6).html(
+                                '<div class="progress progress-sm mb-1" style="height: 10px; border-radius: 8px;">' +
+                                '<div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>' +
+                                '</div>' +
+                                '<div class="text-center small font-weight-bold">100%</div>'
+                            );
+                            // Kolom Status (Index 7)
+                            $trAtasan.find('td').eq(7).html(
+                                '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>'
+                            );
+                            // Kolom Rating (Index 8)
+                            $trAtasan.find('td').eq(8).html(
+                                '<span class="badge badge-warning"><i class="fas fa-star"></i> Siap Dinilai</span>'
+                            );
+                            // Kolom Aksi Atasan (Index 9)
+                            var btnReviewHtml = '<button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="' + idTask + '" data-focus="review">' +
+                                '<i class="fas fa-star"></i> Beri Rating ⭐' +
+                                '</button><br>';
+                            $trAtasan.find('td').eq(9).html(btnReviewHtml);
+
+                            dtAtasan.row($trAtasan).invalidate().draw(false);
+                        }
+                    }
+
+                    // 4. Update badge counter tab & KPI card jika ada
+                    var $badgeReview = $('#badge_need_review');
+                    if ($badgeReview.length) {
+                        var curReview = parseInt($badgeReview.text(), 10) || 0;
+                        $badgeReview.text((curReview + 1) + ' Perlu Rating ⭐').removeClass('badge-secondary').addClass('badge-warning');
+                    }
+                    var $kpiReview = $('#kpi_need_review');
+                    if ($kpiReview.length) {
+                        var curKpi = parseInt($kpiReview.text(), 10) || 0;
+                        $kpiReview.html((curKpi + 1) + ' <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small>');
+                    }
+
+                    // 5. Tampilkan SweetAlert sukses TANPA me-reload Chrome
                     if (window.swal) {
-                        swal('Terkirim!', res.msg, 'success').then(function() { window.location.reload(); });
+                        swal('Terkirim!', res.msg || 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!', 'success');
                     } else {
-                        alert(res.msg);
-                        window.location.reload();
+                        alert(res.msg || 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!');
                     }
                 } else {
-                    alert(res && res.msg ? res.msg : 'Gagal mengirim laporan selesai.');
+                    if (window.swal) {
+                        swal('Gagal', (res && res.msg ? res.msg : 'Gagal mengirim laporan selesai.'), 'error');
+                    } else {
+                        alert(res && res.msg ? res.msg : 'Gagal mengirim laporan selesai.');
+                    }
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+                var errTxt = 'Terjadi kesalahan jaringan atau server saat mengirim laporan.';
+                try {
+                    var jErr = JSON.parse(xhr.responseText);
+                    if (jErr && (jErr.msg || jErr.message)) {
+                        errTxt = jErr.msg || jErr.message;
+                    }
+                } catch(e) {}
+                if (window.swal) {
+                    swal('Error', errTxt, 'error');
+                } else {
+                    alert(errTxt);
                 }
             }
         });
