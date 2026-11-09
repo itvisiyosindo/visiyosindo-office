@@ -357,7 +357,11 @@
 						</a>
 					</li>
 
-					<!-- Menu Audit (Audit Kinerja & Audit Keuangan) -->
+					<!-- Menu Audit (Audit Kinerja & Audit Keuangan: Hanya untuk Atasan, HRD, Auditor, & Manajemen) -->
+					<?php
+					$is_auditor_or_head = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array((string)sessPenggunaId(), ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+					if ($is_auditor_or_head):
+					?>
 					<li class="nav-parent <?= in_array($page_name, ['audit/v_audit_kinerja', 'audit/v_audit_keuangan', 'v_audit_kinerja', 'v_audit_keuangan']) ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
 							<i class="fas fa-clipboard-check text-primary" aria-hidden="true"></i>
@@ -378,8 +382,9 @@
 							</li>
 						</ul>
 					</li>
+					<?php endif; ?>
 
-					<!-- Menu Sasaran Mutu -->
+					<!-- Menu Sasaran Mutu (Tampil untuk Seluruh Karyawan) -->
 					<li class="<?= in_array($page_name, ['sasaran_mutu/v_sasaran_mutu', 'v_sasaran_mutu']) ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('sasaran_mutu') ?>">
 							<i class="fas fa-bullseye text-warning" aria-hidden="true"></i>

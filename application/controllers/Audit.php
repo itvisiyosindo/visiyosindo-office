@@ -26,6 +26,14 @@ class Audit extends CI_Controller
     {
         grantAccessFor('all');
 
+        $user_id = (string)sessPenggunaId();
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+        if (!$isAllowed) {
+            $this->session->set_flashdata('error', 'Halaman Audit Kinerja hanya dapat diakses oleh Atasan, HRD, dan Auditor.');
+            redirect(base_url('sasaran_mutu'));
+            return;
+        }
+
         $year   = $this->input->get('tahun', TRUE);
         $divisi = $this->input->get('divisi', TRUE);
         $posisi = $this->input->get('posisi', TRUE);
@@ -84,6 +92,14 @@ class Audit extends CI_Controller
     public function keuangan()
     {
         grantAccessFor('all');
+
+        $user_id = (string)sessPenggunaId();
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || isAccountingUser() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+        if (!$isAllowed) {
+            $this->session->set_flashdata('error', 'Halaman Audit Keuangan hanya dapat diakses oleh Manajemen, Keuangan, dan Auditor.');
+            redirect(base_url('dashboard'));
+            return;
+        }
 
         $year   = $this->input->get('tahun', TRUE);
         $bulan  = $this->input->get('bulan', TRUE);
@@ -172,6 +188,13 @@ class Audit extends CI_Controller
     {
         grantAccessFor('all');
 
+        $user_id = (string)sessPenggunaId();
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+        if (!$isAllowed) {
+            echo json_encode(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses untuk melakukan sinkronisasi massal audit.']);
+            return;
+        }
+
         $year   = (int)($this->input->post('tahun') ?: 2026);
         $divisi = $this->input->post('divisi', TRUE) ?: 'all';
         $posisi = $this->input->post('posisi', TRUE) ?: 'all';
@@ -204,6 +227,14 @@ class Audit extends CI_Controller
     public function export_excel()
     {
         grantAccessFor('all');
+
+        $user_id = (string)sessPenggunaId();
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+        if (!$isAllowed) {
+            $this->session->set_flashdata('error', 'Anda tidak memiliki hak akses untuk mengunduh rekap audit kinerja.');
+            redirect(base_url('sasaran_mutu'));
+            return;
+        }
 
         $year   = (int)($this->input->get('tahun') ?: 2026);
         $divisi = $this->input->get('divisi') ?: 'all';

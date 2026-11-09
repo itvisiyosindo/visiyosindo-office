@@ -181,6 +181,29 @@
 			</div>
 		</div>
 
+		<!-- Banner Panduan Khusus Karyawan -->
+		<?php if (empty($is_management) && !empty($user_jabatan)): ?>
+			<div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #0284c7; background-color: #f0f9ff; color: #0369a1;">
+				<div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 10px;">
+					<div>
+						<i class="fab fa-google-drive mr-2 fa-lg text-primary"></i>
+						<strong>Halo, <?= htmlspecialchars($current_user_name) ?>!</strong> Halaman ini secara otomatis menampilkan daftar Sasaran Mutu & Jobdesk untuk posisi Anda: <strong><?= htmlspecialchars($user_jabatan) ?></strong>.
+						<div class="small mt-1 text-secondary">
+							Silakan klik tombol <span class="badge badge-warning text-dark font-weight-bold"><i class="fab fa-google-drive mr-1"></i>+ Input Link Drive</span> pada masing-masing jobdesk untuk melampirkan link Google Drive bukti pengerjaan Anda.
+						</div>
+					</div>
+					<div>
+						<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year . '&posisi=all&divisi=all') ?>" class="btn btn-xs btn-outline-info font-weight-bold">
+							<i class="fas fa-list mr-1"></i> Lihat Semua Posisi
+						</a>
+					</div>
+				</div>
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: #0369a1;">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+		<?php endif; ?>
+
 		<!-- Notification Banner Tahun & Petunjuk Sinkronisasi Laporan & Task -->
 		<?php if ($selected_year == 2026): ?>
 			<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #059669; background-color: #ecfdf5; color: #065f46;">
@@ -510,11 +533,18 @@
 										</td>
 										<td class="text-center" id="link_dokumen-<?= htmlspecialchars($row['id']) ?>">
 											<?php if (!empty($row['link_dokumen'])): ?>
-												<a href="<?= htmlspecialchars($row['link_dokumen']) ?>" target="_blank" class="doc-link-pill" title="<?= htmlspecialchars($row['link_dokumen']) ?>">
-													<i class="fas fa-external-link-alt"></i> Buka Bukti
-												</a>
+												<div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
+													<a href="<?= htmlspecialchars($row['link_dokumen']) ?>" target="_blank" class="btn btn-xs btn-success font-weight-bold shadow-sm" title="Buka Link Google Drive: <?= htmlspecialchars($row['link_dokumen']) ?>">
+														<i class="fab fa-google-drive mr-1"></i> Buka Bukti
+													</a>
+													<button type="button" class="btn btn-xs btn-light border text-muted" onclick='openQuickDriveModal(<?= json_encode($row) ?>)' title="Ubah Link Drive">
+														<i class="fas fa-pen"></i>
+													</button>
+												</div>
 											<?php else: ?>
-												<span class="badge badge-light text-muted border font-weight-normal" style="font-size: 10px;">Belum ada link</span>
+												<button type="button" class="btn btn-xs btn-outline-warning font-weight-bold shadow-sm" onclick='openQuickDriveModal(<?= json_encode($row) ?>)' title="Klik untuk melampirkan link Google Drive bukti pekerjaan">
+													<i class="fab fa-google-drive mr-1"></i> + Input Link Drive
+												</button>
 											<?php endif; ?>
 										</td>
 										<td class="text-center">
@@ -825,7 +855,162 @@
 	</div>
 </div>
 
+<!-- Modal Lampirkan Link Google Drive Bukti Pekerjaan (Cepat & Praktis untuk Karyawan) -->
+<div class="modal fade" id="modalQuickDrive" tabindex="-1" role="dialog" aria-labelledby="modalQuickDriveLabel" aria-hidden="true">
+	<div class="modal-dialog modal-md" role="document">
+		<div class="modal-content" style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+			<div class="modal-header text-white" style="background: linear-gradient(135deg, #0f9d58 0%, #0b8043 100%);">
+				<h5 class="modal-title font-weight-bold" id="modalQuickDriveLabel">
+					<i class="fab fa-google-drive mr-2"></i> Lampirkan Link Bukti Pekerjaan (Drive)
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formQuickDrive" onsubmit="submitQuickDrive(event);">
+				<input type="hidden" name="item_id" id="quickDriveItemId">
+				<input type="hidden" name="year" id="quickDriveYear" value="<?= $selected_year ?>">
+				
+				<div class="modal-body p-4 bg-light">
+					<div class="card p-3 mb-3 border-0 shadow-sm" style="background: #ffffff; border-radius: 8px;">
+						<div class="d-flex align-items-center mb-1">
+							<span class="badge badge-primary px-2 py-1 mr-2" id="quickDriveDivisi"></span>
+							<strong class="text-dark small" id="quickDrivePosisi"></strong>
+						</div>
+						<div class="font-weight-bold text-dark" id="quickDriveJobdesk" style="font-size: 13px; line-height: 1.4;"></div>
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="font-weight-bold text-dark mb-1">
+							<i class="fab fa-google-drive text-success mr-1"></i> URL / Link Google Drive Bukti Pekerjaan <span class="text-danger">*</span>
+						</label>
+						<input type="url" name="link_dokumen" id="quickDriveInputLink" class="form-control" required placeholder="https://drive.google.com/drive/folders/... atau link file" style="font-size: 13px; border: 1.5px solid #86efac; border-radius: 6px;">
+						<div class="small text-muted mt-1">
+							<i class="fas fa-info-circle text-info"></i> Bisa berupa link Folder Drive atau link file (PDF, Spreadsheet, Foto Dokumentasi, dll).
+						</div>
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="font-weight-bold text-dark mb-1">
+							<i class="fas fa-sticky-note text-warning mr-1"></i> Keterangan / Catatan Singkat Bukti (Opsional)
+						</label>
+						<textarea name="keterangan" id="quickDriveInputKet" class="form-control" rows="2" placeholder="Contoh: Bukti foto dan rekap pekerjaan minggu ke-1 s.d ke-4 ada di folder tersebut..." style="font-size: 13px; border-radius: 6px;"></textarea>
+					</div>
+
+					<div class="alert alert-warning py-2 px-3 mb-0 small" style="border-radius: 6px; line-height: 1.4;">
+						<i class="fas fa-exclamation-triangle mr-1"></i> <strong>Penting:</strong> Pastikan setelan berbagi di Google Drive telah diatur ke <u>"Anyone with the link can view"</u> (Siapa saja yang memiliki link dapat melihat) agar Atasan dan HRD dapat memeriksa bukti Anda.
+					</div>
+				</div>
+
+				<div class="modal-footer bg-white border-top">
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+						<i class="fas fa-times mr-1"></i> Batal
+					</button>
+					<button type="submit" id="btnSubmitQuickDrive" class="btn btn-success btn-sm font-weight-bold px-4">
+						<i class="fas fa-check mr-1"></i> Simpan Link Bukti
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
+	let currentQuickDriveRow = null;
+
+	function openQuickDriveModal(row) {
+		currentQuickDriveRow = row;
+		document.getElementById('quickDriveItemId').value = row.id;
+		document.getElementById('quickDriveYear').value = row.year || '<?= $selected_year ?>';
+		document.getElementById('quickDriveDivisi').textContent = row.divisi || '';
+		document.getElementById('quickDrivePosisi').textContent = row.posisi || '';
+		document.getElementById('quickDriveJobdesk').textContent = row.jobdesk || '';
+
+		document.getElementById('quickDriveInputLink').value = row.link_dokumen || '';
+		document.getElementById('quickDriveInputKet').value = row.keterangan || '';
+
+		$('#modalQuickDrive').modal('show');
+		setTimeout(() => {
+			document.getElementById('quickDriveInputLink').focus();
+		}, 300);
+	}
+
+	function submitQuickDrive(e) {
+		e.preventDefault();
+		const btn = document.getElementById('btnSubmitQuickDrive');
+		btn.disabled = true;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...';
+
+		const form = document.getElementById('formQuickDrive');
+		const formData = new FormData(form);
+
+		fetch('<?= base_url('sasaran_mutu/save_drive_link') ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(res => res.json())
+		.then(res => {
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fas fa-check mr-1"></i> Simpan Link Bukti';
+
+			if (res.status === 'success') {
+				const itemId = formData.get('item_id');
+				const linkVal = formData.get('link_dokumen');
+				const ketVal = formData.get('keterangan');
+
+				// Update tabel cell link_dokumen secara real-time di DOM
+				const cellLink = document.getElementById('link_dokumen-' + itemId);
+				if (cellLink) {
+					if (linkVal) {
+						cellLink.innerHTML = `
+							<div class="d-flex align-items-center justify-content-center" style="gap: 4px;">
+								<a href="${escapeHtml(linkVal)}" target="_blank" class="btn btn-xs btn-success font-weight-bold shadow-sm" title="Buka Link Google Drive: ${escapeHtml(linkVal)}">
+									<i class="fab fa-google-drive mr-1"></i> Buka Bukti
+								</a>
+								<button type="button" class="btn btn-xs btn-light border text-muted" onclick='openQuickDriveModal(${JSON.stringify(Object.assign({}, currentQuickDriveRow, {link_dokumen: linkVal, keterangan: ketVal}))})' title="Ubah Link Drive">
+									<i class="fas fa-pen"></i>
+								</button>
+							</div>
+						`;
+					} else {
+						cellLink.innerHTML = `
+							<button type="button" class="btn btn-xs btn-outline-warning font-weight-bold shadow-sm" onclick='openQuickDriveModal(${JSON.stringify(Object.assign({}, currentQuickDriveRow, {link_dokumen: "", keterangan: ketVal}))})' title="Klik untuk melampirkan link Google Drive bukti pekerjaan">
+								<i class="fab fa-google-drive mr-1"></i> + Input Link Drive
+							</button>
+						`;
+					}
+				}
+
+				// Update keterangan jika ada
+				const cellKet = document.getElementById('keterangan-' + itemId);
+				if (cellKet && ketVal) {
+					cellKet.innerHTML = `<span class="badge badge-success px-2 py-1 font-weight-bold" style="font-size: 11px;">${escapeHtml(ketVal)}</span>`;
+				}
+
+				$('#modalQuickDrive').modal('hide');
+
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'success',
+						title: 'Tersimpan!',
+						text: res.message,
+						timer: 1800,
+						showConfirmButton: false
+					});
+				} else {
+					alert(res.message);
+				}
+			} else {
+				alert(res.message || 'Gagal menyimpan link drive.');
+			}
+		})
+		.catch(err => {
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fas fa-check mr-1"></i> Simpan Link Bukti';
+			console.error(err);
+			alert('Terjadi kesalahan koneksi.');
+		});
+	}
 	const divTreeData = <?= json_encode($div_tree) ?>;
 	let currentSyncData = null;
 

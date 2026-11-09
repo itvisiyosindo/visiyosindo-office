@@ -45,10 +45,28 @@ class Sasaran_mutu extends CI_Controller
             $this->db->db_debug = FALSE;
             $u = @$this->db->select('jabatan')->where('pengguna_id', $user_id)->get('pengguna')->row();
             if ($u && !empty($u->jabatan)) {
-                $user_jabatan = $u->jabatan;
+                $user_jabatan = trim($u->jabatan);
             }
             $this->db->db_debug = $orig_db_debug;
         }
+
+        // Cek apakah user adalah Manajemen / HRD / Auditor
+        $isManagementOrHrd = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array((string)$user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
+
+        // AUTO-FILTER: Jika staff biasa dan belum memilih filter secara manual, arahkan langsung ke jabatannya sendiri
+        if (!$isManagementOrHrd && empty($posisi) && empty($divisi) && !empty($user_jabatan) && empty($search)) {
+            $posisi = $user_jabatan;
+        }
+
+        if (empty($divisi)) {
+            $divisi = 'all';
+        }
+        if (empty($posisi)) {
+            $posisi = 'all';
+        }
+
+        $smData = $this->md_audit_system->getSasaranMutuData($year, $divisi, $posisi, $search);
+        $divTree = $this->md_audit_system->getDivisiAndPositions();
 
         $page_data['switch']            = 'kepegawaian';
         $page_data['page_name']         = 'sasaran_mutu/v_sasaran_mutu';
@@ -65,6 +83,7 @@ class Sasaran_mutu extends CI_Controller
         $page_data['current_user_name'] = sessNama();
         $page_data['current_user_id']   = sessPenggunaId();
         $page_data['user_jabatan']      = $user_jabatan;
+        $page_data['is_management']     = $isManagementOrHrd;
 
         $this->load->view('index', $page_data);
     }
@@ -126,6 +145,65 @@ class Sasaran_mutu extends CI_Controller
             echo json_encode(['status' => 'success', 'message' => 'Data sasaran mutu berhasil disimpan dan tersinkronisasi']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data']);
+        }
+    }
+
+    /**
+     * AJAX Cepat Simpan Link Google Drive Bukti Pekerjaan oleh Karyawan
+     */
+    public function save_drive_link()
+    {
+        grantAccessFor('all');
+
+        $year    = (int)($this->input->post('year') ?: 2026);
+        $itemId  = $this->input->post('item_id', TRUE);
+        $link    = trim((string)$this->input->post('link_dokumen', TRUE));
+        $catatan = trim((string)$this->input->post('keterangan', TRUE));
+
+        if (empty($itemId)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID item sasaran mutu tidak valid']);
+            return;
+        }
+
+        if (empty($link)) {
+            echo json_encode(['status' => 'error', 'message' => 'Link Google Drive bukti pekerjaan tidak boleh kosong']);
+            return;
+        }
+
+        $master = $this->md_audit_system->getMasterTemplate();
+        $targetItem = null;
+        foreach ($master as $m) {
+            if ($m['id'] === $itemId) {
+                $targetItem = $m;
+                break;
+            }
+        }
+
+        $overrides = $this->md_audit_system->loadSasaranMutuOverrides($year);
+        $existing = isset($overrides[$itemId]) ? $overrides[$itemId] : $targetItem;
+
+        $payload = [
+            'divisi'                 => isset($existing['divisi']) ? $existing['divisi'] : '',
+            'posisi'                 => isset($existing['posisi']) ? $existing['posisi'] : '',
+            'jobdesk'                => isset($existing['jobdesk']) ? $existing['jobdesk'] : '',
+            'detail_proyek'          => isset($existing['detail_proyek']) ? $existing['detail_proyek'] : '',
+            'implementasi'           => isset($existing['implementasi']) ? $existing['implementasi'] : '',
+            'sasaran_mutu'           => isset($existing['sasaran_mutu']) ? $existing['sasaran_mutu'] : '',
+            'metode_pengukuran'      => isset($existing['metode_pengukuran']) ? $existing['metode_pengukuran'] : '',
+            'indikator_keberhasilan' => isset($existing['indikator_keberhasilan']) ? $existing['indikator_keberhasilan'] : '',
+            'keterangan'             => !empty($catatan) ? $catatan : (isset($existing['keterangan']) ? $existing['keterangan'] : 'Bukti Tersedia di Drive'),
+            'link_dokumen'           => $link
+        ];
+
+        $ok = $this->md_audit_system->saveSasaranMutuItem($year, $itemId, $payload);
+        if ($ok) {
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Link Google Drive bukti pekerjaan berhasil disimpan dan disinkronkan ke Audit Kinerja!',
+                'link'    => $link
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan link drive']);
         }
     }
 
