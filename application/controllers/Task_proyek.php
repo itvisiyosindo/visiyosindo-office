@@ -297,7 +297,7 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (60% Task Proyek : 40% Laporan Mingguan)
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (50% Task Proyek : 50% Laporan Mingguan)
         $wherePeriodeTask = "";
         if (!empty($filterBulan)) {
             $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
@@ -426,9 +426,9 @@ class Task_proyek extends CI_Controller
             $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
 
             if ($hasTask && $hasLap) {
-                // Bobot: 60% Task Proyek + 40% Laporan Mingguan (Evaluasi Lengkap / Prioritas Utama Juara)
-                $skorAkhir = round(($skorTask * 0.60) + ($skorLap * 0.40), 1);
-                $komposisi = '60% Task + 40% Laporan';
+                // Bobot: 50% Task Proyek + 50% Laporan Mingguan (Evaluasi Lengkap / Prioritas Utama Juara)
+                $skorAkhir = round(($skorTask * 0.50) + ($skorLap * 0.50), 1);
+                $komposisi = '50% Task + 50% Laporan';
                 $statusNilai = 'lengkap';
                 $isEligiblePodium = true;
             } elseif ($hasTask && !$hasLap) {
