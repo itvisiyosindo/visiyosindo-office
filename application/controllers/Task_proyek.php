@@ -113,6 +113,18 @@ class Task_proyek extends CI_Controller
         return false;
     }
 
+    /**
+     * Mapping penggabungan akun ganda / akun jabatan ke akun karyawan definitif.
+     * Format: [ ID_AKUN_DUPLIKAT => ID_AKUN_UTAMA ]
+     * Contoh: 107 (Head of Accounting and Tax) digabung ke 106 (Dirangga Madali)
+     */
+    private function _getAccountMergeMap()
+    {
+        return [
+            107 => 106, // Head of Accounting and Tax -> Dirangga Madali
+        ];
+    }
+
     public function index()
     {
         grantAccessFor('all');
@@ -145,12 +157,41 @@ class Task_proyek extends CI_Controller
         $canAssignAll = $this->_canAssignAllTasks($myId);
         $canViewAll   = $this->_canViewAllTasks($myId);
 
+        // Ambil mapping penggabungan akun ganda
+        $accountMergeMap  = $this->_getAccountMergeMap();
+        $duplicateIds     = array_keys($accountMergeMap);
+        $excludeMergedSql = !empty($duplicateIds) ? " AND p.pengguna_id NOT IN (" . implode(',', array_map('intval', $duplicateIds)) . ")" : "";
+
+        // Tentukan ID penerima untuk Tugas Saya (termasuk akun ganda/alias jika ada)
+        $myReceiverIds = [$myId];
+        if (isset($accountMergeMap[$myId])) {
+            $myReceiverIds[] = (int)$accountMergeMap[$myId];
+        }
+        foreach ($accountMergeMap as $dupId => $targetId) {
+            if ((int)$targetId === (int)$myId) {
+                $myReceiverIds[] = (int)$dupId;
+            }
+        }
+        $myReceiverIds = array_values(array_unique($myReceiverIds));
+
+        // Tentukan ID pemberi untuk Tugas yang Saya Berikan
+        $myGiverIds = [$myId];
+        if (isset($accountMergeMap[$myId])) {
+            $myGiverIds[] = (int)$accountMergeMap[$myId];
+        }
+        foreach ($accountMergeMap as $dupId => $targetId) {
+            if ((int)$targetId === (int)$myId) {
+                $myGiverIds[] = (int)$dupId;
+            }
+        }
+        $myGiverIds = array_values(array_unique($myGiverIds));
+
         // 1. Daftar semua karyawan aktif (untuk pilihan Atasan Saya di modal & opsi Admin)
         $list_semua_karyawan = $this->db->query("
             SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, d.nama AS nama_divisi
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
-            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != {$myId}
+            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != {$myId} {$excludeMergedSql}
             ORDER BY p.nama ASC
         ")->result();
 
@@ -159,7 +200,7 @@ class Task_proyek extends CI_Controller
             SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, p.hirarki, p.id_atasan, d.nama AS nama_divisi
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
-            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != 1 AND p.id_atasan = {$myId}
+            WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != 1 AND p.id_atasan = {$myId} {$excludeMergedSql}
             ORDER BY p.nama ASC
         ")->result();
 
@@ -168,8 +209,14 @@ class Task_proyek extends CI_Controller
             ->from('task_proyek t')
             ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
             ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
-            ->where('t.is_deleted', 0)
-            ->where('t.id_penerima', $myId);
+            ->where('t.is_deleted', 0);
+
+        if (count($myReceiverIds) === 1) {
+            $this->db->where('t.id_penerima', $myReceiverIds[0]);
+        } else {
+            $this->db->where_in('t.id_penerima', $myReceiverIds);
+        }
+
         if (!empty($filterBulan)) {
             $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
         }
@@ -191,7 +238,11 @@ class Task_proyek extends CI_Controller
             ->where('t.is_deleted', 0);
 
         if (!$canViewAll || $viewMode === 'mine') {
-            $this->db->where('t.id_pemberi', $myId);
+            if (count($myGiverIds) === 1) {
+                $this->db->where('t.id_pemberi', $myGiverIds[0]);
+            } else {
+                $this->db->where_in('t.id_pemberi', $myGiverIds);
+            }
         }
         if (!empty($filterBulan)) {
             $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
@@ -272,6 +323,27 @@ class Task_proyek extends CI_Controller
             $wherePeriodeLap = " AND MONTH(tanggal) = " . (int)$filterBulan;
         }
 
+        // Generator CASE mapping ID untuk akun ganda / akun jabatan yang dimerge
+        $caseTsk = "t.id_penerima";
+        $caseNp  = "id_pengguna";
+        $caseLap = "id_pengaju";
+
+        if (!empty($accountMergeMap)) {
+            $whensTsk = "";
+            $whensNp  = "";
+            $whensLap = "";
+            foreach ($accountMergeMap as $dupId => $targetId) {
+                $dupId    = (int)$dupId;
+                $targetId = (int)$targetId;
+                $whensTsk .= "WHEN t.id_penerima = {$dupId} THEN {$targetId} ";
+                $whensNp  .= "WHEN id_pengguna = {$dupId} THEN {$targetId} ";
+                $whensLap .= "WHEN id_pengaju = {$dupId} THEN {$targetId} ";
+            }
+            $caseTsk = "(CASE {$whensTsk} ELSE t.id_penerima END)";
+            $caseNp  = "(CASE {$whensNp} ELSE id_pengguna END)";
+            $caseLap = "(CASE {$whensLap} ELSE id_pengaju END)";
+        }
+
         $raw_leaderboard = $this->db->query("
             SELECT 
                 p.pengguna_id,
@@ -290,7 +362,7 @@ class Task_proyek extends CI_Controller
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
             LEFT JOIN (
                 SELECT 
-                    t.id_penerima,
+                    {$caseTsk} AS id_penerima,
                     COUNT(t.id_task) AS total_task,
                     SUM(CASE WHEN t.status_task = 4 THEN 1 ELSE 0 END) AS task_selesai,
                     SUM(CASE WHEN t.status_task < 4 THEN 1 ELSE 0 END) AS task_aktif,
@@ -299,11 +371,11 @@ class Task_proyek extends CI_Controller
                     SUM(CASE WHEN t.status_task = 4 AND t.rating_bintang = 5 AND (t.tgl_deadline IS NULL OR DATE(COALESCE(t.tgl_submit, t.tgl_dinilai)) <= t.tgl_deadline) THEN 1 ELSE 0 END) AS bintang_5
                 FROM task_proyek t
                 WHERE t.is_deleted = 0 {$wherePeriodeTask}
-                GROUP BY t.id_penerima
+                GROUP BY {$caseTsk}
             ) tsk ON tsk.id_penerima = p.pengguna_id
             LEFT JOIN (
                 SELECT 
-                    id_pengguna,
+                    {$caseNp} AS id_pengguna,
                     COUNT(*) AS total_poin_laporan,
                     ROUND(AVG(
                         CASE 
@@ -319,11 +391,11 @@ class Task_proyek extends CI_Controller
                     ), 1) AS avg_nilai_point
                 FROM nilai_point
                 WHERE 1=1 {$wherePeriodeNp}
-                GROUP BY id_pengguna
+                GROUP BY {$caseNp}
             ) np ON np.id_pengguna = p.pengguna_id
             LEFT JOIN (
                 SELECT 
-                    id_pengaju,
+                    {$caseLap} AS id_pengaju,
                     COUNT(*) AS total_poin_lap,
                     ROUND(AVG(
                         CASE 
@@ -338,9 +410,9 @@ class Task_proyek extends CI_Controller
                     ), 1) AS avg_nilai_lap
                 FROM laporan
                 WHERE status != 3 {$wherePeriodeLap}
-                GROUP BY id_pengaju
+                GROUP BY {$caseLap}
             ) lap ON lap.id_pengaju = p.pengguna_id
-            WHERE p.status = 1 AND (tsk.total_task > 0 OR np.avg_nilai_point IS NOT NULL OR lap.avg_nilai_lap IS NOT NULL)
+            WHERE p.status = 1 {$excludeMergedSql} AND (tsk.total_task > 0 OR np.avg_nilai_point IS NOT NULL OR lap.avg_nilai_lap IS NOT NULL)
         ")->result();
 
         $leaderboard = [];
@@ -411,7 +483,7 @@ class Task_proyek extends CI_Controller
             $lb->komposisi      = $komposisi;
             $lb->status_nilai   = $statusNilai;
 
-            if ((int)$lb->pengguna_id === (int)$myId) {
+            if (in_array((int)$lb->pengguna_id, $myReceiverIds, true)) {
                 $myCombinedKpi = $lb;
             }
 
@@ -442,6 +514,7 @@ class Task_proyek extends CI_Controller
         $page_data['page_desc']           = 'Penugasan Atasan ke Karyawan, Monitoring Progres & Penilaian Rating Bintang 5';
         $page_data['me']                  = $me;
         $page_data['myId']                = $myId;
+        $page_data['myReceiverIds']       = $myReceiverIds;
         $page_data['canViewAll']          = $canViewAll;
         $page_data['canAssignAll']        = $canAssignAll;
         $page_data['isAdmin']             = ($canAssignAll || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
@@ -706,6 +779,19 @@ class Task_proyek extends CI_Controller
         if (!is_array($penerima_list)) {
             $penerima_list = [$penerima_list];
         }
+
+        // Normalisasi akun ganda: arahkan ke akun utama dan hilangkan duplikasi
+        $accountMergeMap  = $this->_getAccountMergeMap();
+        $cleaned_penerima = [];
+        foreach ($penerima_list as $id_raw) {
+            $id_int = (int)$id_raw;
+            if ($id_int <= 0) continue;
+            if (isset($accountMergeMap[$id_int])) {
+                $id_int = (int)$accountMergeMap[$id_int];
+            }
+            $cleaned_penerima[] = $id_int;
+        }
+        $penerima_list = array_values(array_unique($cleaned_penerima));
 
         // VALIDASI: Jika penerima tugas tepat 1 orang, Jobdesk Sasaran Mutu WAJIB dipilih!
         if (count($penerima_list) === 1 && empty($id_sasaran_mutu)) {

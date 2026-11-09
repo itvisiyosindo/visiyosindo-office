@@ -863,7 +863,7 @@ $namaBulanList = [
                             <tbody>
                                 <?php $rank = 1; foreach ($leaderboard as $lb):
                                     $selesai = (int)$lb->task_selesai;
-                                    $isMe    = ((int)$lb->pengguna_id === (int)$myId);
+                                    $isMe    = (!empty($myReceiverIds) && is_array($myReceiverIds)) ? in_array((int)$lb->pengguna_id, $myReceiverIds, true) : ((int)$lb->pengguna_id === (int)$myId);
                                 ?>
                                     <tr <?= $isMe ? 'style="background-color: #f0f9ff;"' : '' ?>>
                                         <td class="text-center font-weight-bold align-middle">
