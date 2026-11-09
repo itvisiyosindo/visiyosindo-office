@@ -112,91 +112,94 @@
         padding: 12px 18px;
     }
 
-    /* ==========================================================
-       Select2 Jobdesk Sasaran Mutu (Anti-Kepotong & Multiline Wrap)
-       ========================================================== */
-    .select2-dropdown-jobdesk {
-        z-index: 100050 !important;
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
-        border: 1.5px solid #10b981 !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
-    }
-    .select2-dropdown-jobdesk .select2-search {
-        padding: 8px !important;
-        background: #f8fafc !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-    }
-    .select2-dropdown-jobdesk .select2-search input {
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 6px !important;
-        padding: 7px 10px !important;
-        font-size: 13px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    .select2-dropdown-jobdesk .select2-results__options {
-        max-height: 350px !important;
-        padding: 4px 0 !important;
-    }
-    .select2-dropdown-jobdesk .select2-results__group {
-        background: #ecfdf5 !important;
-        color: #065f46 !important;
-        font-weight: 700 !important;
-        font-size: 12px !important;
-        padding: 8px 14px !important;
-        border-top: 1px solid #d1fae5 !important;
-        border-bottom: 1px solid #d1fae5 !important;
-        letter-spacing: 0.3px !important;
-        text-align: left !important;
-    }
+    /* =========================================================================
+       SELECT2 & DROPDOWN JOBDESK: ANTI-TERPOTONG (MULTI-LINE WRAP DI SEMUA TEMA)
+       ========================================================================= */
+    .select2-container--bootstrap .select2-results__option,
+    .select2-container--default .select2-results__option,
+    .select2-dropdown .select2-results__option,
+    .select2-results__option,
     .select2-dropdown-jobdesk .select2-results__option {
         white-space: normal !important;
         word-break: break-word !important;
-        font-size: 13px !important;
+        overflow-wrap: break-word !important;
         line-height: 1.5 !important;
+        font-size: 13px !important;
         padding: 9px 14px !important;
+        text-align: left !important;
+        text-overflow: clip !important;
         border-bottom: 1px solid #f1f5f9 !important;
-        color: #1e293b !important;
+    }
+
+    .select2-container--bootstrap .select2-results__group,
+    .select2-container--default .select2-results__group,
+    .select2-results__group,
+    .select2-dropdown-jobdesk .select2-results__group {
+        background: #f0fdf4 !important;
+        color: #166534 !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        padding: 8px 14px !important;
+        border-top: 1px solid #bbf7d0 !important;
+        border-bottom: 1px solid #bbf7d0 !important;
+        white-space: normal !important;
         text-align: left !important;
     }
+
+    .select2-container--bootstrap .select2-results__option--highlighted[aria-selected],
+    .select2-container--default .select2-results__option--highlighted[aria-selected],
     .select2-dropdown-jobdesk .select2-results__option--highlighted {
         background-color: #059669 !important;
         color: #ffffff !important;
     }
+
+    #container_jobdesk_karyawan .select2-container,
+    #container_jobdesk_karyawan .select2-container--bootstrap,
+    #container_jobdesk_karyawan .select2-container--default {
+        width: 100% !important;
+    }
+
+    #container_jobdesk_karyawan .select2-selection--single,
+    #container_jobdesk_karyawan .select2-container--bootstrap .select2-selection--single,
     #container_jobdesk_karyawan .select2-container--default .select2-selection--single {
         height: auto !important;
         min-height: 42px !important;
+        white-space: normal !important;
         padding: 6px 12px !important;
         border: 1.5px solid #86efac !important;
         border-radius: 6px !important;
         background-color: #ffffff !important;
-        display: flex !important;
-        align-items: center !important;
     }
-    #container_jobdesk_karyawan .select2-container--default.select2-container--open .select2-selection--single,
-    #container_jobdesk_karyawan .select2-container--default.select2-container--focus .select2-selection--single {
-        border-color: #10b981 !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
-    }
+
+    #container_jobdesk_karyawan .select2-selection__rendered,
+    #container_jobdesk_karyawan .select2-container--bootstrap .select2-selection--single .select2-selection__rendered,
     #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__rendered {
         white-space: normal !important;
         word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        text-overflow: clip !important;
         line-height: 1.45 !important;
         color: #1e293b !important;
         font-size: 13px !important;
-        padding-left: 0 !important;
         padding-right: 25px !important;
-        margin: 0 !important;
+        padding-left: 0 !important;
+        height: auto !important;
         text-align: left !important;
     }
-    #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__arrow {
+
+    #container_jobdesk_karyawan .select2-selection__arrow,
+    #container_jobdesk_karyawan .select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
         top: 50% !important;
         transform: translateY(-50%) !important;
         right: 10px !important;
     }
-    #container_jobdesk_karyawan .select2-container--default .select2-selection--single .select2-selection__placeholder {
-        color: #64748b !important;
+
+    .select2-container--bootstrap .select2-dropdown,
+    .select2-container--default .select2-dropdown,
+    .select2-dropdown {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        z-index: 100050 !important;
     }
 </style>
 
@@ -1103,9 +1106,11 @@ $namaBulanList = [
                             <i class="fas fa-spinner fa-spin text-success mr-1"></i> Memuat daftar jobdesk resmi karyawan...
                         </div>
 
-                        <div id="jobdesk_detail_preview" class="mt-2 small text-dark p-2 bg-white rounded border border-success" style="display: none;">
-                            <div class="font-weight-bold text-success"><i class="fas fa-info-circle mr-1"></i> Detail Proyek & Sasaran Mutu:</div>
-                            <div id="text_jobdesk_detail" class="mt-1" style="white-space: pre-line; line-height: 1.4;">-</div>
+                        <div id="jobdesk_detail_preview" class="mt-2 small text-dark p-3 bg-white rounded border border-success" style="display: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="font-weight-bold text-success mb-1" style="font-size: 13px;">
+                                <i class="fas fa-check-circle mr-1"></i> <span id="text_jobdesk_title">-</span>
+                            </div>
+                            <div id="text_jobdesk_detail" class="mt-1" style="white-space: pre-line; line-height: 1.45; color: #334155; font-size: 12px;">-</div>
                         </div>
                     </div>
 
@@ -1567,11 +1572,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#select_jobdesk_karyawan').select2('destroy');
                 }
                 $('#select_jobdesk_karyawan').select2({
+                    theme: 'bootstrap',
                     dropdownParent: $('#modalBuatTask'),
                     placeholder: '-- Pilih Jobdesk Sasaran Mutu Terkait (Wajib) --',
                     allowClear: true,
                     width: '100%',
-                    dropdownCssClass: 'select2-dropdown-jobdesk'
+                    templateResult: function(data) {
+                        if (!data.id) return data.text;
+                        var $res = $('<div style="white-space: normal; word-break: break-word; line-height: 1.5; padding: 2px 0; text-align: left;"></div>');
+                        $res.text(data.text);
+                        return $res;
+                    },
+                    templateSelection: function(data) {
+                        if (!data.id) return data.text;
+                        var $res = $('<span style="white-space: normal; word-break: break-word; line-height: 1.4; text-align: left; display: inline-block;"></span>');
+                        $res.text(data.text);
+                        return $res;
+                    }
                 });
             } catch (e) {
                 console.warn('Select2 init error:', e);
@@ -1664,12 +1681,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         $('#input_nama_jobdesk').val(namaJob);
 
-        if (detail || sasaran) {
-            var text = '';
-            if (detail) text += '• Detail: ' + detail;
-            if (sasaran) text += (text ? '\n' : '') + '• Sasaran: ' + sasaran;
-            $('#text_jobdesk_detail').text(text);
-            $('#jobdesk_detail_preview').show();
+        if (namaJob) {
+            $('#text_jobdesk_title').text(namaJob);
+            var detailText = '';
+            if (detail) detailText += '• Detail Proyek: ' + detail;
+            if (sasaran) detailText += (detailText ? '\n' : '') + '• Sasaran Mutu: ' + sasaran;
+            $('#text_jobdesk_detail').text(detailText || '(Tidak ada sasaran mutu khusus)');
+            $('#jobdesk_detail_preview').slideDown(150);
         } else {
             $('#jobdesk_detail_preview').hide();
         }
