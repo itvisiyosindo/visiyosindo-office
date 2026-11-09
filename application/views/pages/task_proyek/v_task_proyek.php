@@ -971,7 +971,7 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu):</strong> Integrasi bobot <strong>50% Penugasan Task Proyek</strong> (konversi rating bintang 1–5 ⭐) + <strong>50% Nilai Laporan Mingguan</strong>.
+                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu):</strong> Integrasi bobot <strong>60% Penugasan Task Proyek</strong> (konversi rating bintang 1–5 ⭐) + <strong>40% Nilai Laporan Mingguan</strong>. Karyawan dengan <em>Evaluasi Lengkap (Task + Laporan)</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
                             <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
@@ -990,11 +990,11 @@ $namaBulanList = [
                                     <th class="align-middle">Jabatan</th>
                                     <th class="text-center align-middle" style="min-width: 130px;">
                                         <div>Task Proyek</div>
-                                        <small class="badge badge-primary" style="font-size: 10px;">Bobot 50%</small>
+                                        <small class="badge badge-primary" style="font-size: 10px;">Bobot 60%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 130px;">
                                         <div>Laporan Mingguan</div>
-                                        <small class="badge badge-info" style="font-size: 10px;">Bobot 50%</small>
+                                        <small class="badge badge-info" style="font-size: 10px;">Bobot 40%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 110px; background: #f0fdf4;">
                                         <div class="text-success font-weight-bold">Skor Akhir</div>
@@ -1011,14 +1011,14 @@ $namaBulanList = [
                                 ?>
                                     <tr <?= $isMe ? 'style="background-color: #f0f9ff;"' : '' ?>>
                                         <td class="text-center font-weight-bold align-middle">
-                                            <?php if ($rank === 1 && $lb->skor_akhir !== null): ?>
+                                            <?php if ($rank === 1 && $lb->skor_akhir !== null && !empty($lb->is_eligible_podium)): ?>
                                                 <span class="badge badge-warning" style="font-size:13px;">🥇 #1</span>
-                                            <?php elseif ($rank === 2 && $lb->skor_akhir !== null): ?>
+                                            <?php elseif ($rank === 2 && $lb->skor_akhir !== null && !empty($lb->is_eligible_podium)): ?>
                                                 <span class="badge badge-secondary" style="font-size:13px;">🥈 #2</span>
-                                            <?php elseif ($rank === 3 && $lb->skor_akhir !== null): ?>
+                                            <?php elseif ($rank === 3 && $lb->skor_akhir !== null && !empty($lb->is_eligible_podium)): ?>
                                                 <span class="badge badge-info" style="font-size:13px;">🥉 #3</span>
                                             <?php else: ?>
-                                                #<?= $rank ?>
+                                                <span class="text-muted font-weight-semibold">#<?= $rank ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="align-middle">
@@ -1053,7 +1053,15 @@ $namaBulanList = [
                                         <td class="text-center align-middle" style="background: #f0fdf4;">
                                             <?php if ($lb->skor_akhir !== null): ?>
                                                 <div class="font-weight-bold" style="font-size: 17px; color: <?= $lb->grade_color ?>;"><?= number_format($lb->skor_akhir, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 10px;"><?= htmlspecialchars($lb->komposisi) ?></div>
+                                                <?php if ($lb->status_nilai === 'lengkap'): ?>
+                                                    <div class="small font-weight-bold text-success" style="font-size: 10px;">
+                                                        <i class="fas fa-check-circle text-success mr-1"></i><?= htmlspecialchars($lb->komposisi) ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="small text-muted" style="font-size: 10px;">
+                                                        <span class="badge badge-warning text-dark py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Parsial</span><?= htmlspecialchars($lb->komposisi) ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             <?php else: ?>
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>

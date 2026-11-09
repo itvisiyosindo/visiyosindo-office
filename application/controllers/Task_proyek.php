@@ -297,7 +297,7 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (50% Task Proyek : 50% Laporan Mingguan)
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (60% Task Proyek : 40% Laporan Mingguan)
         $wherePeriodeTask = "";
         if (!empty($filterBulan)) {
             $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
@@ -426,21 +426,26 @@ class Task_proyek extends CI_Controller
             $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
 
             if ($hasTask && $hasLap) {
-                $skorAkhir = round(($skorTask * 0.50) + ($skorLap * 0.50), 1);
-                $komposisi = '50% Task + 50% Laporan';
+                // Bobot: 60% Task Proyek + 40% Laporan Mingguan (Evaluasi Lengkap / Prioritas Utama Juara)
+                $skorAkhir = round(($skorTask * 0.60) + ($skorLap * 0.40), 1);
+                $komposisi = '60% Task + 40% Laporan';
                 $statusNilai = 'lengkap';
+                $isEligiblePodium = true;
             } elseif ($hasTask && !$hasLap) {
                 $skorAkhir = $skorTask;
-                $komposisi = '100% Task Proyek';
+                $komposisi = '100% Task (Parsial)';
                 $statusNilai = 'task_only';
+                $isEligiblePodium = false;
             } elseif (!$hasTask && $hasLap) {
                 $skorAkhir = $skorLap;
-                $komposisi = '100% Laporan Mingguan';
+                $komposisi = '100% Laporan (Parsial)';
                 $statusNilai = 'laporan_only';
+                $isEligiblePodium = false;
             } else {
                 $skorAkhir = null;
                 $komposisi = 'Belum Ada Nilai';
                 $statusNilai = 'belum_dinilai';
+                $isEligiblePodium = false;
             }
 
             $ratingAgregat = $skorAkhir !== null ? round(($skorAkhir / 100) * 5, 2) : 0;
@@ -472,16 +477,17 @@ class Task_proyek extends CI_Controller
                 $gradeColor = '#64748b';
             }
 
-            $lb->skor_task      = $skorTask;
-            $lb->skor_lap       = $skorLap;
-            $lb->skor_akhir     = $skorAkhir;
-            $lb->rating_agregat = $ratingAgregat;
-            $lb->grade          = $grade;
-            $lb->grade_label    = $gradeLabel;
-            $lb->grade_badge    = $gradeBadge;
-            $lb->grade_color    = $gradeColor;
-            $lb->komposisi      = $komposisi;
-            $lb->status_nilai   = $statusNilai;
+            $lb->skor_task          = $skorTask;
+            $lb->skor_lap           = $skorLap;
+            $lb->skor_akhir         = $skorAkhir;
+            $lb->rating_agregat     = $ratingAgregat;
+            $lb->grade              = $grade;
+            $lb->grade_label        = $gradeLabel;
+            $lb->grade_badge        = $gradeBadge;
+            $lb->grade_color        = $gradeColor;
+            $lb->komposisi          = $komposisi;
+            $lb->status_nilai       = $statusNilai;
+            $lb->is_eligible_podium = $isEligiblePodium;
 
             if (in_array((int)$lb->pengguna_id, $myReceiverIds, true)) {
                 $myCombinedKpi = $lb;
@@ -491,16 +497,29 @@ class Task_proyek extends CI_Controller
         }
 
         // Urutkan Leaderboard berdasarkan:
-        // 1. Skor Akhir tertinggi (NULL paling bawah)
-        // 2. Task selesai terbanyak
-        // 3. Total task terbanyak
+        // 1. Prioritas Kelengkapan Evaluasi: Karyawan dengan evaluasi 'lengkap' (Task + Laporan)
+        //    berada di kelompok utama (Eligible Juara 1, 2, 3) di atas evaluasi parsial
+        // 2. Skor Akhir tertinggi (NULL paling bawah)
+        // 3. Task selesai terbanyak
+        // 4. Total task terbanyak
+        // 5. Total poin laporan terbanyak
         usort($leaderboard, function($a, $b) {
             if ($a->skor_akhir === null && $b->skor_akhir === null) return 0;
             if ($a->skor_akhir === null) return 1;
             if ($b->skor_akhir === null) return -1;
 
+            $aLengkap = ($a->status_nilai === 'lengkap') ? 1 : 0;
+            $bLengkap = ($b->status_nilai === 'lengkap') ? 1 : 0;
+
+            if ($aLengkap !== $bLengkap) {
+                return $bLengkap <=> $aLengkap; // Evaluasi lengkap diurutkan lebih dulu
+            }
+
             if ($a->skor_akhir == $b->skor_akhir) {
                 if ($a->task_selesai == $b->task_selesai) {
+                    if ($a->total_task == $b->total_task) {
+                        return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
+                    }
                     return (int)$b->total_task <=> (int)$a->total_task;
                 }
                 return (int)$b->task_selesai <=> (int)$a->task_selesai;
