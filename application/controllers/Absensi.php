@@ -2450,9 +2450,13 @@ class Absensi extends CI_Controller
                 $tgl = date('Y-m-d', strtotime($row->data_created));
                 $updateData['data_created'] = $tgl . ' 07:55:00';
             }
-            $this->db->where('absensi_id', $row->absensi_id)->update('absensi', $updateData);
+            if (isset($row->id_absensi)) {
+                $this->db->where('id_absensi', $row->id_absensi)->update('absensi', $updateData);
+            } else {
+                $this->db->where('pengguna_id', $uid)->where('data_created', $row->data_created)->update('absensi', $updateData);
+            }
             $absUpdated[] = [
-                'absensi_id' => $row->absensi_id,
+                'id_absensi' => $row->id_absensi ?? null,
                 'data_created_sebelum' => $row->data_created,
                 'status_sebelum' => $row->status_absen,
                 'status_sesudah' => 'tepat_waktu'
