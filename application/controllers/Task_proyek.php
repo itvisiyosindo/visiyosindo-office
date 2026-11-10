@@ -782,15 +782,53 @@ class Task_proyek extends CI_Controller
         $addedJobs = [];
         $seqNo     = 1;
 
-        // 1. PRIORITAS UTAMA: AMBIL JOBDESK YANG ADA DI LAPORAN MINGGUAN KARYAWAN (Tabel jobdesc_detail & jobdesc)
-        // Persis sama seperti pilihan jobdesk saat karyawan tersebut mengisi Laporan Mingguan
-        $this->load->model('md_laporan');
+        // 1. PRIORITAS UTAMA: AMBIL JOBDESK YANG MASIH AKTIF UNTUK KARYAWAN TERSEBUT
+        // Menyaring HANYA jobdesk yang statusnya AKTIF (tgl_mulai <= today dan tgl_selesai >= today / belum kedaluwarsa)
+        $today = date('Y-m-d');
         $laporanJobs = [];
-        if (isset($this->md_laporan) && method_exists($this->md_laporan, 'getByJobs')) {
-            $laporanJobs = $this->md_laporan->getByJobs($id_pengguna);
+
+        // A. Cek Header Jobdesk Aktif untuk karyawan ini (status = 1 dan rentang tanggal mencakup hari ini)
+        $activeHeaders = $this->db->query("
+            SELECT id, tgl_mulai, tgl_selesai
+            FROM jobdesc
+            WHERE id_pengguna = {$id_pengguna}
+              AND (status = 1 OR status IS NULL)
+              AND (tgl_mulai IS NULL OR tgl_mulai = '0000-00-00' OR tgl_mulai <= '{$today}')
+              AND (tgl_selesai IS NULL OR tgl_selesai = '0000-00-00' OR tgl_selesai = '2099-12-31' OR tgl_selesai >= '{$today}')
+            ORDER BY tgl_mulai DESC, id DESC
+        ")->result();
+
+        $activeJobdescIds = [];
+        if (!empty($activeHeaders)) {
+            foreach ($activeHeaders as $ah) {
+                $activeJobdescIds[] = (int)$ah->id;
+            }
         }
 
-        // Jika getByJobs kosong, coba query dengan join ke tabel jobdesc (memastikan tidak ada yang terlewat)
+        // B. Ambil detail jobdesk aktif:
+        // Jika ada header aktif, ambil HANYA detail dari header aktif tersebut
+        if (!empty($activeJobdescIds)) {
+            $inIds = implode(',', $activeJobdescIds);
+            $laporanJobs = $this->db->query("
+                SELECT DISTINCT
+                    jd.id AS id_pod,
+                    jd.id_jobdesc,
+                    jd.deskripsi,
+                    jd.point,
+                    jd.nilai,
+                    jd.id_urut
+                FROM jobdesc_detail jd
+                WHERE jd.id_jobdesc IN ({$inIds})
+                  AND jd.status = 1
+                  AND (jd.tgl_selesai IS NULL OR jd.tgl_selesai = '0000-00-00' OR jd.tgl_selesai = '2099-12-31' OR jd.tgl_selesai >= '{$today}')
+                  AND (jd.tgl_mulai IS NULL OR jd.tgl_mulai = '0000-00-00' OR jd.tgl_mulai <= '{$today}')
+                  AND jd.deskripsi IS NOT NULL
+                  AND TRIM(jd.deskripsi) != ''
+                ORDER BY jd.point ASC, jd.id_urut ASC, jd.id ASC
+            ")->result();
+        }
+
+        // C. Jika belum dapat dari header, ambil detail yang langsung mengarah ke idPengguna yang masih aktif
         if (empty($laporanJobs)) {
             $laporanJobs = $this->db->query("
                 SELECT DISTINCT
@@ -798,17 +836,48 @@ class Task_proyek extends CI_Controller
                     jd.id_jobdesc,
                     jd.deskripsi,
                     jd.point,
-                    jd.nilai
+                    jd.nilai,
+                    jd.id_urut
                 FROM jobdesc_detail jd
                 LEFT JOIN jobdesc j ON j.id = jd.id_jobdesc
                 WHERE (jd.idPengguna = {$id_pengguna} OR j.id_pengguna = {$id_pengguna})
-                AND jd.status = 1
-                AND jd.deskripsi IS NOT NULL
-                AND TRIM(jd.deskripsi) != ''
-                ORDER BY jd.id ASC
+                  AND jd.status = 1
+                  AND (jd.tgl_selesai IS NULL OR jd.tgl_selesai = '0000-00-00' OR jd.tgl_selesai = '2099-12-31' OR jd.tgl_selesai >= '{$today}')
+                  AND (jd.tgl_mulai IS NULL OR jd.tgl_mulai = '0000-00-00' OR jd.tgl_mulai <= '{$today}')
+                  AND (j.status IS NULL OR j.status = 1)
+                  AND (j.tgl_selesai IS NULL OR j.tgl_selesai = '0000-00-00' OR j.tgl_selesai = '2099-12-31' OR j.tgl_selesai >= '{$today}')
+                  AND jd.deskripsi IS NOT NULL
+                  AND TRIM(jd.deskripsi) != ''
+                ORDER BY jd.point ASC, jd.id_urut ASC, jd.id ASC
             ")->result();
         }
 
+        // D. Jika masih kosong juga (misal HR tidak mengisi tanggal masa berlaku), ambil dari batch jobdesk paling terbaru (latest id)
+        if (empty($laporanJobs)) {
+            $latestHeader = $this->db->query("
+                SELECT id FROM jobdesc 
+                WHERE id_pengguna = {$id_pengguna} AND (status = 1 OR status IS NULL)
+                ORDER BY id DESC LIMIT 1
+            ")->row();
+
+            if ($latestHeader) {
+                $laporanJobs = $this->db->query("
+                    SELECT DISTINCT
+                        jd.id AS id_pod,
+                        jd.id_jobdesc,
+                        jd.deskripsi,
+                        jd.point,
+                        jd.nilai,
+                        jd.id_urut
+                    FROM jobdesc_detail jd
+                    WHERE jd.id_jobdesc = {$latestHeader->id}
+                      AND jd.status = 1
+                      AND jd.deskripsi IS NOT NULL
+                      AND TRIM(jd.deskripsi) != ''
+                    ORDER BY jd.point ASC, jd.id_urut ASC, jd.id ASC
+                ")->result();
+            }
+        }
         if (!empty($laporanJobs)) {
             foreach ($laporanJobs as $lj) {
                 $cleanJob = trim((string)$lj->deskripsi);
