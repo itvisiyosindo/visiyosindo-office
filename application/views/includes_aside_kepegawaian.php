@@ -407,7 +407,7 @@
 						</li>
 					<?php } ?>
 
-					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '743' || sessPenggunaId() == '771') { ?>
+					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '743' || sessPenggunaId() == '771' || sessPenggunaId() == '778') { ?>
 						<li class="<?= in_array($page_name, ['v_absensi', 'v_rekap_absensi']) ? 'nav-active' : '' ?>">
 							<a class="nav-link" href="<?= base_url('absensi') ?>">
 								<i class="fas fa-digital-tachograph" aria-hidden="true"></i>
@@ -415,7 +415,7 @@
 							</a>
 						</li>
 					<?php } ?>
-					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '771' || sessPenggunaId() == '33') { ?>
+					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '771' || sessPenggunaId() == '33' || sessPenggunaId() == '778') { ?>
 						<?php
 						$ciKep =& get_instance();
 						$pendingLrKep = 0;

@@ -1368,7 +1368,7 @@ class Absensi extends CI_Controller
         } else if ($param == "approval_luar_radius") {
             grantAccessFor('all');
             $myId = (int)sessPenggunaId();
-            $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33;
+            $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33 || $myId === 778;
             if (!$canAccess) {
                 show_error('Akses ditolak. Halaman ini khusus General Affair, Bu Yola, HRD, dan Administrator.', 403);
                 return;

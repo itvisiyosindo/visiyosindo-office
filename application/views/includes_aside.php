@@ -130,7 +130,7 @@
 						</a>
 					</li>
 
-					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '33') { ?>
+					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '33' || sessPenggunaId() == '778') { ?>
 						<?php
 						$ciSidebar =& get_instance();
 						$pendingLrHome = 0;
