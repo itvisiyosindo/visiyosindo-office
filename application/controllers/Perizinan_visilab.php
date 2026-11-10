@@ -98,8 +98,9 @@ class Perizinan_visilab extends CI_Controller
         $seedRes = false;
         if ($q1) {
             $countQ = $this->db->query("SELECT COUNT(*) as c FROM visilab_perizinan_alat");
-            if ($countQ && (int)$countQ->row()->c == 0) {
-                $this->md_perizinan_visilab->ensure_table();
+            $rowCount = ($countQ && $countQ->num_rows() > 0) ? (int)$countQ->row()->c : 0;
+            if ($rowCount == 0) {
+                $this->md_perizinan_visilab->seed_initial_data();
                 $seedRes = true;
             }
         }
@@ -107,8 +108,11 @@ class Perizinan_visilab extends CI_Controller
         $allData = $this->md_perizinan_visilab->get_all([]);
         $allStats = $this->md_perizinan_visilab->get_summary_stats();
 
+        $dbInfo = $this->db->query("SELECT DATABASE() as db, USER() as usr, @@hostname as hst")->row();
+
         echo json_encode([
-            'git_commit'       => '89a5af2-diagnostics',
+            'git_commit'       => '89a5af2-diagnostics-2',
+            'connected_db'     => $dbInfo,
             'create_perizinan' => $q1,
             'err1'             => $err1,
             'create_history'   => $q2,

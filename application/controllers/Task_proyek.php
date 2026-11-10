@@ -212,12 +212,21 @@ class Task_proyek extends CI_Controller
         }
         $myGiverIds = array_values(array_unique($myGiverIds));
 
-        // 1. Daftar semua karyawan aktif (untuk pilihan Atasan Saya di modal & opsi Admin)
+        // 1. Daftar semua karyawan aktif kecuali user login (opsi bawahan standar)
         $list_semua_karyawan = $this->db->query("
             SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, d.nama AS nama_divisi
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
             WHERE p.status = 1 AND p.is_active = 1 AND p.pengguna_id != {$myId} {$excludeMergedSql}
+            ORDER BY p.nama ASC
+        ")->result();
+
+        // Daftar SEMUA karyawan aktif termasuk user login (untuk opsi pengajuan mandiri dan dropdown Mengetahui)
+        $list_semua_karyawan_all = $this->db->query("
+            SELECT p.pengguna_id, p.nama, p.jabatan, p.id_divisi, d.nama AS nama_divisi
+            FROM pengguna p
+            LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
+            WHERE p.status = 1 AND p.is_active = 1 {$excludeMergedSql}
             ORDER BY p.nama ASC
         ")->result();
 
@@ -230,11 +239,13 @@ class Task_proyek extends CI_Controller
             ORDER BY p.nama ASC
         ")->result();
 
-        // 1. Tugas Saya (Sebagai Penerima / Bawahan)
-        $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima')
+        // 1. Tugas Saya (Sebagai Penerima / Bawahan / Pengaju Mandiri)
+        $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima, p_tahu.nama AS nama_mengetahui, p_acc.nama AS nama_acc_hrd')
             ->from('task_proyek t')
             ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
             ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
+            ->join('pengguna p_tahu', 'p_tahu.pengguna_id = t.id_mengetahui', 'left')
+            ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
             ->where('t.is_deleted', 0);
 
         if (count($myReceiverIds) === 1) {
@@ -249,37 +260,69 @@ class Task_proyek extends CI_Controller
         if (!empty($filterTahun) && $filterTahun !== 'all') {
             $this->db->where('YEAR(t.created_at)', (int)$filterTahun);
         }
-        $tugas_saya = $this->db->order_by('FIELD(t.status_task, 3, 0, 1, 2, 4)', '', FALSE)
+        $tugas_saya = $this->db->order_by('FIELD(t.status_task, 5, 3, 0, 1, 2, 4, 6)', '', FALSE)
             ->order_by('t.id_task', 'DESC')
             ->get()
             ->result();
 
-        // 2. Tugas yang Saya Berikan (Sebagai Atasan) / Semua Tugas jika Admin/Direksi/HRD
+        // 2. Tugas yang Saya Berikan / Ajukan (Sebagai Pembuat / Atasan)
         $viewMode = $this->input->get('mode', TRUE);
-        $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima, d.nama AS divisi_penerima')
+        $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima, d.nama AS divisi_penerima, p_tahu.nama AS nama_mengetahui, p_acc.nama AS nama_acc_hrd')
             ->from('task_proyek t')
             ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
             ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
             ->join('divisi d', 'd.id_divisi = p_terima.id_divisi', 'left')
+            ->join('pengguna p_tahu', 'p_tahu.pengguna_id = t.id_mengetahui', 'left')
+            ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
             ->where('t.is_deleted', 0);
 
-        if (!$canViewAll || $viewMode === 'mine') {
-            if (count($myGiverIds) === 1) {
-                $this->db->where('t.id_pemberi', $myGiverIds[0]);
-            } else {
-                $this->db->where_in('t.id_pemberi', $myGiverIds);
-            }
+        if (count($myGiverIds) === 1) {
+            $this->db->where('t.id_pemberi', $myGiverIds[0]);
+        } else {
+            $this->db->where_in('t.id_pemberi', $myGiverIds);
         }
+
         if (!empty($filterBulan)) {
             $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
         }
         if (!empty($filterTahun) && $filterTahun !== 'all') {
             $this->db->where('YEAR(t.created_at)', (int)$filterTahun);
         }
-        $tugas_atasan = $this->db->order_by('FIELD(t.status_task, 2, 1, 3, 0, 4)', '', FALSE)
+        $tugas_atasan = $this->db->order_by('FIELD(t.status_task, 5, 2, 1, 3, 0, 4, 6)', '', FALSE)
             ->order_by('t.id_task', 'DESC')
             ->get()
             ->result();
+
+        // 3. Semua Task Perusahaan (Monitoring Tim & Transparansi Semua Karyawan)
+        $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima, d.nama AS divisi_penerima, p_tahu.nama AS nama_mengetahui, p_acc.nama AS nama_acc_hrd')
+            ->from('task_proyek t')
+            ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
+            ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
+            ->join('divisi d', 'd.id_divisi = p_terima.id_divisi', 'left')
+            ->join('pengguna p_tahu', 'p_tahu.pengguna_id = t.id_mengetahui', 'left')
+            ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
+            ->where('t.is_deleted', 0);
+
+        if (!empty($filterBulan)) {
+            $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
+        }
+        if (!empty($filterTahun) && $filterTahun !== 'all') {
+            $this->db->where('YEAR(t.created_at)', (int)$filterTahun);
+        }
+        $semua_task = $this->db->order_by('FIELD(t.status_task, 5, 2, 1, 3, 0, 4, 6)', '', FALSE)
+            ->order_by('t.id_task', 'DESC')
+            ->get()
+            ->result();
+
+        $kpi_waiting_acc_hrd = 0;
+        foreach ($semua_task as $stk) {
+            if (function_exists('evaluateTaskDeadlineAndSp')) {
+                evaluateTaskDeadlineAndSp($stk, true);
+            }
+            if ((int)$stk->status_task === 5) {
+                $kpi_waiting_acc_hrd++;
+            }
+        }
 
         // 3. KPI Ringkasan Personal & Atasan
         $kpi_my_active = 0;
@@ -661,24 +704,32 @@ class Task_proyek extends CI_Controller
             return ($b->skor_akhir < $a->skor_akhir) ? -1 : 1;
         });
 
-        $page_data['switch']              = $nav;
-        $page_data['page_name']           = 'task_proyek/v_task_proyek';
-        $page_data['page_title']          = 'Manajemen Task & Proyek Kerja';
-        $page_data['page_desc']           = 'Penugasan Atasan ke Karyawan, Monitoring Progres & Penilaian Rating Bintang 5';
-        $page_data['me']                  = $me;
-        $page_data['myId']                = $myId;
-        $page_data['myReceiverIds']       = $myReceiverIds;
-        $page_data['canViewAll']          = $canViewAll;
-        $page_data['canAssignAll']        = $canAssignAll;
-        $page_data['isAdmin']             = ($canAssignAll || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
-        $page_data['viewMode']            = $viewMode;
-        $page_data['filterBulan']         = $filterBulan;
-        $page_data['filterTahun']         = $filterTahun;
-        $page_data['list_bawahan']        = $list_bawahan;
-        $page_data['list_semua_karyawan'] = $list_semua_karyawan;
-        $page_data['tugas_saya']      = $tugas_saya;
-        $page_data['tugas_atasan']    = $tugas_atasan;
-        $page_data['leaderboard']     = $leaderboard;
+        $isHrdAdmin = $this->_isHrdOrAdmin($myId);
+        $page_data['switch']                  = $nav;
+        $page_data['page_name']               = 'task_proyek/v_task_proyek';
+        $page_data['page_title']              = 'Manajemen Task & Proyek Kerja';
+        $page_data['page_desc']               = 'Penugasan Karyawan, Pengajuan Mandiri, Monitoring Tim & Penilaian Rating';
+        $page_data['me']                      = $me;
+        $page_data['myId']                    = $myId;
+        $page_data['myReceiverIds']           = $myReceiverIds;
+        $page_data['canViewAll']              = true; // Transparansi tugas tim terbuka untuk semua
+        $page_data['canAssignAll']            = true; // Semua karyawan dapat menugaskan / mengajukan
+        $page_data['isHrdAdmin']              = $isHrdAdmin;
+        $page_data['isAdmin']                 = ($isHrdAdmin || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
+        $page_data['viewMode']                = $viewMode;
+        $page_data['filterBulan']             = $filterBulan;
+        $page_data['filterTahun']             = $filterTahun;
+        $page_data['namaBulanList']           = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
+            7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $page_data['list_bawahan']            = $list_bawahan;
+        $page_data['list_semua_karyawan']     = $list_semua_karyawan;
+        $page_data['list_semua_karyawan_all'] = $list_semua_karyawan_all;
+        $page_data['tugas_saya']              = $tugas_saya;
+        $page_data['tugas_atasan']            = $tugas_atasan;
+        $page_data['semua_task']              = $semua_task;
+        $page_data['leaderboard']             = $leaderboard;
         $page_data['kpi'] = [
             'my_active'         => $kpi_my_active,
             'my_done'           => $kpi_my_done,
@@ -688,7 +739,9 @@ class Task_proyek extends CI_Controller
             'need_review'       => $kpi_need_review,
             'given_active'      => $kpi_given_active,
             'given_done'        => $kpi_given_done,
+            'waiting_acc_hrd'   => $kpi_waiting_acc_hrd,
             'total_given'       => count($tugas_atasan),
+            'total_semua'       => count($semua_task),
             'my_combined'       => $myCombinedKpi
         ];
 
@@ -1004,11 +1057,14 @@ class Task_proyek extends CI_Controller
     {
         grantAccessFor('all');
 
+        $myId   = (int)sessPenggunaId();
         $id_task = (int)$this->input->post('id_task', TRUE);
-        $task = $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima')
+        $task = $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima, p_tahu.nama AS nama_mengetahui, p_acc.nama AS nama_acc_hrd')
             ->from('task_proyek t')
             ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
             ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
+            ->join('pengguna p_tahu', 'p_tahu.pengguna_id = t.id_mengetahui', 'left')
+            ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
             ->where('t.id_task', $id_task)
             ->where('t.is_deleted', 0)
             ->get()
@@ -1030,19 +1086,33 @@ class Task_proyek extends CI_Controller
         $task->checklist = !empty($task->checklist_json) ? json_decode($task->checklist_json, true) : [];
         $task->tgl_mulai_fmt = !empty($task->tgl_mulai) ? date('d-m-Y', strtotime($task->tgl_mulai)) : '-';
         $task->tgl_deadline_fmt = !empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-';
+        $task->acc_hrd_at_fmt = !empty($task->acc_hrd_at) ? date('d-m-Y H:i', strtotime($task->acc_hrd_at)) : '';
         if (function_exists('evaluateTaskDeadlineAndSp')) {
             evaluateTaskDeadlineAndSp($task, true);
         }
         $task->is_overdue = (!empty($task->is_late) || (!empty($task->tgl_deadline) && (int)$task->status_task < 4 && date('Y-m-d') > $task->tgl_deadline));
         $task->hrd_jadwal_tgl_fmt = !empty($task->hrd_jadwal_tgl) ? date('d-m-Y', strtotime($task->hrd_jadwal_tgl)) : '';
 
+        $isHrdAdmin = $this->_isHrdOrAdmin($myId);
+        $isGiver = ((int)$task->id_pemberi === $myId);
+        $isAtasanPenerima = false;
+        if (!empty($task->id_penerima)) {
+            $penerimaUser = $this->db->select('id_atasan')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
+            if ($penerimaUser && (int)$penerimaUser->id_atasan === $myId) {
+                $isAtasanPenerima = true;
+            }
+        }
+        $canReviewThis = ($isGiver && (int)$task->id_penerima !== $myId) || $isAtasanPenerima || $isHrdAdmin;
+
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
-            'status' => 'success',
-            'task'   => $task,
-            'logs'   => $logs,
-            'my_id'  => (int)sessPenggunaId(),
-            'is_admin_reviewer' => $this->_canViewAllTasks((int)sessPenggunaId())
+            'status'            => 'success',
+            'task'              => $task,
+            'logs'              => $logs,
+            'my_id'             => $myId,
+            'is_admin_reviewer' => $isHrdAdmin,
+            'is_hrd_admin'      => $isHrdAdmin,
+            'can_review'        => $canReviewThis
         ]);
         exit;
     }
@@ -1111,6 +1181,14 @@ class Task_proyek extends CI_Controller
         }
 
         $newStatus = (int)$task->status_task;
+        if ($newStatus === 5) {
+            ajaxReturnDie('error', 'Task mandiri ini masih menunggu persetujuan (ACC) dari HRD sebelum dapat mulai dikerjakan.', FALSE);
+            return;
+        }
+        if ($newStatus === 6) {
+            ajaxReturnDie('error', 'Task mandiri ini telah ditolak oleh HRD dan tidak dapat dikerjakan.', FALSE);
+            return;
+        }
         if ($newStatus === 4) {
             ajaxReturnDie('error', 'Task ini sudah selesai dinilai oleh Atasan dan tidak dapat diubah lagi.', FALSE);
             return;
@@ -1170,6 +1248,14 @@ class Task_proyek extends CI_Controller
             return;
         }
 
+        if ((int)$task->status_task === 5) {
+            ajaxReturnDie('error', 'Task mandiri ini masih menunggu persetujuan (ACC) dari HRD sebelum dapat mulai dikerjakan.', FALSE);
+            return;
+        }
+        if ((int)$task->status_task === 6) {
+            ajaxReturnDie('error', 'Task mandiri ini telah ditolak oleh HRD.', FALSE);
+            return;
+        }
         // Validasi: Cegah submit ulang jika status sudah Menunggu Penilaian atau sudah Selesai
         if ((int)$task->status_task === 2) {
             ajaxReturnDie('error', 'Hasil pekerjaan untuk task ini sudah terkirim sebelumnya dan saat ini sedang menunggu penilaian Atasan.', FALSE);
@@ -1278,8 +1364,23 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        if ((int)$task->id_pemberi !== $myId && !$this->_canViewAllTasks($myId)) {
-            ajaxReturnDie('error', 'Hanya Atasan pemberi tugas atau Direksi/Admin yang dapat menilai task ini.', FALSE);
+        $isGiver = ((int)$task->id_pemberi === $myId);
+        $isHrdAdmin = $this->_isHrdOrAdmin($myId);
+        $isAtasanPenerima = false;
+        if (!empty($task->id_penerima)) {
+            $penerimaUser = $this->db->select('id_atasan')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
+            if ($penerimaUser && (int)$penerimaUser->id_atasan === $myId) {
+                $isAtasanPenerima = true;
+            }
+        }
+
+        if (((int)$task->is_mandiri === 1 || (int)$task->id_pemberi === (int)$task->id_penerima) && (int)$task->id_penerima === $myId && !$isHrdAdmin) {
+            ajaxReturnDie('error', 'Anda tidak dapat memberikan rating kepada tugas mandiri Anda sendiri. Penilaian dilakukan oleh Atasan Langsung atau HRD/Admin.', FALSE);
+            return;
+        }
+
+        if (!$isGiver && !$isAtasanPenerima && !$isHrdAdmin) {
+            ajaxReturnDie('error', 'Hanya Pemberi Tugas, Atasan Langsung, atau Direksi/HRD yang dapat menilai task ini.', FALSE);
             return;
         }
 
@@ -1602,5 +1703,158 @@ class Task_proyek extends CI_Controller
         }
 
         ajaxReturnDie('success', 'Jadwal pertemuan evaluasi SP 3 dengan HRD berhasil disimpan!', TRUE);
+    }
+    /**
+     * Persetujuan (ACC) Task Mandiri oleh HRD
+     */
+    public function acc_hrd()
+    {
+        grantAccessFor('all');
+        $myId = (int)sessPenggunaId();
+        if (!$this->_isHrdOrAdmin($myId)) {
+            ajaxReturnDie('error', 'Hanya HRD atau Administrator yang berwenang menyetujui (ACC) pengajuan task mandiri.', FALSE);
+            return;
+        }
+
+        $id_task = (int)$this->input->post('id_task', TRUE);
+        $task = $this->db->get_where('task_proyek', ['id_task' => $id_task, 'is_deleted' => 0])->row();
+        if (!$task) {
+            ajaxReturnDie('error', 'Task tidak ditemukan.', FALSE);
+            return;
+        }
+
+        if ((int)$task->status_task !== 5) {
+            ajaxReturnDie('error', 'Status task saat ini bukan "Menunggu ACC HRD".', FALSE);
+            return;
+        }
+
+        $hrdRow = $this->db->select('nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+        $namaHrd = $hrdRow ? $hrdRow->nama : 'HRD';
+
+        $this->db->where('id_task', $id_task)->update('task_proyek', [
+            'status_task' => 0, // Sekarang aktif / Baru / Siap Dikerjakan
+            'acc_hrd_by'  => $myId,
+            'acc_hrd_at'  => date('Y-m-d H:i:s')
+        ]);
+
+        $this->db->insert('task_proyek_log', [
+            'id_task'     => $id_task,
+            'id_pengguna' => $myId,
+            'aksi'        => 'ACC Pengajuan Task oleh HRD',
+            'catatan'     => 'Pengajuan task mandiri telah disetujui (ACC) oleh HRD (' . $namaHrd . '). Task siap dikerjakan oleh karyawan.'
+        ]);
+
+        // 1. Kirim Notifikasi WA ke Karyawan Pelaksana
+        try {
+            $karyawan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
+            $noHpKaryawan = ($karyawan && !empty($karyawan->no_hp)) ? $karyawan->no_hp : (($karyawan && !empty($karyawan->nohp)) ? $karyawan->nohp : '');
+            if (!empty($noHpKaryawan) && function_exists('sendWa')) {
+                $pesanWa = "âœ… *PENGAJUAN TASK MANDIRI TELAH DI-ACC HRD*" .
+                    "%0A%0AHalo *" . $karyawan->nama . "*," .
+                    "%0APengajuan task mandiri Anda telah *DISETUJUI (ACC)* oleh HRD (*" . $namaHrd . "*):" .
+                    "%0A%0AðŸ“Œ *Kode*: " . $task->kode_task .
+                    "%0AðŸ“‹ *Judul*: " . $task->judul .
+                    "%0AðŸŽ¯ *Proyek*: " . ($task->nama_proyek ?: 'Umum') .
+                    "%0Aâš¡ *Prioritas*: " . $task->prioritas .
+                    "%0AðŸ“… *Deadline*: " . (!empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-') .
+                    "%0A%0AAnda sekarang dapat mulai mencentang checklist & memperbarui progres pekerjaan di https://office.visiyosindo.id/task_proyek";
+                @sendWa([
+                    'devId'    => hostWa('2'),
+                    'penerima' => $noHpKaryawan,
+                    'pesan'    => $pesanWa
+                ]);
+            }
+        } catch (\Throwable $e) {}
+
+        // 2. Kirim Notifikasi WA ke Pihak Mengetahui (HANYA DIKIRIM SETELAH DI-ACC HRD sesuai permintaan user!)
+        if (!empty($task->id_mengetahui)) {
+            try {
+                $mengetahui = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_mengetahui)->get()->row();
+                $noHpMengetahui = ($mengetahui && !empty($mengetahui->no_hp)) ? $mengetahui->no_hp : (($mengetahui && !empty($mengetahui->nohp)) ? $mengetahui->nohp : '');
+                $karyawanNama = isset($karyawan) && $karyawan ? $karyawan->nama : 'Karyawan';
+                if (!empty($noHpMengetahui) && function_exists('sendWa')) {
+                    $pesanMengetahui = "â„¹ï¸ *PEMBERITAHUAN TASK KARYAWAN (MENGETAHUI)*" .
+                        "%0A%0AHalo *" . $mengetahui->nama . "*," .
+                        "%0ASebagai pihak yang *Mengetahui*, berikut informasi tugas karyawan yang telah disetujui (ACC) oleh HRD:" .
+                        "%0A%0AðŸ‘¤ *Pelaksana*: *" . $karyawanNama . "*" .
+                        "%0AðŸ“Œ *Kode*: " . $task->kode_task .
+                        "%0AðŸ“‹ *Judul*: " . $task->judul .
+                        "%0AðŸŽ¯ *Proyek*: " . ($task->nama_proyek ?: 'Umum') .
+                        "%0Aâš¡ *Prioritas*: " . $task->prioritas .
+                        "%0AðŸ“… *Deadline*: " . (!empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-') .
+                        "%0Aâœ… *Status*: Disetujui HRD (" . $namaHrd . ")" .
+                        "%0A%0ADapat dipantau di https://office.visiyosindo.id/task_proyek";
+                    @sendWa([
+                        'devId'    => hostWa('2'),
+                        'penerima' => $noHpMengetahui,
+                        'pesan'    => $pesanMengetahui
+                    ]);
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        ajaxReturnDie('success', 'Task mandiri berhasil disetujui (ACC)! Notifikasi WA telah dikirimkan ke Pelaksana dan pihak Mengetahui.', TRUE);
+    }
+
+    /**
+     * Penolakan Task Mandiri oleh HRD
+     */
+    public function tolak_hrd()
+    {
+        grantAccessFor('all');
+        $myId = (int)sessPenggunaId();
+        if (!$this->_isHrdOrAdmin($myId)) {
+            ajaxReturnDie('error', 'Hanya HRD atau Administrator yang berwenang menolak pengajuan task mandiri.', FALSE);
+            return;
+        }
+
+        $id_task = (int)$this->input->post('id_task', TRUE);
+        $alasan  = trim((string)$this->input->post('alasan', FALSE));
+        if ($alasan === '') {
+            ajaxReturnDie('error', 'Alasan penolakan pengajuan task wajib diisi!', FALSE);
+            return;
+        }
+
+        $task = $this->db->get_where('task_proyek', ['id_task' => $id_task, 'is_deleted' => 0])->row();
+        if (!$task) {
+            ajaxReturnDie('error', 'Task tidak ditemukan.', FALSE);
+            return;
+        }
+
+        $hrdRow = $this->db->select('nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+        $namaHrd = $hrdRow ? $hrdRow->nama : 'HRD';
+
+        $this->db->where('id_task', $id_task)->update('task_proyek', [
+            'status_task'      => 6, // Ditolak HRD
+            'acc_hrd_by'       => $myId,
+            'acc_hrd_at'       => date('Y-m-d H:i:s'),
+            'acc_hrd_catatan'  => $alasan
+        ]);
+
+        $this->db->insert('task_proyek_log', [
+            'id_task'     => $id_task,
+            'id_pengguna' => $myId,
+            'aksi'        => 'Menolak Pengajuan Task Mandiri',
+            'catatan'     => 'Ditolak oleh HRD (' . $namaHrd . '). Alasan: ' . $alasan
+        ]);
+
+        try {
+            $karyawan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
+            $noHpKaryawan = ($karyawan && !empty($karyawan->no_hp)) ? $karyawan->no_hp : (($karyawan && !empty($karyawan->nohp)) ? $karyawan->nohp : '');
+            if (!empty($noHpKaryawan) && function_exists('sendWa')) {
+                $pesanWa = "âŒ *PENGAJUAN TASK MANDIRI DITOLAK HRD*" .
+                    "%0A%0AHalo *" . $karyawan->nama . "*," .
+                    "%0AMohon maaf, pengajuan task mandiri Anda (*" . $task->kode_task . " - " . $task->judul . "*) belum disetujui oleh HRD (*" . $namaHrd . "*)." .
+                    "%0A%0Aâš ï¸ *Alasan*: " . $alasan .
+                    "%0A%0ASilakan sesuaikan pengajuan atau diskusikan dengan HRD.";
+                @sendWa([
+                    'devId'    => hostWa('2'),
+                    'penerima' => $noHpKaryawan,
+                    'pesan'    => $pesanWa
+                ]);
+            }
+        } catch (\Throwable $e) {}
+
+        ajaxReturnDie('success', 'Pengajuan task mandiri telah ditolak.', TRUE);
     }
 }

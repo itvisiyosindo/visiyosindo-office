@@ -147,7 +147,7 @@ class Md_perizinan_visilab extends CI_Model
     /**
      * Memasukkan 30 data awal dari master Excel perizinan alat
      */
-    private function seed_initial_data()
+    public function seed_initial_data()
     {
         $now = date('Y-m-d H:i:s');
         $seeds = [
