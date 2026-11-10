@@ -2465,7 +2465,7 @@ class Absensi extends CI_Controller
 
         // 3. Periksa task proyek yang tercatat telat / lewat deadline
         $tasks = $this->db->query("
-            SELECT id_task, kode_task, judul_task, tgl_deadline, tgl_submit, tgl_dinilai, status_task, rating_bintang
+            SELECT id_task, kode_task, judul, tgl_deadline, tgl_submit, tgl_dinilai, status_task, rating_bintang
             FROM task_proyek
             WHERE id_penerima = {$uid} AND is_deleted = 0
             AND tgl_deadline IS NOT NULL
