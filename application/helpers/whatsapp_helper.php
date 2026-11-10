@@ -3777,7 +3777,8 @@ if (!function_exists('ensureWaQueueTable')) {
 			`sent_at` DATETIME DEFAULT NULL,
 			PRIMARY KEY (`id`),
 			KEY `idx_status_sched` (`status`, `scheduled_at`)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+		@$CI->db->query("ALTER TABLE `tbl_wa_queue` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 		$ensured = true;
 		return true;
 	}
@@ -3871,10 +3872,11 @@ if (!function_exists('enqueueWaSequentialMessage')) {
 		$payload = $dataSend;
 		unset($payload['_from_queue_worker']);
 
+		@$CI->db->query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
 		$ok = @$CI->db->insert('tbl_wa_queue', [
 			'is_group'     => $isGroup ? 1 : 0,
 			'penerima'     => substr(trim((string)($dataSend['penerima'] ?? '')), 0, 120),
-			'payload_json' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+			'payload_json' => json_encode($payload),
 			'scheduled_at' => $scheduledAt,
 			'status'       => 'pending',
 			'attempts'     => 0,
@@ -4007,6 +4009,7 @@ if (!function_exists('processOneWaQueueItem')) {
 			// Batalkan baris yang nomor penerimanya tidak valid (misal '-')
 			@$CI->db->query("UPDATE `tbl_wa_queue` SET `status` = 'failed', `sent_at` = NOW() WHERE `status` = 'pending' AND (`penerima` = '' OR `penerima` = '-' OR CHAR_LENGTH(`penerima`) < 7)");
 
+			@$CI->db->query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
 			$row = @$CI->db->query("SELECT * FROM `tbl_wa_queue` WHERE `status` = 'pending' ORDER BY `scheduled_at` ASC, `id` ASC LIMIT 1")->row();
 			if ($row) {
 				$now = time();
