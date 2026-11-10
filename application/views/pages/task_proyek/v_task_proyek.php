@@ -1284,7 +1284,7 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu Mutu & Produktivitas):</strong> Integrasi <strong>80% Kualitas Mutu</strong> (40% Task Proyek + 30% Laporan Rutin + 30% Pencapaian) + <strong>20% Volume Produktivitas</strong> (keaktifan jumlah output kerja). Karyawan dengan <em>Evaluasi Lengkap 3 Pilar</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
+                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu Mutu & Produktivitas):</strong> Integrasi <strong>80% Kualitas Mutu</strong> (35% Task Proyek + 25% Laporan Mingguan + 25% Pencapaian + 15% Product Knowledge) + <strong>20% Volume Produktivitas</strong> (keaktifan jumlah output kerja). Karyawan dengan <em>Evaluasi Lengkap 4 Pilar</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
                             <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
@@ -1303,15 +1303,19 @@ $namaBulanList = [
                                     <th class="align-middle">Jabatan</th>
                                     <th class="text-center align-middle" style="min-width: 125px;">
                                         <div>Task Proyek</div>
-                                        <small class="badge badge-primary" style="font-size: 10px;">Mutu 40%</small>
+                                        <small class="badge badge-primary" style="font-size: 10px;">Mutu 35%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 125px;">
                                         <div>Laporan Mingguan</div>
-                                        <small class="badge badge-info" style="font-size: 10px;">Mutu 30%</small>
+                                        <small class="badge badge-info" style="font-size: 10px;">Mutu 25%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 125px;">
                                         <div>Pencapaian</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 30%</small>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 25%</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 125px;">
+                                        <div>Product Knowledge</div>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #0d9488;">Mutu 15%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 125px; background: #f0fdf4;">
                                         <div class="text-success font-weight-bold">Skor Akhir</div>
@@ -1375,6 +1379,16 @@ $namaBulanList = [
                                                 </div>
                                             <?php else: ?>
                                                 <span class="text-muted small">Belum dinilai</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->skor_pk !== null): ?>
+                                                <div class="font-weight-bold" style="font-size: 14px; color: #0d9488;"><?= number_format($lb->skor_pk, 1) ?></div>
+                                                <div class="small text-muted" style="font-size: 11px;">
+                                                    <i class="fas fa-book-reader mr-1" style="color: #0d9488;"></i><?= (int)$lb->total_pk ?> kuis
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Belum kuis</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-center align-middle" style="background: #f0fdf4;">

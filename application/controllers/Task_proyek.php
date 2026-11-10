@@ -376,21 +376,25 @@ class Task_proyek extends CI_Controller
             $wherePeriodeTask .= " AND YEAR(t.created_at) = " . (int)$filterTahun;
         }
 
-        // Tentukan rentang tanggal untuk filter laporan mingguan
+        // Tentukan rentang tanggal untuk filter laporan mingguan & product knowledge
         $wherePeriodeNp = "";
         $wherePeriodeLap = "";
+        $wherePeriodePk = "";
         if (!empty($filterBulan) && !empty($filterTahun) && $filterTahun !== 'all') {
             $m = str_pad((int)$filterBulan, 2, '0', STR_PAD_LEFT);
             $startDate = "{$filterTahun}-{$m}-01";
             $endDate = date('Y-m-t', strtotime($startDate));
             $wherePeriodeNp  = " AND date >= '{$startDate}' AND date <= '{$endDate}'";
             $wherePeriodeLap = " AND tanggal >= '{$startDate}' AND tanggal <= '{$endDate}'";
+            $wherePeriodePk  = " AND bulan >= '{$startDate}' AND bulan <= '{$endDate}'";
         } elseif (!empty($filterTahun) && $filterTahun !== 'all') {
             $wherePeriodeNp  = " AND YEAR(date) = " . (int)$filterTahun;
             $wherePeriodeLap = " AND YEAR(tanggal) = " . (int)$filterTahun;
+            $wherePeriodePk  = " AND YEAR(bulan) = " . (int)$filterTahun;
         } elseif (!empty($filterBulan)) {
             $wherePeriodeNp  = " AND MONTH(date) = " . (int)$filterBulan;
             $wherePeriodeLap = " AND MONTH(tanggal) = " . (int)$filterBulan;
+            $wherePeriodePk  = " AND MONTH(bulan) = " . (int)$filterBulan;
         }
 
         // Generator CASE mapping ID untuk akun ganda / akun jabatan yang dimerge
@@ -429,7 +433,9 @@ class Task_proyek extends CI_Controller
                 COALESCE(np.avg_nilai_point, lap.avg_nilai_lap) AS avg_nilai_laporan,
                 COALESCE(np.total_poin_laporan, lap.total_poin_lap, 0) AS total_poin_laporan,
                 COALESCE(penc.avg_nilai_pencapaian, lap_penc.avg_nilai_lap_penc) AS avg_nilai_pencapaian,
-                COALESCE(penc.total_pencapaian, lap_penc.total_lap_penc, 0) AS total_pencapaian
+                COALESCE(penc.total_pencapaian, lap_penc.total_lap_penc, 0) AS total_pencapaian,
+                COALESCE(pk.avg_nilai_pk, NULL) AS avg_nilai_pk,
+                COALESCE(pk.total_pk, 0) AS total_pk
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
             LEFT JOIN (
@@ -523,12 +529,22 @@ class Task_proyek extends CI_Controller
                 WHERE status != 3 AND (nilai_pencapaian_a > 0 OR nilai_pencapaian_b > 0) {$wherePeriodeLap}
                 GROUP BY {$caseLap}
             ) lap_penc ON lap_penc.id_pengaju = p.pengguna_id
+            LEFT JOIN (
+                SELECT 
+                    {$caseNp} AS id_pengguna,
+                    COUNT(*) AS total_pk,
+                    ROUND(AVG(nilai), 1) AS avg_nilai_pk
+                FROM product_knowledge
+                WHERE (nilai IS NOT NULL AND nilai > 0) {$wherePeriodePk}
+                GROUP BY {$caseNp}
+            ) pk ON pk.id_pengguna = p.pengguna_id
             WHERE p.status = 1 {$excludeMergedSql} AND (
                 tsk.total_task > 0 
                 OR np.avg_nilai_point IS NOT NULL 
                 OR lap.avg_nilai_lap IS NOT NULL 
                 OR penc.avg_nilai_pencapaian IS NOT NULL
                 OR lap_penc.avg_nilai_lap_penc IS NOT NULL
+                OR pk.avg_nilai_pk IS NOT NULL
             )
         ")->result();
 
@@ -539,64 +555,65 @@ class Task_proyek extends CI_Controller
             $hasTask = ($lb->avg_bintang !== null && (int)$lb->task_selesai > 0);
             $hasLap  = ($lb->avg_nilai_laporan !== null);
             $hasPenc = ($lb->avg_nilai_pencapaian !== null);
+            $hasPk   = ($lb->avg_nilai_pk !== null);
 
             $skorTask = $hasTask ? round(((float)$lb->avg_bintang / 5) * 100, 1) : null;
             $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
             $skorPenc = $hasPenc ? round((float)$lb->avg_nilai_pencapaian, 1) : null;
+            $skorPk   = $hasPk ? round((float)$lb->avg_nilai_pk, 1) : null;
 
             // Target Bulanan Volume Kuantitas Wajar (Baseline Produktivitas)
-            // Task: min 2 task selesai | Laporan: min 120 poin | Pencapaian: min 10 item
+            // Task: min 2 task selesai | Laporan: min 120 poin | Pencapaian: min 10 item | PK: min 1 kuis
             $volTask = min(100.0, ((int)$lb->task_selesai / 2) * 100.0);
             $volLap  = min(100.0, ((int)$lb->total_poin_laporan / 120) * 100.0);
             $volPenc = min(100.0, ((int)$lb->total_pencapaian / 10) * 100.0);
+            $volPk   = min(100.0, ((int)$lb->total_pk / 1) * 100.0);
 
             // 1. Hitung Skor Mutu (Kualitas Rata-rata) & Skor Produktivitas (Volume)
-            if ($hasTask && $hasLap && $hasPenc) {
-                // Lengkap 3 Pilar: 40% Task + 30% Lap + 30% Penc
-                $skorMutu = round(($skorTask * 0.40) + ($skorLap * 0.30) + ($skorPenc * 0.30), 1);
-                $skorProd = round(($volTask * 0.40) + ($volLap * 0.30) + ($volPenc * 0.30), 1);
-                $komposisi = '40% Task + 30% Lap + 30% Penc';
-                $statusNilai = 'lengkap';
-                $isEligiblePodium = true;
-            } elseif ($hasTask && $hasLap && !$hasPenc) {
-                // Task + Lap (Parsial 2 Pilar)
-                $skorMutu = round((($skorTask * 0.40) + ($skorLap * 0.30)) / 0.70, 1);
-                $skorProd = round((($volTask * 0.40) + ($volLap * 0.30)) / 0.70, 1);
-                $komposisi = 'Task + Lap (Parsial)';
-                $statusNilai = 'parsial_2';
-                $isEligiblePodium = false;
-            } elseif ($hasTask && !$hasLap && $hasPenc) {
-                // Task + Penc (Parsial 2 Pilar)
-                $skorMutu = round((($skorTask * 0.40) + ($skorPenc * 0.30)) / 0.70, 1);
-                $skorProd = round((($volTask * 0.40) + ($volPenc * 0.30)) / 0.70, 1);
-                $komposisi = 'Task + Penc (Parsial)';
-                $statusNilai = 'parsial_2';
-                $isEligiblePodium = false;
-            } elseif (!$hasTask && $hasLap && $hasPenc) {
-                // Lap + Penc (Parsial 2 Pilar)
-                $skorMutu = round(($skorLap * 0.50) + ($skorPenc * 0.50), 1);
-                $skorProd = round(($volLap * 0.50) + ($volPenc * 0.50), 1);
-                $komposisi = '50% Lap + 50% Penc (Parsial)';
-                $statusNilai = 'parsial_2';
-                $isEligiblePodium = false;
-            } elseif ($hasTask && !$hasLap && !$hasPenc) {
-                $skorMutu = $skorTask;
-                $skorProd = round($volTask, 1);
-                $komposisi = '100% Task (Parsial)';
-                $statusNilai = 'parsial_1';
-                $isEligiblePodium = false;
-            } elseif (!$hasTask && $hasLap && !$hasPenc) {
-                $skorMutu = $skorLap;
-                $skorProd = round($volLap, 1);
-                $komposisi = '100% Laporan (Parsial)';
-                $statusNilai = 'parsial_1';
-                $isEligiblePodium = false;
-            } elseif (!$hasTask && !$hasLap && $hasPenc) {
-                $skorMutu = $skorPenc;
-                $skorProd = round($volPenc, 1);
-                $komposisi = '100% Pencapaian (Parsial)';
-                $statusNilai = 'parsial_1';
-                $isEligiblePodium = false;
+            // Komposisi 4 Pilar Mutu: 35% Task Proyek + 25% Laporan Mingguan + 25% Pencapaian + 15% Product Knowledge
+            $activePillars = [];
+            $totalWeight = 0;
+
+            if ($hasTask) {
+                $activePillars['Task'] = ['mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.35, 'label' => 'Task'];
+                $totalWeight += 0.35;
+            }
+            if ($hasLap) {
+                $activePillars['Lap'] = ['mutu' => $skorLap, 'prod' => $volLap, 'weight' => 0.25, 'label' => 'Lap'];
+                $totalWeight += 0.25;
+            }
+            if ($hasPenc) {
+                $activePillars['Penc'] = ['mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.25, 'label' => 'Penc'];
+                $totalWeight += 0.25;
+            }
+            if ($hasPk) {
+                $activePillars['PK'] = ['mutu' => $skorPk, 'prod' => $volPk, 'weight' => 0.15, 'label' => 'PK'];
+                $totalWeight += 0.15;
+            }
+
+            if ($totalWeight > 0) {
+                if (count($activePillars) === 4) {
+                    $skorMutu = round(($skorTask * 0.35) + ($skorLap * 0.25) + ($skorPenc * 0.25) + ($skorPk * 0.15), 1);
+                    $skorProd = round(($volTask * 0.35) + ($volLap * 0.25) + ($volPenc * 0.25) + ($volPk * 0.15), 1);
+                    $komposisi = '35% Task + 25% Lap + 25% Penc + 15% PK';
+                    $statusNilai = 'lengkap';
+                    $isEligiblePodium = true;
+                } else {
+                    $sumMutu = 0;
+                    $sumProd = 0;
+                    $parts = [];
+                    foreach ($activePillars as $p) {
+                        $normWeight = $p['weight'] / $totalWeight;
+                        $sumMutu += $p['mutu'] * $normWeight;
+                        $sumProd += $p['prod'] * $normWeight;
+                        $parts[] = round($normWeight * 100) . '% ' . $p['label'];
+                    }
+                    $skorMutu = round($sumMutu, 1);
+                    $skorProd = round($sumProd, 1);
+                    $komposisi = implode(' + ', $parts) . ' (Parsial)';
+                    $statusNilai = 'parsial_' . count($activePillars);
+                    $isEligiblePodium = false;
+                }
             } else {
                 $skorMutu = null;
                 $skorProd = null;
@@ -644,6 +661,9 @@ class Task_proyek extends CI_Controller
             $lb->skor_task          = $skorTask;
             $lb->skor_lap           = $skorLap;
             $lb->skor_penc          = $skorPenc;
+            $lb->skor_pk            = $skorPk;
+            $lb->avg_nilai_pk       = $lb->avg_nilai_pk !== null ? (float)$lb->avg_nilai_pk : null;
+            $lb->total_pk           = (int)$lb->total_pk;
             $lb->skor_mutu          = $skorMutu;
             $lb->skor_prod          = $skorProd;
             $lb->total_pencapaian   = (int)$lb->total_pencapaian;
@@ -665,8 +685,8 @@ class Task_proyek extends CI_Controller
         }
 
         // Urutkan Leaderboard berdasarkan aturan Solusi A (Mutu 80% + Produktivitas 20%):
-        // 1. Evaluasi Lengkap 3 Pilar ('lengkap') diprioritaskan di puncak (Eligible Juara 1, 2, 3)
-        // 2. Evaluasi 2 Pilar di atas 1 Pilar
+        // 1. Evaluasi Lengkap 4 Pilar ('lengkap') diprioritaskan di puncak (Eligible Juara 1, 2, 3)
+        // 2. Evaluasi 3/2/1 Pilar di bawahnya
         // 3. Skor Akhir tertinggi (NULL paling bawah)
         // 4. Skor Produktivitas tertinggi
         // 5. Task selesai terbanyak
@@ -678,7 +698,8 @@ class Task_proyek extends CI_Controller
             if ($b->skor_akhir === null) return -1;
 
             $prioMap = [
-                'lengkap'       => 3,
+                'lengkap'       => 4,
+                'parsial_3'     => 3,
                 'parsial_2'     => 2,
                 'parsial_1'     => 1,
                 'belum_dinilai' => 0
@@ -687,14 +708,17 @@ class Task_proyek extends CI_Controller
             $prioB = isset($prioMap[$b->status_nilai]) ? $prioMap[$b->status_nilai] : 0;
 
             if ($prioA !== $prioB) {
-                return $prioB <=> $prioA; // Lengkap 3 pilar paling atas, disusul 2 pilar, lalu 1 pilar
+                return $prioB <=> $prioA; // Lengkap 4 pilar paling atas, disusul parsial
             }
 
             if ($a->skor_akhir == $b->skor_akhir) {
                 if ($a->skor_prod == $b->skor_prod) {
                     if ($a->task_selesai == $b->task_selesai) {
                         if ($a->total_pencapaian == $b->total_pencapaian) {
-                            return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
+                            if ($a->total_pk == $b->total_pk) {
+                                return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
+                            }
+                            return (int)$b->total_pk <=> (int)$a->total_pk;
                         }
                         return (int)$b->total_pencapaian <=> (int)$a->total_pencapaian;
                     }
