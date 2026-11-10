@@ -620,8 +620,115 @@
         transform: scale(1.08);
         transition: transform 0.18s ease;
     }
+
+    @keyframes tpLbLivePing {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.85); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+    @keyframes tpLbBoltZap {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        20% { transform: scale(1.22) rotate(-10deg); }
+        40% { transform: scale(1.12) rotate(8deg); }
+        60% { transform: scale(1) rotate(0deg); }
+    }
+    @keyframes tpLbSlowSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @keyframes tpLbSparkRise {
+        0% { transform: translateY(28px) scale(0.4); opacity: 0; }
+        25% { opacity: 0.75; }
+        80% { opacity: 0.55; }
+        100% { transform: translateY(-95px) scale(1.15); opacity: 0; }
+    }
+    @keyframes tpLbChampionFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+    }
+    @keyframes tpLbMedalBob {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        30% { transform: translateY(-2px) rotate(-6deg); }
+        60% { transform: translateY(-1px) rotate(5deg); }
+    }
+    @keyframes tpLbProgressGlint {
+        0% { left: -40%; }
+        100% { left: 130%; }
+    }
+    @keyframes tpLbStarTwinkle {
+        0%, 100% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.18); filter: brightness(1.25); }
+    }
+    #tab_leaderboard {
+        position: relative;
+    }
+    .tp-lb-live-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4ade80;
+        animation: tpLbLivePing 1.8s infinite;
+    }
+    .tp-lb-bolt-anim {
+        display: inline-block;
+        animation: tpLbBoltZap 2.6s ease-in-out infinite;
+    }
+    .tp-lb-spin-slow {
+        display: inline-block;
+        animation: tpLbSlowSpin 8s linear infinite;
+    }
+    .tp-lb-spark {
+        position: absolute;
+        bottom: -10px;
+        border-radius: 50%;
+        pointer-events: none;
+        background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(250,204,21,0.5) 55%, rgba(250,204,21,0) 100%);
+        animation: tpLbSparkRise linear infinite;
+    }
+    .tp-lb-spark.s1 { left: 8%; width: 7px; height: 7px; animation-duration: 4.5s; animation-delay: 0s; }
+    .tp-lb-spark.s2 { left: 26%; width: 5px; height: 5px; animation-duration: 5.4s; animation-delay: 1.1s; }
+    .tp-lb-spark.s3 { left: 52%; width: 8px; height: 8px; animation-duration: 4.8s; animation-delay: 0.6s; }
+    .tp-lb-spark.s4 { left: 74%; width: 6px; height: 6px; animation-duration: 5.8s; animation-delay: 1.9s; }
+    .tp-lb-spark.s5 { left: 90%; width: 7px; height: 7px; animation-duration: 4.2s; animation-delay: 0.3s; }
+    .tp-lb-podium-1 {
+        animation: tpLbChampionFloat 4.2s ease-in-out infinite;
+    }
+    .tp-lb-podium-1:hover {
+        animation-play-state: paused;
+        transform: translateY(-6px);
+    }
+    .tp-lb-medal-icon {
+        display: inline-block;
+        animation: tpLbMedalBob 2.6s ease-in-out infinite;
+    }
+    .tp-lb-podium-bar-fill {
+        position: relative;
+        overflow: hidden;
+    }
+    .tp-lb-podium-bar-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 35%;
+        height: 100%;
+        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.7), rgba(255,255,255,0));
+        animation: tpLbProgressGlint 2.5s ease-in-out infinite;
+    }
+    #tab_leaderboard .tp-star-display i.fas {
+        display: inline-block;
+        animation: tpLbStarTwinkle 2.8s ease-in-out infinite;
+    }
+    #tab_leaderboard .tp-star-display i.fas:nth-child(2) { animation-delay: 0.2s; }
+    #tab_leaderboard .tp-star-display i.fas:nth-child(3) { animation-delay: 0.4s; }
+    #tab_leaderboard .tp-star-display i.fas:nth-child(4) { animation-delay: 0.6s; }
+    #tab_leaderboard .tp-star-display i.fas:nth-child(5) { animation-delay: 0.8s; }
     @media (prefers-reduced-motion: reduce) {
         .tp-lb-hero, .tp-lb-trophy-anim, .tp-lb-podium-1::after, .tp-lb-pin-1,
+        .tp-lb-live-dot, .tp-lb-bolt-anim, .tp-lb-spin-slow, .tp-lb-spark,
+        .tp-lb-podium-1, .tp-lb-medal-icon, .tp-lb-podium-bar-fill::after,
+        #tab_leaderboard .tp-star-display i.fas,
         #tab_leaderboard.tp-lb-play .tp-lb-anim-card,
         #tab_leaderboard.tp-lb-play .tp-lb-bar-fill,
         #tab_leaderboard.tp-lb-play .tp-lb-podium-bar-fill,
@@ -1553,6 +1660,7 @@ $namaBulanList = [
 
                 <!-- ================= TAB 3: LEADERBOARD KPI & EVALUASI KARYAWAN ================= -->
                 <div id="tab_leaderboard" class="tab-pane" role="tabpanel">
+                    <canvas id="tpLbConfettiCanvas" style="position:absolute; top:0; left:0; width:100%; height:440px; pointer-events:none; z-index:25;"></canvas>
                     <?php
                     $scoredLeaders = [];
                     foreach ($leaderboard as $cand) {
@@ -1590,13 +1698,21 @@ $namaBulanList = [
 
                     <!-- Hero Header Energetic -->
                     <div class="tp-lb-hero">
+                        <span class="tp-lb-spark s1"></span>
+                        <span class="tp-lb-spark s2"></span>
+                        <span class="tp-lb-spark s3"></span>
+                        <span class="tp-lb-spark s4"></span>
+                        <span class="tp-lb-spark s5"></span>
                         <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 14px; position: relative; z-index: 1;">
                             <div>
                                 <div class="d-flex align-items-center flex-wrap mb-2" style="gap: 8px;">
-                                    <span class="badge px-2 py-1" style="background: #facc15; color: #713f12; font-weight: 800; font-size: 11px; border-radius: 999px;">
-                                        <i class="fas fa-bolt mr-1"></i> ARENA KPI <?= strtoupper(htmlspecialchars($semLabel ?? '')) ?>
+                                    <span class="tp-lb-chip" style="background: rgba(34, 197, 94, 0.22); border-color: rgba(134, 239, 172, 0.45);">
+                                        <span class="tp-lb-live-dot"></span> LIVE KLASEMEN
                                     </span>
-                                    <span class="tp-lb-chip"><i class="fas fa-sync-alt"></i> Reset Per Semester</span>
+                                    <span class="badge px-2 py-1" style="background: #facc15; color: #713f12; font-weight: 800; font-size: 11px; border-radius: 999px;">
+                                        <i class="fas fa-bolt mr-1 tp-lb-bolt-anim"></i> ARENA KPI <?= strtoupper(htmlspecialchars($semLabel ?? '')) ?>
+                                    </span>
+                                    <span class="tp-lb-chip"><i class="fas fa-sync-alt tp-lb-spin-slow"></i> Reset Per Semester</span>
                                     <span class="tp-lb-chip"><i class="fas fa-balance-scale"></i> 80% Mutu + 20% Volume</span>
                                 </div>
                                 <h4 class="font-weight-bold mb-1" style="color: #ffffff; letter-spacing: -0.3px;">
@@ -1640,7 +1756,7 @@ $namaBulanList = [
                                     <div class="tp-lb-podium-card <?= $podiumCardClasses[$pos] ?> tp-lb-anim-card tp-lb-delay-<?= $pos ?>">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <span class="badge px-2 py-1 <?= $pos === 1 ? 'tp-lb-pin-1' : '' ?>" style="font-size:12.5px; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;">
-                                                <?= $pin['icon'] ?> <?= $pos === 1 ? 'JUARA #1' : ('RANK #' . $pos) ?>
+                                                <span class="tp-lb-medal-icon"><?= $pin['icon'] ?></span> <?= $pos === 1 ? 'JUARA #1' : ('RANK #' . $pos) ?>
                                             </span>
                                             <div class="d-flex align-items-center" style="gap: 5px;">
                                                 <?php if ((int)($p->sp_level ?? 0) > 0): ?>
@@ -1774,7 +1890,7 @@ $namaBulanList = [
                                         <tr class="<?= trim($rowCls) ?>">
                                             <td class="text-center font-weight-bold align-middle" data-order="<?= $rank ?>">
                                                 <?php if ($hasPin): $pin = $topPins[$rank]; ?>
-                                                    <span class="badge px-2 py-1" style="font-size:12.5px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800; box-shadow:0 2px 5px rgba(15,23,42,.08);" title="<?= $pin['title'] ?>"><?= $pin['icon'] ?> #<?= $rank ?></span>
+                                                    <span class="badge px-2 py-1 <?= $rank === 1 ? 'tp-lb-pin-1' : '' ?>" style="font-size:12.5px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800; box-shadow:0 2px 5px rgba(15,23,42,.08);" title="<?= $pin['title'] ?>"><span class="tp-lb-medal-icon"><?= $pin['icon'] ?></span> #<?= $rank ?></span>
                                                 <?php else: ?>
                                                     <span class="text-muted font-weight-semibold">#<?= $rank ?></span>
                                                 <?php endif; ?>
@@ -2621,6 +2737,73 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [] });
     }
 
+    // Animasi confetti podium ringan saat tab Leaderboard KPI dibuka
+    var confettiRafId = null;
+    function launchLeaderboardConfetti() {
+        var canvas = document.getElementById('tpLbConfettiCanvas');
+        var tabEl = document.getElementById('tab_leaderboard');
+        if (!canvas || !tabEl || !canvas.getContext) return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        if (confettiRafId) {
+            window.cancelAnimationFrame(confettiRafId);
+            confettiRafId = null;
+        }
+        canvas.width = tabEl.clientWidth || 800;
+        canvas.height = 440;
+        var ctx = canvas.getContext('2d');
+        var colors = ['#facc15', '#38bdf8', '#4ade80', '#f472b6', '#a78bfa', '#fb923c'];
+        var pieces = [];
+        for (var i = 0; i < 64; i++) {
+            pieces.push({
+                x: (canvas.width * 0.15) + Math.random() * (canvas.width * 0.7),
+                y: -15 - Math.random() * 80,
+                w: 5 + Math.random() * 6,
+                h: 3 + Math.random() * 5,
+                vx: (Math.random() - 0.5) * 3.4,
+                vy: 1.8 + Math.random() * 3.2,
+                rot: Math.random() * Math.PI * 2,
+                vRot: (Math.random() - 0.5) * 0.18,
+                color: colors[i % colors.length],
+                alpha: 0.95
+            });
+        }
+        var startTime = null;
+        function drawConfetti(ts) {
+            if (!startTime) startTime = ts;
+            var elapsed = ts - startTime;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var alive = false;
+            for (var j = 0; j < pieces.length; j++) {
+                var p = pieces[j];
+                p.x += p.vx + Math.sin(elapsed * 0.004 + j) * 0.45;
+                p.y += p.vy;
+                p.vy += 0.025;
+                p.rot += p.vRot;
+                if (elapsed > 1700) {
+                    p.alpha = Math.max(0, p.alpha - 0.022);
+                }
+                if (p.alpha > 0.02 && p.y < canvas.height + 20) {
+                    alive = true;
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+            }
+            if (alive && elapsed < 3200) {
+                confettiRafId = window.requestAnimationFrame(drawConfetti);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                confettiRafId = null;
+            }
+        }
+        confettiRafId = window.requestAnimationFrame(drawConfetti);
+    }
+
     // Animasi & count-up angka saat tab Leaderboard KPI dibuka
     var lbAnimTimer = null;
     function playLeaderboardAnimations() {
@@ -2633,6 +2816,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $tabLb.find('#datatable_leaderboard tbody tr').each(function(idx) {
             $(this).css('animation-delay', Math.min(idx * 0.03, 0.45) + 's');
         });
+
+        launchLeaderboardConfetti();
 
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             return;
