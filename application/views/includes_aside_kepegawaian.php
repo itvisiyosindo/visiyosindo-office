@@ -350,13 +350,6 @@
 						</ul>
 					</li>
 
-					<li class="<?= in_array($page_name, ['evaluasi_lisan/v_evaluasi_lisan']) ? 'nav-active' : '' ?>">
-						<a class="nav-link" href="<?= base_url('evaluasi_lisan') ?>">
-							<i class="fas fa-comments text-info" aria-hidden="true"></i>
-							<span>Evaluasi Lisan & Konseling</span>
-						</a>
-					</li>
-
 					<!-- Menu Audit (Audit Kinerja & Audit Keuangan: Hanya untuk Atasan, HRD, Auditor, & Manajemen) -->
 					<?php
 					$is_auditor_or_head = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array((string)sessPenggunaId(), ['1', '744', '29', '69', '58', '33', '23', '54', '107']));

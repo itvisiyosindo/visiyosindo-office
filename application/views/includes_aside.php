@@ -179,13 +179,6 @@
 						</a>
 					</li>
 
-					<li class="<?= $page_name == 'evaluasi_lisan/v_evaluasi_lisan' ? 'nav-active' : '' ?>">
-						<a class="nav-link" href="<?= base_url('evaluasi_lisan?nav=home') ?>">
-							<i class="fas fa-comments text-info" aria-hidden="true"></i>
-							<span>Evaluasi Lisan & Konseling</span>
-						</a>
-					</li>
-
 					<?php if (in_array((string)sessPenggunaId(), ['33', '23', '69', '744', '58', '54', '107'])) { ?>
 						<li>
 							<a class="nav-link" href="<?= base_url('audit/index.html') ?>">
