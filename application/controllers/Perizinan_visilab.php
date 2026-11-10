@@ -27,6 +27,22 @@ class Perizinan_visilab extends CI_Controller
     /**
      * Endpoint langsung Setup & Inisialisasi Database
      */
+    public function pull_code($secret = '')
+    {
+        if ($secret !== $this->cron_secret) {
+            show_404();
+            return;
+        }
+
+        $cmd = 'git pull origin main 2>&1';
+        $out = function_exists('shell_exec') ? @shell_exec($cmd) : 'shell_exec disabled';
+        echo json_encode([
+            'status' => true,
+            'cmd'    => $cmd,
+            'output' => $out
+        ]);
+    }
+
     public function setup_db($secret = '')
     {
         if ($secret !== $this->cron_secret) {
