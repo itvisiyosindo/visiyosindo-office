@@ -368,6 +368,171 @@
         cursor: pointer;
         background-color: #ffffff !important;
     }
+
+    /* =========================================================================
+       ENERGIC & MODERN LEADERBOARD KPI UI
+       ========================================================================= */
+    .tp-lb-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        padding: 20px 22px;
+        margin-bottom: 18px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 48%, #0284c7 100%);
+        box-shadow: 0 10px 28px rgba(2, 132, 199, 0.22);
+    }
+    .tp-lb-hero::before {
+        content: '';
+        position: absolute;
+        top: -45px;
+        right: -35px;
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(250, 204, 21, 0.28) 0%, rgba(250, 204, 21, 0) 70%);
+        pointer-events: none;
+    }
+    .tp-lb-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -60px;
+        left: 20%;
+        width: 220px;
+        height: 140px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0) 70%);
+        pointer-events: none;
+    }
+    .tp-lb-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        color: #f8fafc;
+        backdrop-filter: blur(4px);
+    }
+    .tp-lb-podium-card {
+        position: relative;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 16px 18px;
+        height: 100%;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+    }
+    .tp-lb-podium-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.11);
+    }
+    .tp-lb-podium-1 {
+        border: 2px solid #facc15;
+        background: linear-gradient(180deg, #fefce8 0%, #ffffff 42%);
+        box-shadow: 0 10px 26px rgba(234, 179, 8, 0.18);
+    }
+    .tp-lb-podium-2 {
+        border: 1.5px solid #cbd5e1;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 42%);
+    }
+    .tp-lb-podium-3 {
+        border: 1.5px solid #fdba74;
+        background: linear-gradient(180deg, #fff7ed 0%, #ffffff 42%);
+    }
+    .tp-lb-mini-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 11px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tp-lb-mini-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+    .tp-lb-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 12.5px;
+        color: #ffffff;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+        letter-spacing: 0.4px;
+    }
+    .tp-lb-avatar-lg {
+        width: 44px;
+        height: 44px;
+        font-size: 15px;
+    }
+    .tp-lb-table-card {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        padding: 14px;
+        box-shadow: 0 6px 22px rgba(15, 23, 42, 0.05);
+    }
+    #datatable_leaderboard thead th {
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%) !important;
+        color: #1e293b;
+        font-size: 11.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid #cbd5e1 !important;
+        vertical-align: middle;
+        padding-top: 11px;
+        padding-bottom: 11px;
+    }
+    #datatable_leaderboard tbody tr {
+        transition: background-color 0.15s ease;
+    }
+    #datatable_leaderboard tbody tr:hover td {
+        background-color: #f8fafc !important;
+    }
+    #datatable_leaderboard tbody tr.tp-lb-rank-1 td:first-child { box-shadow: inset 4px 0 0 #eab308; }
+    #datatable_leaderboard tbody tr.tp-lb-rank-2 td:first-child { box-shadow: inset 4px 0 0 #64748b; }
+    #datatable_leaderboard tbody tr.tp-lb-rank-3 td:first-child { box-shadow: inset 4px 0 0 #ea580c; }
+    #datatable_leaderboard tbody tr.tp-lb-rank-4 td:first-child { box-shadow: inset 4px 0 0 #2563eb; }
+    #datatable_leaderboard tbody tr.tp-lb-rank-5 td:first-child { box-shadow: inset 4px 0 0 #7c3aed; }
+    #datatable_leaderboard tbody tr.tp-lb-is-me td {
+        background-color: #eff6ff !important;
+    }
+    .tp-lb-bar-track {
+        width: 56px;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        margin: 4px auto 3px;
+        overflow: hidden;
+    }
+    .tp-lb-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+    }
+    .tp-lb-score-pill {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 10px;
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+    }
 </style>
 
 <?php
@@ -1290,235 +1455,393 @@ $namaBulanList = [
 
                 <!-- ================= TAB 3: LEADERBOARD KPI & EVALUASI KARYAWAN ================= -->
                 <div id="tab_leaderboard" class="tab-pane" role="tabpanel">
-                    <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
-                        <div>
-                            <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Leaderboard <?= htmlspecialchars($semLabel ?? '') ?> (Direset Per Semester &bull; Ratio 80% Mutu + 20% Volume):</strong>
-                            <strong>Reguler:</strong> 25% Task Proyek + 20% Laporan + 15% Pencapaian + 10% Product Knowledge + 15% Absensi + 15% Evaluasi Semester
-                            <span class="text-muted">(Bebas Product Knowledge: 30% Task + 20% Lap + 20% Penc + 15% Absensi + 15% Evaluasi)</span>.
-                            Keterlambatan absen mengurangi poin; Evaluasi yang belum diisi dianggap belum dinilai dulu.
-                            <strong>Plafon SP:</strong> SP0 Maks 100% &bull; SP1 Maks 80% &bull; SP2 Maks 60% &bull; SP3 Maks 40%.
-                        </div>
-                        <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
-                            <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
-                            <span class="badge badge-primary px-2 py-1">Grade B: 75–84 (Baik)</span>
-                            <span class="badge badge-warning px-2 py-1">Grade C: 65–74 (Cukup)</span>
-                            <span class="badge badge-danger px-2 py-1">Grade D &lt; 65 (Kurang / PIP)</span>
+                    <?php
+                    $scoredLeaders = [];
+                    foreach ($leaderboard as $cand) {
+                        if ($cand->skor_akhir !== null && count($scoredLeaders) < 5) {
+                            $scoredLeaders[] = $cand;
+                        }
+                    }
+                    $getInitials = function($fullName) {
+                        $parts = preg_split('/\s+/', trim((string)$fullName));
+                        $ini = '';
+                        foreach ($parts as $pt) {
+                            if ($pt !== '') {
+                                $ini .= strtoupper(substr($pt, 0, 1));
+                                if (strlen($ini) >= 2) break;
+                            }
+                        }
+                        return $ini !== '' ? $ini : '?';
+                    };
+                    $avatarGradients = [
+                        'linear-gradient(135deg, #2563eb, #0ea5e9)',
+                        'linear-gradient(135deg, #7c3aed, #ec4899)',
+                        'linear-gradient(135deg, #059669, #10b981)',
+                        'linear-gradient(135deg, #ea580c, #f59e0b)',
+                        'linear-gradient(135deg, #4f46e5, #06b6d4)',
+                        'linear-gradient(135deg, #db2777, #f43f5e)',
+                    ];
+                    $topPins = [
+                        1 => ['icon' => '🥇', 'bg' => 'linear-gradient(135deg,#fef08a,#fde047)', 'fg' => '#713f12', 'bd' => '#eab308', 'title' => 'Top 1 Leaderboard'],
+                        2 => ['icon' => '🥈', 'bg' => 'linear-gradient(135deg,#f1f5f9,#cbd5e1)', 'fg' => '#1e293b', 'bd' => '#94a3b8', 'title' => 'Top 2 Leaderboard'],
+                        3 => ['icon' => '🥉', 'bg' => 'linear-gradient(135deg,#ffedd5,#fdba74)', 'fg' => '#7c2d12', 'bd' => '#f97316', 'title' => 'Top 3 Leaderboard'],
+                        4 => ['icon' => '🏅', 'bg' => 'linear-gradient(135deg,#dbeafe,#bfdbfe)', 'fg' => '#1e40af', 'bd' => '#60a5fa', 'title' => 'Top 4 Leaderboard'],
+                        5 => ['icon' => '🏅', 'bg' => 'linear-gradient(135deg,#ede9fe,#ddd6fe)', 'fg' => '#5b21b6', 'bd' => '#a78bfa', 'title' => 'Top 5 Leaderboard'],
+                    ];
+                    ?>
+
+                    <!-- Hero Header Energetic -->
+                    <div class="tp-lb-hero">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 14px; position: relative; z-index: 1;">
+                            <div>
+                                <div class="d-flex align-items-center flex-wrap mb-2" style="gap: 8px;">
+                                    <span class="badge px-2 py-1" style="background: #facc15; color: #713f12; font-weight: 800; font-size: 11px; border-radius: 999px;">
+                                        <i class="fas fa-bolt mr-1"></i> ARENA KPI <?= strtoupper(htmlspecialchars($semLabel ?? '')) ?>
+                                    </span>
+                                    <span class="tp-lb-chip"><i class="fas fa-sync-alt"></i> Reset Per Semester</span>
+                                    <span class="tp-lb-chip"><i class="fas fa-balance-scale"></i> 80% Mutu + 20% Volume</span>
+                                </div>
+                                <h4 class="font-weight-bold mb-1" style="color: #ffffff; letter-spacing: -0.3px;">
+                                    <i class="fas fa-trophy text-warning mr-2"></i>Klasemen Performa Karyawan Terbaik
+                                </h4>
+                                <div class="d-flex align-items-center flex-wrap mt-2" style="gap: 6px;">
+                                    <span class="tp-lb-chip">Task 25%</span>
+                                    <span class="tp-lb-chip">Laporan 20%</span>
+                                    <span class="tp-lb-chip">Pencapaian 15%</span>
+                                    <span class="tp-lb-chip">Product Knowledge 10%</span>
+                                    <span class="tp-lb-chip">Absensi 15% <small style="opacity:.85;">(Telat -poin)</small></span>
+                                    <span class="tp-lb-chip">Evaluasi Smt 15%</span>
+                                    <span class="tp-lb-chip" style="background: rgba(239, 68, 68, 0.28); border-color: rgba(252, 165, 165, 0.45);">
+                                        <i class="fas fa-shield-alt"></i> Plafon SP: SP0 100% &bull; SP1 80% &bull; SP2 60% &bull; SP3 40%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
+                                <span class="badge badge-success px-2 py-1" style="border-radius: 8px;">Grade A &ge; 85</span>
+                                <span class="badge badge-primary px-2 py-1" style="border-radius: 8px;">Grade B 75–84</span>
+                                <span class="badge badge-warning px-2 py-1" style="border-radius: 8px;">Grade C 65–74</span>
+                                <span class="badge badge-danger px-2 py-1" style="border-radius: 8px;">Grade D &lt; 65</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover mb-0" id="datatable_leaderboard">
-                            <thead>
-                                <tr style="background: #f8fafc;">
-                                    <th class="text-center align-middle" style="min-width: 74px;">Rank</th>
-                                    <th class="align-middle">Nama Karyawan</th>
-                                    <th class="align-middle">Jabatan</th>
-                                    <th class="text-center align-middle" style="min-width: 110px;">
-                                        <div>Task Proyek</div>
-                                        <small class="badge badge-primary" style="font-size: 10px;">Mutu 25%</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 115px;">
-                                        <div>Laporan</div>
-                                        <small class="badge badge-info" style="font-size: 10px;">Mutu 20%</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 110px;">
-                                        <div>Pencapaian</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 15%</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 130px;">
-                                        <div>Product Knowledge</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #0d9488;">Mutu 10%</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 115px;">
-                                        <div>Absensi</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #0284c7;">Mutu 15%</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 115px;">
-                                        <div>Evaluasi Smt</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #6366f1;">Mutu 15%</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 100px;">
-                                        <div>Status SP</div>
-                                        <small class="badge badge-dark" style="font-size: 10px;">Plafon Maks</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 130px; background: #f0fdf4;">
-                                        <div class="text-success font-weight-bold">Skor Akhir</div>
-                                        <small class="text-muted" style="font-size: 10px;">80% Mutu + 20% Vol</small>
-                                    </th>
-                                    <th class="text-center align-middle" style="min-width: 130px;">Rating Agregat</th>
-                                    <th class="text-center align-middle" width="120">Grade Kinerja</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $topPins = [
-                                    1 => ['icon' => '🥇', 'bg' => '#fef08a', 'fg' => '#854d0e', 'bd' => '#eab308', 'title' => 'Top 1 Leaderboard'],
-                                    2 => ['icon' => '🥈', 'bg' => '#e2e8f0', 'fg' => '#334155', 'bd' => '#94a3b8', 'title' => 'Top 2 Leaderboard'],
-                                    3 => ['icon' => '🥉', 'bg' => '#fed7aa', 'fg' => '#9a3412', 'bd' => '#f97316', 'title' => 'Top 3 Leaderboard'],
-                                    4 => ['icon' => '🏅', 'bg' => '#dbeafe', 'fg' => '#1e40af', 'bd' => '#60a5fa', 'title' => 'Top 4 Leaderboard'],
-                                    5 => ['icon' => '🏅', 'bg' => '#ede9fe', 'fg' => '#5b21b6', 'bd' => '#a78bfa', 'title' => 'Top 5 Leaderboard'],
-                                ];
-                                $rank = 1;
-                                foreach ($leaderboard as $lb):
-                                    $selesai = (int)$lb->task_selesai;
-                                    $isMe    = (!empty($myReceiverIds) && is_array($myReceiverIds)) ? in_array((int)$lb->pengguna_id, $myReceiverIds, true) : ((int)$lb->pengguna_id === (int)$myId);
-                                ?>
-                                    <tr <?= $isMe ? 'style="background-color: #f0f9ff;"' : '' ?>>
-                                        <td class="text-center font-weight-bold align-middle" data-order="<?= $rank ?>">
-                                            <?php if ($lb->skor_akhir !== null && isset($topPins[$rank])): $pin = $topPins[$rank]; ?>
-                                                <span class="badge px-2 py-1" style="font-size:12.5px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;" title="<?= $pin['title'] ?>"><?= $pin['icon'] ?> #<?= $rank ?></span>
-                                            <?php else: ?>
-                                                <span class="text-muted font-weight-semibold">#<?= $rank ?></span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="align-middle">
-                                            <strong><?= htmlspecialchars($lb->nama) ?></strong>
-                                            <?php if ($isMe): ?>
-                                                <span class="badge badge-primary ml-1" style="font-size: 10px;">Saya</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="align-middle">
-                                            <span><?= htmlspecialchars($lb->jabatan ?: '-') ?></span>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->skor_task !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 14px; color: #1e293b;"><?= number_format($lb->skor_task, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 11px;">
-                                                    <i class="fas fa-star text-warning"></i> <?= number_format($lb->avg_bintang, 2) ?> <span class="text-muted">(<?= $selesai ?> task)</span>
+                    <!-- Top 3 Champions Podium & Rank 4-5 Spotlight -->
+                    <?php if (!empty($scoredLeaders)): ?>
+                        <div class="row mb-3" style="row-gap: 14px;">
+                            <?php
+                            $podiumOrderClasses = [1 => 'order-1 order-md-2', 2 => 'order-2 order-md-1', 3 => 'order-3 order-md-3'];
+                            $podiumCardClasses  = [1 => 'tp-lb-podium-1', 2 => 'tp-lb-podium-2', 3 => 'tp-lb-podium-3'];
+                            foreach ($scoredLeaders as $idx => $p):
+                                $pos = $idx + 1;
+                                if ($pos > 3) break;
+                                $pin = $topPins[$pos];
+                                $avBg = $avatarGradients[((int)$p->pengguna_id) % count($avatarGradients)];
+                                $isPodiumMe = (!empty($myReceiverIds) && is_array($myReceiverIds)) ? in_array((int)$p->pengguna_id, $myReceiverIds, true) : ((int)$p->pengguna_id === (int)$myId);
+                            ?>
+                                <div class="col-md-4 <?= $podiumOrderClasses[$pos] ?>">
+                                    <div class="tp-lb-podium-card <?= $podiumCardClasses[$pos] ?>">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="badge px-2 py-1" style="font-size:12.5px; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;">
+                                                <?= $pin['icon'] ?> <?= $pos === 1 ? 'JUARA #1' : ('RANK #' . $pos) ?>
+                                            </span>
+                                            <div class="d-flex align-items-center" style="gap: 5px;">
+                                                <?php if ((int)($p->sp_level ?? 0) > 0): ?>
+                                                    <span class="badge badge-danger px-2 py-1" style="font-size: 10px; border-radius: 999px;"><?= htmlspecialchars($p->sp_label) ?> Cap <?= (int)$p->sp_cap ?>%</span>
+                                                <?php endif; ?>
+                                                <span class="badge <?= $p->grade_badge ?> px-2 py-1" style="font-size: 10.5px; border-radius: 999px;">Grade <?= $p->grade ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between" style="gap: 10px;">
+                                            <div class="d-flex align-items-center" style="gap: 11px; min-width: 0;">
+                                                <div class="tp-lb-avatar tp-lb-avatar-lg" style="background: <?= $avBg ?>;">
+                                                    <?= $getInitials($p->nama) ?>
                                                 </div>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum ada task</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->skor_lap !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 14px; color: #0284c7;"><?= number_format($lb->skor_lap, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 11px;">
-                                                    Poin: <?= number_format($lb->total_poin_laporan, 0) ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum dinilai</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->skor_penc !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 14px; color: #7c3aed;"><?= number_format($lb->skor_penc, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 11px;">
-                                                    <i class="fas fa-award mr-1" style="color: #8b5cf6;"></i><?= (int)$lb->total_pencapaian ?> item
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum dinilai</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if (!empty($lb->is_exempt_pk)): ?>
-                                                <span class="badge badge-light text-muted px-2 py-1" style="border: 1px dashed #cbd5e1; font-size: 11px;" title="Dikecualikan dari Product Knowledge (HR/GA/Security/Manajemen)">
-                                                    <i class="fas fa-minus-circle mr-1 text-secondary"></i>Bebas PK
-                                                </span>
-                                            <?php elseif ($lb->skor_pk !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 14px; color: #0d9488;"><?= number_format($lb->skor_pk, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 11px;">
-                                                    <i class="fas fa-book-reader mr-1" style="color: #0d9488;"></i><?= (int)$lb->total_pk ?> kuis
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum kuis</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->skor_abs !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 14px; color: #0369a1;"><?= number_format($lb->skor_abs, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 11px;">
-                                                    <?= (int)$lb->abs_hari_hadir ?>/<?= (int)$lb->abs_hari_kerja ?> hr
-                                                    <?php if ((int)$lb->abs_hari_terlambat > 0): ?>
-                                                        <span class="badge badge-danger px-1 py-0 ml-1" style="font-size: 9.5px;"><?= (int)$lb->abs_hari_terlambat ?> telat</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum ada data</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->skor_eval !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 14px; color: #4f46e5;"><?= number_format($lb->skor_eval, 1) ?></div>
-                                                <div class="small text-muted" style="font-size: 11px;">
-                                                    <?= htmlspecialchars($lb->eval_label ?: 'Evaluasi') ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum dinilai</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php
-                                                $spLv = (int)($lb->sp_level ?? 0);
-                                                $spCp = (int)($lb->sp_cap ?? 100);
-                                                $spTooltip = ($spLv > 0 && !empty($lb->sp_kode))
-                                                    ? htmlspecialchars($lb->sp_kode . ' (berlaku s/d ' . $lb->sp_akhir . ')')
-                                                    : 'Tidak ada SP aktif';
-                                            ?>
-                                            <?php if ($spLv === 0): ?>
-                                                <span class="badge badge-light text-success px-2 py-1" style="border: 1px solid #bbf7d0; font-size: 11px;" title="<?= $spTooltip ?>">SP 0</span>
-                                                <div class="small text-muted" style="font-size: 10px;">Maks 100%</div>
-                                            <?php elseif ($spLv === 1): ?>
-                                                <span class="badge badge-warning text-dark px-2 py-1" style="font-size: 11px; font-weight: 700;" title="<?= $spTooltip ?>">SP 1</span>
-                                                <div class="small font-weight-bold text-warning" style="font-size: 10px;">Maks <?= $spCp ?>%</div>
-                                            <?php elseif ($spLv === 2): ?>
-                                                <span class="badge text-white px-2 py-1" style="background: #ea580c; font-size: 11px; font-weight: 700;" title="<?= $spTooltip ?>">SP 2</span>
-                                                <div class="small font-weight-bold" style="color: #ea580c; font-size: 10px;">Maks <?= $spCp ?>%</div>
-                                            <?php else: ?>
-                                                <span class="badge badge-danger px-2 py-1" style="font-size: 11px; font-weight: 700;" title="<?= $spTooltip ?>">SP 3</span>
-                                                <div class="small font-weight-bold text-danger" style="font-size: 10px;">Maks <?= $spCp ?>%</div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle" style="background: #f0fdf4;">
-                                            <?php if ($lb->skor_akhir !== null): ?>
-                                                <div class="font-weight-bold" style="font-size: 17px; color: <?= $lb->grade_color ?>;"><?= number_format($lb->skor_akhir, 1) ?></div>
-                                                <?php if ($lb->status_nilai === 'lengkap'): ?>
-                                                    <div class="small font-weight-bold text-success" style="font-size: 10px;">
-                                                        <i class="fas fa-check-circle text-success mr-1"></i>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
+                                                <div style="min-width: 0;">
+                                                    <div class="font-weight-bold text-dark text-truncate" style="font-size: 14.5px;" title="<?= htmlspecialchars($p->nama) ?>">
+                                                        <?= htmlspecialchars($p->nama) ?>
+                                                        <?php if ($isPodiumMe): ?><span class="badge badge-primary ml-1" style="font-size: 9.5px;">Saya</span><?php endif; ?>
                                                     </div>
-                                                <?php elseif ($lb->status_nilai === 'parsial_no_eval'): ?>
-                                                    <div class="small text-info font-weight-bold" style="font-size: 10px;">
-                                                        <span class="badge badge-info py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Non-Eval</span>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
+                                                    <div class="text-muted small text-truncate" style="font-size: 11.5px;"><?= htmlspecialchars($p->jabatan ?: '-') ?></div>
+                                                    <div class="mt-1" style="font-size: 11px;">
+                                                        <?= renderStarsHtml($p->rating_agregat) ?>
+                                                        <span class="font-weight-bold ml-1" style="color: #d97706;"><?= number_format($p->rating_agregat, 2) ?></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right flex-shrink-0">
+                                                <div class="font-weight-bold" style="font-size: 26px; line-height: 1; color: <?= $p->grade_color ?>;"><?= number_format($p->skor_akhir, 1) ?></div>
+                                                <small class="text-muted" style="font-size: 10px;">Skor Akhir</small>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-2" style="border-top: 1px dashed rgba(148, 163, 184, 0.35);">
+                                            <div class="d-flex justify-content-between small text-muted mb-1" style="font-size: 10.5px;">
+                                                <span>Mutu: <strong class="text-dark"><?= number_format($p->skor_mutu, 1) ?></strong></span>
+                                                <span>Volume: <strong class="text-dark"><?= number_format($p->skor_prod, 0) ?>%</strong></span>
+                                            </div>
+                                            <div style="height: 6px; border-radius: 999px; background: #e2e8f0; overflow: hidden;">
+                                                <div style="height: 100%; width: <?= min(100, max(0, (float)$p->skor_akhir)) ?>%; background: linear-gradient(90deg, #0ea5e9, <?= $p->grade_color ?>); border-radius: 999px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <?php if (count($scoredLeaders) > 3): ?>
+                            <div class="row mb-3" style="row-gap: 10px;">
+                                <?php for ($i = 3; $i < count($scoredLeaders) && $i < 5; $i++):
+                                    $p = $scoredLeaders[$i];
+                                    $pos = $i + 1;
+                                    $pin = $topPins[$pos];
+                                    $avBg = $avatarGradients[((int)$p->pengguna_id) % count($avatarGradients)];
+                                ?>
+                                    <div class="col-md-6">
+                                        <div class="tp-lb-mini-card" style="border-left: 4px solid <?= $pin['bd'] ?>;">
+                                            <div class="d-flex align-items-center" style="gap: 10px; min-width: 0;">
+                                                <span class="badge px-2 py-1" style="font-size:12px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;">
+                                                    <?= $pin['icon'] ?> #<?= $pos ?>
+                                                </span>
+                                                <div class="tp-lb-avatar" style="background: <?= $avBg ?>;"><?= $getInitials($p->nama) ?></div>
+                                                <div style="min-width: 0;">
+                                                    <div class="font-weight-bold text-dark text-truncate" style="font-size: 13.5px;"><?= htmlspecialchars($p->nama) ?></div>
+                                                    <div class="text-muted small text-truncate" style="font-size: 11px;"><?= htmlspecialchars($p->jabatan ?: '-') ?></div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center flex-shrink-0" style="gap: 8px;">
+                                                <span class="badge <?= $p->grade_badge ?> px-2 py-1" style="font-size: 10.5px; border-radius: 999px;">Grade <?= $p->grade ?></span>
+                                                <div class="font-weight-bold" style="font-size: 19px; color: <?= $p->grade_color ?>;"><?= number_format($p->skor_akhir, 1) ?></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endfor; ?>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <div class="tp-lb-table-card">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0" id="datatable_leaderboard">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center align-middle" style="min-width: 78px;">Rank</th>
+                                        <th class="align-middle" style="min-width: 190px;">Nama Karyawan</th>
+                                        <th class="align-middle" style="min-width: 145px;">Jabatan</th>
+                                        <th class="text-center align-middle" style="min-width: 110px;">
+                                            <div>Task Proyek</div>
+                                            <small class="badge badge-primary" style="font-size: 9.5px;">Mutu 25%</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 110px;">
+                                            <div>Laporan</div>
+                                            <small class="badge badge-info" style="font-size: 9.5px;">Mutu 20%</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 110px;">
+                                            <div>Pencapaian</div>
+                                            <small class="badge text-white" style="font-size: 9.5px; background-color: #8b5cf6;">Mutu 15%</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 135px;">
+                                            <div>Product Knowledge</div>
+                                            <small class="badge text-white" style="font-size: 9.5px; background-color: #0d9488;">Mutu 10%</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 115px;">
+                                            <div>Absensi</div>
+                                            <small class="badge text-white" style="font-size: 9.5px; background-color: #0284c7;">Mutu 15%</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 120px;">
+                                            <div>Evaluasi Smt</div>
+                                            <small class="badge text-white" style="font-size: 9.5px; background-color: #6366f1;">Mutu 15%</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 100px;">
+                                            <div>Status SP</div>
+                                            <small class="badge badge-dark" style="font-size: 9.5px;">Plafon Maks</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 135px; background: #ecfdf5 !important;">
+                                            <div class="text-success font-weight-bold">Skor Akhir</div>
+                                            <small class="text-muted" style="font-size: 9.5px;">80% Mutu + 20% Vol</small>
+                                        </th>
+                                        <th class="text-center align-middle" style="min-width: 130px;">Rating Agregat</th>
+                                        <th class="text-center align-middle" style="min-width: 120px;">Grade Kinerja</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $rank = 1;
+                                    foreach ($leaderboard as $lb):
+                                        $selesai   = (int)$lb->task_selesai;
+                                        $isMe      = (!empty($myReceiverIds) && is_array($myReceiverIds)) ? in_array((int)$lb->pengguna_id, $myReceiverIds, true) : ((int)$lb->pengguna_id === (int)$myId);
+                                        $hasPin    = ($lb->skor_akhir !== null && isset($topPins[$rank]));
+                                        $rowCls    = $hasPin ? ('tp-lb-rank-' . $rank) : '';
+                                        if ($isMe) $rowCls .= ' tp-lb-is-me';
+                                        $avBg      = $avatarGradients[((int)$lb->pengguna_id) % count($avatarGradients)];
+                                    ?>
+                                        <tr class="<?= trim($rowCls) ?>">
+                                            <td class="text-center font-weight-bold align-middle" data-order="<?= $rank ?>">
+                                                <?php if ($hasPin): $pin = $topPins[$rank]; ?>
+                                                    <span class="badge px-2 py-1" style="font-size:12.5px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800; box-shadow:0 2px 5px rgba(15,23,42,.08);" title="<?= $pin['title'] ?>"><?= $pin['icon'] ?> #<?= $rank ?></span>
+                                                <?php else: ?>
+                                                    <span class="text-muted font-weight-semibold">#<?= $rank ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="d-flex align-items-center" style="gap: 10px;">
+                                                    <div class="tp-lb-avatar" style="background: <?= $avBg ?>;"><?= $getInitials($lb->nama) ?></div>
+                                                    <div>
+                                                        <strong style="color: #0f172a;"><?= htmlspecialchars($lb->nama) ?></strong>
+                                                        <?php if ($isMe): ?>
+                                                            <span class="badge badge-primary ml-1" style="font-size: 9.5px; border-radius: 999px;">Saya</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="text-secondary" style="font-size: 12.5px;"><?= htmlspecialchars($lb->jabatan ?: '-') ?></span>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->skor_task !== null): ?>
+                                                    <div class="font-weight-bold" style="font-size: 14px; color: #1e293b;"><?= number_format($lb->skor_task, 1) ?></div>
+                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_task) ?>%; background:#2563eb;"></div></div>
+                                                    <div class="small text-muted" style="font-size: 10.5px;">
+                                                        <i class="fas fa-star text-warning"></i> <?= number_format($lb->avg_bintang, 2) ?> (<?= $selesai ?>)
                                                     </div>
                                                 <?php else: ?>
-                                                    <div class="small text-muted" style="font-size: 10px;">
-                                                        <span class="badge badge-warning text-dark py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Parsial</span>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
-                                                    </div>
+                                                    <span class="text-muted small">Belum ada task</span>
                                                 <?php endif; ?>
-                                                <?php if (!empty($lb->is_capped_sp)): ?>
-                                                    <div class="small text-danger font-weight-bold" style="font-size: 9.5px;">
-                                                        Asli <?= number_format($lb->skor_akhir_raw, 1) ?> &rarr; Cap <?= htmlspecialchars($lb->sp_label) ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->skor_lap !== null): ?>
+                                                    <div class="font-weight-bold" style="font-size: 14px; color: #0284c7;"><?= number_format($lb->skor_lap, 1) ?></div>
+                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_lap) ?>%; background:#0ea5e9;"></div></div>
+                                                    <div class="small text-muted" style="font-size: 10.5px;">
+                                                        Poin: <?= number_format($lb->total_poin_laporan, 0) ?>
                                                     </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Belum dinilai</span>
                                                 <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted small">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->skor_akhir !== null): ?>
-                                                <div><?= renderStarsHtml($lb->rating_agregat) ?></div>
-                                                <span class="font-weight-bold ml-1" style="font-size:12px; color:#d97706;"><?= number_format($lb->rating_agregat, 2) ?> / 5.0</span>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum dinilai</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <?php if ($lb->grade !== '-'): ?>
-                                                <span class="badge <?= $lb->grade_badge ?> px-2 py-1" style="font-size: 12px; font-weight: 700; border-radius: 6px;">
-                                                    Grade <?= $lb->grade ?>
-                                                </span>
-                                                <div class="small font-weight-bold mt-1" style="font-size: 11px; color: <?= $lb->grade_color ?>;">
-                                                    <?= htmlspecialchars($lb->grade_label) ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="badge badge-secondary px-2 py-1" style="font-size: 11px;">Belum Dinilai</span>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                <?php $rank++; endforeach; ?>
-                            </tbody>
-                        </table>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->skor_penc !== null): ?>
+                                                    <div class="font-weight-bold" style="font-size: 14px; color: #7c3aed;"><?= number_format($lb->skor_penc, 1) ?></div>
+                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_penc) ?>%; background:#8b5cf6;"></div></div>
+                                                    <div class="small text-muted" style="font-size: 10.5px;">
+                                                        <i class="fas fa-award mr-1" style="color: #8b5cf6;"></i><?= (int)$lb->total_pencapaian ?> item
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Belum dinilai</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if (!empty($lb->is_exempt_pk)): ?>
+                                                    <span class="badge badge-light text-muted px-2 py-1" style="border: 1px dashed #cbd5e1; font-size: 11px; border-radius: 999px;" title="Dikecualikan dari Product Knowledge (HR/GA/Security/Manajemen)">
+                                                        <i class="fas fa-minus-circle mr-1 text-secondary"></i>Bebas PK
+                                                    </span>
+                                                <?php elseif ($lb->skor_pk !== null): ?>
+                                                    <div class="font-weight-bold" style="font-size: 14px; color: #0d9488;"><?= number_format($lb->skor_pk, 1) ?></div>
+                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_pk) ?>%; background:#0d9488;"></div></div>
+                                                    <div class="small text-muted" style="font-size: 10.5px;">
+                                                        <i class="fas fa-book-reader mr-1" style="color: #0d9488;"></i><?= (int)$lb->total_pk ?> kuis
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Belum kuis</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->skor_abs !== null): ?>
+                                                    <div class="font-weight-bold" style="font-size: 14px; color: #0369a1;"><?= number_format($lb->skor_abs, 1) ?></div>
+                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_abs) ?>%; background:#0284c7;"></div></div>
+                                                    <div class="small text-muted" style="font-size: 10.5px;">
+                                                        <?= (int)$lb->abs_hari_hadir ?>/<?= (int)$lb->abs_hari_kerja ?> hr
+                                                        <?php if ((int)$lb->abs_hari_terlambat > 0): ?>
+                                                            <span class="badge badge-danger px-1 py-0 ml-1" style="font-size: 9.5px; border-radius: 999px;"><?= (int)$lb->abs_hari_terlambat ?> telat</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Belum ada data</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->skor_eval !== null): ?>
+                                                    <div class="font-weight-bold" style="font-size: 14px; color: #4f46e5;"><?= number_format($lb->skor_eval, 1) ?></div>
+                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_eval) ?>%; background:#6366f1;"></div></div>
+                                                    <div class="small text-muted" style="font-size: 10.5px;">
+                                                        <?= htmlspecialchars($lb->eval_label ?: 'Evaluasi') ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Belum dinilai</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php
+                                                    $spLv = (int)($lb->sp_level ?? 0);
+                                                    $spCp = (int)($lb->sp_cap ?? 100);
+                                                    $spTooltip = ($spLv > 0 && !empty($lb->sp_kode))
+                                                        ? htmlspecialchars($lb->sp_kode . ' (berlaku s/d ' . $lb->sp_akhir . ')')
+                                                        : 'Tidak ada SP aktif';
+                                                ?>
+                                                <?php if ($spLv === 0): ?>
+                                                    <span class="badge badge-light text-success px-2 py-1" style="border: 1px solid #bbf7d0; font-size: 11px; border-radius: 999px;" title="<?= $spTooltip ?>">SP 0</span>
+                                                    <div class="small text-muted" style="font-size: 10px;">Maks 100%</div>
+                                                <?php elseif ($spLv === 1): ?>
+                                                    <span class="badge badge-warning text-dark px-2 py-1" style="font-size: 11px; font-weight: 700; border-radius: 999px;" title="<?= $spTooltip ?>">SP 1</span>
+                                                    <div class="small font-weight-bold text-warning" style="font-size: 10px;">Maks <?= $spCp ?>%</div>
+                                                <?php elseif ($spLv === 2): ?>
+                                                    <span class="badge text-white px-2 py-1" style="background: #ea580c; font-size: 11px; font-weight: 700; border-radius: 999px;" title="<?= $spTooltip ?>">SP 2</span>
+                                                    <div class="small font-weight-bold" style="color: #ea580c; font-size: 10px;">Maks <?= $spCp ?>%</div>
+                                                <?php else: ?>
+                                                    <span class="badge badge-danger px-2 py-1" style="font-size: 11px; font-weight: 700; border-radius: 999px;" title="<?= $spTooltip ?>">SP 3</span>
+                                                    <div class="small font-weight-bold text-danger" style="font-size: 10px;">Maks <?= $spCp ?>%</div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle" style="background: #f0fdf4;">
+                                                <?php if ($lb->skor_akhir !== null): ?>
+                                                    <div class="tp-lb-score-pill" style="color: <?= $lb->grade_color ?>; background: rgba(255,255,255,0.85); border: 1px solid rgba(16, 185, 129, 0.22);">
+                                                        <?= number_format($lb->skor_akhir, 1) ?>
+                                                    </div>
+                                                    <?php if ($lb->status_nilai === 'lengkap'): ?>
+                                                        <div class="small font-weight-bold text-success mt-1" style="font-size: 10px;">
+                                                            <i class="fas fa-check-circle text-success mr-1"></i>Mutu <?= number_format($lb->skor_mutu, 1) ?> &bull; Vol <?= number_format($lb->skor_prod, 0) ?>%
+                                                        </div>
+                                                    <?php elseif ($lb->status_nilai === 'parsial_no_eval'): ?>
+                                                        <div class="small text-info font-weight-bold mt-1" style="font-size: 10px;">
+                                                            <span class="badge badge-info py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Non-Eval</span>Mutu <?= number_format($lb->skor_mutu, 1) ?> &bull; Vol <?= number_format($lb->skor_prod, 0) ?>%
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <div class="small text-muted mt-1" style="font-size: 10px;">
+                                                            <span class="badge badge-warning text-dark py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Parsial</span>Mutu <?= number_format($lb->skor_mutu, 1) ?> &bull; Vol <?= number_format($lb->skor_prod, 0) ?>%
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($lb->is_capped_sp)): ?>
+                                                        <div class="small text-danger font-weight-bold" style="font-size: 9.5px;">
+                                                            Asli <?= number_format($lb->skor_akhir_raw, 1) ?> &rarr; Cap <?= htmlspecialchars($lb->sp_label) ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->skor_akhir !== null): ?>
+                                                    <div><?= renderStarsHtml($lb->rating_agregat) ?></div>
+                                                    <span class="font-weight-bold ml-1" style="font-size:12px; color:#d97706;"><?= number_format($lb->rating_agregat, 2) ?> / 5.0</span>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Belum dinilai</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <?php if ($lb->grade !== '-'): ?>
+                                                    <span class="badge <?= $lb->grade_badge ?> px-2 py-1" style="font-size: 11.5px; font-weight: 700; border-radius: 999px;">
+                                                        Grade <?= $lb->grade ?>
+                                                    </span>
+                                                    <div class="small font-weight-bold mt-1" style="font-size: 11px; color: <?= $lb->grade_color ?>;">
+                                                        <?= htmlspecialchars($lb->grade_label) ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="badge badge-secondary px-2 py-1" style="font-size: 11px; border-radius: 999px;">Belum Dinilai</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php $rank++; endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
