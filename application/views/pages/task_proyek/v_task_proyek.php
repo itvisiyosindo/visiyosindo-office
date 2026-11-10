@@ -532,6 +532,104 @@
         font-size: 17px;
         font-weight: 800;
         letter-spacing: -0.3px;
+        transition: transform 0.18s ease;
+    }
+
+    /* =========================================================================
+       ANIMASI ENERGETIK LEADERBOARD KPI
+       ========================================================================= */
+    @keyframes tpLbBgFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes tpLbTrophyFloat {
+        0%, 100% { transform: translateY(0) rotate(-3deg); }
+        50% { transform: translateY(-4px) rotate(4deg); }
+    }
+    @keyframes tpLbCardPop {
+        0% { opacity: 0; transform: translateY(18px) scale(0.97); }
+        70% { opacity: 1; transform: translateY(-3px) scale(1.01); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes tpLbBarSweep {
+        0% { transform: scaleX(0); }
+        100% { transform: scaleX(1); }
+    }
+    @keyframes tpLbGoldPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.45); }
+        50% { box-shadow: 0 0 0 7px rgba(234, 179, 8, 0); }
+    }
+    @keyframes tpLbSheen {
+        0% { transform: translateX(-140%) skewX(-22deg); }
+        45%, 100% { transform: translateX(260%) skewX(-22deg); }
+    }
+    @keyframes tpLbRowSlide {
+        0% { opacity: 0; transform: translateX(-8px); }
+        100% { opacity: 1; transform: translateX(0); }
+    }
+    .tp-lb-hero {
+        background-size: 200% 200%;
+        animation: tpLbBgFlow 10s ease infinite;
+    }
+    .tp-lb-trophy-anim {
+        display: inline-block;
+        animation: tpLbTrophyFloat 2.8s ease-in-out infinite;
+    }
+    .tp-lb-podium-1::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 45%;
+        height: 100%;
+        background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 100%);
+        transform: translateX(-140%) skewX(-22deg);
+        animation: tpLbSheen 5.2s ease-in-out infinite;
+        pointer-events: none;
+    }
+    .tp-lb-pin-1 {
+        animation: tpLbGoldPulse 2.4s ease-in-out infinite;
+    }
+    #tab_leaderboard.tp-lb-play .tp-lb-anim-card {
+        opacity: 0;
+        animation: tpLbCardPop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    #tab_leaderboard.tp-lb-play .tp-lb-delay-1 { animation-delay: 0.05s; }
+    #tab_leaderboard.tp-lb-play .tp-lb-delay-2 { animation-delay: 0.14s; }
+    #tab_leaderboard.tp-lb-play .tp-lb-delay-3 { animation-delay: 0.22s; }
+    #tab_leaderboard.tp-lb-play .tp-lb-delay-4 { animation-delay: 0.30s; }
+    #tab_leaderboard.tp-lb-play .tp-lb-delay-5 { animation-delay: 0.36s; }
+    #tab_leaderboard.tp-lb-play .tp-lb-delay-table { animation-delay: 0.42s; }
+    .tp-lb-bar-fill,
+    .tp-lb-podium-bar-fill {
+        transform-origin: left center;
+    }
+    #tab_leaderboard.tp-lb-play .tp-lb-bar-fill,
+    #tab_leaderboard.tp-lb-play .tp-lb-podium-bar-fill {
+        animation: tpLbBarSweep 0.75s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+        animation-delay: 0.25s;
+    }
+    #tab_leaderboard.tp-lb-play #datatable_leaderboard tbody tr {
+        animation: tpLbRowSlide 0.38s ease backwards;
+    }
+    #datatable_leaderboard tbody tr:hover .tp-lb-score-pill {
+        transform: scale(1.06);
+    }
+    #datatable_leaderboard tbody tr:hover .tp-lb-avatar {
+        transform: scale(1.08);
+        transition: transform 0.18s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .tp-lb-hero, .tp-lb-trophy-anim, .tp-lb-podium-1::after, .tp-lb-pin-1,
+        #tab_leaderboard.tp-lb-play .tp-lb-anim-card,
+        #tab_leaderboard.tp-lb-play .tp-lb-bar-fill,
+        #tab_leaderboard.tp-lb-play .tp-lb-podium-bar-fill,
+        #tab_leaderboard.tp-lb-play #datatable_leaderboard tbody tr {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
     }
 </style>
 
@@ -1502,7 +1600,7 @@ $namaBulanList = [
                                     <span class="tp-lb-chip"><i class="fas fa-balance-scale"></i> 80% Mutu + 20% Volume</span>
                                 </div>
                                 <h4 class="font-weight-bold mb-1" style="color: #ffffff; letter-spacing: -0.3px;">
-                                    <i class="fas fa-trophy text-warning mr-2"></i>Klasemen Performa Karyawan Terbaik
+                                    <i class="fas fa-trophy text-warning mr-2 tp-lb-trophy-anim"></i>Klasemen Performa Karyawan Terbaik
                                 </h4>
                                 <div class="d-flex align-items-center flex-wrap mt-2" style="gap: 6px;">
                                     <span class="tp-lb-chip">Task 25%</span>
@@ -1539,9 +1637,9 @@ $namaBulanList = [
                                 $isPodiumMe = (!empty($myReceiverIds) && is_array($myReceiverIds)) ? in_array((int)$p->pengguna_id, $myReceiverIds, true) : ((int)$p->pengguna_id === (int)$myId);
                             ?>
                                 <div class="col-md-4 <?= $podiumOrderClasses[$pos] ?>">
-                                    <div class="tp-lb-podium-card <?= $podiumCardClasses[$pos] ?>">
+                                    <div class="tp-lb-podium-card <?= $podiumCardClasses[$pos] ?> tp-lb-anim-card tp-lb-delay-<?= $pos ?>">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="badge px-2 py-1" style="font-size:12.5px; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;">
+                                            <span class="badge px-2 py-1 <?= $pos === 1 ? 'tp-lb-pin-1' : '' ?>" style="font-size:12.5px; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;">
                                                 <?= $pin['icon'] ?> <?= $pos === 1 ? 'JUARA #1' : ('RANK #' . $pos) ?>
                                             </span>
                                             <div class="d-flex align-items-center" style="gap: 5px;">
@@ -1569,7 +1667,7 @@ $namaBulanList = [
                                                 </div>
                                             </div>
                                             <div class="text-right flex-shrink-0">
-                                                <div class="font-weight-bold" style="font-size: 26px; line-height: 1; color: <?= $p->grade_color ?>;"><?= number_format($p->skor_akhir, 1) ?></div>
+                                                <div class="font-weight-bold tp-lb-countup" data-score="<?= htmlspecialchars(number_format((float)$p->skor_akhir, 1, '.', '')) ?>" style="font-size: 26px; line-height: 1; color: <?= $p->grade_color ?>;"><?= number_format($p->skor_akhir, 1) ?></div>
                                                 <small class="text-muted" style="font-size: 10px;">Skor Akhir</small>
                                             </div>
                                         </div>
@@ -1579,7 +1677,7 @@ $namaBulanList = [
                                                 <span>Volume: <strong class="text-dark"><?= number_format($p->skor_prod, 0) ?>%</strong></span>
                                             </div>
                                             <div style="height: 6px; border-radius: 999px; background: #e2e8f0; overflow: hidden;">
-                                                <div style="height: 100%; width: <?= min(100, max(0, (float)$p->skor_akhir)) ?>%; background: linear-gradient(90deg, #0ea5e9, <?= $p->grade_color ?>); border-radius: 999px;"></div>
+                                                <div class="tp-lb-podium-bar-fill" style="height: 100%; width: <?= min(100, max(0, (float)$p->skor_akhir)) ?>%; background: linear-gradient(90deg, #0ea5e9, <?= $p->grade_color ?>); border-radius: 999px;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1596,7 +1694,7 @@ $namaBulanList = [
                                     $avBg = $avatarGradients[((int)$p->pengguna_id) % count($avatarGradients)];
                                 ?>
                                     <div class="col-md-6">
-                                        <div class="tp-lb-mini-card" style="border-left: 4px solid <?= $pin['bd'] ?>;">
+                                        <div class="tp-lb-mini-card tp-lb-anim-card tp-lb-delay-<?= $pos ?>" style="border-left: 4px solid <?= $pin['bd'] ?>;">
                                             <div class="d-flex align-items-center" style="gap: 10px; min-width: 0;">
                                                 <span class="badge px-2 py-1" style="font-size:12px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;">
                                                     <?= $pin['icon'] ?> #<?= $pos ?>
@@ -1609,7 +1707,7 @@ $namaBulanList = [
                                             </div>
                                             <div class="d-flex align-items-center flex-shrink-0" style="gap: 8px;">
                                                 <span class="badge <?= $p->grade_badge ?> px-2 py-1" style="font-size: 10.5px; border-radius: 999px;">Grade <?= $p->grade ?></span>
-                                                <div class="font-weight-bold" style="font-size: 19px; color: <?= $p->grade_color ?>;"><?= number_format($p->skor_akhir, 1) ?></div>
+                                                <div class="font-weight-bold tp-lb-countup" data-score="<?= htmlspecialchars(number_format((float)$p->skor_akhir, 1, '.', '')) ?>" style="font-size: 19px; color: <?= $p->grade_color ?>;"><?= number_format($p->skor_akhir, 1) ?></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1618,7 +1716,7 @@ $namaBulanList = [
                         <?php endif; ?>
                     <?php endif; ?>
 
-                    <div class="tp-lb-table-card">
+                    <div class="tp-lb-table-card tp-lb-anim-card tp-lb-delay-table">
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover mb-0" id="datatable_leaderboard">
                                 <thead>
@@ -2521,6 +2619,55 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#datatable_tugas_saya').DataTable({ pageLength: 10, order: [] });
         $('#datatable_tugas_atasan').DataTable({ pageLength: 10, order: [] });
         $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [] });
+    }
+
+    // Animasi & count-up angka saat tab Leaderboard KPI dibuka
+    var lbAnimTimer = null;
+    function playLeaderboardAnimations() {
+        var $tabLb = $('#tab_leaderboard');
+        if (!$tabLb.length) return;
+        $tabLb.removeClass('tp-lb-play');
+        void $tabLb[0].offsetWidth; // paksa reflow agar animasi CSS ulang mulus
+        $tabLb.addClass('tp-lb-play');
+
+        $tabLb.find('#datatable_leaderboard tbody tr').each(function(idx) {
+            $(this).css('animation-delay', Math.min(idx * 0.03, 0.45) + 's');
+        });
+
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+        $tabLb.find('.tp-lb-countup').each(function() {
+            var el = this;
+            var target = parseFloat(el.getAttribute('data-score'));
+            if (isNaN(target)) return;
+            var startTs = null;
+            var duration = 680;
+            function step(ts) {
+                if (!startTs) startTs = ts;
+                var p = Math.min(1, (ts - startTs) / duration);
+                var eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = (target * eased).toFixed(1);
+                if (p < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    el.textContent = target.toFixed(1);
+                }
+            }
+            window.requestAnimationFrame(step);
+        });
+    }
+
+    $('a[href="#tab_leaderboard"]').on('shown.bs.tab click', function() {
+        clearTimeout(lbAnimTimer);
+        lbAnimTimer = setTimeout(function() {
+            if ($('#tab_leaderboard').hasClass('active')) {
+                playLeaderboardAnimations();
+            }
+        }, 45);
+    });
+    if ($('#tab_leaderboard').hasClass('active')) {
+        playLeaderboardAnimations();
     }
 
     // Inisialisasi Select2 pada pilihan karyawan
