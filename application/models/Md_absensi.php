@@ -1073,7 +1073,7 @@ class Md_absensi extends CI_Model
     public function getLuarRadiusList($filterStatus = 'pending', $filterMonth = '')
     {
         $this->ensureLuarRadiusColumns();
-        $this->db->select('a.*, p.nama, p.jabatan, p.no_pegawai, p.no_hp, d.nama_divisi, pga.nama AS nama_acc_ga, pyo.nama AS nama_acc_yola')
+        $this->db->select('a.*, p.nama, p.jabatan, p.no_pegawai, p.no_hp, d.nama AS nama_divisi, pga.nama AS nama_acc_ga, pyo.nama AS nama_acc_yola')
             ->from('absensi a')
             ->join('pengguna p', 'a.pengguna_id = p.pengguna_id', 'left')
             ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
