@@ -25,6 +25,95 @@ class Perizinan_visilab extends CI_Controller
     }
 
     /**
+     * Endpoint langsung Setup & Inisialisasi Database
+     */
+    public function setup_db($secret = '')
+    {
+        if ($secret !== $this->cron_secret) {
+            show_404();
+            return;
+        }
+
+        $sql1 = "CREATE TABLE IF NOT EXISTS `visilab_perizinan_alat` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `nama_instansi` VARCHAR(255) NOT NULL,
+            `pihak_ketiga` VARCHAR(255),
+            `jenis_alat` VARCHAR(255) NOT NULL,
+            `status_jasa` VARCHAR(100) DEFAULT 'Tidak Termasuk Perizinan',
+            `status_perizinan` VARCHAR(100) DEFAULT '-',
+            `progres_perizinan` TEXT,
+            `marketing_id` INT,
+            `marketing_nama` VARCHAR(150),
+            `marketing_nohp` VARCHAR(50),
+            `pic_instansi` VARCHAR(150),
+            `kontak_pic` VARCHAR(50),
+            `email_pic` VARCHAR(150),
+            `tgl_terbit` DATE,
+            `tgl_jatuh_tempo` DATE,
+            `tgl_exp_luk` DATE,
+            `tgl_exp_kalibrasi` DATE,
+            `tgl_evaluasi_tld` DATE,
+            `catatan` TEXT,
+            `reminder_45_sent` TINYINT(1) DEFAULT 0,
+            `last_reminder_at` DATETIME,
+            `reminder_luk_sent` TINYINT(1) DEFAULT 0,
+            `last_reminder_luk_at` DATETIME,
+            `reminder_kalibrasi_sent` TINYINT(1) DEFAULT 0,
+            `last_reminder_kalibrasi_at` DATETIME,
+            `reminder_tld_sent` TINYINT(1) DEFAULT 0,
+            `last_reminder_tld_at` DATETIME,
+            `created_by` INT,
+            `updated_by` INT,
+            `created_at` DATETIME,
+            `updated_at` DATETIME
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+
+        $sql2 = "CREATE TABLE IF NOT EXISTS `visilab_perizinan_history` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `id_perizinan` INT NOT NULL,
+            `jenis_notif` VARCHAR(50) DEFAULT 'progres',
+            `status_lama` VARCHAR(100),
+            `status_baru` VARCHAR(100),
+            `progres_lama` TEXT,
+            `progres_baru` TEXT,
+            `tgl_jatuh_tempo_lama` DATE,
+            `tgl_jatuh_tempo_baru` DATE,
+            `penerima_cust` VARCHAR(50),
+            `penerima_mkt` VARCHAR(50),
+            `keterangan` TEXT,
+            `notif_marketing_sent` TINYINT(1) DEFAULT 0,
+            `notif_visilab_sent` TINYINT(1) DEFAULT 0,
+            `notif_customer_sent` TINYINT(1) DEFAULT 0,
+            `created_by` INT,
+            `created_by_nama` VARCHAR(150),
+            `created_at` DATETIME
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+
+        $q1 = $this->db->query($sql1);
+        $err1 = $this->db->error();
+
+        $q2 = $this->db->query($sql2);
+        $err2 = $this->db->error();
+
+        $seedRes = false;
+        if ($q1) {
+            $countQ = $this->db->query("SELECT COUNT(*) as c FROM visilab_perizinan_alat");
+            if ($countQ && (int)$countQ->row()->c == 0) {
+                $this->md_perizinan_visilab->ensure_table();
+                $seedRes = true;
+            }
+        }
+
+        echo json_encode([
+            'create_perizinan' => $q1,
+            'err1'             => $err1,
+            'create_history'   => $q2,
+            'err2'             => $err2,
+            'seeded'           => $seedRes
+        ]);
+    }
+
+    /**
      * Halaman Utama: Daftar Perizinan Alat Visilab
      */
     public function index()
