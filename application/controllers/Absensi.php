@@ -2420,7 +2420,7 @@ class Absensi extends CI_Controller
         }
 
         // 1. Ambil data Dimas Chandra Winata
-        $dimas = $this->db->select('pengguna_id, nama, npp')
+        $dimas = $this->db->select('pengguna_id, nama, username AS npp')
             ->from('pengguna')
             ->where('pengguna_id', 778)
             ->or_like('nama', 'Dimas Chandra')

@@ -46,7 +46,7 @@ class Md_knowledge extends CI_Model
         }
 
         // Ambil seluruh karyawan aktif
-        $this->db->select('p.pengguna_id, p.nama, p.npp, p.jabatan, d.nama AS nama_divisi');
+        $this->db->select('p.pengguna_id, p.nama, p.username AS npp, p.jabatan, d.nama AS nama_divisi');
         $this->db->from('pengguna p');
         $this->db->join('divisi d', 'd.id_divisi = p.id_divisi', 'left');
         $this->db->where('p.is_active', 1);
@@ -75,7 +75,7 @@ class Md_knowledge extends CI_Model
         $this->db->select('
             p.pengguna_id,
             p.nama,
-            p.npp,
+            p.username AS npp,
             p.jabatan,
             MONTH(k.bulan) AS bulan,
             k.nilai,
@@ -143,7 +143,7 @@ class Md_knowledge extends CI_Model
         }
 
         // 1. Ambil data seluruh pengguna untuk pencocokan (ID, NPP, Nama)
-        $allUsers = $this->db->select('pengguna_id, npp, nama')->from('pengguna')->get()->result();
+        $allUsers = $this->db->select('pengguna_id, username AS npp, nama')->from('pengguna')->get()->result();
         $userById = [];
         $userByNpp = [];
         $userByNama = [];
