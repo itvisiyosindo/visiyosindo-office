@@ -2118,4 +2118,156 @@ class Task_proyek extends CI_Controller
 
         ajaxReturnDie('success', 'Pengajuan task mandiri telah ditolak.', TRUE);
     }
+
+    /**
+     * Set Pihak Mengetahui Task & Kirim Notifikasi WhatsApp
+     */
+    public function set_mengetahui_task($token = '', $kode_task = 'TSK/2026/11/115')
+    {
+        $myId = (int)sessPenggunaId();
+        $isAuth = ($token === 'vysi_medikal_2026') || $this->_isHrdOrAdmin($myId) || isAdmin();
+        if (!$isAuth) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak: token atau sesi tidak valid.']);
+            exit;
+        }
+
+        if (empty($kode_task)) {
+            $kode_task = 'TSK/2026/11/115';
+        }
+
+        // 1. Cari data task berdasarkan kode
+        $task = $this->db->select('t.*, p_terima.nama AS nama_penerima, p_beri.nama AS nama_pemberi, p_acc.nama AS nama_acc')
+            ->from('task_proyek t')
+            ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
+            ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
+            ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
+            ->where('t.kode_task', $kode_task)
+            ->where('t.is_deleted', 0)
+            ->get()
+            ->row();
+
+        if (!$task) {
+            $task = $this->db->select('t.*, p_terima.nama AS nama_penerima, p_beri.nama AS nama_pemberi, p_acc.nama AS nama_acc')
+                ->from('task_proyek t')
+                ->join('pengguna p_terima', 'p_terima.pengguna_id = t.id_penerima', 'left')
+                ->join('pengguna p_beri', 'p_beri.pengguna_id = t.id_pemberi', 'left')
+                ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
+                ->like('t.kode_task', '115')
+                ->where('t.is_deleted', 0)
+                ->get()
+                ->row();
+        }
+
+        if (!$task) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'msg' => 'Task dengan kode ' . $kode_task . ' tidak ditemukan.']);
+            exit;
+        }
+
+        // 2. Cari Bob Ariyos di tabel pengguna
+        $bob = $this->db->select('pengguna_id, nama, jabatan, no_hp, nohp')
+            ->from('pengguna')
+            ->group_start()
+                ->where('pengguna_id', 54)
+                ->or_like('nama', 'Bob Ariyos', 'both')
+            ->group_end()
+            ->where('status', 1)
+            ->get()
+            ->row();
+
+        if (!$bob) {
+            $bob = $this->db->select('pengguna_id, nama, jabatan, no_hp, nohp')
+                ->from('pengguna')
+                ->where('pengguna_id', 54)
+                ->or_like('nama', 'Bob Ariyos', 'both')
+                ->get()
+                ->row();
+        }
+
+        if (!$bob) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'msg' => 'Data pengguna Bob Ariyos tidak ditemukan di database.']);
+            exit;
+        }
+
+        // 3. Update task_proyek
+        $this->db->where('id_task', $task->id_task)->update('task_proyek', [
+            'id_mengetahui' => (int)$bob->pengguna_id
+        ]);
+
+        // 4. Catat Log Aktivitas
+        $this->db->insert('task_proyek_log', [
+            'id_task'     => $task->id_task,
+            'id_pengguna' => ($myId > 0 ? $myId : $task->id_pemberi),
+            'aksi'        => 'Menetapkan Mengetahui: ' . $bob->nama,
+            'catatan'     => 'Menetapkan ' . $bob->nama . ' sebagai pihak Mengetahui dan mengirimkan notifikasi WhatsApp.'
+        ]);
+
+        // 5. Susun dan Kirim Notifikasi WhatsApp ke Bob Ariyos
+        $noHpBob = (!empty($bob->no_hp)) ? $bob->no_hp : ((!empty($bob->nohp)) ? $bob->nohp : '');
+
+        $statusLabels = [
+            0 => 'Baru / Belum Mulai',
+            1 => 'Sedang Dikerjakan',
+            2 => 'Menunggu Penilaian Atasan',
+            3 => 'Perlu Revisi',
+            4 => 'Selesai & Dinilai',
+            5 => 'Menunggu ACC HRD',
+            6 => 'Ditolak HRD'
+        ];
+        $stLabel = isset($statusLabels[(int)$task->status_task]) ? $statusLabels[(int)$task->status_task] : 'Aktif';
+        if (!empty($task->nama_acc)) {
+            $stLabel .= ' (Disetujui HRD: ' . $task->nama_acc . ')';
+        }
+
+        $pelaksanaStr = !empty($task->nama_penerima) ? $task->nama_penerima : 'Karyawan';
+        $pemberiStr = !empty($task->nama_pemberi) ? $task->nama_pemberi : '-';
+        $deadlineStr = !empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-';
+
+        $pesanMengetahui = "[INFO MENGETAHUI] *PEMBERITAHUAN TASK KARYAWAN*" .
+            "%0A%0AHalo *" . $bob->nama . "*," .
+            "%0ASebagai pihak yang *Mengetahui*, berikut informasi penugasan tugas / proyek kerja karyawan:" .
+            "%0A%0A- *Pelaksana*: *" . $pelaksanaStr . "*" .
+            "%0A- *Pemberi Tugas*: " . $pemberiStr .
+            "%0A- *Kode*: " . $task->kode_task .
+            "%0A- *Judul*: " . $task->judul .
+            "%0A- *Proyek*: " . ($task->nama_proyek ?: 'Umum / Operasional') .
+            "%0A- *Prioritas*: " . $task->prioritas .
+            "%0A- *Deadline*: " . $deadlineStr .
+            "%0A- *Status*: " . $stLabel .
+            "%0A%0ADapat dipantau di https://office.visiyosindo.id/task_proyek" .
+            "%0A_Sistem Office PT Visi Yosindo Medikal_";
+
+        $waStatus = 'Nomor HP tidak ditemukan';
+        if (!empty($noHpBob) && function_exists('sendWa')) {
+            $sendRes = @sendWa([
+                'devId'    => hostWa('2'),
+                'penerima' => $noHpBob,
+                'pesan'    => $pesanMengetahui
+            ]);
+            $waStatus = 'Terkirim ke WhatsApp ' . $noHpBob;
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status'          => 'success',
+            'msg'             => 'Task ' . $task->kode_task . ' berhasil diperbarui. Pihak Mengetahui ditetapkan ke ' . $bob->nama . ' dan notifikasi WhatsApp telah dikirimkan.',
+            'task'            => [
+                'id_task'     => $task->id_task,
+                'kode_task'   => $task->kode_task,
+                'judul'       => $task->judul,
+                'pelaksana'   => $pelaksanaStr,
+                'status'      => $stLabel
+            ],
+            'mengetahui'      => [
+                'id'          => $bob->pengguna_id,
+                'nama'        => $bob->nama,
+                'no_hp'       => $noHpBob
+            ],
+            'wa_status'       => $waStatus,
+            'pesan_preview'   => urldecode(str_replace('%0A', "\n", $pesanMengetahui))
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }
