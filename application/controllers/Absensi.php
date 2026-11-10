@@ -702,7 +702,7 @@ class Absensi extends CI_Controller
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
 
         $isLuarRadius = false;
-        $isExemptRadius = ((int)$user_id === 105); // Khusus Muhammad Tamrin (105): bebas absen luar radius tanpa ACC
+        $isExemptRadius = $this->md_absensi->isExemptLuarRadius($user_id); // Bebas absen luar radius tanpa ACC (105: Tamrin, 745: Nurdiansyah)
         $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
         // Geofence radius validation untuk Absen Kantor jika bukan WFA
         if ($jenisLokasi !== 'WFA') {
@@ -1303,7 +1303,8 @@ class Absensi extends CI_Controller
             $page_data['switch']              = $this->id_navbar();
             $page_data['data_absen']           = $this->md_absensi->getAbsensiTodayById2($pengguna_id);
             $page_data['data_absen_izin']      = $this->md_absensi->getAbsensiIzinTodayById($pengguna_id);
-            $page_data['list_cabang']          = $this->md_cabang->getActiveBranches();
+            $page_data['list_cabang']           = $this->md_cabang->getActiveBranches();
+            $page_data['is_exempt_luar_radius'] = $this->md_absensi->isExemptLuarRadius($pengguna_id);
             // echo_array($page_data);die;
             $page_data['page_name']         = 'v_do_absen2';
             $page_data['page_title']         = 'Absen';

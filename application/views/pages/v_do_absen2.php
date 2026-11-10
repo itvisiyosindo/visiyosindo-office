@@ -798,7 +798,7 @@ if (isset($data_absen[0]->waktu_absen)) {
     const SAVED_LATITUDE = <?= isset($data_absen[0]->latitude) && $data_absen[0]->latitude !== '' ? json_encode($data_absen[0]->latitude) : 'null' ?>;
     const SAVED_LONGITUDE = <?= isset($data_absen[0]->longitude) && $data_absen[0]->longitude !== '' ? json_encode($data_absen[0]->longitude) : 'null' ?>;
     const LIST_CABANG = <?= json_encode($list_cabang ?? []) ?>;
-    const IS_EXEMPT_LUAR_RADIUS = <?= ((int)sessPenggunaId() === 105) ? 'true' : 'false' ?>;
+    const IS_EXEMPT_LUAR_RADIUS = <?= !empty($is_exempt_luar_radius) ? 'true' : 'false' ?>;
     const CAMERA_PREF_KEY = 'absen_camera_pref_office_v1';
 
     function calculateDistanceMeters(lat1, lon1, lat2, lon2) {

@@ -988,7 +988,19 @@ class Md_absensi extends CI_Model
     }
 
     /**
-     * Pastikan kolom luar radius & dual approval (GA + Yola) tersedia pada tabel absensi.
+     * Cek apakah karyawan dibebaskan dari validasi luar radius & ACC.
+     * @param int $pengguna_id
+     * @return bool
+     */
+    public function isExemptLuarRadius($pengguna_id)
+    {
+        // 105: Muhammad Tamrin (Sales Manager), 745: Nurdiansyah (Medical Representative)
+        $exemptIds = [105, 745];
+        return in_array((int)$pengguna_id, $exemptIds, true);
+    }
+
+    /**
+     * Pastikan kolom luar radius & dual approval (GA + General Manager) tersedia pada tabel absensi.
      */
     public function ensureLuarRadiusColumns()
     {
