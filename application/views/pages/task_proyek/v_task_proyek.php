@@ -362,23 +362,11 @@
         color: #059669 !important;
         margin-right: 5px !important;
     }
-    #modalBuatTask .select2-container--default .select2-selection--single {
-        border: 1.5px solid #cbd5e1 !important;
-        border-radius: 8px !important;
-        height: 40px !important;
-        padding: 5px 10px !important;
-    }
-    #modalBuatTask .select2-container--default.select2-container--focus .select2-selection--single {
-        border-color: #10b981 !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
-    }
-    #modalBuatTask .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 28px !important;
-        font-size: 13px !important;
-        color: #1e293b !important;
-    }
-    #modalBuatTask .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 38px !important;
+    #modalBuatTask select.form-control {
+        height: 42px !important;
+        padding: 8px 12px !important;
+        cursor: pointer;
+        background-color: #ffffff !important;
     }
 </style>
 
@@ -2116,12 +2104,6 @@ document.addEventListener('DOMContentLoaded', function() {
             allowClear: true,
             width: '100%'
         });
-        $('#select_mengetahui_task').select2({
-            dropdownParent: $('#modalBuatTask'),
-            placeholder: '-- Pilih Karyawan / Atasan yang Mengetahui (Opsional) --',
-            allowClear: true,
-            width: '100%'
-        });
     }
 
     // Tombol Pilih Semua Karyawan yang Dibawahi Langsung
@@ -2332,8 +2314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#menu_jobdesk_list').hide();
         if ($.fn.select2) {
             $('#select_penerima_task').val(null).trigger('change');
-            $('#select_mengetahui_task').val(null).trigger('change');
         }
+        $('#select_mengetahui_task').val('');
         $('#modalBuatTask').modal('show');
     });
 
