@@ -10,15 +10,73 @@ class Md_knowledge extends CI_Model
         $this->db->insert('product_knowledge', $data);
     }
 
+    public function saveOrUpdateNilai($id_pengguna, $tahun, $bulan, $nilai)
+    {
+        $bulanDate = sprintf('%04d-%02d-01', (int)$tahun, (int)$bulan);
+        $checkPk = $this->db->select('id')
+            ->from('product_knowledge')
+            ->where('id_pengguna', (int)$id_pengguna)
+            ->where('bulan', $bulanDate)
+            ->get()
+            ->row();
+
+        $now = date('Y-m-d H:i:s');
+        $nilaiFloat = (float)$nilai;
+
+        if ($checkPk) {
+            $this->db->where('id', $checkPk->id)->update('product_knowledge', [
+                'nilai' => $nilaiFloat
+            ]);
+            return 'updated';
+        } else {
+            $this->db->insert('product_knowledge', [
+                'id_pengguna' => (int)$id_pengguna,
+                'nilai'       => $nilaiFloat,
+                'bulan'       => $bulanDate,
+                'created_at'  => $now
+            ]);
+            return 'inserted';
+        }
+    }
+
     public function getAllKnowledge($tahun = null)
     {
         if ($tahun === null) {
             $tahun = date('Y'); // default: tahun sekarang
         }
 
+        // Ambil seluruh karyawan aktif
+        $this->db->select('p.pengguna_id, p.nama, p.npp, p.jabatan, d.nama AS nama_divisi');
+        $this->db->from('pengguna p');
+        $this->db->join('divisi d', 'd.id_divisi = p.id_divisi', 'left');
+        $this->db->where('p.is_active', 1);
+        $this->db->where_not_in('p.pengguna_id', [1, 727, 714, 84, 109, 110, 79, 54, 72, 81, 70, 58, 69, 57, 74, 56, 83, 55, 107, 86, 749]);
+        $this->db->order_by('p.nama', 'ASC');
+        $pegawaiList = $this->db->get()->result();
+
+        $data = [];
+        foreach ($pegawaiList as $p) {
+            $isExempt = $this->isExemptFromPk($p->nama, $p->jabatan, $p->nama_divisi);
+            $data[$p->pengguna_id] = [
+                'id'        => $p->pengguna_id,
+                'nama'      => $p->nama,
+                'npp'       => $p->npp,
+                'jabatan'   => $p->jabatan,
+                'divisi'    => $p->nama_divisi,
+                'is_exempt' => $isExempt,
+                'nilai'     => array_fill(1, 12, null),
+                'avg_smt1'  => null,
+                'avg_smt2'  => null,
+                'avg_tahun' => null
+            ];
+        }
+
+        // Ambil nilai dari tabel product_knowledge untuk tahun terkait
         $this->db->select('
             p.pengguna_id,
             p.nama,
+            p.npp,
+            p.jabatan,
             MONTH(k.bulan) AS bulan,
             k.nilai,
             k.id
@@ -26,24 +84,275 @@ class Md_knowledge extends CI_Model
         $this->db->from('product_knowledge k');
         $this->db->join('pengguna p', 'p.pengguna_id = k.id_pengguna');
         $this->db->where('YEAR(k.bulan)', $tahun);
-        $this->db->order_by('p.nama', 'ASC');
         $query = $this->db->get();
         $result = $query->result();
 
         // Olah data menjadi format per pengguna dengan nilai per bulan
-        $data = [];
         foreach ($result as $row) {
-            if (!isset($data[$row->pengguna_id])) {
-                $data[$row->pengguna_id] = [
-                    'id' => $row->pengguna_id, // simpan ID pengguna
-                    'nama' => $row->nama,
-                    'nilai' => array_fill(1, 12, null) // isi bulan 1-12 dengan null
+            $uid = (int)$row->pengguna_id;
+            if (!isset($data[$uid])) {
+                $data[$uid] = [
+                    'id'        => $uid,
+                    'nama'      => $row->nama,
+                    'npp'       => $row->npp,
+                    'jabatan'   => $row->jabatan,
+                    'divisi'    => '',
+                    'is_exempt' => $this->isExemptFromPk($row->nama, $row->jabatan),
+                    'nilai'     => array_fill(1, 12, null),
+                    'avg_smt1'  => null,
+                    'avg_smt2'  => null,
+                    'avg_tahun' => null
                 ];
             }
-            $data[$row->pengguna_id]['nilai'][$row->bulan] = $row->nilai;
+            $data[$uid]['nilai'][(int)$row->bulan] = (float)$row->nilai;
         }
 
+        // Hitung rata-rata per semester & tahun
+        foreach ($data as $uid => &$item) {
+            // Semester 1 (Bulan 1 - 6)
+            $s1 = [];
+            for ($m = 1; $m <= 6; $m++) {
+                if ($item['nilai'][$m] !== null) {
+                    $s1[] = (float)$item['nilai'][$m];
+                }
+            }
+            $item['avg_smt1'] = !empty($s1) ? round(array_sum($s1) / count($s1), 1) : null;
+
+            // Semester 2 (Bulan 7 - 12)
+            $s2 = [];
+            for ($m = 7; $m <= 12; $m++) {
+                if ($item['nilai'][$m] !== null) {
+                    $s2[] = (float)$item['nilai'][$m];
+                }
+            }
+            $item['avg_smt2'] = !empty($s2) ? round(array_sum($s2) / count($s2), 1) : null;
+
+            // Tahunan (Bulan 1 - 12)
+            $all = array_merge($s1, $s2);
+            $item['avg_tahun'] = !empty($all) ? round(array_sum($all) / count($all), 1) : null;
+        }
+        unset($item);
+
         return $data;
+    }
+
+    public function importExcelData($sheetData, $defaultTahun = null)
+    {
+        if (empty($defaultTahun)) {
+            $defaultTahun = (int)date('Y');
+        }
+
+        // 1. Ambil data seluruh pengguna untuk pencocokan (ID, NPP, Nama)
+        $allUsers = $this->db->select('pengguna_id, npp, nama')->from('pengguna')->get()->result();
+        $userById = [];
+        $userByNpp = [];
+        $userByNama = [];
+
+        foreach ($allUsers as $u) {
+            $uid = (int)$u->pengguna_id;
+            $userById[$uid] = $uid;
+            if (!empty($u->npp)) {
+                $userByNpp[strtolower(trim((string)$u->npp))] = $uid;
+            }
+            if (!empty($u->nama)) {
+                $cleaned = preg_replace('/[^a-z0-9]/', '', strtolower(trim((string)$u->nama)));
+                $userByNama[$cleaned] = $uid;
+            }
+        }
+
+        // 2. Deteksi baris header dan mapping kolom
+        $headerRowIdx = null;
+        $colMap = [
+            'id'     => null,
+            'npp'    => null,
+            'nama'   => null,
+            'tahun'  => null,
+            'bulan'  => null,
+            'nilai'  => null,
+            'months' => [] // 1 => colIdx, ..., 12 => colIdx
+        ];
+
+        $monthAliases = [
+            1  => ['jan', 'januari', 'january', '1'],
+            2  => ['feb', 'februari', 'february', '2'],
+            3  => ['mar', 'maret', 'march', '3'],
+            4  => ['apr', 'april', '4'],
+            5  => ['mei', 'may', '5'],
+            6  => ['jun', 'juni', 'june', '6'],
+            7  => ['jul', 'juli', 'july', '7'],
+            8  => ['agu', 'agustus', 'august', 'aug', '8'],
+            9  => ['sep', 'september', '9'],
+            10 => ['okt', 'oktober', 'october', 'oct', '10'],
+            11 => ['nov', 'november', '11'],
+            12 => ['des', 'desember', 'december', 'dec', '12'],
+        ];
+
+        foreach ($sheetData as $rIdx => $row) {
+            if (!is_array($row)) continue;
+            $foundCols = 0;
+            foreach ($row as $cIdx => $cellVal) {
+                $cellStr = strtolower(trim((string)$cellVal));
+                if (empty($cellStr)) continue;
+
+                if (strpos($cellStr, 'id pegawai') !== false || strpos($cellStr, 'id_pengguna') !== false || $cellStr === 'id') {
+                    $foundCols++;
+                } else if ($cellStr === 'npp') {
+                    $foundCols++;
+                } else if (strpos($cellStr, 'nama') !== false || strpos($cellStr, 'karyawan') !== false || strpos($cellStr, 'pegawai') !== false) {
+                    $foundCols++;
+                }
+                foreach ($monthAliases as $mNum => $aliases) {
+                    foreach ($aliases as $al) {
+                        if (strpos($cellStr, $al) === 0 || $cellStr === $al) {
+                            $foundCols++;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($foundCols >= 3) {
+                $headerRowIdx = $rIdx;
+                break;
+            }
+        }
+
+        if ($headerRowIdx === null) {
+            $headerRowIdx = 0;
+        }
+
+        // Mapping index kolom dari baris header
+        $headerRow = $sheetData[$headerRowIdx];
+        foreach ($headerRow as $cIdx => $cellVal) {
+            $cellStr = strtolower(trim((string)$cellVal));
+            if (empty($cellStr)) continue;
+
+            if (strpos($cellStr, 'id pegawai') !== false || strpos($cellStr, 'id_pengguna') !== false || $cellStr === 'id') {
+                $colMap['id'] = $cIdx;
+            } else if ($cellStr === 'npp') {
+                $colMap['npp'] = $cIdx;
+            } else if (strpos($cellStr, 'nama') !== false || strpos($cellStr, 'karyawan') !== false || strpos($cellStr, 'pegawai') !== false) {
+                $colMap['nama'] = $cIdx;
+            } else if (strpos($cellStr, 'tahun') !== false || strpos($cellStr, 'year') !== false) {
+                $colMap['tahun'] = $cIdx;
+            } else if ($cellStr === 'bulan' || $cellStr === 'month') {
+                $colMap['bulan'] = $cIdx;
+            } else if (strpos($cellStr, 'nilai') !== false || strpos($cellStr, 'skor') !== false || strpos($cellStr, 'score') !== false) {
+                $colMap['nilai'] = $cIdx;
+            }
+
+            // Month columns detection
+            foreach ($monthAliases as $mNum => $aliases) {
+                if (isset($colMap['months'][$mNum])) continue;
+                foreach ($aliases as $al) {
+                    if (preg_match('/^' . preg_quote($al, '/') . '(\b|\s|\()/i', $cellStr)) {
+                        $colMap['months'][$mNum] = $cIdx;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $totalSaved = 0;
+        $warnings = [];
+
+        // 3. Loop baris data setelah header
+        for ($i = $headerRowIdx + 1; $i < count($sheetData); $i++) {
+            $row = $sheetData[$i];
+            if (!is_array($row) || empty(array_filter($row, function($v) { return $v !== null && trim((string)$v) !== ''; }))) {
+                continue;
+            }
+
+            // Tentukan ID Pengguna
+            $userId = null;
+            if ($colMap['id'] !== null && isset($row[$colMap['id']]) && is_numeric($row[$colMap['id']])) {
+                $candId = (int)$row[$colMap['id']];
+                if (isset($userById[$candId])) {
+                    $userId = $candId;
+                }
+            }
+
+            if (!$userId && $colMap['npp'] !== null && !empty($row[$colMap['npp']])) {
+                $candNpp = strtolower(trim((string)$row[$colMap['npp']]));
+                if (isset($userByNpp[$candNpp])) {
+                    $userId = $userByNpp[$candNpp];
+                }
+            }
+
+            if (!$userId && $colMap['nama'] !== null && !empty($row[$colMap['nama']])) {
+                $candNama = preg_replace('/[^a-z0-9]/', '', strtolower(trim((string)$row[$colMap['nama']])));
+                if (isset($userByNama[$candNama])) {
+                    $userId = $userByNama[$candNama];
+                } else {
+                    foreach ($userByNama as $clNama => $uid) {
+                        if (strpos($clNama, $candNama) !== false || strpos($candNama, $clNama) !== false) {
+                            $userId = $uid;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!$userId) {
+                $namaPreview = isset($row[$colMap['nama']]) ? $row[$colMap['nama']] : (isset($row[3]) ? $row[3] : 'Baris ' . ($i + 1));
+                $warnings[] = "Karyawan tidak teridentifikasi: {$namaPreview} (Baris " . ($i + 1) . ")";
+                continue;
+            }
+
+            // Tentukan Tahun
+            $rowTahun = $defaultTahun;
+            if ($colMap['tahun'] !== null && isset($row[$colMap['tahun']]) && is_numeric($row[$colMap['tahun']])) {
+                $rowTahun = (int)$row[$colMap['tahun']];
+            }
+
+            // A. Format Matriks (Bulan 1 - 12 per kolom)
+            if (!empty($colMap['months'])) {
+                foreach ($colMap['months'] as $mNum => $cIdx) {
+                    if (!isset($row[$cIdx])) continue;
+                    $valStr = trim((string)$row[$cIdx]);
+                    if ($valStr === '' || $valStr === '-') continue;
+
+                    $valClean = str_replace(',', '.', $valStr);
+                    if (is_numeric($valClean)) {
+                        $score = max(0, min(100, (float)$valClean));
+                        $this->saveOrUpdateNilai($userId, $rowTahun, $mNum, $score);
+                        $totalSaved++;
+                    }
+                }
+            }
+            // B. Format Baris Tunggal (kolom bulan & nilai)
+            else if ($colMap['bulan'] !== null && $colMap['nilai'] !== null) {
+                $bulanVal = trim((string)$row[$colMap['bulan']]);
+                $nilaiVal = trim((string)$row[$colMap['nilai']]);
+
+                $mNum = null;
+                if (is_numeric($bulanVal) && (int)$bulanVal >= 1 && (int)$bulanVal <= 12) {
+                    $mNum = (int)$bulanVal;
+                } else {
+                    $bulanStr = strtolower($bulanVal);
+                    foreach ($monthAliases as $mn => $aliases) {
+                        foreach ($aliases as $al) {
+                            if (strpos($bulanStr, $al) === 0) {
+                                $mNum = $mn;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+
+                if ($mNum && is_numeric(str_replace(',', '.', $nilaiVal))) {
+                    $score = max(0, min(100, (float)str_replace(',', '.', $nilaiVal)));
+                    $this->saveOrUpdateNilai($userId, $rowTahun, $mNum, $score);
+                    $totalSaved++;
+                }
+            }
+        }
+
+        return [
+            'status'      => 'success',
+            'total_saved' => $totalSaved,
+            'warnings'    => $warnings
+        ];
     }
 
 
@@ -281,26 +590,7 @@ class Md_knowledge extends CI_Model
         }
 
         // Sinkronisasi otomatis ke tabel `product_knowledge`
-        $bulanDate = sprintf('%04d-%02d-01', (int)$kuis->tahun, (int)$kuis->bulan);
-        $checkPk = $this->db->select('id')->from('product_knowledge')
-            ->where('id_pengguna', (int)$id_pengguna)
-            ->where('YEAR(bulan)', (int)$kuis->tahun)
-            ->where('MONTH(bulan)', (int)$kuis->bulan)
-            ->get()
-            ->row();
-
-        if ($checkPk) {
-            $this->db->where('id', $checkPk->id)->update('product_knowledge', [
-                'nilai' => $skorAkhir
-            ]);
-        } else {
-            $this->db->insert('product_knowledge', [
-                'id_pengguna' => (int)$id_pengguna,
-                'nilai'       => $skorAkhir,
-                'bulan'       => $bulanDate,
-                'created_at'  => $now
-            ]);
-        }
+        $this->saveOrUpdateNilai($id_pengguna, $kuis->tahun, $kuis->bulan, $skorAkhir);
 
         return [
             'status'       => 'success',

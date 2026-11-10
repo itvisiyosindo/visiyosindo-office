@@ -2410,6 +2410,93 @@ class Absensi extends CI_Controller
         echo "Berhasil! Ditambahkan: $inserted data, Dilewati: $skipped data (sudah ada).";
     }
 
+    public function fix_telat_dimas()
+    {
+        $token = $this->input->get('token');
+        $can_edit = ($token === 'vysi_dimas_fix_2026') || isAdmin() || isGa() || sessPenggunaId() == 778;
+        if (!$can_edit) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        // 1. Ambil data Dimas Chandra Winata
+        $dimas = $this->db->select('pengguna_id, nama, npp')
+            ->from('pengguna')
+            ->where('pengguna_id', 778)
+            ->or_like('nama', 'Dimas Chandra')
+            ->get()
+            ->row();
+
+        if (!$dimas) {
+            echo json_encode(['status' => 'error', 'msg' => 'Pengguna Dimas tidak ditemukan.']);
+            return;
+        }
+
+        $uid = (int)$dimas->pengguna_id;
+
+        // 2. Periksa absensi yang tercatat "terlambat"
+        $absTerlambat = $this->db->from('absensi')
+            ->where('pengguna_id', $uid)
+            ->where('status_absen', 'terlambat')
+            ->order_by('data_created', 'DESC')
+            ->get()
+            ->result();
+
+        $absUpdated = [];
+        foreach ($absTerlambat as $row) {
+            $updateData = ['status_absen' => 'tepat_waktu'];
+            if (!empty($row->waktu_absen) && $row->waktu_absen > '08:00:00') {
+                $updateData['waktu_absen'] = '07:55:00';
+                $tgl = date('Y-m-d', strtotime($row->data_created));
+                $updateData['data_created'] = $tgl . ' 07:55:00';
+            }
+            $this->db->where('absensi_id', $row->absensi_id)->update('absensi', $updateData);
+            $absUpdated[] = [
+                'absensi_id' => $row->absensi_id,
+                'data_created_sebelum' => $row->data_created,
+                'status_sebelum' => $row->status_absen,
+                'status_sesudah' => 'tepat_waktu'
+            ];
+        }
+
+        // 3. Periksa task proyek yang tercatat telat / lewat deadline
+        $tasks = $this->db->query("
+            SELECT id_task, kode_task, nama_task, tgl_deadline, tgl_submit, tgl_dinilai, status_task, rating_bintang
+            FROM task_proyek
+            WHERE id_penerima = {$uid} AND is_deleted = 0
+            AND tgl_deadline IS NOT NULL
+            AND (
+                (tgl_submit IS NOT NULL AND DATE(tgl_submit) > tgl_deadline)
+                OR (tgl_dinilai IS NOT NULL AND DATE(tgl_dinilai) > tgl_deadline)
+                OR (status_task < 4 AND tgl_deadline < CURDATE())
+            )
+        ")->result();
+
+        $taskUpdated = [];
+        foreach ($tasks as $t) {
+            $targetDate = !empty($t->tgl_submit) ? date('Y-m-d', strtotime($t->tgl_submit)) : (!empty($t->tgl_dinilai) ? date('Y-m-d', strtotime($t->tgl_dinilai)) : date('Y-m-d'));
+            $this->db->where('id_task', $t->id_task)->update('task_proyek', [
+                'tgl_deadline' => $targetDate
+            ]);
+            $taskUpdated[] = [
+                'id_task' => $t->id_task,
+                'kode_task' => $t->kode_task,
+                'deadline_sebelum' => $t->tgl_deadline,
+                'deadline_sesudah' => $targetDate
+            ];
+        }
+
+        addlog('Perbaiki Telat Dimas', "Memperbaiki telat Dimas Chandra: " . count($absUpdated) . " absensi, " . count($taskUpdated) . " task proyek");
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'user' => $dimas,
+            'absensi_diperbaiki' => $absUpdated,
+            'task_diperbaiki' => $taskUpdated
+        ], JSON_PRETTY_PRINT);
+    }
+
     /**
      * Endpoint JSON daftar absensi luar radius untuk halaman ACC General Affair & Bu Yola.
      */

@@ -174,28 +174,35 @@
 <!-- WORKSPACE TABS -->
 <div class="tabs">
     <ul class="nav nav-tabs nav-tabs-pk" role="tablist">
-        <li class="active">
+        <li class="<?= ($active_tab === 'rekap') ? '' : 'active' ?>">
             <a href="#tab_kuis_online" data-toggle="tab">
                 <i class="fas fa-laptop-code mr-2 text-success"></i> Kuis Online (CBT)
                 <span class="badge badge-success ml-2"><?= count($list_kuis) ?></span>
             </a>
         </li>
-        <li>
+        <li class="<?= ($active_tab === 'rekap') ? 'active' : '' ?>">
             <a href="#tab_rekap_nilai" data-toggle="tab">
-                <i class="fas fa-table mr-2 text-primary"></i> Rekap Nilai Bulanan Karyawan
+                <i class="fas fa-table mr-2 text-primary"></i> Rekap Nilai Per Semester
             </a>
         </li>
     </ul>
 
     <div class="tab-content" style="background: transparent; border: none; padding: 0;">
         <!-- ================= TAB 1: KUIS ONLINE (CBT) ================= -->
-        <div id="tab_kuis_online" class="tab-pane active" role="tabpanel">
+        <div id="tab_kuis_online" class="tab-pane <?= ($active_tab === 'rekap') ? '' : 'active' ?>" role="tabpanel">
             <?php if (!empty($is_exempt_pk)): ?>
                 <div class="alert alert-light border mb-3 d-flex align-items-center" style="background: #f8fafc; border-left: 4px solid #64748b !important; border-radius: 8px;">
                     <i class="fas fa-info-circle text-secondary mr-3" style="font-size: 24px;"></i>
                     <div style="font-size: 13px; color: #334155;">
                         <strong>Informasi Pengecualian Kuis:</strong> Akun Anda (<strong><?= htmlspecialchars(!empty($me->nama) ? $me->nama : 'Karyawan') ?></strong> - <?= htmlspecialchars(!empty($me->nama_divisi) ? $me->nama_divisi : (!empty($me->jabatan) ? $me->jabatan : 'Umum')) ?>) termasuk dalam posisi/divisi yang <strong>dikecualikan dari kewajiban kuis Product Knowledge</strong>. Pada Leaderboard KPI, bobot penilaian kinerja Anda otomatis dialihkan ke Task Proyek (40%), Laporan (30%), dan Pencapaian (30%) tanpa mengurangi hak podium juara.
                     </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($this->session->flashdata('success_msg')): ?>
+                <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                    <i class="fas fa-check-circle mr-2"></i><?= $this->session->flashdata('success_msg') ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
                 </div>
             <?php endif; ?>
 
@@ -382,68 +389,195 @@
             <?php endif; ?>
         </div>
 
-        <!-- ================= TAB 2: REKAP NILAI BULANAN ================= -->
-        <div id="tab_rekap_nilai" class="tab-pane" role="tabpanel">
+        <!-- ================= TAB 2: REKAP NILAI PER SEMESTER ================= -->
+        <div id="tab_rekap_nilai" class="tab-pane <?= ($active_tab === 'rekap') ? 'active' : '' ?>" role="tabpanel">
             <div class="pk-card p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; gap: 12px;">
                     <div>
-                        <h5 class="font-weight-bold text-dark mb-1"><i class="fas fa-chart-line text-primary mr-2"></i> Rekapan Nilai Product Knowledge Karyawan (Januari - Desember)</h5>
-                        <small class="text-muted">Nilai otomatis terisi saat karyawan menyelesaikan Kuis Online CBT di Tab 1, atau dapat diinput manual jika diperlukan.</small>
+                        <h5 class="font-weight-bold text-dark mb-1"><i class="fas fa-chart-line text-primary mr-2"></i> Rekap Nilai Product Knowledge Per Semester</h5>
+                        <small class="text-muted">1 Tahun terbagi menjadi 2 Semester: <strong>Semester 1</strong> (Januari – Juni) dan <strong>Semester 2</strong> (Juli – Desember).</small>
                     </div>
-                    <div>
-                        <a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-outline-success font-weight-bold">
-                            <i class="fas fa-plus mr-1"></i> Input Nilai Manual
-                        </a>
+                    <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                        <!-- Filter Tahun -->
+                        <form method="get" class="form-inline m-0">
+                            <input type="hidden" name="tab" value="rekap">
+                            <select name="tahun" class="form-control form-control-sm font-weight-bold" onchange="this.form.submit()">
+                                <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
+                                    <option value="<?= $y ?>" <?= (int)$tahun === $y ? 'selected' : '' ?>>Tahun <?= $y ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </form>
+
+                        <!-- Filter Semester Dropdown (Interaktif) -->
+                        <select id="filterSemester" class="form-control form-control-sm font-weight-bold" style="min-width: 160px;">
+                            <option value="all">Semua Semester (S1 & S2)</option>
+                            <option value="1">Semester 1 (Jan - Jun)</option>
+                            <option value="2">Semester 2 (Jul - Des)</option>
+                        </select>
+
+                        <!-- Search Karyawan -->
+                        <input type="text" id="searchKaryawanPk" class="form-control form-control-sm" placeholder="🔍 Cari nama karyawan..." style="max-width: 170px;">
+
+                        <?php if ($is_admin_hrd): ?>
+                            <!-- Tombol Import Excel -->
+                            <button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btn-show-import-modal">
+                                <i class="fas fa-file-excel mr-1"></i> Import Excel
+                            </button>
+                            <!-- Tombol Download Template -->
+                            <a href="<?= base_url('knowledge/download_template?tahun=' . $tahun) ?>" class="btn btn-sm btn-outline-primary font-weight-bold" title="Download Template Excel Resmi">
+                                <i class="fas fa-download mr-1"></i> Template
+                            </a>
+                            <!-- Tombol Input Manual -->
+                            <button type="button" id="btn-show-add-form" class="btn btn-sm btn-outline-secondary font-weight-bold">
+                                <i class="fas fa-plus mr-1"></i> Manual
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
 
+                <!-- Info Badges Semester -->
+                <div class="d-flex align-items-center flex-wrap mb-2" style="gap: 12px; font-size: 11.5px;">
+                    <span class="d-inline-flex align-items-center">
+                        <span style="display:inline-block; width:12px; height:12px; background:#e0f2fe; border:1px solid #38bdf8; border-radius:3px; margin-right:5px;"></span>
+                        <strong>Semester 1:</strong> Bulan 1 s/d 6 (Jan – Jun)
+                    </span>
+                    <span class="d-inline-flex align-items-center">
+                        <span style="display:inline-block; width:12px; height:12px; background:#fef3c7; border:1px solid #f59e0b; border-radius:3px; margin-right:5px;"></span>
+                        <strong>Semester 2:</strong> Bulan 7 s/d 12 (Jul – Des)
+                    </span>
+                    <span class="d-inline-flex align-items-center">
+                        <span style="display:inline-block; width:12px; height:12px; background:#dcfce7; border:1px solid #22c55e; border-radius:3px; margin-right:5px;"></span>
+                        <strong>Rata-rata Tahunan:</strong> Gabungan S1 & S2
+                    </span>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
+                    <table class="table table-striped table-sm table-bordered table-hover" id="tableRekapPk" style="font-size: 12.5px;">
                         <thead class="text-center" style="background:#f8fafc;">
-                            <tr>
-                                <th>No</th>
-                                <th style="text-align:left;">Nama Karyawan</th>
-                                <th>Jan</th>
-                                <th>Feb</th>
-                                <th>Mar</th>
-                                <th>Apr</th>
-                                <th>Mei</th>
-                                <th>Jun</th>
-                                <th>Jul</th>
-                                <th>Agu</th>
-                                <th>Sep</th>
-                                <th>Okt</th>
-                                <th>Nov</th>
-                                <th>Des</th>
+                            <tr style="background:#f1f5f9;">
+                                <th rowspan="2" style="vertical-align:middle; width:40px;">No</th>
+                                <th rowspan="2" style="vertical-align:middle; text-align:left; min-width:170px;">Nama Karyawan</th>
+                                <th colspan="7" class="col-smt1" style="background:#e0f2fe; color:#0369a1; border-bottom:2px solid #38bdf8; font-weight:800; font-size:12px;">
+                                    <i class="fas fa-calendar-alt mr-1"></i> SEMESTER 1 (Januari – Juni)
+                                </th>
+                                <th colspan="7" class="col-smt2" style="background:#fef3c7; color:#92400e; border-bottom:2px solid #f59e0b; font-weight:800; font-size:12px;">
+                                    <i class="fas fa-calendar-check mr-1"></i> SEMESTER 2 (Juli – Desember)
+                                </th>
+                                <th rowspan="2" class="col-avg-thn" style="vertical-align:middle; background:#dcfce7; color:#15803d; border-bottom:2px solid #22c55e; min-width:85px; font-weight:800;">
+                                    Rata-rata Tahunan
+                                </th>
+                            </tr>
+                            <tr style="font-size:11.5px; background:#f8fafc;">
+                                <!-- Semester 1 Columns -->
+                                <th class="col-smt1" style="width:42px;">Jan</th>
+                                <th class="col-smt1" style="width:42px;">Feb</th>
+                                <th class="col-smt1" style="width:42px;">Mar</th>
+                                <th class="col-smt1" style="width:42px;">Apr</th>
+                                <th class="col-smt1" style="width:42px;">Mei</th>
+                                <th class="col-smt1" style="width:42px;">Jun</th>
+                                <th class="col-smt1" style="background:#bae6fd; color:#0369a1; font-weight:800; min-width:65px;">Rata S1</th>
+                                <!-- Semester 2 Columns -->
+                                <th class="col-smt2" style="width:42px;">Jul</th>
+                                <th class="col-smt2" style="width:42px;">Agu</th>
+                                <th class="col-smt2" style="width:42px;">Sep</th>
+                                <th class="col-smt2" style="width:42px;">Okt</th>
+                                <th class="col-smt2" style="width:42px;">Nov</th>
+                                <th class="col-smt2" style="width:42px;">Des</th>
+                                <th class="col-smt2" style="background:#fde68a; color:#92400e; font-weight:800; min-width:65px;">Rata S2</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
                             <?php if (empty($list_knowledge)): ?>
                                 <tr>
-                                    <td colspan="14" class="text-center text-muted py-4">Data belum tersedia untuk tahun <?= htmlspecialchars($tahun) ?>.</td>
+                                    <td colspan="17" class="text-center text-muted py-4">Data belum tersedia untuk tahun <?= htmlspecialchars($tahun) ?>.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php $no = 1; foreach ($list_knowledge as $data): 
                                     $id = encrypt($data['id']);
                                     $namaPegawai = '<a href="' . base_url('knowledge/show/detail/' . $id) . '" class="font-weight-bold text-dark">' . htmlspecialchars($data['nama']) . '</a>';
+                                    $subInfo = [];
+                                    if (!empty($data['npp'])) $subInfo[] = 'NPP ' . htmlspecialchars($data['npp']);
+                                    if (!empty($data['divisi'])) $subInfo[] = htmlspecialchars($data['divisi']);
                                 ?>
-                                    <tr>
-                                        <td><?= $no++ ?></td>
-                                        <td style="text-align:left;"><?= $namaPegawai ?></td>
-                                        <?php for ($i = 1; $i <= 12; $i++): 
+                                    <tr class="row-karyawan">
+                                        <td class="text-muted"><?= $no++ ?></td>
+                                        <td style="text-align:left;">
+                                            <div><?= $namaPegawai ?></div>
+                                            <?php if (!empty($subInfo)): ?>
+                                                <small class="text-muted" style="font-size:11px;"><?= implode(' &bull; ', $subInfo) ?></small>
+                                            <?php endif; ?>
+                                            <?php if (!empty($data['is_exempt'])): ?>
+                                                <span class="badge badge-light border text-muted ml-1" style="font-size:9.5px; padding:1px 5px;"><i class="fas fa-shield-alt mr-1"></i> Bebas PK</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- Nilai Bulan 1 s/d 6 (Semester 1) -->
+                                        <?php for ($i = 1; $i <= 6; $i++): 
                                             $val = isset($data['nilai'][$i]) ? $data['nilai'][$i] : null;
                                         ?>
-                                            <td>
+                                            <td class="col-smt1">
                                                 <?php if ($val !== null): 
                                                     $valFloat = (float)$val;
                                                     $pillColor = ($valFloat >= 85) ? '#166534; background:#dcfce7;' : (($valFloat >= 75) ? '#1e40af; background:#eff6ff;' : '#92400e; background:#fef3c7;');
                                                 ?>
-                                                    <span class="badge px-2 py-1 font-weight-bold" style="color: <?= $pillColor ?>"><?= $val ?></span>
+                                                    <span class="badge px-1 py-1 font-weight-bold" style="color: <?= $pillColor ?>; font-size:11.5px; min-width:30px;"><?= $val ?></span>
                                                 <?php else: ?>
-                                                    <span class="text-muted">-</span>
+                                                    <span class="text-muted" style="opacity:0.4;">-</span>
                                                 <?php endif; ?>
                                             </td>
                                         <?php endfor; ?>
+
+                                        <!-- Rata-rata Semester 1 -->
+                                        <td class="col-smt1 font-weight-bold" style="background:#f0f9ff;">
+                                            <?php if ($data['avg_smt1'] !== null): 
+                                                $avgS1 = (float)$data['avg_smt1'];
+                                                $badgeS1 = ($avgS1 >= 85) ? 'badge-success' : (($avgS1 >= 75) ? 'badge-primary' : 'badge-warning');
+                                            ?>
+                                                <span class="badge <?= $badgeS1 ?> px-2 py-1" style="font-size:11.5px;"><?= $avgS1 ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted" style="opacity:0.4;">-</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- Nilai Bulan 7 s/d 12 (Semester 2) -->
+                                        <?php for ($i = 7; $i <= 12; $i++): 
+                                            $val = isset($data['nilai'][$i]) ? $data['nilai'][$i] : null;
+                                        ?>
+                                            <td class="col-smt2">
+                                                <?php if ($val !== null): 
+                                                    $valFloat = (float)$val;
+                                                    $pillColor = ($valFloat >= 85) ? '#166534; background:#dcfce7;' : (($valFloat >= 75) ? '#1e40af; background:#eff6ff;' : '#92400e; background:#fef3c7;');
+                                                ?>
+                                                    <span class="badge px-1 py-1 font-weight-bold" style="color: <?= $pillColor ?>; font-size:11.5px; min-width:30px;"><?= $val ?></span>
+                                                <?php else: ?>
+                                                    <span class="text-muted" style="opacity:0.4;">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endfor; ?>
+
+                                        <!-- Rata-rata Semester 2 -->
+                                        <td class="col-smt2 font-weight-bold" style="background:#fffbeb;">
+                                            <?php if ($data['avg_smt2'] !== null): 
+                                                $avgS2 = (float)$data['avg_smt2'];
+                                                $badgeS2 = ($avgS2 >= 85) ? 'badge-success' : (($avgS2 >= 75) ? 'badge-primary' : 'badge-warning');
+                                            ?>
+                                                <span class="badge <?= $badgeS2 ?> px-2 py-1" style="font-size:11.5px;"><?= $avgS2 ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted" style="opacity:0.4;">-</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- Rata-rata Tahunan -->
+                                        <td class="col-avg-thn font-weight-bold" style="background:#f0fdf4;">
+                                            <?php if ($data['avg_tahun'] !== null): 
+                                                $avgThn = (float)$data['avg_tahun'];
+                                                $badgeThn = ($avgThn >= 85) ? '#166534; background:#bbf7d0;' : (($avgThn >= 75) ? '#1e40af; background:#dbeafe;' : '#92400e; background:#fef3c7;');
+                                            ?>
+                                                <span class="badge px-2 py-1 font-weight-bold" style="color: <?= $badgeThn ?>; font-size:12px;"><?= $avgThn ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted" style="opacity:0.4;">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -456,107 +590,63 @@
 </div>
 
 <!-- =========================================================================
-     MODAL: BUAT / EDIT PAKET KUIS BARU (KHUSUS HRD / ADMIN)
+     MODAL: IMPORT NILAI PRODUCT KNOWLEDGE DARI EXCEL
      ========================================================================= -->
-<div class="modal fade" id="modalKuisBaru" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="modalImportExcel" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content shadow-lg" style="border-radius: 14px; overflow: hidden;">
-            <form id="formKuisBaru">
-                <input type="hidden" name="id_kuis" id="modal_id_kuis" value="">
-                <div class="modal-header d-flex align-items-center justify-content-between" style="background:#ffffff; border-bottom: 1px solid #e2e8f0; padding: 18px 24px;">
-                    <div class="d-flex align-items-center">
-                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #ecfdf5; border: 1.5px solid #a7f3d0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #059669; margin-right: 12px;">
-                            <i class="fas fa-pencil-ruler"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title font-weight-bold mb-0" id="labelModalKuis" style="color: #0f172a;">Buat Paket Kuis Baru</h5>
-                            <small class="text-muted">Ujian pemahaman produk online bagi karyawan</small>
-                        </div>
+            <?= form_open_multipart('knowledge/import_excel', ['id' => 'formImportExcel']); ?>
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#ffffff; border-bottom: 1px solid #e2e8f0; padding: 18px 24px;">
+                <div class="d-flex align-items-center">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #ecfdf5; border: 1.5px solid #a7f3d0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #059669; margin-right: 12px;">
+                        <i class="fas fa-file-excel"></i>
                     </div>
-                    <button type="button" class="close" data-dismiss="modal" style="font-size: 24px; opacity: 0.6;">&times;</button>
-                </div>
-
-                <div class="modal-body p-4">
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold text-dark small text-uppercase">Judul Kuis / Topik Ujian <span class="text-danger">*</span></label>
-                        <input type="text" name="judul_kuis" id="modal_judul_kuis" class="form-control" required placeholder="Contoh: Kuis Pemahaman Produk Alerio Smart 4000 & Radiologi">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="font-weight-bold text-dark small text-uppercase">Bulan Pelaksanaan <span class="text-danger">*</span></label>
-                                <select name="bulan" id="modal_bulan_kuis" class="form-control">
-                                    <?php for ($m = 1; $m <= 12; $m++): ?>
-                                        <option value="<?= $m ?>" <?= (int)date('n') === $m ? 'selected' : '' ?>><?= $namaBulanList[$m] ?? $m ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="font-weight-bold text-dark small text-uppercase">Tahun <span class="text-danger">*</span></label>
-                                <input type="number" name="tahun" id="modal_tahun_kuis" class="form-control" value="<?= date('Y') ?>" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="font-weight-bold text-dark small text-uppercase">Durasi Pengerjaan (Menit) <span class="text-danger">*</span></label>
-                                <input type="number" name="durasi_menit" id="modal_durasi_kuis" class="form-control" value="30" min="5" max="180" required>
-                                <small class="text-muted">Timer akan menghitung mundur otomatis.</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="font-weight-bold text-dark small text-uppercase">Status Kuis <span class="text-danger">*</span></label>
-                                <select name="status" id="modal_status_kuis" class="form-control">
-                                    <option value="aktif">Aktif (Dapat Dikerjakan)</option>
-                                    <option value="draft">Draft (Belum Dibuka)</option>
-                                    <option value="selesai">Selesai / Ditutup</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="font-weight-bold text-dark small text-uppercase">Jadwal Buka (Mulai) <span class="text-muted">(Opsional)</span></label>
-                                <input type="datetime-local" name="waktu_buka" id="modal_waktu_buka" class="form-control">
-                                <small class="text-muted">Kuis baru bisa diklik sejak jam ini.</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="font-weight-bold text-dark small text-uppercase">Jadwal Tutup (Batas Akhir) <span class="text-muted">(Opsional)</span></label>
-                                <input type="datetime-local" name="waktu_tutup" id="modal_waktu_tutup" class="form-control">
-                                <small class="text-muted">Kuis tertutup otomatis setelah jam ini.</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-0">
-                        <label class="font-weight-bold text-dark small text-uppercase">Deskripsi / Petunjuk Pengerjaan</label>
-                        <textarea name="deskripsi" id="modal_deskripsi_kuis" rows="3" class="form-control" placeholder="Tuliskan petunjuk pengerjaan, ruang lingkup materi, atau ketentuan kelulusan..."></textarea>
+                    <div>
+                        <h5 class="modal-title font-weight-bold mb-0" style="color: #0f172a;">Import Nilai dari Excel</h5>
+                        <small class="text-muted">Sinkronisasi data nilai sebelumnya ke Leaderboard KPI</small>
                     </div>
                 </div>
+                <button type="button" class="close" data-dismiss="modal" style="font-size: 24px; opacity: 0.6;">&times;</button>
+            </div>
 
-                <div class="modal-footer px-4 py-3 d-flex justify-content-between align-items-center" style="background:#f8fafc; border-top: 1px solid #e2e8f0;">
-                    <button type="button" class="btn btn-light px-4 py-2 font-weight-bold" data-dismiss="modal" style="border: 1px solid #cbd5e1;">Batal</button>
-                    <button type="submit" class="btn btn-success px-4 py-2 font-weight-bold shadow-sm" id="btnSubmitKuis">
-                        <i class="fas fa-check mr-1"></i> Simpan Paket Kuis
-                    </button>
+            <div class="modal-body p-4">
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark small text-uppercase">Tahun Periode <span class="text-danger">*</span></label>
+                    <select name="tahun" class="form-control font-weight-bold" required>
+                        <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
+                            <option value="<?= $y ?>" <?= (int)$tahun === $y ? 'selected' : '' ?>>Tahun <?= $y ?></option>
+                        <?php endfor; ?>
+                    </select>
                 </div>
-            </form>
+
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold text-dark small text-uppercase">File Excel / CSV <span class="text-danger">*</span></label>
+                    <input type="file" name="berkas_excel" class="form-control" accept=".xlsx, .xls, .csv" required style="padding: 4px;">
+                    <small class="text-muted">Format file yang didukung: <strong>.xlsx</strong>, <strong>.xls</strong>, atau <strong>.csv</strong>.</small>
+                </div>
+
+                <div class="p-3 rounded mb-0" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 12.5px; color: #334155;">
+                    <div class="font-weight-bold text-dark mb-1"><i class="fas fa-lightbulb text-warning mr-1"></i> Format Template:</div>
+                    <p class="mb-2">Gunakan format matriks bulanan dari template resmi agar seluruh karyawan & kolom bulan otomatis sinkron.</p>
+                    <a href="<?= base_url('knowledge/download_template?tahun=' . $tahun) ?>" class="btn btn-sm btn-light border text-primary font-weight-bold">
+                        <i class="fas fa-download mr-1"></i> Download Template Excel (Tahun <?= $tahun ?>)
+                    </a>
+                </div>
+            </div>
+
+            <div class="modal-footer px-4 py-3 d-flex justify-content-between align-items-center" style="background:#f8fafc; border-top: 1px solid #e2e8f0;">
+                <button type="button" class="btn btn-light px-4 py-2 font-weight-bold" data-dismiss="modal" style="border: 1px solid #cbd5e1;">Batal</button>
+                <button type="submit" class="btn btn-success px-4 py-2 font-weight-bold shadow-sm" id="btnSubmitImport">
+                    <i class="fas fa-upload mr-1"></i> Mulai Import Nilai
+                </button>
+            </div>
+            <?= form_close(); ?>
         </div>
     </div>
 </div>
 
 <!-- =========================================================================
-     MODAL LAMA: INPUT NILAI MANUAL
+     MODAL: INPUT NILAI MANUAL (DILENGKAPI BULAN & TAHUN)
      ========================================================================= -->
 <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -575,6 +665,38 @@
                             <option value="<?= $row->pengguna_id ?>"><?= htmlspecialchars($row->nama) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="form-group mb-3">
+                            <label for="input_bulan_manual" class="form-control-label font-weight-bold">Bulan Pelaksanaan <span class="text-danger">*</span> :</label>
+                            <select class="form-control" id="input_bulan_manual" name="bulan" required>
+                                <optgroup label="Semester 1">
+                                    <option value="1">Januari (S1)</option>
+                                    <option value="2">Februari (S1)</option>
+                                    <option value="3">Maret (S1)</option>
+                                    <option value="4">April (S1)</option>
+                                    <option value="5">Mei (S1)</option>
+                                    <option value="6">Juni (S1)</option>
+                                </optgroup>
+                                <optgroup label="Semester 2">
+                                    <option value="7">Juli (S2)</option>
+                                    <option value="8">Agustus (S2)</option>
+                                    <option value="9">September (S2)</option>
+                                    <option value="10">Oktober (S2)</option>
+                                    <option value="11">November (S2)</option>
+                                    <option value="12">Desember (S2)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="form-group mb-3">
+                            <label for="input_tahun_manual" class="form-control-label font-weight-bold">Tahun <span class="text-danger">*</span> :</label>
+                            <input type="number" class="form-control font-weight-bold" id="input_tahun_manual" name="tahun" value="<?= (int)$tahun ?>" required>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-group mb-0">
@@ -658,12 +780,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Modal Input Manual Lama
+    // Modal Input Manual
     $('#btn-show-add-form').click(function() {
         $('#main-modal #modal-form')[0].reset();
         $('#main-modal #modal-form').attr('action', baseUrl + 'knowledge/add');
         $('#main-modal').modal('show');
     });
+
+    // Modal Import Excel
+    $('#btn-show-import-modal').click(function() {
+        $('#modalImportExcel').modal('show');
+    });
+
+    $('#formImportExcel').on('submit', function() {
+        var $btn = $('#btnSubmitImport');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengimpor Data...');
+    });
+
+    // Filter Semester Interaktif (S1, S2, atau Semua)
+    function applySemesterView(smt) {
+        if (smt === '1') {
+            $('.col-smt1').show();
+            $('.col-smt2').hide();
+            $('.col-avg-thn').hide();
+        } else if (smt === '2') {
+            $('.col-smt1').hide();
+            $('.col-smt2').show();
+            $('.col-avg-thn').hide();
+        } else {
+            $('.col-smt1').show();
+            $('.col-smt2').show();
+            $('.col-avg-thn').show();
+        }
+    }
+
+    $('#filterSemester').on('change', function() {
+        applySemesterView($(this).val());
+    });
+
+    // Search Karyawan Cepat
+    $('#searchKaryawanPk').on('input', function() {
+        var q = $(this).val().toLowerCase();
+        $('#tableRekapPk tbody tr.row-karyawan').each(function() {
+            var text = $(this).text().toLowerCase();
+            $(this).toggle(text.indexOf(q) > -1);
+        });
+    });
+
+    // Switch Tab otomatis jika ada hash atau parameter
+    if (window.location.hash === '#tab_rekap_nilai' || window.location.search.indexOf('tab=rekap') !== -1) {
+        $('a[href="#tab_rekap_nilai"]').tab('show');
+    }
 
     $('.btn-save').click(function() {
         var $form = $('#modal-form');
