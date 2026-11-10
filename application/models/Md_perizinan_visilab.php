@@ -5,6 +5,7 @@ class Md_perizinan_visilab extends CI_Model
 {
     protected $table = 'visilab_perizinan_alat';
     protected $table_history = 'visilab_perizinan_history';
+    protected static $initialized = false;
 
     public function __construct()
     {
@@ -15,118 +16,131 @@ class Md_perizinan_visilab extends CI_Model
     }
 
     /**
+     * Cek keberadaan tabel di database tanpa memicu fatal error
+     */
+    public function hasTable($tableName)
+    {
+        if (!isset($this->db) || !$this->db->conn_id) {
+            return false;
+        }
+        $orig = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+        $q = @$this->db->query("SHOW TABLES LIKE '{$tableName}'");
+        $res = ($q && $q->num_rows() > 0);
+        $this->db->db_debug = $orig;
+        return $res;
+    }
+
+    /**
      * Memastikan tabel perizinan dan tabel history telah dibuat di database,
      * serta menambahkan kolom LUK, Kalibrasi, dan TLD jika belum ada.
      */
     public function ensure_table()
     {
-        if (!isset($this->db)) {
+        if (self::$initialized || !isset($this->db) || !$this->db->conn_id) {
             return false;
         }
 
-        // 1. Tabel Utama Perizinan Alat
-        $sql = "CREATE TABLE IF NOT EXISTS `{$this->table}` (
-            `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-            `nama_instansi` VARCHAR(255) NOT NULL,
-            `pihak_ketiga` VARCHAR(255) DEFAULT NULL,
-            `jenis_alat` VARCHAR(255) NOT NULL,
-            `status_jasa` VARCHAR(100) NOT NULL DEFAULT 'Tidak Termasuk Perizinan',
-            `status_perizinan` VARCHAR(100) DEFAULT '-',
-            `progres_perizinan` TEXT DEFAULT NULL,
-            `marketing_id` INT(11) DEFAULT NULL,
-            `marketing_nama` VARCHAR(150) DEFAULT NULL,
-            `marketing_nohp` VARCHAR(50) DEFAULT NULL,
-            `pic_instansi` VARCHAR(150) DEFAULT NULL,
-            `kontak_pic` VARCHAR(50) DEFAULT NULL,
-            `email_pic` VARCHAR(150) DEFAULT NULL,
-            `tgl_terbit` DATE DEFAULT NULL,
-            `tgl_jatuh_tempo` DATE DEFAULT NULL COMMENT 'Batas Evaluasi / Masa Berlaku Izin',
-            `tgl_exp_luk` DATE DEFAULT NULL COMMENT 'Masa Berlaku LUK Uji Kesesuaian (Reminder 1 Bulan)',
-            `tgl_exp_kalibrasi` DATE DEFAULT NULL COMMENT 'Masa Berlaku Kalibrasi (Reminder 1 Bulan)',
-            `tgl_evaluasi_tld` DATE DEFAULT NULL COMMENT 'Jatuh Tempo Evaluasi TLD Triwulan (Reminder 1 Bulan)',
-            `catatan` TEXT DEFAULT NULL,
-            `reminder_45_sent` TINYINT(1) DEFAULT 0,
-            `last_reminder_at` DATETIME DEFAULT NULL,
-            `reminder_luk_sent` TINYINT(1) DEFAULT 0,
-            `last_reminder_luk_at` DATETIME DEFAULT NULL,
-            `reminder_kalibrasi_sent` TINYINT(1) DEFAULT 0,
-            `last_reminder_kalibrasi_at` DATETIME DEFAULT NULL,
-            `reminder_tld_sent` TINYINT(1) DEFAULT 0,
-            `last_reminder_tld_at` DATETIME DEFAULT NULL,
-            `created_by` INT(11) DEFAULT NULL,
-            `updated_by` INT(11) DEFAULT NULL,
-            `created_at` DATETIME NOT NULL,
-            `updated_at` DATETIME NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `idx_status_perizinan` (`status_perizinan`),
-            KEY `idx_status_jasa` (`status_jasa`),
-            KEY `idx_tgl_jatuh_tempo` (`tgl_jatuh_tempo`),
-            KEY `idx_tgl_luk` (`tgl_exp_luk`),
-            KEY `idx_tgl_kalibrasi` (`tgl_exp_kalibrasi`),
-            KEY `idx_tgl_tld` (`tgl_evaluasi_tld`),
-            KEY `idx_marketing` (`marketing_nama`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-        @$this->db->query($sql);
+        $orig = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
 
-        // Tambah kolom jika tabel sudah ada dari versi sebelumnya
-        $existingCols = $this->db->list_fields($this->table);
-        $newCols = [
-            'tgl_exp_luk'                => "DATE DEFAULT NULL COMMENT 'Masa Berlaku LUK Uji Kesesuaian'",
-            'tgl_exp_kalibrasi'          => "DATE DEFAULT NULL COMMENT 'Masa Berlaku Kalibrasi Alat'",
-            'tgl_evaluasi_tld'           => "DATE DEFAULT NULL COMMENT 'Jatuh Tempo Evaluasi TLD 3 Bulanan'",
-            'reminder_luk_sent'          => "TINYINT(1) DEFAULT 0",
-            'last_reminder_luk_at'       => "DATETIME DEFAULT NULL",
-            'reminder_kalibrasi_sent'    => "TINYINT(1) DEFAULT 0",
-            'last_reminder_kalibrasi_at' => "DATETIME DEFAULT NULL",
-            'reminder_tld_sent'          => "TINYINT(1) DEFAULT 0",
-            'last_reminder_tld_at'       => "DATETIME DEFAULT NULL",
-        ];
-        foreach ($newCols as $col => $definition) {
-            if (!in_array($col, $existingCols)) {
-                @$this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `{$col}` {$definition}");
+        // 1. Buat Tabel Utama Perizinan Alat jika belum ada
+        if (!$this->hasTable($this->table)) {
+            $sql = "CREATE TABLE IF NOT EXISTS `{$this->table}` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `nama_instansi` VARCHAR(255) NOT NULL,
+                `pihak_ketiga` VARCHAR(255),
+                `jenis_alat` VARCHAR(255) NOT NULL,
+                `status_jasa` VARCHAR(100) DEFAULT 'Tidak Termasuk Perizinan',
+                `status_perizinan` VARCHAR(100) DEFAULT '-',
+                `progres_perizinan` TEXT,
+                `marketing_id` INT,
+                `marketing_nama` VARCHAR(150),
+                `marketing_nohp` VARCHAR(50),
+                `pic_instansi` VARCHAR(150),
+                `kontak_pic` VARCHAR(50),
+                `email_pic` VARCHAR(150),
+                `tgl_terbit` DATE,
+                `tgl_jatuh_tempo` DATE,
+                `tgl_exp_luk` DATE,
+                `tgl_exp_kalibrasi` DATE,
+                `tgl_evaluasi_tld` DATE,
+                `catatan` TEXT,
+                `reminder_45_sent` TINYINT(1) DEFAULT 0,
+                `last_reminder_at` DATETIME,
+                `reminder_luk_sent` TINYINT(1) DEFAULT 0,
+                `last_reminder_luk_at` DATETIME,
+                `reminder_kalibrasi_sent` TINYINT(1) DEFAULT 0,
+                `last_reminder_kalibrasi_at` DATETIME,
+                `reminder_tld_sent` TINYINT(1) DEFAULT 0,
+                `last_reminder_tld_at` DATETIME,
+                `created_by` INT,
+                `updated_by` INT,
+                `created_at` DATETIME,
+                `updated_at` DATETIME
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+            @$this->db->query($sql);
+        }
+
+        // 2. Buat Tabel Riwayat jika belum ada
+        if (!$this->hasTable($this->table_history)) {
+            $sql_history = "CREATE TABLE IF NOT EXISTS `{$this->table_history}` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `id_perizinan` INT NOT NULL,
+                `jenis_notif` VARCHAR(50) DEFAULT 'progres',
+                `status_lama` VARCHAR(100),
+                `status_baru` VARCHAR(100),
+                `progres_lama` TEXT,
+                `progres_baru` TEXT,
+                `tgl_jatuh_tempo_lama` DATE,
+                `tgl_jatuh_tempo_baru` DATE,
+                `penerima_cust` VARCHAR(50),
+                `penerima_mkt` VARCHAR(50),
+                `keterangan` TEXT,
+                `notif_marketing_sent` TINYINT(1) DEFAULT 0,
+                `notif_visilab_sent` TINYINT(1) DEFAULT 0,
+                `notif_customer_sent` TINYINT(1) DEFAULT 0,
+                `created_by` INT,
+                `created_by_nama` VARCHAR(150),
+                `created_at` DATETIME
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+            @$this->db->query($sql_history);
+        }
+
+        // 3. Tambah kolom baru jika tabel sudah ada dari versi sebelumnya
+        if ($this->hasTable($this->table)) {
+            $colsToCheck = [
+                'tgl_exp_luk'                => "DATE DEFAULT NULL",
+                'tgl_exp_kalibrasi'          => "DATE DEFAULT NULL",
+                'tgl_evaluasi_tld'           => "DATE DEFAULT NULL",
+                'reminder_luk_sent'          => "TINYINT(1) DEFAULT 0",
+                'last_reminder_luk_at'       => "DATETIME DEFAULT NULL",
+                'reminder_kalibrasi_sent'    => "TINYINT(1) DEFAULT 0",
+                'last_reminder_kalibrasi_at' => "DATETIME DEFAULT NULL",
+                'reminder_tld_sent'          => "TINYINT(1) DEFAULT 0",
+                'last_reminder_tld_at'       => "DATETIME DEFAULT NULL"
+            ];
+            foreach ($colsToCheck as $c => $def) {
+                $chk = @$this->db->query("SHOW COLUMNS FROM `{$this->table}` LIKE '{$c}'");
+                if (!$chk || $chk->num_rows() == 0) {
+                    @$this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `{$c}` {$def}");
+                }
             }
         }
 
-        // 2. Tabel Riwayat Progres Perizinan
-        $sql_history = "CREATE TABLE IF NOT EXISTS `{$this->table_history}` (
-            `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-            `id_perizinan` INT(11) UNSIGNED NOT NULL,
-            `jenis_notif` VARCHAR(50) DEFAULT 'progres' COMMENT 'progres, izin_h45, luk_1bln, kalibrasi_1bln, tld_1bln',
-            `status_lama` VARCHAR(100) DEFAULT NULL,
-            `status_baru` VARCHAR(100) DEFAULT NULL,
-            `progres_lama` TEXT DEFAULT NULL,
-            `progres_baru` TEXT DEFAULT NULL,
-            `tgl_jatuh_tempo_lama` DATE DEFAULT NULL,
-            `tgl_jatuh_tempo_baru` DATE DEFAULT NULL,
-            `penerima_cust` VARCHAR(50) DEFAULT NULL,
-            `penerima_mkt` VARCHAR(50) DEFAULT NULL,
-            `keterangan` TEXT DEFAULT NULL,
-            `notif_marketing_sent` TINYINT(1) DEFAULT 0,
-            `notif_visilab_sent` TINYINT(1) DEFAULT 0,
-            `notif_customer_sent` TINYINT(1) DEFAULT 0,
-            `created_by` INT(11) DEFAULT NULL,
-            `created_by_nama` VARCHAR(150) DEFAULT NULL,
-            `created_at` DATETIME NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `idx_id_perizinan` (`id_perizinan`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-        @$this->db->query($sql_history);
-
-        // Tambah kolom history jika belum ada
-        $existingHistCols = $this->db->list_fields($this->table_history);
-        if (!in_array('jenis_notif', $existingHistCols)) {
-            @$this->db->query("ALTER TABLE `{$this->table_history}` ADD COLUMN `jenis_notif` VARCHAR(50) DEFAULT 'progres'");
-        }
-        if (!in_array('notif_customer_sent', $existingHistCols)) {
-            @$this->db->query("ALTER TABLE `{$this->table_history}` ADD COLUMN `notif_customer_sent` TINYINT(1) DEFAULT 0");
+        // 4. Auto Seed data awal jika tabel ada dan kosong
+        if ($this->hasTable($this->table)) {
+            $countQ = @$this->db->query("SELECT COUNT(*) as total FROM `{$this->table}`");
+            if ($countQ && $countQ->num_rows() > 0) {
+                $totalRows = (int)$countQ->row()->total;
+                if ($totalRows == 0) {
+                    $this->seed_initial_data();
+                }
+            }
         }
 
-        // 3. Auto Seed data awal jika tabel masih kosong
-        $count = $this->db->count_all($this->table);
-        if ($count == 0) {
-            $this->seed_initial_data();
-        }
-
+        $this->db->db_debug = $orig;
+        self::$initialized = true;
         return true;
     }
 
@@ -491,6 +505,10 @@ class Md_perizinan_visilab extends CI_Model
      */
     public function get_all($filters = [])
     {
+        if (!$this->hasTable($this->table)) {
+            return [];
+        }
+
         $this->db->select("
             p.*,
             DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) AS sisa_hari_izin,
@@ -554,6 +572,10 @@ class Md_perizinan_visilab extends CI_Model
 
     public function get_by_id($id)
     {
+        if (!$this->hasTable($this->table)) {
+            return null;
+        }
+
         $this->db->select("
             p.*,
             DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) AS sisa_hari_izin,
@@ -568,6 +590,7 @@ class Md_perizinan_visilab extends CI_Model
 
     public function insert($data)
     {
+        $this->ensure_table();
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['updated_at'] = date('Y-m-d H:i:s');
         $this->db->insert($this->table, $data);
@@ -576,6 +599,7 @@ class Md_perizinan_visilab extends CI_Model
 
     public function update($id, $data)
     {
+        $this->ensure_table();
         $data['updated_at'] = date('Y-m-d H:i:s');
         $this->db->where('id', $id);
         return $this->db->update($this->table, $data);
@@ -583,30 +607,40 @@ class Md_perizinan_visilab extends CI_Model
 
     public function delete($id)
     {
-        $this->db->where('id_perizinan', $id)->delete($this->table_history);
-        $this->db->where('id', $id)->delete($this->table);
+        if ($this->hasTable($this->table_history)) {
+            $this->db->where('id_perizinan', $id)->delete($this->table_history);
+        }
+        if ($this->hasTable($this->table)) {
+            $this->db->where('id', $id)->delete($this->table);
+        }
         return true;
     }
 
     public function add_history($data)
     {
+        $this->ensure_table();
         $data['created_at'] = date('Y-m-d H:i:s');
         return $this->db->insert($this->table_history, $data);
     }
 
     public function get_history($id_perizinan)
     {
+        if (!$this->hasTable($this->table_history)) {
+            return [];
+        }
+
         return $this->db->where('id_perizinan', $id_perizinan)
             ->order_by('id', 'DESC')
             ->get($this->table_history)
             ->result();
     }
 
-    /**
-     * Ambil data yang jatuh tempo dalam H-X hari untuk masing-masing jenis
-     */
     public function get_expiring($jenis = 'izin', $days = 30, $only_unsent = false)
     {
+        if (!$this->hasTable($this->table)) {
+            return [];
+        }
+
         $this->db->from("{$this->table} p");
 
         if ($jenis == 'izin') {
@@ -644,46 +678,46 @@ class Md_perizinan_visilab extends CI_Model
 
     public function get_summary_stats()
     {
-        $total = $this->db->count_all($this->table);
+        if (!$this->hasTable($this->table)) {
+            return [
+                'total'          => 0,
+                'proses'         => 0,
+                'selesai'        => 0,
+                'h45_izin'       => 0,
+                'h30_luk'        => 0,
+                'h30_kalibrasi'  => 0,
+                'h30_tld'        => 0,
+                'expired'        => 0
+            ];
+        }
 
-        $proses = $this->db->where_in('status_jasa', ['Pengurusan Perizinan', 'Pendampingan Perizinan'])
-            ->count_all_results($this->table);
+        $totalQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}`");
+        $total = ($totalQ && $totalQ->num_rows() > 0) ? (int)$totalQ->row()->c : 0;
 
-        $selesai = $this->db->where('status_perizinan', 'Selesai')
-            ->count_all_results($this->table);
+        $prosesQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE status_jasa IN ('Pengurusan Perizinan', 'Pendampingan Perizinan')");
+        $proses = ($prosesQ && $prosesQ->num_rows() > 0) ? (int)$prosesQ->row()->c : 0;
 
-        // Izin H-45
-        $h45_izin = $this->db->where('tgl_jatuh_tempo IS NOT NULL')
-            ->where('DATEDIFF(tgl_jatuh_tempo, CURDATE()) >=', 0)
-            ->where('DATEDIFF(tgl_jatuh_tempo, CURDATE()) <=', 45)
-            ->count_all_results($this->table);
+        $selesaiQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE status_perizinan = 'Selesai'");
+        $selesai = ($selesaiQ && $selesaiQ->num_rows() > 0) ? (int)$selesaiQ->row()->c : 0;
 
-        // LUK H-30 (1 Bulan)
-        $h30_luk = $this->db->where('tgl_exp_luk IS NOT NULL')
-            ->where('DATEDIFF(tgl_exp_luk, CURDATE()) >=', 0)
-            ->where('DATEDIFF(tgl_exp_luk, CURDATE()) <=', 30)
-            ->count_all_results($this->table);
+        $h45Q = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE tgl_jatuh_tempo IS NOT NULL AND DATEDIFF(tgl_jatuh_tempo, CURDATE()) >= 0 AND DATEDIFF(tgl_jatuh_tempo, CURDATE()) <= 45");
+        $h45_izin = ($h45Q && $h45Q->num_rows() > 0) ? (int)$h45Q->row()->c : 0;
 
-        // Kalibrasi H-30 (1 Bulan)
-        $h30_kalibrasi = $this->db->where('tgl_exp_kalibrasi IS NOT NULL')
-            ->where('DATEDIFF(tgl_exp_kalibrasi, CURDATE()) >=', 0)
-            ->where('DATEDIFF(tgl_exp_kalibrasi, CURDATE()) <=', 30)
-            ->count_all_results($this->table);
+        $lukQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE tgl_exp_luk IS NOT NULL AND DATEDIFF(tgl_exp_luk, CURDATE()) >= 0 AND DATEDIFF(tgl_exp_luk, CURDATE()) <= 30");
+        $h30_luk = ($lukQ && $lukQ->num_rows() > 0) ? (int)$lukQ->row()->c : 0;
 
-        // TLD H-30 (1 Bulan)
-        $h30_tld = $this->db->where('tgl_evaluasi_tld IS NOT NULL')
-            ->where('DATEDIFF(tgl_evaluasi_tld, CURDATE()) >=', 0)
-            ->where('DATEDIFF(tgl_evaluasi_tld, CURDATE()) <=', 30)
-            ->count_all_results($this->table);
+        $kalQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE tgl_exp_kalibrasi IS NOT NULL AND DATEDIFF(tgl_exp_kalibrasi, CURDATE()) >= 0 AND DATEDIFF(tgl_exp_kalibrasi, CURDATE()) <= 30");
+        $h30_kalibrasi = ($kalQ && $kalQ->num_rows() > 0) ? (int)$kalQ->row()->c : 0;
 
-        // Expired (lewat tanggal jatuh tempo apapun)
-        $expired = $this->db->group_start()
-            ->where('(tgl_jatuh_tempo IS NOT NULL AND tgl_jatuh_tempo < CURDATE())')
-            ->or_where('(tgl_exp_luk IS NOT NULL AND tgl_exp_luk < CURDATE())')
-            ->or_where('(tgl_exp_kalibrasi IS NOT NULL AND tgl_exp_kalibrasi < CURDATE())')
-            ->or_where('(tgl_evaluasi_tld IS NOT NULL AND tgl_evaluasi_tld < CURDATE())')
-            ->group_end()
-            ->count_all_results($this->table);
+        $tldQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE tgl_evaluasi_tld IS NOT NULL AND DATEDIFF(tgl_evaluasi_tld, CURDATE()) >= 0 AND DATEDIFF(tgl_evaluasi_tld, CURDATE()) <= 30");
+        $h30_tld = ($tldQ && $tldQ->num_rows() > 0) ? (int)$tldQ->row()->c : 0;
+
+        $expQ = @$this->db->query("SELECT COUNT(*) as c FROM `{$this->table}` WHERE 
+            (tgl_jatuh_tempo IS NOT NULL AND tgl_jatuh_tempo < CURDATE()) OR
+            (tgl_exp_luk IS NOT NULL AND tgl_exp_luk < CURDATE()) OR
+            (tgl_exp_kalibrasi IS NOT NULL AND tgl_exp_kalibrasi < CURDATE()) OR
+            (tgl_evaluasi_tld IS NOT NULL AND tgl_evaluasi_tld < CURDATE())");
+        $expired = ($expQ && $expQ->num_rows() > 0) ? (int)$expQ->row()->c : 0;
 
         return [
             'total'          => $total,
