@@ -10,7 +10,7 @@ class Md_knowledge extends CI_Model
         $this->db->insert('product_knowledge', $data);
     }
 
-    public function saveOrUpdateNilai($id_pengguna, $tahun, $bulan, $nilai)
+    public function saveOrUpdateNilai($id_pengguna, $tahun, $bulan, $nilai, $id_kuis = null)
     {
         $bulanDate = sprintf('%04d-%02d-01', (int)$tahun, (int)$bulan);
         $checkPk = $this->db->select('id')
@@ -23,18 +23,23 @@ class Md_knowledge extends CI_Model
         $now = date('Y-m-d H:i:s');
         $nilaiFloat = (float)$nilai;
 
+        $updateData = ['nilai' => $nilaiFloat];
+        if ($id_kuis !== null) {
+            $updateData['id_kuis'] = (int)$id_kuis;
+        }
+
         if ($checkPk) {
-            $this->db->where('id', $checkPk->id)->update('product_knowledge', [
-                'nilai' => $nilaiFloat
-            ]);
+            $this->db->where('id', $checkPk->id)->update('product_knowledge', $updateData);
             return 'updated';
         } else {
-            $this->db->insert('product_knowledge', [
+            $insertData = [
                 'id_pengguna' => (int)$id_pengguna,
+                'id_kuis'     => $id_kuis ? (int)$id_kuis : null,
                 'nilai'       => $nilaiFloat,
                 'bulan'       => $bulanDate,
                 'created_at'  => $now
-            ]);
+            ];
+            $this->db->insert('product_knowledge', $insertData);
             return 'inserted';
         }
     }
@@ -452,6 +457,85 @@ class Md_knowledge extends CI_Model
             KEY `idx_kuis_status` (`id_kuis`, `status_pengerjaan`),
             KEY `idx_pengguna` (`id_pengguna`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Migration kolom id_kuis pada tabel product_knowledge
+        if ($this->db->table_exists('product_knowledge')) {
+            $fields = $this->db->list_fields('product_knowledge');
+            if (!in_array('id_kuis', $fields)) {
+                $this->db->query("ALTER TABLE `product_knowledge` ADD COLUMN `id_kuis` INT(11) NULL AFTER `id_pengguna`");
+            }
+        }
+
+        // Otomatis bersihkan nilai rekap dari kuis yang sudah berstatus dihapus
+        $this->cleanDeletedKuisScores();
+    }
+
+    /**
+     * Membersihkan nilai di tabel product_knowledge yang berasal dari kuis yang dihapus (is_deleted = 1).
+     */
+    public function cleanDeletedKuisScores($id_kuis = null)
+    {
+        if ($this->db->table_exists('product_knowledge')) {
+            $fields = $this->db->list_fields('product_knowledge');
+            if (!in_array('id_kuis', $fields)) {
+                $this->db->query("ALTER TABLE `product_knowledge` ADD COLUMN `id_kuis` INT(11) NULL AFTER `id_pengguna`");
+            }
+        }
+
+        if ($id_kuis) {
+            $this->db->where('id_kuis', (int)$id_kuis)->update('pk_kuis', ['is_deleted' => 1]);
+        }
+
+        $deletedKuis = $this->db->get_where('pk_kuis', ['is_deleted' => 1])->result();
+        $totalCleaned = 0;
+
+        foreach ($deletedKuis as $k) {
+            $kid = (int)$k->id_kuis;
+            $tahun = (int)$k->tahun;
+            $bulan = (int)$k->bulan;
+
+            // Hapus nilai yang terikat ke id_kuis ini
+            $this->db->where('id_kuis', $kid)->delete('product_knowledge');
+            $totalCleaned += $this->db->affected_rows();
+
+            // Cek kuis aktif lain di bulan & tahun yang sama
+            $activeOther = $this->db->where('tahun', $tahun)
+                ->where('bulan', $bulan)
+                ->where('is_deleted', 0)
+                ->where('id_kuis !=', $kid)
+                ->get('pk_kuis')
+                ->row();
+
+            // Ambil semua peserta kuis yang dihapus ini
+            $peserta = $this->db->get_where('pk_peserta', ['id_kuis' => $kid])->result();
+            foreach ($peserta as $p) {
+                if ($activeOther) {
+                    $otherPeserta = $this->db->get_where('pk_peserta', [
+                        'id_kuis' => $activeOther->id_kuis,
+                        'id_pengguna' => $p->id_pengguna,
+                        'status_pengerjaan' => 'selesai'
+                    ])->row();
+
+                    if ($otherPeserta) {
+                        $this->saveOrUpdateNilai($p->id_pengguna, $tahun, $bulan, $otherPeserta->skor_akhir, $activeOther->id_kuis);
+                    } else {
+                        $this->db->where('id_pengguna', $p->id_pengguna)
+                            ->where('YEAR(bulan)', $tahun)
+                            ->where('MONTH(bulan)', $bulan)
+                            ->delete('product_knowledge');
+                        $totalCleaned += $this->db->affected_rows();
+                    }
+                } else {
+                    $this->db->where('id_pengguna', $p->id_pengguna)
+                        ->where('YEAR(bulan)', $tahun)
+                        ->where('MONTH(bulan)', $bulan)
+                        ->delete('product_knowledge');
+                    $totalCleaned += $this->db->affected_rows();
+                }
+            }
+        }
+
+        return $totalCleaned;
     }
 
     public function getKuisList($tahun = null, $bulan = null, $onlyActive = false)
@@ -590,7 +674,7 @@ class Md_knowledge extends CI_Model
         }
 
         // Sinkronisasi otomatis ke tabel `product_knowledge`
-        $this->saveOrUpdateNilai($id_pengguna, $kuis->tahun, $kuis->bulan, $skorAkhir);
+        $this->saveOrUpdateNilai($id_pengguna, $kuis->tahun, $kuis->bulan, $skorAkhir, $kuis->id_kuis);
 
         return [
             'status'       => 'success',

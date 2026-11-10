@@ -275,9 +275,30 @@ class Knowledge extends CI_Controller
         }
 
         $id_kuis = (int)$this->input->post('id_kuis', TRUE);
+        $kuis = $this->db->get_where('pk_kuis', ['id_kuis' => $id_kuis])->row();
+
         $this->db->where('id_kuis', $id_kuis)->update('pk_kuis', ['is_deleted' => 1]);
-        addLog('Product Knowledge', 'Menghapus Paket Kuis ID: ' . $id_kuis);
-        ajaxReturnDie('success', 'Paket kuis berhasil dihapus.', TRUE);
+        $cleaned = $this->md_knowledge->cleanDeletedKuisScores($id_kuis);
+
+        addLog('Product Knowledge', 'Menghapus Paket Kuis ID: ' . $id_kuis . ($kuis ? ' (' . $kuis->judul_kuis . ')' : ''));
+        ajaxReturnDie('success', 'Paket kuis berhasil dihapus dan nilai terkait pada rekap telah dibersihkan.', ['cleaned' => $cleaned]);
+    }
+
+    public function clean_deleted_scores()
+    {
+        $token = $this->input->get('token');
+        $can_access = ($token === 'vysi_clean_pk_2026') || $this->_isAdminHrd();
+        if (!$can_access) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        $cleaned = $this->md_knowledge->cleanDeletedKuisScores();
+        echo json_encode([
+            'status' => 'success',
+            'msg' => 'Pembersihan nilai dari kuis yang dihapus selesai.',
+            'total_cleaned' => $cleaned
+        ]);
     }
 
     public function ajax_simpan_soal()
