@@ -702,6 +702,7 @@ class Absensi extends CI_Controller
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
 
         $isLuarRadius = false;
+        $isExemptRadius = ((int)$user_id === 105); // Khusus Muhammad Tamrin (105): bebas absen luar radius tanpa ACC
         $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
         // Geofence radius validation untuk Absen Kantor jika bukan WFA
         if ($jenisLokasi !== 'WFA') {
@@ -709,45 +710,47 @@ class Absensi extends CI_Controller
                 ajaxReturnDie('error', 'Titik lokasi GPS tidak terdeteksi. Silakan aktifkan GPS dan izinkan browser mengakses lokasi.');
             }
 
-            $this->load->model('md_cabang');
-            $activeBranches = $this->md_cabang->getActiveBranches();
+            if (!$isExemptRadius) {
+                $this->load->model('md_cabang');
+                $activeBranches = $this->md_cabang->getActiveBranches();
 
-            if (!empty($activeBranches)) {
-                $closestBranch = null;
-                $minDistance = null;
+                if (!empty($activeBranches)) {
+                    $closestBranch = null;
+                    $minDistance = null;
 
-                foreach ($activeBranches as $branch) {
-                    $bLat = (float)str_replace(',', '.', trim((string)$branch->latitude));
-                    $bLng = (float)str_replace(',', '.', trim((string)$branch->longitude));
-                    if ($bLat == 0.0 && $bLng == 0.0) {
-                        continue;
-                    }
-                    $dist = $this->_calculateHaversineDistance($data['latitude'], $data['longitude'], $bLat, $bLng);
-                    if ($minDistance === null || $dist < $minDistance) {
-                        $minDistance = $dist;
-                        $closestBranch = $branch;
-                    }
-                }
-
-                if ($closestBranch !== null) {
-                    $allowedRadius = !empty($closestBranch->radius) ? (int)$closestBranch->radius : 100;
-                    if ($minDistance > $allowedRadius) {
-                        $distMeter = (int)round($minDistance);
-                        $alasanLuarRadius = trim((string)$this->input->post('alasan_luar_radius', TRUE));
-                        if (mb_strlen($alasanLuarRadius) < 5) {
-                            ajaxReturnDie('error', "Anda berada di luar radius kantor cabang ({$closestBranch->nama_cabang}: {$distMeter}m / maks {$allowedRadius}m). Silakan isi alasan minimal 5 karakter untuk absen luar radius.");
+                    foreach ($activeBranches as $branch) {
+                        $bLat = (float)str_replace(',', '.', trim((string)$branch->latitude));
+                        $bLng = (float)str_replace(',', '.', trim((string)$branch->longitude));
+                        if ($bLat == 0.0 && $bLng == 0.0) {
+                            continue;
                         }
+                        $dist = $this->_calculateHaversineDistance($data['latitude'], $data['longitude'], $bLat, $bLng);
+                        if ($minDistance === null || $dist < $minDistance) {
+                            $minDistance = $dist;
+                            $closestBranch = $branch;
+                        }
+                    }
 
-                        $isLuarRadius               = true;
-                        $data['is_luar_radius']     = 1;
-                        $data['jarak_radius']       = $distMeter;
-                        $data['cabang_terdekat']    = $closestBranch->nama_cabang;
-                        $data['alasan_luar_radius'] = $alasanLuarRadius;
-                        $data['acc_ga']             = 0;
-                        $data['acc_yola']           = 0;
-                        $data['approval']           = NULL;
-                        $existingKet                = !empty($data['keterangan']) ? ($data['keterangan'] . ' | ') : '';
-                        $data['keterangan']         = $existingKet . "[Luar Radius {$closestBranch->nama_cabang} - {$distMeter}m] " . $alasanLuarRadius;
+                    if ($closestBranch !== null) {
+                        $allowedRadius = !empty($closestBranch->radius) ? (int)$closestBranch->radius : 100;
+                        if ($minDistance > $allowedRadius) {
+                            $distMeter = (int)round($minDistance);
+                            $alasanLuarRadius = trim((string)$this->input->post('alasan_luar_radius', TRUE));
+                            if (mb_strlen($alasanLuarRadius) < 5) {
+                                ajaxReturnDie('error', "Anda berada di luar radius kantor cabang ({$closestBranch->nama_cabang}: {$distMeter}m / maks {$allowedRadius}m). Silakan isi alasan minimal 5 karakter untuk absen luar radius.");
+                            }
+
+                            $isLuarRadius               = true;
+                            $data['is_luar_radius']     = 1;
+                            $data['jarak_radius']       = $distMeter;
+                            $data['cabang_terdekat']    = $closestBranch->nama_cabang;
+                            $data['alasan_luar_radius'] = $alasanLuarRadius;
+                            $data['acc_ga']             = 0;
+                            $data['acc_yola']           = 0;
+                            $data['approval']           = NULL;
+                            $existingKet                = !empty($data['keterangan']) ? ($data['keterangan'] . ' | ') : '';
+                            $data['keterangan']         = $existingKet . "[Luar Radius {$closestBranch->nama_cabang} - {$distMeter}m] " . $alasanLuarRadius;
+                        }
                     }
                 }
             }

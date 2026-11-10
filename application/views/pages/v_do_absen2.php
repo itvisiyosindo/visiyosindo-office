@@ -798,6 +798,7 @@ if (isset($data_absen[0]->waktu_absen)) {
     const SAVED_LATITUDE = <?= isset($data_absen[0]->latitude) && $data_absen[0]->latitude !== '' ? json_encode($data_absen[0]->latitude) : 'null' ?>;
     const SAVED_LONGITUDE = <?= isset($data_absen[0]->longitude) && $data_absen[0]->longitude !== '' ? json_encode($data_absen[0]->longitude) : 'null' ?>;
     const LIST_CABANG = <?= json_encode($list_cabang ?? []) ?>;
+    const IS_EXEMPT_LUAR_RADIUS = <?= ((int)sessPenggunaId() === 105) ? 'true' : 'false' ?>;
     const CAMERA_PREF_KEY = 'absen_camera_pref_office_v1';
 
     function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
@@ -946,9 +947,10 @@ if (isset($data_absen[0]->waktu_absen)) {
                 const distMeter = Math.round(closest.distance);
                 const allowedRadius = parseInt(closest.radius) || 100;
                 const isInside = distMeter <= allowedRadius;
-                const badgeColor = isInside ? '#067647' : '#b42318';
-                const badgeBg = isInside ? '#dcfae6' : '#ffe4e8';
-                const statusLabel = isInside ? 'Dalam Radius Kantor' : 'Di Luar Radius (Wajib Alasan)';
+                const isAllowed = isInside || IS_EXEMPT_LUAR_RADIUS;
+                const badgeColor = isAllowed ? '#067647' : '#b42318';
+                const badgeBg = isAllowed ? '#dcfae6' : '#ffe4e8';
+                const statusLabel = isInside ? 'Dalam Radius Kantor' : (IS_EXEMPT_LUAR_RADIUS ? 'Di Luar Radius (Bebas Radius)' : 'Di Luar Radius (Wajib Alasan)');
                 statusEl.innerHTML = accText + ' | Cabang terdekat: <b>' + closest.nama_cabang + '</b> (' + distMeter + 'm / maks ' + allowedRadius + 'm) ' +
                     '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;color:' + badgeColor + ';background:' + badgeBg + ';">' + statusLabel + '</span>';
             } else {
@@ -1175,7 +1177,7 @@ if (isset($data_absen[0]->waktu_absen)) {
 
             // Cek radius multi-cabang sebelum ambil foto
             const isWfa = getSelectedJenisLokasi() === 'WFA';
-            if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
+            if (!isWfa && !IS_EXEMPT_LUAR_RADIUS && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
                 const closest = findClosestBranch(latitude, longitude);
                 if (closest) {
                     const distMeter = Math.round(closest.distance);
