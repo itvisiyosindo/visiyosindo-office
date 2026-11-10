@@ -652,8 +652,14 @@ $namaBulanList = [
                             <div class="small">
                                 <?= renderStarsHtml($kpi['my_combined']->rating_agregat) ?>
                                 <span class="badge <?= $kpi['my_combined']->grade_badge ?> ml-1"><?= $kpi['my_combined']->grade_label ?></span>
+                                <?php if (!empty($kpi['my_combined']->sp_level)): ?>
+                                    <span class="badge badge-danger ml-1" title="Plafon maks <?= (int)$kpi['my_combined']->sp_cap ?>"><?= htmlspecialchars($kpi['my_combined']->sp_label) ?> (Maks <?= (int)$kpi['my_combined']->sp_cap ?>)</span>
+                                <?php endif; ?>
                             </div>
                             <div class="text-muted" style="font-size: 10.5px;">Bobot: <?= htmlspecialchars($kpi['my_combined']->komposisi) ?></div>
+                            <?php if (!empty($kpi['my_combined']->is_capped_sp)): ?>
+                                <div class="text-danger font-weight-bold" style="font-size: 10.5px;">Hitungan <?= number_format($kpi['my_combined']->skor_akhir_raw, 1) ?> dibatasi plafon <?= htmlspecialchars($kpi['my_combined']->sp_label) ?> (<?= (int)$kpi['my_combined']->sp_cap ?>)</div>
+                            <?php endif; ?>
                         <?php else: ?>
                             <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
                                 <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
@@ -719,8 +725,14 @@ $namaBulanList = [
                             <div class="small">
                                 <?= renderStarsHtml($kpi['my_combined']->rating_agregat) ?>
                                 <span class="badge <?= $kpi['my_combined']->grade_badge ?> ml-1"><?= $kpi['my_combined']->grade_label ?></span>
+                                <?php if (!empty($kpi['my_combined']->sp_level)): ?>
+                                    <span class="badge badge-danger ml-1" title="Plafon maks <?= (int)$kpi['my_combined']->sp_cap ?>"><?= htmlspecialchars($kpi['my_combined']->sp_label) ?> (Maks <?= (int)$kpi['my_combined']->sp_cap ?>)</span>
+                                <?php endif; ?>
                             </div>
                             <div class="text-muted" style="font-size: 10.5px;">Bobot: <?= htmlspecialchars($kpi['my_combined']->komposisi) ?></div>
+                            <?php if (!empty($kpi['my_combined']->is_capped_sp)): ?>
+                                <div class="text-danger font-weight-bold" style="font-size: 10.5px;">Hitungan <?= number_format($kpi['my_combined']->skor_akhir_raw, 1) ?> dibatasi plafon <?= htmlspecialchars($kpi['my_combined']->sp_label) ?> (<?= (int)$kpi['my_combined']->sp_cap ?>)</div>
+                            <?php endif; ?>
                         <?php else: ?>
                             <div style="font-size: 24px; font-weight: 800; color: #f59e0b;">
                                 <?= number_format((float)$kpi['my_avg_star'], 2) ?> <small style="font-size: 13px; color:#64748b;">/ 5.0</small>
@@ -1284,7 +1296,11 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu Mutu & Produktivitas):</strong> Integrasi <strong>80% Kualitas Mutu</strong> (35% Task Proyek + 25% Laporan Mingguan + 25% Pencapaian + 15% Product Knowledge; khusus HR, GA, Security & Manajemen bebas PK dengan bobot 40% Task + 30% Lap + 30% Penc) + <strong>20% Volume Produktivitas</strong>. Karyawan dengan <em>Evaluasi Lengkap</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
+                            <strong>Sistem Evaluasi Kinerja 6 Pilar (Ratio 80% Mutu + 20% Volume):</strong>
+                            <strong>Reguler:</strong> 25% Task + 20% Laporan + 15% Pencapaian + 10% PK + 15% Absensi + 15% Evaluasi Semester
+                            <span class="text-muted">(Bebas PK: 30% Task + 20% Lap + 20% Penc + 15% Absensi + 15% Evaluasi)</span>.
+                            Keterlambatan absen mengurangi poin; Evaluasi yang belum diisi dianggap belum dinilai dulu.
+                            <strong>Plafon SP:</strong> SP0 Maks 100% &bull; SP1 Maks 80% &bull; SP2 Maks 60% &bull; SP3 Maks 40%.
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
                             <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
@@ -1301,28 +1317,40 @@ $namaBulanList = [
                                     <th width="50" class="text-center align-middle">Rank</th>
                                     <th class="align-middle">Nama Karyawan</th>
                                     <th class="align-middle">Jabatan</th>
-                                    <th class="text-center align-middle" style="min-width: 125px;">
+                                    <th class="text-center align-middle" style="min-width: 110px;">
                                         <div>Task Proyek</div>
-                                        <small class="badge badge-primary" style="font-size: 10px;">Mutu 35%</small>
+                                        <small class="badge badge-primary" style="font-size: 10px;">Mutu 25%</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 125px;">
-                                        <div>Laporan Mingguan</div>
-                                        <small class="badge badge-info" style="font-size: 10px;">Mutu 25%</small>
+                                    <th class="text-center align-middle" style="min-width: 115px;">
+                                        <div>Laporan</div>
+                                        <small class="badge badge-info" style="font-size: 10px;">Mutu 20%</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 125px;">
+                                    <th class="text-center align-middle" style="min-width: 110px;">
                                         <div>Pencapaian</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 25%</small>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 15%</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 125px;">
-                                        <div>Product Knowledge</div>
-                                        <small class="badge text-white" style="font-size: 10px; background-color: #0d9488;">Mutu 15%</small>
+                                    <th class="text-center align-middle" style="min-width: 110px;">
+                                        <div>PK</div>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #0d9488;">Mutu 10%</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 125px; background: #f0fdf4;">
+                                    <th class="text-center align-middle" style="min-width: 115px;">
+                                        <div>Absensi</div>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #0284c7;">Mutu 15%</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 115px;">
+                                        <div>Evaluasi Smt</div>
+                                        <small class="badge text-white" style="font-size: 10px; background-color: #6366f1;">Mutu 15%</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 100px;">
+                                        <div>Status SP</div>
+                                        <small class="badge badge-dark" style="font-size: 10px;">Plafon Maks</small>
+                                    </th>
+                                    <th class="text-center align-middle" style="min-width: 130px; background: #f0fdf4;">
                                         <div class="text-success font-weight-bold">Skor Akhir</div>
                                         <small class="text-muted" style="font-size: 10px;">80% Mutu + 20% Vol</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 140px;">Rating Agregat</th>
-                                    <th class="text-center align-middle" width="125">Grade Kinerja</th>
+                                    <th class="text-center align-middle" style="min-width: 130px;">Rating Agregat</th>
+                                    <th class="text-center align-middle" width="120">Grade Kinerja</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1395,6 +1423,51 @@ $namaBulanList = [
                                                 <span class="text-muted small">Belum kuis</span>
                                             <?php endif; ?>
                                         </td>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->skor_abs !== null): ?>
+                                                <div class="font-weight-bold" style="font-size: 14px; color: #0369a1;"><?= number_format($lb->skor_abs, 1) ?></div>
+                                                <div class="small text-muted" style="font-size: 11px;">
+                                                    <?= (int)$lb->abs_hari_hadir ?>/<?= (int)$lb->abs_hari_kerja ?> hr
+                                                    <?php if ((int)$lb->abs_hari_terlambat > 0): ?>
+                                                        <span class="badge badge-danger px-1 py-0 ml-1" style="font-size: 9.5px;"><?= (int)$lb->abs_hari_terlambat ?> telat</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Belum ada data</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <?php if ($lb->skor_eval !== null): ?>
+                                                <div class="font-weight-bold" style="font-size: 14px; color: #4f46e5;"><?= number_format($lb->skor_eval, 1) ?></div>
+                                                <div class="small text-muted" style="font-size: 11px;">
+                                                    <?= htmlspecialchars($lb->eval_label ?: 'Evaluasi') ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Belum dinilai</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <?php
+                                                $spLv = (int)($lb->sp_level ?? 0);
+                                                $spCp = (int)($lb->sp_cap ?? 100);
+                                                $spTooltip = ($spLv > 0 && !empty($lb->sp_kode))
+                                                    ? htmlspecialchars($lb->sp_kode . ' (berlaku s/d ' . $lb->sp_akhir . ')')
+                                                    : 'Tidak ada SP aktif';
+                                            ?>
+                                            <?php if ($spLv === 0): ?>
+                                                <span class="badge badge-light text-success px-2 py-1" style="border: 1px solid #bbf7d0; font-size: 11px;" title="<?= $spTooltip ?>">SP 0</span>
+                                                <div class="small text-muted" style="font-size: 10px;">Maks 100%</div>
+                                            <?php elseif ($spLv === 1): ?>
+                                                <span class="badge badge-warning text-dark px-2 py-1" style="font-size: 11px; font-weight: 700;" title="<?= $spTooltip ?>">SP 1</span>
+                                                <div class="small font-weight-bold text-warning" style="font-size: 10px;">Maks <?= $spCp ?>%</div>
+                                            <?php elseif ($spLv === 2): ?>
+                                                <span class="badge text-white px-2 py-1" style="background: #ea580c; font-size: 11px; font-weight: 700;" title="<?= $spTooltip ?>">SP 2</span>
+                                                <div class="small font-weight-bold" style="color: #ea580c; font-size: 10px;">Maks <?= $spCp ?>%</div>
+                                            <?php else: ?>
+                                                <span class="badge badge-danger px-2 py-1" style="font-size: 11px; font-weight: 700;" title="<?= $spTooltip ?>">SP 3</span>
+                                                <div class="small font-weight-bold text-danger" style="font-size: 10px;">Maks <?= $spCp ?>%</div>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-center align-middle" style="background: #f0fdf4;">
                                             <?php if ($lb->skor_akhir !== null): ?>
                                                 <div class="font-weight-bold" style="font-size: 17px; color: <?= $lb->grade_color ?>;"><?= number_format($lb->skor_akhir, 1) ?></div>
@@ -1402,9 +1475,18 @@ $namaBulanList = [
                                                     <div class="small font-weight-bold text-success" style="font-size: 10px;">
                                                         <i class="fas fa-check-circle text-success mr-1"></i>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
                                                     </div>
+                                                <?php elseif ($lb->status_nilai === 'parsial_no_eval'): ?>
+                                                    <div class="small text-info font-weight-bold" style="font-size: 10px;">
+                                                        <span class="badge badge-info py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Non-Eval</span>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
+                                                    </div>
                                                 <?php else: ?>
                                                     <div class="small text-muted" style="font-size: 10px;">
                                                         <span class="badge badge-warning text-dark py-0 px-1 mr-1" style="font-size: 9px; font-weight: 600;">Parsial</span>Mutu: <?= number_format($lb->skor_mutu, 1) ?> | Vol: <?= number_format($lb->skor_prod, 0) ?>%
+                                                    </div>
+                                                <?php endif; ?>
+                                                <?php if (!empty($lb->is_capped_sp)): ?>
+                                                    <div class="small text-danger font-weight-bold" style="font-size: 9.5px;">
+                                                        Asli <?= number_format($lb->skor_akhir_raw, 1) ?> &rarr; Cap <?= htmlspecialchars($lb->sp_label) ?>
                                                     </div>
                                                 <?php endif; ?>
                                             <?php else: ?>

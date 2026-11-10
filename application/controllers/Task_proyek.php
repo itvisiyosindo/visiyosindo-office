@@ -176,6 +176,273 @@ class Task_proyek extends CI_Controller
         ];
     }
 
+    /**
+     * Hitung jumlah hari kerja efektif (Senin-Jumat, di luar hari libur absensi_config_libur).
+     */
+    private function _countEffectiveWorkdays($startDate, $endDate, array $holidaySet, $onlyMonth = 0)
+    {
+        static $cache = [];
+        if (empty($startDate) || empty($endDate) || $endDate < $startDate) {
+            return 0;
+        }
+        $cacheKey = $startDate . '_' . $endDate . '_' . (int)$onlyMonth;
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
+
+        $count = 0;
+        $cur = new DateTime($startDate);
+        $end = new DateTime($endDate);
+        while ($cur <= $end) {
+            $dow = (int)$cur->format('N');
+            if ($dow < 6) {
+                $m = (int)$cur->format('n');
+                if ((int)$onlyMonth === 0 || $m === (int)$onlyMonth) {
+                    $ymd = $cur->format('Y-m-d');
+                    if (!isset($holidaySet[$ymd])) {
+                        $count++;
+                    }
+                }
+            }
+            $cur->modify('+1 day');
+        }
+
+        $cache[$cacheKey] = $count;
+        return $count;
+    }
+
+    /**
+     * Ambil peta tanggal masuk pertama masing-masing karyawan (untuk pro-rata karyawan baru di filter multi-bulan).
+     */
+    private function _getFirstAbsenDateMap($todayYmd, array $accountMergeMap)
+    {
+        $map = [];
+        $rows = $this->db->query("
+            SELECT pengguna_id, MIN(DATE(data_created)) AS first_masuk
+            FROM absensi
+            WHERE type_absen = 'masuk'
+              AND data_created >= '2020-01-01 00:00:00'
+              AND data_created <= ?
+            GROUP BY pengguna_id
+        ", [$todayYmd . ' 23:59:59'])->result();
+
+        foreach ($rows as $r) {
+            if (empty($r->first_masuk)) {
+                continue;
+            }
+            $uid = (int)$r->pengguna_id;
+            if (isset($accountMergeMap[$uid])) {
+                $uid = (int)$accountMergeMap[$uid];
+            }
+            if (!isset($map[$uid]) || $r->first_masuk < $map[$uid]) {
+                $map[$uid] = $r->first_masuk;
+            }
+        }
+        return $map;
+    }
+
+    /**
+     * Ambil peta skor Evaluasi Semester (tabel evaluasi + evaluasi_detail, jenis_evaluasi = 1) per pengguna_id.
+     */
+    private function _getEvaluasiSemesterScoreMap($filterBulan, $filterTahun, array $accountMergeMap)
+    {
+        $mInt    = !empty($filterBulan) ? (int)$filterBulan : 0;
+        $hasYear = (!empty($filterTahun) && $filterTahun !== 'all');
+        $yInt    = $hasYear ? (int)$filterTahun : 0;
+
+        $where = " WHERE e.jenis_evaluasi = 1 ";
+        if ($hasYear) {
+            $where .= " AND e.tahun = {$yInt} ";
+        } else {
+            $where .= " AND e.tahun IS NOT NULL ";
+        }
+        if ($mInt > 0) {
+            $targetSmt = ($mInt <= 6) ? 1 : 2;
+            $where .= " AND e.smt = {$targetSmt} ";
+        } else {
+            $where .= " AND e.smt IS NOT NULL ";
+        }
+
+        $rows = $this->db->query("
+            SELECT e.id_pengguna, e.tahun, e.smt,
+                   ed.nilaia, ed.nilaib, ed.nilaic, ed.nilaid, ed.nilaie, ed.nilaif
+            FROM evaluasi e
+            INNER JOIN evaluasi_detail ed ON ed.id_evaluasi = e.id
+            {$where}
+        ")->result();
+
+        // Kumpulkan rata-rata per jobdesc per (uid, tahun, smt) identik dengan Md_hasil_evaluasi_semester::getNilaiEvaluasi()
+        $perSem = [];
+        foreach ($rows as $r) {
+            $sum = 0.0;
+            $cnt = 0;
+            foreach (['nilaia', 'nilaib', 'nilaic', 'nilaid', 'nilaie', 'nilaif'] as $col) {
+                $v = isset($r->$col) ? (float)$r->$col : 0.0;
+                if ($v > 0) {
+                    $sum += $v;
+                    $cnt++;
+                }
+            }
+            if ($cnt <= 0) {
+                continue;
+            }
+            $uid = (int)$r->id_pengguna;
+            if (isset($accountMergeMap[$uid])) {
+                $uid = (int)$accountMergeMap[$uid];
+            }
+            $semKey = (int)$r->tahun . '_' . (int)$r->smt;
+            if (!isset($perSem[$uid][$semKey])) {
+                $perSem[$uid][$semKey] = [
+                    'tahun' => (int)$r->tahun,
+                    'smt'   => (int)$r->smt,
+                    'sum'   => 0.0,
+                    'cnt'   => 0,
+                ];
+            }
+            $perSem[$uid][$semKey]['sum'] += ($sum / $cnt);
+            $perSem[$uid][$semKey]['cnt']++;
+        }
+
+        $result = [];
+        foreach ($perSem as $uid => $sems) {
+            $semScores = [];
+            $labels = [];
+            ksort($sems);
+            foreach ($sems as $s) {
+                if ($s['cnt'] > 0) {
+                    $semScores[] = $s['sum'] / $s['cnt'];
+                    $labels[] = 'Smt ' . $s['smt'] . ' ' . $s['tahun'];
+                }
+            }
+            if (!empty($semScores)) {
+                $result[$uid] = [
+                    'skor'  => round(array_sum($semScores) / count($semScores), 1),
+                    'label' => count($labels) > 1 ? (count($labels) . ' Semester') : $labels[0],
+                    'count' => count($semScores),
+                ];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Deteksi level SP (1, 2, 3) dari kolom jenis_sp dan perihal pada tabel surat_peringatan.
+     */
+    private function _parseSpLevel($jenisSp, $perihal = '')
+    {
+        $raw = strtolower(trim((string)$jenisSp . ' ' . (string)$perihal));
+        if ($raw === '') {
+            return 0;
+        }
+        if (preg_match('/\b(3|iii|ketiga|tiga|sp\s*3|sp\s*iii)\b/', $raw) || strpos($raw, 'ketiga') !== false || strpos($raw, 'sp3') !== false) {
+            return 3;
+        }
+        if (preg_match('/\b(2|ii|kedua|dua|sp\s*2|sp\s*ii)\b/', $raw) || strpos($raw, 'kedua') !== false || strpos($raw, 'sp2') !== false) {
+            return 2;
+        }
+        if (preg_match('/\b(1|i|pertama|kesatu|satu|sp\s*1|sp\s*i)\b/', $raw) || strpos($raw, 'pertama') !== false || strpos($raw, 'kesatu') !== false || strpos($raw, 'sp1') !== false) {
+            return 1;
+        }
+        return 1;
+    }
+
+    /**
+     * Ambil peta status SP aktif & batas plafon nilai maksimal (SP0=100, SP1=80, SP2=60, SP3=40) per pengguna_id.
+     */
+    private function _getActiveSpCapMap($windowStart, $windowEnd, array $accountMergeMap)
+    {
+        if (!$this->db->table_exists('surat_peringatan')) {
+            return [];
+        }
+
+        // Bangun lookup nama -> pengguna_id sebagai fallback jika sp.nama menyimpan string nama
+        $nameToId = [];
+        $users = $this->db->select('pengguna_id, nama')->from('pengguna')->get()->result();
+        foreach ($users as $u) {
+            $key = strtolower(trim((string)$u->nama));
+            if ($key !== '') {
+                $nameToId[$key] = (int)$u->pengguna_id;
+            }
+        }
+
+        $rows = $this->db->query("
+            SELECT id, kode, nama, jenis_sp, perihal, tgl_pengajuan, tgl_evaluasi, masa, ttd_3
+            FROM surat_peringatan
+            WHERE ttd_3 IS NULL OR ttd_3 != '2'
+            ORDER BY tgl_pengajuan DESC, id DESC
+        ")->result();
+
+        $capByLevel = [0 => 100, 1 => 80, 2 => 60, 3 => 40];
+        $map = [];
+
+        foreach ($rows as $sp) {
+            $rawNama = trim((string)$sp->nama);
+            if ($rawNama === '') {
+                continue;
+            }
+            if (is_numeric($rawNama)) {
+                $uid = (int)$rawNama;
+            } else {
+                $nameKey = strtolower($rawNama);
+                if (!isset($nameToId[$nameKey])) {
+                    continue;
+                }
+                $uid = $nameToId[$nameKey];
+            }
+            if (isset($accountMergeMap[$uid])) {
+                $uid = (int)$accountMergeMap[$uid];
+            }
+
+            $tglMulaiStr = (!empty($sp->tgl_pengajuan) && $sp->tgl_pengajuan !== '0000-00-00')
+                ? $sp->tgl_pengajuan
+                : ((!empty($sp->tgl_evaluasi) && $sp->tgl_evaluasi !== '0000-00-00') ? $sp->tgl_evaluasi : null);
+            if (!$tglMulaiStr) {
+                continue;
+            }
+
+            $masaBulan = 0;
+            if (!empty($sp->masa) && preg_match('/\d+/', (string)$sp->masa, $m)) {
+                $masaBulan = (int)$m[0];
+            }
+            if ($masaBulan <= 0) {
+                $masaBulan = 3;
+            }
+
+            try {
+                $dtMulai = new DateTime($tglMulaiStr);
+                $dtAkhir = clone $dtMulai;
+                $dtAkhir->modify('+' . $masaBulan . ' months');
+                $tglMulai = $dtMulai->format('Y-m-d');
+                $tglAkhir = $dtAkhir->format('Y-m-d');
+            } catch (Exception $e) {
+                continue;
+            }
+
+            // SP dianggap aktif jika rentang berlakunya beririsan dengan jendela periode evaluasi
+            if ($tglMulai > $windowEnd || $tglAkhir < $windowStart) {
+                continue;
+            }
+
+            $level = $this->_parseSpLevel($sp->jenis_sp, $sp->perihal);
+            if ($level <= 0) {
+                continue;
+            }
+
+            if (!isset($map[$uid]) || $level > $map[$uid]['level']) {
+                $map[$uid] = [
+                    'level'     => $level,
+                    'cap'       => isset($capByLevel[$level]) ? $capByLevel[$level] : 80,
+                    'label'     => 'SP ' . $level,
+                    'kode'      => (string)$sp->kode,
+                    'tgl_mulai' => $tglMulai,
+                    'tgl_akhir' => $tglAkhir,
+                ];
+            }
+        }
+
+        return $map;
+    }
+
     public function index()
     {
         grantAccessFor('all');
@@ -392,7 +659,7 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (Solusi A: 80% Mutu Kualitas + 20% Volume Produktivitas)
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (Solusi A: 80% Mutu Kualitas 6 Pilar + 20% Volume Produktivitas + Plafon SP)
         $wherePeriodeTask = "";
         if (!empty($filterBulan)) {
             $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
@@ -401,10 +668,10 @@ class Task_proyek extends CI_Controller
             $wherePeriodeTask .= " AND YEAR(t.created_at) = " . (int)$filterTahun;
         }
 
-        // Tentukan rentang tanggal untuk filter laporan mingguan & product knowledge
-        $wherePeriodeNp = "";
+        // Tentukan rentang tanggal untuk filter laporan mingguan, product knowledge, absensi, & jendela SP aktif
+        $wherePeriodeNp  = "";
         $wherePeriodeLap = "";
-        $wherePeriodePk = "";
+        $wherePeriodePk  = "";
         if (!empty($filterBulan) && !empty($filterTahun) && $filterTahun !== 'all') {
             $m = str_pad((int)$filterBulan, 2, '0', STR_PAD_LEFT);
             $startDate = "{$filterTahun}-{$m}-01";
@@ -422,25 +689,93 @@ class Task_proyek extends CI_Controller
             $wherePeriodePk  = " AND MONTH(bulan) = " . (int)$filterBulan;
         }
 
+        $todayYmd      = date('Y-m-d');
+        $mInt          = !empty($filterBulan) ? (int)$filterBulan : 0;
+        $hasYearFilter = (!empty($filterTahun) && $filterTahun !== 'all');
+        $yInt          = $hasYearFilter ? (int)$filterTahun : 0;
+        $onlyMonth     = 0;
+        $isSingleMonth = false;
+
+        if ($mInt > 0 && $hasYearFilter) {
+            $mPad          = str_pad($mInt, 2, '0', STR_PAD_LEFT);
+            $absStart      = "{$yInt}-{$mPad}-01";
+            $absFullEnd    = date('Y-m-t', strtotime($absStart));
+            $absEnd        = ($absFullEnd > $todayYmd) ? $todayYmd : $absFullEnd;
+            $isSingleMonth = true;
+            $spWindowStart = $absStart;
+            $spWindowEnd   = $absFullEnd;
+            $wherePeriodeAbs = ($absEnd < $absStart)
+                ? " AND 1 = 0"
+                : " AND a.data_created >= '{$absStart} 00:00:00' AND a.data_created <= '{$absEnd} 23:59:59'";
+        } elseif ($mInt === 0 && $hasYearFilter) {
+            $absStart   = "{$yInt}-01-01";
+            $absFullEnd = "{$yInt}-12-31";
+            $absEnd     = ($absFullEnd > $todayYmd) ? $todayYmd : $absFullEnd;
+            if ($yInt >= (int)date('Y')) {
+                $spWindowStart = $todayYmd;
+                $spWindowEnd   = $todayYmd;
+            } else {
+                $spWindowStart = $absStart;
+                $spWindowEnd   = $absFullEnd;
+            }
+            $wherePeriodeAbs = ($absEnd < $absStart)
+                ? " AND 1 = 0"
+                : " AND a.data_created >= '{$absStart} 00:00:00' AND a.data_created <= '{$absEnd} 23:59:59'";
+        } elseif ($mInt > 0 && !$hasYearFilter) {
+            $absStart        = "2024-01-01";
+            $absFullEnd      = $todayYmd;
+            $absEnd          = $todayYmd;
+            $onlyMonth       = $mInt;
+            $spWindowStart   = $todayYmd;
+            $spWindowEnd     = $todayYmd;
+            $wherePeriodeAbs = " AND a.data_created >= '2024-01-01 00:00:00' AND a.data_created <= '{$todayYmd} 23:59:59' AND MONTH(a.data_created) = {$mInt}";
+        } else {
+            $absStart        = "2024-01-01";
+            $absFullEnd      = $todayYmd;
+            $absEnd          = $todayYmd;
+            $spWindowStart   = $todayYmd;
+            $spWindowEnd     = $todayYmd;
+            $wherePeriodeAbs = " AND a.data_created >= '2024-01-01 00:00:00' AND a.data_created <= '{$todayYmd} 23:59:59'";
+        }
+
+        // Ambil hari libur nasional, tanggal mulai absen karyawan, nilai evaluasi semester, & status SP aktif
+        $holidaySet = [];
+        if ($this->db->table_exists('absensi_config_libur')) {
+            $libRows = $this->db->query("SELECT tgl FROM absensi_config_libur WHERE tgl >= '2020-01-01'")->result();
+            foreach ($libRows as $lr) {
+                if (!empty($lr->tgl)) {
+                    $holidaySet[date('Y-m-d', strtotime($lr->tgl))] = true;
+                }
+            }
+        }
+        $firstAbsenMap      = $this->_getFirstAbsenDateMap($todayYmd, $accountMergeMap);
+        $evalScoreMap       = $this->_getEvaluasiSemesterScoreMap($filterBulan, $filterTahun, $accountMergeMap);
+        $evalExistsInPeriod = !empty($evalScoreMap);
+        $spCapMap           = $this->_getActiveSpCapMap($spWindowStart, $spWindowEnd, $accountMergeMap);
+
         // Generator CASE mapping ID untuk akun ganda / akun jabatan yang dimerge
         $caseTsk = "t.id_penerima";
         $caseNp  = "id_pengguna";
         $caseLap = "id_pengaju";
+        $caseAbs = "a.pengguna_id";
 
         if (!empty($accountMergeMap)) {
             $whensTsk = "";
             $whensNp  = "";
             $whensLap = "";
+            $whensAbs = "";
             foreach ($accountMergeMap as $dupId => $targetId) {
                 $dupId    = (int)$dupId;
                 $targetId = (int)$targetId;
                 $whensTsk .= "WHEN t.id_penerima = {$dupId} THEN {$targetId} ";
                 $whensNp  .= "WHEN id_pengguna = {$dupId} THEN {$targetId} ";
                 $whensLap .= "WHEN id_pengaju = {$dupId} THEN {$targetId} ";
+                $whensAbs .= "WHEN a.pengguna_id = {$dupId} THEN {$targetId} ";
             }
             $caseTsk = "(CASE {$whensTsk} ELSE t.id_penerima END)";
             $caseNp  = "(CASE {$whensNp} ELSE id_pengguna END)";
             $caseLap = "(CASE {$whensLap} ELSE id_pengaju END)";
+            $caseAbs = "(CASE {$whensAbs} ELSE a.pengguna_id END)";
         }
 
         $raw_leaderboard = $this->db->query("
@@ -460,7 +795,13 @@ class Task_proyek extends CI_Controller
                 COALESCE(penc.avg_nilai_pencapaian, lap_penc.avg_nilai_lap_penc) AS avg_nilai_pencapaian,
                 COALESCE(penc.total_pencapaian, lap_penc.total_lap_penc, 0) AS total_pencapaian,
                 COALESCE(pk.avg_nilai_pk, NULL) AS avg_nilai_pk,
-                COALESCE(pk.total_pk, 0) AS total_pk
+                COALESCE(pk.total_pk, 0) AS total_pk,
+                COALESCE(abs_data.hari_hadir, 0) AS abs_hari_hadir,
+                COALESCE(abs_data.hari_tepat, 0) AS abs_hari_tepat,
+                COALESCE(abs_data.hari_terlambat, 0) AS abs_hari_terlambat,
+                COALESCE(abs_data.hari_cuti, 0) AS abs_hari_cuti,
+                COALESCE(abs_data.hari_izin_sakit, 0) AS abs_hari_izin_sakit,
+                COALESCE(abs_data.total_absen_rec, 0) AS abs_total_rec
             FROM pengguna p
             LEFT JOIN divisi d ON d.id_divisi = p.id_divisi
             LEFT JOIN (
@@ -563,6 +904,35 @@ class Task_proyek extends CI_Controller
                 WHERE (nilai IS NOT NULL AND nilai > 0) {$wherePeriodePk}
                 GROUP BY {$caseNp}
             ) pk ON pk.id_pengguna = p.pengguna_id
+            LEFT JOIN (
+                SELECT
+                    {$caseAbs} AS id_pengguna,
+                    COUNT(DISTINCT CASE
+                        WHEN (a.type_absen = 'masuk' OR LOWER(COALESCE(a.type_absen, '')) = 'cuti' OR LOWER(COALESCE(a.status_absen, '')) = 'cuti')
+                        THEN DATE(a.data_created)
+                    END) AS hari_hadir,
+                    COUNT(DISTINCT CASE
+                        WHEN a.type_absen = 'masuk' AND LOWER(COALESCE(a.status_absen, '')) IN ('tepat_waktu', 'tepat waktu', 'dinas')
+                        THEN DATE(a.data_created)
+                    END) AS hari_tepat,
+                    COUNT(DISTINCT CASE
+                        WHEN a.type_absen = 'masuk' AND LOWER(COALESCE(a.status_absen, '')) = 'terlambat'
+                        THEN DATE(a.data_created)
+                    END) AS hari_terlambat,
+                    COUNT(DISTINCT CASE
+                        WHEN (LOWER(COALESCE(a.type_absen, '')) = 'cuti' OR LOWER(COALESCE(a.status_absen, '')) = 'cuti')
+                        THEN DATE(a.data_created)
+                    END) AS hari_cuti,
+                    COUNT(DISTINCT CASE
+                        WHEN LOWER(COALESCE(a.status_absen, '')) IN ('izin', 'sakit')
+                        THEN DATE(a.data_created)
+                    END) AS hari_izin_sakit,
+                    COUNT(*) AS total_absen_rec
+                FROM absensi a
+                WHERE (COALESCE(a.is_luar_radius, 0) = 0 OR (a.acc_ga = 1 AND a.acc_yola = 1))
+                  {$wherePeriodeAbs}
+                GROUP BY {$caseAbs}
+            ) abs_data ON abs_data.id_pengguna = p.pengguna_id
             WHERE p.status = 1 {$excludeMergedSql} AND (
                 tsk.total_task > 0 
                 OR np.avg_nilai_point IS NOT NULL 
@@ -570,6 +940,7 @@ class Task_proyek extends CI_Controller
                 OR penc.avg_nilai_pencapaian IS NOT NULL
                 OR lap_penc.avg_nilai_lap_penc IS NOT NULL
                 OR pk.avg_nilai_pk IS NOT NULL
+                OR COALESCE(abs_data.total_absen_rec, 0) > 0
             )
         ")->result();
 
@@ -577,6 +948,7 @@ class Task_proyek extends CI_Controller
         $myCombinedKpi = null;
 
         foreach ($raw_leaderboard as $lb) {
+            $uid        = (int)$lb->pengguna_id;
             $isExemptPk = $this->_isExemptFromPk($lb->nama, $lb->jabatan, $lb->nama_divisi);
             $hasTask    = ($lb->avg_bintang !== null && (int)$lb->task_selesai > 0);
             $hasLap     = ($lb->avg_nilai_laporan !== null);
@@ -588,125 +960,162 @@ class Task_proyek extends CI_Controller
             $skorPenc = $hasPenc ? round((float)$lb->avg_nilai_pencapaian, 1) : null;
             $skorPk   = ($hasPk && !$isExemptPk) ? round((float)$lb->avg_nilai_pk, 1) : null;
 
-            // Target Bulanan Volume Kuantitas Wajar (Baseline Produktivitas)
-            // Task: min 2 task selesai | Laporan: min 120 poin | Pencapaian: min 10 item | PK: min 1 kuis
+            // Pilar 5: Absensi (kehadiran tepat waktu + penalti keterlambatan)
+            $userAbsStart = $absStart;
+            if (isset($firstAbsenMap[$uid]) && $firstAbsenMap[$uid] > $userAbsStart && $firstAbsenMap[$uid] <= $absEnd) {
+                $userAbsStart = $firstAbsenMap[$uid];
+            }
+            $hariKerjaElapsed = $this->_countEffectiveWorkdays($userAbsStart, $absEnd, $holidaySet, $onlyMonth);
+            $hariKerjaPenalti = $isSingleMonth
+                ? max(1, $this->_countEffectiveWorkdays($userAbsStart, $absFullEnd, $holidaySet, $onlyMonth))
+                : max(1, $hariKerjaElapsed);
+
+            $absHadir     = (int)$lb->abs_hari_hadir;
+            $absTepat     = (int)$lb->abs_hari_tepat;
+            $absTerlambat = (int)$lb->abs_hari_terlambat;
+            $absCuti      = (int)$lb->abs_hari_cuti;
+            $absIzinSakit = (int)$lb->abs_hari_izin_sakit;
+            $absTotalRec  = (int)$lb->abs_total_rec;
+
+            $hasAbs  = ($hariKerjaElapsed > 0 && $absTotalRec > 0);
+            $skorAbs = null;
+            $volAbs  = null;
+            if ($hasAbs) {
+                $coverageAbs = min(100.0, ($absHadir / $hariKerjaElapsed) * 100.0);
+                // Penalti terlambat: 1x terlambat memotong 0.6 poin hari kerja (~3 poin per terlambat dalam sebulan)
+                $latePenalty = ($absTerlambat / $hariKerjaPenalti) * 60.0;
+                $skorAbs     = max(0.0, round($coverageAbs - $latePenalty, 1));
+                $volAbs      = round($coverageAbs, 1);
+            }
+
+            // Pilar 6: Evaluasi Semester (jika semester berjalan belum diisi, diperlakukan sebagai "belum dinilai dulu")
+            $evalInfo  = isset($evalScoreMap[$uid]) ? $evalScoreMap[$uid] : null;
+            $hasEval   = ($evalInfo !== null && $evalInfo['skor'] !== null);
+            $skorEval  = $hasEval ? round((float)$evalInfo['skor'], 1) : null;
+            $evalLabel = $hasEval ? $evalInfo['label'] : null;
+
+            // Aturan SP: batas plafon maksimal nilai akhir (SP0=100, SP1=80, SP2=60, SP3=40)
+            $spInfo  = isset($spCapMap[$uid]) ? $spCapMap[$uid] : null;
+            $spLevel = $spInfo ? (int)$spInfo['level'] : 0;
+            $spCap   = $spInfo ? (int)$spInfo['cap'] : 100;
+            $spLabel = $spInfo ? $spInfo['label'] : 'SP 0';
+            $spKode  = $spInfo ? $spInfo['kode'] : '';
+            $spAkhir = $spInfo ? $spInfo['tgl_akhir'] : '';
+
+            // Target Volume Produktivitas: Task min 2 | Lap min 120 poin | Penc min 10 item | PK min 1 kuis | Absensi min hari kerja
             $volTask = min(100.0, ((int)$lb->task_selesai / 2) * 100.0);
             $volLap  = min(100.0, ((int)$lb->total_poin_laporan / 120) * 100.0);
             $volPenc = min(100.0, ((int)$lb->total_pencapaian / 10) * 100.0);
             $volPk   = min(100.0, ((int)$lb->total_pk / 1) * 100.0);
 
-            // 1. Hitung Skor Mutu (Kualitas Rata-rata) & Skor Produktivitas (Volume)
-            $activePillars = [];
-            $totalWeight = 0;
-
+            // 1. Hitung Skor Mutu (6 Pilar Reguler / 5 Pilar Bebas PK) & Skor Produktivitas (Volume)
             if ($isExemptPk) {
-                // Karyawan Bebas PK (HR, GA, Security, Pak Afrianto)
-                // Mutu 100%: 40% Task + 30% Lap + 30% Penc
-                if ($hasTask) {
-                    $activePillars['Task'] = ['mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.40, 'label' => 'Task'];
-                    $totalWeight += 0.40;
-                }
-                if ($hasLap) {
-                    $activePillars['Lap'] = ['mutu' => $skorLap, 'prod' => $volLap, 'weight' => 0.30, 'label' => 'Lap'];
-                    $totalWeight += 0.30;
-                }
-                if ($hasPenc) {
-                    $activePillars['Penc'] = ['mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.30, 'label' => 'Penc'];
-                    $totalWeight += 0.30;
-                }
-
-                if ($totalWeight > 0) {
-                    if (count($activePillars) === 3) {
-                        $skorMutu = round(($skorTask * 0.40) + ($skorLap * 0.30) + ($skorPenc * 0.30), 1);
-                        $skorProd = round(($volTask * 0.40) + ($volLap * 0.30) + ($volPenc * 0.30), 1);
-                        $komposisi = '40% Task + 30% Lap + 30% Penc (Bebas PK)';
-                        $statusNilai = 'lengkap';
-                        $isEligiblePodium = true;
-                    } else {
-                        $sumMutu = 0;
-                        $sumProd = 0;
-                        $parts = [];
-                        foreach ($activePillars as $p) {
-                            $normWeight = $p['weight'] / $totalWeight;
-                            $sumMutu += $p['mutu'] * $normWeight;
-                            $sumProd += $p['prod'] * $normWeight;
-                            $parts[] = round($normWeight * 100) . '% ' . $p['label'];
-                        }
-                        $skorMutu = round($sumMutu, 1);
-                        $skorProd = round($sumProd, 1);
-                        $komposisi = implode(' + ', $parts) . ' (Bebas PK)';
-                        $statusNilai = 'parsial_' . count($activePillars);
-                        $isEligiblePodium = false;
-                    }
-                } else {
-                    $skorMutu = null;
-                    $skorProd = null;
-                    $komposisi = 'Belum Ada Nilai (Bebas PK)';
-                    $statusNilai = 'belum_dinilai';
-                    $isEligiblePodium = false;
-                }
+                // Bebas PK: 30% Task + 20% Lap + 20% Penc + 15% Absensi + 15% Evaluasi Semester
+                $pillarDefs = [
+                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.30, 'label' => 'Task', 'routine' => true],
+                    ['active' => $hasLap,  'mutu' => $skorLap,  'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true],
+                    ['active' => $hasPenc, 'mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.20, 'label' => 'Penc', 'routine' => true],
+                    ['active' => $hasAbs,  'mutu' => $skorAbs,  'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
+                    ['active' => $hasEval, 'mutu' => $skorEval, 'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
+                ];
+                $routineTarget = 4;
             } else {
-                // Karyawan Reguler Wajib PK
-                // Mutu 100%: 35% Task + 25% Lap + 25% Penc + 15% PK
-                if ($hasTask) {
-                    $activePillars['Task'] = ['mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.35, 'label' => 'Task'];
-                    $totalWeight += 0.35;
-                }
-                if ($hasLap) {
-                    $activePillars['Lap'] = ['mutu' => $skorLap, 'prod' => $volLap, 'weight' => 0.25, 'label' => 'Lap'];
-                    $totalWeight += 0.25;
-                }
-                if ($hasPenc) {
-                    $activePillars['Penc'] = ['mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.25, 'label' => 'Penc'];
-                    $totalWeight += 0.25;
-                }
-                if ($hasPk) {
-                    $activePillars['PK'] = ['mutu' => $skorPk, 'prod' => $volPk, 'weight' => 0.15, 'label' => 'PK'];
-                    $totalWeight += 0.15;
-                }
+                // Reguler Wajib PK: 25% Task + 20% Lap + 15% Penc + 10% PK + 15% Absensi + 15% Evaluasi Semester
+                $pillarDefs = [
+                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.25, 'label' => 'Task', 'routine' => true],
+                    ['active' => $hasLap,  'mutu' => $skorLap,  'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true],
+                    ['active' => $hasPenc, 'mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.15, 'label' => 'Penc', 'routine' => true],
+                    ['active' => $hasPk,   'mutu' => $skorPk,   'prod' => $volPk,   'weight' => 0.10, 'label' => 'PK',   'routine' => true],
+                    ['active' => $hasAbs,  'mutu' => $skorAbs,  'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
+                    ['active' => $hasEval, 'mutu' => $skorEval, 'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
+                ];
+                $routineTarget = 5;
+            }
 
-                if ($totalWeight > 0) {
-                    if (count($activePillars) === 4) {
-                        $skorMutu = round(($skorTask * 0.35) + ($skorLap * 0.25) + ($skorPenc * 0.25) + ($skorPk * 0.15), 1);
-                        $skorProd = round(($volTask * 0.35) + ($volLap * 0.25) + ($volPenc * 0.25) + ($volPk * 0.15), 1);
-                        $komposisi = '35% Task + 25% Lap + 25% Penc + 15% PK';
-                        $statusNilai = 'lengkap';
-                        $isEligiblePodium = true;
-                    } else {
-                        $sumMutu = 0;
-                        $sumProd = 0;
-                        $parts = [];
-                        foreach ($activePillars as $p) {
-                            $normWeight = $p['weight'] / $totalWeight;
-                            $sumMutu += $p['mutu'] * $normWeight;
-                            $sumProd += $p['prod'] * $normWeight;
-                            $parts[] = round($normWeight * 100) . '% ' . $p['label'];
-                        }
-                        $skorMutu = round($sumMutu, 1);
-                        $skorProd = round($sumProd, 1);
-                        $komposisi = implode(' + ', $parts) . ' (Parsial)';
-                        $statusNilai = 'parsial_' . count($activePillars);
-                        $isEligiblePodium = false;
-                    }
-                } else {
-                    $skorMutu = null;
-                    $skorProd = null;
-                    $komposisi = 'Belum Ada Nilai';
-                    $statusNilai = 'belum_dinilai';
-                    $isEligiblePodium = false;
+            $activePillars = [];
+            $mutuWeightSum = 0.0;
+            $prodWeightSum = 0.0;
+            $routineActive = 0;
+
+            foreach ($pillarDefs as $pd) {
+                if (!$pd['active']) {
+                    continue;
+                }
+                $activePillars[] = $pd;
+                $mutuWeightSum  += $pd['weight'];
+                if ($pd['prod'] !== null) {
+                    $prodWeightSum += $pd['weight'];
+                }
+                if ($pd['routine']) {
+                    $routineActive++;
                 }
             }
 
-            // 2. SOLUSI A: SKOR AKHIR = 80% KUALITAS MUTU + 20% PRODUKTIVITAS VOLUME
-            if ($skorMutu !== null) {
-                $skorAkhir = round(($skorMutu * 0.80) + ($skorProd * 0.20), 1);
+            if ($mutuWeightSum > 0) {
+                $sumMutu = 0.0;
+                $sumProd = 0.0;
+                $parts   = [];
+                foreach ($activePillars as $p) {
+                    $normMutuW = $p['weight'] / $mutuWeightSum;
+                    $sumMutu  += $p['mutu'] * $normMutuW;
+                    if ($p['prod'] !== null && $prodWeightSum > 0) {
+                        $normProdW = $p['weight'] / $prodWeightSum;
+                        $sumProd  += $p['prod'] * $normProdW;
+                    }
+                    $parts[] = round($normMutuW * 100) . '% ' . $p['label'];
+                }
+                $skorMutu = round($sumMutu, 1);
+                $skorProd = ($prodWeightSum > 0) ? round($sumProd, 1) : $skorMutu;
+
+                $missingRoutine   = $routineTarget - $routineActive;
+                $isAllRoutineDone = ($missingRoutine === 0);
+                $isFullAll        = ($isAllRoutineDone && $hasEval);
+
+                if ($isFullAll || ($isAllRoutineDone && !$evalExistsInPeriod)) {
+                    $statusNilai      = 'lengkap';
+                    $isEligiblePodium = true;
+                    $completenessTier = 10;
+                    $komposisiSuffix  = $isExemptPk ? ' (Bebas PK)' : '';
+                } elseif ($isAllRoutineDone) {
+                    $statusNilai      = 'parsial_no_eval';
+                    $isEligiblePodium = true;
+                    $completenessTier = 9;
+                    $komposisiSuffix  = $isExemptPk ? ' (Bebas PK, Non-Eval)' : ' (Non-Eval)';
+                } else {
+                    $statusNilai      = 'parsial_' . $routineActive;
+                    $isEligiblePodium = false;
+                    $completenessTier = max(1, 9 - $missingRoutine);
+                    $komposisiSuffix  = $isExemptPk ? ' (Bebas PK, Parsial)' : ' (Parsial)';
+                }
+                $komposisi = implode(' + ', $parts) . $komposisiSuffix;
             } else {
-                $skorAkhir = null;
+                $skorMutu         = null;
+                $skorProd         = null;
+                $komposisi        = $isExemptPk ? 'Belum Ada Nilai (Bebas PK)' : 'Belum Ada Nilai';
+                $statusNilai      = 'belum_dinilai';
+                $isEligiblePodium = false;
+                $completenessTier = 0;
+            }
+
+            // 2. SOLUSI A: SKOR AKHIR = 80% KUALITAS MUTU + 20% PRODUKTIVITAS VOLUME, dibatasi plafon SP
+            if ($skorMutu !== null) {
+                $skorAkhirRaw = round(($skorMutu * 0.80) + ($skorProd * 0.20), 1);
+                $skorAkhir    = min($skorAkhirRaw, (float)$spCap);
+                $isCappedSp   = ($skorAkhirRaw > (float)$spCap);
+            } else {
+                $skorAkhirRaw = null;
+                $skorAkhir    = null;
+                $isCappedSp   = false;
             }
 
             $ratingAgregat = $skorAkhir !== null ? round(($skorAkhir / 100) * 5, 2) : 0;
 
-            if ($skorAkhir >= 85) {
+            if ($skorAkhir === null) {
+                $grade = '-';
+                $gradeLabel = 'Belum Dinilai';
+                $gradeBadge = 'badge-secondary';
+                $gradeColor = '#64748b';
+            } elseif ($skorAkhir >= 85) {
                 $grade = 'A';
                 $gradeLabel = 'Sangat Baik';
                 $gradeBadge = 'badge-success';
@@ -721,16 +1130,11 @@ class Task_proyek extends CI_Controller
                 $gradeLabel = 'Cukup';
                 $gradeBadge = 'badge-warning';
                 $gradeColor = '#d97706';
-            } elseif ($skorAkhir !== null) {
+            } else {
                 $grade = 'D';
                 $gradeLabel = 'Kurang (PIP)';
                 $gradeBadge = 'badge-danger';
                 $gradeColor = '#dc2626';
-            } else {
-                $grade = '-';
-                $gradeLabel = 'Belum Dinilai';
-                $gradeBadge = 'badge-secondary';
-                $gradeColor = '#64748b';
             }
 
             $lb->is_exempt_pk       = $isExemptPk;
@@ -738,12 +1142,28 @@ class Task_proyek extends CI_Controller
             $lb->skor_lap           = $skorLap;
             $lb->skor_penc          = $skorPenc;
             $lb->skor_pk            = $skorPk;
+            $lb->skor_abs           = $skorAbs;
+            $lb->abs_hari_hadir     = $absHadir;
+            $lb->abs_hari_tepat     = $absTepat;
+            $lb->abs_hari_terlambat = $absTerlambat;
+            $lb->abs_hari_cuti      = $absCuti;
+            $lb->abs_hari_izin      = $absIzinSakit;
+            $lb->abs_hari_kerja     = $hariKerjaElapsed;
+            $lb->skor_eval          = $skorEval;
+            $lb->eval_label         = $evalLabel;
+            $lb->sp_level           = $spLevel;
+            $lb->sp_cap             = $spCap;
+            $lb->sp_label           = $spLabel;
+            $lb->sp_kode            = $spKode;
+            $lb->sp_akhir           = $spAkhir;
             $lb->avg_nilai_pk       = ($isExemptPk || $lb->avg_nilai_pk === null) ? null : (float)$lb->avg_nilai_pk;
             $lb->total_pk           = (int)$lb->total_pk;
             $lb->skor_mutu          = $skorMutu;
             $lb->skor_prod          = $skorProd;
             $lb->total_pencapaian   = (int)$lb->total_pencapaian;
+            $lb->skor_akhir_raw     = $skorAkhirRaw;
             $lb->skor_akhir         = $skorAkhir;
+            $lb->is_capped_sp       = $isCappedSp;
             $lb->rating_agregat     = $ratingAgregat;
             $lb->grade              = $grade;
             $lb->grade_label        = $gradeLabel;
@@ -751,40 +1171,28 @@ class Task_proyek extends CI_Controller
             $lb->grade_color        = $gradeColor;
             $lb->komposisi          = $komposisi;
             $lb->status_nilai       = $statusNilai;
+            $lb->completeness_tier  = $completenessTier;
             $lb->is_eligible_podium = $isEligiblePodium;
 
-            if (in_array((int)$lb->pengguna_id, $myReceiverIds, true)) {
+            if (in_array($uid, $myReceiverIds, true)) {
                 $myCombinedKpi = $lb;
             }
 
             $leaderboard[] = $lb;
         }
 
-        // Urutkan Leaderboard berdasarkan aturan Solusi A (Mutu 80% + Produktivitas 20%):
-        // 1. Evaluasi Lengkap 4 Pilar ('lengkap') diprioritaskan di puncak (Eligible Juara 1, 2, 3)
-        // 2. Evaluasi 3/2/1 Pilar di bawahnya
-        // 3. Skor Akhir tertinggi (NULL paling bawah)
-        // 4. Skor Produktivitas tertinggi
-        // 5. Task selesai terbanyak
-        // 6. Total pencapaian terbanyak
-        // 7. Total poin laporan terbanyak
+        // Urutkan Leaderboard berdasarkan aturan Solusi A (Mutu 80% + Produktivitas 20% + Cap SP):
+        // 1. Evaluasi lengkap diprioritaskan di puncak (Eligible Juara 1, 2, 3)
+        // 2. Skor Akhir (setelah batas SP) tertinggi (NULL paling bawah)
+        // 3. Skor Produktivitas tertinggi
+        // 4. Task selesai, pencapaian, PK, poin laporan, dan hari hadir
         usort($leaderboard, function($a, $b) {
             if ($a->skor_akhir === null && $b->skor_akhir === null) return 0;
             if ($a->skor_akhir === null) return 1;
             if ($b->skor_akhir === null) return -1;
 
-            $prioMap = [
-                'lengkap'       => 4,
-                'parsial_3'     => 3,
-                'parsial_2'     => 2,
-                'parsial_1'     => 1,
-                'belum_dinilai' => 0
-            ];
-            $prioA = isset($prioMap[$a->status_nilai]) ? $prioMap[$a->status_nilai] : 0;
-            $prioB = isset($prioMap[$b->status_nilai]) ? $prioMap[$b->status_nilai] : 0;
-
-            if ($prioA !== $prioB) {
-                return $prioB <=> $prioA; // Lengkap 4 pilar paling atas, disusul parsial
+            if ((int)$a->completeness_tier !== (int)$b->completeness_tier) {
+                return (int)$b->completeness_tier <=> (int)$a->completeness_tier;
             }
 
             if ($a->skor_akhir == $b->skor_akhir) {
@@ -792,6 +1200,9 @@ class Task_proyek extends CI_Controller
                     if ($a->task_selesai == $b->task_selesai) {
                         if ($a->total_pencapaian == $b->total_pencapaian) {
                             if ($a->total_pk == $b->total_pk) {
+                                if ($a->total_poin_laporan == $b->total_poin_laporan) {
+                                    return (int)$b->abs_hari_hadir <=> (int)$a->abs_hari_hadir;
+                                }
                                 return (int)$b->total_poin_laporan <=> (int)$a->total_poin_laporan;
                             }
                             return (int)$b->total_pk <=> (int)$a->total_pk;
