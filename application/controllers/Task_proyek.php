@@ -356,7 +356,8 @@ class Task_proyek extends CI_Controller
             if (function_exists('evaluateTaskDeadlineAndSp')) {
                 evaluateTaskDeadlineAndSp($ta, true);
             }
-            if ((int)$ta->status_task === 2) {
+            // Tugas mandiri/ke diri sendiri dinilai oleh Atasan Langsung, HRD, atau Manajemen, bukan oleh pelaksana sendiri
+            if ((int)$ta->status_task === 2 && (int)$ta->id_penerima !== $myId) {
                 $kpi_need_review++;
             }
             if ((int)$ta->status_task < 4) {
@@ -1292,6 +1293,7 @@ class Task_proyek extends CI_Controller
         $task->hrd_jadwal_tgl_fmt = !empty($task->hrd_jadwal_tgl) ? date('d-m-Y', strtotime($task->hrd_jadwal_tgl)) : '';
 
         $isHrdAdmin = $this->_isHrdOrAdmin($myId);
+        $isSelfTask = ((int)$task->id_penerima === $myId);
         $isGiver = ((int)$task->id_pemberi === $myId);
         $isAtasanPenerima = false;
         if (!empty($task->id_penerima)) {
@@ -1300,7 +1302,14 @@ class Task_proyek extends CI_Controller
                 $isAtasanPenerima = true;
             }
         }
-        $canReviewThis = ($isGiver && (int)$task->id_penerima !== $myId) || $isAtasanPenerima || $isHrdAdmin;
+
+        // ATURAN MUTLAK: Pelaksana (penerima tugas) TIDAK BOLEH menilai tugas diri sendiri dalam kondisi apapun!
+        // Penilaian tugas mandiri / tugas ke diri sendiri wajib dilakukan secara objektif oleh Atasan Langsung, HRD, atau Manajemen.
+        if ($isSelfTask) {
+            $canReviewThis = false;
+        } else {
+            $canReviewThis = ($isGiver || $isAtasanPenerima || $isHrdAdmin);
+        }
 
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
@@ -1502,25 +1511,70 @@ class Task_proyek extends CI_Controller
             'lampiran'    => $bukti_selesai
         ]);
 
-        // Kirim WA ke Atasan bahwa task sudah selesai dan siap dinilai bintang
+        // Kirim WA bahwa task sudah selesai dan siap dinilai bintang
         try {
-            $atasan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_pemberi)->get()->row();
+            $isTaskMandiri = ((int)$task->is_mandiri === 1 || (int)$task->id_pemberi === (int)$task->id_penerima || (int)$task->id_pemberi === $myId);
             $bawahan = $this->db->select('nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
-            $noHpAtasan = ($atasan && !empty($atasan->no_hp)) ? $atasan->no_hp : (($atasan && !empty($atasan->nohp)) ? $atasan->nohp : '');
-            if (!empty($noHpAtasan) && function_exists('sendWa')) {
-                $pesanWa = "[TASK SELESAI] *MENUNGGU PENILAIAN RATING ATASAN*" .
-                    "%0A%0AHalo *" . $atasan->nama . "*," .
-                    "%0AKaryawan (*" . ($bawahan ? $bawahan->nama : 'Karyawan') . "*) telah menyelesaikan Task:" .
-                    "%0A%0A- *Kode*: " . $task->kode_task .
-                    "%0A- *Judul*: " . $task->judul .
-                    "%0A- *Hasil*: " . $catatan_bawahan .
-                    ($bukti_selesai ? "%0A- *Bukti*: " . $bukti_selesai : "") .
-                    "%0A%0ASilakan berikan *Penilaian Rating Bintang (1-5 ⭐)* di https://office.visiyosindo.id/task_proyek";
-                @sendWa([
-                    'devId'    => hostWa('2'),
-                    'penerima' => $noHpAtasan,
-                    'pesan'    => $pesanWa
-                ]);
+            $namaPelaksana = ($bawahan && !empty($bawahan->nama)) ? $bawahan->nama : 'Karyawan';
+
+            if ($isTaskMandiri) {
+                // Tugas Mandiri / Ke Diri Sendiri: Notifikasi dikirimkan ke Atasan Langsung & HRD/Manajemen (BUKAN ke diri sendiri)
+                $notifList = [];
+                $userSelf = $this->db->select('id_atasan')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+                if ($userSelf && !empty($userSelf->id_atasan) && (int)$userSelf->id_atasan !== $myId) {
+                    $atasanRow = $this->db->select('pengguna_id, nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $userSelf->id_atasan)->get()->row();
+                    if ($atasanRow) {
+                        $notifList[] = $atasanRow;
+                    }
+                }
+                $hrdRecipients = $this->_getHrdRecipients();
+                foreach ($hrdRecipients as $hr) {
+                    if ((int)$hr->pengguna_id !== $myId) {
+                        $notifList[] = $hr;
+                    }
+                }
+
+                if (!empty($notifList) && function_exists('sendWa')) {
+                    $pesanWa = "[TASK MANDIRI SELESAI] *MENUNGGU PENILAIAN HRD / ATASAN*" .
+                        "%0A%0AHalo Rekan Atasan & HRD," .
+                        "%0AKaryawan (*" . $namaPelaksana . "*) telah menyelesaikan Tugas Mandiri:" .
+                        "%0A%0A- *Kode*: " . $task->kode_task .
+                        "%0A- *Judul*: " . $task->judul .
+                        "%0A- *Hasil*: " . $catatan_bawahan .
+                        ($bukti_selesai ? "%0A- *Bukti*: " . $bukti_selesai : "") .
+                        "%0A%0ASilakan berikan *Penilaian Rating Bintang (1-5 ⭐)* di https://office.visiyosindo.id/task_proyek";
+                    $sentHps = [];
+                    foreach ($notifList as $rec) {
+                        $hp = (!empty($rec->no_hp)) ? $rec->no_hp : ((!empty($rec->nohp)) ? $rec->nohp : '');
+                        if (!empty($hp) && !in_array($hp, $sentHps, true)) {
+                            $sentHps[] = $hp;
+                            @sendWa([
+                                'devId'    => hostWa('2'),
+                                'penerima' => $hp,
+                                'pesan'    => $pesanWa
+                            ]);
+                        }
+                    }
+                }
+            } else {
+                // Task Penugasan Reguler: Kirim ke Atasan Pemberi Tugas
+                $atasan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_pemberi)->get()->row();
+                $noHpAtasan = ($atasan && !empty($atasan->no_hp)) ? $atasan->no_hp : (($atasan && !empty($atasan->nohp)) ? $atasan->nohp : '');
+                if (!empty($noHpAtasan) && function_exists('sendWa')) {
+                    $pesanWa = "[TASK SELESAI] *MENUNGGU PENILAIAN RATING ATASAN*" .
+                        "%0A%0AHalo *" . $atasan->nama . "*," .
+                        "%0AKaryawan (*" . $namaPelaksana . "*) telah menyelesaikan Task:" .
+                        "%0A%0A- *Kode*: " . $task->kode_task .
+                        "%0A- *Judul*: " . $task->judul .
+                        "%0A- *Hasil*: " . $catatan_bawahan .
+                        ($bukti_selesai ? "%0A- *Bukti*: " . $bukti_selesai : "") .
+                        "%0A%0ASilakan berikan *Penilaian Rating Bintang (1-5 ⭐)* di https://office.visiyosindo.id/task_proyek";
+                    @sendWa([
+                        'devId'    => hostWa('2'),
+                        'penerima' => $noHpAtasan,
+                        'pesan'    => $pesanWa
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
         }
@@ -1572,14 +1626,23 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        if (((int)$task->is_mandiri === 1 || (int)$task->id_pemberi === (int)$task->id_penerima) && (int)$task->id_penerima === $myId && !$isHrdAdmin) {
-            ajaxReturnDie('error', 'Anda tidak dapat memberikan rating kepada tugas mandiri Anda sendiri. Penilaian dilakukan oleh Atasan Langsung atau HRD/Admin.', FALSE);
+        // ATURAN MUTLAK: Siapapun (termasuk Admin/HRD) TIDAK BOLEH menilai tugas dirinya sendiri!
+        if ((int)$task->id_penerima === $myId) {
+            ajaxReturnDie('error', 'Anda tidak dapat memberikan penilaian/rating kepada tugas Anda sendiri. Penilaian wajib dilakukan oleh Atasan Langsung, HRD, atau Manajemen.', FALSE);
             return;
         }
 
-        if (!$isGiver && !$isAtasanPenerima && !$isHrdAdmin) {
-            ajaxReturnDie('error', 'Hanya Pemberi Tugas, Atasan Langsung, atau Direksi/HRD yang dapat menilai task ini.', FALSE);
-            return;
+        $isTaskMandiri = ((int)$task->is_mandiri === 1 || (int)$task->id_pemberi === (int)$task->id_penerima);
+        if ($isTaskMandiri) {
+            if (!$isAtasanPenerima && !$isHrdAdmin) {
+                ajaxReturnDie('error', 'Untuk tugas mandiri / tugas ke diri sendiri, penilaian hanya dapat dilakukan oleh Atasan Langsung, HRD, atau Manajemen.', FALSE);
+                return;
+            }
+        } else {
+            if (!$isGiver && !$isAtasanPenerima && !$isHrdAdmin) {
+                ajaxReturnDie('error', 'Hanya Pemberi Tugas, Atasan Langsung, atau Direksi/HRD yang dapat menilai task ini.', FALSE);
+                return;
+            }
         }
 
         if ((int)$task->status_task === 4 && !empty($task->rating_bintang)) {

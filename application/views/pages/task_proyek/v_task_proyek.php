@@ -1081,9 +1081,17 @@ $namaBulanList = [
                                                     <i class="fas fa-times"></i> Tolak
                                                 </button><br>
                                             <?php endif; ?>
-                                            <?php if ($effStatusAtasan === 2 && !$alreadyRated): ?>
+                                            <?php 
+                                            $isSelfRow = ((int)$row->id_penerima === (int)$myId);
+                                            if ($effStatusAtasan === 2 && !$alreadyRated && !$isSelfRow): 
+                                            ?>
                                                 <button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
                                                     <i class="fas fa-star"></i> Beri Rating ⭐
+                                                </button><br>
+                                            <?php elseif ($effStatusAtasan === 2 && !$alreadyRated && $isSelfRow): ?>
+                                                <span class="badge badge-warning mb-1" style="font-size: 10px;"><i class="fas fa-hourglass-half"></i> Menunggu Rating HRD</span><br>
+                                                <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
+                                                    <i class="fas fa-eye"></i> Detail Task
                                                 </button><br>
                                             <?php else: ?>
                                                 <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
@@ -1254,6 +1262,12 @@ $namaBulanList = [
                                             <button type="button" class="btn btn-xs btn-primary mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
                                                 <i class="fas fa-eye"></i> Detail
                                             </button>
+                                            <?php if ((int)$row->status_task === 2 && empty($row->rating_bintang) && (int)$row->id_penerima !== (int)$myId && !empty($isHrdAdmin)): ?>
+                                                <br>
+                                                <button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
+                                                    <i class="fas fa-star"></i> Nilai (HRD)
+                                                </button>
+                                            <?php endif; ?>
                                             <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
                                                 <br>
                                                 <button type="button" class="btn btn-xs btn-success font-weight-bold mb-1 btn-acc-hrd"
@@ -1892,7 +1906,8 @@ $namaBulanList = [
                         <i class="fas fa-hourglass-half fa-2x text-success mr-3"></i>
                         <div>
                             <h6 class="mb-1 font-weight-bold text-success"><i class="fas fa-check-circle mr-1"></i> Hasil Pekerjaan Sudah Terkirim!</h6>
-                            <div class="small text-muted">Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Penilaian / Rating Bintang ⭐ dari Atasan</strong>.</div>
+                            <div class="small text-muted">Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Penilaian / Rating Bintang ⭐ dari HRD / Manajemen / Atasan</strong>.</div>
+                            <div class="small text-muted mt-1" style="font-size: 11.5px;"><i class="fas fa-shield-alt text-warning mr-1"></i> Sesuai standar penilaian objektif perusahaan, tugas yang diajukan ke diri sendiri dinilai langsung oleh HRD dan Manajemen.</div>
                         </div>
                     </div>
                 </div>
@@ -1900,7 +1915,7 @@ $namaBulanList = [
                 <!-- PANEL 3: FORM PENILAIAN RATING BINTANG 5 & REVIEW ATASAN -->
                 <div id="panelAtasanReview" class="card mb-3" style="border: 2px solid #f59e0b; display:none;">
                     <div class="card-header py-2" style="background: #fef3c7;">
-                        <strong style="color:#b45309;"><i class="fas fa-star mr-1"></i> Form Evaluasi & Penilaian Bintang 5 (Khusus Atasan / Reviewer)</strong>
+                        <strong style="color:#b45309;"><i class="fas fa-star mr-1"></i> Form Evaluasi & Penilaian Bintang 5 (Khusus Atasan / HRD / Manajemen)</strong>
                     </div>
                     <div class="card-body py-3">
                         <form id="formReviewAtasan">
@@ -2419,7 +2434,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 var t = res.task;
                 var myId = parseInt(res.my_id, 10);
-                var canReview = (parseInt(t.id_pemberi, 10) === myId) || !!res.is_admin_reviewer;
+                var isPenerima = (parseInt(t.id_penerima, 10) === myId);
+
+                // ATURAN MUTLAK: Pelaksana (penerima tugas) TIDAK BOLEH menilai tugas diri sendiri!
+                // canReview hanya bernilai true jika user BUKAN penerima dan backend memberikan izin review
+                var canReview = !isPenerima && (res.can_review !== undefined ? !!res.can_review : ((parseInt(t.id_pemberi, 10) === myId) || !!res.is_admin_reviewer));
 
                 var stInt = parseInt(t.status_task, 10) || 0;
                 if (stInt === 1 && (parseInt(t.progres, 10) >= 100 || !!t.tgl_submit)) {
