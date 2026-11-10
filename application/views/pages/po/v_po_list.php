@@ -290,14 +290,15 @@
 
 <?php
 // Helper query URL generator
-$makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur_status_proses, $cur_sales, $cur_tgl_awal, $cur_tgl_akhir) {
+$makeUrl = function($newStatus = null, $newProses = null, $newSales = null) use ($cur_status, $cur_status_proses, $cur_sales, $cur_tgl_awal, $cur_tgl_akhir) {
     $params = [];
     $s = ($newStatus !== null) ? $newStatus : $cur_status;
     $p = ($newProses !== null) ? $newProses : $cur_status_proses;
+    $m = ($newSales !== null) ? $newSales : $cur_sales;
     
     if (!empty($s)) $params['status'] = $s;
     if (!empty($p)) $params['status_proses'] = $p;
-    if (!empty($cur_sales)) $params['sales'] = $cur_sales;
+    if (!empty($m)) $params['sales'] = $m;
     if (!empty($cur_tgl_awal)) $params['tgl_awal'] = $cur_tgl_awal;
     if (!empty($cur_tgl_akhir)) $params['tgl_akhir'] = $cur_tgl_akhir;
 
@@ -439,6 +440,56 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                             <i class="fas fa-pause-circle mr-1"></i> Hold/Indent (<?= $stats->total_hold ?? 0 ?>)
                         </a>
                     </div>
+
+                    <!-- Filter Bar Marketing / Sales -->
+                    <div class="d-flex align-items-center flex-wrap mt-2 pt-2 border-top">
+                        <span class="small font-weight-bold text-muted mr-2" style="min-width: 95px;"><i class="fas fa-user-tie mr-1 text-primary"></i> Marketing:</span>
+                        <div class="d-inline-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <select id="select_filter_sales" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; min-width: 250px; max-width: 320px; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff;">
+                                <option value="<?= $makeUrl(null, null, '') ?>" <?= empty($cur_sales) ? 'selected' : '' ?>>-- Semua Marketing / Pengaju --</option>
+                                <?php if (!empty($sales_list)): ?>
+                                    <?php foreach ($sales_list as $sl): ?>
+                                        <?php
+                                            $slLabel = $sl->nama;
+                                            if (!empty($sl->jabatan) && stripos($sl->nama, $sl->jabatan) === false) {
+                                                $slLabel .= ' (' . $sl->jabatan . ')';
+                                            }
+                                            $isSelected = (!empty($cur_sales) && (int)$cur_sales === (int)$sl->pengguna_id);
+                                        ?>
+                                        <option value="<?= $makeUrl(null, null, $sl->pengguna_id) ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($slLabel) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+
+                            <?php if (!empty($cur_sales)): ?>
+                                <?php
+                                    $activeSalesName = '';
+                                    foreach ($sales_list as $sl) {
+                                        if ((int)$sl->pengguna_id === (int)$cur_sales) {
+                                            $activeSalesName = $sl->nama;
+                                            break;
+                                        }
+                                    }
+                                ?>
+                                <span class="badge badge-info px-2 py-1 font-weight-bold" style="border-radius: 20px; font-size: 0.78rem;">
+                                    <i class="fas fa-user-check mr-1"></i> <?= htmlspecialchars($activeSalesName ?: 'Sales #' . $cur_sales) ?>
+                                </span>
+                                <a href="<?= $makeUrl(null, null, '') ?>" class="btn btn-xs btn-outline-danger font-weight-bold" style="border-radius: 20px; padding: 4px 10px;" title="Reset filter marketing">
+                                    <i class="fas fa-times mr-1"></i> Reset
+                                </a>
+                            <?php endif; ?>
+
+                            <!-- Tombol Cepat Sortir Tabel A-Z / Z-A -->
+                            <button type="button" id="btnSortMarketingAsc" class="btn btn-xs btn-outline-primary font-weight-bold shadow-sm ml-1" style="border-radius: 20px; padding: 4px 11px;" title="Urutkan tabel langsung berdasarkan nama marketing A ke Z">
+                                <i class="fas fa-sort-alpha-down mr-1"></i> Sortir A-Z
+                            </button>
+                            <button type="button" id="btnSortMarketingDesc" class="btn btn-xs btn-outline-secondary font-weight-bold shadow-sm" style="border-radius: 20px; padding: 4px 11px;" title="Urutkan tabel langsung berdasarkan nama marketing Z ke A">
+                                <i class="fas fa-sort-alpha-up-alt mr-1"></i> Z-A
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-3 mt-xl-0 d-flex align-items-center">
@@ -457,14 +508,15 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                         <thead>
                             <tr>
                                 <th width="3%" class="text-center">#</th>
-                                <th width="14%">No PO & Kode</th>
-                                <th width="18%">Customer / Instansi</th>
-                                <th width="9%" class="text-center">Tgl PO</th>
-                                <th width="14%" class="text-right">Nominal PO</th>
-                                <th width="13%" class="text-center">Status Kroscek</th>
-                                <th width="12%" class="text-center">Status Proses</th>
-                                <th width="10%" class="text-center">Approval</th>
-                                <th width="7%" class="text-center">Aksi</th>
+                                <th width="13%">No PO & Kode</th>
+                                <th width="16%">Customer / Instansi</th>
+                                <th width="13%" id="th-marketing"><i class="fas fa-user-tie mr-1 text-primary"></i>Marketing / Pengaju</th>
+                                <th width="8%" class="text-center">Tgl PO</th>
+                                <th width="13%" class="text-right">Nominal PO</th>
+                                <th width="11%" class="text-center">Status Kroscek</th>
+                                <th width="11%" class="text-center">Status Proses</th>
+                                <th width="7%" class="text-center">Approval</th>
+                                <th width="5%" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -487,8 +539,25 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                         </td>
                                         <td>
                                             <div class="font-weight-bold text-dark"><?= htmlspecialchars($nama_cust) ?></div>
+                                            <?php if (!empty($row->master_alamat ?: $row->master_pelanggan_alamat)): ?>
+                                                <small class="text-muted d-block text-truncate" style="max-width: 220px;" title="<?= htmlspecialchars($row->master_alamat ?: $row->master_pelanggan_alamat) ?>">
+                                                    <i class="fas fa-map-marker-alt mr-1 text-secondary"></i><?= htmlspecialchars($row->master_alamat ?: $row->master_pelanggan_alamat) ?>
+                                                </small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
                                             <?php if (!empty($row->nama_sales)): ?>
-                                                <small class="text-muted"><i class="fas fa-user-tie mr-1"></i><?= htmlspecialchars($row->nama_sales) ?></small>
+                                                <div class="font-weight-bold text-dark" style="font-size: 0.88rem;">
+                                                    <i class="fas fa-user-tie text-primary mr-1"></i><?= htmlspecialchars($row->nama_sales) ?>
+                                                </div>
+                                                <?php
+                                                    $jabatanShow = !empty($row->jabatan_pembuat) ? $row->jabatan_pembuat : (!empty($row->jabatan) ? $row->jabatan : '');
+                                                ?>
+                                                <?php if (!empty($jabatanShow)): ?>
+                                                    <small class="text-muted d-block" style="font-size: 11px;"><?= htmlspecialchars($jabatanShow) ?></small>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-center text-dark">
@@ -595,7 +664,7 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="9" class="text-center py-5 text-muted">
+                                    <td colspan="10" class="text-center py-5 text-muted">
                                         <div class="py-4">
                                             <i class="fas fa-folder-open fa-3x text-secondary mb-3" style="opacity: 0.4;"></i>
                                             <h5 class="text-muted font-weight-bold">Belum Ada Data PO Masuk</h5>
@@ -691,8 +760,16 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Dropdown navigasi filter marketing
+        $('#select_filter_sales').on('change', function() {
+            var url = $(this).val();
+            if (url) {
+                window.location.href = url;
+            }
+        });
+
         if ($.fn.DataTable && $('#table-po-masuk tbody tr').length > 0 && !$('#table-po-masuk tbody td').hasClass('py-5')) {
-            $('#table-po-masuk').DataTable({
+            var poTable = $('#table-po-masuk').DataTable({
                 "language": {
                     "search": "Cari Cepat:",
                     "lengthMenu": "Tampilkan _MENU_ baris",
@@ -705,7 +782,24 @@ $makeUrl = function($newStatus = null, $newProses = null) use ($cur_status, $cur
                     }
                 },
                 "order": [[0, "asc"]],
-                "pageLength": 25
+                "pageLength": 25,
+                "columnDefs": [
+                    { "targets": [0, 8, 9], "orderable": false } // Nonaktifkan sorting pada kolom #, Approval, dan Aksi
+                ]
+            });
+
+            // Tombol sortir cepat berdasarkan Nama Marketing
+            $('#btnSortMarketingAsc').on('click', function() {
+                poTable.order([3, 'asc']).draw();
+                $('html, body').animate({
+                    scrollTop: $("#table-po-masuk").offset().top - 120
+                }, 300);
+            });
+            $('#btnSortMarketingDesc').on('click', function() {
+                poTable.order([3, 'desc']).draw();
+                $('html, body').animate({
+                    scrollTop: $("#table-po-masuk").offset().top - 120
+                }, 300);
             });
         }
     });
