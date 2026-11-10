@@ -8,6 +8,26 @@
     </div>
 </header>
 
+<style>
+    @media (max-width: 768px) {
+        .tabs .nav-tabs {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+        }
+        .tabs .nav-tabs > li {
+            flex: 0 0 auto;
+        }
+        .tabs .nav-tabs > li > a {
+            padding: 9px 14px !important;
+            font-size: 13px !important;
+            white-space: nowrap;
+        }
+    }
+</style>
+
 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
     <div>
         <a href="<?= base_url('knowledge/show/knowledge') ?>" class="btn btn-sm btn-light border font-weight-bold">

@@ -74,15 +74,67 @@
     .badge-grade-b { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
     .badge-grade-c { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
     .badge-grade-d { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    @media (max-width: 768px) {
+        .pk-stat-card {
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+        .pk-stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+        .nav-tabs-pk {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+            gap: 4px;
+        }
+        .nav-tabs-pk > li {
+            flex: 0 0 auto;
+        }
+        .nav-tabs-pk > li > a {
+            padding: 9px 14px !important;
+            font-size: 12px !important;
+            white-space: nowrap;
+        }
+        .pk-card {
+            padding: 14px !important;
+            border-radius: 12px;
+        }
+        .top-filter-bar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+        }
+        .top-filter-bar > div:last-child {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .card-actions-row {
+            flex-direction: column;
+            gap: 8px !important;
+        }
+        .card-actions-row .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
 </style>
 
 <!-- KPI STATS SUMMARY -->
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-12 col-sm-6 col-md-4 mb-2">
         <div class="pk-stat-card">
             <div>
                 <div class="text-muted small font-weight-bold text-uppercase">Total Paket Kuis</div>
-                <div style="font-size: 26px; font-weight: 800; color: #059669;">
+                <div style="font-size: 24px; font-weight: 800; color: #059669;">
                     <?= count($list_kuis) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Paket</small>
                 </div>
             </div>
@@ -91,12 +143,12 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-sm-6 col-md-4 mb-2">
         <div class="pk-stat-card">
             <div>
                 <div class="text-muted small font-weight-bold text-uppercase">Parameter Leaderboard KPI</div>
-                <div style="font-size: 18px; font-weight: 800; color: #0284c7; margin-top: 5px;">
-                    Bobot 15% <small style="font-size: 12px; font-weight: 600; color:#64748b;">(Pilar Mutu Kinerja)</small>
+                <div style="font-size: 17px; font-weight: 800; color: #0284c7; margin-top: 4px;">
+                    Bobot 15% <small style="font-size: 11.5px; font-weight: 600; color:#64748b;">(Pilar Mutu Kinerja)</small>
                 </div>
             </div>
             <div class="pk-stat-icon" style="background:#f0f9ff; color:#0284c7;">
@@ -104,11 +156,11 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-sm-12 col-md-4 mb-2">
         <div class="pk-stat-card">
             <div>
                 <div class="text-muted small font-weight-bold text-uppercase">Periode Aktif</div>
-                <div style="font-size: 20px; font-weight: 800; color: #475569; margin-top: 5px;">
+                <div style="font-size: 19px; font-weight: 800; color: #475569; margin-top: 4px;">
                     Tahun <?= htmlspecialchars($tahun) ?>
                 </div>
             </div>
@@ -154,7 +206,7 @@
                 </div>
             <?php endif; ?>
 
-            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 p-3 bg-white rounded border" style="border-radius: 10px;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 p-3 bg-white rounded border top-filter-bar" style="border-radius: 10px;">
                 <div>
                     <h5 class="font-weight-bold text-dark mb-1"><i class="fas fa-tasks text-success mr-2"></i> Daftar Kuis & Ujian Product Knowledge</h5>
                     <small class="text-muted">Karyawan dapat mengerjakan soal ujian pemahaman produk secara langsung pada jadwal yang ditentukan. Skor otomatis terhitung dan tersimpan ke KPI.</small>
@@ -286,7 +338,7 @@
                                     </div>
 
                                     <!-- Tombol Aksi -->
-                                    <div class="d-flex flex-wrap" style="gap: 6px;">
+                                    <div class="d-flex flex-wrap card-actions-row" style="gap: 6px;">
                                         <?php if ($isCompleted): ?>
                                             <a href="<?= base_url('knowledge/show/hasil/' . $kuis->id_kuis) ?>" class="btn btn-sm btn-outline-success font-weight-bold flex-grow-1">
                                                 <i class="fas fa-eye mr-1"></i> Lihat Hasil Ujian

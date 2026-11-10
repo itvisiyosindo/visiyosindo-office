@@ -93,6 +93,48 @@ $durasiSec = max(10, $durasiSec);
         justify-content: space-between;
         box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     }
+
+    @media (max-width: 768px) {
+        .cbt-container {
+            padding: 0 4px;
+        }
+        .cbt-timer-box {
+            top: 55px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+        #cbtTimerDisplay {
+            font-size: 17px !important;
+        }
+        .cbt-question-card {
+            padding: 16px 14px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+        .cbt-option-label {
+            padding: 10px 12px;
+            font-size: 13.5px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+        }
+        .cbt-option-radio {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+        .cbt-bottom-bar {
+            padding: 12px 14px;
+            bottom: 10px;
+            border-radius: 10px;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .cbt-bottom-bar .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
 </style>
 
 <div class="cbt-container">
