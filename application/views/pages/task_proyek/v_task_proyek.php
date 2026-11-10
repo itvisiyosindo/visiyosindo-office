@@ -255,6 +255,131 @@
         letter-spacing: 0.5px;
         text-align: left;
     }
+
+    /* =========================================================================
+       MODERN ENTERPRISE MODAL FORM STYLING (#modalBuatTask & #modalDetailTask)
+       ========================================================================= */
+    #modalBuatTask .modal-content,
+    #modalDetailTask .modal-content,
+    #modalAturAtasanSaya .modal-content,
+    #modalJadwalHrdSp3 .modal-content {
+        border-radius: 16px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    #modalBuatTask .modal-header,
+    #modalDetailTask .modal-header,
+    #modalAturAtasanSaya .modal-header,
+    #modalJadwalHrdSp3 .modal-header {
+        background: #ffffff !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 18px 24px !important;
+    }
+    #modalBuatTask .modal-body,
+    #modalDetailTask .modal-body,
+    #modalAturAtasanSaya .modal-body,
+    #modalJadwalHrdSp3 .modal-body {
+        padding: 22px 24px !important;
+        background: #ffffff;
+    }
+    #modalBuatTask .modal-footer,
+    #modalDetailTask .modal-footer,
+    #modalAturAtasanSaya .modal-footer,
+    #modalJadwalHrdSp3 .modal-footer {
+        background: #f8fafc !important;
+        border-top: 1px solid #e2e8f0 !important;
+        padding: 14px 24px !important;
+    }
+    #modalBuatTask .form-label-custom {
+        font-size: 11.5px !important;
+        font-weight: 700 !important;
+        color: #475569 !important;
+        letter-spacing: 0.35px !important;
+        text-transform: uppercase !important;
+        margin-bottom: 6px !important;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    #modalBuatTask .input-group-text {
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-right: none !important;
+        color: #64748b !important;
+        border-top-left-radius: 8px !important;
+        border-bottom-left-radius: 8px !important;
+        padding: 8px 12px !important;
+        font-size: 13.5px !important;
+        transition: all 0.2s ease;
+    }
+    #modalBuatTask .form-control {
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        color: #1e293b !important;
+        padding: 9px 13px !important;
+        transition: all 0.2s ease;
+        background-color: #ffffff;
+    }
+    #modalBuatTask .input-group .form-control {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-left: none !important;
+    }
+    #modalBuatTask .form-control:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+        background-color: #ffffff !important;
+    }
+    #modalBuatTask .input-group:focus-within .input-group-text {
+        border-color: #10b981 !important;
+        color: #10b981 !important;
+        background-color: #ecfdf5 !important;
+    }
+    #modalBuatTask .select2-container--default .select2-selection--multiple {
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        min-height: 42px !important;
+        padding: 4px 6px !important;
+        transition: all 0.2s ease;
+    }
+    #modalBuatTask .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+    }
+    #modalBuatTask .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #ecfdf5 !important;
+        border: 1px solid #a7f3d0 !important;
+        color: #065f46 !important;
+        border-radius: 6px !important;
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+    }
+    #modalBuatTask .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #059669 !important;
+        margin-right: 5px !important;
+    }
+    #modalBuatTask .select2-container--default .select2-selection--single {
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        height: 40px !important;
+        padding: 5px 10px !important;
+    }
+    #modalBuatTask .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+    }
+    #modalBuatTask .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px !important;
+        font-size: 13px !important;
+        color: #1e293b !important;
+    }
+    #modalBuatTask .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px !important;
+    }
 </style>
 
 <?php
@@ -1305,29 +1430,46 @@ $namaBulanList = [
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formBuatTask">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title font-weight-bold">
-                        <i class="fas fa-plus-circle mr-1"></i> Buat Penugasan Task / Proyek ke Karyawan
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <div class="modal-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div style="width: 42px; height: 42px; border-radius: 10px; background: #ecfdf5; border: 1.5px solid #a7f3d0; display: flex; align-items: center; justify-content: center; font-size: 19px; color: #059669; flex-shrink: 0; margin-right: 14px;">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold mb-0" style="color: #0f172a; font-size: 17px; letter-spacing: -0.2px;">
+                                Buat Penugasan Task / Proyek ke Karyawan
+                            </h5>
+                            <small class="text-muted d-block" style="font-size: 12px; margin-top: 2px;">
+                                Delegasikan instruksi kerja baru atau ajukan task mandiri ke HRD
+                            </small>
+                        </div>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #64748b; font-size: 26px; font-weight: 300; opacity: 0.7; transition: opacity 0.2s; outline: none; margin-top: -6px;">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
 
                 <div class="modal-body">
-                    <div class="form-group">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-1">
-                            <label class="font-weight-bold mb-0">Pilih Karyawan Penerima Tugas <span class="text-danger">*</span></label>
+                    <!-- SECTION 1: PILIH KARYAWAN PENERIMA TUGAS -->
+                    <div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                            <label class="form-label-custom mb-0 font-weight-bold" style="color: #0f172a; font-size: 12px;">
+                                <span><i class="fas fa-user-friends text-success mr-1"></i> PILIH KARYAWAN PENERIMA TUGAS <span class="text-danger">*</span></span>
+                            </label>
                             <?php if (!empty($penerimaList)): ?>
-                                <button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnSelectSupervisedEmployees">
-                                    <i class="fas fa-user-check"></i> <?= $canAssignToAll ? 'Pilih Semua Pegawai' : 'Pilih Semua Bawahan' ?> (<?= count($penerimaList) ?>)
+                                <button type="button" class="btn btn-xs btn-outline-success font-weight-bold shadow-none" id="btnSelectSupervisedEmployees" style="border-radius: 20px; padding: 3px 12px; font-size: 11px;">
+                                    <i class="fas fa-check-double mr-1"></i> <?= $canAssignToAll ? 'Pilih Semua Pegawai' : 'Pilih Semua Bawahan' ?> (<?= count($penerimaList) ?>)
                                 </button>
                             <?php endif; ?>
                         </div>
                         <?php if ($canAssignToAll): ?>
-                            <small class="text-primary d-block mb-1"><i class="fas fa-shield-alt mr-1"></i> Anda memiliki akses untuk memberikan task / proyek kepada seluruh pegawai perusahaan.</small>
+                            <small class="text-primary d-block mb-2 font-weight-semibold" style="font-size: 11.5px;">
+                                <i class="fas fa-shield-alt mr-1"></i> Anda memiliki akses untuk memberikan task / proyek kepada seluruh pegawai perusahaan.
+                            </small>
                         <?php else: ?>
-                            <small class="text-muted d-block mb-1">Hanya menampilkan karyawan yang berada di bawah supervisi / atasan langsung Anda.</small>
+                            <small class="text-muted d-block mb-2" style="font-size: 11.5px;">
+                                <i class="fas fa-info-circle mr-1"></i> Hanya menampilkan karyawan yang berada di bawah supervisi / atasan langsung Anda.
+                            </small>
                         <?php endif; ?>
                         <select name="id_penerima[]" id="select_penerima_task" class="form-control" multiple="multiple" required style="width: 100%;">
                             <?php foreach ($penerimaList as $bw):
@@ -1339,12 +1481,12 @@ $namaBulanList = [
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <div id="alert_task_mandiri" class="alert alert-warning py-2 px-3 mt-2 mb-0" style="display: none; font-size: 12px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e;">
+                        <div id="alert_task_mandiri" class="alert alert-warning py-2 px-3 mt-2 mb-0" style="display: none; font-size: 12px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; border-radius: 6px;">
                             <i class="fas fa-shield-alt text-warning mr-1"></i>
                             <strong>Pengajuan Task Mandiri:</strong> Tugas ini diajukan untuk diri Anda sendiri. Sesuai ketentuan, tugas akan dikirimkan ke <strong>HRD</strong> untuk di-<strong>ACC</strong> terlebih dahulu sebelum Anda dapat mulai mengerjakan.
                         </div>
                         <?php if (empty($penerimaList)): ?>
-                            <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
+                            <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small" style="border-radius: 6px;">
                                 <i class="fas fa-exclamation-triangle mr-1"></i>
                                 <strong>Belum ada karyawan yang dibawahi:</strong> Anda hanya dapat memberikan tugas kepada karyawan yang dibawahi langsung oleh Anda. Belum ada karyawan yang memilih Anda sebagai <em>Atasan Langsung</em>. Karyawan dapat memilih Anda di menu <strong>Profil Karyawan</strong> mereka, atau Admin/HRD dapat mengaturnya di menu <strong>Data Karyawan</strong>.
                             </div>
@@ -1352,17 +1494,17 @@ $namaBulanList = [
                     </div>
 
                     <!-- Container Dropdown Jobdesk Sasaran Mutu (Hanya muncul jika 1 orang karyawan dipilih) -->
-                    <div id="container_jobdesk_karyawan" style="display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div id="container_jobdesk_karyawan" style="display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                         <div class="d-flex align-items-center justify-content-between flex-wrap mb-1" style="gap: 8px;">
-                            <label class="font-weight-bold text-success mb-0" style="font-size: 13px;">
+                            <label class="font-weight-bold text-success mb-0" style="font-size: 12.5px;">
                                 <i class="fas fa-bullseye text-success mr-1"></i> Hubungkan ke Jobdesk (Sama dengan Laporan Mingguan) <span class="text-danger">* (Wajib)</span>
                             </label>
-                            <span class="badge badge-success px-2 py-1" id="badge_info_karyawan" style="font-size: 11px;">
+                            <span class="badge badge-success px-2 py-1" id="badge_info_karyawan" style="font-size: 11px; border-radius: 12px;">
                                 <i class="fas fa-user mr-1"></i> <span id="nama_karyawan_terpilih">-</span>
                             </span>
                         </div>
-                        <small class="text-muted d-block mb-2">
-                            <i class="fas fa-sync-alt text-primary mr-1"></i> Penugasan ini akan otomatis terhubung ke jobdesk karyawan terkait dan disinkronkan ke <strong>Sasaran Mutu</strong> serta <strong>Audit Kinerja</strong>.
+                        <small class="text-muted d-block mb-2" style="font-size: 11.5px;">
+                            <i class="fas fa-sync-alt text-success mr-1"></i> Penugasan ini akan otomatis terhubung ke jobdesk karyawan terkait dan disinkronkan ke <strong>Sasaran Mutu</strong> serta <strong>Audit Kinerja</strong>.
                         </small>
 
                         <!-- Input Hidden untuk form submission -->
@@ -1399,7 +1541,7 @@ $namaBulanList = [
                             </div>
                         </div>
 
-                        <div id="jobdesk_detail_preview" class="mt-2 small text-dark p-3 bg-white rounded border border-success" style="display: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div id="jobdesk_detail_preview" class="mt-2 small text-dark p-3 bg-white rounded border border-success" style="display: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 8px;">
                             <div class="font-weight-bold text-success mb-1" style="font-size: 13px;">
                                 <i class="fas fa-check-circle mr-1"></i> <span id="text_jobdesk_title">-</span>
                             </div>
@@ -1407,66 +1549,118 @@ $namaBulanList = [
                         </div>
                     </div>
 
+                    <!-- ROW: NAMA PROYEK, JENIS PENUGASAN, PRIORITAS -->
                     <div class="row">
                         <div class="col-md-5">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Nama Proyek / Kategori Kerja</label>
-                                <input type="text" name="nama_proyek" class="form-control" placeholder="Contoh: Proyek Instalasi CCTV / Operasional IT">
+                            <div class="form-group mb-3">
+                                <label class="form-label-custom">
+                                    <span><i class="fas fa-folder text-muted mr-1"></i> Nama Proyek / Kategori</span>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                    </div>
+                                    <input type="text" name="nama_proyek" class="form-control" placeholder="Contoh: Proyek CCTV / Operasional IT">
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Jenis Penugasan</label>
-                                <select name="jenis" class="form-control">
-                                    <option value="Task Harian">Task Harian</option>
-                                    <option value="Proyek Mingguan">Proyek Mingguan</option>
-                                    <option value="Proyek Bulanan / Khusus">Proyek Bulanan / Khusus</option>
-                                    <option value="Urgent / Insidental">Urgent / Insidental</option>
-                                </select>
+                            <div class="form-group mb-3">
+                                <label class="form-label-custom">
+                                    <span><i class="fas fa-tags text-muted mr-1"></i> Jenis Penugasan</span>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-clipboard-list"></i></span>
+                                    </div>
+                                    <select name="jenis" class="form-control">
+                                        <option value="Task Harian">Task Harian</option>
+                                        <option value="Proyek Mingguan">Proyek Mingguan</option>
+                                        <option value="Proyek Bulanan / Khusus">Proyek Bulanan / Khusus</option>
+                                        <option value="Urgent / Insidental">Urgent / Insidental</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Prioritas</label>
-                                <select name="prioritas" class="form-control">
-                                    <option value="Low">Low (Rendah)</option>
-                                    <option value="Medium" selected>Medium (Normal)</option>
-                                    <option value="High">High (Tinggi)</option>
-                                    <option value="Urgent">Urgent (Mendesak)</option>
-                                </select>
+                            <div class="form-group mb-3">
+                                <label class="form-label-custom">
+                                    <span><i class="fas fa-flag text-muted mr-1"></i> Prioritas</span>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-signal"></i></span>
+                                    </div>
+                                    <select name="prioritas" class="form-control">
+                                        <option value="Low">Low (Rendah)</option>
+                                        <option value="Medium" selected>Medium (Normal)</option>
+                                        <option value="High">High (Tinggi)</option>
+                                        <option value="Urgent">Urgent (Mendesak)</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="font-weight-bold">Judul Task / Instruksi Utama <span class="text-danger">*</span></label>
-                        <input type="text" name="judul" class="form-control" required placeholder="Contoh: Penarikan Kabel Jaringan & Konfigurasi Router Lantai 2">
+                    <!-- ROW: JUDUL TASK -->
+                    <div class="form-group mb-3">
+                        <label class="form-label-custom">
+                            <span><i class="fas fa-pencil-alt text-success mr-1"></i> Judul Task / Instruksi Utama <span class="text-danger">*</span></span>
+                        </label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                            </div>
+                            <input type="text" name="judul" class="form-control" required placeholder="Contoh: Penarikan Kabel Jaringan & Konfigurasi Router Lantai 2" style="font-weight: 500;">
+                        </div>
                     </div>
 
+                    <!-- ROW: TANGGAL MULAI & TARGET SELESAI -->
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Tanggal Mulai</label>
-                                <input type="date" name="tgl_mulai" class="form-control" value="<?= date('Y-m-d') ?>">
+                            <div class="form-group mb-3">
+                                <label class="form-label-custom">
+                                    <span><i class="far fa-calendar-alt text-muted mr-1"></i> Tanggal Mulai</span>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                    </div>
+                                    <input type="date" name="tgl_mulai" class="form-control" value="<?= date('Y-m-d') ?>">
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Target Selesai (Deadline) <span class="text-danger">*</span></label>
-                                <input type="date" name="tgl_deadline" class="form-control" value="<?= date('Y-m-d', strtotime('+3 days')) ?>" required>
+                            <div class="form-group mb-3">
+                                <label class="form-label-custom">
+                                    <span class="text-danger"><i class="far fa-calendar-check mr-1"></i> Target Selesai (Deadline) *</span>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="far fa-calendar-check text-danger"></i></span>
+                                    </div>
+                                    <input type="date" name="tgl_deadline" class="form-control" value="<?= date('Y-m-d', strtotime('+3 days')) ?>" required>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="font-weight-bold">Deskripsi / Rincian Instruksi Kerja</label>
+                    <!-- ROW: DESKRIPSI -->
+                    <div class="form-group mb-3">
+                        <label class="form-label-custom">
+                            <span><i class="fas fa-align-left text-muted mr-1"></i> Deskripsi / Rincian Instruksi Kerja</span>
+                        </label>
                         <textarea name="deskripsi" rows="3" class="form-control" placeholder="Tuliskan rincian target, spesifikasi hasil yang diharapkan, atau langkah kerja..."></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label class="font-weight-bold">
-                            <i class="fas fa-eye text-primary mr-1"></i> Mengetahui (Pihak Terkait / Atasan) <span class="badge badge-light border ml-1 font-weight-normal">Opsional</span>
-                        </label>
+                    <!-- ROW: MENGETAHUI (PIHAK TERKAIT / ATASAN) -->
+                    <div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label-custom mb-0 font-weight-bold" style="color: #0f172a; font-size: 12px;">
+                                <span><i class="fas fa-eye text-info mr-1"></i> Mengetahui (Pihak Terkait / Atasan)</span>
+                            </label>
+                            <span class="badge badge-light border text-muted" style="font-size: 11px; border-radius: 6px;">Opsional</span>
+                        </div>
                         <select name="id_mengetahui" id="select_mengetahui_task" class="form-control" style="width: 100%;">
                             <option value="">-- Pilih Karyawan / Atasan yang Mengetahui (Opsional) --</option>
                             <?php foreach ($list_semua_karyawan_all as $kw):
@@ -1477,28 +1671,44 @@ $namaBulanList = [
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <small class="text-muted d-block mt-1">
+                        <small class="text-muted d-block mt-2" style="font-size: 11.5px; line-height: 1.4;">
                             <i class="fas fa-bell text-warning mr-1"></i> Pihak yang dipilih di kolom Mengetahui <strong>hanya akan dikirimkan notifikasi WhatsApp setelah task disetujui (ACC) oleh HRD</strong>.
                         </small>
                     </div>
 
-                    <div class="form-group">
-                        <label class="font-weight-bold">Link Lampiran / Referensi dari Atasan (Opsional)</label>
-                        <input type="text" name="lampiran_atasan" class="form-control" placeholder="https://drive.google.com/... (Link dokumen, desain, atau referensi)">
-                        <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Catatan: <strong>Checklist langkah kerja / sub-task</strong> akan diisi dan dicentang langsung oleh <strong>Karyawan Penerima Tugas</strong> sebagai dasar perhitungan progres.</small>
+                    <!-- ROW: LINK LAMPIRAN / REFERENSI -->
+                    <div class="form-group mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <label class="form-label-custom mb-0">
+                                <span><i class="fas fa-paperclip text-muted mr-1"></i> Link Lampiran / Referensi dari Atasan</span>
+                            </label>
+                            <span class="badge badge-light border text-muted" style="font-size: 11px; border-radius: 6px;">Opsional</span>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-link"></i></span>
+                            </div>
+                            <input type="text" name="lampiran_atasan" class="form-control" placeholder="https://drive.google.com/... (Link dokumen, desain, atau referensi)">
+                        </div>
+                        <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
+                            <i class="fas fa-info-circle text-primary mr-1"></i> Catatan: <strong>Checklist langkah kerja / sub-task</strong> akan diisi dan dicentang langsung oleh <strong>Karyawan Penerima Tugas</strong> sebagai dasar perhitungan progres.
+                        </small>
                     </div>
 
-                    <div class="checkbox-custom checkbox-success mt-2">
-                        <input type="checkbox" id="chk_kirim_wa" name="kirim_wa" value="1" checked>
-                        <label for="chk_kirim_wa" class="font-weight-bold text-success">
-                            <i class="fab fa-whatsapp"></i> Kirim Notifikasi WhatsApp Otomatis ke Karyawan
+                    <!-- ROW: NOTIFIKASI WHATSAPP -->
+                    <div class="p-3 rounded mb-1 d-flex align-items-center" style="background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px;">
+                        <input type="checkbox" id="chk_kirim_wa" name="kirim_wa" value="1" checked style="width: 18px; height: 18px; accent-color: #10b981; cursor: pointer; margin-right: 12px;">
+                        <label for="chk_kirim_wa" class="font-weight-bold text-success mb-0" style="cursor: pointer; font-size: 13px; user-select: none;">
+                            <i class="fab fa-whatsapp mr-1" style="font-size: 15px;"></i> Kirim Notifikasi WhatsApp Otomatis ke Karyawan
                         </label>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-success font-weight-bold" id="btnSubmitBuatTask" <?= empty($penerimaList) ? 'disabled title="Tidak ada karyawan yang dapat dipilih"' : '' ?>>
+                <div class="modal-footer d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-light px-4 py-2 font-weight-bold" data-dismiss="modal" style="border-radius: 8px; border: 1.5px solid #cbd5e1; color: #475569; background: #ffffff;">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-success px-4 py-2 font-weight-bold shadow-sm" id="btnSubmitBuatTask" <?= empty($penerimaList) ? 'disabled title="Tidak ada karyawan yang dapat dipilih"' : '' ?> style="border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-size: 13.5px; letter-spacing: 0.2px;">
                         <i class="fas fa-paper-plane mr-1"></i> Simpan & Tugaskan Sekarang
                     </button>
                 </div>
@@ -1513,11 +1723,21 @@ $namaBulanList = [
 <div class="modal fade" id="modalDetailTask" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title font-weight-bold">
-                    <i class="fas fa-clipboard-list mr-1"></i> Detail Task: <span id="dt_kode_task">-</span>
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <div class="modal-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: #eff6ff; border: 1.5px solid #bfdbfe; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #2563eb; flex-shrink: 0; margin-right: 14px;">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title font-weight-bold mb-0" style="color: #0f172a; font-size: 17px; letter-spacing: -0.2px;">
+                            Detail Task: <span id="dt_kode_task" class="text-primary">-</span>
+                        </h5>
+                        <small class="text-muted d-block" style="font-size: 12px; margin-top: 2px;">
+                            Monitoring progres pekerjaan, verifikasi checklist & submit review
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #64748b; font-size: 26px; font-weight: 300; opacity: 0.7; transition: opacity 0.2s; outline: none; margin-top: -6px;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -1881,6 +2101,12 @@ document.addEventListener('DOMContentLoaded', function() {
             allowClear: true,
             width: '100%'
         });
+        $('#select_mengetahui_task').select2({
+            dropdownParent: $('#modalBuatTask'),
+            placeholder: '-- Pilih Karyawan / Atasan yang Mengetahui (Opsional) --',
+            allowClear: true,
+            width: '100%'
+        });
     }
 
     // Tombol Pilih Semua Karyawan yang Dibawahi Langsung
@@ -2091,6 +2317,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#menu_jobdesk_list').hide();
         if ($.fn.select2) {
             $('#select_penerima_task').val(null).trigger('change');
+            $('#select_mengetahui_task').val(null).trigger('change');
         }
         $('#modalBuatTask').modal('show');
     });
