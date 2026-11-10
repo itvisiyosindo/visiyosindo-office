@@ -66,12 +66,20 @@ class Task_proyek extends CI_Controller
         @$this->db->query($sql1);
         @$this->db->query($sql2);
 
-        $chkSm = @$this->db->query("SHOW COLUMNS FROM `task_proyek` LIKE 'id_sasaran_mutu'");
-        if ($chkSm && $chkSm->num_rows() === 0) {
-            @$this->db->query("ALTER TABLE `task_proyek`
-                ADD COLUMN `id_sasaran_mutu` VARCHAR(100) DEFAULT NULL AFTER `nama_proyek`,
-                ADD COLUMN `nama_jobdesk` VARCHAR(255) DEFAULT NULL AFTER `id_sasaran_mutu`
-            ");
+        $colsToAdd = [
+            'id_sasaran_mutu' => "VARCHAR(100) DEFAULT NULL AFTER `nama_proyek`",
+            'nama_jobdesk'    => "VARCHAR(255) DEFAULT NULL AFTER `id_sasaran_mutu`",
+            'id_mengetahui'   => "INT(11) DEFAULT NULL AFTER `id_penerima`",
+            'is_mandiri'      => "TINYINT(1) DEFAULT 0 AFTER `id_mengetahui`",
+            'acc_hrd_by'      => "INT(11) DEFAULT NULL AFTER `status_task`",
+            'acc_hrd_at'      => "DATETIME DEFAULT NULL AFTER `acc_hrd_by`",
+            'acc_hrd_catatan' => "TEXT DEFAULT NULL AFTER `acc_hrd_at`"
+        ];
+        foreach ($colsToAdd as $colName => $colDef) {
+            $chk = @$this->db->query("SHOW COLUMNS FROM `task_proyek` LIKE '{$colName}'");
+            if ($chk && $chk->num_rows() === 0) {
+                @$this->db->query("ALTER TABLE `task_proyek` ADD COLUMN `{$colName}` {$colDef}");
+            }
         }
 
         if (function_exists('ensureTaskProyekSpColumns')) {
@@ -81,43 +89,61 @@ class Task_proyek extends CI_Controller
 
     private function _canViewAllTasks($myId)
     {
-        return isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 23, 33, 54, 55, 56, 58, 69, 744], true) || $this->_canAssignAllTasks($myId);
+        return true; // Transparansi tugas tim dibuka untuk semua pengguna perusahaan
     }
 
     private function _canAssignAllTasks($myId)
     {
-        // 1. Admin, HRD, Eksekutif, Akun Manajemen & Dian Melati (ID 744)
-        if (isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 69, 744], true)) {
+        return true; // Semua karyawan sekarang bisa memberikan atau mengajukan task
+    }
+
+    public function _isHrdOrAdmin($myId)
+    {
+        if (isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 23, 33, 54, 55, 56, 58, 69, 744], true)) {
             return true;
         }
-
-        // 2. Cek username session atau nama session yang mengandung kata 'dian'
-        $sessUser = strtolower((string)$this->session->userdata('username'));
+        $sessUser = strtolower((string)$this->session->userdata("username"));
         $sessNama = strtolower((string)sessNama());
-        if (strpos($sessUser, 'dian') !== false || strpos($sessNama, 'dian') !== false) {
+        if (strpos($sessUser, "dian") !== false || strpos($sessNama, "dian") !== false || strpos($sessUser, "hrd") !== false) {
             return true;
         }
-
-        // 3. Cek database profil pengguna saat ini
         if ($myId > 0) {
-            $userRow = $this->db->select('username, nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+            $userRow = $this->db->select("username, nama, jabatan")->from("pengguna")->where("pengguna_id", $myId)->get()->row();
             if ($userRow) {
                 $uName = strtolower((string)$userRow->username);
                 $nName = strtolower((string)$userRow->nama);
-                if (strpos($uName, 'dian') !== false || strpos($nName, 'dian') !== false) {
+                $jName = strtolower((string)$userRow->jabatan);
+                if (strpos($uName, "dian") !== false || strpos($nName, "dian") !== false || strpos($jName, "hrd") !== false || strpos($jName, "personalia") !== false) {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
-    /**
-     * Mapping penggabungan akun ganda / akun jabatan ke akun karyawan definitif.
-     * Format: [ ID_AKUN_DUPLIKAT => ID_AKUN_UTAMA ]
-     * Contoh: 107 (Head of Accounting and Tax) digabung ke 106 (Dirangga Madali)
-     */
+    private function _getHrdRecipients()
+    {
+        $hrdUsers = $this->db->select("pengguna_id, nama, no_hp, nohp")
+            ->from("pengguna")
+            ->group_start()
+                ->where("pengguna_id", 744)
+                ->or_like("jabatan", "hrd")
+                ->or_like("jabatan", "personalia")
+            ->group_end()
+            ->where("status", 1)
+            ->where("is_active", 1)
+            ->get()
+            ->result();
+
+        if (empty($hrdUsers)) {
+            $dian = $this->db->select("pengguna_id, nama, no_hp, nohp")->from("pengguna")->where("pengguna_id", 744)->get()->row();
+            if ($dian) {
+                $hrdUsers = [$dian];
+            }
+        }
+        return $hrdUsers;
+    }
+
     private function _getAccountMergeMap()
     {
         return [

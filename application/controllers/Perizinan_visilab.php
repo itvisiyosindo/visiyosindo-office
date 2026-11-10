@@ -104,12 +104,18 @@ class Perizinan_visilab extends CI_Controller
             }
         }
 
+        $allData = $this->md_perizinan_visilab->get_all([]);
+        $allStats = $this->md_perizinan_visilab->get_summary_stats();
+
         echo json_encode([
+            'git_commit'       => '89a5af2-diagnostics',
             'create_perizinan' => $q1,
             'err1'             => $err1,
             'create_history'   => $q2,
             'err2'             => $err2,
-            'seeded'           => $seedRes
+            'total_rows_db'    => count($allData),
+            'stats'            => $allStats,
+            'first_row'        => !empty($allData) ? $allData[0]->nama_instansi : null
         ]);
     }
 
