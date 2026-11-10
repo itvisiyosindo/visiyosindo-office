@@ -754,8 +754,8 @@ class Evaluasi extends CI_Controller
         $tahun         = $ambilDataEv->tahun;
 
 
-        $dataPenerima3     = $this->md_pengguna->getById($detail['idPenerima3']);
-        $nama3           = $dataPenerima3[0]->nama;
+        $dataPenerima3     = !empty($detail['idPenerima3']) ? $this->md_pengguna->getById($detail['idPenerima3']) : [];
+        $nama3           = !empty($dataPenerima3) ? $dataPenerima3[0]->nama : '';
 
         for ($i = 1; $i <= $ulang; $i++) {
             if ($i == 1) {

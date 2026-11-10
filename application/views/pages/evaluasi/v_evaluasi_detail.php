@@ -28,6 +28,33 @@
 			<?php $id = $data_job->id_po ?>
 			<input type="hidden" name="id" id="id" value="<?= $data_job->id_po ?>">
 
+			<?php
+			$my_penilai_letter = '';
+			if (!empty($data_detail2)) {
+				foreach ($data_detail2 as $d_row) {
+					if (sessPenggunaId() == $d_row->penilaia) { $my_penilai_letter = 'A'; break; }
+					elseif (sessPenggunaId() == $d_row->penilaib) { $my_penilai_letter = 'B'; break; }
+					elseif (sessPenggunaId() == $d_row->penilaic) { $my_penilai_letter = 'C'; break; }
+					elseif (sessPenggunaId() == $d_row->penilaid) { $my_penilai_letter = 'D'; break; }
+					elseif (sessPenggunaId() == $d_row->penilaie) { $my_penilai_letter = 'E'; break; }
+					elseif (sessPenggunaId() == $d_row->penilaif) { $my_penilai_letter = 'F'; break; }
+				}
+			}
+			?>
+			<?php if ($my_penilai_letter != ''): ?>
+				<div class="alert alert-info d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 p-3" style="border-left: 5px solid #0088cc;">
+					<div>
+						<h5 class="alert-heading mb-1"><i class="fas fa-edit mr-2"></i><strong>Perhatian Penilai:</strong></h5>
+						<span>Anda terdaftar sebagai <strong>Penilai <?= $my_penilai_letter ?></strong> untuk evaluasi ini. Halaman ini adalah <em>halaman rekapitulasi detail</em>. Untuk menginput / mengubah nilai Jobdesc dan Penilaian Umum Anda, silakan buka Form Penilaian.</span>
+					</div>
+					<div class="mt-2 mt-md-0 ml-md-3">
+						<a href="<?= base_url('evaluasi/show/detail/penilaian/' . encrypt($data_job->id_po)) ?>" class="btn btn-primary text-nowrap">
+							<i class="fas fa-pencil-alt"></i> Buka Form Penilaian
+						</a>
+					</div>
+				</div>
+			<?php endif; ?>
+
 			<hr>
 
 			<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center bg-light p-3 rounded border">

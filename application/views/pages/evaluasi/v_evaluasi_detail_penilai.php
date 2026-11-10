@@ -588,10 +588,20 @@
 
 						dataType: 'JSON',
 
+						beforeSend: function() {
+							$('.btn-save').attr('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+						},
 						success: function(resp) {
-
+							$('.btn-save').attr('disabled', false).html('Simpan');
 							handleResponse(resp);
-
+						},
+						error: function(xhr, status, error) {
+							$('.btn-save').attr('disabled', false).html('Simpan');
+							Swal.fire({
+								title: 'Gagal!',
+								text: 'Terjadi kesalahan saat menyimpan data: ' + error,
+								icon: 'error'
+							});
 						}
 
 					});
