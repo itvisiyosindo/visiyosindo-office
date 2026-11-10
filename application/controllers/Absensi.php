@@ -2434,33 +2434,36 @@ class Absensi extends CI_Controller
 
         $uid = (int)$dimas->pengguna_id;
 
-        // 2. Periksa absensi yang tercatat "terlambat"
-        $absTerlambat = $this->db->from('absensi')
-            ->where('pengguna_id', $uid)
-            ->where('status_absen', 'terlambat')
-            ->order_by('data_created', 'DESC')
-            ->get()
-            ->result();
+        // 2. Periksa seluruh absensi Dimas dan cari yang berstatus telat / terlambat
+        $absAll = $this->db->query("
+            SELECT id_absensi, waktu_absen, data_created, type_absen, status_absen
+            FROM absensi
+            WHERE pengguna_id = {$uid}
+               OR pengguna_id IN (SELECT pengguna_id FROM pengguna WHERE nama LIKE '%Dimas%')
+            ORDER BY data_created DESC
+        ")->result();
 
+        $absTerlambatFound = [];
         $absUpdated = [];
-        foreach ($absTerlambat as $row) {
-            $updateData = ['status_absen' => 'tepat_waktu'];
-            if (!empty($row->waktu_absen) && $row->waktu_absen > '08:00:00') {
-                $updateData['waktu_absen'] = '07:55:00';
-                $tgl = date('Y-m-d', strtotime($row->data_created));
-                $updateData['data_created'] = $tgl . ' 07:55:00';
-            }
-            if (isset($row->id_absensi)) {
+        foreach ($absAll as $row) {
+            $st = strtolower(trim((string)$row->status_absen));
+            if (strpos($st, 'terlambat') !== false || strpos($st, 'telat') !== false) {
+                $absTerlambatFound[] = $row;
+                $updateData = ['status_absen' => 'tepat_waktu'];
+                if (!empty($row->waktu_absen) && $row->waktu_absen > '08:00:00') {
+                    $updateData['waktu_absen'] = '07:55:00';
+                    $tgl = date('Y-m-d', strtotime($row->data_created));
+                    $updateData['data_created'] = $tgl . ' 07:55:00';
+                }
                 $this->db->where('id_absensi', $row->id_absensi)->update('absensi', $updateData);
-            } else {
-                $this->db->where('pengguna_id', $uid)->where('data_created', $row->data_created)->update('absensi', $updateData);
+                $absUpdated[] = [
+                    'id_absensi' => $row->id_absensi,
+                    'waktu_sebelum' => $row->waktu_absen,
+                    'data_created_sebelum' => $row->data_created,
+                    'status_sebelum' => $row->status_absen,
+                    'status_sesudah' => 'tepat_waktu'
+                ];
             }
-            $absUpdated[] = [
-                'id_absensi' => $row->id_absensi ?? null,
-                'data_created_sebelum' => $row->data_created,
-                'status_sebelum' => $row->status_absen,
-                'status_sesudah' => 'tepat_waktu'
-            ];
         }
 
         // 3. Periksa task proyek yang tercatat telat / lewat deadline
@@ -2492,12 +2495,22 @@ class Absensi extends CI_Controller
 
         addlog('Perbaiki Telat Dimas', "Memperbaiki telat Dimas Chandra: " . count($absUpdated) . " absensi, " . count($taskUpdated) . " task proyek");
 
+        // 4. Verifikasi status akhir di database
+        $kpiCheck = $this->db->query("
+            SELECT 
+                COUNT(DISTINCT CASE WHEN a.type_absen = 'masuk' AND LOWER(COALESCE(a.status_absen, '')) = 'terlambat' THEN DATE(a.data_created) END) AS sisa_absen_terlambat,
+                COUNT(DISTINCT CASE WHEN a.type_absen = 'masuk' AND LOWER(COALESCE(a.status_absen, '')) IN ('tepat_waktu', 'tepat waktu', 'dinas') THEN DATE(a.data_created) END) AS total_absen_tepat
+            FROM absensi a
+            WHERE a.pengguna_id = {$uid}
+        ")->row();
+
         header('Content-Type: application/json');
         echo json_encode([
             'status' => 'success',
             'user' => $dimas,
             'absensi_diperbaiki' => $absUpdated,
-            'task_diperbaiki' => $taskUpdated
+            'task_diperbaiki' => $taskUpdated,
+            'verifikasi_kpi' => $kpiCheck
         ], JSON_PRETTY_PRINT);
     }
 
