@@ -219,7 +219,7 @@ class Absensi extends CI_Controller
 
 
         //di bawah jam 4 belum bisa absen
-        if (date("H:i:s") < date($config[0]->boleh_absen) && sessPenggunaId != 94) {
+        if (date("H:i:s") < date($config[0]->boleh_absen) && sessPenggunaId() != 94) {
             ajaxReturnDie('error', 'Belum waktunya Absen!');
         }
 
@@ -501,7 +501,7 @@ class Absensi extends CI_Controller
 
 
         //di bawah jam 4 belum bisa absen
-        if (date("H:i:s") < date($config[0]->boleh_absen) && sessPenggunaId != 94) {
+        if (date("H:i:s") < date($config[0]->boleh_absen) && sessPenggunaId() != 94) {
             ajaxReturnDie('error', 'Belum waktunya Absen!');
         }
 
@@ -677,14 +677,18 @@ class Absensi extends CI_Controller
                 $data['type_absen'] = 'masuk';
 
                 // Untuk Absen istirahat
-            } else if ($rehatC > $rehatA && $rehatC < $rehatB) {
+            } else if ($rehatC >= $rehatA && $rehatC < $rehatB) {
 
                 $data['status_absen'] = NULL;
                 $data['type_absen'] = 'istirahat';
-            } else if ($rehatC > $pulang1 && $rehatC < $pulang2) {
+            } else if ($rehatC >= $pulang1 && $rehatC < $pulang2) {
                 $data['status_absen'] = NULL;
                 $data['type_absen'] = 'keluar';
             }
+        }
+
+        if (empty($data['type_absen'])) {
+            ajaxReturnDie('error', 'Saat ini berada di luar jadwal waktu absensi.');
         }
 
         $data['latitude'] = $this->input->post('latitude');
@@ -785,7 +789,7 @@ class Absensi extends CI_Controller
 
 
         //di bawah jam 4 belum bisa absen
-        if (date("H:i:s") < date($config[0]->boleh_absen) && sessPenggunaId != 94) {
+        if (date("H:i:s") < date($config[0]->boleh_absen) && sessPenggunaId() != 94) {
             ajaxReturnDie('error', 'Belum waktunya Absen!');
         }
 

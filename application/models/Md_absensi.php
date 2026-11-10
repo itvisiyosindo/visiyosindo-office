@@ -59,7 +59,24 @@ class Md_absensi extends CI_Model
             $data['tanpa_tunjangan'] = 1;
         }
 
-        $this->db->insert('absensibackup', $data);
+        // Filter hanya kolom yang tersedia pada tabel absensibackup agar tidak error saat insert
+        $allowedColumns = [
+            'pengguna_id',
+            'waktu_absen',
+            'status_absen',
+            'type_absen',
+            'latitude',
+            'longitude',
+            'approval',
+            'tanpa_tunjangan',
+            'file_pendukung',
+            'keterangan',
+            'data_created',
+            'jenis_absen',
+        ];
+        $backupData = array_intersect_key($data, array_flip($allowedColumns));
+
+        $this->db->insert('absensibackup', $backupData);
     }
 
     /**
