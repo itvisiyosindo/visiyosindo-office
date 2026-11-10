@@ -3,7 +3,7 @@
     <div class="right-wrapper text-left">
         <ol class="breadcrumbs">
             <li><a href="<?= base_url('knowledge/show/knowledge') ?>">Product Knowledge</a></li>
-            <li><span>Hasil Ujian</span></li>
+            <li><span>Hasil & Review Ujian</span></li>
         </ol>
     </div>
 </header>
@@ -39,20 +39,33 @@ if ($skor >= 85) {
     $gradeBorder = '#fecaca';
     $gradeIcon = 'fa-exclamation-triangle';
 }
+
+$jawabanAudit = !empty($peserta->jawaban_json) ? json_decode($peserta->jawaban_json, true) : [];
 ?>
 
-<div class="container" style="max-width: 800px; margin: 0 auto;">
-    <div class="card shadow-lg mb-4" style="border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; background: #ffffff;">
+<div class="container" style="max-width: 860px; margin: 0 auto;">
+    <?php if (!empty($is_admin_view)): ?>
+        <div class="alert alert-info border mb-3 d-flex align-items-center shadow-sm" style="border-radius: 10px;">
+            <i class="fas fa-user-shield mr-3" style="font-size: 24px;"></i>
+            <div>
+                <strong>Mode Review HRD / Admin:</strong> Sedang memeriksa lembar jawaban milik 
+                <strong><?= htmlspecialchars($peserta->nama) ?></strong> (<?= htmlspecialchars($peserta->nama_divisi ?: $peserta->jabatan) ?>)
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- RESULT SUMMARY CARD -->
+    <div class="card shadow-sm mb-4" style="border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; background: #ffffff;">
         <!-- RESULT HEADER BANNER -->
-        <div class="text-center p-5" style="background: <?= $gradeBg ?>; border-bottom: 1.5px solid <?= $gradeBorder ?>;">
+        <div class="text-center p-4 p-md-5" style="background: <?= $gradeBg ?>; border-bottom: 1.5px solid <?= $gradeBorder ?>;">
             <div style="width: 72px; height: 72px; border-radius: 50%; background: #ffffff; border: 2px solid <?= $gradeBorder ?>; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; color: <?= $gradeColor ?>; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
                 <i class="fas <?= $gradeIcon ?>"></i>
             </div>
-            <h4 class="font-weight-bold text-dark mb-1">Ujian Kuis Selesai!</h4>
+            <h4 class="font-weight-bold text-dark mb-1">Hasil Ujian Kuis</h4>
             <p class="text-muted small mb-3"><?= htmlspecialchars($kuis->judul_kuis) ?></p>
 
             <div style="font-size: 54px; font-weight: 900; color: <?= $gradeColor ?>; line-height: 1;">
-                <?= $skor ?> <span style="font-size: 24px; font-weight: 600; color: #64748b;">/ 100</span>
+                <?= $skor ?> <span style="font-size: 22px; font-weight: 600; color: #64748b;">/ 100</span>
             </div>
             <div class="mt-2">
                 <span class="badge px-3 py-1 font-weight-bold" style="font-size: 14px; background: #ffffff; color: <?= $gradeColor ?>; border: 1.5px solid <?= $gradeBorder ?>;">
@@ -67,7 +80,7 @@ if ($skor >= 85) {
                 <div class="col-4">
                     <div class="p-3 rounded" style="background:#f8fafc; border:1px solid #e2e8f0;">
                         <small class="text-muted d-block font-weight-bold text-uppercase">Jawaban Benar</small>
-                        <span style="font-size: 24px; font-weight: 800; color: #16a34a;">
+                        <span style="font-size: 22px; font-weight: 800; color: #16a34a;">
                             <i class="fas fa-check-circle mr-1"></i> <?= (int)$peserta->total_benar ?>
                         </span>
                     </div>
@@ -75,7 +88,7 @@ if ($skor >= 85) {
                 <div class="col-4">
                     <div class="p-3 rounded" style="background:#f8fafc; border:1px solid #e2e8f0;">
                         <small class="text-muted d-block font-weight-bold text-uppercase">Jawaban Salah</small>
-                        <span style="font-size: 24px; font-weight: 800; color: #dc2626;">
+                        <span style="font-size: 22px; font-weight: 800; color: #dc2626;">
                             <i class="fas fa-times-circle mr-1"></i> <?= (int)$peserta->total_salah ?>
                         </span>
                     </div>
@@ -83,7 +96,7 @@ if ($skor >= 85) {
                 <div class="col-4">
                     <div class="p-3 rounded" style="background:#f8fafc; border:1px solid #e2e8f0;">
                         <small class="text-muted d-block font-weight-bold text-uppercase">Durasi Ujian</small>
-                        <span style="font-size: 24px; font-weight: 800; color: #0284c7;">
+                        <span style="font-size: 22px; font-weight: 800; color: #0284c7;">
                             <i class="far fa-clock mr-1"></i> <?= round((int)$peserta->durasi_detik / 60) ?> Mnt
                         </span>
                     </div>
@@ -91,23 +104,138 @@ if ($skor >= 85) {
             </div>
 
             <!-- SYNC KPI INFO ALERT -->
-            <div class="alert alert-success d-flex align-items-center mb-4" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; color: #166534;">
+            <div class="alert alert-success d-flex align-items-center mb-0" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; color: #166534;">
                 <i class="fas fa-sync-alt fa-2x mr-3 text-success"></i>
                 <div class="small">
                     <strong>Tersinkronisasi Otomatis ke Leaderboard KPI:</strong><br>
-                    Skor ujian Product Knowledge sebesar <strong><?= $skor ?></strong> telah berhasil tersimpan ke rekap penilaian Anda untuk <strong>Bulan <?= (int)$kuis->bulan ?> / Tahun <?= (int)$kuis->tahun ?></strong> dan menjadi parameter penilaian kinerja resmi.
+                    Skor ujian Product Knowledge sebesar <strong><?= $skor ?></strong> telah otomatis tersimpan ke tabel penilaian <strong>Bulan <?= (int)$kuis->bulan ?> / Tahun <?= (int)$kuis->tahun ?></strong> dan menjadi parameter mutu kinerja.
                 </div>
             </div>
-
-            <!-- ACTION BUTTONS -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
-                <a href="<?= base_url('knowledge/show/knowledge') ?>" class="btn btn-light border font-weight-bold px-4 py-2">
-                    <i class="fas fa-arrow-left mr-1"></i> Kembali ke Menu Product Knowledge
-                </a>
-                <a href="<?= base_url('task_proyek') ?>" class="btn btn-success font-weight-bold px-4 py-2 shadow-sm">
-                    <i class="fas fa-trophy mr-1"></i> Lihat Leaderboard KPI Saya
-                </a>
-            </div>
         </div>
+    </div>
+
+    <!-- =========================================================================
+         SECTION REVIEW LEMBAR JAWABAN (DETAIL SOAL, JAWABAN PESERTA, & KUNCI)
+         ========================================================================= -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 px-2">
+        <div>
+            <h5 class="font-weight-bold text-dark mb-1">
+                <i class="fas fa-clipboard-check text-primary mr-2"></i> Review Lembar Jawaban & Pembahasan
+            </h5>
+            <small class="text-muted">Periksa jawaban Anda pada setiap nomor soal. Kunci jawaban dan pembahasan ditampilkan untuk pembelajaran.</small>
+        </div>
+        <div class="d-flex align-items-center mt-2 mt-md-0" style="gap: 8px;">
+            <span class="badge badge-success px-2 py-1"><i class="fas fa-check mr-1"></i> Benar: <?= (int)$peserta->total_benar ?></span>
+            <span class="badge badge-danger px-2 py-1"><i class="fas fa-times mr-1"></i> Salah: <?= (int)$peserta->total_salah ?></span>
+        </div>
+    </div>
+
+    <?php if (empty($soal_list)): ?>
+        <div class="card p-4 text-center text-muted mb-4">
+            Tidak ada rincian soal untuk kuis ini.
+        </div>
+    <?php else: ?>
+        <?php $no = 1; foreach ($soal_list as $soal): 
+            $idSoal = $soal->id_soal;
+            $audit = isset($jawabanAudit[$idSoal]) ? $jawabanAudit[$idSoal] : null;
+            $userAns = $audit && isset($audit['jawaban_user']) ? strtoupper(trim((string)$audit['jawaban_user'])) : '';
+            $kunci = strtoupper(trim((string)$soal->kunci_jawaban));
+            $isBenar = ($audit && !empty($audit['is_benar']));
+            $isKosong = empty($userAns);
+
+            // Warna Card Header
+            if ($isBenar) {
+                $hdrBg = '#f0fdf4';
+                $hdrBorder = '#86efac';
+                $statusBadge = '<span class="badge badge-success px-2 py-1" style="font-size:11px;"><i class="fas fa-check-circle mr-1"></i> Jawaban Benar</span>';
+            } elseif ($isKosong) {
+                $hdrBg = '#f8fafc';
+                $hdrBorder = '#cbd5e1';
+                $statusBadge = '<span class="badge badge-secondary px-2 py-1" style="font-size:11px;"><i class="fas fa-minus-circle mr-1"></i> Tidak Dijawab</span>';
+            } else {
+                $hdrBg = '#fef2f2';
+                $hdrBorder = '#fca5a5';
+                $statusBadge = '<span class="badge badge-danger px-2 py-1" style="font-size:11px;"><i class="fas fa-times-circle mr-1"></i> Jawaban Salah</span>';
+            }
+        ?>
+            <div class="card shadow-sm mb-3" style="border-radius: 12px; border: 1.5px solid <?= $hdrBorder ?>; overflow: hidden; background: #ffffff;">
+                <div class="card-header d-flex justify-content-between align-items-center py-2 px-3" style="background: <?= $hdrBg ?>; border-bottom: 1px solid <?= $hdrBorder ?>;">
+                    <div class="font-weight-bold text-dark">
+                        <span class="mr-2 text-muted">Soal #<?= $no++ ?></span>
+                    </div>
+                    <div>
+                        <?= $statusBadge ?>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- PERTANYAAN -->
+                    <div class="mb-3 font-weight-bold text-dark" style="font-size: 15px; line-height: 1.6;">
+                        <?= nl2br(htmlspecialchars($soal->pertanyaan)) ?>
+                    </div>
+
+                    <!-- PILIHAN JAWABAN A, B, C, D -->
+                    <div class="list-group mb-2">
+                        <?php 
+                        $opsi = [
+                            'A' => $soal->pilihan_a,
+                            'B' => $soal->pilihan_b,
+                            'C' => $soal->pilihan_c,
+                            'D' => $soal->pilihan_d,
+                        ];
+                        foreach ($opsi as $k => $teksOpsi): 
+                            $isKunci = ($k === $kunci);
+                            $isUser  = ($k === $userAns);
+
+                            if ($isKunci && $isUser) {
+                                // Jawaban peserta BENAR
+                                $rowStyle = 'background: #ecfdf5; border: 2px solid #10b981; color: #065f46; font-weight: 600;';
+                                $badgeTag = '<span class="badge badge-success px-2 py-1 ml-auto" style="font-size:11px;"><i class="fas fa-check-circle mr-1"></i> Pilihan Anda (Benar)</span>';
+                                $iconLeft = '<i class="fas fa-check-circle text-success mr-2" style="font-size: 16px;"></i>';
+                            } elseif ($isKunci && !$isUser) {
+                                // KUNCI JAWABAN (Peserta salah pilih atau tidak jawab)
+                                $rowStyle = 'background: #f0fdf4; border: 2px dashed #10b981; color: #065f46; font-weight: 600;';
+                                $badgeTag = '<span class="badge badge-success px-2 py-1 ml-auto" style="font-size:11px;"><i class="fas fa-check mr-1"></i> Kunci Jawaban</span>';
+                                $iconLeft = '<i class="fas fa-check text-success mr-2" style="font-size: 16px;"></i>';
+                            } elseif ($isUser && !$isKunci) {
+                                // Jawaban peserta SALAH
+                                $rowStyle = 'background: #fef2f2; border: 2px solid #ef4444; color: #991b1b; font-weight: 600;';
+                                $badgeTag = '<span class="badge badge-danger px-2 py-1 ml-auto" style="font-size:11px;"><i class="fas fa-times-circle mr-1"></i> Pilihan Anda (Salah)</span>';
+                                $iconLeft = '<i class="fas fa-times-circle text-danger mr-2" style="font-size: 16px;"></i>';
+                            } else {
+                                // Opsi Netral
+                                $rowStyle = 'background: #ffffff; border: 1px solid #e2e8f0; color: #334155;';
+                                $badgeTag = '';
+                                $iconLeft = '<span class="badge badge-light border text-muted mr-2" style="width: 22px; text-align: center;">' . $k . '</span>';
+                            }
+                        ?>
+                            <div class="d-flex align-items-center p-2 px-3 mb-2 rounded" style="<?= $rowStyle ?> border-radius: 8px;">
+                                <?= $iconLeft ?>
+                                <span class="mr-2" style="flex: 1;"><?= htmlspecialchars($teksOpsi) ?></span>
+                                <?= $badgeTag ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- PEMBAHASAN -->
+                    <?php if (!empty($soal->pembahasan)): ?>
+                        <div class="mt-3 p-3 rounded small" style="background: #f0f9ff; border-left: 4px solid #0284c7; color: #0369a1;">
+                            <strong><i class="fas fa-lightbulb text-warning mr-1"></i> Pembahasan / Penjelasan:</strong><br>
+                            <?= nl2br(htmlspecialchars($soal->pembahasan)) ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <!-- BOTTOM ACTION BUTTONS -->
+    <div class="card shadow-sm p-3 mb-4 d-flex flex-row justify-content-between align-items-center flex-wrap" style="border-radius: 12px; gap: 10px; background: #ffffff; border: 1px solid #e2e8f0;">
+        <a href="<?= base_url('knowledge/show/knowledge') ?>" class="btn btn-light border font-weight-bold px-4 py-2">
+            <i class="fas fa-arrow-left mr-1"></i> Kembali ke Menu Kuis
+        </a>
+        <a href="<?= base_url('task_proyek') ?>" class="btn btn-success font-weight-bold px-4 py-2 shadow-sm">
+            <i class="fas fa-trophy mr-1"></i> Lihat Leaderboard KPI Saya
+        </a>
     </div>
 </div>

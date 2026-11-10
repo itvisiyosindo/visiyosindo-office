@@ -157,20 +157,25 @@ class Knowledge extends CI_Controller
 
         } else if ($param == 'hasil') {
             $id_kuis = (int)$param2;
+            $targetUserId = $myId;
+            if ($isAdminHrd && !empty($param3)) {
+                $targetUserId = (int)$param3;
+            }
             $kuis = $this->md_knowledge->getKuisById($id_kuis);
-            $peserta = $this->md_knowledge->getPesertaKuis($id_kuis, $myId);
+            $peserta = $this->md_knowledge->getPesertaKuis($id_kuis, $targetUserId);
             if (!$kuis || !$peserta) {
                 show_error('Data hasil kuis tidak ditemukan.', 404);
                 return;
             }
 
-            $page_data['switch']     = $this->id_navbar();
-            $page_data['page_name']  = 'knowledge/v_hasil_kuis';
-            $page_data['page_title'] = 'Hasil Kuis: ' . $kuis->judul_kuis;
-            $page_data['page_desc']  = 'Skor & Evaluasi Pemahaman Produk';
-            $page_data['kuis']       = $kuis;
-            $page_data['peserta']    = $peserta;
-            $page_data['soal_list']  = $this->md_knowledge->getSoalByKuis($id_kuis);
+            $page_data['switch']        = $this->id_navbar();
+            $page_data['page_name']     = 'knowledge/v_hasil_kuis';
+            $page_data['page_title']    = 'Hasil Kuis: ' . $kuis->judul_kuis;
+            $page_data['page_desc']     = 'Skor & Review Jawaban Soal';
+            $page_data['kuis']          = $kuis;
+            $page_data['peserta']       = $peserta;
+            $page_data['is_admin_view'] = ($isAdminHrd && $targetUserId !== $myId);
+            $page_data['soal_list']     = $this->md_knowledge->getSoalByKuis($id_kuis);
             $this->load->view('index', $page_data);
 
         } else if ($param == 'detail') {

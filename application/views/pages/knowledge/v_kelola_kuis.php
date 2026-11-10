@@ -170,12 +170,13 @@
                                 <th>Salah</th>
                                 <th>Skor Akhir (0-100)</th>
                                 <th>Grade</th>
+                                <th style="width: 90px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
                             <?php if (empty($peserta_list)): ?>
                                 <tr>
-                                    <td colspan="9" class="text-muted py-4">Belum ada karyawan yang menyelesaikan kuis ini.</td>
+                                    <td colspan="10" class="text-muted py-4">Belum ada karyawan yang menyelesaikan kuis ini.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php $noP = 1; foreach ($peserta_list as $ps): 
@@ -193,6 +194,11 @@
                                         <td class="text-danger font-weight-bold"><?= (int)$ps->total_salah ?></td>
                                         <td style="font-size: 15px; font-weight: 800; color: #059669;"><?= $skor ?></td>
                                         <td><span class="badge <?= $gradeBadge ?> px-2 py-1 font-weight-bold">Grade <?= $grade ?></span></td>
+                                        <td>
+                                            <a href="<?= base_url('knowledge/show/hasil/' . $kuis->id_kuis . '/' . $ps->id_pengguna) ?>" target="_blank" class="btn btn-xs btn-primary font-weight-bold shadow-sm" title="Lihat Lembar Jawaban Peserta">
+                                                <i class="fas fa-eye mr-1"></i> Review
+                                            </a>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
