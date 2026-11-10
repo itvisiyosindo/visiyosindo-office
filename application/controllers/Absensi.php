@@ -2413,7 +2413,7 @@ class Absensi extends CI_Controller
     {
         grantAccessFor('all');
         $myId = (int)sessPenggunaId();
-        $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33;
+        $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33 || $myId === 778;
         if (!$canAccess) {
             echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.', 'data' => []]);
             return;
