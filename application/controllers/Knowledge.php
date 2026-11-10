@@ -183,13 +183,8 @@ class Knowledge extends CI_Controller
             $this->load->view('index', $page_data);
 
         } else if ($param == 'my_detail') {
-            $page_data['switch']        = $this->id_navbar();
-            $page_data['list_nama']     = $this->md_laporan->getBywhereActive();
-            $page_data['pengguna']      = $this->md_pengguna->getById(sessPenggunaId());
-            $page_data['page_name']     = 'knowledge/v_my_knowledge_detail';
-            $page_data['page_title']    = 'Test Product Knowledge';
-            $page_data['page_desc']     = 'Management Data Kepegawaian';
-            $this->load->view('index', $page_data);
+            redirect(base_url('knowledge/show/knowledge'));
+            return;
         }
     }
 

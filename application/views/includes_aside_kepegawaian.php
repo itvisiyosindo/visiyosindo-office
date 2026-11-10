@@ -285,7 +285,7 @@
 										Nilai Evaluasi Semester
 									</a>
 								</li>
-								<li class="<?= in_array($page_name, ['knowledge/v_knowledge', 'knowledge/v_knowledge_detail']) ? 'nav-active' : '' ?>">
+								<li class="<?= in_array($page_name, ['knowledge/v_knowledge', 'knowledge/v_knowledge_detail', 'knowledge/v_kelola_kuis', 'knowledge/v_kerjakan_kuis', 'knowledge/v_hasil_kuis']) ? 'nav-active' : '' ?>">
 									<a class="nav-link" href="<?= base_url('knowledge/show/knowledge') ?>">
 										Product Knowledge
 									</a>
@@ -340,8 +340,8 @@
 									</a>
 								</li>
 
-								<li class="<?= in_array($page_name, ['knowledge/v_my_knowledge_detail']) ? 'nav-active' : '' ?>">
-									<a class="nav-link" href="<?= base_url('knowledge/show/my_detail') ?>">
+								<li class="<?= in_array($page_name, ['knowledge/v_knowledge', 'knowledge/v_my_knowledge_detail', 'knowledge/v_kerjakan_kuis', 'knowledge/v_hasil_kuis']) ? 'nav-active' : '' ?>">
+									<a class="nav-link" href="<?= base_url('knowledge/show/knowledge') ?>">
 										Product Knowledge
 									</a>
 								</li>
