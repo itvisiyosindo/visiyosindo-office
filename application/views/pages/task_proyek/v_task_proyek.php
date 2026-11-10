@@ -633,29 +633,40 @@ $namaBulanList = [
         </header>
         <div class="card-body">
             <?php
-            $openTabAtasan = ($this->input->get('tab', TRUE) === 'atasan') || (empty($tugas_saya) && !empty($tugas_atasan));
+            $tabParam = $this->input->get('tab', TRUE);
+            $openTabSemua  = ($tabParam === 'semua' || $tabParam === 'monitoring');
+            $openTabAtasan = ($tabParam === 'atasan') || (empty($tugas_saya) && !empty($tugas_atasan) && !$openTabSemua);
+            $openTabSaya   = !$openTabAtasan && !$openTabSemua;
             ?>
             <ul class="nav nav-tabs nav-tabs-tp" role="tablist">
-                <li class="nav-item <?= !$openTabAtasan ? 'active' : '' ?>">
-                    <a class="nav-link <?= !$openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_saya" data-toggle="tab" role="tab">
-                        <i class="fas fa-inbox text-primary mr-2"></i> Tugas Saya (Karyawan)
+                <li class="nav-item <?= $openTabSaya ? 'active' : '' ?>">
+                    <a class="nav-link <?= $openTabSaya ? 'active' : '' ?>" href="#tab_tugas_saya" data-toggle="tab" role="tab">
+                        <i class="fas fa-inbox text-primary mr-2"></i> Tugas Saya (Pelaksana)
                         <?php if ($kpi['my_active'] > 0): ?>
                             <span class="badge badge-primary ml-2"><?= (int)$kpi['my_active'] ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
-                <?php if ($canGiveTask || count($tugas_atasan) > 0): ?>
                 <li class="nav-item <?= $openTabAtasan ? 'active' : '' ?>">
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
-                        <i class="fas fa-paper-plane text-success mr-2"></i> Penugasan ke Karyawan
+                        <i class="fas fa-paper-plane text-success mr-2"></i> Tugas yang Saya Berikan / Ajukan
                         <?php if ($kpi['need_review'] > 0): ?>
-                            <span class="badge badge-warning ml-2" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating ⭐</span>
+                            <span class="badge badge-warning ml-2" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating â­</span>
                         <?php else: ?>
                             <span class="badge badge-secondary ml-2" id="badge_need_review"><?= count($tugas_atasan) ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
-                <?php endif; ?>
+                <li class="nav-item <?= $openTabSemua ? 'active' : '' ?>">
+                    <a class="nav-link <?= $openTabSemua ? 'active' : '' ?>" href="#tab_semua_task" data-toggle="tab" role="tab">
+                        <i class="fas fa-users-cog text-info mr-2"></i> Semua Task Perusahaan (Monitoring Tim)
+                        <?php if (!empty($kpi['waiting_acc_hrd']) && $kpi['waiting_acc_hrd'] > 0): ?>
+                            <span class="badge badge-warning ml-2 font-weight-bold" title="<?= $kpi['waiting_acc_hrd'] ?> Pengajuan Mandiri Butuh ACC HRD"><i class="fas fa-hourglass-start"></i> <?= (int)$kpi['waiting_acc_hrd'] ?> Butuh ACC</span>
+                        <?php else: ?>
+                            <span class="badge badge-info ml-2"><?= !empty($semua_task) ? count($semua_task) : 0 ?></span>
+                        <?php endif; ?>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#tab_leaderboard" data-toggle="tab" role="tab">
                         <i class="fas fa-trophy text-warning mr-2"></i> Leaderboard KPI & Evaluasi Karyawan
@@ -866,6 +877,9 @@ $namaBulanList = [
                                         </td>
                                         <td>
                                             <span class="small font-weight-bold"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
+                                            <?php if (!empty($row->nama_mengetahui)): ?>
+                                                <div class="small text-muted mt-1" style="font-size: 11px;"><i class="fas fa-eye text-primary mr-1"></i> Mengetahui: <strong><?= htmlspecialchars($row->nama_mengetahui) ?></strong></div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <span class="tp-priority-badge tp-prio-<?= htmlspecialchars($row->prioritas) ?>"><?= htmlspecialchars($row->prioritas) ?></span>
@@ -928,6 +942,20 @@ $namaBulanList = [
                                             $effStatusAtasan = ((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : (int)$row->status_task;
                                             $alreadyRated = ($effStatusAtasan === 4 && !empty($row->rating_bintang));
                                             ?>
+                                                                                        <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
+                                                <button type="button" class="btn btn-xs btn-success font-weight-bold mb-1 btn-acc-hrd"
+                                                    data-id="<?= (int)$row->id_task ?>"
+                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                    data-judul="<?= htmlspecialchars($row->judul) ?>">
+                                                    <i class="fas fa-check-circle"></i> ACC Task
+                                                </button><br>
+                                                <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold mb-1 btn-tolak-hrd"
+                                                    data-id="<?= (int)$row->id_task ?>"
+                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                    data-judul="<?= htmlspecialchars($row->judul) ?>">
+                                                    <i class="fas fa-times"></i> Tolak
+                                                </button><br>
+                                            <?php endif; ?>
                                             <?php if ($effStatusAtasan === 2 && !$alreadyRated): ?>
                                                 <button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
                                                     <i class="fas fa-star"></i> Beri Rating ⭐
@@ -967,6 +995,162 @@ $namaBulanList = [
                     </div>
                 </div>
                 <?php endif; ?>
+
+                <!-- ================= TAB 3: SEMUA TASK PERUSAHAAN (MONITORING TIM) ================= -->
+                <div id="tab_semua_task" class="tab-pane <?= $openTabSemua ? 'active' : '' ?>" role="tabpanel">
+                    <div class="alert alert-light border py-2 mb-3" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px;">
+                            <div>
+                                <i class="fas fa-users text-primary mr-1"></i>
+                                <strong>Monitoring Seluruh Task Perusahaan:</strong> Halaman transparansi untuk melihat tugas yang sedang dikerjakan rekan kerja di seluruh divisi PT Visi Yosindo Medikal.
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                                <label class="font-weight-bold text-dark small mb-0"><i class="fas fa-filter text-muted mr-1"></i> Saring:</label>
+                                <select id="filter_semua_karyawan" class="form-control form-control-sm" style="min-width: 170px; border-radius: 6px;">
+                                    <option value="">-- Semua Karyawan --</option>
+                                    <?php foreach ($list_semua_karyawan_all as $kAll): ?>
+                                        <option value="<?= htmlspecialchars(strtolower($kAll->nama)) ?>"><?= htmlspecialchars($kAll->nama) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <select id="filter_semua_status" class="form-control form-control-sm" style="min-width: 150px; border-radius: 6px;">
+                                    <option value="">-- Semua Status --</option>
+                                    <option value="Menunggu ACC HRD">Menunggu ACC HRD</option>
+                                    <option value="Baru">Baru / Belum Mulai</option>
+                                    <option value="Sedang Dikerjakan">Sedang Dikerjakan</option>
+                                    <option value="Menunggu Penilaian">Menunggu Penilaian</option>
+                                    <option value="Perlu Revisi">Perlu Revisi</option>
+                                    <option value="Selesai">Selesai & Dinilai</option>
+                                    <option value="Ditolak">Ditolak HRD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover mb-0" id="datatable_semua_task" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th width="45">No</th>
+                                    <th>Kode & Proyek</th>
+                                    <th>Judul Task & Jobdesk</th>
+                                    <th>Pelaksana (Karyawan)</th>
+                                    <th>Pemberi / Pengaju</th>
+                                    <th>Mengetahui</th>
+                                    <th>Prioritas & Deadline</th>
+                                    <th width="120">Progres</th>
+                                    <th>Status</th>
+                                    <th>Rating</th>
+                                    <th width="130">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $noAll = 1; foreach ($semua_task as $row):
+                                    $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
+                                ?>
+                                    <tr id="row_semua_task_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
+                                        <td class="text-center"><?= $noAll++ ?></td>
+                                        <td>
+                                            <strong class="text-primary"><?= htmlspecialchars($row->kode_task) ?></strong><br>
+                                            <span class="badge badge-light border"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
+                                            <div class="small text-muted mt-1"><?= htmlspecialchars($row->jenis) ?></div>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 700; color: #1e293b;"><?= htmlspecialchars($row->judul) ?></div>
+                                            <?php if (!empty($row->nama_jobdesk)): ?>
+                                                <div class="mt-1">
+                                                    <span class="badge badge-success px-2 py-1" style="font-size: 11px;">
+                                                        <i class="fas fa-bullseye mr-1"></i> <?= htmlspecialchars($row->nama_jobdesk) ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($row->deskripsi)): ?>
+                                                <div class="small text-muted mt-1" style="max-width: 250px; white-space: normal;">
+                                                    <?= nl2br(htmlspecialchars(mb_strimwidth($row->deskripsi, 0, 100, '...'))) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <strong class="text-dark"><?= htmlspecialchars($row->nama_penerima ?: '-') ?></strong>
+                                            <?php if (!empty($row->jabatan_penerima)): ?>
+                                                <div class="small text-muted"><?= htmlspecialchars($row->jabatan_penerima) ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($row->divisi_penerima)): ?>
+                                                <span class="badge badge-light border text-info" style="font-size:10.5px;"><?= htmlspecialchars($row->divisi_penerima) ?></span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($row->is_mandiri)): ?>
+                                                <div class="mt-1"><span class="badge badge-warning text-dark" style="font-size: 10px;"><i class="fas fa-user-edit mr-1"></i> Mandiri</span></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <span class="small font-weight-bold"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
+                                            <?php if (!empty($row->jabatan_pemberi)): ?>
+                                                <div class="small text-muted"><?= htmlspecialchars($row->jabatan_pemberi) ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if (!empty($row->nama_mengetahui)): ?>
+                                                <span class="small font-weight-bold text-dark"><i class="fas fa-eye text-primary mr-1"></i> <?= htmlspecialchars($row->nama_mengetahui) ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <span class="tp-priority-badge tp-prio-<?= htmlspecialchars($row->prioritas) ?>"><?= htmlspecialchars($row->prioritas) ?></span>
+                                            <div class="small mt-1">
+                                                <i class="far fa-calendar-check text-muted mr-1"></i>
+                                                <?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
+                                            </div>
+                                            <?php if (!empty($row->is_late)): ?>
+                                                <span class="badge badge-danger mt-1">Terlambat H+<?= (int)$row->hari_telat ?></span>
+                                            <?php elseif ($isOverdue): ?>
+                                                <span class="badge badge-danger mt-1">Overdue</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <div class="progress progress-sm mb-1" style="height: 10px; border-radius: 8px;">
+                                                <div class="progress-bar <?= (int)$row->progres >= 100 ? 'bg-success' : 'bg-primary' ?>" role="progressbar" style="width: <?= (int)$row->progres ?>%;"></div>
+                                            </div>
+                                            <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
+                                        </td>
+                                        <td>
+                                            <?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?>
+                                            <?php if (!empty($row->nama_acc_hrd) && (int)$row->status_task !== 5): ?>
+                                                <div class="small text-muted mt-1" style="font-size:10px;"><i class="fas fa-check-double text-success"></i> ACC HRD: <?= htmlspecialchars($row->nama_acc_hrd) ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
+                                                <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
+                                            <?php else: ?>
+                                                <span class="text-muted small"><em>-</em></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-xs btn-primary mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
+                                                <i class="fas fa-eye"></i> Detail
+                                            </button>
+                                            <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
+                                                <br>
+                                                <button type="button" class="btn btn-xs btn-success font-weight-bold mb-1 btn-acc-hrd"
+                                                    data-id="<?= (int)$row->id_task ?>"
+                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                    data-judul="<?= htmlspecialchars($row->judul) ?>">
+                                                    <i class="fas fa-check-circle"></i> ACC
+                                                </button>
+                                                <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold mb-1 btn-tolak-hrd"
+                                                    data-id="<?= (int)$row->id_task ?>"
+                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                    data-judul="<?= htmlspecialchars($row->judul) ?>">
+                                                    <i class="fas fa-times"></i> Tolak
+                                                </button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
                 <!-- ================= TAB 3: LEADERBOARD KPI & EVALUASI KARYAWAN ================= -->
                 <div id="tab_leaderboard" class="tab-pane" role="tabpanel">
@@ -1148,12 +1332,17 @@ $namaBulanList = [
                         <select name="id_penerima[]" id="select_penerima_task" class="form-control" multiple="multiple" required style="width: 100%;">
                             <?php foreach ($penerimaList as $bw):
                                 $divLabel = !empty($bw->nama_divisi) ? $bw->nama_divisi : 'Umum';
+                                $isSelf = ((int)$bw->pengguna_id === (int)$myId);
                             ?>
-                                <option value="<?= (int)$bw->pengguna_id ?>">
-                                    <?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?> — [<?= htmlspecialchars($divLabel) ?>]
+                                <option value="<?= (int)$bw->pengguna_id ?>" <?= $isSelf ? 'data-self="1"' : '' ?>>
+                                    <?= $isSelf ? 'â­ [Diri Sendiri] ' : '' ?><?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?> â€” [<?= htmlspecialchars($divLabel) ?>]<?= $isSelf ? ' (Pengajuan Mandiri)' : '' ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <div id="alert_task_mandiri" class="alert alert-warning py-2 px-3 mt-2 mb-0" style="display: none; font-size: 12px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e;">
+                            <i class="fas fa-shield-alt text-warning mr-1"></i>
+                            <strong>Pengajuan Task Mandiri:</strong> Tugas ini diajukan untuk diri Anda sendiri. Sesuai ketentuan, tugas akan dikirimkan ke <strong>HRD</strong> untuk di-<strong>ACC</strong> terlebih dahulu sebelum Anda dapat mulai mengerjakan.
+                        </div>
                         <?php if (empty($penerimaList)): ?>
                             <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
                                 <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -1275,6 +1464,25 @@ $namaBulanList = [
                     </div>
 
                     <div class="form-group">
+                        <label class="font-weight-bold">
+                            <i class="fas fa-eye text-primary mr-1"></i> Mengetahui (Pihak Terkait / Atasan) <span class="badge badge-light border ml-1 font-weight-normal">Opsional</span>
+                        </label>
+                        <select name="id_mengetahui" id="select_mengetahui_task" class="form-control" style="width: 100%;">
+                            <option value="">-- Pilih Karyawan / Atasan yang Mengetahui (Opsional) --</option>
+                            <?php foreach ($list_semua_karyawan_all as $kw):
+                                if ((int)$kw->pengguna_id === (int)$myId) continue;
+                            ?>
+                                <option value="<?= (int)$kw->pengguna_id ?>">
+                                    <?= htmlspecialchars($kw->nama) ?> <?= !empty($kw->jabatan) ? '(' . htmlspecialchars($kw->jabatan) . ')' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-bell text-warning mr-1"></i> Pihak yang dipilih di kolom Mengetahui <strong>hanya akan dikirimkan notifikasi WhatsApp setelah task disetujui (ACC) oleh HRD</strong>.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
                         <label class="font-weight-bold">Link Lampiran / Referensi dari Atasan (Opsional)</label>
                         <input type="text" name="lampiran_atasan" class="form-control" placeholder="https://drive.google.com/... (Link dokumen, desain, atau referensi)">
                         <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Catatan: <strong>Checklist langkah kerja / sub-task</strong> akan diisi dan dicentang langsung oleh <strong>Karyawan Penerima Tugas</strong> sebagai dasar perhitungan progres.</small>
@@ -1333,10 +1541,18 @@ $namaBulanList = [
                     <hr class="my-2">
                     <div class="row small">
                         <div class="col-md-6">
-                            <strong>Pemberi Tugas (Atasan):</strong> <span id="dt_pemberi">-</span>
+                            <strong>Pemberi Tugas / Pengaju:</strong> <span id="dt_pemberi">-</span>
                         </div>
                         <div class="col-md-6">
                             <strong>Pelaksana (Karyawan):</strong> <span id="dt_penerima">-</span>
+                        </div>
+                    </div>
+                    <div class="row small mt-1">
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-eye text-primary mr-1"></i> Mengetahui:</strong> <span id="dt_mengetahui">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-check-double text-success mr-1"></i> Status ACC HRD:</strong> <span id="dt_acc_hrd_info">-</span>
                         </div>
                     </div>
                     <div class="mt-2">
@@ -1357,6 +1573,24 @@ $namaBulanList = [
                 </div>
 
                 <!-- HASIL PENILAIAN BINTANG 5 (TAMPIL JIKA SUDAH DINILAI) -->
+                                <!-- KOTAK PERSETUJUAN ACC HRD (HANYA MUNCUL JIKA STATUS MENUNGGU ACC HRD) -->
+                <div id="dt_hrd_acc_box" class="p-3 mb-3 rounded" style="display: none; background: #fffbeb; border: 2px solid #f59e0b;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
+                        <div>
+                            <div class="font-weight-bold text-dark" style="font-size: 14px;"><i class="fas fa-hourglass-start text-warning mr-1"></i> Pengajuan Task Mandiri (Menunggu ACC HRD)</div>
+                            <div class="small text-muted mt-1" id="dt_hrd_acc_desc">Task ini diajukan secara mandiri oleh karyawan dan memerlukan persetujuan (ACC) HRD sebelum pengerjaan dapat dimulai.</div>
+                        </div>
+                        <div id="dt_hrd_acc_actions" style="display: none; gap: 6px;">
+                            <button type="button" class="btn btn-sm btn-success font-weight-bold btn-modal-acc-hrd" id="btn_modal_acc_hrd">
+                                <i class="fas fa-check-circle mr-1"></i> ACC / Setujui Task
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger font-weight-bold btn-modal-tolak-hrd" id="btn_modal_tolak_hrd">
+                                <i class="fas fa-times-circle mr-1"></i> Tolak
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="dt_hasil_rating_box" class="p-3 mb-3 rounded" style="display:none; background:#fffbeb; border: 2px solid #f59e0b;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div>
@@ -1965,7 +2199,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     stInt = 2;
                 }
                 var statusBadgeHtml = '';
-                if (stInt === 4) {
+                if (stInt === 5) {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-5" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;"><i class="fas fa-hourglass-start"></i> Menunggu ACC HRD</span>';
+                } else if (stInt === 6) {
+                    statusBadgeHtml = '<span class="tp-status-badge tp-st-6" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca;"><i class="fas fa-times-circle"></i> Ditolak HRD</span>';
+                } else if (stInt === 4) {
                     statusBadgeHtml = '<span class="tp-status-badge tp-st-4"><i class="fas fa-check-circle"></i> Selesai & Dinilai</span>';
                 } else if (stInt === 2) {
                     statusBadgeHtml = '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>';
@@ -1977,6 +2215,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusBadgeHtml = '<span class="tp-status-badge tp-st-0"><i class="far fa-clock"></i> Baru / Belum Mulai</span>';
                 }
                 $('#dt_status_badge').html(statusBadgeHtml);
+
+                $('#dt_mengetahui').text(t.nama_mengetahui ? t.nama_mengetahui : '-');
+                var accHrdText = '-';
+                if (parseInt(t.status_task, 10) === 5) {
+                    accHrdText = '<span class="badge badge-warning text-dark"><i class="fas fa-hourglass-start mr-1"></i> Menunggu ACC HRD</span>';
+                } else if (parseInt(t.status_task, 10) === 6) {
+                    accHrdText = '<span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i> Ditolak: ' + $('<div>').text(t.acc_hrd_catatan || '').html() + '</span>';
+                } else if (t.nama_acc_hrd) {
+                    accHrdText = '<span class="text-success"><i class="fas fa-check-circle mr-1"></i> Disetujui (' + $('<div>').text(t.nama_acc_hrd).html() + (t.acc_hrd_at_fmt ? ', ' + t.acc_hrd_at_fmt : '') + ')</span>';
+                }
+                $('#dt_acc_hrd_info').html(accHrdText);
+
+                if (parseInt(t.status_task, 10) === 5) {
+                    $('#dt_hrd_acc_box').show();
+                    if (res.is_hrd_admin) {
+                        $('#btn_modal_acc_hrd').data('id', t.id_task).data('kode', t.kode_task).data('judul', t.judul);
+                        $('#btn_modal_tolak_hrd').data('id', t.id_task).data('kode', t.kode_task).data('judul', t.judul);
+                        $('#dt_hrd_acc_actions').css('display', 'flex');
+                    } else {
+                        $('#dt_hrd_acc_actions').hide();
+                    }
+                } else {
+                    $('#dt_hrd_acc_box').hide();
+                }
 
                 $('#dt_kode_task').text(t.kode_task);
                 $('#dt_nama_proyek').text(t.nama_proyek || 'Umum');
@@ -2079,7 +2341,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sub_bukti_selesai').val(t.bukti_selesai || '');
 
                 var isPenerima = (parseInt(t.id_penerima, 10) === myId);
-                var canEditChecklist = isPenerima && stInt < 4 && stInt !== 2;
+                var canEditChecklist = isPenerima && stInt < 4 && stInt !== 2 && stInt !== 5 && stInt !== 6;
 
                 // Render Checklist untuk Penerima Task (Bisa tambah, edit, hapus & centang)
                 var chkHtml = '';
@@ -2576,6 +2838,122 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Deteksi Pengajuan Mandiri pada dropdown Penerima
+    $('#select_penerima_task').on('change', function() {
+        var val = $(this).val() || [];
+        var myUserId = <?= (int)$myId ?>;
+        var isSelf = (val.length === 1 && parseInt(val[0], 10) === myUserId);
+        if (isSelf) {
+            $('#alert_task_mandiri').slideDown();
+            $('#btnSubmitBuatTask').html('<i class="fas fa-paper-plane mr-1"></i> Ajukan Task Mandiri ke HRD');
+            $('label[for="chk_kirim_wa"]').html('<i class="fab fa-whatsapp text-success"></i> Kirim Notifikasi Konfirmasi Pengajuan ke WhatsApp Saya');
+        } else {
+            $('#alert_task_mandiri').slideUp();
+            $('#btnSubmitBuatTask').html('<i class="fas fa-paper-plane mr-1"></i> Simpan & Tugaskan Sekarang');
+            $('label[for="chk_kirim_wa"]').html('<i class="fab fa-whatsapp text-success"></i> Kirim Notifikasi WhatsApp Otomatis ke Penerima Tugas');
+        }
+    });
+
+    // Event Handler ACC Task Mandiri oleh HRD
+    $(document).on('click', '.btn-acc-hrd, .btn-modal-acc-hrd', function() {
+        var idTask = $(this).data('id');
+        var kode = $(this).data('kode') || '';
+        var judul = $(this).data('judul') || '';
+
+        var confirmMsg = 'Setujui (ACC) pengajuan task mandiri ' + (kode ? '[' + kode + '] ' : '') + judul + '?\n\nKaryawan akan dapat mulai mengerjakan dan notifikasi WhatsApp otomatis dikirimkan ke Pelaksana serta pihak Mengetahui.';
+        if (!confirm(confirmMsg)) return;
+
+        var $btn = $(this);
+        var origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+
+        $.ajax({
+            url: baseUrl + 'task_proyek/acc_hrd',
+            type: 'POST',
+            data: { id_task: idTask, [csrfName]: getCsrfHash() },
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(origHtml);
+                if (res && res.status === 'success') {
+                    if (window.swal) {
+                        swal('Berhasil!', res.msg, 'success').then(function() { location.reload(); });
+                    } else {
+                        alert(res.msg);
+                        location.reload();
+                    }
+                } else {
+                    alert((res && res.msg) ? res.msg : 'Gagal menyetujui task.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(origHtml);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+    });
+
+    // Event Handler Tolak Task Mandiri oleh HRD
+    $(document).on('click', '.btn-tolak-hrd, .btn-modal-tolak-hrd', function() {
+        var idTask = $(this).data('id');
+        var kode = $(this).data('kode') || '';
+        var judul = $(this).data('judul') || '';
+
+        var alasan = prompt('Masukkan alasan penolakan pengajuan task mandiri ' + (kode ? '[' + kode + '] ' : '') + ':', '');
+        if (alasan === null) return;
+        alasan = $.trim(alasan);
+        if (!alasan) {
+            alert('Alasan penolakan wajib diisi!');
+            return;
+        }
+
+        var $btn = $(this);
+        var origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+
+        $.ajax({
+            url: baseUrl + 'task_proyek/tolak_hrd',
+            type: 'POST',
+            data: { id_task: idTask, alasan: alasan, [csrfName]: getCsrfHash() },
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(origHtml);
+                if (res && res.status === 'success') {
+                    if (window.swal) {
+                        swal('Ditolak', res.msg, 'info').then(function() { location.reload(); });
+                    } else {
+                        alert(res.msg);
+                        location.reload();
+                    }
+                } else {
+                    alert((res && res.msg) ? res.msg : 'Gagal menolak task.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(origHtml);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+    });
+
+    // Inisialisasi DataTable Semua Task Perusahaan
+    if ($.fn.dataTable && $('#datatable_semua_task').length) {
+        var dtSemua = $('#datatable_semua_task').DataTable({
+            language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' },
+            order: [[0, 'asc']],
+            pageLength: 25
+        });
+
+        $('#filter_semua_karyawan').on('change', function() {
+            var val = $(this).val();
+            dtSemua.column(3).search(val ? val : '', true, false).draw();
+        });
+
+        $('#filter_semua_status').on('change', function() {
+            var val = $(this).val();
+            dtSemua.column(8).search(val ? val : '', true, false).draw();
+        });
+    }
 
     // Hapus Task
     $(document).on('click', '.btn-hapus-task', function() {
