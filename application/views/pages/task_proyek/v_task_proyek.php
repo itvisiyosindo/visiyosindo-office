@@ -1284,7 +1284,7 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu Mutu & Produktivitas):</strong> Integrasi <strong>80% Kualitas Mutu</strong> (35% Task Proyek + 25% Laporan Mingguan + 25% Pencapaian + 15% Product Knowledge) + <strong>20% Volume Produktivitas</strong> (keaktifan jumlah output kerja). Karyawan dengan <em>Evaluasi Lengkap 4 Pilar</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
+                            <strong>Sistem Evaluasi Kinerja (KPI Terpadu Mutu & Produktivitas):</strong> Integrasi <strong>80% Kualitas Mutu</strong> (35% Task Proyek + 25% Laporan Mingguan + 25% Pencapaian + 15% Product Knowledge; khusus HR, GA, Security & Manajemen bebas PK dengan bobot 40% Task + 30% Lap + 30% Penc) + <strong>20% Volume Produktivitas</strong>. Karyawan dengan <em>Evaluasi Lengkap</em> mendapatkan prioritas utama klasemen juara (Podium #1–#3).
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
                             <span class="badge badge-success px-2 py-1">Grade A &ge; 85 (Sangat Baik)</span>
@@ -1382,7 +1382,11 @@ $namaBulanList = [
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-center align-middle">
-                                            <?php if ($lb->skor_pk !== null): ?>
+                                            <?php if (!empty($lb->is_exempt_pk)): ?>
+                                                <span class="badge badge-light text-muted px-2 py-1" style="border: 1px dashed #cbd5e1; font-size: 11px;" title="Dikecualikan dari Product Knowledge (HR/GA/Security/Manajemen)">
+                                                    <i class="fas fa-minus-circle mr-1 text-secondary"></i>Bebas PK
+                                                </span>
+                                            <?php elseif ($lb->skor_pk !== null): ?>
                                                 <div class="font-weight-bold" style="font-size: 14px; color: #0d9488;"><?= number_format($lb->skor_pk, 1) ?></div>
                                                 <div class="small text-muted" style="font-size: 11px;">
                                                     <i class="fas fa-book-reader mr-1" style="color: #0d9488;"></i><?= (int)$lb->total_pk ?> kuis

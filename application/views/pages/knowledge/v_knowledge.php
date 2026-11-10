@@ -138,10 +138,26 @@
     <div class="tab-content" style="background: transparent; border: none; padding: 0;">
         <!-- ================= TAB 1: KUIS ONLINE (CBT) ================= -->
         <div id="tab_kuis_online" class="tab-pane active" role="tabpanel">
+            <?php if (!empty($is_exempt_pk)): ?>
+                <div class="alert alert-light border mb-3 d-flex align-items-center" style="background: #f8fafc; border-left: 4px solid #64748b !important; border-radius: 8px;">
+                    <i class="fas fa-info-circle text-secondary mr-3" style="font-size: 24px;"></i>
+                    <div style="font-size: 13px; color: #334155;">
+                        <strong>Informasi Pengecualian Kuis:</strong> Akun Anda (<strong><?= htmlspecialchars(!empty($me->nama) ? $me->nama : 'Karyawan') ?></strong> - <?= htmlspecialchars(!empty($me->nama_divisi) ? $me->nama_divisi : (!empty($me->jabatan) ? $me->jabatan : 'Umum')) ?>) termasuk dalam posisi/divisi yang <strong>dikecualikan dari kewajiban kuis Product Knowledge</strong>. Pada Leaderboard KPI, bobot penilaian kinerja Anda otomatis dialihkan ke Task Proyek (40%), Laporan (30%), dan Pencapaian (30%) tanpa mengurangi hak podium juara.
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($this->session->flashdata('error_msg')): ?>
+                <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                    <i class="fas fa-exclamation-triangle mr-2"></i><?= $this->session->flashdata('error_msg') ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
+                </div>
+            <?php endif; ?>
+
             <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 p-3 bg-white rounded border" style="border-radius: 10px;">
                 <div>
                     <h5 class="font-weight-bold text-dark mb-1"><i class="fas fa-tasks text-success mr-2"></i> Daftar Kuis & Ujian Product Knowledge</h5>
-                    <small class="text-muted">Karyawan dapat mengerjakan soal ujian pemahaman produk secara langsung. Skor otomatis terhitung dan tersimpan ke KPI.</small>
+                    <small class="text-muted">Karyawan dapat mengerjakan soal ujian pemahaman produk secara langsung pada jadwal yang ditentukan. Skor otomatis terhitung dan tersimpan ke KPI.</small>
                 </div>
                 <div class="d-flex align-items-center flex-wrap mt-2 mt-md-0" style="gap: 8px;">
                     <form method="get" class="form-inline">
@@ -181,6 +197,13 @@
                         ];
                         $namaBulan = $namaBulanList[(int)$kuis->bulan] ?? ('Bulan ' . $kuis->bulan);
                         $isCompleted = ($kuis->status_peserta === 'selesai');
+
+                        $now = time();
+                        $bukaTs = !empty($kuis->waktu_buka) ? strtotime($kuis->waktu_buka) : null;
+                        $tutupTs = !empty($kuis->waktu_tutup) ? strtotime($kuis->waktu_tutup) : null;
+                        $isBelumBuka = ($bukaTs && $now < $bukaTs);
+                        $isSudahTutup = ($tutupTs && $now > $tutupTs);
+                        $isSedangBuka = (!$isBelumBuka && !$isSudahTutup);
                     ?>
                         <div class="col-md-6 col-lg-4 mb-3">
                             <div class="pk-card p-3 h-100 d-flex flex-column justify-content-between">
@@ -189,12 +212,14 @@
                                         <span class="badge badge-light border text-muted px-2 py-1" style="font-size: 11px;">
                                             <i class="far fa-calendar-alt mr-1"></i> <?= $namaBulan . ' ' . $kuis->tahun ?>
                                         </span>
-                                        <?php if ($kuis->status === 'aktif'): ?>
-                                            <span class="badge badge-success px-2 py-1" style="font-size: 11px;"><i class="fas fa-check-circle mr-1"></i> Kuis Aktif</span>
-                                        <?php elseif ($kuis->status === 'draft'): ?>
+                                        <?php if ($kuis->status === 'draft'): ?>
                                             <span class="badge badge-secondary px-2 py-1" style="font-size: 11px;">Draft</span>
+                                        <?php elseif ($isSudahTutup || $kuis->status === 'selesai'): ?>
+                                            <span class="badge badge-light border text-danger px-2 py-1" style="font-size: 11px;"><i class="fas fa-times-circle mr-1"></i> Ditutup</span>
+                                        <?php elseif ($isBelumBuka): ?>
+                                            <span class="badge badge-warning px-2 py-1" style="font-size: 11px; background:#fef3c7; color:#92400e;"><i class="far fa-clock mr-1"></i> Terjadwal</span>
                                         <?php else: ?>
-                                            <span class="badge badge-light border text-muted px-2 py-1" style="font-size: 11px;">Selesai</span>
+                                            <span class="badge badge-success px-2 py-1" style="font-size: 11px;"><i class="fas fa-check-circle mr-1"></i> Sedang Dibuka</span>
                                         <?php endif; ?>
                                     </div>
 
@@ -216,6 +241,14 @@
                                             <span class="text-muted"><i class="far fa-clock text-warning mr-1"></i> Durasi Ujian:</span>
                                             <strong class="text-dark"><?= (int)$kuis->durasi_menit ?> Menit</strong>
                                         </div>
+                                        <?php if ($bukaTs || $tutupTs): ?>
+                                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                                <span class="text-muted"><i class="far fa-calendar-check text-success mr-1"></i> Jadwal:</span>
+                                                <strong class="text-dark" style="font-size: 11px;">
+                                                    <?= $bukaTs ? date('d M H:i', $bukaTs) : 'Sekarang' ?> s/d <?= $tutupTs ? date('d M H:i', $tutupTs) : 'Seterusnya' ?> WIB
+                                                </strong>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="d-flex justify-content-between py-1">
                                             <span class="text-muted"><i class="fas fa-users text-info mr-1"></i> Peserta Selesai:</span>
                                             <strong class="text-dark"><?= (int)$kuis->total_selesai ?> Karyawan</strong>
@@ -234,27 +267,49 @@
                                                 <span class="small font-weight-bold text-success"><i class="fas fa-check-double mr-1"></i> Sudah Mengerjakan</span>
                                                 <span class="badge-grade <?= $gradeCls ?>">Skor: <?= $skorVal ?> / 100</span>
                                             </div>
-                                        <?php else: ?>
+                                        <?php elseif ($isSudahTutup || $kuis->status === 'selesai'): ?>
+                                            <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
+                                                <span class="small font-weight-bold text-muted"><i class="fas fa-calendar-times mr-1"></i> Waktu Berakhir</span>
+                                                <span class="small text-danger font-weight-bold">Ditutup</span>
+                                            </div>
+                                        <?php elseif ($isBelumBuka): ?>
                                             <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: #fffbeb; border: 1px solid #fde68a;">
-                                                <span class="small font-weight-bold text-warning"><i class="fas fa-hourglass-start mr-1"></i> Belum Dikerjakan</span>
-                                                <span class="small text-muted">Batas: <?= (int)$kuis->durasi_menit ?> Mnt</span>
+                                                <span class="small font-weight-bold text-warning"><i class="far fa-clock mr-1"></i> Belum Dibuka</span>
+                                                <span class="small text-muted">Mulai <?= date('d M H:i', $bukaTs) ?></span>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: #ecfdf5; border: 1px solid #a7f3d0;">
+                                                <span class="small font-weight-bold text-success"><i class="fas fa-unlock mr-1"></i> Kuis Tersedia</span>
+                                                <span class="small text-muted"><?= (int)$kuis->durasi_menit ?> Menit</span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
 
                                     <!-- Tombol Aksi -->
                                     <div class="d-flex flex-wrap" style="gap: 6px;">
-                                        <?php if (!$isCompleted && (int)$kuis->total_soal > 0 && $kuis->status === 'aktif'): ?>
-                                            <a href="<?= base_url('knowledge/show/kerjakan/' . $kuis->id_kuis) ?>" class="btn btn-sm btn-success font-weight-bold flex-grow-1 shadow-sm">
-                                                <i class="fas fa-play mr-1"></i> Kerjakan Kuis Sekarang
-                                            </a>
-                                        <?php elseif ($isCompleted): ?>
+                                        <?php if ($isCompleted): ?>
                                             <a href="<?= base_url('knowledge/show/hasil/' . $kuis->id_kuis) ?>" class="btn btn-sm btn-outline-success font-weight-bold flex-grow-1">
                                                 <i class="fas fa-eye mr-1"></i> Lihat Hasil Ujian
                                             </a>
-                                        <?php else: ?>
+                                        <?php elseif ($isSudahTutup || $kuis->status === 'selesai'): ?>
+                                            <button type="button" class="btn btn-sm btn-light border text-danger flex-grow-1 font-weight-bold" disabled>
+                                                <i class="fas fa-ban mr-1"></i> Kuis Telah Berakhir
+                                            </button>
+                                        <?php elseif ($isBelumBuka): ?>
+                                            <button type="button" class="btn btn-sm btn-light border text-warning flex-grow-1 font-weight-bold" disabled style="background:#fffbeb;">
+                                                <i class="far fa-clock mr-1"></i> Dibuka <?= date('d M H:i', $bukaTs) ?> WIB
+                                            </button>
+                                        <?php elseif ((int)$kuis->total_soal <= 0): ?>
                                             <button type="button" class="btn btn-sm btn-light border text-muted flex-grow-1" disabled>
                                                 <i class="fas fa-lock mr-1"></i> Belum Ada Soal
+                                            </button>
+                                        <?php elseif ($kuis->status === 'aktif'): ?>
+                                            <a href="<?= base_url('knowledge/show/kerjakan/' . $kuis->id_kuis) ?>" class="btn btn-sm btn-success font-weight-bold flex-grow-1 shadow-sm">
+                                                <i class="fas fa-play mr-1"></i> Kerjakan Kuis Sekarang
+                                            </a>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-sm btn-light border text-muted flex-grow-1" disabled>
+                                                <i class="fas fa-lock mr-1"></i> Draft
                                             </button>
                                         <?php endif; ?>
 
@@ -410,6 +465,23 @@
                                     <option value="draft">Draft (Belum Dibuka)</option>
                                     <option value="selesai">Selesai / Ditutup</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Jadwal Buka (Mulai) <span class="text-muted">(Opsional)</span></label>
+                                <input type="datetime-local" name="waktu_buka" id="modal_waktu_buka" class="form-control">
+                                <small class="text-muted">Kuis baru bisa diklik sejak jam ini.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Jadwal Tutup (Batas Akhir) <span class="text-muted">(Opsional)</span></label>
+                                <input type="datetime-local" name="waktu_tutup" id="modal_waktu_tutup" class="form-control">
+                                <small class="text-muted">Kuis tertutup otomatis setelah jam ini.</small>
                             </div>
                         </div>
                     </div>

@@ -144,6 +144,31 @@ class Task_proyek extends CI_Controller
         return $hrdUsers;
     }
 
+    /**
+     * Karyawan yang dikecualikan (Bebas PK) dari kuis Product Knowledge:
+     * - HRD / Personalia
+     * - GA (General Affairs) / Bagian Umum
+     * - Security / Satpam / Keamanan
+     * - Pak Afrianto (Direktur / Manajemen)
+     */
+    private function _isExemptFromPk($nama, $jabatan = '', $nama_divisi = '')
+    {
+        $str = strtolower(trim((string)$nama . ' ' . (string)$jabatan . ' ' . (string)$nama_divisi));
+        if (strpos($str, 'afrianto') !== false) {
+            return true;
+        }
+        if (strpos($str, 'security') !== false || strpos($str, 'satpam') !== false || strpos($str, 'keamanan') !== false) {
+            return true;
+        }
+        if (strpos($str, 'general affair') !== false || preg_match('/\bga\b/', $str) || strpos($str, 'ga /') !== false || strpos($str, 'ga &') !== false || strpos($str, 'umum') !== false) {
+            return true;
+        }
+        if (strpos($str, 'human resource') !== false || preg_match('/\bhr\b/', $str) || preg_match('/\bhrd\b/', $str) || strpos($str, 'personalia') !== false) {
+            return true;
+        }
+        return false;
+    }
+
     private function _getAccountMergeMap()
     {
         return [
@@ -552,15 +577,16 @@ class Task_proyek extends CI_Controller
         $myCombinedKpi = null;
 
         foreach ($raw_leaderboard as $lb) {
-            $hasTask = ($lb->avg_bintang !== null && (int)$lb->task_selesai > 0);
-            $hasLap  = ($lb->avg_nilai_laporan !== null);
-            $hasPenc = ($lb->avg_nilai_pencapaian !== null);
-            $hasPk   = ($lb->avg_nilai_pk !== null);
+            $isExemptPk = $this->_isExemptFromPk($lb->nama, $lb->jabatan, $lb->nama_divisi);
+            $hasTask    = ($lb->avg_bintang !== null && (int)$lb->task_selesai > 0);
+            $hasLap     = ($lb->avg_nilai_laporan !== null);
+            $hasPenc    = ($lb->avg_nilai_pencapaian !== null);
+            $hasPk      = (!$isExemptPk && $lb->avg_nilai_pk !== null);
 
             $skorTask = $hasTask ? round(((float)$lb->avg_bintang / 5) * 100, 1) : null;
             $skorLap  = $hasLap ? round((float)$lb->avg_nilai_laporan, 1) : null;
             $skorPenc = $hasPenc ? round((float)$lb->avg_nilai_pencapaian, 1) : null;
-            $skorPk   = $hasPk ? round((float)$lb->avg_nilai_pk, 1) : null;
+            $skorPk   = ($hasPk && !$isExemptPk) ? round((float)$lb->avg_nilai_pk, 1) : null;
 
             // Target Bulanan Volume Kuantitas Wajar (Baseline Produktivitas)
             // Task: min 2 task selesai | Laporan: min 120 poin | Pencapaian: min 10 item | PK: min 1 kuis
@@ -570,56 +596,105 @@ class Task_proyek extends CI_Controller
             $volPk   = min(100.0, ((int)$lb->total_pk / 1) * 100.0);
 
             // 1. Hitung Skor Mutu (Kualitas Rata-rata) & Skor Produktivitas (Volume)
-            // Komposisi 4 Pilar Mutu: 35% Task Proyek + 25% Laporan Mingguan + 25% Pencapaian + 15% Product Knowledge
             $activePillars = [];
             $totalWeight = 0;
 
-            if ($hasTask) {
-                $activePillars['Task'] = ['mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.35, 'label' => 'Task'];
-                $totalWeight += 0.35;
-            }
-            if ($hasLap) {
-                $activePillars['Lap'] = ['mutu' => $skorLap, 'prod' => $volLap, 'weight' => 0.25, 'label' => 'Lap'];
-                $totalWeight += 0.25;
-            }
-            if ($hasPenc) {
-                $activePillars['Penc'] = ['mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.25, 'label' => 'Penc'];
-                $totalWeight += 0.25;
-            }
-            if ($hasPk) {
-                $activePillars['PK'] = ['mutu' => $skorPk, 'prod' => $volPk, 'weight' => 0.15, 'label' => 'PK'];
-                $totalWeight += 0.15;
-            }
+            if ($isExemptPk) {
+                // Karyawan Bebas PK (HR, GA, Security, Pak Afrianto)
+                // Mutu 100%: 40% Task + 30% Lap + 30% Penc
+                if ($hasTask) {
+                    $activePillars['Task'] = ['mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.40, 'label' => 'Task'];
+                    $totalWeight += 0.40;
+                }
+                if ($hasLap) {
+                    $activePillars['Lap'] = ['mutu' => $skorLap, 'prod' => $volLap, 'weight' => 0.30, 'label' => 'Lap'];
+                    $totalWeight += 0.30;
+                }
+                if ($hasPenc) {
+                    $activePillars['Penc'] = ['mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.30, 'label' => 'Penc'];
+                    $totalWeight += 0.30;
+                }
 
-            if ($totalWeight > 0) {
-                if (count($activePillars) === 4) {
-                    $skorMutu = round(($skorTask * 0.35) + ($skorLap * 0.25) + ($skorPenc * 0.25) + ($skorPk * 0.15), 1);
-                    $skorProd = round(($volTask * 0.35) + ($volLap * 0.25) + ($volPenc * 0.25) + ($volPk * 0.15), 1);
-                    $komposisi = '35% Task + 25% Lap + 25% Penc + 15% PK';
-                    $statusNilai = 'lengkap';
-                    $isEligiblePodium = true;
-                } else {
-                    $sumMutu = 0;
-                    $sumProd = 0;
-                    $parts = [];
-                    foreach ($activePillars as $p) {
-                        $normWeight = $p['weight'] / $totalWeight;
-                        $sumMutu += $p['mutu'] * $normWeight;
-                        $sumProd += $p['prod'] * $normWeight;
-                        $parts[] = round($normWeight * 100) . '% ' . $p['label'];
+                if ($totalWeight > 0) {
+                    if (count($activePillars) === 3) {
+                        $skorMutu = round(($skorTask * 0.40) + ($skorLap * 0.30) + ($skorPenc * 0.30), 1);
+                        $skorProd = round(($volTask * 0.40) + ($volLap * 0.30) + ($volPenc * 0.30), 1);
+                        $komposisi = '40% Task + 30% Lap + 30% Penc (Bebas PK)';
+                        $statusNilai = 'lengkap';
+                        $isEligiblePodium = true;
+                    } else {
+                        $sumMutu = 0;
+                        $sumProd = 0;
+                        $parts = [];
+                        foreach ($activePillars as $p) {
+                            $normWeight = $p['weight'] / $totalWeight;
+                            $sumMutu += $p['mutu'] * $normWeight;
+                            $sumProd += $p['prod'] * $normWeight;
+                            $parts[] = round($normWeight * 100) . '% ' . $p['label'];
+                        }
+                        $skorMutu = round($sumMutu, 1);
+                        $skorProd = round($sumProd, 1);
+                        $komposisi = implode(' + ', $parts) . ' (Bebas PK)';
+                        $statusNilai = 'parsial_' . count($activePillars);
+                        $isEligiblePodium = false;
                     }
-                    $skorMutu = round($sumMutu, 1);
-                    $skorProd = round($sumProd, 1);
-                    $komposisi = implode(' + ', $parts) . ' (Parsial)';
-                    $statusNilai = 'parsial_' . count($activePillars);
+                } else {
+                    $skorMutu = null;
+                    $skorProd = null;
+                    $komposisi = 'Belum Ada Nilai (Bebas PK)';
+                    $statusNilai = 'belum_dinilai';
                     $isEligiblePodium = false;
                 }
             } else {
-                $skorMutu = null;
-                $skorProd = null;
-                $komposisi = 'Belum Ada Nilai';
-                $statusNilai = 'belum_dinilai';
-                $isEligiblePodium = false;
+                // Karyawan Reguler Wajib PK
+                // Mutu 100%: 35% Task + 25% Lap + 25% Penc + 15% PK
+                if ($hasTask) {
+                    $activePillars['Task'] = ['mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.35, 'label' => 'Task'];
+                    $totalWeight += 0.35;
+                }
+                if ($hasLap) {
+                    $activePillars['Lap'] = ['mutu' => $skorLap, 'prod' => $volLap, 'weight' => 0.25, 'label' => 'Lap'];
+                    $totalWeight += 0.25;
+                }
+                if ($hasPenc) {
+                    $activePillars['Penc'] = ['mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.25, 'label' => 'Penc'];
+                    $totalWeight += 0.25;
+                }
+                if ($hasPk) {
+                    $activePillars['PK'] = ['mutu' => $skorPk, 'prod' => $volPk, 'weight' => 0.15, 'label' => 'PK'];
+                    $totalWeight += 0.15;
+                }
+
+                if ($totalWeight > 0) {
+                    if (count($activePillars) === 4) {
+                        $skorMutu = round(($skorTask * 0.35) + ($skorLap * 0.25) + ($skorPenc * 0.25) + ($skorPk * 0.15), 1);
+                        $skorProd = round(($volTask * 0.35) + ($volLap * 0.25) + ($volPenc * 0.25) + ($volPk * 0.15), 1);
+                        $komposisi = '35% Task + 25% Lap + 25% Penc + 15% PK';
+                        $statusNilai = 'lengkap';
+                        $isEligiblePodium = true;
+                    } else {
+                        $sumMutu = 0;
+                        $sumProd = 0;
+                        $parts = [];
+                        foreach ($activePillars as $p) {
+                            $normWeight = $p['weight'] / $totalWeight;
+                            $sumMutu += $p['mutu'] * $normWeight;
+                            $sumProd += $p['prod'] * $normWeight;
+                            $parts[] = round($normWeight * 100) . '% ' . $p['label'];
+                        }
+                        $skorMutu = round($sumMutu, 1);
+                        $skorProd = round($sumProd, 1);
+                        $komposisi = implode(' + ', $parts) . ' (Parsial)';
+                        $statusNilai = 'parsial_' . count($activePillars);
+                        $isEligiblePodium = false;
+                    }
+                } else {
+                    $skorMutu = null;
+                    $skorProd = null;
+                    $komposisi = 'Belum Ada Nilai';
+                    $statusNilai = 'belum_dinilai';
+                    $isEligiblePodium = false;
+                }
             }
 
             // 2. SOLUSI A: SKOR AKHIR = 80% KUALITAS MUTU + 20% PRODUKTIVITAS VOLUME
@@ -658,11 +733,12 @@ class Task_proyek extends CI_Controller
                 $gradeColor = '#64748b';
             }
 
+            $lb->is_exempt_pk       = $isExemptPk;
             $lb->skor_task          = $skorTask;
             $lb->skor_lap           = $skorLap;
             $lb->skor_penc          = $skorPenc;
             $lb->skor_pk            = $skorPk;
-            $lb->avg_nilai_pk       = $lb->avg_nilai_pk !== null ? (float)$lb->avg_nilai_pk : null;
+            $lb->avg_nilai_pk       = ($isExemptPk || $lb->avg_nilai_pk === null) ? null : (float)$lb->avg_nilai_pk;
             $lb->total_pk           = (int)$lb->total_pk;
             $lb->skor_mutu          = $skorMutu;
             $lb->skor_prod          = $skorProd;

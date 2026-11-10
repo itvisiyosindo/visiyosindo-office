@@ -1,3 +1,13 @@
+<?php
+$durasiSec = (int)$kuis->durasi_menit * 60;
+if (!empty($kuis->waktu_tutup)) {
+    $sisaTutupSec = strtotime($kuis->waktu_tutup) - time();
+    if ($sisaTutupSec > 0 && $sisaTutupSec < $durasiSec) {
+        $durasiSec = $sisaTutupSec;
+    }
+}
+$durasiSec = max(10, $durasiSec);
+?>
 <header class="page-header">
     <h2><i class="fas fa-pencil-alt mr-2"></i><?= $page_title ?></h2>
     <div class="right-wrapper text-left">
@@ -95,7 +105,7 @@
             <div>
                 <small class="text-muted text-uppercase font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Sisa Waktu Ujian</small>
                 <div id="cbtTimerDisplay" style="font-size: 20px; font-weight: 800; color: #38bdf8; font-family: monospace;">
-                    <?= sprintf('%02d:00', (int)$kuis->durasi_menit) ?>
+                    <?= sprintf('%02d:%02d', floor($durasiSec / 60), $durasiSec % 60) ?>
                 </div>
             </div>
         </div>
@@ -183,8 +193,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     var baseUrl = '<?= base_url() ?>';
     var totalSoal = <?= count($soal_list) ?>;
-    var durasiMenit = <?= (int)$kuis->durasi_menit ?>;
-    var totalDetik = durasiMenit * 60;
+    var totalDetik = <?= (int)$durasiSec ?>;
 
     // Timer Countdown
     var timerInterval = setInterval(function() {

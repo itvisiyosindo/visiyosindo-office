@@ -83,6 +83,8 @@ class Md_knowledge extends CI_Model
             `bulan` TINYINT(2) NOT NULL DEFAULT 1,
             `tahun` INT(4) NOT NULL DEFAULT 2026,
             `durasi_menit` INT(11) NOT NULL DEFAULT 30,
+            `waktu_buka` DATETIME NULL,
+            `waktu_tutup` DATETIME NULL,
             `status` ENUM('draft', 'aktif', 'selesai') NOT NULL DEFAULT 'aktif',
             `created_by` INT(11) NULL,
             `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -92,6 +94,17 @@ class Md_knowledge extends CI_Model
             KEY `idx_periode` (`tahun`, `bulan`),
             KEY `idx_status` (`status`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Migration kolom waktu_buka & waktu_tutup jika tabel sudah ada sebelumnya
+        if ($this->db->table_exists('pk_kuis')) {
+            $fields = $this->db->list_fields('pk_kuis');
+            if (!in_array('waktu_buka', $fields)) {
+                $this->db->query("ALTER TABLE `pk_kuis` ADD COLUMN `waktu_buka` DATETIME NULL AFTER `durasi_menit`");
+            }
+            if (!in_array('waktu_tutup', $fields)) {
+                $this->db->query("ALTER TABLE `pk_kuis` ADD COLUMN `waktu_tutup` DATETIME NULL AFTER `waktu_buka`");
+            }
+        }
 
         // 2. Tabel Soal Pilihan Ganda (A, B, C, D)
         $this->db->query("CREATE TABLE IF NOT EXISTS `pk_soal` (
@@ -301,15 +314,32 @@ class Md_knowledge extends CI_Model
         ];
     }
 
-
-
-
-
-
-
-
-
-
-
-
+    /**
+     * Cek apakah karyawan dikecualikan (bebas) dari kewajiban Product Knowledge:
+     * - HR (Human Resources / Personalia)
+     * - GA (General Affairs / Umum)
+     * - Security (Satpam / Keamanan)
+     * - Pak Afrianto (Direktur / Manajemen)
+     */
+    public function isExemptFromPk($nama, $jabatan = '', $nama_divisi = '')
+    {
+        $str = strtolower(trim((string)$nama . ' ' . (string)$jabatan . ' ' . (string)$nama_divisi));
+        // Pak Afrianto
+        if (strpos($str, 'afrianto') !== false) {
+            return true;
+        }
+        // Security / Keamanan
+        if (strpos($str, 'security') !== false || strpos($str, 'satpam') !== false || strpos($str, 'keamanan') !== false) {
+            return true;
+        }
+        // General Affairs (GA) / Bagian Umum
+        if (strpos($str, 'general affair') !== false || preg_match('/\bga\b/', $str) || strpos($str, 'ga /') !== false || strpos($str, 'ga &') !== false || strpos($str, 'umum') !== false) {
+            return true;
+        }
+        // Human Resources (HR / HRD / Personalia)
+        if (strpos($str, 'human resource') !== false || preg_match('/\bhr\b/', $str) || preg_match('/\bhrd\b/', $str) || strpos($str, 'personalia') !== false) {
+            return true;
+        }
+        return false;
+    }
 }

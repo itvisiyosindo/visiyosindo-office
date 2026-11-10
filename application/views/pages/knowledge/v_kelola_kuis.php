@@ -30,7 +30,14 @@
                     <i class="far fa-calendar-alt text-primary mr-1"></i> Periode: Bulan <?= (int)$kuis->bulan ?> / Tahun <?= (int)$kuis->tahun ?> | Durasi: <?= (int)$kuis->durasi_menit ?> Menit
                 </div>
                 <h4 class="font-weight-bold text-dark mb-1"><?= htmlspecialchars($kuis->judul_kuis) ?></h4>
-                <p class="text-muted mb-0 small"><?= !empty($kuis->deskripsi) ? htmlspecialchars($kuis->deskripsi) : 'Tidak ada petunjuk khusus.' ?></p>
+                <p class="text-muted mb-2 small"><?= !empty($kuis->deskripsi) ? htmlspecialchars($kuis->deskripsi) : 'Tidak ada petunjuk khusus.' ?></p>
+                <?php if (!empty($kuis->waktu_buka) || !empty($kuis->waktu_tutup)): ?>
+                    <div class="p-2 rounded bg-light border text-muted small d-inline-block" style="font-size: 11.5px;">
+                        <i class="far fa-clock text-info mr-1"></i> <strong>Jadwal Pelaksanaan Kuis:</strong> 
+                        <?= !empty($kuis->waktu_buka) ? date('d M Y H:i', strtotime($kuis->waktu_buka)) : 'Sekarang' ?> s/d 
+                        <?= !empty($kuis->waktu_tutup) ? date('d M Y H:i', strtotime($kuis->waktu_tutup)) : 'Seterusnya' ?> WIB
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="col-md-4 text-md-right mt-3 mt-md-0">
                 <button type="button" class="btn btn-success font-weight-bold shadow-sm" id="btnBukaModalSoal">

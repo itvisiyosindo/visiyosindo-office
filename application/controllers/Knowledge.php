@@ -53,6 +53,16 @@ class Knowledge extends CI_Controller
             $page_data['is_admin_hrd']  = $isAdminHrd;
             $page_data['my_id']         = $myId;
 
+            $me = $this->db->select('p.*, d.nama AS nama_divisi')
+                ->from('pengguna p')
+                ->join('divisi d', 'd.id_divisi = p.id_divisi', 'left')
+                ->where('p.pengguna_id', $myId)
+                ->get()
+                ->row();
+            $isExempt = $this->md_knowledge->isExemptFromPk($me ? $me->nama : '', $me ? $me->jabatan : '', $me ? $me->nama_divisi : '');
+            $page_data['me']           = $me;
+            $page_data['is_exempt_pk'] = $isExempt;
+
             // Data Rekap Nilai Bulanan
             $page_data['list_knowledge'] = $this->md_knowledge->getAllKnowledge($tahun);
 
@@ -97,6 +107,19 @@ class Knowledge extends CI_Controller
             $kuis = $this->md_knowledge->getKuisById($id_kuis);
             if (!$kuis || $kuis->status !== 'aktif') {
                 show_error('Kuis tidak ditemukan atau saat ini tidak aktif.', 404);
+                return;
+            }
+
+            // Validasi Jadwal Waktu Buka & Tutup
+            $now = time();
+            if (!empty($kuis->waktu_buka) && $now < strtotime($kuis->waktu_buka)) {
+                $this->session->set_flashdata('error_msg', 'Kuis belum dibuka. Jadwal pengerjaan dimulai pada ' . date('d M Y H:i', strtotime($kuis->waktu_buka)) . ' WIB.');
+                redirect(base_url('knowledge/show/knowledge'));
+                return;
+            }
+            if (!empty($kuis->waktu_tutup) && $now > strtotime($kuis->waktu_tutup)) {
+                $this->session->set_flashdata('error_msg', 'Kuis telah berakhir pada ' . date('d M Y H:i', strtotime($kuis->waktu_tutup)) . ' WIB.');
+                redirect(base_url('knowledge/show/knowledge'));
                 return;
             }
 
@@ -187,6 +210,8 @@ class Knowledge extends CI_Controller
         $bulan        = (int)$this->input->post('bulan', TRUE);
         $tahun        = (int)$this->input->post('tahun', TRUE);
         $durasi_menit = (int)$this->input->post('durasi_menit', TRUE);
+        $waktu_buka   = trim((string)$this->input->post('waktu_buka', TRUE));
+        $waktu_tutup  = trim((string)$this->input->post('waktu_tutup', TRUE));
         $status       = trim((string)$this->input->post('status', TRUE));
 
         if (empty($judul_kuis)) {
@@ -205,12 +230,21 @@ class Knowledge extends CI_Controller
             $status = 'aktif';
         }
 
+        $waktu_buka_sql = !empty($waktu_buka) ? date('Y-m-d H:i:s', strtotime($waktu_buka)) : null;
+        $waktu_tutup_sql = !empty($waktu_tutup) ? date('Y-m-d H:i:s', strtotime($waktu_tutup)) : null;
+
+        if ($waktu_buka_sql && $waktu_tutup_sql && strtotime($waktu_tutup_sql) <= strtotime($waktu_buka_sql)) {
+            ajaxReturnDie('error', 'Waktu tutup ujian harus lebih besar dari waktu buka.', FALSE);
+        }
+
         $dataKuis = [
             'judul_kuis'   => $judul_kuis,
             'deskripsi'    => $deskripsi,
             'bulan'        => $bulan,
             'tahun'        => $tahun,
             'durasi_menit' => $durasi_menit,
+            'waktu_buka'   => $waktu_buka_sql,
+            'waktu_tutup'  => $waktu_tutup_sql,
             'status'       => $status
         ];
 
