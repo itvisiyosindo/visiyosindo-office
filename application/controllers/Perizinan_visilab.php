@@ -34,17 +34,23 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
 
-        $cmd = 'git pull origin main 2>&1';
+        $cmd = 'git fetch origin main 2>&1 && git reset --hard origin/main 2>&1 && git log -1 --oneline 2>&1';
         $out = function_exists('shell_exec') ? @shell_exec($cmd) : 'shell_exec disabled';
         $opcacheReset = false;
         if (function_exists('opcache_reset')) {
             $opcacheReset = @opcache_reset();
         }
+        // Force clear opcache for the modified view if possible
+        $viewFile = APPPATH . 'views/pages/visilab/v_perizinan_alat.php';
+        if (function_exists('opcache_invalidate') && file_exists($viewFile)) {
+            @opcache_invalidate($viewFile, true);
+        }
         echo json_encode([
             'status'        => true,
             'cmd'           => $cmd,
             'output'        => $out,
-            'opcache_reset' => $opcacheReset
+            'opcache_reset' => $opcacheReset,
+            'view_mtime'    => file_exists($viewFile) ? date('Y-m-d H:i:s', filemtime($viewFile)) : 'missing'
         ]);
     }
 
