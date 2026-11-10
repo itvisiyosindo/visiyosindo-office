@@ -407,11 +407,37 @@
 						</li>
 					<?php } ?>
 
-					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '743') { ?>
+					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '743' || sessPenggunaId() == '771') { ?>
 						<li class="<?= in_array($page_name, ['v_absensi', 'v_rekap_absensi']) ? 'nav-active' : '' ?>">
 							<a class="nav-link" href="<?= base_url('absensi') ?>">
 								<i class="fas fa-digital-tachograph" aria-hidden="true"></i>
 								<span>Data Absensi</span>
+							</a>
+						</li>
+					<?php } ?>
+					<?php if (isHrd() || isAdmin() || isGa() || sessPenggunaId() == '771' || sessPenggunaId() == '33') { ?>
+						<?php
+						$ciKep =& get_instance();
+						$pendingLrKep = 0;
+						if (isset($ciKep->db) && $ciKep->db->field_exists('is_luar_radius', 'absensi')) {
+							$pendingLrKep = (int)$ciKep->db->from('absensi')
+								->where('perusahaan', grantAccessForPerusahaan())
+								->where('is_luar_radius', 1)
+								->where('acc_ga !=', 2)
+								->where('acc_yola !=', 2)
+								->group_start()->where('acc_ga', 0)->or_where('acc_yola', 0)->group_end()
+								->count_all_results();
+						}
+						?>
+						<li class="<?= $page_name == 'v_approval_luar_radius' ? 'nav-active' : '' ?>">
+							<a class="nav-link" href="<?= base_url('absensi/show/approval_luar_radius') ?>">
+								<i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+								<span>
+									ACC Absen Luar Radius
+									<?php if ($pendingLrKep > 0): ?>
+										<span class="badge badge-danger ml-1"><?= $pendingLrKep ?></span>
+									<?php endif; ?>
+								</span>
 							</a>
 						</li>
 					<?php } ?>

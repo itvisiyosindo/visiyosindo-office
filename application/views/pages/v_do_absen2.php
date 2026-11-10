@@ -75,24 +75,49 @@ $statusTitle = 'Absensi hari ini belum tercatat.';
 $statusSubtitle = 'Silakan lakukan absensi pada jadwal yang tersedia.';
 
 if (isset($data_absen[0]->waktu_absen)) {
-    if ($data_absen[0]->status_absen == 'terlambat') {
-        $statusClass = 'status-danger';
-        $statusIcon = 'bx bx-error-circle';
-        $statusTitle = 'Anda terlambat absen ' . $data_absen[0]->jenis_absen;
-    } else if ($data_absen[0]->status_absen == 'tepat_waktu' || $data_absen[0]->status_absen == 'istirahat') {
-        $statusClass = 'status-ok';
-        $statusIcon = 'bx bx-check-circle';
-        $statusTitle = 'Anda tepat waktu absen ' . $data_absen[0]->jenis_absen;
-    } else {
-        $statusClass = 'status-ok';
-        $statusIcon = 'bx bx-badge-check';
-        $statusTitle = 'Anda sudah absen ' . $data_absen[0]->type_absen;
-    }
+    if (!empty($data_absen[0]->is_luar_radius)) {
+        $gaSt = (int)($data_absen[0]->acc_ga ?? 0);
+        $yolaSt = (int)($data_absen[0]->acc_yola ?? 0);
+        $gaLabel = $gaSt === 1 ? 'ACC âœ”' : ($gaSt === 2 ? 'Ditolak âœ–' : 'Menunggu â³');
+        $yolaLabel = $yolaSt === 1 ? 'ACC âœ”' : ($yolaSt === 2 ? 'Ditolak âœ–' : 'Menunggu â³');
 
-    $lokasiKerja = isset($data_absen[0]->jenis_lokasi) && $data_absen[0]->jenis_lokasi !== ''
-        ? $data_absen[0]->jenis_lokasi
-        : 'Kantor';
-    $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . ' | Lokasi kerja: ' . $lokasiKerja;
+        if ($data_absen[0]->approval == 'terima') {
+            $statusClass = 'status-ok';
+            $statusIcon = 'bx bx-check-shield';
+            $statusTitle = 'Absensi Luar Radius Diterima (' . $data_absen[0]->type_absen . ')';
+        } elseif ($data_absen[0]->approval == 'tolak') {
+            $statusClass = 'status-danger';
+            $statusIcon = 'bx bx-x-circle';
+            $statusTitle = 'Absensi Luar Radius Ditolak (' . $data_absen[0]->type_absen . ')';
+        } else {
+            $statusClass = 'status-warning';
+            $statusIcon = 'bx bx-time-five';
+            $statusTitle = 'Absensi Luar Radius Tercatat â€” Menunggu ACC GA & Bu Yola';
+        }
+
+        $jarakText = !empty($data_absen[0]->jarak_radius) ? (' | Jarak: ' . (int)$data_absen[0]->jarak_radius . 'm dari ' . htmlspecialchars($data_absen[0]->cabang_terdekat ?? '-')) : '';
+        $alasanText = !empty($data_absen[0]->alasan_luar_radius) ? htmlspecialchars($data_absen[0]->alasan_luar_radius) : '-';
+        $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . $jarakText . ' | GA: ' . $gaLabel . ' | Bu Yola: ' . $yolaLabel . ' | Alasan: ' . $alasanText;
+    } else {
+        if ($data_absen[0]->status_absen == 'terlambat') {
+            $statusClass = 'status-danger';
+            $statusIcon = 'bx bx-error-circle';
+            $statusTitle = 'Anda terlambat absen ' . $data_absen[0]->jenis_absen;
+        } else if ($data_absen[0]->status_absen == 'tepat_waktu' || $data_absen[0]->status_absen == 'istirahat') {
+            $statusClass = 'status-ok';
+            $statusIcon = 'bx bx-check-circle';
+            $statusTitle = 'Anda tepat waktu absen ' . $data_absen[0]->jenis_absen;
+        } else {
+            $statusClass = 'status-ok';
+            $statusIcon = 'bx bx-badge-check';
+            $statusTitle = 'Anda sudah absen ' . $data_absen[0]->type_absen;
+        }
+
+        $lokasiKerja = isset($data_absen[0]->jenis_lokasi) && $data_absen[0]->jenis_lokasi !== ''
+            ? $data_absen[0]->jenis_lokasi
+            : 'Kantor';
+        $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . ' | Lokasi kerja: ' . $lokasiKerja;
+    }
 }
 ?>
 
@@ -274,6 +299,12 @@ if (isset($data_absen[0]->waktu_absen)) {
     background: var(--danger-soft);
     border-color: #ffc4cc;
     color: var(--danger);
+}
+
+.status-warning {
+    background: var(--amber-soft);
+    border-color: #fed7aa;
+    color: var(--amber);
 }
 
 .grid-two {
@@ -917,7 +948,7 @@ if (isset($data_absen[0]->waktu_absen)) {
                 const isInside = distMeter <= allowedRadius;
                 const badgeColor = isInside ? '#067647' : '#b42318';
                 const badgeBg = isInside ? '#dcfae6' : '#ffe4e8';
-                const statusLabel = isInside ? 'Dalam Radius Kantor' : 'Di Luar Radius Kantor';
+                const statusLabel = isInside ? 'Dalam Radius Kantor' : 'Di Luar Radius (Wajib Alasan)';
                 statusEl.innerHTML = accText + ' | Cabang terdekat: <b>' + closest.nama_cabang + '</b> (' + distMeter + 'm / maks ' + allowedRadius + 'm) ' +
                     '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;color:' + badgeColor + ';background:' + badgeBg + ';">' + statusLabel + '</span>';
             } else {
@@ -1068,7 +1099,43 @@ if (isset($data_absen[0]->waktu_absen)) {
         return hidden ? hidden.value : 'Kantor';
     }
 
-    function submitAttendance(latitude, longitude, imageData) {
+    function sendAttendanceAjax(latitude, longitude, imageData, alasanLuarRadius) {
+        Swal.fire({
+            title: 'Mengirim Absensi...',
+            text: 'Mohon tunggu sebentar.',
+            allowOutsideClick: false,
+            didOpen: function() {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            method: 'POST',
+            url: 'absensi/addPhoto',
+            dataType: 'JSON',
+            data: {
+                latitude: latitude,
+                longitude: longitude,
+                jenis_lokasi: getSelectedJenisLokasi(),
+                imageData: imageData,
+                alasan_luar_radius: alasanLuarRadius || '',
+                csrf_token: token
+            },
+            success: function(resp) {
+                handleResponse(resp);
+            },
+            error: function() {
+                Swal.fire('Gagal', 'Terjadi kesalahan saat mengirim data absensi.', 'error');
+            }
+        });
+    }
+
+    function submitAttendance(latitude, longitude, imageData, alasanLuarRadius) {
+        if (alasanLuarRadius) {
+            sendAttendanceAjax(latitude, longitude, imageData, alasanLuarRadius);
+            return;
+        }
+
         Swal.fire({
             title: 'Konfirmasi Absensi',
             text: 'Pastikan Anda sudah berada di lokasi yang benar.',
@@ -1080,25 +1147,17 @@ if (isset($data_absen[0]->waktu_absen)) {
             if (!result.value) {
                 return;
             }
+            sendAttendanceAjax(latitude, longitude, imageData, '');
+        });
+    }
 
-            $.ajax({
-                method: 'POST',
-                url: 'absensi/addPhoto',
-                dataType: 'JSON',
-                data: {
-                    latitude: latitude,
-                    longitude: longitude,
-                    jenis_lokasi: getSelectedJenisLokasi(),
-                    imageData: imageData,
-                    csrf_token: token
-                },
-                success: function(resp) {
-                    handleResponse(resp);
-                },
-                error: function() {
-                    Swal.fire('Gagal', 'Terjadi kesalahan saat mengirim data absensi.', 'error');
-                }
-            });
+    function proceedCaptureAndSubmit(latitude, longitude, alasanLuarRadius) {
+        takeSnapshot(function(imageData) {
+            if (!imageData) {
+                Swal.fire('Kamera belum siap', 'Foto absensi belum berhasil diambil. Izinkan kamera lalu coba lagi.', 'warning');
+                return;
+            }
+            submitAttendance(latitude, longitude, imageData, alasanLuarRadius);
         });
     }
 
@@ -1114,7 +1173,7 @@ if (isset($data_absen[0]->waktu_absen)) {
                 return;
             }
 
-            // Validasi radius multi-cabang sebelum ambil foto
+            // Cek radius multi-cabang sebelum ambil foto
             const isWfa = getSelectedJenisLokasi() === 'WFA';
             if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
                 const closest = findClosestBranch(latitude, longitude);
@@ -1123,29 +1182,41 @@ if (isset($data_absen[0]->waktu_absen)) {
                     const allowedRadius = parseInt(closest.radius) || 100;
                     if (distMeter > allowedRadius) {
                         Swal.fire({
-                            title: 'Di Luar Radius Kantor',
-                            html: `Anda berada di luar jangkauan absensi kantor.<br><br>
-                                   Kantor cabang terdekat: <b>${closest.nama_cabang}<\/b><br>
-                                   Jarak saat ini: <b class="text-danger">${distMeter} meter<\/b><br>
-                                   Radius diizinkan: <b>${allowedRadius} meter<\/b><br><br>
-                                   <small class="text-muted">Jika sedang dinas luar, silakan gunakan menu <b>Absen Dinas<\/b>.<\/small>`,
-                            icon: 'warning',
-                            confirmButtonText: 'Tutup'
+                            title: 'Absen di Luar Radius Kantor',
+                            html: `<div class="text-left" style="font-size:13.5px;">
+                                     <div class="alert alert-warning p-2 mb-3">
+                                       <div><b>Cabang Terdekat:<\/b> ${closest.nama_cabang}<\/div>
+                                       <div><b>Jarak Anda:<\/b> <span class="text-danger font-weight-bold">${distMeter} meter<\/span> (Maks: ${allowedRadius} meter)<\/div>
+                                     <\/div>
+                                     <p class="mb-2 text-muted">Untuk tugas luar / kunjungan (Teknisi, Marketing, dll), silakan masukkan alasan Anda di bawah. Absensi akan tercatat dengan status <b>Menunggu ACC General Affair &amp; Bu Yola<\/b>.<\/p>
+                                     <label class="font-weight-bold mb-1">Alasan Absen di Luar Radius <span class="text-danger">*<\/span>:<\/label>
+                                   <\/div>`,
+                            input: 'textarea',
+                            inputPlaceholder: 'Contoh: Kunjungan customer ke RSUD X / Troubleshooting alat di Klinik Y...',
+                            inputAttributes: {
+                                'aria-label': 'Alasan absen luar radius',
+                                rows: 3
+                            },
+                            showCancelButton: true,
+                            confirmButtonText: 'Lanjut Ambil Foto & Absen',
+                            cancelButtonText: 'Batal',
+                            confirmButtonColor: '#155eef',
+                            inputValidator: function(value) {
+                                if (!value || value.trim().length < 5) {
+                                    return 'Wajib mengisi alasan minimal 5 karakter!';
+                                }
+                            }
+                        }).then(function(result) {
+                            if (result.value) {
+                                proceedCaptureAndSubmit(latitude, longitude, result.value.trim());
+                            }
                         });
                         return;
                     }
                 }
             }
 
-            
-
-            takeSnapshot(function(imageData) {
-                if (!imageData) {
-                    Swal.fire('Kamera belum siap', 'Foto absensi belum berhasil diambil. Izinkan kamera lalu coba lagi.', 'warning');
-                    return;
-                }
-                submitAttendance(latitude, longitude, imageData);
-            });
+            proceedCaptureAndSubmit(latitude, longitude, '');
         });
     }
 

@@ -857,7 +857,17 @@ class Md_absensi extends CI_Model
         a.jenis_lokasi,
         a.ip_addr,
         a.file_pendukung,
-        a.file_foto
+        a.file_foto,
+        a.is_luar_radius,
+        a.jarak_radius,
+        a.cabang_terdekat,
+        a.alasan_luar_radius,
+        a.acc_ga,
+        a.acc_ga_by,
+        a.acc_ga_at,
+        a.acc_yola,
+        a.acc_yola_by,
+        a.acc_yola_at
         ')
             ->from('absensi a')
             ->where('a.pengguna_id', $pengguna_id)
@@ -975,6 +985,183 @@ class Md_absensi extends CI_Model
             ];
         }
         return $result;
+    }
+
+    /**
+     * Pastikan kolom luar radius & dual approval (GA + Yola) tersedia pada tabel absensi.
+     */
+    public function ensureLuarRadiusColumns()
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        if (!$this->db->field_exists('is_luar_radius', 'absensi')) {
+            @$this->db->query("ALTER TABLE absensi
+                ADD COLUMN is_luar_radius TINYINT(1) NOT NULL DEFAULT 0,
+                ADD COLUMN jarak_radius INT(11) DEFAULT NULL,
+                ADD COLUMN cabang_terdekat VARCHAR(150) DEFAULT NULL,
+                ADD COLUMN alasan_luar_radius TEXT DEFAULT NULL,
+                ADD COLUMN acc_ga TINYINT(1) NOT NULL DEFAULT 0,
+                ADD COLUMN acc_ga_by INT(11) DEFAULT NULL,
+                ADD COLUMN acc_ga_at DATETIME DEFAULT NULL,
+                ADD COLUMN acc_yola TINYINT(1) NOT NULL DEFAULT 0,
+                ADD COLUMN acc_yola_by INT(11) DEFAULT NULL,
+                ADD COLUMN acc_yola_at DATETIME DEFAULT NULL");
+        }
+    }
+
+    /**
+     * Hitung jumlah pengajuan absensi luar radius yang masih menunggu ACC GA dan/atau Yola.
+     * @return int
+     */
+    public function countPendingLuarRadius()
+    {
+        $this->ensureLuarRadiusColumns();
+        return (int) $this->db->from('absensi')
+            ->where('perusahaan', grantAccessForPerusahaan())
+            ->where('is_luar_radius', 1)
+            ->where('acc_ga !=', 2)
+            ->where('acc_yola !=', 2)
+            ->group_start()
+                ->where('acc_ga', 0)
+                ->or_where('acc_yola', 0)
+            ->group_end()
+            ->count_all_results();
+    }
+
+    /**
+     * Ringkasan statistik approval absensi luar radius.
+     * @return array
+     */
+    public function getLuarRadiusStats($filterMonth = '')
+    {
+        $this->ensureLuarRadiusColumns();
+        $this->db->select("
+            COUNT(*) AS total,
+            SUM(CASE WHEN acc_ga != 2 AND acc_yola != 2 AND (acc_ga = 0 OR acc_yola = 0) THEN 1 ELSE 0 END) AS pending_all,
+            SUM(CASE WHEN acc_ga = 0 AND acc_yola != 2 THEN 1 ELSE 0 END) AS pending_ga,
+            SUM(CASE WHEN acc_yola = 0 AND acc_ga != 2 THEN 1 ELSE 0 END) AS pending_yola,
+            SUM(CASE WHEN acc_ga = 1 AND acc_yola = 1 THEN 1 ELSE 0 END) AS approved,
+            SUM(CASE WHEN acc_ga = 2 OR acc_yola = 2 THEN 1 ELSE 0 END) AS rejected
+        ", false)
+            ->from('absensi')
+            ->where('perusahaan', grantAccessForPerusahaan())
+            ->where('is_luar_radius', 1);
+
+        if (!empty($filterMonth)) {
+            $this->db->like('data_created', $filterMonth, 'after');
+        }
+
+        $row = $this->db->get()->row_array();
+        return [
+            'total'        => (int)($row['total'] ?? 0),
+            'pending_all'  => (int)($row['pending_all'] ?? 0),
+            'pending_ga'   => (int)($row['pending_ga'] ?? 0),
+            'pending_yola' => (int)($row['pending_yola'] ?? 0),
+            'approved'     => (int)($row['approved'] ?? 0),
+            'rejected'     => (int)($row['rejected'] ?? 0),
+        ];
+    }
+
+    /**
+     * Ambil daftar absensi luar radius beserta info karyawan dan status ACC GA + Bu Yola.
+     * @return array
+     */
+    public function getLuarRadiusList($filterStatus = 'pending', $filterMonth = '')
+    {
+        $this->ensureLuarRadiusColumns();
+        $this->db->select('a.*, p.nama, p.jabatan, p.no_pegawai, p.no_hp, d.nama_divisi, pga.nama AS nama_acc_ga, pyo.nama AS nama_acc_yola')
+            ->from('absensi a')
+            ->join('pengguna p', 'a.pengguna_id = p.pengguna_id', 'left')
+            ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
+            ->join('pengguna pga', 'a.acc_ga_by = pga.pengguna_id', 'left')
+            ->join('pengguna pyo', 'a.acc_yola_by = pyo.pengguna_id', 'left')
+            ->where('a.perusahaan', grantAccessForPerusahaan())
+            ->where('a.is_luar_radius', 1);
+
+        if ($filterStatus === 'pending') {
+            $this->db->where('a.acc_ga !=', 2)
+                ->where('a.acc_yola !=', 2)
+                ->group_start()
+                    ->where('a.acc_ga', 0)
+                    ->or_where('a.acc_yola', 0)
+                ->group_end();
+        } elseif ($filterStatus === 'pending_ga') {
+            $this->db->where('a.acc_ga', 0)->where('a.acc_yola !=', 2);
+        } elseif ($filterStatus === 'pending_yola') {
+            $this->db->where('a.acc_yola', 0)->where('a.acc_ga !=', 2);
+        } elseif ($filterStatus === 'approved') {
+            $this->db->where('a.acc_ga', 1)->where('a.acc_yola', 1);
+        } elseif ($filterStatus === 'rejected') {
+            $this->db->group_start()
+                ->where('a.acc_ga', 2)
+                ->or_where('a.acc_yola', 2)
+            ->group_end();
+        }
+
+        if (!empty($filterMonth)) {
+            $this->db->like('a.data_created', $filterMonth, 'after');
+        }
+
+        $this->db->order_by('a.data_created', 'DESC');
+        $this->db->order_by('a.id_absensi', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Proses persetujuan / penolakan absen luar radius oleh GA atau Bu Yola.
+     * @param int $id_absensi
+     * @param string $role 'ga'|'yola'
+     * @param int $decision 1=Setuju, 2=Tolak
+     * @param int $approver_id
+     * @return array|false
+     */
+    public function processLuarRadiusApproval($id_absensi, $role, $decision, $approver_id)
+    {
+        $this->ensureLuarRadiusColumns();
+        $row = $this->db->where('id_absensi', $id_absensi)->get('absensi')->row();
+        if (!$row) {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $update = [];
+        $accGa = (int)$row->acc_ga;
+        $accYola = (int)$row->acc_yola;
+
+        if ($role === 'ga') {
+            $update['acc_ga'] = $decision;
+            $update['acc_ga_by'] = $approver_id;
+            $update['acc_ga_at'] = $now;
+            $accGa = $decision;
+        } elseif ($role === 'yola') {
+            $update['acc_yola'] = $decision;
+            $update['acc_yola_by'] = $approver_id;
+            $update['acc_yola_at'] = $now;
+            $accYola = $decision;
+        } else {
+            return false;
+        }
+
+        if ($accGa === 2 || $accYola === 2) {
+            $update['approval'] = 'tolak';
+        } elseif ($accGa === 1 && $accYola === 1) {
+            $update['approval'] = 'terima';
+        } else {
+            $update['approval'] = NULL;
+        }
+
+        $this->db->where('id_absensi', $id_absensi)->update('absensi', $update);
+
+        return [
+            'acc_ga'   => $accGa,
+            'acc_yola' => $accYola,
+            'approval' => $update['approval'],
+            'row'      => $row,
+        ];
     }
 
     public function deleteById($id)

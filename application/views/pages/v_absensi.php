@@ -10,8 +10,17 @@
 	<div class="col-12">
 		<div class="table-card-container">
 			<div class="table-top-bar">
-				<div class="d-flex align-items-center">
-					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-users mr-1"></i> Rekap Absensi Karyawan</span>
+				<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+					<span class="badge badge-primary" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-users mr-1"></i> Rekap Absensi Karyawan</span>
+					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '33'): ?>
+						<?php $pendingLr = isset($pending_luar_radius) ? (int)$pending_luar_radius : 0; ?>
+						<a href="<?= base_url('absensi/show/approval_luar_radius') ?>" class="btn btn-sm <?= $pendingLr > 0 ? 'btn-warning text-dark font-weight-bold' : 'btn-outline-secondary' ?> shadow-sm">
+							<i class="fas fa-map-marker-alt mr-1"></i> ACC Absen Luar Radius
+							<?php if ($pendingLr > 0): ?>
+								<span class="badge badge-danger ml-1"><?= $pendingLr ?> Menunggu</span>
+							<?php endif; ?>
+						</a>
+					<?php endif; ?>
 				</div>
 				<div class="table-actions d-flex align-items-center">
 					<button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white shadow-sm mr-2" style="font-weight: 600;" title="Buka Print Preview Absensi Foto Selfie & Lokasi GPS 1 Bulan">

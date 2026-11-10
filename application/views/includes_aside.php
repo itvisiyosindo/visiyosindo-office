@@ -130,6 +130,33 @@
 						</a>
 					</li>
 
+					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '33') { ?>
+						<?php
+						$ciSidebar =& get_instance();
+						$pendingLrHome = 0;
+						if (isset($ciSidebar->db) && $ciSidebar->db->field_exists('is_luar_radius', 'absensi')) {
+							$pendingLrHome = (int)$ciSidebar->db->from('absensi')
+								->where('perusahaan', grantAccessForPerusahaan())
+								->where('is_luar_radius', 1)
+								->where('acc_ga !=', 2)
+								->where('acc_yola !=', 2)
+								->group_start()->where('acc_ga', 0)->or_where('acc_yola', 0)->group_end()
+								->count_all_results();
+						}
+						?>
+						<li class="<?= $page_name == 'v_approval_luar_radius' ? 'nav-active' : '' ?>">
+							<a class="nav-link" href="<?= base_url('absensi/show/approval_luar_radius') ?>">
+								<i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+								<span>
+									ACC Luar Radius
+									<?php if ($pendingLrHome > 0): ?>
+										<span class="badge badge-danger ml-1"><?= $pendingLrHome ?></span>
+									<?php endif; ?>
+								</span>
+							</a>
+						</li>
+					<?php } ?>
+
 					<li class="<?= $page_name == 'voting/v_voting' ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('voting') ?>">
 							<i class="icons fas fa-poll" aria-hidden="true"></i>

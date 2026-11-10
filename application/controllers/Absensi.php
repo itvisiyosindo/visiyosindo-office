@@ -37,11 +37,13 @@ class Absensi extends CI_Controller
         //grantAccessFor(['Administrator', 'Hrd','Ga']);
         grantAccessFor('all');
 
-        $page_data['switch']          = "kepegawaian";
-        $page_data['list_nama']     = $this->md_laporan->getBywhereActive();
-        $page_data['page_name']     = 'v_absensi';
-        $page_data['page_title']    = 'Absensi';
-        $page_data['page_desc']     = 'List Data Absensi Karyawan';
+        $this->md_absensi->ensureLuarRadiusColumns();
+        $page_data['switch']              = "kepegawaian";
+        $page_data['list_nama']           = $this->md_laporan->getBywhereActive();
+        $page_data['pending_luar_radius'] = $this->md_absensi->countPendingLuarRadius();
+        $page_data['page_name']           = 'v_absensi';
+        $page_data['page_title']          = 'Absensi';
+        $page_data['page_desc']           = 'List Data Absensi Karyawan';
         $this->load->view('index', $page_data);
     }
 
@@ -691,12 +693,15 @@ class Absensi extends CI_Controller
             ajaxReturnDie('error', 'Saat ini berada di luar jadwal waktu absensi.');
         }
 
+        $this->md_absensi->ensureLuarRadiusColumns();
+
         $data['latitude'] = $this->input->post('latitude');
         $data['longitude'] = $this->input->post('longitude');
         $data['jenis_absen'] = 'Kantor';
         $data['jenis_lokasi'] = $this->input->post('jenis_lokasi') ?: 'Kantor';
         $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
 
+        $isLuarRadius = false;
         $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
         // Geofence radius validation untuk Absen Kantor jika bukan WFA
         if ($jenisLokasi !== 'WFA') {
@@ -727,8 +732,22 @@ class Absensi extends CI_Controller
                 if ($closestBranch !== null) {
                     $allowedRadius = !empty($closestBranch->radius) ? (int)$closestBranch->radius : 100;
                     if ($minDistance > $allowedRadius) {
-                        $distMeter = round($minDistance);
-                        ajaxReturnDie('error', "Anda berada di luar radius kantor cabang. Jarak terdekat ke {$closestBranch->nama_cabang} adalah {$distMeter} meter (Maksimal {$allowedRadius} meter).");
+                        $distMeter = (int)round($minDistance);
+                        $alasanLuarRadius = trim((string)$this->input->post('alasan_luar_radius', TRUE));
+                        if (mb_strlen($alasanLuarRadius) < 5) {
+                            ajaxReturnDie('error', "Anda berada di luar radius kantor cabang ({$closestBranch->nama_cabang}: {$distMeter}m / maks {$allowedRadius}m). Silakan isi alasan minimal 5 karakter untuk absen luar radius.");
+                        }
+
+                        $isLuarRadius               = true;
+                        $data['is_luar_radius']     = 1;
+                        $data['jarak_radius']       = $distMeter;
+                        $data['cabang_terdekat']    = $closestBranch->nama_cabang;
+                        $data['alasan_luar_radius'] = $alasanLuarRadius;
+                        $data['acc_ga']             = 0;
+                        $data['acc_yola']           = 0;
+                        $data['approval']           = NULL;
+                        $existingKet                = !empty($data['keterangan']) ? ($data['keterangan'] . ' | ') : '';
+                        $data['keterangan']         = $existingKet . "[Luar Radius {$closestBranch->nama_cabang} - {$distMeter}m] " . $alasanLuarRadius;
                     }
                 }
             }
@@ -758,8 +777,13 @@ class Absensi extends CI_Controller
             }
         }
         $this->md_absensi->add($data);
+        $insertedAbsenId = $this->db->insert_id();
 
-
+        if ($isLuarRadius) {
+            addLog('Absensi Luar Radius', 'Melakukan Absen ' . $data['type_absen'] . ' luar radius (' . $data['cabang_terdekat'] . ' ' . $data['jarak_radius'] . 'm). Alasan: ' . $data['alasan_luar_radius']);
+            $this->_notifWaLuarRadius($data, $insertedAbsenId);
+            ajaxReturnDie('success', 'Absen Luar Radius berhasil dikirim! Menunggu ACC General Affair & Bu Yola.', TRUE);
+        }
 
         addLog('Absensi', 'Melakukan Absen ' . $data['type_absen']);
         ajaxReturnDie('success', 'Absen Berhasil', TRUE);
@@ -1341,6 +1365,24 @@ class Absensi extends CI_Controller
             $page_data['page_title'] = 'Rekap Absensi';
             $page_data['page_desc'] = 'List Rekap Absensi';
             $this->load->view('index', $page_data);
+        } else if ($param == "approval_luar_radius") {
+            grantAccessFor('all');
+            $myId = (int)sessPenggunaId();
+            $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33;
+            if (!$canAccess) {
+                show_error('Akses ditolak. Halaman ini khusus General Affair, Bu Yola, HRD, dan Administrator.', 403);
+                return;
+            }
+
+            $this->md_absensi->ensureLuarRadiusColumns();
+            $page_data['switch']        = isKaryawan() ? $this->id_navbar() : 'kepegawaian';
+            $page_data['page_name']     = 'v_approval_luar_radius';
+            $page_data['page_title']    = 'ACC Absen Luar Radius';
+            $page_data['page_desc']     = 'Persetujuan Absensi Karyawan di Luar Radius Kantor (General Affair & Bu Yola)';
+            $page_data['can_acc_ga']    = isAdmin() || isGa() || $myId === 771;
+            $page_data['can_acc_yola']  = isAdmin() || $myId === 33;
+            $page_data['stats']         = $this->md_absensi->getLuarRadiusStats();
+            $this->load->view('index', $page_data);
         } else if ($param == "latlong") {
             grantAccessFor(['Administrator', 'Hrd', 'Karyawan', 'Ga']);
             if ($param2 == 'by_id') {
@@ -1419,7 +1461,25 @@ class Absensi extends CI_Controller
 
 
 
-            if (isAdmin() || isHrd() || isGa()) {
+            if (!empty($row->is_luar_radius)) {
+                $gaStatus = (int)($row->acc_ga ?? 0);
+                $yolaStatus = (int)($row->acc_yola ?? 0);
+                $gaBadge = $gaStatus === 1
+                    ? '<span class="badge badge-success">GA: ACC</span>'
+                    : ($gaStatus === 2 ? '<span class="badge badge-danger">GA: Tolak</span>' : '<span class="badge badge-warning text-dark">GA: Menunggu</span>');
+                $yolaBadge = $yolaStatus === 1
+                    ? '<span class="badge badge-success">Yola: ACC</span>'
+                    : ($yolaStatus === 2 ? '<span class="badge badge-danger">Yola: Tolak</span>' : '<span class="badge badge-warning text-dark">Yola: Menunggu</span>');
+
+                if ($row->approval == 'terima') {
+                    $finalBadge = '<span class="badge badge-success badge-pill">Diterima</span>';
+                } elseif ($row->approval == 'tolak') {
+                    $finalBadge = '<span class="badge badge-danger badge-pill">Ditolak</span>';
+                } else {
+                    $finalBadge = '<span class="badge badge-warning badge-pill text-dark">Menunggu ACC</span>';
+                }
+                $li_btn = '<div style="line-height:1.5;">' . $finalBadge . '<div class="mt-1">' . $gaBadge . ' ' . $yolaBadge . '</div></div>';
+            } else if (isAdmin() || isHrd() || isGa()) {
                 if ($row->approval) {
                     if ($row->approval == 'tolak') {
                         // Kalau ditolak → badge merah + tombol TERIMA
@@ -1499,7 +1559,7 @@ class Absensi extends CI_Controller
             $th[] = $row->type_absen == 'keluar' ? '' : ($row->file_pendukung == '' ? '' : $link_download);
             $th[] = $keterangan;
             $th[] = $row->ip_addr;
-            $th[] = ($row->type_absen == 'keluar' || $row->type_absen == 'istirahat') ? '' : ($row->type_absen == 'masuk' || $row->type_absen == 'izin' ? $li_btn : '');
+            $th[] = (!empty($row->is_luar_radius)) ? $li_btn : (($row->type_absen == 'keluar' || $row->type_absen == 'istirahat') ? '' : ($row->type_absen == 'masuk' || $row->type_absen == 'izin' ? $li_btn : ''));
             $th[] = isset($row->jenis_lokasi) && $row->jenis_lokasi ? $row->jenis_lokasi : '-';
             $th[] = $row->jenis_absen;
             if ($can_edit) {
@@ -2074,7 +2134,7 @@ class Absensi extends CI_Controller
             $perusahaan = grantAccessForPerusahaan();
 
             // 1. Batch query Absen Masuk untuk tanggal/filter terpilih
-            $this->db->select('id_absensi, pengguna_id, status_absen, jenis_absen, waktu_absen, approval, ip_addr, latitude, longitude, data_created');
+            $this->db->select('id_absensi, pengguna_id, status_absen, jenis_absen, waktu_absen, approval, ip_addr, latitude, longitude, data_created, is_luar_radius, jarak_radius, acc_ga, acc_yola');
             $this->db->where_in('pengguna_id', $userIds);
             $this->db->where('type_absen', 'masuk');
             $this->db->where('perusahaan', $perusahaan);
@@ -2205,7 +2265,19 @@ class Absensi extends CI_Controller
                     $status_absen = '-';
                 }
 
-                if ($data_absen[0]->approval == 'terima') {
+                if (!empty($data_absen[0]->is_luar_radius)) {
+                    $gaSt = (int)($data_absen[0]->acc_ga ?? 0);
+                    $yoSt = (int)($data_absen[0]->acc_yola ?? 0);
+                    $gaLbl = $gaSt === 1 ? 'GA:✔' : ($gaSt === 2 ? 'GA:✖' : 'GA:⏳');
+                    $yoLbl = $yoSt === 1 ? 'Yola:✔' : ($yoSt === 2 ? 'Yola:✖' : 'Yola:⏳');
+                    if ($data_absen[0]->approval == 'terima') {
+                        $apr = '<span class="badge badge-success badge-pill font-weight-bold">Diterima (Luar Radius)</span>';
+                    } else if ($data_absen[0]->approval == 'tolak') {
+                        $apr = '<span class="badge badge-danger badge-pill font-weight-bold">Ditolak (' . $gaLbl . ' | ' . $yoLbl . ')</span>';
+                    } else {
+                        $apr = '<span class="badge badge-warning badge-pill text-dark font-weight-bold">Menunggu ACC (' . $gaLbl . ' | ' . $yoLbl . ')</span>';
+                    }
+                } else if ($data_absen[0]->approval == 'terima') {
                     $apr = '<span class="badge badge-success badge-pill font-weight-bold">Diterima</span>';
                 } else if ($data_absen[0]->approval == 'tolak') {
                     $apr = '<span class="badge badge-danger badge-pill font-weight-bold">Ditolak</span>';
@@ -2332,5 +2404,218 @@ class Absensi extends CI_Controller
 
         addlog('Lengkapi Absensi Dimas', "Menambahkan $inserted data absensi siang/pulang Dimas Chandra Winata (dilewati $skipped karena sudah ada)");
         echo "Berhasil! Ditambahkan: $inserted data, Dilewati: $skipped data (sudah ada).";
+    }
+
+    /**
+     * Endpoint JSON daftar absensi luar radius untuk halaman ACC General Affair & Bu Yola.
+     */
+    public function luar_radius_data()
+    {
+        grantAccessFor('all');
+        $myId = (int)sessPenggunaId();
+        $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33;
+        if (!$canAccess) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.', 'data' => []]);
+            return;
+        }
+
+        $filterStatus = trim((string)$this->input->get('status', TRUE)) ?: 'pending';
+        $filterMonth  = trim((string)$this->input->get('month', TRUE));
+
+        $stats = $this->md_absensi->getLuarRadiusStats($filterMonth);
+        $rows  = $this->md_absensi->getLuarRadiusList($filterStatus, $filterMonth);
+
+        $data = [];
+        foreach ($rows as $r) {
+            $data[] = [
+                'id_absensi'         => (int)$r->id_absensi,
+                'id_encrypted'       => encrypt($r->id_absensi),
+                'pengguna_id'        => (int)$r->pengguna_id,
+                'pengguna_id_enc'    => encrypt($r->pengguna_id),
+                'nama'               => $r->nama ?: '-',
+                'jabatan'            => $r->jabatan ?: '-',
+                'divisi'             => $r->nama_divisi ?: '-',
+                'tanggal'            => !empty($r->data_created) ? date('d-m-Y', strtotime($r->data_created)) : '-',
+                'waktu_absen'        => $r->waktu_absen ?: '-',
+                'type_absen'         => $r->type_absen ?: '-',
+                'status_absen'       => $r->status_absen ?: '-',
+                'cabang_terdekat'    => $r->cabang_terdekat ?: '-',
+                'jarak_radius'       => $r->jarak_radius !== null ? (int)$r->jarak_radius : null,
+                'latitude'           => $r->latitude,
+                'longitude'          => $r->longitude,
+                'file_foto'          => $r->file_foto,
+                'alasan_luar_radius' => $r->alasan_luar_radius ?: '-',
+                'acc_ga'             => (int)$r->acc_ga,
+                'nama_acc_ga'        => $r->nama_acc_ga ?: '',
+                'acc_ga_at'          => !empty($r->acc_ga_at) ? date('d-m-Y H:i', strtotime($r->acc_ga_at)) : '',
+                'acc_yola'           => (int)$r->acc_yola,
+                'nama_acc_yola'      => $r->nama_acc_yola ?: '',
+                'acc_yola_at'        => !empty($r->acc_yola_at) ? date('d-m-Y H:i', strtotime($r->acc_yola_at)) : '',
+                'approval'           => $r->approval,
+            ];
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'stats'  => $stats,
+            'data'   => $data,
+        ]);
+    }
+
+    /**
+     * Endpoint AJAX untuk ACC / Tolak absensi luar radius oleh General Affair dan Bu Yola.
+     */
+    public function acc_luar_radius()
+    {
+        grantAccessFor('all');
+        $myId       = (int)sessPenggunaId();
+        $id_absensi = (int)$this->input->post('id_absensi', TRUE);
+        $role       = strtolower(trim((string)$this->input->post('role', TRUE)));
+        $decision   = (int)$this->input->post('decision', TRUE);
+
+        if ($id_absensi <= 0 || !in_array($role, ['ga', 'yola'], true) || !in_array($decision, [1, 2], true)) {
+            ajaxReturnDie('error', 'Parameter tidak valid.');
+        }
+
+        $canAccGa   = isAdmin() || isGa() || $myId === 771;
+        $canAccYola = isAdmin() || $myId === 33;
+
+        if ($role === 'ga' && !$canAccGa) {
+            ajaxReturnDie('error', 'Hanya General Affair (GA) atau Administrator yang dapat melakukan ACC GA.');
+        }
+        if ($role === 'yola' && !$canAccYola) {
+            ajaxReturnDie('error', 'Hanya Bu Yola atau Administrator yang dapat melakukan ACC Bu Yola.');
+        }
+
+        $res = $this->md_absensi->processLuarRadiusApproval($id_absensi, $role, $decision, $myId);
+        if (!$res) {
+            ajaxReturnDie('error', 'Data absensi tidak ditemukan.');
+        }
+
+        $row      = $res['row'];
+        $emp      = $this->md_pengguna->getById($row->pengguna_id);
+        $empName  = !empty($emp) ? $emp[0]->nama : 'Karyawan ID ' . $row->pengguna_id;
+        $roleLbl  = $role === 'ga' ? 'General Affair' : 'Bu Yola';
+        $aksiLbl  = $decision === 1 ? 'Menyetujui (ACC)' : 'Menolak';
+
+        addLog('ACC Absen Luar Radius', "{$aksiLbl} ({$roleLbl}) absensi {$row->type_absen} luar radius milik {$empName} (ID Absensi: {$id_absensi})");
+
+        if ($res['approval'] === 'terima' || $res['approval'] === 'tolak') {
+            $this->_notifWaLuarRadiusResult($row, $emp, $res['approval'], $roleLbl);
+        }
+
+        $msgStatus = $decision === 1 ? 'disetujui' : 'ditolak';
+        $extra = '';
+        if ($res['approval'] === 'terima') {
+            $extra = ' Status absensi kini resmi Diterima (GA & Bu Yola sudah ACC).';
+        } elseif ($res['approval'] === 'tolak') {
+            $extra = ' Status absensi kini Ditolak.';
+        } else {
+            $waiting = ($res['acc_ga'] === 0) ? 'General Affair' : 'Bu Yola';
+            $extra = " Masih menunggu ACC {$waiting}.";
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'msg'    => "ACC {$roleLbl} berhasil {$msgStatus}." . $extra,
+            'result' => [
+                'acc_ga'   => $res['acc_ga'],
+                'acc_yola' => $res['acc_yola'],
+                'approval' => $res['approval'],
+            ],
+        ]);
+    }
+
+    /**
+     * Kirim notifikasi WhatsApp ke General Affair & Bu Yola saat ada karyawan absen luar radius.
+     */
+    private function _notifWaLuarRadius($dataAbsen, $idAbsensi = 0)
+    {
+        try {
+            $emp = $this->md_pengguna->getById($dataAbsen['pengguna_id']);
+            if (empty($emp)) {
+                return;
+            }
+            $empName    = $emp[0]->nama;
+            $empJabatan = !empty($emp[0]->jabatan) ? $emp[0]->jabatan : '-';
+            $tgl        = date('d-m-Y');
+            $jam        = $dataAbsen['waktu_absen'] ?? date('H:i:s');
+            $tipe       = ucfirst((string)($dataAbsen['type_absen'] ?? 'Absen'));
+            $status     = !empty($dataAbsen['status_absen']) ? ucwords(str_replace('_', ' ', $dataAbsen['status_absen'])) : '-';
+            $cabang     = $dataAbsen['cabang_terdekat'] ?? '-';
+            $jarak      = isset($dataAbsen['jarak_radius']) ? $dataAbsen['jarak_radius'] . ' meter' : '-';
+            $alasan     = $dataAbsen['alasan_luar_radius'] ?? '-';
+            $lat        = $dataAbsen['latitude'] ?? '';
+            $lng        = $dataAbsen['longitude'] ?? '';
+            $mapsUrl    = ($lat !== '' && $lng !== '') ? "https://www.google.com/maps?q={$lat},{$lng}" : '-';
+            $accUrl     = 'https://office.visiyosindo.id/absensi/show/approval_luar_radius';
+
+            // Ambil kontak GA (771 Novemby, 58 General Affair) dan Bu Yola (33 Yolanda Pratiwi)
+            $targets = $this->db->select('pengguna_id, nama, no_hp')
+                ->from('pengguna')
+                ->where_in('pengguna_id', [771, 58, 33])
+                ->where('is_active', 1)
+                ->get()
+                ->result();
+
+            $sentNumbers = [];
+            foreach ($targets as $t) {
+                $noHp = trim((string)$t->no_hp);
+                if (empty($noHp) || isset($sentNumbers[$noHp])) {
+                    continue;
+                }
+                $sentNumbers[$noHp] = true;
+
+                $pesan = "*Notifikasi Absen Luar Radius (Menunggu ACC)*%0A%0A"
+                    . "Yth. *{$t->nama}*,%0A"
+                    . "Terdapat pengajuan absensi dari luar radius kantor:%0A%0A"
+                    . "• *Karyawan:* {$empName} ({$empJabatan})%0A"
+                    . "• *Tanggal / Jam:* {$tgl} | {$jam} WIB%0A"
+                    . "• *Tipe / Status:* {$tipe} ({$status})%0A"
+                    . "• *Jarak dari {$cabang}:* {$jarak}%0A"
+                    . "• *Alasan:* {$alasan}%0A"
+                    . "• *Titik Maps:* {$mapsUrl}%0A%0A"
+                    . "Silakan lakukan ACC (GA & Bu Yola) pada link berikut:%0A{$accUrl}";
+
+                sendWa([
+                    'devId'    => hostWa('3'),
+                    'penerima' => $noHp,
+                    'pesan'    => $pesan,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Jangan gagalkan penyimpanan absen jika pengiriman WA gagal
+        }
+    }
+
+    /**
+     * Kirim notifikasi WhatsApp hasil akhir ACC absen luar radius ke karyawan bersangkutan.
+     */
+    private function _notifWaLuarRadiusResult($row, $emp, $finalApproval, $lastActor)
+    {
+        try {
+            if (empty($emp) || empty($emp[0]->no_hp)) {
+                return;
+            }
+            $empName = $emp[0]->nama;
+            $noHp    = trim((string)$emp[0]->no_hp);
+            $tgl     = !empty($row->data_created) ? date('d-m-Y', strtotime($row->data_created)) : '-';
+            $jam     = $row->waktu_absen ?: '-';
+            $tipe    = ucfirst((string)$row->type_absen);
+            $statusLbl = $finalApproval === 'terima' ? 'DISETUJUI (ACC Lengkap GA & Bu Yola)' : "DITOLAK (oleh {$lastActor})";
+
+            $pesan = "*Informasi Status Absen Luar Radius*%0A%0A"
+                . "Halo *{$empName}*,%0A"
+                . "Pengajuan absensi luar radius Anda pada tanggal *{$tgl} ({$jam} WIB)* untuk Absen *{$tipe}* telah *{$statusLbl}*.%0A%0A"
+                . "Terima kasih.";
+
+            sendWa([
+                'devId'    => hostWa('3'),
+                'penerima' => $noHp,
+                'pesan'    => $pesan,
+            ]);
+        } catch (\Throwable $e) {
+            // Abaikan error WA
+        }
     }
 }
