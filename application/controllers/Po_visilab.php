@@ -129,9 +129,7 @@ class Po_visilab extends CI_Controller
             $data['kota_pengajuan']	= $this->input->post('kota_aju', TRUE);
             $data['tgl_pengajuan']	= date_db_format($this->input->post('pengajuan', TRUE));
             $data['status']       	= 0;
-            if ($data['id_pengaju'] == 751) {
-                $data['ttd_gm'] = 1;
-            }
+            $data['ttd_gm'] = 1;
             $this->md_po_visilab->addPO($data);
 
 
@@ -159,28 +157,15 @@ class Po_visilab extends CI_Controller
             
 
               //send notif wa po
-              if ($data['id_pengaju'] == 751) {
-                  $dataWa = [
-                    'id'            => $lastGcId,
-                    'idPenerima1' 	=> 75,
-                    'idPenerima2' 	=> '',
-                    'namaSurat' 	=> 'Permintaan PO Aset Visilab',
-                    'penerima' 	    => '_Head of Visilab (Mrs. Mega Ratu)_',
-                    'suplier' 	    => $dataDetailGc['supplier'],
-                    'kode' 	        => $kodeFpp
-                  ];
-              } else {
-                  $dataWa = [
-                    'id'            => $lastGcId,
-                    'idPenerima1' 	=> 751,
-                    'idPenerima2' 	=> '',
-                    'namaSurat' 	=> 'Permintaan PO Aset Visilab',
-                    'penerima' 	    => '_Intan Kurnia_',
-                    'suplier' 	    => $dataDetailGc['supplier'],
-                    'kode' 	        => $kodeFpp
-                  ];
-              }
-          
+              $dataWa = [
+                'id'            => $lastGcId,
+                'idPenerima1' 	=> 75,
+                'idPenerima2' 	=> '',
+                'namaSurat' 	=> 'Permintaan PO Aset Visilab',
+                'penerima' 	    => '_Head of Visilab (Mrs. Mega Ratu)_',
+                'suplier' 	    => $dataDetailGc['supplier'],
+                'kode' 	        => $kodeFpp
+              ];
               $this->notifWaAddSurat(1, $dataWa);
 
 
@@ -335,8 +320,6 @@ class Po_visilab extends CI_Controller
           $this->md_po_visilab->updatePO($id_sp, $data);
 
           $ambilDataPo = $this->md_po_visilab->getNotifPoId($id_sp);
-          $is_pengaju_mutu = (isset($ambilDataPo[0]) && $ambilDataPo[0]->idPengaju == 751);
-
           //send notif wa to Staff Accounting (ID 714)
           $dataWa = [
             'id' 	          => $id_sp,
@@ -345,11 +328,11 @@ class Po_visilab extends CI_Controller
             'namaSurat' 	=> 'Permintaan PO Aset Visilab',
             'penerima' 	    => '_Staff Accounting_',
             'proses' 	    => 'Masukkan No dan Link PO pada',
-            'ttd_sebelum1' 	=> $is_pengaju_mutu ? 'Head of Visilab' : 'Manager Mutu',
-            'ttd_sebelum2' 	=> $is_pengaju_mutu ? 'Head of Accounting and Tax' : 'Head of Visilab',
-            'ttd_sebelum3' 	=> $is_pengaju_mutu ? 'Director of Corporate Planning & Business Management' : 'Head of Accounting and Tax',
-            'ttd_sebelum4' 	=> $is_pengaju_mutu ? 'Director' : 'Director of Corporate Planning & Business Management',
-            'ttd_sebelum5' 	=> $is_pengaju_mutu ? '' : 'Director'
+            'ttd_sebelum1' 	=> 'Head of Visilab',
+            'ttd_sebelum2' 	=> 'Head of Accounting and Tax',
+            'ttd_sebelum3' 	=> 'Director of Corporate Planning & Business Management',
+            'ttd_sebelum4' 	=> 'Director',
+            'ttd_sebelum5' 	=> ''
           ];
         
           $this->notifWaAprovPb(1, 1, $dataWa);

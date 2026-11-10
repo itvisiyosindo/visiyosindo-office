@@ -209,17 +209,14 @@
                         </table>
                         <br>
                         <?php
-                        $is_pengaju_mutu = ($data_po[0]->idPengaju == '751');
                         $img_path     = "uploads/file_karyawan/ttd/";
                         $ttdaju        = $img_path . "ttd_" . $data_po[0]->idPengaju . ".png";
                         $ttd1         = ($data_po[0]->ttd_1 == '1') ? $img_path . "ttd_75.png" : (($data_po[0]->ttd_1 == '2') ? $img_path . "ttd_not.png" : $img_path . "ttd_notyet2.png");
                         $ttd2         = ($data_po[0]->ttd_2 == '1') ? $img_path . "ttd_107.png" : (($data_po[0]->ttd_2 == '2') ? $img_path . "ttd_not.png" : $img_path . "ttd_notyet2.png");
                         $ttd3         = ($data_po[0]->ttd_3 == '1') ? $img_path . "ttd_23.png" : (($data_po[0]->ttd_3 == '2') ? $img_path . "ttd_not.png" : $img_path . "ttd_notyet2.png");
                         $ttd4         = ($data_po[0]->ttd_4 == '1') ? $img_path . "ttd_54.png" : (($data_po[0]->ttd_4 == '2') ? $img_path . "ttd_not.png" : $img_path . "ttd_notyet2.png");
-                        $ttdgm         = ($data_po[0]->ttd_gm == '1') ? $img_path . "ttd_751.png" : (($data_po[0]->ttd_gm == '2') ? $img_path . "ttd_not.png" : $img_path . "ttd_notyet2.png");
                         ?>
 
-                        <?php if ($is_pengaju_mutu) { ?>
                         <table border="0" style="width:100%; font-family:Times New Roman; color:black; font-size:15px;">
                             <tbody>
                                 <tr style="height: 35px;">
@@ -269,63 +266,6 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <?php } else { ?>
-                        <table border="0" style="width:100%; font-family:Times New Roman; color:black; font-size:15px;">
-                            <tbody>
-                                <tr style="height: 35px;">
-                                    <td style="width:100%; height:35px; text-align:right; vertical-align:top;" colspan="11">
-                                        <?= $data_po[0]->kota_pengajuan ?>, <?= $tgl_pengajuan ?>
-                                    </td>
-                                </tr>
-                                <tr style="height: 18px;">
-                                    <td style="text-align:center; width:15%;">Diajukan Oleh,</td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:49%;" colspan="5">Diverifikasi Oleh,</td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:32%;" colspan="3">Disetujui Oleh,</td>
-                                </tr>
-                                <tr style="height:60px;">
-                                    <td style="text-align:center; width:15%;"><?php echo '<img src="' . $ttdaju . '" height="70">'; ?></td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:15%;"><?php echo '<img src="' . $ttdgm . '" height="70">'; ?></td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:15%;"><?php echo '<img src="' . $ttd1 . '" height="70">'; ?></td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:15%;"><?php echo '<img src="' . $ttd2 . '" height="70">'; ?></td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:15%;"><?php echo '<img src="' . $ttd3 . '" height="70">'; ?></td>
-                                    <td style="width:2%;"></td>
-                                    <td style="text-align:center; width:15%;"><?php echo '<img src="' . $ttd4 . '" height="70">'; ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="text-align:center;"><?= $data_po[0]->nama_ttd ?><hr></hr></td>
-                                    <td></td>
-                                    <td style="text-align:center;">Intan Kurnia<hr></hr></td>
-                                    <td></td>
-                                    <td style="text-align:center;">Mega Ratu<hr></hr></td>
-                                    <td></td>
-                                    <td style="text-align:center;">Dirangga Madali<hr></hr></td>
-                                    <td></td>
-                                    <td style="text-align:center;">Meilina Safitri<hr></hr></td>
-                                    <td></td>
-                                    <td style="text-align:center;">Bob Ariyos<hr></hr></td>
-                                </tr>
-                                <tr>
-                                    <td style="text-align:center; vertical-align:top;"><i><?= $data_po[0]->jabatan_visilab ?: $data_po[0]->jabatan ?></i></td>
-                                    <td></td>
-                                    <td style="text-align:center; vertical-align:top;"><i>Manager Mutu</i></td>
-                                    <td></td>
-                                    <td style="text-align:center; vertical-align:top;"><i>Head of Visilab</i></td>
-                                    <td></td>
-                                    <td style="text-align:center; vertical-align:top;"><i>Head of Accounting and Tax</i></td>
-                                    <td></td>
-                                    <td style="text-align:center; vertical-align:top;"><i>Director of Corporate Planning & Business Management</i></td>
-                                    <td></td>
-                                    <td style="text-align:center; vertical-align:top;"><i>Director</i></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <?php } ?>
 
                     </div>
                 </section>
