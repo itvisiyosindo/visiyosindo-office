@@ -53,6 +53,13 @@
 						</ul>
 					</li>
 
+					<li class="<?= in_array($page_name, ['visilab/v_perizinan_alat', 'visilab/v_detail_perizinan_alat']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('perizinan_visilab') ?>">
+							<i class="fas fa-file-contract" aria-hidden="true"></i>
+							<span>Perizinan Alat</span>
+						</a>
+					</li>
+
 					<li class="<?= in_array($page_name, ['visilab/v_jadwal_list']) ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('visilab_jadwal') ?>">
 							<i class="fas fa-calendar-week" aria-hidden="true"></i>
