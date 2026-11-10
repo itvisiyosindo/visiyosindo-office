@@ -1179,7 +1179,7 @@ $namaBulanList = [
                                             <div style="font-weight: 700; color: #1e293b;"><?= htmlspecialchars($row->judul) ?></div>
                                             <?php if (!empty($row->nama_jobdesk)): ?>
                                                 <div class="mt-1">
-                                                    <span class="badge badge-success px-2 py-1" style="font-size: 11px;">
+                                                    <span class="badge badge-success px-2 py-1" style="font-size: 11px; white-space: normal; text-align: left; line-height: 1.4; display: inline-block; max-width: 100%; word-break: break-word;">
                                                         <i class="fas fa-bullseye mr-1"></i> <?= htmlspecialchars($row->nama_jobdesk) ?>
                                                     </span>
                                                 </div>
@@ -1740,12 +1740,12 @@ $namaBulanList = [
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" style="min-width: 0; flex: 1;">
                     <div style="width: 42px; height: 42px; border-radius: 10px; background: #eff6ff; border: 1.5px solid #bfdbfe; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #2563eb; flex-shrink: 0; margin-right: 14px;">
                         <i class="fas fa-clipboard-list"></i>
                     </div>
-                    <div>
-                        <h5 class="modal-title font-weight-bold mb-0" style="color: #0f172a; font-size: 17px; letter-spacing: -0.2px;">
+                    <div style="min-width: 0;">
+                        <h5 class="modal-title font-weight-bold mb-0" style="color: #0f172a; font-size: 17px; letter-spacing: -0.2px; word-break: break-word;">
                             Detail Task: <span id="dt_kode_task" class="text-primary">-</span>
                         </h5>
                         <small class="text-muted d-block" style="font-size: 12px; margin-top: 2px;">
@@ -1753,30 +1753,32 @@ $namaBulanList = [
                         </small>
                     </div>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #64748b; font-size: 26px; font-weight: 300; opacity: 0.7; transition: opacity 0.2s; outline: none; margin-top: -6px;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #64748b; font-size: 26px; font-weight: 300; opacity: 0.7; transition: opacity 0.2s; outline: none; margin-top: -6px; flex-shrink: 0;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
             <div class="modal-body">
                 <!-- INFO RINGKAS TASK -->
-                <div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap">
-                        <div>
-                            <span class="badge badge-info" id="dt_nama_proyek">Proyek</span>
-                            <span class="badge badge-secondary" id="dt_jenis">Jenis</span>
-                            <span id="dt_prioritas_badge"></span>
-                            <span id="dt_jobdesk_badge" style="display:none;"></span>
-                            <h4 class="font-weight-bold mt-2 mb-1" id="dt_judul" style="color:#0f172a;">-</h4>
+                <div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; overflow-wrap: break-word; word-break: break-word;">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 12px;">
+                        <div style="flex: 1 1 300px; min-width: 0;">
+                            <div class="d-flex flex-wrap align-items-center" style="gap: 6px;">
+                                <span class="badge badge-info" id="dt_nama_proyek" style="white-space: normal; text-align: left;">Proyek</span>
+                                <span class="badge badge-secondary" id="dt_jenis">Jenis</span>
+                                <span id="dt_prioritas_badge"></span>
+                            </div>
+                            <div id="dt_jobdesk_badge" style="display:none;"></div>
+                            <h4 class="font-weight-bold mt-2 mb-1" id="dt_judul" style="color:#0f172a; white-space: normal; word-break: break-word; overflow-wrap: anywhere; line-height: 1.35; font-size: 18px;">-</h4>
                         </div>
-                        <div class="text-right">
+                        <div class="text-md-right" style="flex-shrink: 0;">
                             <div id="dt_status_badge"></div>
                             <div class="small text-muted mt-1">Deadline: <strong id="dt_deadline">-</strong></div>
                         </div>
                     </div>
                     <hr class="my-2">
                     <div class="row small">
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-1 mb-md-0">
                             <strong>Pemberi Tugas / Pengaju:</strong> <span id="dt_pemberi">-</span>
                         </div>
                         <div class="col-md-6">
@@ -1784,7 +1786,7 @@ $namaBulanList = [
                         </div>
                     </div>
                     <div class="row small mt-1">
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-1 mb-md-0">
                             <strong><i class="fas fa-eye text-primary mr-1"></i> Mengetahui:</strong> <span id="dt_mengetahui">-</span>
                         </div>
                         <div class="col-md-6">
@@ -1793,7 +1795,7 @@ $namaBulanList = [
                     </div>
                     <div class="mt-2">
                         <strong class="small text-uppercase text-muted">Instruksi / Deskripsi Pekerjaan:</strong>
-                        <div id="dt_deskripsi" class="p-2 mt-1 rounded bg-white border" style="white-space: pre-line; font-size: 13px;">-</div>
+                        <div id="dt_deskripsi" class="p-2 mt-1 rounded bg-white border" style="white-space: pre-line; word-break: break-word; overflow-wrap: anywhere; font-size: 13px;">-</div>
                     </div>
                     <div id="dt_lampiran_atasan_wrap" class="mt-2" style="display:none;">
                         <a href="#" id="dt_lampiran_atasan_link" target="_blank" class="btn btn-xs btn-outline-primary">
@@ -2487,7 +2489,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#dt_jenis').text(t.jenis || 'Task Harian');
                 $('#dt_prioritas_badge').html('<span class="tp-priority-badge tp-prio-' + t.prioritas + '">' + t.prioritas + '</span>');
                 if (t.nama_jobdesk) {
-                    $('#dt_jobdesk_badge').html('<span class="badge badge-success px-2 py-1 ml-1" style="font-size:11.5px;"><i class="fas fa-bullseye mr-1"></i> Jobdesk: ' + $('<div>').text(t.nama_jobdesk).html() + '</span>').show();
+                    $('#dt_jobdesk_badge').html('<div class="d-flex align-items-start mt-2 px-2 py-1 rounded" style="background:#dcfce7; border:1px solid #86efac; color:#166534; font-size:12px; font-weight:600; line-height:1.45; white-space:normal; word-break:break-word; max-width:100%;"><i class="fas fa-bullseye mr-2 mt-1 flex-shrink-0"></i><span><strong>Jobdesk:</strong> ' + $('<div>').text(t.nama_jobdesk).html() + '</span></div>').show();
                 } else {
                     $('#dt_jobdesk_badge').hide().empty();
                 }
