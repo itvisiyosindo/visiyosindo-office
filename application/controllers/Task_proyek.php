@@ -1143,16 +1143,16 @@ class Task_proyek extends CI_Controller
                         foreach ($hrdRecipients as $hrd) {
                             $noHpHrd = (!empty($hrd->no_hp)) ? $hrd->no_hp : ((!empty($hrd->nohp)) ? $hrd->nohp : '');
                             if (!empty($noHpHrd) && function_exists('sendWa')) {
-                                $pesanHrd = "ðŸ“¢ *PENGAJUAN TASK MANDIRI KARYAWAN (MENUNGGU ACC HRD)*" .
+                                $pesanHrd = "[PENGAJUAN TASK MANDIRI] *MENUNGGU ACC HRD*" .
                                     "%0A%0AHalo *" . $hrd->nama . "*," .
                                     "%0AKaryawan *" . $namaPembuat . "* mengajukan task mandiri baru yang membutuhkan persetujuan (ACC) HRD sebelum mulai pengerjaan:" .
-                                    "%0A%0AðŸ“Œ *Kode*: " . $kode_task .
-                                    "%0AðŸ“‹ *Judul*: " . $judul .
-                                    "%0AðŸŽ¯ *Proyek*: " . ($nama_proyek ?: 'Umum') .
-                                    "%0Aâš¡ *Prioritas*: " . $prioritas .
-                                    "%0AðŸ“… *Target Selesai*: " . date('d-m-Y', strtotime($tgl_deadline)) .
+                                    "%0A%0A- *Kode*: " . $kode_task .
+                                    "%0A- *Judul*: " . $judul .
+                                    "%0A- *Proyek*: " . ($nama_proyek ?: 'Umum') .
+                                    "%0A- *Prioritas*: " . $prioritas .
+                                    "%0A- *Target Selesai*: " . date('d-m-Y', strtotime($tgl_deadline)) .
                                     ($nama_jobdesk ? "%0AðŸŽ¯ *Jobdesk Sasaran Mutu*: " . $nama_jobdesk : "") .
-                                    ($namaMengetahui ? "%0AðŸ‘ï¸ *Mengetahui*: " . $namaMengetahui : "") .
+                                    ($namaMengetahui ? "%0A- *Mengetahui*: " . $namaMengetahui : "") .
                                     "%0A%0ASilakan tinjau & klik *ACC* di sistem Office:%0Ahttps://office.visiyosindo.id/task_proyek";
                                 @sendWa([
                                     'devId'    => hostWa('2'),
@@ -1169,7 +1169,7 @@ class Task_proyek extends CI_Controller
                             $pembuatUser = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
                             $noHpPembuat = ($pembuatUser && !empty($pembuatUser->no_hp)) ? $pembuatUser->no_hp : (($pembuatUser && !empty($pembuatUser->nohp)) ? $pembuatUser->nohp : '');
                             if (!empty($noHpPembuat) && function_exists('sendWa')) {
-                                $pesanKaryawan = "â³ *PENGAJUAN TASK MANDIRI BERHASIL DIAJUKAN*" .
+                                $pesanKaryawan = "[BERHASIL DIAJUKAN] *PENGAJUAN TASK MANDIRI*" .
                                     "%0A%0AHalo *" . $namaPembuat . "*," .
                                     "%0APengajuan task Anda (*" . $kode_task . " - " . $judul . "*) telah berhasil masuk ke sistem dan saat ini *Menunggu Persetujuan (ACC) HRD*." .
                                     "%0A%0AAnda akan menerima notifikasi kembali setelah disetujui (ACC) oleh HRD untuk dapat mulai mengerjakan.%0Ahttps://office.visiyosindo.id/task_proyek";
@@ -1190,15 +1190,15 @@ class Task_proyek extends CI_Controller
                             $bawahan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $id_penerima)->get()->row();
                             $noHp = ($bawahan && !empty($bawahan->no_hp)) ? $bawahan->no_hp : (($bawahan && !empty($bawahan->nohp)) ? $bawahan->nohp : '');
                             if (!empty($noHp) && function_exists('sendWa')) {
-                                $pesanWa = "ðŸ“Œ *PENUGASAN TASK / PROYEK BARU*" .
+                                $pesanWa = "[TUGAS BARU] *PENUGASAN TASK / PROYEK*" .
                                     "%0A%0AHalo *" . $bawahan->nama . "*," .
                                     "%0AAnda menerima penugasan baru dari *" . $namaPembuat . "*:" .
-                                    "%0A%0AðŸ“Œ *Kode*: " . $kode_task .
-                                    "%0AðŸ“‹ *Judul*: " . $judul .
-                                    "%0AðŸŽ¯ *Proyek*: " . ($nama_proyek ?: 'Umum') .
-                                    "%0Aâš¡ *Prioritas*: " . $prioritas .
-                                    "%0AðŸ“… *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
-                                    ($namaMengetahui ? "%0AðŸ‘ï¸ *Mengetahui*: " . $namaMengetahui : "") .
+                                    "%0A%0A- *Kode*: " . $kode_task .
+                                    "%0A- *Judul*: " . $judul .
+                                    "%0A- *Proyek*: " . ($nama_proyek ?: 'Umum') .
+                                    "%0A- *Prioritas*: " . $prioritas .
+                                    "%0A- *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
+                                    ($namaMengetahui ? "%0A- *Mengetahui*: " . $namaMengetahui : "") .
                                     "%0A%0ASilakan buka menu *Task & Proyek Kerja* di https://office.visiyosindo.id/task_proyek untuk mulai mengerjakan.";
                                 @sendWa([
                                     'devId'    => hostWa('2'),
@@ -1213,14 +1213,14 @@ class Task_proyek extends CI_Controller
                             try {
                                 $noHpMengetahui = (!empty($mengetahuiUser->no_hp)) ? $mengetahuiUser->no_hp : ((!empty($mengetahuiUser->nohp)) ? $mengetahuiUser->nohp : '');
                                 if (!empty($noHpMengetahui) && function_exists('sendWa')) {
-                                    $pesanTahu = "ðŸ‘ï¸ *INFORMASI PENUGASAN TASK (MENGETAHUI)*" .
+                                    $pesanTahu = "[INFO MENGETAHUI] *INFORMASI PENUGASAN TASK*" .
                                         "%0A%0AHalo *" . $mengetahuiUser->nama . "*," .
                                         "%0ASebagai pihak yang mengetahui, *" . $namaPembuat . "* telah menugaskan task kepada *" . ($bawahan ? $bawahan->nama : 'Karyawan') . "*:" .
-                                        "%0A%0AðŸ“Œ *Kode*: " . $kode_task .
-                                        "%0AðŸ“‹ *Judul*: " . $judul .
-                                        "%0AðŸŽ¯ *Proyek*: " . ($nama_proyek ?: 'Umum') .
-                                        "%0Aâš¡ *Prioritas*: " . $prioritas .
-                                        "%0AðŸ“… *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
+                                        "%0A%0A- *Kode*: " . $kode_task .
+                                        "%0A- *Judul*: " . $judul .
+                                        "%0A- *Proyek*: " . ($nama_proyek ?: 'Umum') .
+                                        "%0A- *Prioritas*: " . $prioritas .
+                                        "%0A- *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
                                         "%0A%0APemantauan tugas: https://office.visiyosindo.id/task_proyek";
                                     @sendWa([
                                         'devId'    => hostWa('2'),
@@ -1508,13 +1508,13 @@ class Task_proyek extends CI_Controller
             $bawahan = $this->db->select('nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
             $noHpAtasan = ($atasan && !empty($atasan->no_hp)) ? $atasan->no_hp : (($atasan && !empty($atasan->nohp)) ? $atasan->nohp : '');
             if (!empty($noHpAtasan) && function_exists('sendWa')) {
-                $pesanWa = "*✅ LAPORAN PENYELESAIAN TASK (MENUNGGU RATING ⭐)*" .
+                $pesanWa = "[TASK SELESAI] *MENUNGGU PENILAIAN RATING ATASAN*" .
                     "%0A%0AHalo *" . $atasan->nama . "*," .
                     "%0AKaryawan (*" . ($bawahan ? $bawahan->nama : 'Karyawan') . "*) telah menyelesaikan Task:" .
-                    "%0A%0A🔹 *Kode*: " . $task->kode_task .
-                    "%0A📌 *Judul*: " . $task->judul .
-                    "%0A📝 *Hasil*: " . $catatan_bawahan .
-                    ($bukti_selesai ? "%0A📎 *Bukti*: " . $bukti_selesai : "") .
+                    "%0A%0A- *Kode*: " . $task->kode_task .
+                    "%0A- *Judul*: " . $task->judul .
+                    "%0A- *Hasil*: " . $catatan_bawahan .
+                    ($bukti_selesai ? "%0A- *Bukti*: " . $bukti_selesai : "") .
                     "%0A%0ASilakan berikan *Penilaian Rating Bintang (1-5 ⭐)* di https://office.visiyosindo.id/task_proyek";
                 @sendWa([
                     'devId'    => hostWa('2'),
@@ -1610,10 +1610,10 @@ class Task_proyek extends CI_Controller
                 $bawahan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
                 $noHp = ($bawahan && !empty($bawahan->no_hp)) ? $bawahan->no_hp : (($bawahan && !empty($bawahan->nohp)) ? $bawahan->nohp : '');
                 if (!empty($noHp) && function_exists('sendWa')) {
-                    $pesanWa = "*🔄 PERMINTAAN REVISI TASK*" .
+                    $pesanWa = "[PERMINTAAN REVISI] *TASK PERLU DIPERBAIKI*" .
                         "%0A%0AHalo *" . $bawahan->nama . "*," .
                         "%0ATask Anda (*" . $task->kode_task . " - " . $task->judul . "*) membutuhkan revisi dari Atasan:" .
-                        "%0A%0A📌 *Catatan Revisi*: " . $ulasan_atasan .
+                        "%0A%0A- *Catatan Revisi*: " . $ulasan_atasan .
                         "%0A%0ASilakan perbaiki dan submit kembali di https://office.visiyosindo.id/task_proyek";
                     @sendWa([
                         'devId'    => hostWa('2'),
@@ -1669,12 +1669,12 @@ class Task_proyek extends CI_Controller
             $bawahan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
             $noHp = ($bawahan && !empty($bawahan->no_hp)) ? $bawahan->no_hp : (($bawahan && !empty($bawahan->nohp)) ? $bawahan->nohp : '');
             if (!empty($noHp) && function_exists('sendWa')) {
-                $pesanWa = "*🌟 PENILAIAN TASK SELESAI (" . $starText . ")*" .
+                $pesanWa = "[TASK SELESAI & DINILAI] *HASIL REVIEW ATASAN*" .
                     "%0A%0ASelamat *" . $bawahan->nama . "*!" .
                     "%0ATask Anda telah disetujui dan dinilai oleh Atasan:" .
-                    "%0A%0A🔹 *Kode*: " . $task->kode_task .
-                    "%0A📌 *Judul*: " . $task->judul .
-                    "%0A⭐ *Rating*: " . $starText .
+                    "%0A%0A- *Kode*: " . $task->kode_task .
+                    "%0A- *Judul*: " . $task->judul .
+                    "%0A- *Rating*: " . $starText .
                     "%0A💬 *Ulasan Atasan*: " . ($ulasan_atasan ?: 'Pekerjaan selesai dengan baik.') .
                     "%0A%0ATerima kasih atas kontribusi terbaik Anda!";
                 @sendWa([
@@ -1947,14 +1947,14 @@ class Task_proyek extends CI_Controller
             $karyawan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
             $noHpKaryawan = ($karyawan && !empty($karyawan->no_hp)) ? $karyawan->no_hp : (($karyawan && !empty($karyawan->nohp)) ? $karyawan->nohp : '');
             if (!empty($noHpKaryawan) && function_exists('sendWa')) {
-                $pesanWa = "âœ… *PENGAJUAN TASK MANDIRI TELAH DI-ACC HRD*" .
+                $pesanWa = "[DISETUJUI] *PENGAJUAN TASK MANDIRI TELAH DI-ACC HRD*" .
                     "%0A%0AHalo *" . $karyawan->nama . "*," .
                     "%0APengajuan task mandiri Anda telah *DISETUJUI (ACC)* oleh HRD (*" . $namaHrd . "*):" .
-                    "%0A%0AðŸ“Œ *Kode*: " . $task->kode_task .
-                    "%0AðŸ“‹ *Judul*: " . $task->judul .
-                    "%0AðŸŽ¯ *Proyek*: " . ($task->nama_proyek ?: 'Umum') .
-                    "%0Aâš¡ *Prioritas*: " . $task->prioritas .
-                    "%0AðŸ“… *Deadline*: " . (!empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-') .
+                    "%0A%0A- *Kode*: " . $task->kode_task .
+                    "%0A- *Judul*: " . $task->judul .
+                    "%0A- *Proyek*: " . ($task->nama_proyek ?: 'Umum') .
+                    "%0A- *Prioritas*: " . $task->prioritas .
+                    "%0A- *Deadline*: " . (!empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-') .
                     "%0A%0AAnda sekarang dapat mulai mencentang checklist & memperbarui progres pekerjaan di https://office.visiyosindo.id/task_proyek";
                 @sendWa([
                     'devId'    => hostWa('2'),
@@ -1971,16 +1971,16 @@ class Task_proyek extends CI_Controller
                 $noHpMengetahui = ($mengetahui && !empty($mengetahui->no_hp)) ? $mengetahui->no_hp : (($mengetahui && !empty($mengetahui->nohp)) ? $mengetahui->nohp : '');
                 $karyawanNama = isset($karyawan) && $karyawan ? $karyawan->nama : 'Karyawan';
                 if (!empty($noHpMengetahui) && function_exists('sendWa')) {
-                    $pesanMengetahui = "â„¹ï¸ *PEMBERITAHUAN TASK KARYAWAN (MENGETAHUI)*" .
+                    $pesanMengetahui = "[INFO MENGETAHUI] *PEMBERITAHUAN TASK KARYAWAN*" .
                         "%0A%0AHalo *" . $mengetahui->nama . "*," .
                         "%0ASebagai pihak yang *Mengetahui*, berikut informasi tugas karyawan yang telah disetujui (ACC) oleh HRD:" .
-                        "%0A%0AðŸ‘¤ *Pelaksana*: *" . $karyawanNama . "*" .
-                        "%0AðŸ“Œ *Kode*: " . $task->kode_task .
-                        "%0AðŸ“‹ *Judul*: " . $task->judul .
-                        "%0AðŸŽ¯ *Proyek*: " . ($task->nama_proyek ?: 'Umum') .
-                        "%0Aâš¡ *Prioritas*: " . $task->prioritas .
-                        "%0AðŸ“… *Deadline*: " . (!empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-') .
-                        "%0Aâœ… *Status*: Disetujui HRD (" . $namaHrd . ")" .
+                        "%0A%0A- *Pelaksana*: *" . $karyawanNama . "*" .
+                        "%0A- *Kode*: " . $task->kode_task .
+                        "%0A- *Judul*: " . $task->judul .
+                        "%0A- *Proyek*: " . ($task->nama_proyek ?: 'Umum') .
+                        "%0A- *Prioritas*: " . $task->prioritas .
+                        "%0A- *Deadline*: " . (!empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-') .
+                        "%0A- *Status*: Disetujui HRD (" . $namaHrd . ")" .
                         "%0A%0ADapat dipantau di https://office.visiyosindo.id/task_proyek";
                     @sendWa([
                         'devId'    => hostWa('2'),
@@ -2040,10 +2040,10 @@ class Task_proyek extends CI_Controller
             $karyawan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
             $noHpKaryawan = ($karyawan && !empty($karyawan->no_hp)) ? $karyawan->no_hp : (($karyawan && !empty($karyawan->nohp)) ? $karyawan->nohp : '');
             if (!empty($noHpKaryawan) && function_exists('sendWa')) {
-                $pesanWa = "âŒ *PENGAJUAN TASK MANDIRI DITOLAK HRD*" .
+                $pesanWa = "[DITOLAK] *PENGAJUAN TASK MANDIRI DITOLAK HRD*" .
                     "%0A%0AHalo *" . $karyawan->nama . "*," .
                     "%0AMohon maaf, pengajuan task mandiri Anda (*" . $task->kode_task . " - " . $task->judul . "*) belum disetujui oleh HRD (*" . $namaHrd . "*)." .
-                    "%0A%0Aâš ï¸ *Alasan*: " . $alasan .
+                    "%0A%0A- *Alasan*: " . $alasan .
                     "%0A%0ASilakan sesuaikan pengajuan atau diskusikan dengan HRD.";
                 @sendWa([
                     'devId'    => hostWa('2'),
