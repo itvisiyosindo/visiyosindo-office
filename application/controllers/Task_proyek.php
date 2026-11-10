@@ -244,23 +244,12 @@ class Task_proyek extends CI_Controller
     /**
      * Ambil peta skor Evaluasi Semester (tabel evaluasi + evaluasi_detail, jenis_evaluasi = 1) per pengguna_id.
      */
-    private function _getEvaluasiSemesterScoreMap($filterBulan, $filterTahun, array $accountMergeMap)
+    private function _getEvaluasiSemesterScoreMap($filterSemester, $filterTahun, array $accountMergeMap)
     {
-        $mInt    = !empty($filterBulan) ? (int)$filterBulan : 0;
-        $hasYear = (!empty($filterTahun) && $filterTahun !== 'all');
-        $yInt    = $hasYear ? (int)$filterTahun : 0;
-
-        $where = " WHERE e.jenis_evaluasi = 1 ";
-        if ($hasYear) {
-            $where .= " AND e.tahun = {$yInt} ";
-        } else {
-            $where .= " AND e.tahun IS NOT NULL ";
-        }
-        if ($mInt > 0) {
-            $targetSmt = ($mInt <= 6) ? 1 : 2;
-            $where .= " AND e.smt = {$targetSmt} ";
-        } else {
-            $where .= " AND e.smt IS NOT NULL ";
+        $smtInt = (int)$filterSemester;
+        $yInt   = (int)$filterTahun;
+        if ($smtInt <= 0 || $yInt <= 0) {
+            return [];
         }
 
         $rows = $this->db->query("
@@ -268,11 +257,13 @@ class Task_proyek extends CI_Controller
                    ed.nilaia, ed.nilaib, ed.nilaic, ed.nilaid, ed.nilaie, ed.nilaif
             FROM evaluasi e
             INNER JOIN evaluasi_detail ed ON ed.id_evaluasi = e.id
-            {$where}
-        ")->result();
+            WHERE e.jenis_evaluasi = 1
+              AND e.tahun = ?
+              AND e.smt = ?
+        ", [$yInt, $smtInt])->result();
 
-        // Kumpulkan rata-rata per jobdesc per (uid, tahun, smt) identik dengan Md_hasil_evaluasi_semester::getNilaiEvaluasi()
-        $perSem = [];
+        // Kumpulkan rata-rata per jobdesc identik dengan Md_hasil_evaluasi_semester::getNilaiEvaluasi()
+        $perUser = [];
         foreach ($rows as $r) {
             $sum = 0.0;
             $cnt = 0;
@@ -290,35 +281,20 @@ class Task_proyek extends CI_Controller
             if (isset($accountMergeMap[$uid])) {
                 $uid = (int)$accountMergeMap[$uid];
             }
-            $semKey = (int)$r->tahun . '_' . (int)$r->smt;
-            if (!isset($perSem[$uid][$semKey])) {
-                $perSem[$uid][$semKey] = [
-                    'tahun' => (int)$r->tahun,
-                    'smt'   => (int)$r->smt,
-                    'sum'   => 0.0,
-                    'cnt'   => 0,
-                ];
+            if (!isset($perUser[$uid])) {
+                $perUser[$uid] = ['sum' => 0.0, 'cnt' => 0];
             }
-            $perSem[$uid][$semKey]['sum'] += ($sum / $cnt);
-            $perSem[$uid][$semKey]['cnt']++;
+            $perUser[$uid]['sum'] += ($sum / $cnt);
+            $perUser[$uid]['cnt']++;
         }
 
         $result = [];
-        foreach ($perSem as $uid => $sems) {
-            $semScores = [];
-            $labels = [];
-            ksort($sems);
-            foreach ($sems as $s) {
-                if ($s['cnt'] > 0) {
-                    $semScores[] = $s['sum'] / $s['cnt'];
-                    $labels[] = 'Smt ' . $s['smt'] . ' ' . $s['tahun'];
-                }
-            }
-            if (!empty($semScores)) {
+        foreach ($perUser as $uid => $agg) {
+            if ($agg['cnt'] > 0) {
                 $result[$uid] = [
-                    'skor'  => round(array_sum($semScores) / count($semScores), 1),
-                    'label' => count($labels) > 1 ? (count($labels) . ' Semester') : $labels[0],
-                    'count' => count($semScores),
+                    'skor'  => round($agg['sum'] / $agg['cnt'], 1),
+                    'label' => 'Smt ' . $smtInt . ' ' . $yInt,
+                    'count' => 1,
                 ];
             }
         }
@@ -347,9 +323,9 @@ class Task_proyek extends CI_Controller
     }
 
     /**
-     * Ambil peta status SP aktif & batas plafon nilai maksimal (SP0=100, SP1=80, SP2=60, SP3=40) per pengguna_id.
+     * Ambil peta status SP aktif & batas plafon nilai maksimal (SP0=100, SP1=80, SP2=60, SP3=40) per pengguna_id untuk semester terpilih.
      */
-    private function _getActiveSpCapMap($windowStart, $windowEnd, array $accountMergeMap)
+    private function _getActiveSpCapMap($semStart, $semEnd, $refDate, array $accountMergeMap)
     {
         if (!$this->db->table_exists('surat_peringatan')) {
             return [];
@@ -418,8 +394,10 @@ class Task_proyek extends CI_Controller
                 continue;
             }
 
-            // SP dianggap aktif jika rentang berlakunya beririsan dengan jendela periode evaluasi
-            if ($tglMulai > $windowEnd || $tglAkhir < $windowStart) {
+            // SP berlaku pada semester ini jika diterbitkan di dalam semester tersebut ATAU masih aktif berjalan pada tanggal acuan
+            $issuedInSem = ($tglMulai >= $semStart && $tglMulai <= $semEnd);
+            $activeOnRef = ($tglMulai <= $refDate && $tglAkhir >= $refDate);
+            if (!$issuedInSem && !$activeOnRef) {
                 continue;
             }
 
@@ -450,11 +428,26 @@ class Task_proyek extends CI_Controller
         $myId = (int)sessPenggunaId();
         $nav  = 'kepegawaian';
 
-        $filterBulan = $this->input->get('bulan', TRUE);
-        $filterTahun = $this->input->get('tahun', TRUE);
-        if ($filterTahun === null || $filterTahun === '') {
+        $filterSemester = $this->input->get('semester', TRUE);
+        $filterBulan    = $this->input->get('bulan', TRUE);
+        $filterTahun    = $this->input->get('tahun', TRUE);
+
+        if ($filterSemester !== '1' && $filterSemester !== '2') {
+            if (!empty($filterBulan) && (int)$filterBulan >= 1 && (int)$filterBulan <= 12) {
+                $filterSemester = ((int)$filterBulan <= 6) ? '1' : '2';
+            } else {
+                $filterSemester = ((int)date('n') <= 6) ? '1' : '2';
+            }
+        }
+        if (empty($filterTahun) || $filterTahun === 'all' || !is_numeric($filterTahun)) {
             $filterTahun = date('Y');
         }
+
+        $smtInt   = (int)$filterSemester;
+        $yInt     = (int)$filterTahun;
+        $semStart = ($smtInt === 1) ? "{$yInt}-01-01" : "{$yInt}-07-01";
+        $semEnd   = ($smtInt === 1) ? "{$yInt}-06-30" : "{$yInt}-12-31";
+        $semLabel = ($smtInt === 1) ? "Semester 1 (Jan–Jun {$yInt})" : "Semester 2 (Jul–Des {$yInt})";
 
         // Pastikan kolom id_atasan tersedia di tabel pengguna
         $chkAtasan = @$this->db->query("SHOW COLUMNS FROM `pengguna` LIKE 'id_atasan'");
@@ -546,12 +539,8 @@ class Task_proyek extends CI_Controller
             $this->db->where_in('t.id_penerima', $myReceiverIds);
         }
 
-        if (!empty($filterBulan)) {
-            $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
-        }
-        if (!empty($filterTahun) && $filterTahun !== 'all') {
-            $this->db->where('YEAR(t.created_at)', (int)$filterTahun);
-        }
+        $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
+        $this->db->where('t.created_at <=', $semEnd . ' 23:59:59');
         $tugas_saya = $this->db->order_by('FIELD(t.status_task, 5, 3, 0, 1, 2, 4, 6)', '', FALSE)
             ->order_by('t.id_task', 'DESC')
             ->get()
@@ -574,12 +563,8 @@ class Task_proyek extends CI_Controller
             $this->db->where_in('t.id_pemberi', $myGiverIds);
         }
 
-        if (!empty($filterBulan)) {
-            $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
-        }
-        if (!empty($filterTahun) && $filterTahun !== 'all') {
-            $this->db->where('YEAR(t.created_at)', (int)$filterTahun);
-        }
+        $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
+        $this->db->where('t.created_at <=', $semEnd . ' 23:59:59');
         $tugas_atasan = $this->db->order_by('FIELD(t.status_task, 5, 2, 1, 3, 0, 4, 6)', '', FALSE)
             ->order_by('t.id_task', 'DESC')
             ->get()
@@ -595,12 +580,8 @@ class Task_proyek extends CI_Controller
             ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
             ->where('t.is_deleted', 0);
 
-        if (!empty($filterBulan)) {
-            $this->db->where('MONTH(t.created_at)', (int)$filterBulan);
-        }
-        if (!empty($filterTahun) && $filterTahun !== 'all') {
-            $this->db->where('YEAR(t.created_at)', (int)$filterTahun);
-        }
+        $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
+        $this->db->where('t.created_at <=', $semEnd . ' 23:59:59');
         $semua_task = $this->db->order_by('FIELD(t.status_task, 5, 2, 1, 3, 0, 4, 6)', '', FALSE)
             ->order_by('t.id_task', 'DESC')
             ->get()
@@ -659,84 +640,21 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan (Solusi A: 80% Mutu Kualitas 6 Pilar + 20% Volume Produktivitas + Plafon SP)
-        $wherePeriodeTask = "";
-        if (!empty($filterBulan)) {
-            $wherePeriodeTask .= " AND MONTH(t.created_at) = " . (int)$filterBulan;
-        }
-        if (!empty($filterTahun) && $filterTahun !== 'all') {
-            $wherePeriodeTask .= " AND YEAR(t.created_at) = " . (int)$filterTahun;
-        }
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan per Semester (Solusi A: 80% Mutu Kualitas 6 Pilar + 20% Volume Produktivitas + Plafon SP)
+        $wherePeriodeTask = " AND t.created_at >= '{$semStart} 00:00:00' AND t.created_at <= '{$semEnd} 23:59:59'";
+        $wherePeriodeNp   = " AND date >= '{$semStart}' AND date <= '{$semEnd}'";
+        $wherePeriodeLap  = " AND tanggal >= '{$semStart}' AND tanggal <= '{$semEnd}'";
+        $wherePeriodePk   = " AND bulan >= '{$semStart}' AND bulan <= '{$semEnd}'";
 
-        // Tentukan rentang tanggal untuk filter laporan mingguan, product knowledge, absensi, & jendela SP aktif
-        $wherePeriodeNp  = "";
-        $wherePeriodeLap = "";
-        $wherePeriodePk  = "";
-        if (!empty($filterBulan) && !empty($filterTahun) && $filterTahun !== 'all') {
-            $m = str_pad((int)$filterBulan, 2, '0', STR_PAD_LEFT);
-            $startDate = "{$filterTahun}-{$m}-01";
-            $endDate = date('Y-m-t', strtotime($startDate));
-            $wherePeriodeNp  = " AND date >= '{$startDate}' AND date <= '{$endDate}'";
-            $wherePeriodeLap = " AND tanggal >= '{$startDate}' AND tanggal <= '{$endDate}'";
-            $wherePeriodePk  = " AND bulan >= '{$startDate}' AND bulan <= '{$endDate}'";
-        } elseif (!empty($filterTahun) && $filterTahun !== 'all') {
-            $wherePeriodeNp  = " AND YEAR(date) = " . (int)$filterTahun;
-            $wherePeriodeLap = " AND YEAR(tanggal) = " . (int)$filterTahun;
-            $wherePeriodePk  = " AND YEAR(bulan) = " . (int)$filterTahun;
-        } elseif (!empty($filterBulan)) {
-            $wherePeriodeNp  = " AND MONTH(date) = " . (int)$filterBulan;
-            $wherePeriodeLap = " AND MONTH(tanggal) = " . (int)$filterBulan;
-            $wherePeriodePk  = " AND MONTH(bulan) = " . (int)$filterBulan;
-        }
-
-        $todayYmd      = date('Y-m-d');
-        $mInt          = !empty($filterBulan) ? (int)$filterBulan : 0;
-        $hasYearFilter = (!empty($filterTahun) && $filterTahun !== 'all');
-        $yInt          = $hasYearFilter ? (int)$filterTahun : 0;
-        $onlyMonth     = 0;
-        $isSingleMonth = false;
-
-        if ($mInt > 0 && $hasYearFilter) {
-            $mPad          = str_pad($mInt, 2, '0', STR_PAD_LEFT);
-            $absStart      = "{$yInt}-{$mPad}-01";
-            $absFullEnd    = date('Y-m-t', strtotime($absStart));
-            $absEnd        = ($absFullEnd > $todayYmd) ? $todayYmd : $absFullEnd;
-            $isSingleMonth = true;
-            $spWindowStart = $absStart;
-            $spWindowEnd   = $absFullEnd;
-            $wherePeriodeAbs = ($absEnd < $absStart)
-                ? " AND 1 = 0"
-                : " AND a.data_created >= '{$absStart} 00:00:00' AND a.data_created <= '{$absEnd} 23:59:59'";
-        } elseif ($mInt === 0 && $hasYearFilter) {
-            $absStart   = "{$yInt}-01-01";
-            $absFullEnd = "{$yInt}-12-31";
-            $absEnd     = ($absFullEnd > $todayYmd) ? $todayYmd : $absFullEnd;
-            if ($yInt >= (int)date('Y')) {
-                $spWindowStart = $todayYmd;
-                $spWindowEnd   = $todayYmd;
-            } else {
-                $spWindowStart = $absStart;
-                $spWindowEnd   = $absFullEnd;
-            }
-            $wherePeriodeAbs = ($absEnd < $absStart)
-                ? " AND 1 = 0"
-                : " AND a.data_created >= '{$absStart} 00:00:00' AND a.data_created <= '{$absEnd} 23:59:59'";
-        } elseif ($mInt > 0 && !$hasYearFilter) {
-            $absStart        = "2024-01-01";
-            $absFullEnd      = $todayYmd;
-            $absEnd          = $todayYmd;
-            $onlyMonth       = $mInt;
-            $spWindowStart   = $todayYmd;
-            $spWindowEnd     = $todayYmd;
-            $wherePeriodeAbs = " AND a.data_created >= '2024-01-01 00:00:00' AND a.data_created <= '{$todayYmd} 23:59:59' AND MONTH(a.data_created) = {$mInt}";
-        } else {
-            $absStart        = "2024-01-01";
-            $absFullEnd      = $todayYmd;
-            $absEnd          = $todayYmd;
-            $spWindowStart   = $todayYmd;
-            $spWindowEnd     = $todayYmd;
-            $wherePeriodeAbs = " AND a.data_created >= '2024-01-01 00:00:00' AND a.data_created <= '{$todayYmd} 23:59:59'";
-        }
+        $todayYmd    = date('Y-m-d');
+        $absStart    = $semStart;
+        $absFullEnd  = $semEnd;
+        $absEnd      = ($absFullEnd > $todayYmd) ? $todayYmd : $absFullEnd;
+        $currentSmt  = ((int)date('n') <= 6) ? 1 : 2;
+        $spRefDate   = ($yInt === (int)date('Y') && $smtInt === $currentSmt) ? $todayYmd : $semEnd;
+        $wherePeriodeAbs = ($absEnd < $absStart)
+            ? " AND 1 = 0"
+            : " AND a.data_created >= '{$absStart} 00:00:00' AND a.data_created <= '{$absEnd} 23:59:59'";
 
         // Ambil hari libur nasional, tanggal mulai absen karyawan, nilai evaluasi semester, & status SP aktif
         $holidaySet = [];
@@ -749,9 +667,9 @@ class Task_proyek extends CI_Controller
             }
         }
         $firstAbsenMap      = $this->_getFirstAbsenDateMap($todayYmd, $accountMergeMap);
-        $evalScoreMap       = $this->_getEvaluasiSemesterScoreMap($filterBulan, $filterTahun, $accountMergeMap);
+        $evalScoreMap       = $this->_getEvaluasiSemesterScoreMap($smtInt, $yInt, $accountMergeMap);
         $evalExistsInPeriod = !empty($evalScoreMap);
-        $spCapMap           = $this->_getActiveSpCapMap($spWindowStart, $spWindowEnd, $accountMergeMap);
+        $spCapMap           = $this->_getActiveSpCapMap($semStart, $semEnd, $spRefDate, $accountMergeMap);
 
         // Generator CASE mapping ID untuk akun ganda / akun jabatan yang dimerge
         $caseTsk = "t.id_penerima";
@@ -960,15 +878,13 @@ class Task_proyek extends CI_Controller
             $skorPenc = $hasPenc ? round((float)$lb->avg_nilai_pencapaian, 1) : null;
             $skorPk   = ($hasPk && !$isExemptPk) ? round((float)$lb->avg_nilai_pk, 1) : null;
 
-            // Pilar 5: Absensi (kehadiran tepat waktu + penalti keterlambatan)
+            // Pilar 5: Absensi per semester (kehadiran tepat waktu + penalti keterlambatan)
             $userAbsStart = $absStart;
             if (isset($firstAbsenMap[$uid]) && $firstAbsenMap[$uid] > $userAbsStart && $firstAbsenMap[$uid] <= $absEnd) {
                 $userAbsStart = $firstAbsenMap[$uid];
             }
-            $hariKerjaElapsed = $this->_countEffectiveWorkdays($userAbsStart, $absEnd, $holidaySet, $onlyMonth);
-            $hariKerjaPenalti = $isSingleMonth
-                ? max(1, $this->_countEffectiveWorkdays($userAbsStart, $absFullEnd, $holidaySet, $onlyMonth))
-                : max(1, $hariKerjaElapsed);
+            $hariKerjaElapsed = $this->_countEffectiveWorkdays($userAbsStart, $absEnd, $holidaySet);
+            $hariKerjaPenalti = max(1, $hariKerjaElapsed);
 
             $absHadir     = (int)$lb->abs_hari_hadir;
             $absTepat     = (int)$lb->abs_hari_tepat;
@@ -1229,6 +1145,8 @@ class Task_proyek extends CI_Controller
         $page_data['isHrdAdmin']              = $isHrdAdmin;
         $page_data['isAdmin']                 = ($isHrdAdmin || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
         $page_data['viewMode']                = $viewMode;
+        $page_data['filterSemester']          = $filterSemester;
+        $page_data['semLabel']                = $semLabel;
         $page_data['filterBulan']             = $filterBulan;
         $page_data['filterTahun']             = $filterTahun;
         $page_data['namaBulanList']           = [

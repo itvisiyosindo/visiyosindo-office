@@ -451,17 +451,14 @@ $namaBulanList = [
                 <?php endif; ?>
 
                 <label class="font-weight-bold text-dark mr-1 mb-0" style="font-size: 13px;">
-                    <i class="far fa-calendar-alt text-primary mr-1"></i> Periode:
+                    <i class="far fa-calendar-alt text-primary mr-1"></i> Periode Semester:
                 </label>
-                <select name="bulan" class="form-control form-control-sm" style="min-width: 140px; border-radius: 6px;">
-                    <option value="">-- Semua Bulan --</option>
-                    <?php foreach ($namaBulanList as $num => $nm): ?>
-                        <option value="<?= $num ?>" <?= ((int)$filterBulan === $num) ? 'selected' : '' ?>><?= $nm ?></option>
-                    <?php endforeach; ?>
+                <select name="semester" class="form-control form-control-sm" style="min-width: 195px; border-radius: 6px;">
+                    <option value="1" <?= ((string)($filterSemester ?? '') === '1') ? 'selected' : '' ?>>Semester 1 (Januari – Juni)</option>
+                    <option value="2" <?= ((string)($filterSemester ?? '') === '2') ? 'selected' : '' ?>>Semester 2 (Juli – Desember)</option>
                 </select>
 
-                <select name="tahun" class="form-control form-control-sm" style="min-width: 105px; border-radius: 6px;">
-                    <option value="all" <?= ($filterTahun === 'all') ? 'selected' : '' ?>>Semua Tahun</option>
+                <select name="tahun" class="form-control form-control-sm" style="min-width: 95px; border-radius: 6px;">
                     <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
                         <option value="<?= $y ?>" <?= ((string)$filterTahun === (string)$y) ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
@@ -1296,9 +1293,9 @@ $namaBulanList = [
                     <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px; border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
                         <div>
                             <i class="fas fa-medal text-warning mr-1"></i>
-                            <strong>Sistem Evaluasi Kinerja 6 Pilar (Ratio 80% Mutu + 20% Volume):</strong>
-                            <strong>Reguler:</strong> 25% Task + 20% Laporan + 15% Pencapaian + 10% PK + 15% Absensi + 15% Evaluasi Semester
-                            <span class="text-muted">(Bebas PK: 30% Task + 20% Lap + 20% Penc + 15% Absensi + 15% Evaluasi)</span>.
+                            <strong>Leaderboard <?= htmlspecialchars($semLabel ?? '') ?> (Direset Per Semester &bull; Ratio 80% Mutu + 20% Volume):</strong>
+                            <strong>Reguler:</strong> 25% Task Proyek + 20% Laporan + 15% Pencapaian + 10% Product Knowledge + 15% Absensi + 15% Evaluasi Semester
+                            <span class="text-muted">(Bebas Product Knowledge: 30% Task + 20% Lap + 20% Penc + 15% Absensi + 15% Evaluasi)</span>.
                             Keterlambatan absen mengurangi poin; Evaluasi yang belum diisi dianggap belum dinilai dulu.
                             <strong>Plafon SP:</strong> SP0 Maks 100% &bull; SP1 Maks 80% &bull; SP2 Maks 60% &bull; SP3 Maks 40%.
                         </div>
@@ -1329,8 +1326,8 @@ $namaBulanList = [
                                         <div>Pencapaian</div>
                                         <small class="badge text-white" style="font-size: 10px; background-color: #8b5cf6;">Mutu 15%</small>
                                     </th>
-                                    <th class="text-center align-middle" style="min-width: 110px;">
-                                        <div>PK</div>
+                                    <th class="text-center align-middle" style="min-width: 130px;">
+                                        <div>Product Knowledge</div>
                                         <small class="badge text-white" style="font-size: 10px; background-color: #0d9488;">Mutu 10%</small>
                                     </th>
                                     <th class="text-center align-middle" style="min-width: 115px;">
