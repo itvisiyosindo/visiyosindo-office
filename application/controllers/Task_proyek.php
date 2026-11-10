@@ -775,79 +775,125 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        $this->load->model('md_audit_system');
-        $master = $this->md_audit_system->getMasterTemplate();
-
         $rawJabatan = trim((string)$user->jabatan);
         $rawDivisi  = trim((string)$user->nama_divisi);
-
-        // Cari posisi master yang paling tepat dan aman untuk jabatan karyawan ini
-        $resolvedPos = $this->md_audit_system->resolveUserPosition($rawJabatan, $rawDivisi);
 
         $jobdesks  = [];
         $addedJobs = [];
         $seqNo     = 1;
 
-        if (!empty($resolvedPos)) {
-            // 1. Ambil HANYA jobdesk resmi yang persis sesuai dengan posisi karyawan ini
-            foreach ($master as $m) {
-                $mPos = isset($m['posisi']) ? trim($m['posisi']) : '';
-                if (strcasecmp($mPos, $resolvedPos) === 0) {
-                    $cleanJob = rtrim(trim($m['jobdesk']), '; ');
-                    if (empty($cleanJob)) continue;
+        // 1. PRIORITAS UTAMA: AMBIL JOBDESK YANG ADA DI LAPORAN MINGGUAN KARYAWAN (Tabel jobdesc_detail & jobdesc)
+        // Persis sama seperti pilihan jobdesk saat karyawan tersebut mengisi Laporan Mingguan
+        $this->load->model('md_laporan');
+        $laporanJobs = [];
+        if (isset($this->md_laporan) && method_exists($this->md_laporan, 'getByJobs')) {
+            $laporanJobs = $this->md_laporan->getByJobs($id_pengguna);
+        }
 
-                    // Abaikan baris header kosong (ALL CAPS tanpa detail proyek & sasaran mutu)
-                    $isHeaderOnly = (empty(trim($m['detail_proyek'])) && empty(trim($m['sasaran_mutu'])) && empty(trim($m['implementasi'])) && mb_strtoupper($cleanJob) === $cleanJob);
-                    if ($isHeaderOnly) continue;
+        // Jika getByJobs kosong, coba query dengan join ke tabel jobdesc (memastikan tidak ada yang terlewat)
+        if (empty($laporanJobs)) {
+            $laporanJobs = $this->db->query("
+                SELECT DISTINCT
+                    jd.id AS id_pod,
+                    jd.id_jobdesc,
+                    jd.deskripsi,
+                    jd.point,
+                    jd.nilai
+                FROM jobdesc_detail jd
+                LEFT JOIN jobdesc j ON j.id = jd.id_jobdesc
+                WHERE (jd.idPengguna = {$id_pengguna} OR j.id_pengguna = {$id_pengguna})
+                AND jd.status = 1
+                AND jd.deskripsi IS NOT NULL
+                AND TRIM(jd.deskripsi) != ''
+                ORDER BY jd.id ASC
+            ")->result();
+        }
 
-                    $jobKey = md5(strtolower($cleanJob));
-                    if (!isset($addedJobs[$jobKey])) {
-                        $addedJobs[$jobKey] = true;
-                        $jobdesks[] = [
-                            'id'            => $m['id'],
-                            'no'            => $seqNo++,
-                            'posisi'        => $resolvedPos,
-                            'divisi'        => $m['divisi'],
-                            'jobdesk'       => $cleanJob,
-                            'detail_proyek' => trim($m['detail_proyek']),
-                            'sasaran_mutu'  => trim($m['sasaran_mutu'])
-                        ];
-                    }
+        if (!empty($laporanJobs)) {
+            foreach ($laporanJobs as $lj) {
+                $cleanJob = trim((string)$lj->deskripsi);
+                if (empty($cleanJob)) continue;
+
+                $jobKey = md5(strtolower($cleanJob));
+                if (!isset($addedJobs[$jobKey])) {
+                    $addedJobs[$jobKey] = true;
+                    $jobdesks[] = [
+                        'id'            => 'JOB_' . (!empty($lj->id_pod) ? $lj->id_pod : (!empty($lj->id) ? $lj->id : $seqNo)),
+                        'no'            => $seqNo++,
+                        'posisi'        => $rawJabatan ?: ($rawDivisi ?: 'Karyawan'),
+                        'divisi'        => $rawDivisi ?: 'Umum',
+                        'jobdesk'       => $cleanJob,
+                        'detail_proyek' => 'Jobdesk Laporan Mingguan: ' . $cleanJob,
+                        'sasaran_mutu'  => 'Tercapainya target ' . $cleanJob . ' dengan baik dan tepat waktu'
+                    ];
                 }
             }
+        }
 
-            // 2. Muat juga custom item override tahun ini khusus posisi tersebut jika ada
-            $curYear = (int)date('Y');
-            $overrides = $this->md_audit_system->loadSasaranMutuOverrides($curYear);
-            if (!empty($overrides)) {
-                foreach ($overrides as $ovId => $ov) {
-                    $ovPos = isset($ov['posisi']) ? trim($ov['posisi']) : '';
-                    $ovJob = isset($ov['jobdesk']) ? trim($ov['jobdesk']) : '';
-                    if (empty($ovJob)) continue;
+        // 2. JIKA DI LAPORAN MINGGUAN BELUM DISETTING / KOSONG, CARI DARI MASTER SASARAN MUTU
+        $resolvedPos = '';
+        if (empty($jobdesks)) {
+            $this->load->model('md_audit_system');
+            $master = $this->md_audit_system->getMasterTemplate();
+            $resolvedPos = $this->md_audit_system->resolveUserPosition($rawJabatan, $rawDivisi);
 
-                    if (strcasecmp($ovPos, $resolvedPos) === 0) {
-                        $cleanJob = rtrim(trim($ovJob), '; ');
+            if (!empty($resolvedPos)) {
+                foreach ($master as $m) {
+                    $mPos = isset($m['posisi']) ? trim($m['posisi']) : '';
+                    if (strcasecmp($mPos, $resolvedPos) === 0) {
+                        $cleanJob = rtrim(trim($m['jobdesk']), '; ');
+                        if (empty($cleanJob)) continue;
+
+                        $isHeaderOnly = (empty(trim($m['detail_proyek'])) && empty(trim($m['sasaran_mutu'])) && empty(trim($m['implementasi'])) && mb_strtoupper($cleanJob) === $cleanJob);
+                        if ($isHeaderOnly) continue;
+
                         $jobKey = md5(strtolower($cleanJob));
                         if (!isset($addedJobs[$jobKey])) {
                             $addedJobs[$jobKey] = true;
                             $jobdesks[] = [
-                                'id'            => $ovId,
+                                'id'            => $m['id'],
                                 'no'            => $seqNo++,
                                 'posisi'        => $resolvedPos,
-                                'divisi'        => isset($ov['divisi']) ? $ov['divisi'] : $rawDivisi,
+                                'divisi'        => $m['divisi'],
                                 'jobdesk'       => $cleanJob,
-                                'detail_proyek' => isset($ov['detail_proyek']) ? trim($ov['detail_proyek']) : '',
-                                'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? trim($ov['sasaran_mutu']) : ''
+                                'detail_proyek' => trim($m['detail_proyek']),
+                                'sasaran_mutu'  => trim($m['sasaran_mutu'])
                             ];
+                        }
+                    }
+                }
+
+                // Override tahunan jika ada
+                $curYear = (int)date('Y');
+                $overrides = $this->md_audit_system->loadSasaranMutuOverrides($curYear);
+                if (!empty($overrides)) {
+                    foreach ($overrides as $ovId => $ov) {
+                        $ovPos = isset($ov['posisi']) ? trim($ov['posisi']) : '';
+                        $ovJob = isset($ov['jobdesk']) ? trim($ov['jobdesk']) : '';
+                        if (empty($ovJob)) continue;
+
+                        if (strcasecmp($ovPos, $resolvedPos) === 0) {
+                            $cleanJob = rtrim(trim($ovJob), '; ');
+                            $jobKey = md5(strtolower($cleanJob));
+                            if (!isset($addedJobs[$jobKey])) {
+                                $addedJobs[$jobKey] = true;
+                                $jobdesks[] = [
+                                    'id'            => $ovId,
+                                    'no'            => $seqNo++,
+                                    'posisi'        => $resolvedPos,
+                                    'divisi'        => isset($ov['divisi']) ? $ov['divisi'] : $rawDivisi,
+                                    'jobdesk'       => $cleanJob,
+                                    'detail_proyek' => isset($ov['detail_proyek']) ? trim($ov['detail_proyek']) : '',
+                                    'sasaran_mutu'  => isset($ov['sasaran_mutu']) ? trim($ov['sasaran_mutu']) : ''
+                                ];
+                            }
                         }
                     }
                 }
             }
         }
 
-        // 3. JIKA TIDAK ADA JOBDESK DI MASTER SASARAN MUTU:
-        // BUATKAN ITEM TUGAS OPERASIONAL RESMI DENGAN NAMA JABATAN KARYAWAN ITU SENDIRI!
-        // JANGAN PERNAH MENAMPILKAN JABATAN ORANG LAIN (SEPERTI DIRECTOR OF CORPORATE PLANNING)!
+        // 3. JIKA TETAP KOSONG, BUATKAN ITEM TUGAS OPERASIONAL RESMI DENGAN NAMA JABATAN KARYAWAN ITU SENDIRI
         if (empty($jobdesks)) {
             $displayPos = !empty($rawJabatan) ? $rawJabatan : (!empty($rawDivisi) ? $rawDivisi : 'Karyawan');
             $jobdesks[] = [
@@ -868,7 +914,7 @@ class Task_proyek extends CI_Controller
                 'id'             => (int)$user->pengguna_id,
                 'nama'           => $user->nama,
                 'jabatan'        => $user->jabatan,
-                'posisi_matched' => $resolvedPos ?: $rawJabatan,
+                'posisi_matched' => $resolvedPos ?: ($rawJabatan ?: 'Karyawan'),
                 'divisi'         => $user->nama_divisi ?: 'General'
             ],
             'total'    => count($jobdesks),

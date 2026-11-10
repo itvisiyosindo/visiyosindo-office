@@ -1335,7 +1335,7 @@ $namaBulanList = [
                                 $isSelf = ((int)$bw->pengguna_id === (int)$myId);
                             ?>
                                 <option value="<?= (int)$bw->pengguna_id ?>" <?= $isSelf ? 'data-self="1"' : '' ?>>
-                                    <?= $isSelf ? 'â­ [Diri Sendiri] ' : '' ?><?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? '(' . htmlspecialchars($bw->jabatan) . ')' : '' ?> â€” [<?= htmlspecialchars($divLabel) ?>]<?= $isSelf ? ' (Pengajuan Mandiri)' : '' ?>
+                                    <?= $isSelf ? "[Diri Sendiri] " : "" ?><?= htmlspecialchars($bw->nama) ?> <?= !empty($bw->jabatan) ? "(" . htmlspecialchars($bw->jabatan) . ")" : "" ?> - [<?= htmlspecialchars($divLabel) ?>]<?= $isSelf ? " (Pengajuan Mandiri)" : "" ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -1355,7 +1355,7 @@ $namaBulanList = [
                     <div id="container_jobdesk_karyawan" style="display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                         <div class="d-flex align-items-center justify-content-between flex-wrap mb-1" style="gap: 8px;">
                             <label class="font-weight-bold text-success mb-0" style="font-size: 13px;">
-                                <i class="fas fa-bullseye text-success mr-1"></i> Hubungkan ke Jobdesk Sasaran Mutu <span class="text-danger">* (Wajib)</span>
+                                <i class="fas fa-bullseye text-success mr-1"></i> Hubungkan ke Jobdesk (Sama dengan Laporan Mingguan) <span class="text-danger">* (Wajib)</span>
                             </label>
                             <span class="badge badge-success px-2 py-1" id="badge_info_karyawan" style="font-size: 11px;">
                                 <i class="fas fa-user mr-1"></i> <span id="nama_karyawan_terpilih">-</span>
