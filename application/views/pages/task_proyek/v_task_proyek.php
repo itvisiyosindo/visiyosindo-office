@@ -1311,7 +1311,7 @@ $namaBulanList = [
                         <table class="table table-bordered table-striped table-hover mb-0" id="datatable_leaderboard">
                             <thead>
                                 <tr style="background: #f8fafc;">
-                                    <th width="50" class="text-center align-middle">Rank</th>
+                                    <th class="text-center align-middle" style="min-width: 74px;">Rank</th>
                                     <th class="align-middle">Nama Karyawan</th>
                                     <th class="align-middle">Jabatan</th>
                                     <th class="text-center align-middle" style="min-width: 110px;">
@@ -1351,18 +1351,23 @@ $namaBulanList = [
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $rank = 1; foreach ($leaderboard as $lb):
+                                <?php
+                                $topPins = [
+                                    1 => ['icon' => '🥇', 'bg' => '#fef08a', 'fg' => '#854d0e', 'bd' => '#eab308', 'title' => 'Top 1 Leaderboard'],
+                                    2 => ['icon' => '🥈', 'bg' => '#e2e8f0', 'fg' => '#334155', 'bd' => '#94a3b8', 'title' => 'Top 2 Leaderboard'],
+                                    3 => ['icon' => '🥉', 'bg' => '#fed7aa', 'fg' => '#9a3412', 'bd' => '#f97316', 'title' => 'Top 3 Leaderboard'],
+                                    4 => ['icon' => '🏅', 'bg' => '#dbeafe', 'fg' => '#1e40af', 'bd' => '#60a5fa', 'title' => 'Top 4 Leaderboard'],
+                                    5 => ['icon' => '🏅', 'bg' => '#ede9fe', 'fg' => '#5b21b6', 'bd' => '#a78bfa', 'title' => 'Top 5 Leaderboard'],
+                                ];
+                                $rank = 1;
+                                foreach ($leaderboard as $lb):
                                     $selesai = (int)$lb->task_selesai;
                                     $isMe    = (!empty($myReceiverIds) && is_array($myReceiverIds)) ? in_array((int)$lb->pengguna_id, $myReceiverIds, true) : ((int)$lb->pengguna_id === (int)$myId);
                                 ?>
                                     <tr <?= $isMe ? 'style="background-color: #f0f9ff;"' : '' ?>>
-                                        <td class="text-center font-weight-bold align-middle">
-                                            <?php if ($rank === 1 && $lb->skor_akhir !== null && !empty($lb->is_eligible_podium)): ?>
-                                                <span class="badge badge-warning" style="font-size:13px;">🥇 #1</span>
-                                            <?php elseif ($rank === 2 && $lb->skor_akhir !== null && !empty($lb->is_eligible_podium)): ?>
-                                                <span class="badge badge-secondary" style="font-size:13px;">🥈 #2</span>
-                                            <?php elseif ($rank === 3 && $lb->skor_akhir !== null && !empty($lb->is_eligible_podium)): ?>
-                                                <span class="badge badge-info" style="font-size:13px;">🥉 #3</span>
+                                        <td class="text-center font-weight-bold align-middle" data-order="<?= $rank ?>">
+                                            <?php if ($lb->skor_akhir !== null && isset($topPins[$rank])): $pin = $topPins[$rank]; ?>
+                                                <span class="badge px-2 py-1" style="font-size:12.5px; white-space:nowrap; background:<?= $pin['bg'] ?>; color:<?= $pin['fg'] ?>; border:1px solid <?= $pin['bd'] ?>; border-radius:20px; font-weight:800;" title="<?= $pin['title'] ?>"><?= $pin['icon'] ?> #<?= $rank ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted font-weight-semibold">#<?= $rank ?></span>
                                             <?php endif; ?>
