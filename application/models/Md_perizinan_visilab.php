@@ -20,15 +20,7 @@ class Md_perizinan_visilab extends CI_Model
      */
     public function hasTable($tableName)
     {
-        if (!isset($this->db) || !$this->db->conn_id) {
-            return false;
-        }
-        $orig = $this->db->db_debug;
-        $this->db->db_debug = FALSE;
-        $q = @$this->db->query("SHOW TABLES LIKE '{$tableName}'");
-        $res = ($q && $q->num_rows() > 0);
-        $this->db->db_debug = $orig;
-        return $res;
+        return true;
     }
 
     /**

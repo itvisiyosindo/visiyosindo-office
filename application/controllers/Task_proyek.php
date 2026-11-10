@@ -889,6 +889,7 @@ class Task_proyek extends CI_Controller
         $nama_proyek     = trim((string)$this->input->post('nama_proyek', FALSE));
         $id_sasaran_mutu = trim((string)$this->input->post('id_sasaran_mutu', TRUE));
         $nama_jobdesk    = trim((string)$this->input->post('nama_jobdesk', TRUE));
+        $id_mengetahui   = (int)$this->input->post('id_mengetahui', TRUE) ?: null;
         $jenis           = trim((string)$this->input->post('jenis', TRUE)) ?: 'Task Harian';
         $prioritas       = trim((string)$this->input->post('prioritas', TRUE)) ?: 'Medium';
         $deskripsi       = trim((string)$this->input->post('deskripsi', FALSE));
@@ -928,15 +929,12 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        $canAssignAll = $this->_canAssignAllTasks($myId);
-        $isAdmin      = ($canAssignAll || isAdmin() || (int)$myId === 1 || in_array((int)$this->session->userdata('id_role'), [1], true));
-
-        // Validasi: Jika bukan Administrator / yang berwenang menugaskan ke semua karyawan (seperti akun Dian / HRD), hanya boleh memberikan task kepada karyawan yang dibawahi langsung (id_atasan == $myId)
+        // Validasi keberadaan user penerima
         foreach ($penerima_list as $id_penerima_raw) {
             $id_penerima = (int)$id_penerima_raw;
             if ($id_penerima <= 0) continue;
 
-            $chkSub = $this->db->select('pengguna_id, nama, id_atasan')
+            $chkSub = $this->db->select('pengguna_id, nama')
                 ->from('pengguna')
                 ->where('pengguna_id', $id_penerima)
                 ->where('status', 1)
@@ -946,12 +944,6 @@ class Task_proyek extends CI_Controller
 
             if (!$chkSub) {
                 ajaxReturnDie('error', 'Karyawan penerima tugas (ID: ' . $id_penerima . ') tidak ditemukan atau tidak aktif!', FALSE);
-                return;
-            }
-
-            if (!$isAdmin && (int)$chkSub->id_atasan !== $myId) {
-                $namaBawahan = $chkSub->nama;
-                ajaxReturnDie('error', 'Anda tidak dapat memberikan task kepada ' . $namaBawahan . ' karena bukan merupakan bawahan langsung Anda!', FALSE);
                 return;
             }
         }
@@ -969,12 +961,23 @@ class Task_proyek extends CI_Controller
         $checklist_json = !empty($checklist) ? json_encode($checklist, JSON_UNESCAPED_UNICODE) : null;
 
         $pembuatRow = $this->db->select('nama, jabatan')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
-        $namaAtasan = $pembuatRow ? $pembuatRow->nama : 'Atasan';
+        $namaPembuat = $pembuatRow ? $pembuatRow->nama : 'Karyawan';
+
+        $mengetahuiUser = null;
+        if (!empty($id_mengetahui)) {
+            $mengetahuiUser = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $id_mengetahui)->get()->row();
+        }
+        $namaMengetahui = $mengetahuiUser ? $mengetahuiUser->nama : '';
 
         $createdCount = 0;
         foreach ($penerima_list as $id_penerima_raw) {
             $id_penerima = (int)$id_penerima_raw;
             if ($id_penerima <= 0) continue;
+
+            // Cek apakah ini pengajuan task mandiri untuk diri sendiri
+            $is_self = ($id_penerima === $myId);
+            $is_mandiri = $is_self ? 1 : 0;
+            $status_task = $is_self ? 5 : 0; // 5 = Menunggu ACC HRD, 0 = Baru / Aktif
 
             // Generate kode task unik
             $lastRow = $this->db->select('id_task')->from('task_proyek')->order_by('id_task', 'DESC')->limit(1)->get()->row();
@@ -993,47 +996,125 @@ class Task_proyek extends CI_Controller
                 'checklist_json'  => $checklist_json,
                 'id_pemberi'      => $myId,
                 'id_penerima'     => $id_penerima,
+                'id_mengetahui'   => $id_mengetahui,
+                'is_mandiri'      => $is_mandiri,
                 'tgl_mulai'       => date('Y-m-d', strtotime($tgl_mulai)),
                 'tgl_deadline'    => date('Y-m-d', strtotime($tgl_deadline)),
                 'lampiran_atasan' => $lampiran_atasan,
                 'progres'         => 0,
-                'status_task'     => 0
+                'status_task'     => $status_task
             ];
 
             if ($this->db->insert('task_proyek', $dataInsert)) {
                 $id_task = $this->db->insert_id();
                 $createdCount++;
 
-                // Catat log pembuatan
+                $aksiLog = $is_mandiri ? 'Mengajukan Task Mandiri (Menunggu ACC HRD)' : 'Membuat & Menugaskan Task';
+                $catatanLog = $is_mandiri 
+                    ? 'Pengajuan Task Mandiri "' . $judul . '" diajukan oleh ' . $namaPembuat . ' dan membutuhkan persetujuan (ACC) HRD sebelum mulai pengerjaan.'
+                    : 'Task "' . $judul . '" ditugaskan oleh ' . $namaPembuat . ' (Prioritas: ' . $prioritas . ', Deadline: ' . date('d-m-Y', strtotime($tgl_deadline)) . ').';
+
                 $this->db->insert('task_proyek_log', [
                     'id_task'     => $id_task,
                     'id_pengguna' => $myId,
-                    'aksi'        => 'Membuat & Menugaskan Task',
-                    'catatan'     => 'Task "' . $judul . '" ditugaskan oleh ' . $namaAtasan . ' (Prioritas: ' . $prioritas . ', Deadline: ' . date('d-m-Y', strtotime($tgl_deadline)) . ').'
+                    'aksi'        => $aksiLog,
+                    'catatan'     => $catatanLog
                 ]);
 
-                // Kirim WA ke bawahan jika dicentang
-                if ($kirim_wa) {
+                // 1. JIKA TASK MANDIRI: Kirim WA ke HRD untuk di-ACC
+                if ($is_mandiri) {
                     try {
-                        $bawahan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $id_penerima)->get()->row();
-                        $noHp = ($bawahan && !empty($bawahan->no_hp)) ? $bawahan->no_hp : (($bawahan && !empty($bawahan->nohp)) ? $bawahan->nohp : '');
-                        if (!empty($noHp) && function_exists('sendWa')) {
-                            $pesanWa = "*📋 PENUGASAN TASK / PROYEK BARU*" .
-                                "%0A%0AHalo *" . $bawahan->nama . "*," .
-                                "%0AAnda menerima penugasan baru dari *" . $namaAtasan . "*:" .
-                                "%0A%0A🔹 *Kode*: " . $kode_task .
-                                "%0A📌 *Judul*: " . $judul .
-                                "%0A📁 *Proyek*: " . ($nama_proyek ?: 'Umum') .
-                                "%0A⚡ *Prioritas*: " . $prioritas .
-                                "%0A📅 *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
-                                "%0A%0ASilakan buka menu *Task & Proyek Kerja* di https://office.visiyosindo.id/task_proyek untuk mulai mengerjakan.";
-                            @sendWa([
-                                'devId'    => hostWa('2'),
-                                'penerima' => $noHp,
-                                'pesan'    => $pesanWa
-                            ]);
+                        $hrdRecipients = $this->_getHrdRecipients();
+                        foreach ($hrdRecipients as $hrd) {
+                            $noHpHrd = (!empty($hrd->no_hp)) ? $hrd->no_hp : ((!empty($hrd->nohp)) ? $hrd->nohp : '');
+                            if (!empty($noHpHrd) && function_exists('sendWa')) {
+                                $pesanHrd = "ðŸ“¢ *PENGAJUAN TASK MANDIRI KARYAWAN (MENUNGGU ACC HRD)*" .
+                                    "%0A%0AHalo *" . $hrd->nama . "*," .
+                                    "%0AKaryawan *" . $namaPembuat . "* mengajukan task mandiri baru yang membutuhkan persetujuan (ACC) HRD sebelum mulai pengerjaan:" .
+                                    "%0A%0AðŸ“Œ *Kode*: " . $kode_task .
+                                    "%0AðŸ“‹ *Judul*: " . $judul .
+                                    "%0AðŸŽ¯ *Proyek*: " . ($nama_proyek ?: 'Umum') .
+                                    "%0Aâš¡ *Prioritas*: " . $prioritas .
+                                    "%0AðŸ“… *Target Selesai*: " . date('d-m-Y', strtotime($tgl_deadline)) .
+                                    ($nama_jobdesk ? "%0AðŸŽ¯ *Jobdesk Sasaran Mutu*: " . $nama_jobdesk : "") .
+                                    ($namaMengetahui ? "%0AðŸ‘ï¸ *Mengetahui*: " . $namaMengetahui : "") .
+                                    "%0A%0ASilakan tinjau & klik *ACC* di sistem Office:%0Ahttps://office.visiyosindo.id/task_proyek";
+                                @sendWa([
+                                    'devId'    => hostWa('2'),
+                                    'penerima' => $noHpHrd,
+                                    'pesan'    => $pesanHrd
+                                ]);
+                            }
                         }
-                    } catch (\Throwable $e) {
+                    } catch (\Throwable $e) {}
+
+                    // Konfirmasi ke pengaju jika kirim_wa dicentang
+                    if ($kirim_wa) {
+                        try {
+                            $pembuatUser = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
+                            $noHpPembuat = ($pembuatUser && !empty($pembuatUser->no_hp)) ? $pembuatUser->no_hp : (($pembuatUser && !empty($pembuatUser->nohp)) ? $pembuatUser->nohp : '');
+                            if (!empty($noHpPembuat) && function_exists('sendWa')) {
+                                $pesanKaryawan = "â³ *PENGAJUAN TASK MANDIRI BERHASIL DIAJUKAN*" .
+                                    "%0A%0AHalo *" . $namaPembuat . "*," .
+                                    "%0APengajuan task Anda (*" . $kode_task . " - " . $judul . "*) telah berhasil masuk ke sistem dan saat ini *Menunggu Persetujuan (ACC) HRD*." .
+                                    "%0A%0AAnda akan menerima notifikasi kembali setelah disetujui (ACC) oleh HRD untuk dapat mulai mengerjakan.%0Ahttps://office.visiyosindo.id/task_proyek";
+                                @sendWa([
+                                    'devId'    => hostWa('2'),
+                                    'penerima' => $noHpPembuat,
+                                    'pesan'    => $pesanKaryawan
+                                ]);
+                            }
+                        } catch (\Throwable $e) {}
+                    }
+                    // Catatan: Pihak Mengetahui TIDAK dikirim sekarang.
+                    // Sesuai permintaan, notifikasi ke pihak Mengetahui hanya dikirim setelah di-ACC HRD!
+                } else {
+                    // 2. JIKA PENUGASAN KE REKAN / BAWAHAN
+                    if ($kirim_wa) {
+                        try {
+                            $bawahan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $id_penerima)->get()->row();
+                            $noHp = ($bawahan && !empty($bawahan->no_hp)) ? $bawahan->no_hp : (($bawahan && !empty($bawahan->nohp)) ? $bawahan->nohp : '');
+                            if (!empty($noHp) && function_exists('sendWa')) {
+                                $pesanWa = "ðŸ“Œ *PENUGASAN TASK / PROYEK BARU*" .
+                                    "%0A%0AHalo *" . $bawahan->nama . "*," .
+                                    "%0AAnda menerima penugasan baru dari *" . $namaPembuat . "*:" .
+                                    "%0A%0AðŸ“Œ *Kode*: " . $kode_task .
+                                    "%0AðŸ“‹ *Judul*: " . $judul .
+                                    "%0AðŸŽ¯ *Proyek*: " . ($nama_proyek ?: 'Umum') .
+                                    "%0Aâš¡ *Prioritas*: " . $prioritas .
+                                    "%0AðŸ“… *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
+                                    ($namaMengetahui ? "%0AðŸ‘ï¸ *Mengetahui*: " . $namaMengetahui : "") .
+                                    "%0A%0ASilakan buka menu *Task & Proyek Kerja* di https://office.visiyosindo.id/task_proyek untuk mulai mengerjakan.";
+                                @sendWa([
+                                    'devId'    => hostWa('2'),
+                                    'penerima' => $noHp,
+                                    'pesan'    => $pesanWa
+                                ]);
+                            }
+                        } catch (\Throwable $e) {}
+
+                        // Kirim juga ke pihak mengetahui jika ada
+                        if ($mengetahuiUser) {
+                            try {
+                                $noHpMengetahui = (!empty($mengetahuiUser->no_hp)) ? $mengetahuiUser->no_hp : ((!empty($mengetahuiUser->nohp)) ? $mengetahuiUser->nohp : '');
+                                if (!empty($noHpMengetahui) && function_exists('sendWa')) {
+                                    $pesanTahu = "ðŸ‘ï¸ *INFORMASI PENUGASAN TASK (MENGETAHUI)*" .
+                                        "%0A%0AHalo *" . $mengetahuiUser->nama . "*," .
+                                        "%0ASebagai pihak yang mengetahui, *" . $namaPembuat . "* telah menugaskan task kepada *" . ($bawahan ? $bawahan->nama : 'Karyawan') . "*:" .
+                                        "%0A%0AðŸ“Œ *Kode*: " . $kode_task .
+                                        "%0AðŸ“‹ *Judul*: " . $judul .
+                                        "%0AðŸŽ¯ *Proyek*: " . ($nama_proyek ?: 'Umum') .
+                                        "%0Aâš¡ *Prioritas*: " . $prioritas .
+                                        "%0AðŸ“… *Deadline*: " . date('d-m-Y', strtotime($tgl_deadline)) .
+                                        "%0A%0APemantauan tugas: https://office.visiyosindo.id/task_proyek";
+                                    @sendWa([
+                                        'devId'    => hostWa('2'),
+                                        'penerima' => $noHpMengetahui,
+                                        'pesan'    => $pesanTahu
+                                    ]);
+                                }
+                            } catch (\Throwable $e) {}
+                        }
                     }
                 }
             }
@@ -1042,9 +1123,11 @@ class Task_proyek extends CI_Controller
         if ($createdCount > 0) {
             try {
                 addLog('Buat Task Proyek', 'Menugaskan Task "' . $judul . '" kepada ' . $createdCount . ' karyawan');
-            } catch (\Throwable $e) {
-            }
-            ajaxReturnDie('success', 'Berhasil membuat ' . $createdCount . ' penugasan Task / Proyek baru!', TRUE);
+            } catch (\Throwable $e) {}
+            $suksesMsg = (count($penerima_list) === 1 && (int)$penerima_list[0] === $myId)
+                ? 'Pengajuan Task Mandiri berhasil dikirimkan ke HRD dan menunggu persetujuan (ACC)!'
+                : 'Berhasil membuat ' . $createdCount . ' penugasan Task / Proyek baru!';
+            ajaxReturnDie('success', $suksesMsg, TRUE);
         } else {
             ajaxReturnDie('error', 'Gagal menyimpan penugasan Task.', FALSE);
         }

@@ -287,6 +287,10 @@ function renderStatusTaskBadge($st)
             return '<span class="tp-status-badge tp-st-3"><i class="fas fa-redo"></i> Perlu Revisi</span>';
         case 4:
             return '<span class="tp-status-badge tp-st-4"><i class="fas fa-check-circle"></i> Selesai & Dinilai</span>';
+        case 5:
+            return '<span class="tp-status-badge tp-st-5" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;"><i class="fas fa-hourglass-start"></i> Menunggu ACC HRD</span>';
+        case 6:
+            return '<span class="tp-status-badge tp-st-6" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca;"><i class="fas fa-times-circle"></i> Ditolak HRD</span>';
         default:
             return '<span class="tp-status-badge tp-st-0">Draft</span>';
     }
@@ -314,11 +318,11 @@ $namaBulanList = [
     <div class="col">
 
     <?php
-    $canAssignToAll   = (!empty($canAssignAll) || !empty($isAdmin) || isAdmin() || (int)$myId === 1);
-    $isAdminUser      = $canAssignToAll;
+    $canAssignToAll   = true;
+    $isAdminUser      = (!empty($isHrdAdmin) || !empty($isAdmin) || isAdmin() || (int)$myId === 1);
     $jmlSupervisiSaya = count($list_bawahan);
-    $canGiveTask      = ($canAssignToAll || $jmlSupervisiSaya > 0);
-    $penerimaList     = $canAssignToAll ? $list_semua_karyawan : $list_bawahan;
+    $canGiveTask      = true; // Sekarang semua karyawan bisa membuat / mengajukan task
+    $penerimaList     = !empty($list_semua_karyawan_all) ? $list_semua_karyawan_all : $list_semua_karyawan;
     ?>
 
     <!-- KARTU KONTROL FILTER & STATUS SUPERVISI -->
@@ -358,14 +362,12 @@ $namaBulanList = [
                 </a>
             </form>
 
-            <!-- Tombol Beri Task (Jika punya bawahan atau Administrator) -->
-            <?php if ($canGiveTask): ?>
-                <div>
-                    <button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask" style="border-radius: 6px; padding: 6px 14px;">
-                        <i class="fas fa-plus-circle mr-1"></i> Beri Task / Proyek <?= $isAdminUser ? 'ke Pegawai' : 'ke Karyawan' ?>
-                    </button>
-                </div>
-            <?php endif; ?>
+            <!-- Tombol Beri Task / Ajukan Mandiri (Tersedia untuk SEMUA Karyawan) -->
+            <div>
+                <button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask" style="border-radius: 6px; padding: 6px 14px;">
+                    <i class="fas fa-plus-circle mr-1"></i> + Buat / Ajukan Task Proyek
+                </button>
+            </div>
         </div>
 
         <hr style="margin: 12px 0 10px 0; border: 0; border-top: 1px solid #f1f5f9;">
