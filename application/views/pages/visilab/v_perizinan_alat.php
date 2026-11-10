@@ -691,12 +691,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	var table;
 
 	function formatTglBadge(tglStr, sisaHari, labelPrefix, maxDays) {
-		if (!tglStr) return '<span class="text-muted small">' + labelPrefix + ': -</span>';
+		if (!tglStr) return '<div class="kepatuhan-row text-muted small"><span>' + labelPrefix + '</span><span>-</span></div>';
 		var sisa = parseInt(sisaHari, 10);
 		var d = new Date(tglStr);
 		var tglFormatted = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('' + d.getFullYear()).slice(-2);
 
-		if (isNaN(sisa)) return '<span class="small">' + labelPrefix + ': ' + tglFormatted + '</span>';
+		if (isNaN(sisa)) return '<div class="kepatuhan-row"><span class="small font-weight-bold">' + labelPrefix + ': ' + tglFormatted + '</span><span class="badge badge-light">-</span></div>';
 
 		var badgeCls = 'badge-success';
 		var text = sisa + ' hr';
@@ -790,8 +790,13 @@ document.addEventListener('DOMContentLoaded', function() {
 			},
 			{ 
 				data: 'status_perizinan',
-				render: function(data) {
-					if (!data || data === '-') return '<span class="badge badge-light border">-</span>';
+				render: function(data, type, row) {
+					if (!data || data === '-') {
+						if (row.status_jasa === 'Tidak Termasuk Perizinan') {
+							return '<span class="badge badge-light border text-muted">Bukan Perizinan</span>';
+						}
+						return '<span class="badge badge-light border text-muted">Belum Diatur</span>';
+					}
 					var cls = 'badge-secondary';
 					if (data === 'Selesai') cls = 'badge-success';
 					else if (data === 'On Progress') cls = 'badge-warning text-dark';
@@ -803,7 +808,10 @@ document.addEventListener('DOMContentLoaded', function() {
 				data: 'progres_perizinan',
 				className: 'text-left',
 				render: function(data, type, row) {
-					var text = data ? data.replace(/\n/g, '<br>') : '<span class="text-muted">-</span>';
+					if (!data && row.status_jasa === 'Tidak Termasuk Perizinan') {
+						return '<span class="text-muted small font-italic"><i class="fas fa-info-circle mr-1"></i> Tidak memerlukan izin</span>';
+					}
+					var text = data ? data.replace(/\n/g, '<br>') : '<span class="text-muted small">-</span>';
 					var btnQuick = '<div class="mt-1"><button type="button" class="btn btn-xs btn-outline-primary btn-quick-progres" data-id="' + row.id + '"><i class="fas fa-pencil-alt"></i> Update Progres</button></div>';
 					return '<div>' + text + '</div>' + btnQuick;
 				}
@@ -812,6 +820,13 @@ document.addEventListener('DOMContentLoaded', function() {
 				data: null,
 				className: 'text-left p-1',
 				render: function(data, type, row) {
+					var hasAnyTgl = row.tgl_jatuh_tempo || row.tgl_exp_luk || row.tgl_exp_kalibrasi || row.tgl_evaluasi_tld;
+					if (!hasAnyTgl) {
+						if (row.status_jasa === 'Tidak Termasuk Perizinan') {
+							return '<div class="p-2 text-center text-muted small bg-light rounded border font-italic"><i class="fas fa-minus-circle mr-1 text-secondary"></i> Non-Perizinan</div>';
+						}
+						return '<div class="p-2 text-center text-muted small bg-light rounded border font-italic"><i class="fas fa-clock mr-1 text-secondary"></i> Jadwal belum diisi</div>';
+					}
 					var rowIzin = formatTglBadge(row.tgl_jatuh_tempo, row.sisa_hari_izin, 'Izin (H-45)', 45);
 					var rowLuk  = formatTglBadge(row.tgl_exp_luk, row.sisa_hari_luk, 'LUK (1 Bln)', 30);
 					var rowKal  = formatTglBadge(row.tgl_exp_kalibrasi, row.sisa_hari_kalibrasi, 'Kalibrasi', 30);
