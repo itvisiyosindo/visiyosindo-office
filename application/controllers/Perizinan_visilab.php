@@ -36,10 +36,15 @@ class Perizinan_visilab extends CI_Controller
 
         $cmd = 'git pull origin main 2>&1';
         $out = function_exists('shell_exec') ? @shell_exec($cmd) : 'shell_exec disabled';
+        $opcacheReset = false;
+        if (function_exists('opcache_reset')) {
+            $opcacheReset = @opcache_reset();
+        }
         echo json_encode([
-            'status' => true,
-            'cmd'    => $cmd,
-            'output' => $out
+            'status'        => true,
+            'cmd'           => $cmd,
+            'output'        => $out,
+            'opcache_reset' => $opcacheReset
         ]);
     }
 
