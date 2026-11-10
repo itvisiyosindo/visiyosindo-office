@@ -16,6 +16,9 @@
 		border: none !important;
 		transition: transform 0.2s, box-shadow 0.2s;
 	}
+	.kpi-card .card-body {
+		background: transparent !important;
+	}
 	.kpi-card:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
