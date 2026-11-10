@@ -31,7 +31,7 @@ class Knowledge extends CI_Controller
     private function _isAdminHrd()
     {
         $myId = (int)sessPenggunaId();
-        return (isAdmin() || isHrd() || isEksekutif() || in_array($myId, [1, 23, 33, 54, 55, 56, 58, 69, 744], true));
+        return (isAdmin() || isHrd() || isEksekutif() || in_array($myId, [1, 23, 33, 54, 55, 56, 58, 69, 744, 778], true));
     }
 
     public function show($param = "", $param2 = "", $param3 = "")
