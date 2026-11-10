@@ -787,8 +787,8 @@ if (isset($data_absen[0]->waktu_absen)) {
 
         LIST_CABANG.forEach(function(branch) {
             if (branch.latitude && branch.longitude) {
-                const bLat = parseFloat(branch.latitude);
-                const bLng = parseFloat(branch.longitude);
+                const bLat = parseFloat(String(branch.latitude).replace(',', '.'));
+                const bLng = parseFloat(String(branch.longitude).replace(',', '.'));
                 if (!isNaN(bLat) && !isNaN(bLng)) {
                     const dist = calculateDistanceMeters(userLat, userLng, bLat, bLng);
                     if (dist < minDistance) {
@@ -907,10 +907,22 @@ if (isset($data_absen[0]->waktu_absen)) {
         mapEl.innerHTML = '<iframe loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="' +
             buildMapEmbedUrl(latitude, longitude, 19) + '"></iframe>';
 
-        const statusEl = document.getElementById('locationStatus');
+                const statusEl = document.getElementById('locationStatus');
         if (statusEl) {
-            const accText = accuracy ? 'Akurasi GPS sekitar ' + Math.round(accuracy) + ' meter.' : 'Lokasi terdeteksi.';
-            statusEl.innerHTML = accText;
+            const accText = accuracy ? 'Akurasi GPS ±' + Math.round(accuracy) + 'm.' : 'Lokasi terdeteksi.';
+            const closest = findClosestBranch(parseFloat(latitude), parseFloat(longitude));
+            if (closest) {
+                const distMeter = Math.round(closest.distance);
+                const allowedRadius = parseInt(closest.radius) || 100;
+                const isInside = distMeter <= allowedRadius;
+                const badgeColor = isInside ? '#067647' : '#b42318';
+                const badgeBg = isInside ? '#dcfae6' : '#ffe4e8';
+                const statusLabel = isInside ? 'Dalam Radius Kantor' : 'Di Luar Radius Kantor';
+                statusEl.innerHTML = accText + ' | Cabang terdekat: <b>' + closest.nama_cabang + '</b> (' + distMeter + 'm / maks ' + allowedRadius + 'm) ' +
+                    '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;color:' + badgeColor + ';background:' + badgeBg + ';">' + statusLabel + '</span>';
+            } else {
+                statusEl.innerHTML = accText;
+            }
         }
     }
 
@@ -1102,8 +1114,6 @@ if (isset($data_absen[0]->waktu_absen)) {
                 return;
             }
 
-            // Validasi radius multi-cabang (DINONAKTIFKAN SEMENTARA)
-            /*
             // Validasi radius multi-cabang sebelum ambil foto
             const isWfa = getSelectedJenisLokasi() === 'WFA';
             if (!isWfa && typeof LIST_CABANG !== 'undefined' && LIST_CABANG.length > 0) {
@@ -1127,7 +1137,7 @@ if (isset($data_absen[0]->waktu_absen)) {
                 }
             }
 
-            */
+            
 
             takeSnapshot(function(imageData) {
                 if (!imageData) {

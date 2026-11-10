@@ -687,6 +687,49 @@ class Absensi extends CI_Controller
             }
         }
 
+        $data['latitude'] = $this->input->post('latitude');
+        $data['longitude'] = $this->input->post('longitude');
+        $data['jenis_absen'] = 'Kantor';
+        $data['jenis_lokasi'] = $this->input->post('jenis_lokasi') ?: 'Kantor';
+        $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
+
+        $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
+        // Geofence radius validation untuk Absen Kantor jika bukan WFA
+        if ($jenisLokasi !== 'WFA') {
+            if (empty($data['latitude']) || empty($data['longitude'])) {
+                ajaxReturnDie('error', 'Titik lokasi GPS tidak terdeteksi. Silakan aktifkan GPS dan izinkan browser mengakses lokasi.');
+            }
+
+            $this->load->model('md_cabang');
+            $activeBranches = $this->md_cabang->getActiveBranches();
+
+            if (!empty($activeBranches)) {
+                $closestBranch = null;
+                $minDistance = null;
+
+                foreach ($activeBranches as $branch) {
+                    $bLat = (float)str_replace(',', '.', trim((string)$branch->latitude));
+                    $bLng = (float)str_replace(',', '.', trim((string)$branch->longitude));
+                    if ($bLat == 0.0 && $bLng == 0.0) {
+                        continue;
+                    }
+                    $dist = $this->_calculateHaversineDistance($data['latitude'], $data['longitude'], $bLat, $bLng);
+                    if ($minDistance === null || $dist < $minDistance) {
+                        $minDistance = $dist;
+                        $closestBranch = $branch;
+                    }
+                }
+
+                if ($closestBranch !== null) {
+                    $allowedRadius = !empty($closestBranch->radius) ? (int)$closestBranch->radius : 100;
+                    if ($minDistance > $allowedRadius) {
+                        $distMeter = round($minDistance);
+                        ajaxReturnDie('error', "Anda berada di luar radius kantor cabang. Jarak terdekat ke {$closestBranch->nama_cabang} adalah {$distMeter} meter (Maksimal {$allowedRadius} meter).");
+                    }
+                }
+            }
+        }
+
         $this->md_absensi->addbackup($data);
 
         // Ambil data base64 dari input
@@ -710,47 +753,6 @@ class Absensi extends CI_Controller
                 ajaxReturnDie('error', 'Gagal menyimpan foto');
             }
         }
-
-        $data['latitude'] = $this->input->post('latitude');
-        $data['longitude'] = $this->input->post('longitude');
-        $data['jenis_absen'] = 'Kantor';
-        $data['jenis_lokasi'] = $this->input->post('jenis_lokasi') ?: 'Kantor';
-        $data['ip_addr']     = $_SERVER['REMOTE_ADDR'];
-
-        $jenisLokasi = strtoupper(trim((string)$this->input->post('jenis_lokasi', TRUE)));
-        // Geofence radius validation untuk Absen Kantor jika bukan WFA (DINONAKTIFKAN SEMENTARA)
-        /*
-        if ($jenisLokasi !== 'WFA') {
-            if (empty($data['latitude']) || empty($data['longitude'])) {
-                ajaxReturnDie('error', 'Titik lokasi GPS tidak terdeteksi. Silakan aktifkan GPS dan izinkan browser mengakses lokasi.');
-            }
-
-            $this->load->model('md_cabang');
-            $activeBranches = $this->md_cabang->getActiveBranches();
-
-            if (!empty($activeBranches)) {
-                $closestBranch = null;
-                $minDistance = null;
-
-                foreach ($activeBranches as $branch) {
-                    $dist = $this->_calculateHaversineDistance($data['latitude'], $data['longitude'], $branch->latitude, $branch->longitude);
-                    if ($minDistance === null || $dist < $minDistance) {
-                        $minDistance = $dist;
-                        $closestBranch = $branch;
-                    }
-                }
-
-                if ($closestBranch !== null) {
-                    $allowedRadius = !empty($closestBranch->radius) ? (int)$closestBranch->radius : 100;
-                    if ($minDistance > $allowedRadius) {
-                        $distMeter = round($minDistance);
-                        ajaxReturnDie('error', "Anda berada di luar radius kantor cabang. Jarak terdekat ke {$closestBranch->nama_cabang} adalah {$distMeter} meter (Maksimal {$allowedRadius} meter).");
-                    }
-                }
-            }
-        }
-        */
-
         $this->md_absensi->add($data);
 
 
@@ -2261,10 +2263,10 @@ class Absensi extends CI_Controller
     private function _calculateHaversineDistance($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 6371000; // in meters
-        $lat1 = deg2rad((float)$lat1);
-        $lon1 = deg2rad((float)$lon1);
-        $lat2 = deg2rad((float)$lat2);
-        $lon2 = deg2rad((float)$lon2);
+        $lat1 = deg2rad((float)str_replace(',', '.', (string)$lat1));
+        $lon1 = deg2rad((float)str_replace(',', '.', (string)$lon1));
+        $lat2 = deg2rad((float)str_replace(',', '.', (string)$lat2));
+        $lon2 = deg2rad((float)str_replace(',', '.', (string)$lon2));
 
         $latDelta = $lat2 - $lat1;
         $lonDelta = $lon2 - $lon1;
