@@ -782,7 +782,7 @@ class Absensi extends CI_Controller
         if ($isLuarRadius) {
             addLog('Absensi Luar Radius', 'Melakukan Absen ' . $data['type_absen'] . ' luar radius (' . $data['cabang_terdekat'] . ' ' . $data['jarak_radius'] . 'm). Alasan: ' . $data['alasan_luar_radius']);
             $this->_notifWaLuarRadius($data, $insertedAbsenId);
-            ajaxReturnDie('success', 'Absen Luar Radius berhasil dikirim! Menunggu ACC General Affair & Bu Yola.', TRUE);
+            ajaxReturnDie('success', 'Absen Luar Radius berhasil dikirim! Menunggu ACC General Affair & General Manager.', TRUE);
         }
 
         addLog('Absensi', 'Melakukan Absen ' . $data['type_absen']);
@@ -1370,7 +1370,7 @@ class Absensi extends CI_Controller
             $myId = (int)sessPenggunaId();
             $canAccess = isAdmin() || isGa() || isHrd() || $myId === 771 || $myId === 33 || $myId === 778;
             if (!$canAccess) {
-                show_error('Akses ditolak. Halaman ini khusus General Affair, Bu Yola, HRD, dan Administrator.', 403);
+                show_error('Akses ditolak. Halaman ini khusus General Affair, General Manager, HRD, dan Administrator.', 403);
                 return;
             }
 
@@ -1378,7 +1378,7 @@ class Absensi extends CI_Controller
             $page_data['switch']        = isKaryawan() ? $this->id_navbar() : 'kepegawaian';
             $page_data['page_name']     = 'v_approval_luar_radius';
             $page_data['page_title']    = 'ACC Absen Luar Radius';
-            $page_data['page_desc']     = 'Persetujuan Absensi Karyawan di Luar Radius Kantor (General Affair & Bu Yola)';
+            $page_data['page_desc']     = 'Persetujuan Absensi Karyawan di Luar Radius Kantor (General Affair & General Manager)';
             $page_data['can_acc_ga']    = isAdmin() || isGa() || $myId === 771;
             $page_data['can_acc_yola']  = isAdmin() || $myId === 33;
             $page_data['stats']         = $this->md_absensi->getLuarRadiusStats();
@@ -1468,8 +1468,8 @@ class Absensi extends CI_Controller
                     ? '<span class="badge badge-success">GA: ACC</span>'
                     : ($gaStatus === 2 ? '<span class="badge badge-danger">GA: Tolak</span>' : '<span class="badge badge-warning text-dark">GA: Menunggu</span>');
                 $yolaBadge = $yolaStatus === 1
-                    ? '<span class="badge badge-success">Yola: ACC</span>'
-                    : ($yolaStatus === 2 ? '<span class="badge badge-danger">Yola: Tolak</span>' : '<span class="badge badge-warning text-dark">Yola: Menunggu</span>');
+                    ? '<span class="badge badge-success">GM: ACC</span>'
+                    : ($yolaStatus === 2 ? '<span class="badge badge-danger">GM: Tolak</span>' : '<span class="badge badge-warning text-dark">GM: Menunggu</span>');
 
                 if ($row->approval == 'terima') {
                     $finalBadge = '<span class="badge badge-success badge-pill">Diterima</span>';
@@ -2269,7 +2269,7 @@ class Absensi extends CI_Controller
                     $gaSt = (int)($data_absen[0]->acc_ga ?? 0);
                     $yoSt = (int)($data_absen[0]->acc_yola ?? 0);
                     $gaLbl = $gaSt === 1 ? 'GA:✔' : ($gaSt === 2 ? 'GA:✖' : 'GA:⏳');
-                    $yoLbl = $yoSt === 1 ? 'Yola:✔' : ($yoSt === 2 ? 'Yola:✖' : 'Yola:⏳');
+                    $yoLbl = $yoSt === 1 ? 'GM:✔' : ($yoSt === 2 ? 'GM:✖' : 'GM:⏳');
                     if ($data_absen[0]->approval == 'terima') {
                         $apr = '<span class="badge badge-success badge-pill font-weight-bold">Diterima (Luar Radius)</span>';
                     } else if ($data_absen[0]->approval == 'tolak') {
@@ -2484,7 +2484,7 @@ class Absensi extends CI_Controller
             ajaxReturnDie('error', 'Hanya General Affair (GA) atau Administrator yang dapat melakukan ACC GA.');
         }
         if ($role === 'yola' && !$canAccYola) {
-            ajaxReturnDie('error', 'Hanya Bu Yola atau Administrator yang dapat melakukan ACC Bu Yola.');
+            ajaxReturnDie('error', 'Hanya General Manager atau Administrator yang dapat melakukan ACC General Manager.');
         }
 
         $res = $this->md_absensi->processLuarRadiusApproval($id_absensi, $role, $decision, $myId);
@@ -2495,7 +2495,7 @@ class Absensi extends CI_Controller
         $row      = $res['row'];
         $emp      = $this->md_pengguna->getById($row->pengguna_id);
         $empName  = !empty($emp) ? $emp[0]->nama : 'Karyawan ID ' . $row->pengguna_id;
-        $roleLbl  = $role === 'ga' ? 'General Affair' : 'Bu Yola';
+        $roleLbl  = $role === 'ga' ? 'General Affair' : 'General Manager';
         $aksiLbl  = $decision === 1 ? 'Menyetujui (ACC)' : 'Menolak';
 
         addLog('ACC Absen Luar Radius', "{$aksiLbl} ({$roleLbl}) absensi {$row->type_absen} luar radius milik {$empName} (ID Absensi: {$id_absensi})");
@@ -2507,11 +2507,11 @@ class Absensi extends CI_Controller
         $msgStatus = $decision === 1 ? 'disetujui' : 'ditolak';
         $extra = '';
         if ($res['approval'] === 'terima') {
-            $extra = ' Status absensi kini resmi Diterima (GA & Bu Yola sudah ACC).';
+            $extra = ' Status absensi kini resmi Diterima (General Affair & General Manager sudah ACC).';
         } elseif ($res['approval'] === 'tolak') {
             $extra = ' Status absensi kini Ditolak.';
         } else {
-            $waiting = ($res['acc_ga'] === 0) ? 'General Affair' : 'Bu Yola';
+            $waiting = ($res['acc_ga'] === 0) ? 'General Affair' : 'General Manager';
             $extra = " Masih menunggu ACC {$waiting}.";
         }
 
@@ -2575,7 +2575,7 @@ class Absensi extends CI_Controller
                     . "• *Jarak dari {$cabang}:* {$jarak}%0A"
                     . "• *Alasan:* {$alasan}%0A"
                     . "• *Titik Maps:* {$mapsUrl}%0A%0A"
-                    . "Silakan lakukan ACC (GA & Bu Yola) pada link berikut:%0A{$accUrl}";
+                    . "Silakan lakukan ACC (GA & General Manager) pada link berikut:%0A{$accUrl}";
 
                 sendWa([
                     'devId'    => hostWa('3'),
@@ -2602,7 +2602,7 @@ class Absensi extends CI_Controller
             $tgl     = !empty($row->data_created) ? date('d-m-Y', strtotime($row->data_created)) : '-';
             $jam     = $row->waktu_absen ?: '-';
             $tipe    = ucfirst((string)$row->type_absen);
-            $statusLbl = $finalApproval === 'terima' ? 'DISETUJUI (ACC Lengkap GA & Bu Yola)' : "DITOLAK (oleh {$lastActor})";
+            $statusLbl = $finalApproval === 'terima' ? 'DISETUJUI (ACC Lengkap General Affair & General Manager)' : "DITOLAK (oleh {$lastActor})";
 
             $pesan = "*Informasi Status Absen Luar Radius*%0A%0A"
                 . "Halo *{$empName}*,%0A"

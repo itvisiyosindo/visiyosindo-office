@@ -92,12 +92,12 @@ if (isset($data_absen[0]->waktu_absen)) {
         } else {
             $statusClass = 'status-warning';
             $statusIcon = 'bx bx-time-five';
-            $statusTitle = 'Absensi Luar Radius Tercatat â€” Menunggu ACC GA & Bu Yola';
+            $statusTitle = 'Absensi Luar Radius Tercatat â€” Menunggu ACC GA & General Manager';
         }
 
         $jarakText = !empty($data_absen[0]->jarak_radius) ? (' | Jarak: ' . (int)$data_absen[0]->jarak_radius . 'm dari ' . htmlspecialchars($data_absen[0]->cabang_terdekat ?? '-')) : '';
         $alasanText = !empty($data_absen[0]->alasan_luar_radius) ? htmlspecialchars($data_absen[0]->alasan_luar_radius) : '-';
-        $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . $jarakText . ' | GA: ' . $gaLabel . ' | Bu Yola: ' . $yolaLabel . ' | Alasan: ' . $alasanText;
+        $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . $jarakText . ' | GA: ' . $gaLabel . ' | General Manager: ' . $yolaLabel . ' | Alasan: ' . $alasanText;
     } else {
         if ($data_absen[0]->status_absen == 'terlambat') {
             $statusClass = 'status-danger';
@@ -1188,7 +1188,7 @@ if (isset($data_absen[0]->waktu_absen)) {
                                        <div><b>Cabang Terdekat:<\/b> ${closest.nama_cabang}<\/div>
                                        <div><b>Jarak Anda:<\/b> <span class="text-danger font-weight-bold">${distMeter} meter<\/span> (Maks: ${allowedRadius} meter)<\/div>
                                      <\/div>
-                                     <p class="mb-2 text-muted">Untuk tugas luar / kunjungan (Teknisi, Marketing, dll), silakan masukkan alasan Anda di bawah. Absensi akan tercatat dengan status <b>Menunggu ACC General Affair &amp; Bu Yola<\/b>.<\/p>
+                                     <p class="mb-2 text-muted">Untuk tugas luar / kunjungan (Teknisi, Marketing, dll), silakan masukkan alasan Anda di bawah. Absensi akan tercatat dengan status <b>Menunggu ACC General Affair &amp; General Manager<\/b>.<\/p>
                                      <label class="font-weight-bold mb-1">Alasan Absen di Luar Radius <span class="text-danger">*<\/span>:<\/label>
                                    <\/div>`,
                             input: 'textarea',

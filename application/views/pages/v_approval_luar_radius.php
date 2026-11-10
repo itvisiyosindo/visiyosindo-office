@@ -74,7 +74,7 @@
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
 		<div class="card card-sm lr-kpi-card lr-bg-primary h-100">
 			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold"><i class="fas fa-user-tie"></i> Menunggu Bu Yola</div>
+				<div class="small text-uppercase font-weight-bold"><i class="fas fa-user-tie"></i> Menunggu GM</div>
 				<div class="h4 font-weight-bold mb-0 text-white" id="stat-pending-yola"><?= (int)$stats['pending_yola'] ?></div>
 			</div>
 		</div>
@@ -101,11 +101,11 @@
 <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center flex-wrap">
 	<div class="small">
 		<i class="fas fa-shield-alt mr-1"></i>
-		<b>Aturan Persetujuan:</b> Absen luar radius (kunjungan Teknisi / Marketing, dll.) membutuhkan ACC dari <b>General Affair</b> dan <b>Bu Yola</b>.
+		<b>Aturan Persetujuan:</b> Absen luar radius (kunjungan Teknisi / Marketing, dll.) membutuhkan ACC dari <b>General Affair</b> dan <b>General Manager</b>.
 		<span class="ml-2">
 			Hak ACC Anda:
 			<?php if (!empty($can_acc_ga)): ?><span class="badge badge-info">General Affair</span><?php endif; ?>
-			<?php if (!empty($can_acc_yola)): ?><span class="badge badge-primary">Bu Yola</span><?php endif; ?>
+			<?php if (!empty($can_acc_yola)): ?><span class="badge badge-primary">General Manager</span><?php endif; ?>
 			<?php if (empty($can_acc_ga) && empty($can_acc_yola)): ?><span class="badge badge-secondary">Lihat Saja (Read-Only)</span><?php endif; ?>
 		</span>
 	</div>
@@ -122,9 +122,9 @@
 					<div class="col-md-4 col-sm-6 mb-2 mb-md-0">
 						<label class="small font-weight-bold text-dark mb-1">Filter Status ACC:</label>
 						<select class="form-control form-control-sm" id="filter_status_lr">
-							<option value="pending" selected>Menunggu ACC (GA / Bu Yola)</option>
+							<option value="pending" selected>Menunggu ACC (GA / General Manager)</option>
 							<option value="pending_ga">Belum ACC General Affair</option>
-							<option value="pending_yola">Belum ACC Bu Yola</option>
+							<option value="pending_yola">Belum ACC General Manager</option>
 							<option value="approved">Sudah ACC Lengkap (Diterima)</option>
 							<option value="rejected">Ditolak</option>
 							<option value="all">Semua Pengajuan</option>
@@ -152,7 +152,7 @@
 								<th>Lokasi & Jarak</th>
 								<th>Alasan Kunjungan</th>
 								<th>ACC General Affair</th>
-								<th>ACC Bu Yola</th>
+								<th>ACC General Manager</th>
 								<th>Status Final</th>
 							</tr>
 						</thead>
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 
 		if (canApprove) {
-			var roleLabel = role === 'ga' ? 'GA' : 'Bu Yola';
+			var roleLabel = role === 'ga' ? 'GA' : 'GM';
 			html += '<div class="mt-2 d-flex justify-content-center flex-wrap" style="gap:4px;">';
 			if (statusVal !== 1) {
 				html += '<button type="button" class="btn btn-xs btn-success btn-acc-lr" data-id="' + idAbsensi + '" data-role="' + role + '" data-decision="1"><i class="fas fa-check"></i> ACC ' + roleLabel + '</button>';
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		var idAbsensi = $(this).data('id');
 		var role      = $(this).data('role');
 		var decision  = $(this).data('decision');
-		var roleLbl   = role === 'ga' ? 'General Affair' : 'Bu Yola';
+		var roleLbl   = role === 'ga' ? 'General Affair' : 'General Manager';
 		var decLbl    = decision == 1 ? 'MENYETUJUI (ACC)' : 'MENOLAK';
 
 		Swal.fire({
