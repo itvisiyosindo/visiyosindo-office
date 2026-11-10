@@ -8,98 +8,271 @@
 	</div>
 </header>
 
-<!-- Widget KPI Ringkasan Kepatuhan -->
-<!-- Widget KPI Ringkasan Kepatuhan -->
 <style>
-	.kpi-card {
+	:root {
+		--card-radius: 12px;
+		--text-dark: #1e293b;
+		--text-muted: #64748b;
+		--border-color: #e2e8f0;
+	}
+
+	.card-modern {
+		border: 0 !important;
+		border-radius: var(--card-radius) !important;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+		background: #fff !important;
+		margin-bottom: 24px;
+	}
+
+	/* KPI Cards */
+	.kpi-card-modern {
+		border: 0 !important;
+		border-radius: var(--card-radius) !important;
+		background: #fff !important;
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+		padding: 1.1rem 1.25rem !important;
+		transition: all 0.25s ease !important;
+		position: relative;
+		overflow: hidden;
+		border: 1px solid #edf2f7 !important;
+	}
+	.kpi-card-modern:hover {
+		transform: translateY(-3px) !important;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09) !important;
+	}
+	.kpi-card-modern::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 4px;
+	}
+	.kpi-blue::before { background: linear-gradient(180deg, #3b82f6, #1d4ed8); }
+	.kpi-amber::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
+	.kpi-cyan::before { background: linear-gradient(180deg, #06b6d4, #0891b2); }
+	.kpi-slate::before { background: linear-gradient(180deg, #64748b, #475569); }
+	.kpi-purple::before { background: linear-gradient(180deg, #8b5cf6, #6d28d9); }
+	.kpi-red::before { background: linear-gradient(180deg, #ef4444, #b91c1c); }
+
+	.kpi-icon-wrapper {
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.2rem;
+		flex-shrink: 0;
+	}
+	.kpi-blue .kpi-icon-wrapper { background: #eff6ff; color: #2563eb; }
+	.kpi-amber .kpi-icon-wrapper { background: #fffbeb; color: #d97706; }
+	.kpi-cyan .kpi-icon-wrapper { background: #ecfeff; color: #0891b2; }
+	.kpi-slate .kpi-icon-wrapper { background: #f1f5f9; color: #475569; }
+	.kpi-purple .kpi-icon-wrapper { background: #f5f3ff; color: #7c3aed; }
+	.kpi-red .kpi-icon-wrapper { background: #fef2f2; color: #dc2626; }
+
+	.kpi-title {
+		font-size: 0.72rem;
+		text-transform: uppercase;
+		letter-spacing: 0.6px;
+		color: var(--text-muted);
+		font-weight: 700;
+		margin-bottom: 2px;
+	}
+	.kpi-value {
+		font-size: 1.6rem;
+		font-weight: 800;
+		color: var(--text-dark);
+		line-height: 1.2;
+	}
+
+	/* Table Modern */
+	.table-modern {
+		width: 100% !important;
+		border-collapse: separate !important;
+		border-spacing: 0 !important;
+	}
+	.table-modern thead th {
+		background: #f8fafc !important;
+		color: #475569 !important;
+		font-size: 0.74rem !important;
+		text-transform: uppercase !important;
+		letter-spacing: 0.6px !important;
+		font-weight: 700 !important;
+		padding: 12px 10px !important;
+		border-top: 0 !important;
+		border-bottom: 1px solid #e2e8f0 !important;
+		vertical-align: middle !important;
+	}
+	.table-modern tbody td {
+		padding: 10px 10px !important;
+		vertical-align: middle !important;
+		border-bottom: 1px solid #f1f5f9 !important;
+		font-size: 0.84rem !important;
+		color: #1e293b !important;
+	}
+	.table-modern tbody tr:hover td {
+		background-color: #f8fafc !important;
+	}
+
+	/* Compact Kepatuhan Item */
+	.kepatuhan-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 2.5px 0;
+		font-size: 11px;
+		border-bottom: 1px dashed #e2e8f0;
+	}
+	.kepatuhan-row:last-child {
+		border-bottom: none;
+	}
+
+	/* DataTables Controls Modernization */
+	.dataTables_wrapper .dataTables_length {
+		float: left;
+		margin-bottom: 14px;
+	}
+	.dataTables_wrapper .dataTables_length label {
+		font-size: 12.5px;
+		color: #64748b;
+		font-weight: 500;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.dataTables_wrapper .dataTables_length select {
+		width: 68px !important;
+		height: 32px !important;
+		padding: 2px 8px !important;
+		font-size: 12.5px !important;
 		border-radius: 8px !important;
-		border: none !important;
-		transition: transform 0.2s, box-shadow 0.2s;
+		border: 1.5px solid #cbd5e1 !important;
+		background-color: #fff !important;
+		color: #1e293b !important;
+		outline: none !important;
 	}
-	.kpi-card .card-body {
-		background: transparent !important;
+	.dataTables_wrapper .dataTables_filter {
+		float: right;
+		margin-bottom: 14px;
 	}
-	.kpi-card:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+	.dataTables_wrapper .dataTables_filter label {
+		font-size: 12.5px;
+		color: #64748b;
+		font-weight: 500;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 	}
-	.kpi-bg-primary {
-		background: linear-gradient(135deg, #0088cc 0%, #005580 100%) !important;
-		color: #ffffff !important;
+	.dataTables_wrapper .dataTables_filter input {
+		height: 32px !important;
+		width: 220px !important;
+		padding: 4px 12px !important;
+		font-size: 12.5px !important;
+		border-radius: 8px !important;
+		border: 1.5px solid #cbd5e1 !important;
+		background-color: #fff !important;
+		outline: none !important;
+		transition: all 0.2s ease !important;
 	}
-	.kpi-bg-warning {
-		background: linear-gradient(135deg, #f39c12 0%, #d68910 100%) !important;
-		color: #ffffff !important;
+	.dataTables_wrapper .dataTables_filter input:focus {
+		border-color: #3b82f6 !important;
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
 	}
-	.kpi-bg-info {
-		background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%) !important;
-		color: #ffffff !important;
+	.dataTables_wrapper .dataTables_paginate {
+		margin-top: 14px !important;
+		font-size: 12px !important;
 	}
-	.kpi-bg-secondary {
-		background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
-		color: #ffffff !important;
-	}
-	.kpi-bg-dark {
-		background: linear-gradient(135deg, #343a40 0%, #212529 100%) !important;
-		color: #ffffff !important;
-	}
-	.kpi-bg-danger {
-		background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-		color: #ffffff !important;
+	.dataTables_wrapper .dataTables_info {
+		margin-top: 14px !important;
+		font-size: 12px !important;
+		color: #64748b !important;
 	}
 </style>
 
+<!-- Top KPI Summary Cards -->
 <div class="row mb-3">
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm kpi-card kpi-bg-primary shadow-sm h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-hospital"></i> Total Instansi</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-total"><?= $stats['total'] ?></div>
+		<div class="card card-sm kpi-card-modern kpi-blue h-100">
+			<div class="d-flex align-items-center justify-content-between">
+				<div>
+					<div class="kpi-title"><i class="fas fa-hospital mr-1"></i> Total Instansi</div>
+					<div class="kpi-value text-primary" id="stat-total"><?= $stats['total'] ?></div>
+				</div>
+				<div class="kpi-icon-wrapper">
+					<i class="fas fa-hospital"></i>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm kpi-card kpi-bg-warning shadow-sm h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.9);"><i class="fas fa-file-signature"></i> Izin &le; 45 Hari</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-h45-izin"><?= $stats['h45_izin'] ?></div>
+		<div class="card card-sm kpi-card-modern kpi-amber h-100">
+			<div class="d-flex align-items-center justify-content-between">
+				<div>
+					<div class="kpi-title"><i class="fas fa-file-signature mr-1"></i> Izin &le; 45 Hari</div>
+					<div class="kpi-value text-warning" id="stat-h45-izin"><?= $stats['h45_izin'] ?></div>
+				</div>
+				<div class="kpi-icon-wrapper">
+					<i class="fas fa-hourglass-half"></i>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm kpi-card kpi-bg-info shadow-sm h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-clipboard-check"></i> LUK &le; 1 Bulan</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-h30-luk"><?= $stats['h30_luk'] ?></div>
+		<div class="card card-sm kpi-card-modern kpi-cyan h-100">
+			<div class="d-flex align-items-center justify-content-between">
+				<div>
+					<div class="kpi-title"><i class="fas fa-clipboard-check mr-1"></i> LUK &le; 1 Bln</div>
+					<div class="kpi-value text-info" id="stat-h30-luk"><?= $stats['h30_luk'] ?></div>
+				</div>
+				<div class="kpi-icon-wrapper">
+					<i class="fas fa-clipboard-check"></i>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm kpi-card kpi-bg-secondary shadow-sm h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-cogs"></i> Kalibrasi &le; 1 Bln</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-h30-kal"><?= $stats['h30_kalibrasi'] ?></div>
+		<div class="card card-sm kpi-card-modern kpi-slate h-100">
+			<div class="d-flex align-items-center justify-content-between">
+				<div>
+					<div class="kpi-title"><i class="fas fa-cogs mr-1"></i> Kalibrasi &le; 1 Bln</div>
+					<div class="kpi-value text-secondary" id="stat-h30-kal"><?= $stats['h30_kalibrasi'] ?></div>
+				</div>
+				<div class="kpi-icon-wrapper">
+					<i class="fas fa-cogs"></i>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm kpi-card kpi-bg-dark shadow-sm h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-id-badge"></i> TLD (3 Bln)</div>
-				<div class="h4 font-weight-bold mb-0 text-warning font-weight-bold" id="stat-h30-tld"><?= $stats['h30_tld'] ?></div>
+		<div class="card card-sm kpi-card-modern kpi-purple h-100">
+			<div class="d-flex align-items-center justify-content-between">
+				<div>
+					<div class="kpi-title"><i class="fas fa-id-badge mr-1"></i> TLD (3 Bln)</div>
+					<div class="kpi-value" style="color: #7c3aed;" id="stat-h30-tld"><?= $stats['h30_tld'] ?></div>
+				</div>
+				<div class="kpi-icon-wrapper">
+					<i class="fas fa-id-badge"></i>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm kpi-card kpi-bg-danger shadow-sm h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-exclamation-triangle"></i> Expired</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-expired"><?= $stats['expired'] ?></div>
+		<div class="card card-sm kpi-card-modern kpi-red h-100">
+			<div class="d-flex align-items-center justify-content-between">
+				<div>
+					<div class="kpi-title text-danger"><i class="fas fa-exclamation-triangle mr-1"></i> Expired</div>
+					<div class="kpi-value text-danger" id="stat-expired"><?= $stats['expired'] ?></div>
+				</div>
+				<div class="kpi-icon-wrapper">
+					<i class="fas fa-exclamation-triangle"></i>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -107,93 +280,93 @@
 
 <div class="row">
 	<div class="col-12">
-		<section class="card">
-			<header class="card-header bg-light py-2">
-				<div class="d-flex justify-content-between align-items-center flex-wrap">
-					<div class="my-1">
-						<button type="button" class="btn btn-sm btn-success" id="btn-tambah">
-							<i class="fas fa-plus"></i>&nbsp; Tambah Data
-						</button>
-						<button type="button" class="btn btn-sm btn-info text-white ml-1" id="btn-import">
-							<i class="fas fa-file-import"></i>&nbsp; Import Excel
-						</button>
-						<button type="button" class="btn btn-sm btn-secondary ml-1" id="btn-export">
-							<i class="fas fa-file-excel"></i>&nbsp; Export Excel
-						</button>
-						<button type="button" class="btn btn-sm btn-warning text-dark ml-1" id="btn-cron-reminder" title="Kirim reminder ke seluruh customer & marketing yang izinnya &le; 45 hari atau LUK/Kalibrasi/TLD &le; 1 bulan">
-							<i class="fab fa-whatsapp"></i>&nbsp; Cek & Kirim Semua Pengingat
-						</button>
-					</div>
-					<div class="my-1">
-						<button type="button" class="btn btn-sm btn-outline-dark" id="btn-refresh" title="Muat Ulang Data">
-							<i class="fas fa-sync-alt"></i>&nbsp; Refresh
-						</button>
-					</div>
+		<section class="card card-modern shadow-sm border-0">
+			<header class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
+				<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+					<button type="button" class="btn btn-sm btn-primary font-weight-bold shadow-sm" id="btn-tambah" style="border-radius: 8px;">
+						<i class="fas fa-plus-circle mr-1"></i> Tambah Data
+					</button>
+					<button type="button" class="btn btn-sm btn-outline-info font-weight-bold" id="btn-import" style="border-radius: 8px;">
+						<i class="fas fa-file-import mr-1"></i> Import Excel
+					</button>
+					<button type="button" class="btn btn-sm btn-outline-secondary font-weight-bold" id="btn-export" style="border-radius: 8px;">
+						<i class="fas fa-file-excel mr-1"></i> Export Excel
+					</button>
+					<button type="button" class="btn btn-sm btn-warning font-weight-bold text-dark shadow-sm" id="btn-cron-reminder" style="border-radius: 8px;" title="Kirim reminder ke customer & marketing">
+						<i class="fab fa-whatsapp mr-1"></i> Cek & Kirim Semua Pengingat
+					</button>
+				</div>
+				<div>
+					<button type="button" class="btn btn-sm btn-light border font-weight-bold" id="btn-refresh" style="border-radius: 8px;" title="Muat Ulang Data">
+						<i class="fas fa-sync-alt mr-1 text-primary"></i> Refresh
+					</button>
 				</div>
 			</header>
 
-			<div class="card-body">
-				<!-- Filter Bar -->
-				<div class="row mb-3 bg-light p-2 rounded mx-0">
-					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="small font-weight-bold text-muted mb-1">Status Jasa:</label>
-						<select id="filter_status_jasa" class="form-control form-control-sm">
-							<option value="">-- Semua Status Jasa --</option>
-							<option value="Pengurusan Perizinan">Pengurusan Perizinan</option>
-							<option value="Pendampingan Perizinan">Pendampingan Perizinan</option>
-							<option value="Tidak Termasuk Perizinan">Tidak Termasuk Perizinan</option>
-						</select>
-					</div>
+			<div class="card-body p-3">
+				<!-- Filter Bar Modern -->
+				<div class="p-3 mb-3 rounded border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+					<div class="row align-items-center">
+						<div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+							<label class="small font-weight-bold text-muted text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">Status Jasa</label>
+							<select id="filter_status_jasa" class="form-control form-control-sm" style="border-radius: 8px;">
+								<option value="">-- Semua Status Jasa --</option>
+								<option value="Pengurusan Perizinan">Pengurusan Perizinan</option>
+								<option value="Pendampingan Perizinan">Pendampingan Perizinan</option>
+								<option value="Tidak Termasuk Perizinan">Tidak Termasuk Perizinan</option>
+							</select>
+						</div>
 
-					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="small font-weight-bold text-muted mb-1">Status Perizinan:</label>
-						<select id="filter_status_perizinan" class="form-control form-control-sm">
-							<option value="">-- Semua Status Izin --</option>
-							<option value="Menunggu Info Customer">Menunggu Info Customer</option>
-							<option value="On Progress">On Progress</option>
-							<option value="Selesai">Selesai</option>
-							<option value="-">-</option>
-						</select>
-					</div>
+						<div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+							<label class="small font-weight-bold text-muted text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">Status Perizinan</label>
+							<select id="filter_status_perizinan" class="form-control form-control-sm" style="border-radius: 8px;">
+								<option value="">-- Semua Status Izin --</option>
+								<option value="Menunggu Info Customer">Menunggu Info Customer</option>
+								<option value="On Progress">On Progress</option>
+								<option value="Selesai">Selesai</option>
+								<option value="-">-</option>
+							</select>
+						</div>
 
-					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="small font-weight-bold text-muted mb-1">Marketing:</label>
-						<select id="filter_marketing" class="form-control form-control-sm">
-							<option value="">-- Semua Marketing --</option>
-							<?php foreach ($marketing_list as $m) : ?>
-								<option value="<?= htmlspecialchars($m->nama) ?>"><?= htmlspecialchars($m->nama) ?></option>
-							<?php endforeach; ?>
-						</select>
-					</div>
+						<div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+							<label class="small font-weight-bold text-muted text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">Marketing</label>
+							<select id="filter_marketing" class="form-control form-control-sm" style="border-radius: 8px;">
+								<option value="">-- Semua Marketing --</option>
+								<?php foreach ($marketing_list as $m) : ?>
+									<option value="<?= htmlspecialchars($m->nama) ?>"><?= htmlspecialchars($m->nama) ?></option>
+								<?php endforeach; ?>
+							</select>
+						</div>
 
-					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="small font-weight-bold text-muted mb-1">Filter Masa Berlaku / Jatuh Tempo:</label>
-						<select id="filter_masa_berlaku" class="form-control form-control-sm">
-							<option value="">-- Semua Kewajiban --</option>
-							<option value="h45_izin">⚠️ Izin Alat &le; 45 Hari</option>
-							<option value="h30_luk">📋 LUK (Ukes) &le; 1 Bulan (30 Hari)</option>
-							<option value="h30_kalibrasi">⚙️ Kalibrasi &le; 1 Bulan (30 Hari)</option>
-							<option value="h30_tld">🩻 TLD (3 Bln) &le; 1 Bulan (30 Hari)</option>
-							<option value="expired">🚨 Ada yang Expired / Lewat Waktu</option>
-						</select>
+						<div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+							<label class="small font-weight-bold text-muted text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">Masa Berlaku / Jatuh Tempo</label>
+							<select id="filter_masa_berlaku" class="form-control form-control-sm" style="border-radius: 8px;">
+								<option value="">-- Semua Kewajiban --</option>
+								<option value="h45_izin">âš ï¸ Izin Alat &le; 45 Hari</option>
+								<option value="h30_luk">ðŸ“‹ LUK (Ukes) &le; 1 Bulan</option>
+								<option value="h30_kalibrasi">âš™ï¸ Kalibrasi &le; 1 Bulan</option>
+								<option value="h30_tld">ðŸ©» TLD (3 Bln) &le; 1 Bulan</option>
+								<option value="expired">ðŸš¨ Ada yang Expired</option>
+							</select>
+						</div>
 					</div>
 				</div>
 
-				<!-- Tabel DataTables -->
+				<!-- Tabel DataTables Modern -->
 				<div class="table-responsive">
-					<table class="table table-bordered table-striped table-hover table-sm text-center" id="table-perizinan" style="width:100%; font-size:12px;">
-						<thead class="thead-dark">
+					<table class="table table-modern table-hover" id="table-perizinan" style="width:100%;">
+						<thead>
 							<tr>
-								<th style="width: 3%;">No</th>
-								<th style="width: 15%; text-align: left;">Nama Instansi</th>
+								<th style="width: 3%; text-align: center;">No</th>
+								<th style="width: 17%; text-align: left;">Instansi & Kontak</th>
 								<th style="width: 11%; text-align: left;">Pihak Ketiga</th>
-								<th style="width: 10%;">Jenis Alat</th>
-								<th style="width: 8%;">Status Jasa</th>
-								<th style="width: 8%;">Status Izin</th>
+								<th style="width: 10%; text-align: center;">Jenis Alat</th>
+								<th style="width: 10%; text-align: center;">Status Jasa</th>
+								<th style="width: 9%; text-align: center;">Status Izin</th>
 								<th style="width: 14%; text-align: left;">Progres Izin</th>
-								<th style="width: 18%; text-align: left;">Jadwal Kepatuhan & Masa Berlaku</th>
-								<th style="width: 8%;">Marketing</th>
-								<th style="width: 13%;">Aksi</th>
+								<th style="width: 15%; text-align: left;">Jadwal Kepatuhan</th>
+								<th style="width: 9%; text-align: center;">Marketing</th>
+								<th style="width: 12%; text-align: center;">Aksi</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -746,102 +919,122 @@ document.addEventListener('DOMContentLoaded', function() {
 				console.error('DataTables Load Error:', xhr.responseText || error);
 			}
 		},
+		language: {
+			search: "_INPUT_",
+			searchPlaceholder: "Cari cepat instansi, alat, marketing...",
+			lengthMenu: "Tampilkan _MENU_ baris",
+			info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+			infoEmpty: "Menampilkan 0 data",
+			infoFiltered: "(disaring dari _MAX_ data)",
+			zeroRecords: "Tidak ada data perizinan yang sesuai",
+			paginate: {
+				first: '<i class="fas fa-angle-double-left"></i>',
+				previous: '<i class="fas fa-angle-left"></i>',
+				next: '<i class="fas fa-angle-right"></i>',
+				last: '<i class="fas fa-angle-double-right"></i>'
+			}
+		},
 		columns: [
 			{ 
 				data: null,
+				className: 'text-center align-middle font-weight-bold text-muted',
 				render: function(data, type, row, meta) {
 					return meta.row + 1;
 				}
 			},
 			{ 
 				data: 'nama_instansi',
-				className: 'text-left font-weight-bold',
+				className: 'text-left align-middle',
 				render: function(data, type, row) {
-					var html = '<div>' + (data || '-') + '</div>';
+					var html = '<div class="font-weight-bold text-dark" style="font-size: 13px;">' + (data || '-') + '</div>';
 					if (row.pic_instansi || row.kontak_pic) {
-						html += '<small class="text-muted"><i class="fas fa-user-circle"></i> ' + (row.pic_instansi || 'PIC') + ' (' + (row.kontak_pic || '-') + ')</small>';
+						html += '<div class="text-muted small mt-1" style="font-size: 11px;"><i class="fas fa-user-circle mr-1 text-primary"></i>' + (row.pic_instansi || 'PIC') + (row.kontak_pic ? ' &bull; ' + row.kontak_pic : '') + '</div>';
 					}
 					return html;
 				}
 			},
 			{ 
 				data: 'pihak_ketiga',
-				className: 'text-left',
+				className: 'text-left align-middle',
 				render: function(data) {
-					return (!data || data === '-') ? '<span class="text-muted">-</span>' : data;
+					return (!data || data === '-') ? '<span class="text-muted">-</span>' : '<span class="font-weight-600 text-dark" style="font-size: 12px;">' + data + '</span>';
 				}
 			},
 			{ 
 				data: 'jenis_alat',
+				className: 'text-center align-middle',
 				render: function(data) {
-					return '<span class="badge badge-info px-2 py-1">' + (data || '-') + '</span>';
+					return '<span class="badge badge-light border text-primary px-2 py-1 font-weight-bold" style="border-radius:6px; font-size:11px;">' + (data || '-') + '</span>';
 				}
 			},
 			{ 
 				data: 'status_jasa',
+				className: 'text-center align-middle',
 				render: function(data) {
 					if (!data) return '-';
-					var cls = 'badge-secondary';
-					if (data.indexOf('Pengurusan') !== -1) cls = 'badge-primary';
-					else if (data.indexOf('Pendampingan') !== -1) cls = 'badge-success';
-					else if (data.indexOf('Tidak') !== -1) cls = 'badge-danger';
-					return '<span class="badge ' + cls + ' px-2 py-1">' + data + '</span>';
+					var bg = 'background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;';
+					if (data.indexOf('Pengurusan') !== -1) bg = 'background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;';
+					else if (data.indexOf('Pendampingan') !== -1) bg = 'background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;';
+					else if (data.indexOf('Tidak') !== -1) bg = 'background:#fef2f2; color:#b91c1c; border:1px solid #fecaca;';
+					return '<span class="badge px-2 py-1 font-weight-bold" style="' + bg + ' border-radius:6px; font-size:11px;">' + data + '</span>';
 				}
 			},
 			{ 
 				data: 'status_perizinan',
+				className: 'text-center align-middle',
 				render: function(data, type, row) {
 					if (!data || data === '-') {
 						if (row.status_jasa === 'Tidak Termasuk Perizinan') {
-							return '<span class="badge badge-light border text-muted">Bukan Perizinan</span>';
+							return '<span class="badge badge-light border text-muted px-2 py-1" style="border-radius:6px; font-size:11px;">Bukan Perizinan</span>';
 						}
-						return '<span class="badge badge-light border text-muted">Belum Diatur</span>';
+						return '<span class="badge badge-light border text-muted px-2 py-1" style="border-radius:6px; font-size:11px;">Belum Diatur</span>';
 					}
-					var cls = 'badge-secondary';
-					if (data === 'Selesai') cls = 'badge-success';
-					else if (data === 'On Progress') cls = 'badge-warning text-dark';
-					else if (data === 'Menunggu Info Customer') cls = 'badge-info';
-					return '<span class="badge ' + cls + ' px-2 py-1">' + data + '</span>';
+					var bg = 'background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;';
+					if (data === 'Selesai') bg = 'background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;';
+					else if (data === 'On Progress') bg = 'background:#fffbeb; color:#b45309; border:1px solid #fde68a;';
+					else if (data === 'Menunggu Info Customer') bg = 'background:#ecfeff; color:#0e7490; border:1px solid #a5f3fc;';
+					return '<span class="badge px-2 py-1 font-weight-bold" style="' + bg + ' border-radius:6px; font-size:11px;">' + data + '</span>';
 				}
 			},
 			{ 
 				data: 'progres_perizinan',
-				className: 'text-left',
+				className: 'text-left align-middle',
 				render: function(data, type, row) {
 					if (!data && row.status_jasa === 'Tidak Termasuk Perizinan') {
-						return '<span class="text-muted small font-italic"><i class="fas fa-info-circle mr-1"></i> Tidak memerlukan izin</span>';
+						return '<span class="badge badge-light border text-muted font-italic px-2 py-1"><i class="fas fa-check-circle mr-1 text-success"></i> Bebas Izin</span>';
 					}
 					var text = data ? data.replace(/\n/g, '<br>') : '<span class="text-muted small">-</span>';
-					var btnQuick = '<div class="mt-1"><button type="button" class="btn btn-xs btn-outline-primary btn-quick-progres" data-id="' + row.id + '"><i class="fas fa-pencil-alt"></i> Update Progres</button></div>';
-					return '<div>' + text + '</div>' + btnQuick;
+					var btnQuick = '<div class="mt-1"><button type="button" class="btn btn-xs btn-outline-primary btn-quick-progres py-0 px-2 font-weight-bold" style="font-size:10.5px; border-radius:4px;" data-id="' + row.id + '"><i class="fas fa-pencil-alt mr-1"></i> Update Progres</button></div>';
+					return '<div style="font-size:12px; line-height:1.35;">' + text + '</div>' + btnQuick;
 				}
 			},
 			{ 
 				data: null,
-				className: 'text-left p-1',
+				className: 'text-left align-middle p-1',
 				render: function(data, type, row) {
 					var hasAnyTgl = row.tgl_jatuh_tempo || row.tgl_exp_luk || row.tgl_exp_kalibrasi || row.tgl_evaluasi_tld;
 					if (!hasAnyTgl) {
 						if (row.status_jasa === 'Tidak Termasuk Perizinan') {
-							return '<div class="p-2 text-center text-muted small bg-light rounded border font-italic"><i class="fas fa-minus-circle mr-1 text-secondary"></i> Non-Perizinan</div>';
+							return '<span class="badge badge-light border text-muted px-2 py-1 font-weight-normal"><i class="fas fa-ban mr-1 text-secondary"></i> Non-Perizinan</span>';
 						}
-						return '<div class="p-2 text-center text-muted small bg-light rounded border font-italic"><i class="fas fa-clock mr-1 text-secondary"></i> Jadwal belum diisi</div>';
+						return '<span class="badge badge-light border text-muted px-2 py-1 font-weight-normal"><i class="fas fa-clock mr-1 text-secondary"></i> Belum diisi</span>';
 					}
-					var rowIzin = formatTglBadge(row.tgl_jatuh_tempo, row.sisa_hari_izin, 'Izin (H-45)', 45);
-					var rowLuk  = formatTglBadge(row.tgl_exp_luk, row.sisa_hari_luk, 'LUK (1 Bln)', 30);
+					var rowIzin = formatTglBadge(row.tgl_jatuh_tempo, row.sisa_hari_izin, 'Izin', 45);
+					var rowLuk  = formatTglBadge(row.tgl_exp_luk, row.sisa_hari_luk, 'LUK', 30);
 					var rowKal  = formatTglBadge(row.tgl_exp_kalibrasi, row.sisa_hari_kalibrasi, 'Kalibrasi', 30);
-					var rowTld  = formatTglBadge(row.tgl_evaluasi_tld, row.sisa_hari_tld, 'TLD (3 Bln)', 30);
+					var rowTld  = formatTglBadge(row.tgl_evaluasi_tld, row.sisa_hari_tld, 'TLD', 30);
 
-					return '<div class="bg-white p-1 rounded border">' + rowIzin + rowLuk + rowKal + rowTld + '</div>';
+					return '<div class="bg-white p-1 rounded border shadow-none" style="min-width: 145px;">' + rowIzin + rowLuk + rowKal + rowTld + '</div>';
 				}
 			},
 			{ 
 				data: 'marketing_nama',
+				className: 'text-center align-middle',
 				render: function(data, type, row) {
 					if (!data || data === '-') return '<span class="text-muted">-</span>';
-					var html = '<span class="badge badge-light border font-weight-bold">' + data + '</span>';
+					var html = '<span class="badge badge-light border text-dark font-weight-bold px-2 py-1" style="font-size:11px;">' + data + '</span>';
 					if (row.marketing_nohp) {
-						html += '<br><small class="text-muted">' + row.marketing_nohp + '</small>';
+						html += '<div class="small text-muted mt-1" style="font-size:10px;"><i class="fab fa-whatsapp text-success mr-1"></i>' + row.marketing_nohp + '</div>';
 					}
 					return html;
 				}
@@ -849,13 +1042,14 @@ document.addEventListener('DOMContentLoaded', function() {
 			{ 
 				data: null,
 				orderable: false,
+				className: 'text-center align-middle',
 				render: function(data, type, row) {
-					var btnManualWa = '<button type="button" class="btn btn-sm btn-success btn-open-manual-notif mr-1 mb-1 font-weight-bold" data-id="' + row.id + '" title="Kirim Notifikasi WhatsApp Manual"><i class="fab fa-whatsapp"></i> Kirim Notif</button>';
-					var btnEdit = '<button type="button" class="btn btn-sm btn-info btn-edit mr-1 mb-1 text-white" data-id="' + row.id + '" title="Edit Data Lengkap"><i class="fas fa-edit"></i></button>';
-					var btnHist = '<button type="button" class="btn btn-sm btn-secondary btn-history mr-1 mb-1" data-id="' + row.id + '" title="Lihat Riwayat"><i class="fas fa-history"></i></button>';
-					var btnDel = '<button type="button" class="btn btn-sm btn-danger btn-delete mb-1" data-id="' + row.id + '" title="Hapus"><i class="fas fa-trash"></i></button>';
+					var btnWa = '<button type="button" class="btn btn-xs btn-outline-success font-weight-bold btn-open-manual-notif px-2 py-1" style="border-radius:6px;" data-id="' + row.id + '" title="Kirim Notifikasi WhatsApp Manual"><i class="fab fa-whatsapp mr-1"></i>WA</button>';
+					var btnEdit = '<button type="button" class="btn btn-xs btn-outline-primary btn-edit px-2 py-1" style="border-radius:6px;" data-id="' + row.id + '" title="Edit Data Lengkap"><i class="fas fa-edit"></i></button>';
+					var btnHist = '<button type="button" class="btn btn-xs btn-outline-secondary btn-history px-2 py-1" style="border-radius:6px;" data-id="' + row.id + '" title="Lihat Riwayat"><i class="fas fa-history"></i></button>';
+					var btnDel = '<button type="button" class="btn btn-xs btn-outline-danger btn-delete px-2 py-1" style="border-radius:6px;" data-id="' + row.id + '" title="Hapus Data"><i class="fas fa-trash-alt"></i></button>';
 
-					return '<div class="d-flex flex-wrap justify-content-center">' + btnManualWa + btnEdit + btnHist + btnDel + '</div>';
+					return '<div class="d-inline-flex align-items-center justify-content-center" style="white-space:nowrap; gap:4px;">' + btnWa + btnEdit + btnHist + btnDel + '</div>';
 				}
 			}
 		]
