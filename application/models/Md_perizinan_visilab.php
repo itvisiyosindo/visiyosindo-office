@@ -542,26 +542,26 @@ class Md_perizinan_visilab extends CI_Model
         if (!empty($filters['masa_berlaku'])) {
             if ($filters['masa_berlaku'] == 'h45_izin') {
                 $this->db->where('p.tgl_jatuh_tempo IS NOT NULL');
-                $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) >=', 0);
-                $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) <=', 45);
+                $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) >= 0', NULL, FALSE);
+                $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) <= 45', NULL, FALSE);
             } else if ($filters['masa_berlaku'] == 'h30_luk') {
                 $this->db->where('p.tgl_exp_luk IS NOT NULL');
-                $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) >=', 0);
-                $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) <=', 30);
+                $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) >= 0', NULL, FALSE);
+                $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) <= 30', NULL, FALSE);
             } else if ($filters['masa_berlaku'] == 'h30_kalibrasi') {
                 $this->db->where('p.tgl_exp_kalibrasi IS NOT NULL');
-                $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) >=', 0);
-                $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) <=', 30);
+                $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) >= 0', NULL, FALSE);
+                $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) <= 30', NULL, FALSE);
             } else if ($filters['masa_berlaku'] == 'h30_tld') {
                 $this->db->where('p.tgl_evaluasi_tld IS NOT NULL');
-                $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) >=', 0);
-                $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) <=', 30);
+                $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) >= 0', NULL, FALSE);
+                $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) <= 30', NULL, FALSE);
             } else if ($filters['masa_berlaku'] == 'expired') {
                 $this->db->group_start();
-                $this->db->where('(p.tgl_jatuh_tempo IS NOT NULL AND p.tgl_jatuh_tempo < CURDATE())');
-                $this->db->or_where('(p.tgl_exp_luk IS NOT NULL AND p.tgl_exp_luk < CURDATE())');
-                $this->db->or_where('(p.tgl_exp_kalibrasi IS NOT NULL AND p.tgl_exp_kalibrasi < CURDATE())');
-                $this->db->or_where('(p.tgl_evaluasi_tld IS NOT NULL AND p.tgl_evaluasi_tld < CURDATE())');
+                $this->db->where('(p.tgl_jatuh_tempo IS NOT NULL AND p.tgl_jatuh_tempo < CURDATE())', NULL, FALSE);
+                $this->db->or_where('(p.tgl_exp_luk IS NOT NULL AND p.tgl_exp_luk < CURDATE())', NULL, FALSE);
+                $this->db->or_where('(p.tgl_exp_kalibrasi IS NOT NULL AND p.tgl_exp_kalibrasi < CURDATE())', NULL, FALSE);
+                $this->db->or_where('(p.tgl_evaluasi_tld IS NOT NULL AND p.tgl_evaluasi_tld < CURDATE())', NULL, FALSE);
                 $this->db->group_end();
             }
         }
@@ -644,31 +644,31 @@ class Md_perizinan_visilab extends CI_Model
         $this->db->from("{$this->table} p");
 
         if ($jenis == 'izin') {
-            $this->db->select("p.*, DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) AS sisa_hari");
+            $this->db->select("p.*, DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) AS sisa_hari", FALSE);
             $this->db->where('p.tgl_jatuh_tempo IS NOT NULL');
-            $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) >=', 0);
-            $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) <=', (int)$days);
+            $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) >= 0', NULL, FALSE);
+            $this->db->where('DATEDIFF(p.tgl_jatuh_tempo, CURDATE()) <= ' . (int)$days, NULL, FALSE);
             if ($only_unsent) $this->db->where('p.reminder_45_sent', 0);
             $this->db->order_by('p.tgl_jatuh_tempo', 'ASC');
         } else if ($jenis == 'luk') {
-            $this->db->select("p.*, DATEDIFF(p.tgl_exp_luk, CURDATE()) AS sisa_hari");
+            $this->db->select("p.*, DATEDIFF(p.tgl_exp_luk, CURDATE()) AS sisa_hari", FALSE);
             $this->db->where('p.tgl_exp_luk IS NOT NULL');
-            $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) >=', 0);
-            $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) <=', (int)$days);
+            $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) >= 0', NULL, FALSE);
+            $this->db->where('DATEDIFF(p.tgl_exp_luk, CURDATE()) <= ' . (int)$days, NULL, FALSE);
             if ($only_unsent) $this->db->where('p.reminder_luk_sent', 0);
             $this->db->order_by('p.tgl_exp_luk', 'ASC');
         } else if ($jenis == 'kalibrasi') {
-            $this->db->select("p.*, DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) AS sisa_hari");
+            $this->db->select("p.*, DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) AS sisa_hari", FALSE);
             $this->db->where('p.tgl_exp_kalibrasi IS NOT NULL');
-            $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) >=', 0);
-            $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) <=', (int)$days);
+            $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) >= 0', NULL, FALSE);
+            $this->db->where('DATEDIFF(p.tgl_exp_kalibrasi, CURDATE()) <= ' . (int)$days, NULL, FALSE);
             if ($only_unsent) $this->db->where('p.reminder_kalibrasi_sent', 0);
             $this->db->order_by('p.tgl_exp_kalibrasi', 'ASC');
         } else if ($jenis == 'tld') {
-            $this->db->select("p.*, DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) AS sisa_hari");
+            $this->db->select("p.*, DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) AS sisa_hari", FALSE);
             $this->db->where('p.tgl_evaluasi_tld IS NOT NULL');
-            $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) >=', 0);
-            $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) <=', (int)$days);
+            $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) >= 0', NULL, FALSE);
+            $this->db->where('DATEDIFF(p.tgl_evaluasi_tld, CURDATE()) <= ' . (int)$days, NULL, FALSE);
             if ($only_unsent) $this->db->where('p.reminder_tld_sent', 0);
             $this->db->order_by('p.tgl_evaluasi_tld', 'ASC');
         }

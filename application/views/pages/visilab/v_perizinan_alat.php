@@ -9,57 +9,94 @@
 </header>
 
 <!-- Widget KPI Ringkasan Kepatuhan -->
+<!-- Widget KPI Ringkasan Kepatuhan -->
+<style>
+	.kpi-card {
+		border-radius: 8px !important;
+		border: none !important;
+		transition: transform 0.2s, box-shadow 0.2s;
+	}
+	.kpi-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+	}
+	.kpi-bg-primary {
+		background: linear-gradient(135deg, #0088cc 0%, #005580 100%) !important;
+		color: #ffffff !important;
+	}
+	.kpi-bg-warning {
+		background: linear-gradient(135deg, #f39c12 0%, #d68910 100%) !important;
+		color: #ffffff !important;
+	}
+	.kpi-bg-info {
+		background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%) !important;
+		color: #ffffff !important;
+	}
+	.kpi-bg-secondary {
+		background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+		color: #ffffff !important;
+	}
+	.kpi-bg-dark {
+		background: linear-gradient(135deg, #343a40 0%, #212529 100%) !important;
+		color: #ffffff !important;
+	}
+	.kpi-bg-danger {
+		background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+		color: #ffffff !important;
+	}
+</style>
+
 <div class="row mb-3">
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm bg-primary text-white shadow-sm h-100">
-			<div class="card-body p-2 text-center">
-				<div class="text-white-50 small text-uppercase font-weight-bold">Total Instansi</div>
-				<div class="h4 font-weight-bold mb-0" id="stat-total"><?= $stats['total'] ?></div>
+		<div class="card card-sm kpi-card kpi-bg-primary shadow-sm h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-hospital"></i> Total Instansi</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-total"><?= $stats['total'] ?></div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm bg-warning text-dark shadow-sm h-100">
-			<div class="card-body p-2 text-center">
-				<div class="text-dark small text-uppercase font-weight-bold"><i class="fas fa-file-signature"></i> Izin &le; 45 Hari</div>
-				<div class="h4 font-weight-bold mb-0 text-dark" id="stat-h45-izin"><?= $stats['h45_izin'] ?></div>
+		<div class="card card-sm kpi-card kpi-bg-warning shadow-sm h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.9);"><i class="fas fa-file-signature"></i> Izin &le; 45 Hari</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-h45-izin"><?= $stats['h45_izin'] ?></div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm bg-info text-white shadow-sm h-100">
-			<div class="card-body p-2 text-center">
-				<div class="text-white-50 small text-uppercase font-weight-bold"><i class="fas fa-clipboard-check"></i> LUK &le; 1 Bulan</div>
-				<div class="h4 font-weight-bold mb-0" id="stat-h30-luk"><?= $stats['h30_luk'] ?></div>
+		<div class="card card-sm kpi-card kpi-bg-info shadow-sm h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-clipboard-check"></i> LUK &le; 1 Bulan</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-h30-luk"><?= $stats['h30_luk'] ?></div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm bg-secondary text-white shadow-sm h-100">
-			<div class="card-body p-2 text-center">
-				<div class="text-white-50 small text-uppercase font-weight-bold"><i class="fas fa-cogs"></i> Kalibrasi &le; 1 Bln</div>
-				<div class="h4 font-weight-bold mb-0" id="stat-h30-kal"><?= $stats['h30_kalibrasi'] ?></div>
+		<div class="card card-sm kpi-card kpi-bg-secondary shadow-sm h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-cogs"></i> Kalibrasi &le; 1 Bln</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-h30-kal"><?= $stats['h30_kalibrasi'] ?></div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm bg-dark text-white shadow-sm h-100">
-			<div class="card-body p-2 text-center">
-				<div class="text-white-50 small text-uppercase font-weight-bold"><i class="fas fa-id-badge"></i> TLD &le; 1 Bln (3 Bln)</div>
-				<div class="h4 font-weight-bold mb-0 text-warning" id="stat-h30-tld"><?= $stats['h30_tld'] ?></div>
+		<div class="card card-sm kpi-card kpi-bg-dark shadow-sm h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-id-badge"></i> TLD (3 Bln)</div>
+				<div class="h4 font-weight-bold mb-0 text-warning font-weight-bold" id="stat-h30-tld"><?= $stats['h30_tld'] ?></div>
 			</div>
 		</div>
 	</div>
 
 	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm bg-danger text-white shadow-sm h-100">
-			<div class="card-body p-2 text-center">
-				<div class="text-white-50 small text-uppercase font-weight-bold"><i class="fas fa-exclamation-triangle"></i> Expired / Lewat</div>
-				<div class="h4 font-weight-bold mb-0" id="stat-expired"><?= $stats['expired'] ?></div>
+		<div class="card card-sm kpi-card kpi-bg-danger shadow-sm h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold" style="color: rgba(255,255,255,0.85);"><i class="fas fa-exclamation-triangle"></i> Expired</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-expired"><?= $stats['expired'] ?></div>
 			</div>
 		</div>
 	</div>
@@ -686,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				d.masa_berlaku = $('#filter_masa_berlaku').val();
 			},
 			dataSrc: function(json) {
-				if (json.stats) {
+				if (json && json.stats) {
 					$('#stat-total').text(json.stats.total);
 					$('#stat-h45-izin').text(json.stats.h45_izin);
 					$('#stat-h30-luk').text(json.stats.h30_luk);
@@ -694,7 +731,16 @@ document.addEventListener('DOMContentLoaded', function() {
 					$('#stat-h30-tld').text(json.stats.h30_tld);
 					$('#stat-expired').text(json.stats.expired);
 				}
-				return json.data || [];
+				if (json && json.data) {
+					return json.data;
+				}
+				if (Array.isArray(json)) {
+					return json;
+				}
+				return [];
+			},
+			error: function(xhr, status, error) {
+				console.error('DataTables Load Error:', xhr.responseText || error);
 			}
 		},
 		columns: [
