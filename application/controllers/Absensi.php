@@ -2557,7 +2557,7 @@ class Absensi extends CI_Controller
         $activityLogs = $this->db->query("
             SELECT *
             FROM log
-            WHERE id_pengguna = 94
+            WHERE pengguna_id = 94
               AND data_created >= '2026-11-09 00:00:00'
             ORDER BY data_created DESC
             LIMIT 20
