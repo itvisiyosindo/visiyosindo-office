@@ -630,6 +630,122 @@
         padding: 14px 16px;
         box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.05);
     }
+    .tp-workspace-card .table-responsive.tp-has-dt-scroll,
+    .tp-lb-table-card .table-responsive.tp-has-dt-scroll {
+        overflow: visible !important;
+    }
+    .tp-workspace-card .dataTables_wrapper .row,
+    .tp-lb-table-card .dataTables_wrapper .row {
+        margin-left: 0;
+        margin-right: 0;
+        align-items: center;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_filter,
+    .tp-lb-table-card .dataTables_wrapper .dataTables_filter {
+        text-align: right !important;
+    }
+    .tp-dt-sync-wrap {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin: 4px 0 8px 0;
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+        border: 1px solid #dbeafe;
+    }
+    .tp-dt-sync-wrap.is-scrollable {
+        display: flex;
+    }
+    .tp-dt-sync-hint {
+        font-size: 11px;
+        font-weight: 800;
+        color: #1e40af;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .tp-dt-sync-top {
+        flex: 1 1 auto;
+        overflow-x: auto;
+        overflow-y: hidden;
+        height: 16px;
+        padding: 2px 0;
+        scrollbar-width: thin;
+        scrollbar-color: #2563eb #dbeafe;
+    }
+    .tp-dt-sync-top::-webkit-scrollbar {
+        height: 10px;
+    }
+    .tp-dt-sync-top::-webkit-scrollbar-track {
+        background: #dbeafe;
+        border-radius: 999px;
+    }
+    .tp-dt-sync-top::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #2563eb, #0284c7);
+        border-radius: 999px;
+    }
+    .tp-dt-sync-spacer {
+        height: 1px;
+    }
+    .tp-dt-sync-btns {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    .tp-scroll-step {
+        width: 26px;
+        height: 24px;
+        border-radius: 7px;
+        border: 1px solid #bfdbfe;
+        background: #ffffff;
+        color: #1d4ed8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        padding: 0;
+    }
+    .tp-scroll-step:hover {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+    .tp-dt-scroll {
+        width: 100%;
+        max-height: 64vh;
+        overflow-x: auto;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #94a3b8 #f1f5f9;
+    }
+    .tp-dt-scroll::-webkit-scrollbar {
+        height: 10px;
+        width: 10px;
+    }
+    .tp-dt-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 999px;
+    }
+    .tp-dt-scroll::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 999px;
+        border: 2px solid #f1f5f9;
+    }
+    .tp-dt-scroll::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+    }
+    .tp-dt-scroll thead th {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+    }
     .tp-workspace-card .dataTables_wrapper .dataTables_length label,
     .tp-workspace-card .dataTables_wrapper .dataTables_filter label {
         font-size: 12.5px;
@@ -676,11 +792,9 @@
         border-collapse: separate !important;
         border-spacing: 0 !important;
         width: 100% !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-top: 6px !important;
-        margin-bottom: 6px !important;
+        border: none !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     #datatable_tugas_saya thead th,
     #datatable_tugas_atasan thead th,
@@ -755,14 +869,14 @@
     .tp-col-status { min-width: 158px; white-space: nowrap; }
     .tp-col-rating { min-width: 148px; max-width: 215px; }
     .tp-col-aksi { width: 138px; min-width: 132px; }
-    #datatable_semua_task .tp-col-code { min-width: 122px; max-width: 165px; }
-    #datatable_semua_task .tp-col-main { min-width: 205px; max-width: 290px; }
-    #datatable_semua_task .tp-col-person { min-width: 112px; max-width: 155px; }
-    #datatable_semua_task .tp-col-prio { min-width: 124px; max-width: 155px; }
-    #datatable_semua_task .tp-col-prog { width: 96px; min-width: 92px; }
-    #datatable_semua_task .tp-col-status { min-width: 140px; }
-    #datatable_semua_task .tp-col-rating { min-width: 122px; max-width: 165px; }
-    #datatable_semua_task .tp-col-aksi { width: 116px; min-width: 112px; }
+    #datatable_semua_task .tp-col-code { min-width: 112px; max-width: 150px; }
+    #datatable_semua_task .tp-col-main { min-width: 190px; max-width: 265px; }
+    #datatable_semua_task .tp-col-person { min-width: 104px; max-width: 142px; }
+    #datatable_semua_task .tp-col-prio { min-width: 116px; max-width: 145px; }
+    #datatable_semua_task .tp-col-prog { width: 84px; min-width: 82px; }
+    #datatable_semua_task .tp-col-status { min-width: 132px; }
+    #datatable_semua_task .tp-col-rating { min-width: 96px; max-width: 145px; }
+    #datatable_semua_task .tp-col-aksi { width: 106px; min-width: 102px; }
 
     .tp-status-badge,
     .tp-priority-badge {
@@ -978,6 +1092,16 @@
 
     /* Responsive Mobile Overrides */
     @media (max-width: 768px) {
+        .tp-dt-sync-hint {
+            display: none;
+        }
+        .tp-dt-scroll {
+            max-height: 70vh;
+        }
+        .tp-workspace-card .dataTables_wrapper .dataTables_filter,
+        .tp-lb-table-card .dataTables_wrapper .dataTables_filter {
+            text-align: left !important;
+        }
         .tp-arena-hero {
             padding: 15px 14px;
             border-radius: 14px 14px 0 0;
@@ -1351,9 +1475,7 @@
     #datatable_leaderboard {
         border-collapse: separate !important;
         border-spacing: 0 !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 10px;
-        overflow: hidden;
+        border: none !important;
     }
     #datatable_leaderboard thead th {
         background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%) !important;
@@ -2198,7 +2320,7 @@ $namaBulanList = [
                 <div id="tab_tugas_saya" class="tab-pane <?= $openTabSaya ? 'active' : '' ?>" role="tabpanel">
                     <div class="tp-tab-banner tp-banner-blue">
                         <div>
-                            <i class="fas fa-crosshairs mr-1"></i>
+                            <i class="fas fa-bullseye mr-1"></i>
                             <strong>Misi Eksekusi Anda:</strong> Klik <strong>Detail / Progres</strong> untuk mencentang checklist pekerjaan, lalu klik <strong>Submit Selesai</strong> saat tuntas 100% sebelum deadline untuk mengunci <strong>Rating Bintang 5 ⭐</strong>!
                         </div>
                         <span class="badge badge-primary px-2 py-1" style="border-radius: 999px; font-weight: 700;">
@@ -2542,7 +2664,7 @@ $namaBulanList = [
                 <div id="tab_semua_task" class="tab-pane <?= $openTabSemua ? 'active' : '' ?>" role="tabpanel">
                     <div class="tp-tab-banner tp-banner-cyan">
                         <div>
-                            <i class="fas fa-broadcast-tower mr-1"></i>
+                            <i class="fas fa-globe mr-1"></i>
                             <strong>Radar Task Perusahaan:</strong> Transparansi seluruh proyek lintas divisi PT Visi Yosindo Medikal untuk mendorong akuntabilitas dan kolaborasi tim.
                         </div>
                         <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
@@ -3769,11 +3891,95 @@ document.addEventListener('DOMContentLoaded', function() {
         return $('input[name="token"]').val() || '<?= $this->security->get_csrf_hash() ?>';
     }
 
+    // Scrollbar horizontal atas + sticky viewport agar tidak perlu scroll jauh ke bawah
+    function setupTableHorizontalUX(selector) {
+        var $table = $(selector);
+        if (!$table.length || $table.closest('.tp-dt-scroll').length) return;
+
+        var $resp = $table.closest('.table-responsive');
+        if ($resp.length) {
+            $resp.addClass('tp-has-dt-scroll');
+        }
+
+        $table.wrap('<div class="tp-dt-scroll"></div>');
+        var $scrollBox = $table.closest('.tp-dt-scroll');
+        var $syncWrap = $(
+            '<div class="tp-dt-sync-wrap">' +
+                '<span class="tp-dt-sync-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Geser Tabel</span>' +
+                '<div class="tp-dt-sync-top"><div class="tp-dt-sync-spacer"></div></div>' +
+                '<div class="tp-dt-sync-btns">' +
+                    '<button type="button" class="tp-scroll-step" data-dir="-1" title="Geser Kiri"><i class="fas fa-chevron-left"></i></button>' +
+                    '<button type="button" class="tp-scroll-step" data-dir="1" title="Geser Kanan"><i class="fas fa-chevron-right"></i></button>' +
+                '</div>' +
+            '</div>'
+        );
+        $syncWrap.insertBefore($scrollBox);
+
+        var $topScroll = $syncWrap.find('.tp-dt-sync-top');
+        var $spacer = $syncWrap.find('.tp-dt-sync-spacer');
+        var syncing = false;
+
+        function syncMetrics() {
+            var tblW = $table[0].scrollWidth || 0;
+            var boxW = $scrollBox[0].clientWidth || 0;
+            if (tblW > boxW + 4) {
+                $syncWrap.addClass('is-scrollable');
+                $spacer.width(tblW);
+                $topScroll.scrollLeft($scrollBox.scrollLeft());
+            } else {
+                $syncWrap.removeClass('is-scrollable');
+            }
+        }
+
+        $topScroll.on('scroll', function() {
+            if (syncing) return;
+            syncing = true;
+            $scrollBox.scrollLeft($topScroll.scrollLeft());
+            syncing = false;
+        });
+
+        $scrollBox.on('scroll', function() {
+            if (syncing) return;
+            syncing = true;
+            $topScroll.scrollLeft($scrollBox.scrollLeft());
+            syncing = false;
+        });
+
+        $scrollBox.on('wheel', function(e) {
+            if (e.originalEvent && e.originalEvent.shiftKey && $table[0].scrollWidth > $scrollBox[0].clientWidth) {
+                var delta = e.originalEvent.deltaY || e.originalEvent.deltaX;
+                if (delta) {
+                    e.preventDefault();
+                    $scrollBox.scrollLeft($scrollBox.scrollLeft() + delta);
+                }
+            }
+        });
+
+        $syncWrap.on('click', '.tp-scroll-step', function() {
+            var dir = parseInt($(this).attr('data-dir'), 10) || 1;
+            var step = Math.max(220, Math.round($scrollBox.width() * 0.45));
+            $scrollBox.stop().animate({ scrollLeft: $scrollBox.scrollLeft() + (dir * step) }, 220);
+        });
+
+        $table.on('draw.dt', function() {
+            setTimeout(syncMetrics, 20);
+        });
+        $(window).on('resize', syncMetrics);
+        $('.nav-tabs-tp a[data-toggle="tab"]').on('shown.bs.tab', function() {
+            setTimeout(syncMetrics, 30);
+        });
+
+        setTimeout(syncMetrics, 40);
+    }
+
     // Inisialisasi DataTables
     if ($.fn.DataTable) {
         $('#datatable_tugas_saya').DataTable({ pageLength: 10, order: [], autoWidth: false });
         $('#datatable_tugas_atasan').DataTable({ pageLength: 10, order: [], autoWidth: false });
         $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [], autoWidth: false });
+        setupTableHorizontalUX('#datatable_tugas_saya');
+        setupTableHorizontalUX('#datatable_tugas_atasan');
+        setupTableHorizontalUX('#datatable_leaderboard');
     }
 
     // Animasi confetti podium ringan saat tab Leaderboard KPI dibuka
@@ -4969,7 +5175,10 @@ document.addEventListener('DOMContentLoaded', function() {
             language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' },
             order: [[0, 'asc']],
             pageLength: 25,
-            autoWidth: false
+            autoWidth: false,
+            initComplete: function() {
+                setupTableHorizontalUX('#datatable_semua_task');
+            }
         });
 
         $('#filter_semua_karyawan').on('change', function() {
