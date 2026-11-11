@@ -15,6 +15,7 @@ class Dashboard extends CI_Controller
         $this->load->model('md_log');
         $this->load->model('md_absensi');
         $this->load->model('md_announcement');
+        $this->load->model('md_kpi_leaderboard');
     }
 
     function id_navbar()
@@ -104,9 +105,7 @@ class Dashboard extends CI_Controller
             $page_data['rekap_sisa_cuti_karyawan'] = $this->md_dashboard->getRekapSisaCutiKaryawanTahunBerjalan($pemerintah, $page_data['tahun_berjalan']);
         }
 
-
-
-
+        $page_data['lb_dashboard'] = $this->md_kpi_leaderboard->getDashboardTopPodium($pengguna_id, 3);
 
         $this->load->view('index', $page_data);
     }

@@ -804,21 +804,11 @@ class Md_kpi_leaderboard extends CI_Model
     }
 
     /**
-     * Ambil ringkasan peringkat Leaderboard KPI untuk seorang karyawan tertentu.
+     * Ekstrak daftar peserta terperingkat + posisi karyawan target dari bundle leaderboard.
      */
-    public function getUserLeaderboardSummary($targetPenggunaId, $smtInt = null, $yInt = null)
+    private function _extractSummaryFromBundle(array $bundle, array $targetIds)
     {
-        if ($smtInt === null) {
-            $smtInt = ((int)date('n') <= 6) ? 1 : 2;
-        }
-        if ($yInt === null) {
-            $yInt = (int)date('Y');
-        }
-
-        $targetIds = $this->resolveUserIds((int)$targetPenggunaId);
-        $bundle    = $this->buildLeaderboard($smtInt, $yInt, $targetIds);
-        $lbList    = $bundle['leaderboard'];
-
+        $lbList     = $bundle['leaderboard'];
         $scoredList = [];
         foreach ($lbList as $item) {
             if ($item->skor_akhir !== null) {
@@ -850,6 +840,7 @@ class Md_kpi_leaderboard extends CI_Model
         }
 
         return [
+            'scored_list'  => $scoredList,
             'rank'         => $rank,
             'total_ranked' => $totalScored,
             'total_all'    => count($lbList),
@@ -859,6 +850,56 @@ class Md_kpi_leaderboard extends CI_Model
             'sem_label'    => $bundle['sem_label'],
             'semester'     => $bundle['semester'],
             'tahun'        => $bundle['tahun'],
+        ];
+    }
+
+    /**
+     * Resolve target IDs, periode default, lalu ekstrak ringkasan bundle untuk satu karyawan.
+     */
+    private function _buildSummaryForUser($penggunaId, $smtInt = null, $yInt = null)
+    {
+        if ($smtInt === null) {
+            $smtInt = ((int)date('n') <= 6) ? 1 : 2;
+        }
+        if ($yInt === null) {
+            $yInt = (int)date('Y');
+        }
+
+        $targetIds = $this->resolveUserIds((int)$penggunaId);
+        $bundle    = $this->buildLeaderboard($smtInt, $yInt, $targetIds);
+        $summary   = $this->_extractSummaryFromBundle($bundle, $targetIds);
+        $summary['target_ids'] = $targetIds;
+        return $summary;
+    }
+
+    /**
+     * Ambil ringkasan peringkat Leaderboard KPI untuk seorang karyawan tertentu.
+     */
+    public function getUserLeaderboardSummary($targetPenggunaId, $smtInt = null, $yInt = null)
+    {
+        $summary = $this->_buildSummaryForUser($targetPenggunaId, $smtInt, $yInt);
+        unset($summary['scored_list'], $summary['target_ids']);
+        return $summary;
+    }
+
+    /**
+     * Ambil data Podium Top N (default Top 1, 2, 3) + ringkasan peringkat user login untuk Dashboard Home.
+     */
+    public function getDashboardTopPodium($currentPenggunaId, $limit = 3, $smtInt = null, $yInt = null)
+    {
+        $summary = $this->_buildSummaryForUser($currentPenggunaId, $smtInt, $yInt);
+
+        return [
+            'top_leaders'  => array_slice($summary['scored_list'], 0, max(1, (int)$limit)),
+            'my_ids'       => $summary['target_ids'],
+            'rank'         => $summary['rank'],
+            'total_ranked' => $summary['total_ranked'],
+            'row'          => $summary['row'],
+            'gap_to_above' => $summary['gap_to_above'],
+            'above_name'   => $summary['above_name'],
+            'sem_label'    => $summary['sem_label'],
+            'semester'     => $summary['semester'],
+            'tahun'        => $summary['tahun'],
         ];
     }
 }
