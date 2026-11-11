@@ -2275,9 +2275,10 @@ $namaBulanList = [
         <div class="card-body">
             <?php
             $tabParam = $this->input->get('tab', TRUE);
-            $openTabSemua  = ($tabParam === 'semua' || $tabParam === 'monitoring');
-            $openTabAtasan = ($tabParam === 'atasan') || (empty($tugas_saya) && !empty($tugas_atasan) && !$openTabSemua);
-            $openTabSaya   = !$openTabAtasan && !$openTabSemua;
+            $openTabLeaderboard = ($tabParam === 'leaderboard');
+            $openTabSemua       = !$openTabLeaderboard && ($tabParam === 'semua' || $tabParam === 'monitoring');
+            $openTabAtasan      = !$openTabLeaderboard && (($tabParam === 'atasan') || (empty($tugas_saya) && !empty($tugas_atasan) && !$openTabSemua));
+            $openTabSaya        = !$openTabLeaderboard && !$openTabAtasan && !$openTabSemua;
             ?>
             <ul class="nav nav-tabs nav-tabs-tp" role="tablist">
                 <li class="nav-item <?= $openTabSaya ? 'active' : '' ?>">
@@ -2308,8 +2309,8 @@ $namaBulanList = [
                         <?php endif; ?>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#tab_leaderboard" data-toggle="tab" role="tab">
+                <li class="nav-item <?= $openTabLeaderboard ? 'active' : '' ?>">
+                    <a class="nav-link <?= $openTabLeaderboard ? 'active' : '' ?>" href="#tab_leaderboard" data-toggle="tab" role="tab">
                         <i class="fas fa-trophy text-warning mr-2"></i> Leaderboard KPI & Evaluasi Karyawan
                     </a>
                 </li>
@@ -2820,7 +2821,7 @@ $namaBulanList = [
                 </div>
 
                 <!-- ================= TAB 3: LEADERBOARD KPI & EVALUASI KARYAWAN ================= -->
-                <div id="tab_leaderboard" class="tab-pane" role="tabpanel">
+                <div id="tab_leaderboard" class="tab-pane <?= $openTabLeaderboard ? 'active' : '' ?>" role="tabpanel">
                     <canvas id="tpLbConfettiCanvas" style="position:absolute; top:0; left:0; width:100%; height:440px; pointer-events:none; z-index:25;"></canvas>
                     <?php
                     $scoredLeaders = [];

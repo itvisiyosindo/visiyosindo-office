@@ -332,6 +332,99 @@
         transform: translateY(-1px);
     }
 
+    /* Leaderboard Rank Spotlight in Hero */
+    .profile-npp.badge-rank-gold {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        border-color: #fde68a;
+        color: #451a03;
+        text-decoration: none !important;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+
+    .profile-npp.badge-rank-top {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(234, 88, 12, 0.34) 100%);
+        border-color: rgba(251, 191, 36, 0.65);
+        color: #fef3c7;
+        text-decoration: none !important;
+    }
+
+    .profile-npp.badge-rank-link:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+    }
+
+    .profile-rank-spotlight {
+        margin-top: 10px;
+        padding: 13px 16px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.52) 0%, rgba(30, 58, 138, 0.56) 100%);
+        border: 1px solid rgba(251, 191, 36, 0.42);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .rank-spotlight-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .rank-spotlight-medal {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #fbbf24 0%, #ea580c 100%);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        flex-shrink: 0;
+        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.38);
+    }
+
+    .rank-spotlight-medal.is-muted {
+        background: rgba(148, 163, 184, 0.25);
+        color: #cbd5e1;
+        box-shadow: none;
+    }
+
+    .rank-spotlight-title {
+        font-size: 14.5px;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.3;
+    }
+
+    .rank-spotlight-sub {
+        font-size: 11.5px;
+        color: #cbd5e1;
+        margin-top: 2px;
+    }
+
+    .rank-spotlight-stats {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .rank-stat-chip {
+        padding: 5px 11px;
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 700;
+        color: #f8fafc;
+        white-space: nowrap;
+    }
+
     /* Segmented Tab Navigation */
     .profile-tabs {
         background: #f1f5f9;
@@ -1338,6 +1431,15 @@
         }
         $totalDocsCount = count($docsList);
         $docsPct = $totalDocsCount > 0 ? round(($uploadedDocsCount / $totalDocsCount) * 100) : 0;
+
+        $kpiSummary     = isset($kpi_rank_summary) && is_array($kpi_rank_summary) ? $kpi_rank_summary : [];
+        $kpiRank        = !empty($kpiSummary['rank']) ? (int)$kpiSummary['rank'] : 0;
+        $kpiTotalRanked = !empty($kpiSummary['total_ranked']) ? (int)$kpiSummary['total_ranked'] : 0;
+        $kpiRow         = isset($kpiSummary['row']) ? $kpiSummary['row'] : null;
+        $kpiSemLabel    = !empty($kpiSummary['sem_label']) ? (string)$kpiSummary['sem_label'] : '';
+        $kpiGapToAbove  = isset($kpiSummary['gap_to_above']) ? $kpiSummary['gap_to_above'] : null;
+        $kpiAboveName   = !empty($kpiSummary['above_name']) ? (string)$kpiSummary['above_name'] : '';
+        $lbUrl          = base_url('task_proyek?tab=leaderboard');
         ?>
 
         <!-- Profile Header Card -->
@@ -1401,6 +1503,15 @@
                         <span class="profile-npp">
                             <i class="fas fa-folder-open"></i> Dokumen: <?= $uploadedDocsCount ?>/<?= $totalDocsCount ?> (<?= $docsPct ?>%)
                         </span>
+                        <a href="<?= $lbUrl ?>" class="profile-npp badge-rank-link <?= $kpiRank === 1 ? 'badge-rank-gold' : ($kpiRank > 0 ? 'badge-rank-top' : '') ?>" title="Lihat posisi lengkap di Leaderboard KPI">
+                            <?php if ($kpiRank === 1): ?>
+                                <i class="fas fa-crown"></i> Rank #1 Leaderboard KPI
+                            <?php elseif ($kpiRank > 0): ?>
+                                <i class="fas fa-trophy"></i> Rank #<?= $kpiRank ?> / <?= $kpiTotalRanked ?> Leaderboard KPI
+                            <?php else: ?>
+                                <i class="fas fa-trophy"></i> Leaderboard KPI: Belum Terperingkat
+                            <?php endif; ?>
+                        </a>
                     </div>
 
                     <div class="profile-meta-grid">
@@ -1466,6 +1577,61 @@
                                     <i class="fas fa-user-edit"></i> <?= !empty($namaAtasanProfil) ? 'Ubah' : 'Pilih' ?>
                                 </a>
                             <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard KPI Rank Spotlight -->
+                    <div class="profile-rank-spotlight">
+                        <div class="rank-spotlight-left">
+                            <div class="rank-spotlight-medal <?= $kpiRank <= 0 ? 'is-muted' : '' ?>">
+                                <?php if ($kpiRank === 1): ?>
+                                    <i class="fas fa-crown"></i>
+                                <?php elseif ($kpiRank > 0): ?>
+                                    <i class="fas fa-trophy"></i>
+                                <?php else: ?>
+                                    <i class="fas fa-chart-line"></i>
+                                <?php endif; ?>
+                            </div>
+                            <div style="min-width: 0; text-align: left;">
+                                <?php if ($kpiRank > 0 && $kpiRow !== null): ?>
+                                    <div class="rank-spotlight-title">
+                                        Peringkat #<?= $kpiRank ?> dari <?= $kpiTotalRanked ?> Karyawan &bull; <?= htmlspecialchars($kpiSemLabel) ?>
+                                    </div>
+                                    <div class="rank-spotlight-sub">
+                                        <?php if ($kpiRank === 1): ?>
+                                            Memimpin klasemen KPI perusahaan saat ini!
+                                        <?php elseif ($kpiGapToAbove !== null): ?>
+                                            Selisih <strong><?= number_format((float)$kpiGapToAbove, 1) ?></strong> poin ke peringkat #<?= $kpiRank - 1 ?> (<?= htmlspecialchars($kpiAboveName) ?>)
+                                        <?php else: ?>
+                                            Evaluasi gabungan 6 pilar kinerja karyawan
+                                        <?php endif; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="rank-spotlight-title">
+                                        Leaderboard KPI &bull; <?= htmlspecialchars($kpiSemLabel ?: 'Semester Berjalan') ?>
+                                    </div>
+                                    <div class="rank-spotlight-sub">
+                                        Belum memiliki skor KPI atau belum termasuk dalam daftar peringkat periode ini.
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="rank-spotlight-stats">
+                            <?php if ($kpiRank > 0 && $kpiRow !== null && $kpiRow->skor_akhir !== null): ?>
+                                <span class="rank-stat-chip">
+                                    Skor Akhir: <strong><?= number_format((float)$kpiRow->skor_akhir, 1) ?></strong>
+                                </span>
+                                <span class="rank-stat-chip">
+                                    Grade <?= htmlspecialchars($kpiRow->grade) ?> (<?= htmlspecialchars($kpiRow->grade_label) ?>)
+                                </span>
+                                <span class="rank-stat-chip">
+                                    <i class="fas fa-star text-warning"></i> <?= number_format((float)$kpiRow->rating_agregat, 2) ?>/5.0
+                                </span>
+                            <?php endif; ?>
+                            <a href="<?= $lbUrl ?>" class="quick-account-btn">
+                                <i class="fas fa-trophy text-warning"></i> Lihat Klasemen
+                            </a>
                         </div>
                     </div>
                 </div>

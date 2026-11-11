@@ -158,10 +158,13 @@ class Pengguna extends CI_Controller
 				$page_data['switch']      	= $this->id_navbar();
 			}
             			
-            $page_data['pengguna']      = $this->md_pengguna->getByWhere(['p.is_active' => 1, 'p.status' => 1, 'p.level !=' => 'Administrator']);
-            $page_data['list_atasan']   = $this->md_pengguna->getByWhere(['p.is_active' => 1, 'p.status' => 1, 'p.pengguna_id !=' => 1]);
-            $page_data['data_pengguna'] = $this->md_pengguna->getByWhere(['p.pengguna_id' => decrypt($param2)]);
-            $page_data['data_salary']   = $this->md_salary->getByWhere(['sl.pengguna_id' => decrypt($param2)]);
+            $targetPenggunaId            = (int)decrypt($param2);
+            $page_data['pengguna']       = $this->md_pengguna->getByWhere(['p.is_active' => 1, 'p.status' => 1, 'p.level !=' => 'Administrator']);
+            $page_data['list_atasan']    = $this->md_pengguna->getByWhere(['p.is_active' => 1, 'p.status' => 1, 'p.pengguna_id !=' => 1]);
+            $page_data['data_pengguna']  = $this->md_pengguna->getByWhere(['p.pengguna_id' => $targetPenggunaId]);
+            $page_data['data_salary']    = $this->md_salary->getByWhere(['sl.pengguna_id' => $targetPenggunaId]);
+            $this->load->model('md_kpi_leaderboard');
+            $page_data['kpi_rank_summary'] = $this->md_kpi_leaderboard->getUserLeaderboardSummary($targetPenggunaId);
             $page_data['page_name']     = 'v_pengguna_detail';
             $page_data['page_title']    = 'Detail Karyawan';
             $page_data['page_desc']     = 'Profil Karyawan';
