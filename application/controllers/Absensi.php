@@ -2597,6 +2597,111 @@ class Absensi extends CI_Controller
         ], JSON_PRETTY_PRINT);
     }
 
+    public function tambah_absen_body()
+    {
+        $token = $this->input->get('token');
+        if ($token !== 'vysi_dimas_fix_2026') {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        // Cek apakah sudah pernah ditambahkan
+        $existMasuk = $this->db->get_where('absensi', [
+            'pengguna_id'  => 94,
+            'type_absen'   => 'masuk',
+            'data_created' => '2026-11-10 19:12:08'
+        ])->row();
+
+        $existKeluar = $this->db->get_where('absensi', [
+            'pengguna_id'  => 94,
+            'type_absen'   => 'keluar',
+            'data_created' => '2026-11-11 08:05:53'
+        ])->row();
+
+        $inserted = [];
+
+        if (!$existMasuk) {
+            $dataMasuk = [
+                'pengguna_id'     => 94,
+                'waktu_absen'     => '19:12:08',
+                'status_absen'    => 'tepat_waktu',
+                'type_absen'      => 'masuk',
+                'file_foto'       => 'absen_6af1b9f67ab60.jpg',
+                'latitude'        => '0.45045045045045046',
+                'longitude'       => '101.42655792318347',
+                'approval'        => 'terima',
+                'tanpa_tunjangan' => 0,
+                'file_pendukung'  => '',
+                'keterangan'      => 'hari_biasa',
+                'data_created'    => '2026-11-10 19:12:08',
+                'jenis_absen'     => 'Kantor',
+                'ip_addr'         => '114.125.21.235',
+                'tutupbuku'       => 0,
+                'perusahaan'      => 0,
+                'jenis_lokasi'    => 'Kantor',
+                'is_luar_radius'  => 0,
+                'acc_ga'          => 0,
+                'acc_yola'        => 0
+            ];
+            $this->db->insert('absensi', $dataMasuk);
+            $idMasuk = $this->db->insert_id();
+            if ($this->db->table_exists('absensibackup')) {
+                $this->db->insert('absensibackup', $dataMasuk);
+            }
+            $inserted['masuk'] = [
+                'id_absensi' => $idMasuk,
+                'data' => $dataMasuk
+            ];
+        } else {
+            $inserted['masuk'] = 'Sudah ada (ID: ' . $existMasuk->id_absensi . ')';
+        }
+
+        if (!$existKeluar) {
+            $dataKeluar = [
+                'pengguna_id'     => 94,
+                'waktu_absen'     => '08:05:53',
+                'status_absen'    => NULL,
+                'type_absen'      => 'keluar',
+                'file_foto'       => 'absen_6af26efc35282.jpg',
+                'latitude'        => '0.43243243243243246',
+                'longitude'       => '101.444330703778',
+                'approval'        => NULL,
+                'tanpa_tunjangan' => 0,
+                'file_pendukung'  => '',
+                'keterangan'      => '',
+                'data_created'    => '2026-11-11 08:05:53',
+                'jenis_absen'     => 'Kantor',
+                'ip_addr'         => '103.129.25.223',
+                'tutupbuku'       => 0,
+                'perusahaan'      => 0,
+                'jenis_lokasi'    => 'Kantor',
+                'is_luar_radius'  => 0,
+                'acc_ga'          => 0,
+                'acc_yola'        => 0
+            ];
+            $this->db->insert('absensi', $dataKeluar);
+            $idKeluar = $this->db->insert_id();
+            if ($this->db->table_exists('absensibackup')) {
+                $this->db->insert('absensibackup', $dataKeluar);
+            }
+            $inserted['keluar'] = [
+                'id_absensi' => $idKeluar,
+                'data' => $dataKeluar
+            ];
+        } else {
+            $inserted['keluar'] = 'Sudah ada (ID: ' . $existKeluar->id_absensi . ')';
+        }
+
+        addlog('Absensi Susulan Security', 'Menambahkan absensi masuk (10-11-2026 19:12) dan keluar (11-11-2026 08:05) Boddy Cahayadi karena kendala HP');
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'msg' => 'Absensi susulan Boddy Cahayadi berhasil ditambahkan.',
+            'result' => $inserted
+        ], JSON_PRETTY_PRINT);
+    }
+
     /**
      * Endpoint JSON daftar absensi luar radius untuk halaman ACC General Affair.
      */
