@@ -2506,6 +2506,63 @@ class Absensi extends CI_Controller
         ], JSON_PRETTY_PRINT);
     }
 
+    public function cek_absen_body()
+    {
+        $token = $this->input->get('token');
+        if ($token !== 'vysi_dimas_fix_2026') {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        // Cari user yang bernama body, bodi, budi, dll
+        $users = $this->db->query("
+            SELECT pengguna_id, nama, username, jabatan, id_divisi, is_active 
+            FROM pengguna 
+            WHERE nama LIKE '%body%' 
+               OR nama LIKE '%bodi%' 
+               OR nama LIKE '%budi%'
+               OR username LIKE '%body%'
+               OR username LIKE '%bodi%'
+               OR username LIKE '%budi%'
+            ORDER BY pengguna_id ASC
+        ")->result();
+
+        // Ambil data absensi untuk masing-masing user yang cocok (3 hari terakhir)
+        $userAbsensi = [];
+        foreach ($users as $u) {
+            $abs = $this->db->query("
+                SELECT a.*
+                FROM absensi a
+                WHERE a.pengguna_id = {$u->pengguna_id}
+                  AND a.data_created >= '2026-11-09 00:00:00'
+                ORDER BY a.data_created DESC
+                LIMIT 15
+            ")->result();
+            $userAbsensi[] = [
+                'user' => $u,
+                'absensi_terakhir' => $abs
+            ];
+        }
+
+        // Cari juga seluruh absensi tadi malam s/d pagi ini (2026-11-10 18:00 WIB s/d sekarang)
+        $nightLogs = $this->db->query("
+            SELECT a.id_absensi, a.pengguna_id, p.nama, p.jabatan, a.waktu_absen, a.type_absen, a.status_absen, a.data_created, a.is_luar_radius, a.jarak_radius, a.cabang_terdekat, a.alasan_luar_radius, a.approval
+            FROM absensi a
+            JOIN pengguna p ON p.pengguna_id = a.pengguna_id
+            WHERE a.data_created >= '2026-11-10 17:00:00'
+            ORDER BY a.data_created DESC
+            LIMIT 50
+        ")->result();
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'users_matching' => $users,
+            'user_absensi' => $userAbsensi,
+            'night_logs' => $nightLogs
+        ], JSON_PRETTY_PRINT);
+    }
+
     /**
      * Endpoint JSON daftar absensi luar radius untuk halaman ACC General Affair.
      */
