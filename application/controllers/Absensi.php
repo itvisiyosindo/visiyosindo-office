@@ -2645,9 +2645,7 @@ class Absensi extends CI_Controller
             ];
             $this->db->insert('absensi', $dataMasuk);
             $idMasuk = $this->db->insert_id();
-            if ($this->db->table_exists('absensibackup')) {
-                $this->db->insert('absensibackup', $dataMasuk);
-            }
+            $this->md_absensi->addbackup($dataMasuk);
             $inserted['masuk'] = [
                 'id_absensi' => $idMasuk,
                 'data' => $dataMasuk
@@ -2681,9 +2679,7 @@ class Absensi extends CI_Controller
             ];
             $this->db->insert('absensi', $dataKeluar);
             $idKeluar = $this->db->insert_id();
-            if ($this->db->table_exists('absensibackup')) {
-                $this->db->insert('absensibackup', $dataKeluar);
-            }
+            $this->md_absensi->addbackup($dataKeluar);
             $inserted['keluar'] = [
                 'id_absensi' => $idKeluar,
                 'data' => $dataKeluar
