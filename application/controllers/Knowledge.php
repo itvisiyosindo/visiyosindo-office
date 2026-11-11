@@ -31,7 +31,25 @@ class Knowledge extends CI_Controller
     private function _isAdminHrd()
     {
         $myId = (int)sessPenggunaId();
-        return (isAdmin() || isHrd() || isEksekutif() || in_array($myId, [1, 23, 33, 54, 55, 56, 58, 69, 744, 778], true));
+        if (isAdmin() || isHrd() || in_array($myId, [1, 778], true)) {
+            return true;
+        }
+
+        // Cek juga jabatan pengguna di database apakah HR atau Legal / Kepegawaian
+        $user = $this->db->select('jabatan, id_divisi')
+            ->from('pengguna')
+            ->where('pengguna_id', $myId)
+            ->get()
+            ->row();
+
+        if ($user && !empty($user->jabatan)) {
+            $jbt = strtolower($user->jabatan);
+            if (strpos($jbt, 'hr') !== false || strpos($jbt, 'human resource') !== false || strpos($jbt, 'kepegawaian') !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function show($param = "", $param2 = "", $param3 = "")
@@ -51,6 +69,11 @@ class Knowledge extends CI_Controller
             $semester = $this->input->get('semester') ?: 'all';
             $activeTab = $this->input->get('tab') ?: 'kuis';
 
+            // Jika bukan HRD / Admin, paksa tab ke kuis (tidak bisa akses tab rekap nilai)
+            if ($activeTab === 'rekap' && !$isAdminHrd) {
+                $activeTab = 'kuis';
+            }
+
             $page_data['tahun']         = $tahun;
             $page_data['bulan']         = $bulan;
             $page_data['semester']      = $semester;
@@ -68,8 +91,8 @@ class Knowledge extends CI_Controller
             $page_data['me']           = $me;
             $page_data['is_exempt_pk'] = $isExempt;
 
-            // Data Rekap Nilai Bulanan
-            $page_data['list_knowledge'] = $this->md_knowledge->getAllKnowledge($tahun);
+            // Data Rekap Nilai Bulanan HANYA dimuat untuk HRD dan Administrator
+            $page_data['list_knowledge'] = $isAdminHrd ? $this->md_knowledge->getAllKnowledge($tahun) : [];
 
             // Data Daftar Kuis Online
             $kuisList = $this->md_knowledge->getKuisList($tahun, $bulan);
@@ -86,7 +109,7 @@ class Knowledge extends CI_Controller
         } else if ($param == 'kelola_kuis') {
             // Khusus Admin / HRD: Kelola Soal & Lihat Peserta
             if (!$isAdminHrd) {
-                show_error('Akses ditolak: Hanya HRD / Manajemen yang dapat mengelola kuis.', 403);
+                show_error('Akses ditolak: Hanya HRD dan Administrator yang dapat mengelola kuis.', 403);
                 return;
             }
 
@@ -385,6 +408,9 @@ class Knowledge extends CI_Controller
     public function add()
     {
         grantAccessFor('all');
+        if (!$this->_isAdminHrd()) {
+            ajaxReturnDie('error', 'Akses ditolak: Hanya HRD dan Administrator yang dapat menambah nilai.', FALSE);
+        }
 
         $idPengguna = $this->input->post('id_pengguna', TRUE);
         $nilai      = $this->input->post('nilai', TRUE);
@@ -579,6 +605,12 @@ class Knowledge extends CI_Controller
         grantAccessFor('all');
 
         $pengguna_id = decrypt($param);
+        $myId = (int)sessPenggunaId();
+        if (!$this->_isAdminHrd() && (int)$pengguna_id !== $myId) {
+            echo json_encode(['data' => []]);
+            die;
+        }
+
         $dt    = $this->md_knowledge->getAllDetail($pengguna_id);
         $start = $this->input->post('start');
         $data  = array();
@@ -631,6 +663,10 @@ class Knowledge extends CI_Controller
     public function edit($param1)
     {
         grantAccessFor('all');
+        if (!$this->_isAdminHrd()) {
+            echo json_encode([]);
+            die;
+        }
         $id = decrypt($param1);
         $dt = $this->md_knowledge->getById($id);
         foreach ($dt as $row) {

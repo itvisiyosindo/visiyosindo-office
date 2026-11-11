@@ -180,11 +180,13 @@
                 <span class="badge badge-success ml-2"><?= count($list_kuis) ?></span>
             </a>
         </li>
+        <?php if ($is_admin_hrd): ?>
         <li class="<?= ($active_tab === 'rekap') ? 'active' : '' ?>">
             <a href="#tab_rekap_nilai" data-toggle="tab">
                 <i class="fas fa-table mr-2 text-primary"></i> Rekap Nilai Per Semester
             </a>
         </li>
+        <?php endif; ?>
     </ul>
 
     <div class="tab-content" style="background: transparent; border: none; padding: 0;">
@@ -389,6 +391,7 @@
             <?php endif; ?>
         </div>
 
+        <?php if ($is_admin_hrd): ?>
         <!-- ================= TAB 2: REKAP NILAI PER SEMESTER ================= -->
         <div id="tab_rekap_nilai" class="tab-pane <?= ($active_tab === 'rekap') ? 'active' : '' ?>" role="tabpanel">
             <div class="pk-card p-3 mb-3">
@@ -586,9 +589,11 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
+<?php if ($is_admin_hrd): ?>
 <!-- =========================================================================
      MODAL: BUAT / EDIT PAKET KUIS BARU (KHUSUS HRD / ADMIN)
      ========================================================================= -->
@@ -819,6 +824,7 @@
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
