@@ -2921,11 +2921,7 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $li_btn   = '
-            <div class="btn-group" role="group" aria-label="First group">
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-primary btn-edit"><i class="bx bx-pencil"></i></a>' : '') . ' &nbsp;
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="bx bx-trash"></i></button>' : '') . '
-            </div>';
+        $li_btn = $this->_buildCutiActionButtons($row, false, false);
 
         $th = array();
         $th[] = ++$start;
@@ -2973,16 +2969,7 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $btnBatal = '';
-        if ($row->status != '3' && $row->status != '5') {
-          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti" title="Batalkan Pengajuan Cuti" data-id="' . $row->idGc . '" data-kode="' . $row->kode_cuti . '"><i class="fas fa-ban"></i> Batal</button>';
-        }
-
-        $li_btn   = '
-            <div class="btn-group" role="group" aria-label="Aksi">
-                <a href="surat_part_two/show/detail/cuti/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
-                ' . $btnBatal . '
-            </div>';
+        $li_btn = $this->_buildCutiActionButtons($row, false, true, 'btn-batal-cuti');
 
         $th = array();
         $th[] = ++$start;
@@ -3500,16 +3487,7 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $btnBatal = '';
-        if ($row->status != '3' && $row->status != '5') {
-          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti-sgm" title="Batalkan Pengajuan Cuti SGM" data-id="' . $row->idGc . '" data-kode="' . $row->kode . '"><i class="fas fa-ban"></i> Batal</button>';
-        }
-
-        $li_btn   = '
-            <div class="btn-group" role="group" aria-label="Aksi">
-                <a href="surat_part_two/show/detail/cuti_sgm/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
-                ' . $btnBatal . '
-            </div>';
+        $li_btn = $this->_buildCutiActionButtons($row, true, true, 'btn-batal-cuti-sgm');
 
         $th = array();
         $th[] = ++$start;
@@ -3555,17 +3533,9 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $btnBatal = '';
-        if ($row->status != '3' && $row->status != '5' && (isAdmin() || (isset($row->idPengaju) && $row->idPengaju == sessPenggunaId()))) {
-          $btnBatal = '<button type="button" class="btn btn-sm btn-danger btn-batal-cuti-sgm" title="Batalkan Pengajuan Cuti SGM" data-id="' . $row->idGc . '" data-kode="' . $row->kode . '"><i class="fas fa-ban"></i> Batal</button>';
-        }
-
-        $li_btn   = '
-            <div class="btn-group" role="group" aria-label="Aksi">
-                <a href="surat_part_two/show/detail/cuti_sgm/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a> &nbsp;
-                ' . (isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti_sgm\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a> &nbsp;' : '') . '
-                ' . $btnBatal . '
-            </div>';
+        $allowBatal = ($row->status != '3' && $row->status != '5' && (isAdmin() || (isset($row->idPengaju) && $row->idPengaju == sessPenggunaId())));
+        $adminEdit  = isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti_sgm\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>' : '';
+        $li_btn     = $this->_buildCutiActionButtons($row, true, $allowBatal, 'btn-batal-cuti-sgm', $adminEdit);
 
         $th = array();
         $th[] = ++$start;
@@ -4487,5 +4457,161 @@ class Surat_part_two extends CI_Controller
       'updated_rows' => $updated,
       'data_cuti_sukma' => $rows
     ]);
+  }
+
+  /**
+   * Tentukan penerima notifikasi approval berikutnya untuk pengajuan Surat Cuti.
+   */
+  private function _getCutiResendTarget($status, $isSgm = false)
+  {
+    $st = (string)$status;
+    if ($st === '0') {
+      return ['can_resend' => true, 'recipient' => 'General Affair'];
+    }
+    if ($st === '1') {
+      return ['can_resend' => true, 'recipient' => 'HR & Legal Officer'];
+    }
+    if ($st === '2' && !$isSgm) {
+      return ['can_resend' => true, 'recipient' => 'General Manager'];
+    }
+    return ['can_resend' => false, 'recipient' => ''];
+  }
+
+  /**
+   * Bangun tombol aksi pada tabel daftar Surat Cuti (Detail, Resend Notif WA, Batal).
+   */
+  private function _buildCutiActionButtons($row, $isSgm = false, $allowBatal = false, $batalClass = 'btn-batal-cuti', $extraHtml = '')
+  {
+    $typeSlug  = $isSgm ? 'cuti_sgm' : 'cuti';
+    $detailUrl = 'surat_part_two/show/detail/' . $typeSlug . '/' . $row->idGc;
+    $kode      = $isSgm ? ($row->kode ?? '') : ($row->kode_cuti ?? '');
+    $target    = $this->_getCutiResendTarget($row->status, $isSgm);
+
+    $btns = '<div class="d-flex align-items-center justify-content-center" style="gap: 4px; white-space: nowrap;">';
+    $btns .= '<a href="' . $detailUrl . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a>';
+
+    if ($target['can_resend']) {
+      $resendUrl = base_url('surat_part_two/resend_wa_cuti/' . encrypt($row->idGc) . '/' . $typeSlug);
+      $btns .= '<a href="javascript:void(0)" class="btn btn-sm btn-success btn-resend-wa" title="Kirim Ulang Notifikasi WA ke ' . htmlspecialchars($target['recipient']) . '" data-url="' . $resendUrl . '" data-recipient="' . htmlspecialchars($target['recipient']) . '"><i class="fab fa-whatsapp"></i> Resend Notif</a>';
+    }
+
+    if ($extraHtml !== '') {
+      $btns .= $extraHtml;
+    }
+
+    if ($allowBatal && (string)$row->status !== '3' && (string)$row->status !== '5') {
+      $batalTitle = $isSgm ? 'Batalkan Pengajuan Cuti SGM' : 'Batalkan Pengajuan Cuti';
+      $btns .= '<button type="button" class="btn btn-sm btn-danger ' . $batalClass . '" title="' . $batalTitle . '" data-id="' . $row->idGc . '" data-kode="' . htmlspecialchars($kode) . '"><i class="fas fa-ban"></i> Batal</button>';
+    }
+
+    $btns .= '</div>';
+    return $btns;
+  }
+
+  /**
+   * Kirim ulang notifikasi WhatsApp approval Surat Cuti kepada approver tahap aktif berikutnya.
+   */
+  public function resend_wa_cuti($id_encrypted = '', $type = 'cuti')
+  {
+    grantAccessFor('all');
+
+    $id    = (int)decrypt($id_encrypted);
+    $isSgm = ($type === 'cuti_sgm');
+
+    $referer = $this->input->server('HTTP_REFERER');
+    if (!$referer) {
+      $referer = $isSgm ? 'surat_part_two/show/permintaan/cuti_sgm' : 'surat_part_two/show/permintaan/cuti';
+    }
+
+    if ($id <= 0) {
+      $this->session->set_flashdata('error', 'Data pengajuan cuti tidak valid.');
+      redirect($referer);
+      return;
+    }
+
+    $rows = $isSgm ? $this->md_surat_part_two->getAllById($id) : $this->md_surat_part_two->getCutiById($id);
+    if (empty($rows)) {
+      $this->session->set_flashdata('error', 'Data pengajuan cuti tidak ditemukan.');
+      redirect($referer);
+      return;
+    }
+
+    $cuti        = $rows[0];
+    $myId        = (int)sessPenggunaId();
+    $isOwner     = ((int)$cuti->idPengaju === $myId);
+    $isPrivilege = (isAdmin() || isHrd() || isGa() || in_array($myId, [1, 23, 33, 54, 58, 69, 744, (int)GA_USER_ID], true));
+    if (!$isOwner && !$isPrivilege) {
+      $this->session->set_flashdata('error', 'Anda tidak memiliki akses untuk mengirim ulang notifikasi surat ini.');
+      redirect($referer);
+      return;
+    }
+
+    $status     = (string)$cuti->status;
+    $kode       = $isSgm ? $cuti->kode : $cuti->kode_cuti;
+    $detailPath = ($isSgm ? 'surat_part_two/show/detail/cuti_sgm/' : 'surat_part_two/show/detail/cuti/') . $id;
+    $target     = $this->_getCutiResendTarget($status, $isSgm);
+
+    if (!$target['can_resend']) {
+      $this->session->set_flashdata('error', 'Pengajuan cuti ' . $kode . ' sudah selesai disetujui atau dibatalkan.');
+      redirect($referer);
+      return;
+    }
+
+    if ($status === '0') {
+      // Menunggu ACC tahap 1: General Affair
+      $sentPhones = [];
+      foreach (array_unique([(int)GA_USER_ID, 58]) as $gaUid) {
+        $gaUser = $this->md_pengguna->getById($gaUid);
+        $hp     = !empty($gaUser[0]->no_hp) ? trim((string)$gaUser[0]->no_hp) : '';
+        if ($hp !== '' && !isset($sentPhones[$hp])) {
+          $sentPhones[$hp] = true;
+          waCutiPengajuan([
+            'noPenerima'   => $hp,
+            'namaApprover' => $gaUser[0]->nama,
+            'namaPengaju'  => $cuti->pengaju,
+            'kodeSurat'    => $kode,
+            'tglMulai'     => $cuti->tgl_awal,
+            'tglAkhir'     => $cuti->tgl_akhir,
+            'totalHari'    => $cuti->total,
+            'alasan'       => $cuti->alasan,
+            'linkApproval' => 'https://office.visiyosindo.id/' . $detailPath
+          ]);
+        }
+      }
+    } elseif ($status === '1') {
+      // Menunggu ACC tahap 2: HR & Legal Officer (kirim ke Dian 744 & role HR 69)
+      $dataWa = [
+        'id'           => $id,
+        'idPenerima1'  => '744',
+        'idPenerima2'  => '69',
+        'namaSurat'    => 'Cuti Tahunan',
+        'penerima'     => '_HR and Legal Officer_',
+        'ttd_sebelum1' => 'General Affair',
+        'ttd_sebelum2' => '',
+        'ttd_sebelum3' => ''
+      ];
+      if ($isSgm) {
+        $this->notifWaAprovPbSGM(2, 1, $dataWa);
+      } else {
+        $this->notifWaAprovCuti(2, 1, $dataWa);
+      }
+    } elseif ($status === '2') {
+      // Menunggu ACC tahap 3: General Manager
+      $dataWa = [
+        'id'           => $id,
+        'idPenerima1'  => '33',
+        'idPenerima2'  => '',
+        'namaSurat'    => 'Cuti Tahunan',
+        'penerima'     => '_General Manager_',
+        'ttd_sebelum1' => 'General Affair',
+        'ttd_sebelum2' => 'HR and Legal Officer',
+        'ttd_sebelum3' => ''
+      ];
+      $this->notifWaAprovCuti(1, 1, $dataWa);
+    }
+
+    addLog('Resend Notif Cuti Tahunan', 'Mengirim ulang notifikasi WA pengajuan cuti ' . $kode . ' ke ' . $target['recipient']);
+    $this->session->set_flashdata('success', 'Berhasil mengirim ulang notifikasi WA untuk Cuti ' . $kode . ' ke ' . $target['recipient'] . '.');
+    redirect($referer);
   }
 }
