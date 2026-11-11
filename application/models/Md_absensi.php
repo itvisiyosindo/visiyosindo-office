@@ -991,9 +991,22 @@ class Md_absensi extends CI_Model
      */
     public function isExemptLuarRadius($pengguna_id)
     {
-        // 105: Muhammad Tamrin (Sales Manager), 745: Nurdiansyah (Medical Representative)
-        $exemptIds = [105, 745];
-        return in_array((int)$pengguna_id, $exemptIds, true);
+        // 105: Muhammad Tamrin (Sales Manager), 745: Nurdiansyah (Medical Representative), 94: Boddy Cahayadi (Head of Security), 724: Muammar Alfha (Security)
+        $exemptIds = [105, 745, 94, 724];
+        if (in_array((int)$pengguna_id, $exemptIds, true)) {
+            return true;
+        }
+
+        // Juga bebaskan jabatan Security / Satpam (karena area pos satpam, gerbang, dan patroli malam rentan GPS drift)
+        $user = $this->db->select('jabatan')->where('pengguna_id', $pengguna_id)->get('pengguna')->row();
+        if ($user && !empty($user->jabatan)) {
+            $jbt = strtolower($user->jabatan);
+            if (strpos($jbt, 'security') !== false || strpos($jbt, 'satpam') !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
