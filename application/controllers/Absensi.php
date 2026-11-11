@@ -2544,6 +2544,25 @@ class Absensi extends CI_Controller
             ];
         }
 
+        // Ambil data absensi Boddy Cahayadi (94) bulan November 2026 lengkap
+        $boddyLogs = $this->db->query("
+            SELECT a.id_absensi, a.type_absen, a.status_absen, a.waktu_absen, a.data_created, a.approval, a.keterangan, a.is_luar_radius, a.file_foto
+            FROM absensi a
+            WHERE a.pengguna_id = 94
+              AND a.data_created >= '2026-11-01 00:00:00'
+            ORDER BY a.data_created DESC
+        ")->result();
+
+        // Cek juga log aktivitas pengguna 94
+        $activityLogs = $this->db->query("
+            SELECT *
+            FROM log
+            WHERE id_pengguna = 94
+              AND data_created >= '2026-11-09 00:00:00'
+            ORDER BY data_created DESC
+            LIMIT 20
+        ")->result();
+
         // Cari juga seluruh absensi tadi malam s/d pagi ini (2026-11-10 18:00 WIB s/d sekarang)
         $nightLogs = $this->db->query("
             SELECT a.id_absensi, a.pengguna_id, p.nama, p.jabatan, a.waktu_absen, a.type_absen, a.status_absen, a.data_created, a.is_luar_radius, a.jarak_radius, a.cabang_terdekat, a.alasan_luar_radius, a.approval
@@ -2557,6 +2576,8 @@ class Absensi extends CI_Controller
         header('Content-Type: application/json');
         echo json_encode([
             'status' => 'success',
+            'boddy_all_november' => $boddyLogs,
+            'boddy_activity_logs' => $activityLogs,
             'users_matching' => $users,
             'user_absensi' => $userAbsensi,
             'night_logs' => $nightLogs
