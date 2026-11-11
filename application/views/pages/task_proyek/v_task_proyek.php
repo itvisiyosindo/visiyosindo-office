@@ -622,11 +622,53 @@
         padding: 6px 12px;
     }
 
-    /* Energetic Task Table Styling */
+    /* Energetic & Clean Task Table Architecture */
     .tp-workspace-card .table-responsive {
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        border-radius: 14px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        padding: 14px 16px;
+        box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.05);
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_length label,
+    .tp-workspace-card .dataTables_wrapper .dataTables_filter label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 10px;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_length select {
+        border-radius: 8px !important;
+        border: 1.5px solid #cbd5e1 !important;
+        padding: 3px 8px !important;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_filter input {
+        border-radius: 999px !important;
+        border: 1.5px solid #cbd5e1 !important;
+        padding: 4px 14px !important;
+        font-size: 12.5px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        outline: none;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_info {
+        font-size: 12px;
+        color: #64748b;
+        padding-top: 10px;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_paginate {
+        padding-top: 8px;
+    }
+    .tp-workspace-card .dataTables_wrapper .dataTables_paginate .paginate_button,
+    .tp-workspace-card .dataTables_wrapper .pagination .page-link {
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
     }
     #datatable_tugas_saya,
     #datatable_tugas_atasan,
@@ -634,20 +676,38 @@
         border-collapse: separate !important;
         border-spacing: 0 !important;
         width: 100% !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
     }
     #datatable_tugas_saya thead th,
     #datatable_tugas_atasan thead th,
     #datatable_semua_task thead th {
         background: linear-gradient(180deg, #eff6ff 0%, #e0e7ff 100%) !important;
         color: #1e3a8a !important;
-        font-size: 11.5px !important;
+        font-size: 11px !important;
         font-weight: 800 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.45px !important;
         border-top: none !important;
+        border-left: none !important;
+        border-right: 1px solid rgba(191, 219, 254, 0.75) !important;
         border-bottom: 2px solid #3b82f6 !important;
-        padding: 12px 13px !important;
+        padding: 12px 11px !important;
         vertical-align: middle !important;
+        line-height: 1.3;
+    }
+    #datatable_tugas_saya thead th:last-child,
+    #datatable_tugas_atasan thead th:last-child,
+    #datatable_semua_task thead th:last-child {
+        border-right: none !important;
+    }
+    #datatable_tugas_saya tbody tr:nth-child(even) td,
+    #datatable_tugas_atasan tbody tr:nth-child(even) td,
+    #datatable_semua_task tbody tr:nth-child(even) td {
+        background-color: #fafcff;
     }
     #datatable_tugas_saya tbody tr,
     #datatable_tugas_atasan tbody tr,
@@ -657,7 +717,7 @@
     #datatable_tugas_saya tbody tr:hover td,
     #datatable_tugas_atasan tbody tr:hover td,
     #datatable_semua_task tbody tr:hover td {
-        background-color: #f8fafc !important;
+        background-color: #f1f5f9 !important;
     }
     #datatable_tugas_saya tbody tr:hover td:first-child,
     #datatable_tugas_atasan tbody tr:hover td:first-child,
@@ -667,10 +727,197 @@
     #datatable_tugas_saya tbody td,
     #datatable_tugas_atasan tbody td,
     #datatable_semua_task tbody td {
-        padding: 12px 13px !important;
-        vertical-align: middle !important;
+        padding: 13px 11px !important;
+        vertical-align: top !important;
         font-size: 12.5px !important;
-        border-bottom: 1px solid #f1f5f9 !important;
+        line-height: 1.45;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: 1px solid #f1f5f9 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    #datatable_semua_task tbody td {
+        padding: 11px 9px !important;
+    }
+    #datatable_tugas_saya tbody td:last-child,
+    #datatable_tugas_atasan tbody td:last-child,
+    #datatable_semua_task tbody td:last-child {
+        border-right: none !important;
+    }
+
+    /* Table Column Sizing & Clean Long-Text Wrapping */
+    .tp-col-no { width: 44px; text-align: center; font-weight: 700; color: #64748b; }
+    .tp-col-code { min-width: 140px; max-width: 185px; }
+    .tp-col-main { min-width: 230px; max-width: 315px; }
+    .tp-col-person { min-width: 132px; max-width: 180px; }
+    .tp-col-prio { min-width: 142px; max-width: 175px; }
+    .tp-col-prog { width: 112px; min-width: 108px; }
+    .tp-col-status { min-width: 158px; white-space: nowrap; }
+    .tp-col-rating { min-width: 148px; max-width: 215px; }
+    .tp-col-aksi { width: 138px; min-width: 132px; }
+    #datatable_semua_task .tp-col-code { min-width: 122px; max-width: 165px; }
+    #datatable_semua_task .tp-col-main { min-width: 205px; max-width: 290px; }
+    #datatable_semua_task .tp-col-person { min-width: 112px; max-width: 155px; }
+    #datatable_semua_task .tp-col-prio { min-width: 124px; max-width: 155px; }
+    #datatable_semua_task .tp-col-prog { width: 96px; min-width: 92px; }
+    #datatable_semua_task .tp-col-status { min-width: 140px; }
+    #datatable_semua_task .tp-col-rating { min-width: 122px; max-width: 165px; }
+    #datatable_semua_task .tp-col-aksi { width: 116px; min-width: 112px; }
+
+    .tp-status-badge,
+    .tp-priority-badge {
+        white-space: nowrap;
+    }
+    .tp-task-code {
+        display: inline-block;
+        font-weight: 800;
+        color: #2563eb;
+        font-size: 12px;
+        letter-spacing: 0.25px;
+        margin-bottom: 4px;
+    }
+    .tp-proyek-pill {
+        display: inline-block;
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        text-align: left;
+        line-height: 1.35;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #f8fafc;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+    }
+    .tp-jenis-meta {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 4px;
+        word-break: break-word;
+    }
+    .tp-task-title {
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 13px;
+        line-height: 1.4;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .tp-task-desc {
+        font-size: 11.8px;
+        color: #475569;
+        line-height: 1.45;
+        margin-top: 4px;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .tp-jobdesk-pill {
+        display: inline-block;
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        text-align: left;
+        line-height: 1.35;
+        padding: 4px 9px;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+    .tp-note-box {
+        margin-top: 6px;
+        padding: 6px 9px;
+        border-radius: 8px;
+        font-size: 11.5px;
+        line-height: 1.4;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .tp-note-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .tp-note-revisi {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 3px solid #ef4444;
+        color: #991b1b;
+    }
+    .tp-note-laporan {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-left: 3px solid #10b981;
+        color: #14532d;
+    }
+    .tp-note-ulasan {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-left: 3px solid #f59e0b;
+        color: #78350f;
+        font-style: italic;
+    }
+    .tp-note-hrd {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 3px solid #dc2626;
+        color: #991b1b;
+        font-size: 11px;
+    }
+    .tp-person-name {
+        display: block;
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 12.5px;
+        line-height: 1.35;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .tp-person-meta {
+        display: block;
+        font-size: 11px;
+        color: #64748b;
+        line-height: 1.35;
+        margin-top: 2px;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .tp-badge-wrap {
+        display: inline-block;
+        max-width: 100%;
+        white-space: normal !important;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        text-align: left;
+        line-height: 1.3;
+    }
+    .tp-action-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+    .tp-action-stack .btn-xs {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        margin: 0 !important;
+        white-space: nowrap;
     }
 
     /* Vibrant Progress Bars & Tactile Action Pills in Task Tables */
@@ -712,7 +959,7 @@
     #datatable_semua_task .btn-xs {
         border-radius: 8px !important;
         font-weight: 700 !important;
-        padding: 4px 10px !important;
+        padding: 5px 10px !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     #datatable_tugas_saya .btn-xs:hover,
@@ -1101,6 +1348,13 @@
         padding: 14px;
         box-shadow: 0 6px 22px rgba(15, 23, 42, 0.05);
     }
+    #datatable_leaderboard {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px;
+        overflow: hidden;
+    }
     #datatable_leaderboard thead th {
         background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%) !important;
         color: #1e293b;
@@ -1108,13 +1362,42 @@
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.3px;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: 1px solid #e2e8f0 !important;
         border-bottom: 2px solid #cbd5e1 !important;
         vertical-align: middle;
         padding-top: 11px;
         padding-bottom: 11px;
     }
+    #datatable_leaderboard thead th:last-child {
+        border-right: none !important;
+    }
     #datatable_leaderboard tbody tr {
         transition: background-color 0.15s ease;
+    }
+    #datatable_leaderboard tbody td {
+        border-top: none !important;
+        border-left: none !important;
+        border-right: 1px solid #f1f5f9 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    #datatable_leaderboard tbody td:last-child {
+        border-right: none !important;
+    }
+    #datatable_leaderboard tbody td:nth-child(2) {
+        min-width: 195px;
+        max-width: 245px;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    #datatable_leaderboard tbody td:nth-child(3) {
+        min-width: 145px;
+        max-width: 195px;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
     #datatable_leaderboard tbody tr:hover td {
         background-color: #f8fafc !important;
@@ -1394,6 +1677,15 @@ function renderStatusTaskBadge($st)
         default:
             return '<span class="tp-status-badge tp-st-0">Draft</span>';
     }
+}
+
+function tpTablePreviewText($text, $limit = 110)
+{
+    $clean = preg_replace('/\s+/u', ' ', trim((string)$text));
+    if ($clean === '') {
+        return '';
+    }
+    return mb_strimwidth($clean, 0, $limit, '...');
 }
 
 $namaBulanList = [
@@ -1915,18 +2207,18 @@ $namaBulanList = [
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover mb-0" id="datatable_tugas_saya">
+                        <table class="table table-hover mb-0" id="datatable_tugas_saya">
                             <thead>
                                 <tr>
-                                    <th width="45">No</th>
-                                    <th>Kode & Proyek</th>
-                                    <th>Judul Task / Instruksi</th>
-                                    <th>Pemberi Tugas (Atasan)</th>
-                                    <th>Prioritas & Deadline</th>
-                                    <th width="140">Progres</th>
-                                    <th>Status</th>
-                                    <th>Rating & Ulasan Atasan</th>
-                                    <th width="150">Aksi</th>
+                                    <th class="tp-col-no">No</th>
+                                    <th class="tp-col-code">Kode &amp; Proyek</th>
+                                    <th class="tp-col-main">Judul Task / Instruksi</th>
+                                    <th class="tp-col-person">Pemberi Tugas</th>
+                                    <th class="tp-col-prio">Prioritas &amp; Deadline</th>
+                                    <th class="tp-col-prog">Progres</th>
+                                    <th class="tp-col-status">Status</th>
+                                    <th class="tp-col-rating">Rating &amp; Ulasan</th>
+                                    <th class="tp-col-aksi text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1934,74 +2226,76 @@ $namaBulanList = [
                                     $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
                                 ?>
                                     <tr id="row_task_saya_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
-                                        <td class="text-center"><?= $no++ ?></td>
-                                        <td>
-                                            <strong class="text-primary"><?= htmlspecialchars($row->kode_task) ?></strong><br>
-                                            <span class="badge badge-light border"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
-                                            <div class="small text-muted mt-1"><?= htmlspecialchars($row->jenis) ?></div>
+                                        <td class="tp-col-no"><?= $no++ ?></td>
+                                        <td class="tp-col-code">
+                                            <span class="tp-task-code"><?= htmlspecialchars($row->kode_task) ?></span><br>
+                                            <span class="tp-proyek-pill" title="<?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?>"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
+                                            <div class="tp-jenis-meta"><?= htmlspecialchars($row->jenis) ?></div>
                                         </td>
-                                        <td>
-                                            <div style="font-weight: 700; color: #1e293b;"><?= htmlspecialchars($row->judul) ?></div>
+                                        <td class="tp-col-main">
+                                            <div class="tp-task-title" title="<?= htmlspecialchars($row->judul) ?>"><?= htmlspecialchars($row->judul) ?></div>
                                             <?php if (!empty($row->deskripsi)): ?>
-                                                <div class="small text-muted" style="max-width: 280px; white-space: normal;">
-                                                    <?= nl2br(htmlspecialchars(mb_strimwidth($row->deskripsi, 0, 120, '...'))) ?>
+                                                <div class="tp-task-desc" title="<?= htmlspecialchars($row->deskripsi) ?>">
+                                                    <?= htmlspecialchars(tpTablePreviewText($row->deskripsi, 140)) ?>
                                                 </div>
                                             <?php endif; ?>
                                             <?php if ((int)$row->status_task === 3 && !empty($row->catatan_revisi)): ?>
-                                                <div class="mt-1 p-1 rounded" style="background:#fee2e2; color:#991b1b; font-size:11.5px;">
-                                                    <strong><i class="fas fa-exclamation-triangle"></i> Revisi Atasan:</strong> <?= htmlspecialchars($row->catatan_revisi) ?>
+                                                <div class="tp-note-box tp-note-revisi" title="<?= htmlspecialchars($row->catatan_revisi) ?>">
+                                                    <strong><i class="fas fa-exclamation-triangle mr-1"></i> Revisi Atasan:</strong>
+                                                    <div class="tp-note-clamp"><?= htmlspecialchars(tpTablePreviewText($row->catatan_revisi, 130)) ?></div>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <strong><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></strong>
-                                            <div class="small text-muted"><?= htmlspecialchars($row->jabatan_pemberi ?: '') ?></div>
+                                        <td class="tp-col-person">
+                                            <span class="tp-person-name"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
+                                            <?php if (!empty($row->jabatan_pemberi)): ?>
+                                                <span class="tp-person-meta"><?= htmlspecialchars($row->jabatan_pemberi) ?></span>
+                                            <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-prio">
                                             <span class="tp-priority-badge tp-prio-<?= htmlspecialchars($row->prioritas) ?>"><?= htmlspecialchars($row->prioritas) ?></span>
-                                            <div class="small mt-1">
-                                                <i class="far fa-calendar-check text-muted"></i>
-                                                <?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
+                                            <div class="small mt-1 text-dark">
+                                                <i class="far fa-calendar-check text-muted mr-1"></i><?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
                                             <?php if (!empty($row->is_late)): ?>
-                                                <span class="badge badge-danger mt-1" title="Melewati batas deadline (Maksimal Rating Bintang 1)">
-                                                    <i class="fas fa-exclamation-circle"></i> Terlambat H+<?= (int)$row->hari_telat ?> (Maks ⭐1)
-                                                </span>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap" title="Melewati batas deadline (Maksimal Rating Bintang 1)"><i class="fas fa-exclamation-circle"></i> Telat H+<?= (int)$row->hari_telat ?> (Maks ⭐1)</span></div>
                                             <?php elseif ($isOverdue): ?>
-                                                <span class="badge badge-danger mt-1">Terlambat / Overdue</span>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap">Terlambat / Overdue</span></div>
                                             <?php endif; ?>
                                             <?php if ((int)($row->sp_level ?? 0) >= 1): ?>
                                                 <div class="mt-1">
-                                                    <span class="badge <?= htmlspecialchars($row->sp_badge_cls ?? 'badge-danger') ?> px-2 py-1" style="font-size: 11px;">
+                                                    <span class="badge <?= htmlspecialchars($row->sp_badge_cls ?? 'badge-danger') ?> tp-badge-wrap px-2 py-1" style="font-size: 10.5px;">
                                                         <i class="fas fa-gavel mr-1"></i> <?= htmlspecialchars($row->sp_label ?? ('SP ' . (int)$row->sp_level)) ?>
                                                     </span>
                                                 </div>
                                             <?php endif; ?>
                                             <?php if (!empty($row->hrd_jadwal_tgl)): ?>
-                                                <div class="mt-1 p-1 rounded small" style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; font-size:10.5px;">
-                                                    <strong><i class="fas fa-handshake"></i> Jadwal HRD:</strong><br>
+                                                <div class="tp-note-box tp-note-hrd">
+                                                    <strong><i class="fas fa-handshake mr-1"></i> Jadwal HRD:</strong><br>
                                                     <?= date('d-m-Y', strtotime($row->hrd_jadwal_tgl)) ?> <?= !empty($row->hrd_jadwal_jam) ? htmlspecialchars($row->hrd_jadwal_jam) . ' WIB' : '' ?>
                                                     <?php if (!empty($row->hrd_jadwal_lokasi)): ?>
-                                                        <br><span class="text-muted"><?= htmlspecialchars($row->hrd_jadwal_metode ?: 'Tatap Muka') ?> - <?= htmlspecialchars($row->hrd_jadwal_lokasi) ?></span>
+                                                        <div class="text-muted mt-1"><?= htmlspecialchars($row->hrd_jadwal_metode ?: 'Tatap Muka') ?> - <?= htmlspecialchars($row->hrd_jadwal_lokasi) ?></div>
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-prog">
                                             <div class="progress progress-sm mb-1" style="height: 10px; border-radius: 8px;">
                                                 <div class="progress-bar <?= (int)$row->progres >= 100 ? 'bg-success' : 'bg-primary' ?>" role="progressbar" style="width: <?= (int)$row->progres ?>%;"></div>
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
-                                        <td>
+                                        <td class="tp-col-status"><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
+                                        <td class="tp-col-rating">
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
-                                                <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
+                                                <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
                                                 <?php if (!empty($row->is_late)): ?>
-                                                    <div class="badge badge-light-danger text-danger mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                    <div class="badge badge-light-danger text-danger tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
                                                 <?php endif; ?>
                                                 <?php if (!empty($row->ulasan_atasan)): ?>
-                                                    <div class="small text-muted mt-1" style="max-width:200px; white-space:normal;">"<?= htmlspecialchars($row->ulasan_atasan) ?>"</div>
+                                                    <div class="tp-note-box tp-note-ulasan" title="<?= htmlspecialchars($row->ulasan_atasan) ?>">
+                                                        <div class="tp-note-clamp">"<?= htmlspecialchars(tpTablePreviewText($row->ulasan_atasan, 120)) ?>"</div>
+                                                    </div>
                                                 <?php endif; ?>
                                             <?php elseif (!empty($row->is_late)): ?>
                                                 <span class="badge badge-danger" style="font-size:10.5px;"><i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5</span>
@@ -2010,32 +2304,32 @@ $namaBulanList = [
                                                 <span class="text-muted small"><em>Belum dinilai</em></span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-xs btn-primary mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="progres">
-                                                <i class="fas fa-edit"></i> Detail / Progres
-                                            </button>
-                                            <?php if ((int)$row->status_task < 4 && (int)$row->status_task !== 2): ?>
-                                                <br>
-                                                <button type="button" class="btn btn-xs btn-success mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="submit">
-                                                    <i class="fas fa-check"></i> Submit Selesai
+                                        <td class="tp-col-aksi text-center">
+                                            <div class="tp-action-stack">
+                                                <button type="button" class="btn btn-xs btn-primary btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="progres">
+                                                    <i class="fas fa-edit"></i> Detail / Progres
                                                 </button>
-                                            <?php endif; ?>
-                                            <?php if ((int)($row->sp_level ?? 0) >= 3): ?>
-                                                <br>
-                                                <button type="button" class="btn btn-xs btn-danger font-weight-bold btn-jadwal-hrd-sp3"
-                                                    data-id="<?= (int)$row->id_task ?>"
-                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
-                                                    data-judul="<?= htmlspecialchars($row->judul) ?>"
-                                                    data-karyawan="<?= htmlspecialchars($row->nama_penerima ?: ($me->nama ?? '-')) ?>"
-                                                    data-telat="<?= (int)($row->hari_telat ?? 21) ?>"
-                                                    data-tgl="<?= htmlspecialchars($row->hrd_jadwal_tgl ?? '') ?>"
-                                                    data-jam="<?= htmlspecialchars($row->hrd_jadwal_jam ?? '10:00') ?>"
-                                                    data-metode="<?= htmlspecialchars($row->hrd_jadwal_metode ?? 'Tatap Muka (Offline)') ?>"
-                                                    data-lokasi="<?= htmlspecialchars($row->hrd_jadwal_lokasi ?? 'Ruang HRD') ?>"
-                                                    data-catatan="<?= htmlspecialchars($row->hrd_jadwal_catatan ?? '') ?>">
-                                                    <i class="fas fa-calendar-check"></i> <?= !empty($row->hrd_jadwal_tgl) ? 'Ubah Jadwal HRD' : 'Jadwalkan HRD (SP 3)' ?>
-                                                </button>
-                                            <?php endif; ?>
+                                                <?php if ((int)$row->status_task < 4 && (int)$row->status_task !== 2): ?>
+                                                    <button type="button" class="btn btn-xs btn-success btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="submit">
+                                                        <i class="fas fa-check"></i> Submit Selesai
+                                                    </button>
+                                                <?php endif; ?>
+                                                <?php if ((int)($row->sp_level ?? 0) >= 3): ?>
+                                                    <button type="button" class="btn btn-xs btn-danger font-weight-bold btn-jadwal-hrd-sp3"
+                                                        data-id="<?= (int)$row->id_task ?>"
+                                                        data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                        data-judul="<?= htmlspecialchars($row->judul) ?>"
+                                                        data-karyawan="<?= htmlspecialchars($row->nama_penerima ?: ($me->nama ?? '-')) ?>"
+                                                        data-telat="<?= (int)($row->hari_telat ?? 21) ?>"
+                                                        data-tgl="<?= htmlspecialchars($row->hrd_jadwal_tgl ?? '') ?>"
+                                                        data-jam="<?= htmlspecialchars($row->hrd_jadwal_jam ?? '10:00') ?>"
+                                                        data-metode="<?= htmlspecialchars($row->hrd_jadwal_metode ?? 'Tatap Muka (Offline)') ?>"
+                                                        data-lokasi="<?= htmlspecialchars($row->hrd_jadwal_lokasi ?? 'Ruang HRD') ?>"
+                                                        data-catatan="<?= htmlspecialchars($row->hrd_jadwal_catatan ?? '') ?>">
+                                                        <i class="fas fa-calendar-check"></i> <?= !empty($row->hrd_jadwal_tgl) ? 'Ubah Jadwal HRD' : 'Jadwalkan HRD (SP 3)' ?>
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -2065,19 +2359,19 @@ $namaBulanList = [
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover mb-0" id="datatable_tugas_atasan">
+                        <table class="table table-hover mb-0" id="datatable_tugas_atasan">
                             <thead>
                                 <tr>
-                                    <th width="45">No</th>
-                                    <th>Kode & Proyek</th>
-                                    <th>Penerima Tugas (Karyawan)</th>
-                                    <th>Judul Task & Hasil Karyawan</th>
-                                    <th>Pemberi Tugas</th>
-                                    <th>Prioritas & Deadline</th>
-                                    <th width="120">Progres</th>
-                                    <th>Status</th>
-                                    <th>Rating Bintang ⭐</th>
-                                    <th width="165">Aksi Atasan</th>
+                                    <th class="tp-col-no">No</th>
+                                    <th class="tp-col-code">Kode &amp; Proyek</th>
+                                    <th class="tp-col-person">Penerima Tugas</th>
+                                    <th class="tp-col-main">Judul Task &amp; Hasil Karyawan</th>
+                                    <th class="tp-col-person">Pemberi Tugas</th>
+                                    <th class="tp-col-prio">Prioritas &amp; Deadline</th>
+                                    <th class="tp-col-prog">Progres</th>
+                                    <th class="tp-col-status">Status</th>
+                                    <th class="tp-col-rating">Rating Bintang ⭐</th>
+                                    <th class="tp-col-aksi text-center">Aksi Atasan</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2085,84 +2379,89 @@ $namaBulanList = [
                                     $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
                                 ?>
                                     <tr id="row_task_atasan_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
-                                        <td class="text-center"><?= $no++ ?></td>
-                                        <td>
-                                            <strong class="text-primary"><?= htmlspecialchars($row->kode_task) ?></strong><br>
-                                            <span class="badge badge-light border"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
+                                        <td class="tp-col-no"><?= $no++ ?></td>
+                                        <td class="tp-col-code">
+                                            <span class="tp-task-code"><?= htmlspecialchars($row->kode_task) ?></span><br>
+                                            <span class="tp-proyek-pill" title="<?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?>"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
                                         </td>
-                                        <td>
-                                            <strong><?= htmlspecialchars($row->nama_penerima ?: '-') ?></strong>
-                                            <div class="small text-muted"><?= htmlspecialchars($row->jabatan_penerima ?: '') ?></div>
+                                        <td class="tp-col-person">
+                                            <span class="tp-person-name"><?= htmlspecialchars($row->nama_penerima ?: '-') ?></span>
+                                            <?php if (!empty($row->jabatan_penerima)): ?>
+                                                <span class="tp-person-meta"><?= htmlspecialchars($row->jabatan_penerima) ?></span>
+                                            <?php endif; ?>
                                             <?php if (!empty($row->divisi_penerima)): ?>
-                                                <span class="badge badge-info" style="font-size:10px;"><?= htmlspecialchars($row->divisi_penerima) ?></span>
+                                                <div class="mt-1"><span class="badge badge-info tp-badge-wrap" style="font-size:10px;"><?= htmlspecialchars($row->divisi_penerima) ?></span></div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <div style="font-weight: 700; color: #1e293b;"><?= htmlspecialchars($row->judul) ?></div>
+                                        <td class="tp-col-main">
+                                            <div class="tp-task-title" title="<?= htmlspecialchars($row->judul) ?>"><?= htmlspecialchars($row->judul) ?></div>
                                             <?php if (!empty($row->catatan_bawahan)): ?>
-                                                <div class="mt-1 p-1 rounded" style="background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 11.5px;">
-                                                    <strong>Laporan Karyawan:</strong> <?= htmlspecialchars(mb_strimwidth($row->catatan_bawahan, 0, 110, '...')) ?>
+                                                <div class="tp-note-box tp-note-laporan" title="<?= htmlspecialchars($row->catatan_bawahan) ?>">
+                                                    <strong>Laporan Karyawan:</strong>
+                                                    <div class="tp-note-clamp"><?= htmlspecialchars(tpTablePreviewText($row->catatan_bawahan, 130)) ?></div>
                                                     <?php if (!empty($row->bukti_selesai)): ?>
-                                                        <br><a href="<?= htmlspecialchars($row->bukti_selesai) ?>" target="_blank" class="text-primary font-weight-bold"><i class="fas fa-external-link-alt"></i> Buka Bukti / Lampiran</a>
+                                                        <div class="mt-1">
+                                                            <a href="<?= htmlspecialchars($row->bukti_selesai) ?>" target="_blank" class="text-primary font-weight-bold d-inline-block text-truncate" style="max-width: 100%;"><i class="fas fa-external-link-alt mr-1"></i> Buka Bukti / Lampiran</a>
+                                                        </div>
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <span class="small font-weight-bold"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
+                                        <td class="tp-col-person">
+                                            <span class="tp-person-name"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
                                             <?php if (!empty($row->nama_mengetahui)): ?>
-                                                <div class="small text-muted mt-1" style="font-size: 11px;"><i class="fas fa-eye text-primary mr-1"></i> Mengetahui: <strong><?= htmlspecialchars($row->nama_mengetahui) ?></strong></div>
+                                                <span class="tp-person-meta"><i class="fas fa-eye text-primary mr-1"></i> Mengetahui: <strong><?= htmlspecialchars($row->nama_mengetahui) ?></strong></span>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-prio">
                                             <span class="tp-priority-badge tp-prio-<?= htmlspecialchars($row->prioritas) ?>"><?= htmlspecialchars($row->prioritas) ?></span>
-                                            <div class="small mt-1">
-                                                <?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
+                                            <div class="small mt-1 text-dark">
+                                                <i class="far fa-calendar-check text-muted mr-1"></i><?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
                                             <?php if (!empty($row->is_late)): ?>
-                                                <span class="badge badge-danger mt-1" title="Melewati batas deadline (Maksimal Rating Bintang 1)">
-                                                    <i class="fas fa-exclamation-circle"></i> H+<?= (int)$row->hari_telat ?> (Maks ⭐1)
-                                                </span>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap" title="Melewati batas deadline (Maksimal Rating Bintang 1)"><i class="fas fa-exclamation-circle"></i> H+<?= (int)$row->hari_telat ?> (Maks ⭐1)</span></div>
                                             <?php elseif ($isOverdue): ?>
-                                                <span class="badge badge-danger mt-1">Overdue</span>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap">Overdue</span></div>
                                             <?php endif; ?>
                                             <?php if ((int)($row->sp_level ?? 0) >= 1): ?>
                                                 <div class="mt-1">
-                                                    <span class="badge <?= htmlspecialchars($row->sp_badge_cls ?? 'badge-danger') ?> px-2 py-1" style="font-size: 11px;">
+                                                    <span class="badge <?= htmlspecialchars($row->sp_badge_cls ?? 'badge-danger') ?> tp-badge-wrap px-2 py-1" style="font-size: 10.5px;">
                                                         <i class="fas fa-gavel mr-1"></i> <?= htmlspecialchars($row->sp_label ?? ('SP ' . (int)$row->sp_level)) ?>
                                                     </span>
                                                 </div>
                                             <?php endif; ?>
                                             <?php if (!empty($row->hrd_jadwal_tgl)): ?>
-                                                <div class="mt-1 p-1 rounded small" style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; font-size:10.5px;">
-                                                    <strong><i class="fas fa-handshake"></i> Jadwal HRD:</strong><br>
+                                                <div class="tp-note-box tp-note-hrd">
+                                                    <strong><i class="fas fa-handshake mr-1"></i> Jadwal HRD:</strong><br>
                                                     <?= date('d-m-Y', strtotime($row->hrd_jadwal_tgl)) ?> <?= !empty($row->hrd_jadwal_jam) ? htmlspecialchars($row->hrd_jadwal_jam) . ' WIB' : '' ?>
                                                     <?php if (!empty($row->hrd_jadwal_lokasi)): ?>
-                                                        <br><span class="text-muted"><?= htmlspecialchars($row->hrd_jadwal_metode ?: 'Tatap Muka') ?> - <?= htmlspecialchars($row->hrd_jadwal_lokasi) ?></span>
+                                                        <div class="text-muted mt-1"><?= htmlspecialchars($row->hrd_jadwal_metode ?: 'Tatap Muka') ?> - <?= htmlspecialchars($row->hrd_jadwal_lokasi) ?></div>
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-prog">
                                             <div class="progress progress-sm mb-1" style="height: 10px; border-radius: 8px;">
                                                 <div class="progress-bar <?= (int)$row->progres >= 100 ? 'bg-success' : 'bg-info' ?>" role="progressbar" style="width: <?= (int)$row->progres ?>%;"></div>
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
-                                        <td>
+                                        <td class="tp-col-status"><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
+                                        <td class="tp-col-rating">
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
-                                                <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
+                                                <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
                                                 <?php if (!empty($row->is_late)): ?>
-                                                    <div class="badge badge-light-danger text-danger mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                    <div class="badge badge-light-danger text-danger tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
                                                 <?php endif; ?>
                                                 <?php if (!empty($row->ulasan_atasan)): ?>
-                                                    <div class="small text-muted mt-1" style="max-width:180px; white-space:normal;">"<?= htmlspecialchars($row->ulasan_atasan) ?>"</div>
+                                                    <div class="tp-note-box tp-note-ulasan" title="<?= htmlspecialchars($row->ulasan_atasan) ?>">
+                                                        <div class="tp-note-clamp">"<?= htmlspecialchars(tpTablePreviewText($row->ulasan_atasan, 120)) ?>"</div>
+                                                    </div>
                                                 <?php endif; ?>
                                             <?php elseif ((int)$row->status_task === 2): ?>
                                                 <span class="badge badge-warning"><i class="fas fa-star"></i> Siap Dinilai</span>
                                                 <?php if (!empty($row->is_late)): ?>
-                                                    <div class="badge badge-danger mt-1" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</div>
+                                                    <div class="mt-1"><span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</span></div>
                                                 <?php endif; ?>
                                             <?php elseif (!empty($row->is_late)): ?>
                                                 <span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</span>
@@ -2170,45 +2469,46 @@ $namaBulanList = [
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="tp-col-aksi text-center">
+                                            <div class="tp-action-stack">
                                             <?php
                                             $effStatusAtasan = ((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : (int)$row->status_task;
                                             $alreadyRated = ($effStatusAtasan === 4 && !empty($row->rating_bintang));
                                             ?>
-                                                                                        <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
-                                                <button type="button" class="btn btn-xs btn-success font-weight-bold mb-1 btn-acc-hrd"
+                                            <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
+                                                <button type="button" class="btn btn-xs btn-success font-weight-bold btn-acc-hrd"
                                                     data-id="<?= (int)$row->id_task ?>"
                                                     data-kode="<?= htmlspecialchars($row->kode_task) ?>"
                                                     data-judul="<?= htmlspecialchars($row->judul) ?>">
                                                     <i class="fas fa-check-circle"></i> ACC Task
-                                                </button><br>
-                                                <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold mb-1 btn-tolak-hrd"
+                                                </button>
+                                                <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold btn-tolak-hrd"
                                                     data-id="<?= (int)$row->id_task ?>"
                                                     data-kode="<?= htmlspecialchars($row->kode_task) ?>"
                                                     data-judul="<?= htmlspecialchars($row->judul) ?>">
                                                     <i class="fas fa-times"></i> Tolak
-                                                </button><br>
+                                                </button>
                                             <?php endif; ?>
                                             <?php 
                                             $isSelfRow = ((int)$row->id_penerima === (int)$myId);
                                             if ($effStatusAtasan === 2 && !$alreadyRated && !$isSelfRow): 
                                             ?>
-                                                <button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
+                                                <button type="button" class="btn btn-xs btn-warning font-weight-bold btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
                                                     <i class="fas fa-star"></i> Beri Rating ⭐
-                                                </button><br>
+                                                </button>
                                             <?php elseif ($effStatusAtasan === 2 && !$alreadyRated && $isSelfRow): ?>
-                                                <span class="badge badge-warning mb-1" style="font-size: 10px;"><i class="fas fa-hourglass-half"></i> Menunggu Rating HRD</span><br>
-                                                <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
+                                                <span class="badge badge-warning tp-badge-wrap text-center" style="font-size: 10px;"><i class="fas fa-hourglass-half"></i> Menunggu Rating HRD</span>
+                                                <button type="button" class="btn btn-xs btn-info btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
                                                     <i class="fas fa-eye"></i> Detail Task
-                                                </button><br>
+                                                </button>
                                             <?php else: ?>
-                                                <button type="button" class="btn btn-xs btn-info mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
+                                                <button type="button" class="btn btn-xs btn-info btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
                                                     <i class="fas fa-eye"></i> Detail Task
-                                                </button><br>
+                                                </button>
                                             <?php endif; ?>
 
                                             <?php if ((int)($row->sp_level ?? 0) >= 3): ?>
-                                                <button type="button" class="btn btn-xs btn-danger font-weight-bold mb-1 btn-jadwal-hrd-sp3"
+                                                <button type="button" class="btn btn-xs btn-danger font-weight-bold btn-jadwal-hrd-sp3"
                                                     data-id="<?= (int)$row->id_task ?>"
                                                     data-kode="<?= htmlspecialchars($row->kode_task) ?>"
                                                     data-judul="<?= htmlspecialchars($row->judul) ?>"
@@ -2220,14 +2520,15 @@ $namaBulanList = [
                                                     data-lokasi="<?= htmlspecialchars($row->hrd_jadwal_lokasi ?? 'Ruang HRD') ?>"
                                                     data-catatan="<?= htmlspecialchars($row->hrd_jadwal_catatan ?? '') ?>">
                                                     <i class="fas fa-calendar-check"></i> <?= !empty($row->hrd_jadwal_tgl) ? 'Jadwal HRD' : 'Jadwalkan HRD (SP 3)' ?>
-                                                </button><br>
+                                                </button>
                                             <?php endif; ?>
 
                                             <?php if ((int)$row->id_pemberi === (int)$myId || $canViewAll): ?>
                                                 <button type="button" class="btn btn-xs btn-danger btn-hapus-task" data-id="<?= (int)$row->id_task ?>" data-kode="<?= htmlspecialchars($row->kode_task) ?>">
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="fas fa-trash"></i> Hapus
                                                 </button>
                                             <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -2266,20 +2567,20 @@ $namaBulanList = [
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover mb-0" id="datatable_semua_task" style="width: 100%;">
+                        <table class="table table-hover mb-0" id="datatable_semua_task" style="width: 100%;">
                             <thead>
                                 <tr>
-                                    <th width="45">No</th>
-                                    <th>Kode & Proyek</th>
-                                    <th>Judul Task & Jobdesk</th>
-                                    <th>Pelaksana (Karyawan)</th>
-                                    <th>Pemberi / Pengaju</th>
-                                    <th>Mengetahui</th>
-                                    <th>Prioritas & Deadline</th>
-                                    <th width="120">Progres</th>
-                                    <th>Status</th>
-                                    <th>Rating</th>
-                                    <th width="130">Aksi</th>
+                                    <th class="tp-col-no">No</th>
+                                    <th class="tp-col-code">Kode &amp; Proyek</th>
+                                    <th class="tp-col-main">Judul Task &amp; Jobdesk</th>
+                                    <th class="tp-col-person">Pelaksana</th>
+                                    <th class="tp-col-person">Pemberi / Pengaju</th>
+                                    <th class="tp-col-person">Mengetahui</th>
+                                    <th class="tp-col-prio">Prioritas &amp; Deadline</th>
+                                    <th class="tp-col-prog">Progres</th>
+                                    <th class="tp-col-status">Status</th>
+                                    <th class="tp-col-rating">Rating</th>
+                                    <th class="tp-col-aksi text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2287,108 +2588,107 @@ $namaBulanList = [
                                     $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
                                 ?>
                                     <tr id="row_semua_task_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
-                                        <td class="text-center"><?= $noAll++ ?></td>
-                                        <td>
-                                            <strong class="text-primary"><?= htmlspecialchars($row->kode_task) ?></strong><br>
-                                            <span class="badge badge-light border"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
-                                            <div class="small text-muted mt-1"><?= htmlspecialchars($row->jenis) ?></div>
+                                        <td class="tp-col-no"><?= $noAll++ ?></td>
+                                        <td class="tp-col-code">
+                                            <span class="tp-task-code"><?= htmlspecialchars($row->kode_task) ?></span><br>
+                                            <span class="tp-proyek-pill" title="<?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?>"><?= htmlspecialchars($row->nama_proyek ?: 'Umum') ?></span>
+                                            <div class="tp-jenis-meta"><?= htmlspecialchars($row->jenis) ?></div>
                                         </td>
-                                        <td>
-                                            <div style="font-weight: 700; color: #1e293b;"><?= htmlspecialchars($row->judul) ?></div>
+                                        <td class="tp-col-main">
+                                            <div class="tp-task-title" title="<?= htmlspecialchars($row->judul) ?>"><?= htmlspecialchars($row->judul) ?></div>
                                             <?php if (!empty($row->nama_jobdesk)): ?>
-                                                <div class="mt-1">
-                                                    <span class="badge badge-success px-2 py-1" style="font-size: 11px; white-space: normal; text-align: left; line-height: 1.4; display: inline-block; max-width: 100%; word-break: break-word;">
+                                                <div>
+                                                    <span class="badge badge-success tp-jobdesk-pill" title="<?= htmlspecialchars($row->nama_jobdesk) ?>">
                                                         <i class="fas fa-bullseye mr-1"></i> <?= htmlspecialchars($row->nama_jobdesk) ?>
                                                     </span>
                                                 </div>
                                             <?php endif; ?>
                                             <?php if (!empty($row->deskripsi)): ?>
-                                                <div class="small text-muted mt-1" style="max-width: 250px; white-space: normal;">
-                                                    <?= nl2br(htmlspecialchars(mb_strimwidth($row->deskripsi, 0, 100, '...'))) ?>
+                                                <div class="tp-task-desc" title="<?= htmlspecialchars($row->deskripsi) ?>">
+                                                    <?= htmlspecialchars(tpTablePreviewText($row->deskripsi, 120)) ?>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <strong class="text-dark"><?= htmlspecialchars($row->nama_penerima ?: '-') ?></strong>
+                                        <td class="tp-col-person">
+                                            <span class="tp-person-name"><?= htmlspecialchars($row->nama_penerima ?: '-') ?></span>
                                             <?php if (!empty($row->jabatan_penerima)): ?>
-                                                <div class="small text-muted"><?= htmlspecialchars($row->jabatan_penerima) ?></div>
+                                                <span class="tp-person-meta"><?= htmlspecialchars($row->jabatan_penerima) ?></span>
                                             <?php endif; ?>
                                             <?php if (!empty($row->divisi_penerima)): ?>
-                                                <span class="badge badge-light border text-info" style="font-size:10.5px;"><?= htmlspecialchars($row->divisi_penerima) ?></span>
+                                                <div class="mt-1"><span class="badge badge-light border text-info tp-badge-wrap" style="font-size:10.5px;"><?= htmlspecialchars($row->divisi_penerima) ?></span></div>
                                             <?php endif; ?>
                                             <?php if (!empty($row->is_mandiri)): ?>
                                                 <div class="mt-1"><span class="badge badge-warning text-dark" style="font-size: 10px;"><i class="fas fa-user-edit mr-1"></i> Mandiri</span></div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <span class="small font-weight-bold"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
+                                        <td class="tp-col-person">
+                                            <span class="tp-person-name"><?= htmlspecialchars($row->nama_pemberi ?: '-') ?></span>
                                             <?php if (!empty($row->jabatan_pemberi)): ?>
-                                                <div class="small text-muted"><?= htmlspecialchars($row->jabatan_pemberi) ?></div>
+                                                <span class="tp-person-meta"><?= htmlspecialchars($row->jabatan_pemberi) ?></span>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-person">
                                             <?php if (!empty($row->nama_mengetahui)): ?>
-                                                <span class="small font-weight-bold text-dark"><i class="fas fa-eye text-primary mr-1"></i> <?= htmlspecialchars($row->nama_mengetahui) ?></span>
+                                                <span class="tp-person-name"><i class="fas fa-eye text-primary mr-1"></i> <?= htmlspecialchars($row->nama_mengetahui) ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-prio">
                                             <span class="tp-priority-badge tp-prio-<?= htmlspecialchars($row->prioritas) ?>"><?= htmlspecialchars($row->prioritas) ?></span>
-                                            <div class="small mt-1">
-                                                <i class="far fa-calendar-check text-muted mr-1"></i>
-                                                <?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
+                                            <div class="small mt-1 text-dark">
+                                                <i class="far fa-calendar-check text-muted mr-1"></i><?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
                                             <?php if (!empty($row->is_late)): ?>
-                                                <span class="badge badge-danger mt-1">Terlambat H+<?= (int)$row->hari_telat ?></span>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap">Terlambat H+<?= (int)$row->hari_telat ?></span></div>
                                             <?php elseif ($isOverdue): ?>
-                                                <span class="badge badge-danger mt-1">Overdue</span>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap">Overdue</span></div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-prog">
                                             <div class="progress progress-sm mb-1" style="height: 10px; border-radius: 8px;">
                                                 <div class="progress-bar <?= (int)$row->progres >= 100 ? 'bg-success' : 'bg-primary' ?>" role="progressbar" style="width: <?= (int)$row->progres ?>%;"></div>
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-status">
                                             <?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?>
                                             <?php if (!empty($row->nama_acc_hrd) && (int)$row->status_task !== 5): ?>
-                                                <div class="small text-muted mt-1" style="font-size:10px;"><i class="fas fa-check-double text-success"></i> ACC HRD: <?= htmlspecialchars($row->nama_acc_hrd) ?></div>
+                                                <div class="tp-person-meta mt-1"><i class="fas fa-check-double text-success mr-1"></i> ACC HRD: <?= htmlspecialchars($row->nama_acc_hrd) ?></div>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="tp-col-rating">
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
-                                                <div><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
+                                                <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
                                             <?php else: ?>
                                                 <span class="text-muted small"><em>-</em></span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-xs btn-primary mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
-                                                <i class="fas fa-eye"></i> Detail
-                                            </button>
-                                            <?php if ((int)$row->status_task === 2 && empty($row->rating_bintang) && (int)$row->id_penerima !== (int)$myId && !empty($isHrdAdmin)): ?>
-                                                <br>
-                                                <button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
-                                                    <i class="fas fa-star"></i> Nilai (HRD)
+                                        <td class="tp-col-aksi text-center">
+                                            <div class="tp-action-stack">
+                                                <button type="button" class="btn btn-xs btn-primary btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
+                                                    <i class="fas fa-eye"></i> Detail
                                                 </button>
-                                            <?php endif; ?>
-                                            <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
-                                                <br>
-                                                <button type="button" class="btn btn-xs btn-success font-weight-bold mb-1 btn-acc-hrd"
-                                                    data-id="<?= (int)$row->id_task ?>"
-                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
-                                                    data-judul="<?= htmlspecialchars($row->judul) ?>">
-                                                    <i class="fas fa-check-circle"></i> ACC
-                                                </button>
-                                                <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold mb-1 btn-tolak-hrd"
-                                                    data-id="<?= (int)$row->id_task ?>"
-                                                    data-kode="<?= htmlspecialchars($row->kode_task) ?>"
-                                                    data-judul="<?= htmlspecialchars($row->judul) ?>">
-                                                    <i class="fas fa-times"></i> Tolak
-                                                </button>
-                                            <?php endif; ?>
+                                                <?php if ((int)$row->status_task === 2 && empty($row->rating_bintang) && (int)$row->id_penerima !== (int)$myId && !empty($isHrdAdmin)): ?>
+                                                    <button type="button" class="btn btn-xs btn-warning font-weight-bold btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
+                                                        <i class="fas fa-star"></i> Nilai (HRD)
+                                                    </button>
+                                                <?php endif; ?>
+                                                <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
+                                                    <button type="button" class="btn btn-xs btn-success font-weight-bold btn-acc-hrd"
+                                                        data-id="<?= (int)$row->id_task ?>"
+                                                        data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                        data-judul="<?= htmlspecialchars($row->judul) ?>">
+                                                        <i class="fas fa-check-circle"></i> ACC
+                                                    </button>
+                                                    <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold btn-tolak-hrd"
+                                                        data-id="<?= (int)$row->id_task ?>"
+                                                        data-kode="<?= htmlspecialchars($row->kode_task) ?>"
+                                                        data-judul="<?= htmlspecialchars($row->judul) ?>">
+                                                        <i class="fas fa-times"></i> Tolak
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -3471,9 +3771,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Inisialisasi DataTables
     if ($.fn.DataTable) {
-        $('#datatable_tugas_saya').DataTable({ pageLength: 10, order: [] });
-        $('#datatable_tugas_atasan').DataTable({ pageLength: 10, order: [] });
-        $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [] });
+        $('#datatable_tugas_saya').DataTable({ pageLength: 10, order: [], autoWidth: false });
+        $('#datatable_tugas_atasan').DataTable({ pageLength: 10, order: [], autoWidth: false });
+        $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [], autoWidth: false });
     }
 
     // Animasi confetti podium ringan saat tab Leaderboard KPI dibuka
@@ -4368,9 +4668,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 '<span class="badge badge-warning"><i class="fas fa-star"></i> Siap Dinilai</span>'
                             );
                             // Kolom Aksi Atasan (Index 9)
-                            var btnReviewHtml = '<button type="button" class="btn btn-xs btn-warning font-weight-bold mb-1 btn-detail-task" data-id="' + idTask + '" data-focus="review">' +
+                            var btnReviewHtml = '<div class="tp-action-stack">' +
+                                '<button type="button" class="btn btn-xs btn-warning font-weight-bold btn-detail-task" data-id="' + idTask + '" data-focus="review">' +
                                 '<i class="fas fa-star"></i> Beri Rating ⭐' +
-                                '</button><br>';
+                                '</button></div>';
                             $trAtasan.find('td').eq(9).html(btnReviewHtml);
 
                             dtAtasan.row($trAtasan).invalidate().draw(false);
@@ -4667,7 +4968,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var dtSemua = $('#datatable_semua_task').DataTable({
             language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' },
             order: [[0, 'asc']],
-            pageLength: 25
+            pageLength: 25,
+            autoWidth: false
         });
 
         $('#filter_semua_karyawan').on('change', function() {
