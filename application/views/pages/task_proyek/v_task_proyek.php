@@ -1,36 +1,46 @@
 <style>
+    /* Modern Surface & Card Architecture */
     .tp-control-card {
-        border-radius: 12px;
+        border-radius: 14px;
         border: 1px solid #e2e8f0;
-        background: #fff;
+        background: #ffffff;
         padding: 16px 20px;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
         margin-bottom: 16px;
     }
     .tp-kpi-card {
-        border-radius: 12px;
+        border-radius: 14px;
         border: 1px solid #e2e8f0;
-        background: #fff;
-        padding: 18px 20px;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        background: #ffffff;
+        padding: 16px 18px;
+        box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 16px;
-        transition: transform 0.15s ease;
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .tp-kpi-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
     }
+    .tp-kpi-card.kpi-blue { border-left: 4px solid #3b82f6 !important; }
+    .tp-kpi-card.kpi-amber { border-left: 4px solid #f59e0b !important; }
+    .tp-kpi-card.kpi-green { border-left: 4px solid #10b981 !important; }
+    .tp-kpi-card.kpi-purple { border-left: 4px solid #8b5cf6 !important; }
+
     .tp-kpi-icon {
-        width: 50px;
-        height: 50px;
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
+        font-size: 20px;
         flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
     .tp-star-display {
         color: #f59e0b;
@@ -41,30 +51,38 @@
         color: #cbd5e1;
     }
     .tp-priority-badge {
-        padding: 3px 9px;
-        border-radius: 20px;
+        padding: 3px 10px;
+        border-radius: 999px;
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        letter-spacing: 0.3px;
     }
-    .tp-prio-Low { background: #f1f5f9; color: #475569; }
-    .tp-prio-Medium { background: #e0f2fe; color: #0369a1; }
-    .tp-prio-High { background: #ffedd5; color: #c2410c; }
-    .tp-prio-Urgent { background: #fee2e2; color: #b91c1c; }
+    .tp-prio-Low { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .tp-prio-Medium { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .tp-prio-High { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .tp-prio-Urgent { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
     .tp-status-badge {
         padding: 4px 10px;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 11.5px;
-        font-weight: 600;
-        display: inline-block;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        letter-spacing: 0.2px;
     }
-    .tp-st-0 { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .tp-st-0 { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
     .tp-st-1 { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
     .tp-st-2 { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
     .tp-st-3 { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
     .tp-st-4 { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .tp-st-5 { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .tp-st-6 { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
     /* Interactive 5-Star Rating Picker */
     .star-rating-picker {
@@ -88,11 +106,15 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 12px;
+        padding: 9px 13px;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         margin-bottom: 6px;
         background: #f8fafc;
+        transition: background-color 0.15s ease;
+    }
+    .tp-checklist-row:hover {
+        background: #f1f5f9;
     }
     .tp-checklist-row.done {
         background: #f0fdf4;
@@ -102,12 +124,15 @@
     }
     .tp-log-item {
         border-left: 3px solid #3b82f6;
-        padding: 8px 12px;
+        padding: 9px 13px;
         margin-bottom: 10px;
         background: #f8fafc;
         border-radius: 0 8px 8px 0;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+        border-right: 1px solid #f1f5f9;
     }
-    /* Modern high-contrast styling for Workspace Tabs */
+    /* Modern Workspace Tabs */
     .nav-tabs-tp {
         border-bottom: 2px solid #e2e8f0 !important;
         margin-bottom: 20px;
@@ -121,9 +146,9 @@
     }
     .nav-tabs-tp > li > a,
     .nav-tabs-tp .nav-link {
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         font-size: 13.5px !important;
-        color: #475569 !important; /* High contrast dark slate */
+        color: #475569 !important;
         background: #f1f5f9 !important;
         border: 1px solid #e2e8f0 !important;
         border-bottom: 2px solid #e2e8f0 !important;
@@ -147,8 +172,8 @@
     .nav-tabs-tp .nav-link.active:hover,
     .nav-tabs-tp .nav-link.active:focus {
         background: #ffffff !important;
-        color: #0f172a !important; /* Bold high contrast dark slate */
-        font-weight: 700 !important;
+        color: #0f172a !important;
+        font-weight: 800 !important;
         border-top: 3px solid #0088cc !important;
         border-left: 1px solid #cbd5e1 !important;
         border-right: 1px solid #cbd5e1 !important;
@@ -180,6 +205,94 @@
     .nav-tabs-tp .badge-secondary {
         background-color: #64748b !important;
         color: #ffffff !important;
+    }
+
+    /* Enterprise Table Styling */
+    #datatable_tugas_saya,
+    #datatable_tugas_atasan,
+    #datatable_semua_task {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        width: 100% !important;
+    }
+    #datatable_tugas_saya thead th,
+    #datatable_tugas_atasan thead th,
+    #datatable_semua_task thead th {
+        background: #f8fafc !important;
+        color: #334155 !important;
+        font-size: 11.5px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.4px !important;
+        border-top: 1px solid #e2e8f0 !important;
+        border-bottom: 2px solid #cbd5e1 !important;
+        padding: 11px 13px !important;
+        vertical-align: middle !important;
+    }
+    #datatable_tugas_saya tbody tr:hover td,
+    #datatable_tugas_atasan tbody tr:hover td,
+    #datatable_semua_task tbody tr:hover td {
+        background-color: #f8fafc !important;
+    }
+    #datatable_tugas_saya tbody td,
+    #datatable_tugas_atasan tbody td,
+    #datatable_semua_task tbody td {
+        padding: 11px 13px !important;
+        vertical-align: middle !important;
+        font-size: 12.5px !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    /* Responsive Mobile Overrides */
+    @media (max-width: 768px) {
+        .tp-control-card {
+            padding: 12px 14px;
+        }
+        .tp-control-card form {
+            width: 100%;
+        }
+        .tp-control-card form .form-control {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin-bottom: 6px;
+        }
+        .tp-control-card .btn {
+            width: 100%;
+            margin-top: 4px;
+        }
+        .tp-kpi-card {
+            padding: 12px 14px;
+            flex-direction: column-reverse;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .tp-kpi-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 15px;
+            border-radius: 8px;
+        }
+        .tp-kpi-card div:first-child > div:nth-child(2) {
+            font-size: 20px !important;
+        }
+        .nav-tabs-tp {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 6px;
+            gap: 4px;
+            margin-bottom: 14px;
+        }
+        .nav-tabs-tp > li {
+            flex: 0 0 auto;
+        }
+        .nav-tabs-tp > li > a,
+        .nav-tabs-tp .nav-link {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+            white-space: nowrap;
+        }
     }
 
     /* =========================================================================
@@ -915,8 +1028,8 @@ $namaBulanList = [
     <div class="row">
         <?php if ($isTopLeaderOnly): ?>
             <!-- Mode Pimpinan Tertinggi / Direksi (Fokus Supervisi Tim) -->
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-blue">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Penugasan Berjalan Tim</div>
                         <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)($kpi['given_active'] ?? 0) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
@@ -928,8 +1041,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-amber">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
                         <div style="font-size: 26px; font-weight: 800; color: #d97706;" id="kpi_need_review"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
@@ -941,8 +1054,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-green">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Penugasan Selesai Tim</div>
                         <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)($kpi['given_done'] ?? 0) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
@@ -954,8 +1067,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-purple">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Karyawan Dibawahi</div>
                         <div style="font-size: 26px; font-weight: 800; color: #7c3aed;"><?= $jmlSupervisiSaya ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Pegawai</small></div>
@@ -969,8 +1082,8 @@ $namaBulanList = [
 
         <?php elseif ($isStaffOnly): ?>
             <!-- Mode Karyawan / Staf Pelaksana Murni -->
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-blue">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Tugas Aktif Saya</div>
                         <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)$kpi['my_active'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
@@ -982,8 +1095,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-amber">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Menunggu Rating Atasan</div>
                         <div style="font-size: 26px; font-weight: 800; color: #d97706;"><?= (int)($kpi['my_waiting_review'] ?? 0) ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
@@ -995,8 +1108,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-green">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Tugas Selesai Saya</div>
                         <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)$kpi['my_done'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
@@ -1008,8 +1121,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-purple">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">KPI Gabungan Saya</div>
                         <?php if (!empty($kpi['my_combined']) && $kpi['my_combined']->skor_akhir !== null): ?>
@@ -1042,8 +1155,8 @@ $namaBulanList = [
 
         <?php else: ?>
             <!-- Mode Manajer / Supervisor (Memiliki Atasan & Memiliki Bawahan) -->
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-blue">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Tugas Aktif Saya</div>
                         <div style="font-size: 26px; font-weight: 800; color: #1e293b;"><?= (int)$kpi['my_active'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
@@ -1055,8 +1168,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-amber">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Menunggu Review Saya</div>
                         <div style="font-size: 26px; font-weight: 800; color: #d97706;" id="kpi_need_review"><?= (int)$kpi['need_review'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small></div>
@@ -1068,8 +1181,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-green">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">Tugas Selesai Saya</div>
                         <div style="font-size: 26px; font-weight: 800; color: #15803d;"><?= (int)$kpi['my_done'] ?> <small style="font-size: 13px; font-weight: 600; color:#64748b;">Selesai</small></div>
@@ -1081,8 +1194,8 @@ $namaBulanList = [
                 </div>
             </div>
 
-            <div class="col-md-3 col-sm-6">
-                <div class="tp-kpi-card">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="tp-kpi-card kpi-purple">
                     <div>
                         <div class="text-muted small font-weight-bold text-uppercase">KPI Gabungan Saya</div>
                         <?php if (!empty($kpi['my_combined']) && $kpi['my_combined']->skor_akhir !== null): ?>
@@ -1143,7 +1256,7 @@ $namaBulanList = [
                     <a class="nav-link <?= $openTabAtasan ? 'active' : '' ?>" href="#tab_tugas_atasan" data-toggle="tab" role="tab">
                         <i class="fas fa-paper-plane text-success mr-2"></i> Tugas yang Saya Berikan / Ajukan
                         <?php if ($kpi['need_review'] > 0): ?>
-                            <span class="badge badge-warning ml-2" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating â­</span>
+                            <span class="badge badge-warning ml-2" id="badge_need_review"><?= (int)$kpi['need_review'] ?> Perlu Rating <i class="fas fa-star text-warning"></i></span>
                         <?php else: ?>
                             <span class="badge badge-secondary ml-2" id="badge_need_review"><?= count($tugas_atasan) ?></span>
                         <?php endif; ?>
@@ -3642,7 +3755,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     var $badgeReview = $('#badge_need_review');
                     if ($badgeReview.length) {
                         var curReview = parseInt($badgeReview.text(), 10) || 0;
-                        $badgeReview.text((curReview + 1) + ' Perlu Rating ⭐').removeClass('badge-secondary').addClass('badge-warning');
+                        $badgeReview.html((curReview + 1) + ' Perlu Rating <i class="fas fa-star text-warning"></i>').removeClass('badge-secondary').addClass('badge-warning');
                     }
                     var $kpiReview = $('#kpi_need_review');
                     if ($kpiReview.length) {

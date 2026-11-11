@@ -77,27 +77,25 @@ $statusSubtitle = 'Silakan lakukan absensi pada jadwal yang tersedia.';
 if (isset($data_absen[0]->waktu_absen)) {
     if (!empty($data_absen[0]->is_luar_radius)) {
         $gaSt = (int)($data_absen[0]->acc_ga ?? 0);
-        $yolaSt = (int)($data_absen[0]->acc_yola ?? 0);
-        $gaLabel = $gaSt === 1 ? 'ACC âœ”' : ($gaSt === 2 ? 'Ditolak âœ–' : 'Menunggu â³');
-        $yolaLabel = $yolaSt === 1 ? 'ACC âœ”' : ($yolaSt === 2 ? 'Ditolak âœ–' : 'Menunggu â³');
+        $gaLabel = $gaSt === 1 ? 'ACC ✔' : ($gaSt === 2 ? 'Ditolak ✖' : 'Menunggu ⏳');
 
-        if ($data_absen[0]->approval == 'terima') {
+        if ($gaSt === 1) {
             $statusClass = 'status-ok';
             $statusIcon = 'bx bx-check-shield';
             $statusTitle = 'Absensi Luar Radius Diterima (' . $data_absen[0]->type_absen . ')';
-        } elseif ($data_absen[0]->approval == 'tolak') {
+        } elseif ($gaSt === 2) {
             $statusClass = 'status-danger';
             $statusIcon = 'bx bx-x-circle';
             $statusTitle = 'Absensi Luar Radius Ditolak (' . $data_absen[0]->type_absen . ')';
         } else {
             $statusClass = 'status-warning';
             $statusIcon = 'bx bx-time-five';
-            $statusTitle = 'Absensi Luar Radius Tercatat â€” Menunggu ACC GA & General Manager';
+            $statusTitle = 'Absensi Luar Radius Tercatat — Menunggu ACC General Affair';
         }
 
         $jarakText = !empty($data_absen[0]->jarak_radius) ? (' | Jarak: ' . (int)$data_absen[0]->jarak_radius . 'm dari ' . htmlspecialchars($data_absen[0]->cabang_terdekat ?? '-')) : '';
         $alasanText = !empty($data_absen[0]->alasan_luar_radius) ? htmlspecialchars($data_absen[0]->alasan_luar_radius) : '-';
-        $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . $jarakText . ' | GA: ' . $gaLabel . ' | General Manager: ' . $yolaLabel . ' | Alasan: ' . $alasanText;
+        $statusSubtitle = 'Waktu: ' . $data_absen[0]->waktu_absen . $jarakText . ' | GA: ' . $gaLabel . ' | Alasan: ' . $alasanText;
     } else {
         if ($data_absen[0]->status_absen == 'terlambat') {
             $statusClass = 'status-danger';
@@ -1190,7 +1188,7 @@ if (isset($data_absen[0]->waktu_absen)) {
                                        <div><b>Cabang Terdekat:<\/b> ${closest.nama_cabang}<\/div>
                                        <div><b>Jarak Anda:<\/b> <span class="text-danger font-weight-bold">${distMeter} meter<\/span> (Maks: ${allowedRadius} meter)<\/div>
                                      <\/div>
-                                     <p class="mb-2 text-muted">Untuk tugas luar / kunjungan (Teknisi, Marketing, dll), silakan masukkan alasan Anda di bawah. Absensi akan tercatat dengan status <b>Menunggu ACC General Affair &amp; General Manager<\/b>.<\/p>
+                                     <p class="mb-2 text-muted">Untuk tugas luar / kunjungan (Teknisi, Marketing, dll), silakan masukkan alasan Anda di bawah. Absensi akan tercatat dengan status <b>Menunggu ACC General Affair<\/b>.<\/p>
                                      <label class="font-weight-bold mb-1">Alasan Absen di Luar Radius <span class="text-danger">*<\/span>:<\/label>
                                    <\/div>`,
                             input: 'textarea',

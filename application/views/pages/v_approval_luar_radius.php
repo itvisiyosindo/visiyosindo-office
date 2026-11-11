@@ -55,34 +55,18 @@
 
 <!-- KPI Cards -->
 <div class="row mb-3">
-	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
+	<div class="col-xl-3 col-md-6 col-sm-6 mb-2">
 		<div class="card card-sm lr-kpi-card lr-bg-warning h-100">
 			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold"><i class="fas fa-hourglass-half"></i> Menunggu ACC</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-pending"><?= (int)$stats['pending_all'] ?></div>
-			</div>
-		</div>
-	</div>
-	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm lr-kpi-card lr-bg-info h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold"><i class="fas fa-user-cog"></i> Menunggu GA</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-pending-ga"><?= (int)$stats['pending_ga'] ?></div>
-			</div>
-		</div>
-	</div>
-	<div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-		<div class="card card-sm lr-kpi-card lr-bg-primary h-100">
-			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold"><i class="fas fa-user-tie"></i> Menunggu GM</div>
-				<div class="h4 font-weight-bold mb-0 text-white" id="stat-pending-yola"><?= (int)$stats['pending_yola'] ?></div>
+				<div class="small text-uppercase font-weight-bold"><i class="fas fa-hourglass-half"></i> Menunggu ACC GA</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-pending"><?= (int)$stats['pending_ga'] ?></div>
 			</div>
 		</div>
 	</div>
 	<div class="col-xl-3 col-md-6 col-sm-6 mb-2">
 		<div class="card card-sm lr-kpi-card lr-bg-success h-100">
 			<div class="card-body p-2 text-center text-white">
-				<div class="small text-uppercase font-weight-bold"><i class="fas fa-check-double"></i> Disetujui (ACC Lengkap)</div>
+				<div class="small text-uppercase font-weight-bold"><i class="fas fa-check-circle"></i> Disetujui (ACC GA)</div>
 				<div class="h4 font-weight-bold mb-0 text-white" id="stat-approved"><?= (int)$stats['approved'] ?></div>
 			</div>
 		</div>
@@ -95,18 +79,25 @@
 			</div>
 		</div>
 	</div>
+	<div class="col-xl-3 col-md-6 col-sm-6 mb-2">
+		<div class="card card-sm lr-kpi-card lr-bg-info h-100">
+			<div class="card-body p-2 text-center text-white">
+				<div class="small text-uppercase font-weight-bold"><i class="fas fa-list-ul"></i> Total Pengajuan</div>
+				<div class="h4 font-weight-bold mb-0 text-white" id="stat-total"><?= (int)$stats['total'] ?></div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- Info Akses Approver -->
 <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center flex-wrap">
 	<div class="small">
 		<i class="fas fa-shield-alt mr-1"></i>
-		<b>Aturan Persetujuan:</b> Absen luar radius (kunjungan Teknisi / Marketing, dll.) membutuhkan ACC dari <b>General Affair</b> dan <b>General Manager</b>.
+		<b>Aturan Persetujuan:</b> Absen luar radius (kunjungan Teknisi / Marketing, dll.) membutuhkan ACC dari <b>General Affair</b>.
 		<span class="ml-2">
 			Hak ACC Anda:
 			<?php if (!empty($can_acc_ga)): ?><span class="badge badge-info">General Affair</span><?php endif; ?>
-			<?php if (!empty($can_acc_yola)): ?><span class="badge badge-primary">General Manager</span><?php endif; ?>
-			<?php if (empty($can_acc_ga) && empty($can_acc_yola)): ?><span class="badge badge-secondary">Lihat Saja (Read-Only)</span><?php endif; ?>
+			<?php if (empty($can_acc_ga)): ?><span class="badge badge-secondary">Lihat Saja (Read-Only)</span><?php endif; ?>
 		</span>
 	</div>
 	<a href="<?= base_url('absensi') ?>" class="btn btn-xs btn-outline-primary font-weight-bold mt-1 mt-md-0">
@@ -122,10 +113,8 @@
 					<div class="col-md-4 col-sm-6 mb-2 mb-md-0">
 						<label class="small font-weight-bold text-dark mb-1">Filter Status ACC:</label>
 						<select class="form-control form-control-sm" id="filter_status_lr">
-							<option value="pending" selected>Menunggu ACC (GA / General Manager)</option>
-							<option value="pending_ga">Belum ACC General Affair</option>
-							<option value="pending_yola">Belum ACC General Manager</option>
-							<option value="approved">Sudah ACC Lengkap (Diterima)</option>
+							<option value="pending" selected>Menunggu ACC General Affair</option>
+							<option value="approved">Sudah ACC (Diterima)</option>
 							<option value="rejected">Ditolak</option>
 							<option value="all">Semua Pengajuan</option>
 						</select>
@@ -152,7 +141,6 @@
 								<th>Lokasi & Jarak</th>
 								<th>Alasan Kunjungan</th>
 								<th>ACC General Affair</th>
-								<th>ACC General Manager</th>
 								<th>Status Final</th>
 							</tr>
 						</thead>
@@ -182,8 +170,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-	var CAN_ACC_GA   = <?= !empty($can_acc_ga) ? 'true' : 'false' ?>;
-	var CAN_ACC_YOLA = <?= !empty($can_acc_yola) ? 'true' : 'false' ?>;
+	var CAN_ACC_GA = <?= !empty($can_acc_ga) ? 'true' : 'false' ?>;
 
 	function escHtml(str) {
 		if (!str) return '';
@@ -194,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			.replace(/"/g, '&quot;');
 	}
 
-	function renderApproverCell(statusVal, approverName, approvedAt, role, idAbsensi, canApprove) {
+	function renderApproverCell(statusVal, approverName, approvedAt, idAbsensi, canApprove) {
 		var html = '';
 		if (statusVal === 1) {
 			html += '<span class="badge badge-success px-2 py-1"><i class="fas fa-check-circle"></i> Disetujui</span>';
@@ -211,13 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 
 		if (canApprove) {
-			var roleLabel = role === 'ga' ? 'GA' : 'GM';
 			html += '<div class="mt-2 d-flex justify-content-center flex-wrap" style="gap:4px;">';
 			if (statusVal !== 1) {
-				html += '<button type="button" class="btn btn-xs btn-success btn-acc-lr" data-id="' + idAbsensi + '" data-role="' + role + '" data-decision="1"><i class="fas fa-check"></i> ACC ' + roleLabel + '</button>';
+				html += '<button type="button" class="btn btn-xs btn-success btn-acc-lr" data-id="' + idAbsensi + '" data-decision="1"><i class="fas fa-check"></i> ACC GA</button>';
 			}
 			if (statusVal !== 2) {
-				html += '<button type="button" class="btn btn-xs btn-outline-danger btn-acc-lr" data-id="' + idAbsensi + '" data-role="' + role + '" data-decision="2"><i class="fas fa-times"></i> Tolak</button>';
+				html += '<button type="button" class="btn btn-xs btn-outline-danger btn-acc-lr" data-id="' + idAbsensi + '" data-decision="2"><i class="fas fa-times"></i> Tolak</button>';
 			}
 			html += '</div>';
 		}
@@ -237,11 +223,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			},
 			dataSrc: function(json) {
 				if (json && json.stats) {
-					$('#stat-pending').text(json.stats.pending_all);
-					$('#stat-pending-ga').text(json.stats.pending_ga);
-					$('#stat-pending-yola').text(json.stats.pending_yola);
+					$('#stat-pending').text(json.stats.pending_ga);
 					$('#stat-approved').text(json.stats.approved);
 					$('#stat-rejected').text(json.stats.rejected);
+					$('#stat-total').text(json.stats.total);
 				}
 				return (json && json.data) ? json.data : [];
 			}
@@ -313,23 +298,16 @@ document.addEventListener('DOMContentLoaded', function() {
 				data: null,
 				className: 'text-center align-middle',
 				render: function(data, type, row) {
-					return renderApproverCell(row.acc_ga, row.nama_acc_ga, row.acc_ga_at, 'ga', row.id_absensi, CAN_ACC_GA);
-				}
-			},
-			{
-				data: null,
-				className: 'text-center align-middle',
-				render: function(data, type, row) {
-					return renderApproverCell(row.acc_yola, row.nama_acc_yola, row.acc_yola_at, 'yola', row.id_absensi, CAN_ACC_YOLA);
+					return renderApproverCell(row.acc_ga, row.nama_acc_ga, row.acc_ga_at, row.id_absensi, CAN_ACC_GA);
 				}
 			},
 			{
 				data: 'approval',
 				className: 'text-center align-middle',
-				render: function(data) {
-					if (data === 'terima') return '<span class="badge badge-success badge-pill px-2 py-1">Diterima</span>';
-					if (data === 'tolak') return '<span class="badge badge-danger badge-pill px-2 py-1">Ditolak</span>';
-					return '<span class="badge badge-warning badge-pill text-dark px-2 py-1">Menunggu ACC</span>';
+				render: function(data, type, row) {
+					if (row.acc_ga === 1) return '<span class="badge badge-success badge-pill px-2 py-1">Diterima</span>';
+					if (row.acc_ga === 2) return '<span class="badge badge-danger badge-pill px-2 py-1">Ditolak</span>';
+					return '<span class="badge badge-warning badge-pill text-dark px-2 py-1">Menunggu ACC GA</span>';
 				}
 			}
 		]
@@ -351,13 +329,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	$(document).on('click', '.btn-acc-lr', function() {
 		var idAbsensi = $(this).data('id');
-		var role      = $(this).data('role');
 		var decision  = $(this).data('decision');
-		var roleLbl   = role === 'ga' ? 'General Affair' : 'General Manager';
 		var decLbl    = decision == 1 ? 'MENYETUJUI (ACC)' : 'MENOLAK';
 
 		Swal.fire({
-			title: 'Konfirmasi ' + roleLbl,
+			title: 'Konfirmasi General Affair',
 			text: 'Anda yakin ingin ' + decLbl + ' pengajuan absen luar radius ini?',
 			icon: decision == 1 ? 'question' : 'warning',
 			showCancelButton: true,
@@ -373,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				dataType: 'JSON',
 				data: {
 					id_absensi: idAbsensi,
-					role: role,
+					role: 'ga',
 					decision: decision,
 					csrf_token: typeof token !== 'undefined' ? token : ''
 				},

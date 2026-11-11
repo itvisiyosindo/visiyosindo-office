@@ -12,7 +12,7 @@
 			<div class="table-top-bar">
 				<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
 					<span class="badge badge-primary" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-users mr-1"></i> Rekap Absensi Karyawan</span>
-					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '33' || sessPenggunaId() == '778'): ?>
+					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '778'): ?>
 						<?php $pendingLr = isset($pending_luar_radius) ? (int)$pending_luar_radius : 0; ?>
 						<a href="<?= base_url('absensi/show/approval_luar_radius') ?>" class="btn btn-sm <?= $pendingLr > 0 ? 'btn-warning text-dark font-weight-bold' : 'btn-outline-secondary' ?> shadow-sm">
 							<i class="fas fa-map-marker-alt mr-1"></i> ACC Absen Luar Radius

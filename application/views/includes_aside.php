@@ -130,7 +130,7 @@
 						</a>
 					</li>
 
-					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '33' || sessPenggunaId() == '778') { ?>
+					<?php if (isAdmin() || isGa() || isHrd() || sessPenggunaId() == '771' || sessPenggunaId() == '778') { ?>
 						<?php
 						$ciSidebar =& get_instance();
 						$pendingLrHome = 0;
@@ -138,9 +138,7 @@
 							$pendingLrHome = (int)$ciSidebar->db->from('absensi')
 								->where('perusahaan', grantAccessForPerusahaan())
 								->where('is_luar_radius', 1)
-								->where('acc_ga !=', 2)
-								->where('acc_yola !=', 2)
-								->group_start()->where('acc_ga', 0)->or_where('acc_yola', 0)->group_end()
+								->where('acc_ga', 0)
 								->count_all_results();
 						}
 						?>

@@ -847,7 +847,7 @@ class Task_proyek extends CI_Controller
                     END) AS hari_izin_sakit,
                     COUNT(*) AS total_absen_rec
                 FROM absensi a
-                WHERE (COALESCE(a.is_luar_radius, 0) = 0 OR (a.acc_ga = 1 AND a.acc_yola = 1))
+                WHERE (COALESCE(a.is_luar_radius, 0) = 0 OR a.acc_ga = 1)
                   {$wherePeriodeAbs}
                 GROUP BY {$caseAbs}
             ) abs_data ON abs_data.id_pengguna = p.pengguna_id

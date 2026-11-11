@@ -864,10 +864,7 @@ class Md_absensi extends CI_Model
         a.alasan_luar_radius,
         a.acc_ga,
         a.acc_ga_by,
-        a.acc_ga_at,
-        a.acc_yola,
-        a.acc_yola_by,
-        a.acc_yola_at
+        a.acc_ga_at
         ')
             ->from('absensi a')
             ->where('a.pengguna_id', $pengguna_id)
@@ -1000,7 +997,7 @@ class Md_absensi extends CI_Model
     }
 
     /**
-     * Pastikan kolom luar radius & dual approval (GA + General Manager) tersedia pada tabel absensi.
+     * Pastikan kolom luar radius & approval General Affair (GA) tersedia pada tabel absensi.
      */
     public function ensureLuarRadiusColumns()
     {
@@ -1022,11 +1019,35 @@ class Md_absensi extends CI_Model
                 ADD COLUMN acc_yola TINYINT(1) NOT NULL DEFAULT 0,
                 ADD COLUMN acc_yola_by INT(11) DEFAULT NULL,
                 ADD COLUMN acc_yola_at DATETIME DEFAULT NULL");
+            return;
+        }
+
+        // Sinkronkan data lama yang sudah di-ACC GA namun sebelumnya menunggu approval GM
+        $hasUnsynced = $this->db->select('id_absensi')
+            ->from('absensi')
+            ->where('is_luar_radius', 1)
+            ->where('acc_ga', 1)
+            ->group_start()
+                ->where('approval IS NULL', null, false)
+                ->or_where('approval', '')
+            ->group_end()
+            ->limit(1)
+            ->get()
+            ->num_rows() > 0;
+
+        if ($hasUnsynced) {
+            $this->db->where('is_luar_radius', 1)
+                ->where('acc_ga', 1)
+                ->group_start()
+                    ->where('approval IS NULL', null, false)
+                    ->or_where('approval', '')
+                ->group_end()
+                ->update('absensi', ['approval' => 'terima']);
         }
     }
 
     /**
-     * Hitung jumlah pengajuan absensi luar radius yang masih menunggu ACC GA dan/atau Yola.
+     * Hitung jumlah pengajuan absensi luar radius yang masih menunggu ACC General Affair (GA).
      * @return int
      */
     public function countPendingLuarRadius()
@@ -1035,17 +1056,12 @@ class Md_absensi extends CI_Model
         return (int) $this->db->from('absensi')
             ->where('perusahaan', grantAccessForPerusahaan())
             ->where('is_luar_radius', 1)
-            ->where('acc_ga !=', 2)
-            ->where('acc_yola !=', 2)
-            ->group_start()
-                ->where('acc_ga', 0)
-                ->or_where('acc_yola', 0)
-            ->group_end()
+            ->where('acc_ga', 0)
             ->count_all_results();
     }
 
     /**
-     * Ringkasan statistik approval absensi luar radius.
+     * Ringkasan statistik approval absensi luar radius (ACC General Affair).
      * @return array
      */
     public function getLuarRadiusStats($filterMonth = '')
@@ -1053,11 +1069,9 @@ class Md_absensi extends CI_Model
         $this->ensureLuarRadiusColumns();
         $this->db->select("
             COUNT(*) AS total,
-            SUM(CASE WHEN acc_ga != 2 AND acc_yola != 2 AND (acc_ga = 0 OR acc_yola = 0) THEN 1 ELSE 0 END) AS pending_all,
-            SUM(CASE WHEN acc_ga = 0 AND acc_yola != 2 THEN 1 ELSE 0 END) AS pending_ga,
-            SUM(CASE WHEN acc_yola = 0 AND acc_ga != 2 THEN 1 ELSE 0 END) AS pending_yola,
-            SUM(CASE WHEN acc_ga = 1 AND acc_yola = 1 THEN 1 ELSE 0 END) AS approved,
-            SUM(CASE WHEN acc_ga = 2 OR acc_yola = 2 THEN 1 ELSE 0 END) AS rejected
+            SUM(CASE WHEN acc_ga = 0 THEN 1 ELSE 0 END) AS pending_ga,
+            SUM(CASE WHEN acc_ga = 1 THEN 1 ELSE 0 END) AS approved,
+            SUM(CASE WHEN acc_ga = 2 THEN 1 ELSE 0 END) AS rejected
         ", false)
             ->from('absensi')
             ->where('perusahaan', grantAccessForPerusahaan())
@@ -1068,50 +1082,37 @@ class Md_absensi extends CI_Model
         }
 
         $row = $this->db->get()->row_array();
+        $pendingGa = (int)($row['pending_ga'] ?? 0);
         return [
-            'total'        => (int)($row['total'] ?? 0),
-            'pending_all'  => (int)($row['pending_all'] ?? 0),
-            'pending_ga'   => (int)($row['pending_ga'] ?? 0),
-            'pending_yola' => (int)($row['pending_yola'] ?? 0),
-            'approved'     => (int)($row['approved'] ?? 0),
-            'rejected'     => (int)($row['rejected'] ?? 0),
+            'total'       => (int)($row['total'] ?? 0),
+            'pending_all' => $pendingGa,
+            'pending_ga'  => $pendingGa,
+            'approved'    => (int)($row['approved'] ?? 0),
+            'rejected'    => (int)($row['rejected'] ?? 0),
         ];
     }
 
     /**
-     * Ambil daftar absensi luar radius beserta info karyawan dan status ACC GA + Bu Yola.
+     * Ambil daftar absensi luar radius beserta info karyawan dan status ACC General Affair (GA).
      * @return array
      */
     public function getLuarRadiusList($filterStatus = 'pending', $filterMonth = '')
     {
         $this->ensureLuarRadiusColumns();
-        $this->db->select('a.*, p.nama, p.jabatan, p.no_pegawai, p.no_hp, d.nama AS nama_divisi, pga.nama AS nama_acc_ga, pyo.nama AS nama_acc_yola')
+        $this->db->select('a.*, p.nama, p.jabatan, p.no_pegawai, p.no_hp, d.nama AS nama_divisi, pga.nama AS nama_acc_ga')
             ->from('absensi a')
             ->join('pengguna p', 'a.pengguna_id = p.pengguna_id', 'left')
             ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
             ->join('pengguna pga', 'a.acc_ga_by = pga.pengguna_id', 'left')
-            ->join('pengguna pyo', 'a.acc_yola_by = pyo.pengguna_id', 'left')
             ->where('a.perusahaan', grantAccessForPerusahaan())
             ->where('a.is_luar_radius', 1);
 
-        if ($filterStatus === 'pending') {
-            $this->db->where('a.acc_ga !=', 2)
-                ->where('a.acc_yola !=', 2)
-                ->group_start()
-                    ->where('a.acc_ga', 0)
-                    ->or_where('a.acc_yola', 0)
-                ->group_end();
-        } elseif ($filterStatus === 'pending_ga') {
-            $this->db->where('a.acc_ga', 0)->where('a.acc_yola !=', 2);
-        } elseif ($filterStatus === 'pending_yola') {
-            $this->db->where('a.acc_yola', 0)->where('a.acc_ga !=', 2);
+        if ($filterStatus === 'pending' || $filterStatus === 'pending_ga') {
+            $this->db->where('a.acc_ga', 0);
         } elseif ($filterStatus === 'approved') {
-            $this->db->where('a.acc_ga', 1)->where('a.acc_yola', 1);
+            $this->db->where('a.acc_ga', 1);
         } elseif ($filterStatus === 'rejected') {
-            $this->db->group_start()
-                ->where('a.acc_ga', 2)
-                ->or_where('a.acc_yola', 2)
-            ->group_end();
+            $this->db->where('a.acc_ga', 2);
         }
 
         if (!empty($filterMonth)) {
@@ -1124,9 +1125,9 @@ class Md_absensi extends CI_Model
     }
 
     /**
-     * Proses persetujuan / penolakan absen luar radius oleh GA atau Bu Yola.
+     * Proses persetujuan / penolakan absen luar radius oleh General Affair (GA).
      * @param int $id_absensi
-     * @param string $role 'ga'|'yola'
+     * @param string $role 'ga'
      * @param int $decision 1=Setuju, 2=Tolak
      * @param int $approver_id
      * @return array|false
@@ -1135,43 +1136,25 @@ class Md_absensi extends CI_Model
     {
         $this->ensureLuarRadiusColumns();
         $row = $this->db->where('id_absensi', $id_absensi)->get('absensi')->row();
-        if (!$row) {
+        $decision = (int)$decision;
+        if (!$row || $role !== 'ga' || !in_array($decision, [1, 2], true)) {
             return false;
         }
 
         $now = date('Y-m-d H:i:s');
-        $update = [];
-        $accGa = (int)$row->acc_ga;
-        $accYola = (int)$row->acc_yola;
-
-        if ($role === 'ga') {
-            $update['acc_ga'] = $decision;
-            $update['acc_ga_by'] = $approver_id;
-            $update['acc_ga_at'] = $now;
-            $accGa = $decision;
-        } elseif ($role === 'yola') {
-            $update['acc_yola'] = $decision;
-            $update['acc_yola_by'] = $approver_id;
-            $update['acc_yola_at'] = $now;
-            $accYola = $decision;
-        } else {
-            return false;
-        }
-
-        if ($accGa === 2 || $accYola === 2) {
-            $update['approval'] = 'tolak';
-        } elseif ($accGa === 1 && $accYola === 1) {
-            $update['approval'] = 'terima';
-        } else {
-            $update['approval'] = NULL;
-        }
+        $approval = $decision === 1 ? 'terima' : 'tolak';
+        $update = [
+            'acc_ga'    => $decision,
+            'acc_ga_by' => $approver_id,
+            'acc_ga_at' => $now,
+            'approval'  => $approval,
+        ];
 
         $this->db->where('id_absensi', $id_absensi)->update('absensi', $update);
 
         return [
-            'acc_ga'   => $accGa,
-            'acc_yola' => $accYola,
-            'approval' => $update['approval'],
+            'acc_ga'   => $decision,
+            'approval' => $approval,
             'row'      => $row,
         ];
     }
