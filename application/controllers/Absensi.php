@@ -2562,6 +2562,19 @@ class Absensi extends CI_Controller
             LIMIT 20
         ")->result();
 
+        // Cek juga di absensibackup jika ada
+        $backupLogs = [];
+        if ($this->db->table_exists('absensibackup')) {
+            $backupLogs = $this->db->query("
+                SELECT *
+                FROM absensibackup
+                WHERE pengguna_id = 94
+                  AND data_created >= '2026-11-09 00:00:00'
+                ORDER BY data_created DESC
+                LIMIT 10
+            ")->result();
+        }
+
         // Cari juga seluruh absensi tadi malam s/d pagi ini (2026-11-10 18:00 WIB s/d sekarang)
         $nightLogs = $this->db->query("
             SELECT a.id_absensi, a.pengguna_id, p.nama, p.jabatan, a.waktu_absen, a.type_absen, a.status_absen, a.data_created, a.is_luar_radius, a.jarak_radius, a.cabang_terdekat, a.alasan_luar_radius, a.approval
@@ -2577,6 +2590,7 @@ class Absensi extends CI_Controller
             'status' => 'success',
             'boddy_all_november' => $boddyLogs,
             'boddy_activity_logs' => $activityLogs,
+            'boddy_backup_logs' => $backupLogs,
             'users_matching' => $users,
             'user_absensi' => $userAbsensi,
             'night_logs' => $nightLogs
