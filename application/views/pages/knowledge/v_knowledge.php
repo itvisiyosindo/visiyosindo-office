@@ -590,6 +590,113 @@
 </div>
 
 <!-- =========================================================================
+     MODAL: BUAT / EDIT PAKET KUIS BARU (KHUSUS HRD / ADMIN)
+     ========================================================================= -->
+<div class="modal fade" id="modalKuisBaru" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content shadow-lg" style="border-radius: 14px; overflow: hidden;">
+            <form id="formKuisBaru">
+                <input type="hidden" name="id_kuis" id="modal_id_kuis" value="">
+                <div class="modal-header d-flex align-items-center justify-content-between" style="background:#ffffff; border-bottom: 1px solid #e2e8f0; padding: 18px 24px;">
+                    <div class="d-flex align-items-center">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #ecfdf5; border: 1.5px solid #a7f3d0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #059669; margin-right: 12px;">
+                            <i class="fas fa-pencil-ruler"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold mb-0" id="labelModalKuis" style="color: #0f172a;">Buat Paket Kuis Baru</h5>
+                            <small class="text-muted">Ujian pemahaman produk online bagi karyawan</small>
+                        </div>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" style="font-size: 24px; opacity: 0.6;">&times;</button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-dark small text-uppercase">Judul Kuis / Topik Ujian <span class="text-danger">*</span></label>
+                        <input type="text" name="judul_kuis" id="modal_judul_kuis" class="form-control" required placeholder="Contoh: Kuis Pemahaman Produk Alerio Smart 4000 & Radiologi">
+                    </div>
+
+                    <?php
+                    $namaBulanModal = [
+                        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                    ];
+                    ?>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Bulan Pelaksanaan <span class="text-danger">*</span></label>
+                                <select name="bulan" id="modal_bulan_kuis" class="form-control">
+                                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                                        <option value="<?= $m ?>" <?= (int)date('n') === $m ? 'selected' : '' ?>><?= $namaBulanModal[$m] ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Tahun <span class="text-danger">*</span></label>
+                                <input type="number" name="tahun" id="modal_tahun_kuis" class="form-control" value="<?= !empty($tahun) ? (int)$tahun : (int)date('Y') ?>" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Durasi Pengerjaan (Menit) <span class="text-danger">*</span></label>
+                                <input type="number" name="durasi_menit" id="modal_durasi_kuis" class="form-control" value="30" min="5" max="180" required>
+                                <small class="text-muted">Timer akan menghitung mundur otomatis.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Status Kuis <span class="text-danger">*</span></label>
+                                <select name="status" id="modal_status_kuis" class="form-control">
+                                    <option value="aktif">Aktif (Dapat Dikerjakan)</option>
+                                    <option value="draft">Draft (Belum Dibuka)</option>
+                                    <option value="selesai">Selesai / Ditutup</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Jadwal Buka (Mulai) <span class="text-muted">(Opsional)</span></label>
+                                <input type="datetime-local" name="waktu_buka" id="modal_waktu_buka" class="form-control">
+                                <small class="text-muted">Kuis baru bisa diklik sejak jam ini.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold text-dark small text-uppercase">Jadwal Tutup (Batas Akhir) <span class="text-muted">(Opsional)</span></label>
+                                <input type="datetime-local" name="waktu_tutup" id="modal_waktu_tutup" class="form-control">
+                                <small class="text-muted">Kuis tertutup otomatis setelah jam ini.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold text-dark small text-uppercase">Deskripsi / Petunjuk Pengerjaan</label>
+                        <textarea name="deskripsi" id="modal_deskripsi_kuis" rows="3" class="form-control" placeholder="Tuliskan petunjuk pengerjaan, ruang lingkup materi, atau ketentuan kelulusan..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer px-4 py-3 d-flex justify-content-between align-items-center" style="background:#f8fafc; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-light px-4 py-2 font-weight-bold" data-dismiss="modal" style="border: 1px solid #cbd5e1;">Batal</button>
+                    <button type="submit" class="btn btn-success px-4 py-2 font-weight-bold shadow-sm" id="btnSubmitKuis">
+                        <i class="fas fa-check mr-1"></i> Simpan Paket Kuis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
      MODAL: IMPORT NILAI PRODUCT KNOWLEDGE DARI EXCEL
      ========================================================================= -->
 <div class="modal fade" id="modalImportExcel" tabindex="-1" role="dialog" aria-hidden="true">
