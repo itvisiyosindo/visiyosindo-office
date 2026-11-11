@@ -3135,11 +3135,13 @@ $namaBulanList = [
                                             </td>
                                             <td class="text-center align-middle">
                                                 <?php if ($lb->skor_eval !== null): ?>
-                                                    <div class="font-weight-bold" style="font-size: 14px; color: #4f46e5;"><?= number_format($lb->skor_eval, 1) ?></div>
-                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_eval) ?>%; background:#6366f1;"></div></div>
-                                                    <div class="small text-muted" style="font-size: 10.5px;">
-                                                        <?= htmlspecialchars($lb->eval_label ?: 'Evaluasi') ?>
-                                                    </div>
+                                                    <?php if (!empty($isAdminUser)): ?>
+                                                        <span class="font-weight-bold" style="font-size: 15px; letter-spacing: 2px; color: #6366f1; cursor: help;" title="Nilai Asli: <?= number_format($lb->skor_eval, 1) ?> (Khusus HRD/Admin)">***</span>
+                                                        <div class="small text-muted" style="font-size: 9.5px;" title="Nilai Asli: <?= number_format($lb->skor_eval, 1) ?> (Khusus HRD/Admin)">Rahasia</div>
+                                                    <?php else: ?>
+                                                        <span class="font-weight-bold" style="font-size: 15px; letter-spacing: 2px; color: #64748b;" title="Nilai evaluasi semester bersifat rahasia">***</span>
+                                                        <div class="small text-muted" style="font-size: 9.5px;">Rahasia</div>
+                                                    <?php endif; ?>
                                                 <?php else: ?>
                                                     <span class="text-muted small">Belum dinilai</span>
                                                 <?php endif; ?>
