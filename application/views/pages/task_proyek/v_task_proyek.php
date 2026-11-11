@@ -1,86 +1,377 @@
 <style>
-    /* Modern Surface & Card Architecture */
-    .tp-control-card {
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        padding: 16px 20px;
-        box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-        margin-bottom: 16px;
+    /* Modern Energetic & Competitive Surface Architecture */
+    @keyframes tpHeroLiveDot {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.45); opacity: 0.55; }
     }
-    .tp-kpi-card {
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        padding: 16px 18px;
-        box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    @keyframes tpBadgePulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); transform: scale(1); }
+        50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); transform: scale(1.03); }
+    }
+    @keyframes tpUrgentGlow {
+        0%, 100% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35); }
+        50% { box-shadow: 0 2px 14px rgba(239, 68, 68, 0.65); }
+    }
+    @keyframes tpProgressStripes {
+        0% { background-position: 0 0; }
+        100% { background-position: 28px 0; }
+    }
+    @keyframes tpArenaShine {
+        0% { transform: translateX(-140%) skewX(-20deg); }
+        100% { transform: translateX(240%) skewX(-20deg); }
+    }
+
+    /* Arena Hero Command Banner */
+    .tp-arena-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px 16px 0 0;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 52%, #1d4ed8 100%);
+        color: #f8fafc;
+        padding: 20px 24px;
+        border: 1px solid #1e293b;
+        border-bottom: none;
+        box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.28);
+    }
+    .tp-arena-hero::before {
+        content: "";
+        position: absolute;
+        top: -55%;
+        right: -8%;
+        width: 340px;
+        height: 340px;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, transparent 68%);
+        pointer-events: none;
+    }
+    .tp-arena-hero::after {
+        content: "";
+        position: absolute;
+        bottom: -65%;
+        left: 10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .tp-arena-hero-inner {
+        position: relative;
+        z-index: 2;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .tp-arena-live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fde68a;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        backdrop-filter: blur(6px);
+    }
+    .tp-arena-live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 8px #22c55e;
+        animation: tpHeroLiveDot 1.8s ease-in-out infinite;
+    }
+    .tp-arena-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 6px 0;
+        line-height: 1.25;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .tp-arena-rank-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #451a03;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+    .tp-arena-gap-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 11px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        background: rgba(249, 115, 22, 0.22);
+        border: 1px solid rgba(251, 146, 60, 0.45);
+        color: #ffedd5;
+    }
+    .tp-arena-sub {
+        font-size: 13px;
+        color: #cbd5e1;
+        margin-bottom: 10px;
+    }
+    .tp-arena-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .tp-arena-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 11px;
+        border-radius: 10px;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        color: #e2e8f0;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .tp-arena-chip.chip-urgent {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: rgba(251, 191, 36, 0.55);
+        color: #fef3c7;
+        animation: tpBadgePulse 2.4s ease-in-out infinite;
+    }
+    .tp-arena-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+    .tp-btn-cta-arena {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+        border-radius: 11px !important;
+        padding: 10px 18px !important;
+        font-size: 13.5px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.2px;
+        box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.55);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .tp-btn-cta-arena::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 45%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+        transform: translateX(-140%) skewX(-20deg);
+        transition: transform 0.6s ease;
+    }
+    .tp-btn-cta-arena:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.68);
+        color: #ffffff !important;
+    }
+    .tp-btn-cta-arena:hover::after {
+        animation: tpArenaShine 0.85s ease forwards;
+    }
+    .tp-btn-lb-jump {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(234, 88, 12, 0.28) 100%) !important;
+        border: 1px solid rgba(251, 191, 36, 0.6) !important;
+        color: #fef3c7 !important;
+        border-radius: 11px !important;
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        backdrop-filter: blur(6px);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .tp-btn-lb-jump:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 20px -4px rgba(245, 158, 11, 0.55);
+    }
+
+    .tp-control-card {
+        border-radius: 0 0 16px 16px;
+        border: 1px solid #cbd5e1;
+        border-top: 2px solid #2563eb;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 14px 20px;
+        box-shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.06);
+        margin-bottom: 18px;
+    }
+    .tp-kpi-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 18px 20px;
+        box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
         margin-bottom: 16px;
         height: 100%;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+    .tp-kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.9;
+    }
+    .tp-kpi-card::after {
+        content: "";
+        position: absolute;
+        right: -24px;
+        bottom: -24px;
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0.14;
+        transition: transform 0.25s ease, opacity 0.25s ease;
     }
     .tp-kpi-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
-        border-color: #cbd5e1;
+        transform: translateY(-4px);
     }
-    .tp-kpi-card.kpi-blue { border-left: 4px solid #3b82f6 !important; }
-    .tp-kpi-card.kpi-amber { border-left: 4px solid #f59e0b !important; }
-    .tp-kpi-card.kpi-green { border-left: 4px solid #10b981 !important; }
-    .tp-kpi-card.kpi-purple { border-left: 4px solid #8b5cf6 !important; }
+    .tp-kpi-card:hover::after {
+        transform: scale(1.18);
+        opacity: 0.22;
+    }
+    .tp-kpi-card > div:first-child {
+        position: relative;
+        z-index: 2;
+    }
+    .tp-kpi-card > div:first-child > div:nth-child(2) {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.5px;
+        line-height: 1.15;
+        margin: 4px 0;
+    }
+    .tp-kpi-card.kpi-blue { border-left: 5px solid #2563eb !important; }
+    .tp-kpi-card.kpi-blue::before { background: linear-gradient(90deg, #2563eb, #38bdf8); }
+    .tp-kpi-card.kpi-blue::after { background: radial-gradient(circle, #3b82f6, transparent 70%); }
+    .tp-kpi-card.kpi-blue:hover { box-shadow: 0 14px 28px -8px rgba(37, 99, 235, 0.22); border-color: #93c5fd; }
+
+    .tp-kpi-card.kpi-amber { border-left: 5px solid #f59e0b !important; }
+    .tp-kpi-card.kpi-amber::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .tp-kpi-card.kpi-amber::after { background: radial-gradient(circle, #f59e0b, transparent 70%); }
+    .tp-kpi-card.kpi-amber:hover { box-shadow: 0 14px 28px -8px rgba(245, 158, 11, 0.25); border-color: #fcd34d; }
+
+    .tp-kpi-card.kpi-green { border-left: 5px solid #10b981 !important; }
+    .tp-kpi-card.kpi-green::before { background: linear-gradient(90deg, #10b981, #22c55e); }
+    .tp-kpi-card.kpi-green::after { background: radial-gradient(circle, #10b981, transparent 70%); }
+    .tp-kpi-card.kpi-green:hover { box-shadow: 0 14px 28px -8px rgba(16, 185, 129, 0.22); border-color: #6ee7b7; }
+
+    .tp-kpi-card.kpi-purple { border-left: 5px solid #7c3aed !important; }
+    .tp-kpi-card.kpi-purple::before { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+    .tp-kpi-card.kpi-purple::after { background: radial-gradient(circle, #8b5cf6, transparent 70%); }
+    .tp-kpi-card.kpi-purple:hover { box-shadow: 0 14px 28px -8px rgba(124, 58, 237, 0.22); border-color: #c4b5fd; }
 
     .tp-kpi-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        position: relative;
+        z-index: 2;
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 21px;
         flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        color: #ffffff !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+    }
+    .tp-kpi-card.kpi-blue .tp-kpi-icon {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+        box-shadow: 0 8px 18px -4px rgba(37, 99, 235, 0.45);
+    }
+    .tp-kpi-card.kpi-amber .tp-kpi-icon {
+        background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+        box-shadow: 0 8px 18px -4px rgba(245, 158, 11, 0.45);
+    }
+    .tp-kpi-card.kpi-green .tp-kpi-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        box-shadow: 0 8px 18px -4px rgba(16, 185, 129, 0.45);
+    }
+    .tp-kpi-card.kpi-purple .tp-kpi-icon {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+        box-shadow: 0 8px 18px -4px rgba(124, 58, 237, 0.45);
+    }
+    .tp-kpi-card:hover .tp-kpi-icon {
+        transform: scale(1.09) rotate(-4deg);
     }
     .tp-star-display {
         color: #f59e0b;
         font-size: 14px;
         letter-spacing: 1px;
+        text-shadow: 0 1px 4px rgba(245, 158, 11, 0.25);
     }
     .tp-star-empty {
         color: #cbd5e1;
     }
     .tp-priority-badge {
-        padding: 3px 10px;
+        padding: 4px 11px;
         border-radius: 999px;
         font-size: 11px;
-        font-weight: 700;
+        font-weight: 800;
         text-transform: uppercase;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        letter-spacing: 0.3px;
+        gap: 5px;
+        letter-spacing: 0.4px;
     }
     .tp-prio-Low { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-    .tp-prio-Medium { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-    .tp-prio-High { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
-    .tp-prio-Urgent { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .tp-prio-Medium { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1; border: 1px solid #7dd3fc; }
+    .tp-prio-High {
+        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+        color: #c2410c;
+        border: 1px solid #fdba74;
+        box-shadow: 0 2px 6px rgba(234, 88, 12, 0.2);
+    }
+    .tp-prio-Urgent {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        border: 1px solid #b91c1c;
+        animation: tpUrgentGlow 2s ease-in-out infinite;
+    }
 
     .tp-status-badge {
-        padding: 4px 10px;
-        border-radius: 8px;
+        padding: 5px 11px;
+        border-radius: 999px;
         font-size: 11.5px;
         font-weight: 700;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
         letter-spacing: 0.2px;
     }
     .tp-st-0 { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
-    .tp-st-1 { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .tp-st-2 { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-    .tp-st-3 { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
-    .tp-st-4 { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .tp-st-1 { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #1d4ed8; border: 1px solid #93c5fd; }
+    .tp-st-2 { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; border: 1px solid #fcd34d; }
+    .tp-st-3 { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #b91c1c; border: 1px solid #fca5a5; }
+    .tp-st-4 { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #15803d; border: 1px solid #86efac; }
     .tp-st-5 { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
     .tp-st-6 { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
@@ -132,14 +423,58 @@
         border-bottom: 1px solid #f1f5f9;
         border-right: 1px solid #f1f5f9;
     }
-    /* Modern Workspace Tabs */
+
+    /* Main Workspace Featured Panel */
+    .tp-workspace-card {
+        border-radius: 16px !important;
+        overflow: hidden;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 12px 32px -10px rgba(15, 23, 42, 0.1) !important;
+    }
+    .tp-workspace-card > .card-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 52%, #1e3a8a 100%) !important;
+        color: #ffffff !important;
+        padding: 15px 20px !important;
+        border-bottom: 2px solid #2563eb !important;
+    }
+    .tp-workspace-card > .card-header .card-title {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 15.5px !important;
+        letter-spacing: 0.2px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .tp-workspace-card > .card-header .card-actions a {
+        color: #e2e8f0 !important;
+    }
+    .tp-workspace-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        background: rgba(251, 191, 36, 0.18);
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        color: #fde68a;
+        letter-spacing: 0.4px;
+    }
+
+    /* Segmented Competitive Workspace Tabs */
     .nav-tabs-tp {
-        border-bottom: 2px solid #e2e8f0 !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 14px !important;
+        padding: 6px !important;
         margin-bottom: 20px;
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        background: transparent;
+        background: #f1f5f9;
+        box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.05);
     }
     .nav-tabs-tp > li {
         margin-bottom: 0;
@@ -149,21 +484,32 @@
         font-weight: 700 !important;
         font-size: 13.5px !important;
         color: #475569 !important;
-        background: #f1f5f9 !important;
-        border: 1px solid #e2e8f0 !important;
-        border-bottom: 2px solid #e2e8f0 !important;
-        border-radius: 8px 8px 0 0 !important;
-        padding: 11px 18px !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 10px !important;
+        padding: 10px 16px !important;
         display: inline-flex !important;
         align-items: center !important;
         text-decoration: none !important;
-        transition: all 0.2s ease-in-out;
+        transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .nav-tabs-tp > li > a:hover,
     .nav-tabs-tp .nav-link:hover {
-        background: #e2e8f0 !important;
+        background: #ffffff !important;
         color: #0f172a !important;
         border-color: #cbd5e1 !important;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+        transform: translateY(-1px);
+    }
+    .nav-tabs-tp > li > a[href="#tab_leaderboard"] {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+        color: #92400e !important;
+        border-color: #fde68a !important;
+    }
+    .nav-tabs-tp > li > a[href="#tab_leaderboard"]:hover {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+        color: #78350f !important;
+        border-color: #fbbf24 !important;
     }
     .nav-tabs-tp > li.active > a,
     .nav-tabs-tp > li.active > a:hover,
@@ -171,19 +517,37 @@
     .nav-tabs-tp .nav-link.active,
     .nav-tabs-tp .nav-link.active:hover,
     .nav-tabs-tp .nav-link.active:focus {
-        background: #ffffff !important;
-        color: #0f172a !important;
+        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
-        border-top: 3px solid #0088cc !important;
-        border-left: 1px solid #cbd5e1 !important;
-        border-right: 1px solid #cbd5e1 !important;
-        border-bottom: 2px solid #ffffff !important;
-        margin-bottom: -2px !important;
-        box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid transparent !important;
+        margin-bottom: 0 !important;
+        box-shadow: 0 6px 16px -3px rgba(37, 99, 235, 0.42) !important;
+        transform: translateY(0);
+    }
+    .nav-tabs-tp > li.active > a[href="#tab_tugas_atasan"],
+    .nav-tabs-tp .nav-link.active[href="#tab_tugas_atasan"] {
+        background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important;
+        box-shadow: 0 6px 16px -3px rgba(5, 150, 105, 0.42) !important;
+    }
+    .nav-tabs-tp > li.active > a[href="#tab_semua_task"],
+    .nav-tabs-tp .nav-link.active[href="#tab_semua_task"] {
+        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+        box-shadow: 0 6px 16px -3px rgba(2, 132, 199, 0.42) !important;
+    }
+    .nav-tabs-tp > li.active > a[href="#tab_leaderboard"],
+    .nav-tabs-tp .nav-link.active[href="#tab_leaderboard"] {
+        background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 18px -3px rgba(234, 88, 12, 0.48) !important;
+    }
+    .nav-tabs-tp > li.active > a > i,
+    .nav-tabs-tp .nav-link.active > i {
+        color: #ffffff !important;
     }
     .nav-tabs-tp .badge {
         font-size: 11px !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         padding: 4px 10px !important;
         border-radius: 999px !important;
         line-height: 1.2 !important;
@@ -191,23 +555,79 @@
         vertical-align: middle;
         display: inline-flex;
         align-items: center;
+        gap: 4px;
         margin-left: 8px !important;
     }
     .nav-tabs-tp .badge-primary {
-        background-color: #0088cc !important;
+        background-color: #0284c7 !important;
         color: #ffffff !important;
     }
     .nav-tabs-tp .badge-warning {
         background-color: #f59e0b !important;
         color: #ffffff !important;
-        box-shadow: 0 1px 4px rgba(245, 158, 11, 0.35);
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.45);
+        animation: tpBadgePulse 2.3s ease-in-out infinite;
+    }
+    .nav-tabs-tp .badge-warning i {
+        color: #fef08a !important;
     }
     .nav-tabs-tp .badge-secondary {
         background-color: #64748b !important;
         color: #ffffff !important;
     }
+    .nav-tabs-tp > li.active > a .badge-primary,
+    .nav-tabs-tp .nav-link.active .badge-primary,
+    .nav-tabs-tp > li.active > a .badge-info,
+    .nav-tabs-tp .nav-link.active .badge-info,
+    .nav-tabs-tp > li.active > a .badge-secondary,
+    .nav-tabs-tp .nav-link.active .badge-secondary {
+        background-color: rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+    }
 
-    /* Enterprise Table Styling */
+    /* Tab Intro Mission Banners */
+    .tp-tab-banner {
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .tp-tab-banner.tp-banner-blue {
+        background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #2563eb;
+        color: #1e3a8a;
+    }
+    .tp-tab-banner.tp-banner-emerald {
+        background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%);
+        border: 1px solid #a7f3d0;
+        border-left: 4px solid #059669;
+        color: #064e3b;
+    }
+    .tp-tab-banner.tp-banner-cyan {
+        background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+        border: 1px solid #bae6fd;
+        border-left: 4px solid #0284c7;
+        color: #0c4a6e;
+    }
+    .tp-mode-switch .btn {
+        border-radius: 8px !important;
+        font-weight: 700;
+        padding: 6px 12px;
+    }
+
+    /* Energetic Task Table Styling */
+    .tp-workspace-card .table-responsive {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    }
     #datatable_tugas_saya,
     #datatable_tugas_atasan,
     #datatable_semua_task {
@@ -218,35 +638,116 @@
     #datatable_tugas_saya thead th,
     #datatable_tugas_atasan thead th,
     #datatable_semua_task thead th {
-        background: #f8fafc !important;
-        color: #334155 !important;
+        background: linear-gradient(180deg, #eff6ff 0%, #e0e7ff 100%) !important;
+        color: #1e3a8a !important;
         font-size: 11.5px !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.4px !important;
-        border-top: 1px solid #e2e8f0 !important;
-        border-bottom: 2px solid #cbd5e1 !important;
-        padding: 11px 13px !important;
+        letter-spacing: 0.45px !important;
+        border-top: none !important;
+        border-bottom: 2px solid #3b82f6 !important;
+        padding: 12px 13px !important;
         vertical-align: middle !important;
+    }
+    #datatable_tugas_saya tbody tr,
+    #datatable_tugas_atasan tbody tr,
+    #datatable_semua_task tbody tr {
+        transition: background-color 0.16s ease, box-shadow 0.16s ease;
     }
     #datatable_tugas_saya tbody tr:hover td,
     #datatable_tugas_atasan tbody tr:hover td,
     #datatable_semua_task tbody tr:hover td {
         background-color: #f8fafc !important;
     }
+    #datatable_tugas_saya tbody tr:hover td:first-child,
+    #datatable_tugas_atasan tbody tr:hover td:first-child,
+    #datatable_semua_task tbody tr:hover td:first-child {
+        box-shadow: inset 4px 0 0 #2563eb;
+    }
     #datatable_tugas_saya tbody td,
     #datatable_tugas_atasan tbody td,
     #datatable_semua_task tbody td {
-        padding: 11px 13px !important;
+        padding: 12px 13px !important;
         vertical-align: middle !important;
         font-size: 12.5px !important;
         border-bottom: 1px solid #f1f5f9 !important;
     }
 
+    /* Vibrant Progress Bars & Tactile Action Pills in Task Tables */
+    #datatable_tugas_saya .progress,
+    #datatable_tugas_atasan .progress,
+    #datatable_semua_task .progress {
+        height: 11px !important;
+        border-radius: 999px !important;
+        background: #e2e8f0;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.1);
+        overflow: hidden;
+    }
+    #datatable_tugas_saya .progress-bar,
+    #datatable_tugas_atasan .progress-bar,
+    #datatable_semua_task .progress-bar {
+        border-radius: 999px;
+        transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #datatable_tugas_saya .progress-bar.bg-primary,
+    #datatable_tugas_saya .progress-bar.bg-info,
+    #datatable_tugas_atasan .progress-bar.bg-primary,
+    #datatable_tugas_atasan .progress-bar.bg-info,
+    #datatable_semua_task .progress-bar.bg-primary,
+    #datatable_semua_task .progress-bar.bg-info {
+        background-color: #2563eb !important;
+        background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.22) 75%, transparent 75%, transparent),
+                          linear-gradient(90deg, #2563eb 0%, #06b6d4 100%) !important;
+        background-size: 28px 28px, 100% 100%;
+        animation: tpProgressStripes 1.6s linear infinite;
+    }
+    #datatable_tugas_saya .progress-bar.bg-success,
+    #datatable_tugas_atasan .progress-bar.bg-success,
+    #datatable_semua_task .progress-bar.bg-success {
+        background: linear-gradient(90deg, #10b981 0%, #22c55e 100%) !important;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+    }
+    #datatable_tugas_saya .btn-xs,
+    #datatable_tugas_atasan .btn-xs,
+    #datatable_semua_task .btn-xs {
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        padding: 4px 10px !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    #datatable_tugas_saya .btn-xs:hover,
+    #datatable_tugas_atasan .btn-xs:hover,
+    #datatable_semua_task .btn-xs:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.2);
+    }
+    #datatable_tugas_saya .btn-xs.btn-warning,
+    #datatable_tugas_atasan .btn-xs.btn-warning,
+    #datatable_semua_task .btn-xs.btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+        border-color: #d97706 !important;
+        color: #ffffff !important;
+    }
+
     /* Responsive Mobile Overrides */
     @media (max-width: 768px) {
+        .tp-arena-hero {
+            padding: 15px 14px;
+            border-radius: 14px 14px 0 0;
+        }
+        .tp-arena-title {
+            font-size: 16.5px;
+        }
+        .tp-arena-actions {
+            width: 100%;
+        }
+        .tp-arena-actions .btn {
+            width: 100%;
+            text-align: center;
+        }
         .tp-control-card {
             padding: 12px 14px;
+            border-radius: 0 0 14px 14px;
         }
         .tp-control-card form {
             width: 100%;
@@ -256,7 +757,7 @@
             min-width: 0 !important;
             margin-bottom: 6px;
         }
-        .tp-control-card .btn {
+        .tp-control-card form .btn {
             width: 100%;
             margin-top: 4px;
         }
@@ -267,10 +768,10 @@
             gap: 6px;
         }
         .tp-kpi-icon {
-            width: 36px;
-            height: 36px;
-            font-size: 15px;
-            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            font-size: 16px;
+            border-radius: 10px;
         }
         .tp-kpi-card div:first-child > div:nth-child(2) {
             font-size: 20px !important;
@@ -280,7 +781,7 @@
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 6px;
+            padding-bottom: 8px !important;
             gap: 4px;
             margin-bottom: 14px;
         }
@@ -838,6 +1339,9 @@
     #tab_leaderboard .tp-star-display i.fas:nth-child(4) { animation-delay: 0.6s; }
     #tab_leaderboard .tp-star-display i.fas:nth-child(5) { animation-delay: 0.8s; }
     @media (prefers-reduced-motion: reduce) {
+        .tp-arena-live-dot, .tp-arena-chip.chip-urgent, .tp-btn-cta-arena::after,
+        .tp-prio-Urgent, .nav-tabs-tp .badge-warning,
+        #datatable_tugas_saya .progress-bar, #datatable_tugas_atasan .progress-bar, #datatable_semua_task .progress-bar,
         .tp-lb-hero, .tp-lb-trophy-anim, .tp-lb-podium-1::after, .tp-lb-pin-1,
         .tp-lb-live-dot, .tp-lb-bolt-anim, .tp-lb-spin-slow, .tp-lb-spark,
         .tp-lb-podium-1, .tp-lb-medal-icon, .tp-lb-podium-bar-fill::after,
@@ -919,7 +1423,122 @@ $namaBulanList = [
     $jmlSupervisiSaya = count($list_bawahan);
     $canGiveTask      = true; // Sekarang semua karyawan bisa membuat / mengajukan task
     $penerimaList     = !empty($list_semua_karyawan_all) ? $list_semua_karyawan_all : $list_semua_karyawan;
+
+    // Hitung posisi kompetitif user di Leaderboard KPI saat ini
+    $scoredLb = [];
+    if (!empty($leaderboard)) {
+        foreach ($leaderboard as $lbItem) {
+            if (isset($lbItem->skor_akhir) && $lbItem->skor_akhir !== null) {
+                $scoredLb[] = $lbItem;
+            }
+        }
+    }
+    $totalScoredLb = count($scoredLb);
+    $myRankPos     = 0;
+    $myLbRow       = null;
+    $gapToAbove    = null;
+    $aboveName     = '';
+    foreach ($scoredLb as $idxLb => $lbItem) {
+        if (in_array((int)$lbItem->pengguna_id, $myReceiverIds, true)) {
+            $myRankPos = $idxLb + 1;
+            $myLbRow   = $lbItem;
+            if ($idxLb > 0) {
+                $prevItem   = $scoredLb[$idxLb - 1];
+                $gapToAbove = max(0.0, (float)$prevItem->skor_akhir - (float)$lbItem->skor_akhir);
+                $aboveName  = (string)($prevItem->nama ?? '');
+            }
+            break;
+        }
+    }
     ?>
+
+    <!-- ARENA HERO BANNER & ACTION COMMAND -->
+    <div class="tp-arena-hero">
+        <div class="tp-arena-hero-inner">
+            <div>
+                <div class="tp-arena-live-pill">
+                    <span class="tp-arena-live-dot"></span>
+                    Performance &amp; Task Arena &bull; <?= htmlspecialchars($semLabel) ?> <?= (int)$filterTahun ?>
+                </div>
+
+                <?php if ($myRankPos > 0 && $myLbRow !== null): ?>
+                    <div class="tp-arena-title">
+                        <span>Klasemen KPI Anda:</span>
+                        <span class="tp-arena-rank-pill">
+                            <?php if ($myRankPos === 1): ?>
+                                <i class="fas fa-crown"></i> #1 PEMIMPIN KLASEMEN
+                            <?php elseif ($myRankPos <= 3): ?>
+                                <i class="fas fa-trophy"></i> #<?= $myRankPos ?> TOP PODIUM / <?= $totalScoredLb ?>
+                            <?php else: ?>
+                                <i class="fas fa-bolt"></i> Rank #<?= $myRankPos ?> / <?= $totalScoredLb ?> Karyawan
+                            <?php endif; ?>
+                        </span>
+                        <?php if ($myRankPos > 1 && $gapToAbove !== null): ?>
+                            <span class="tp-arena-gap-pill">
+                                <i class="fas fa-fire-alt"></i> Selisih <?= number_format($gapToAbove, 1) ?> poin ke #<?= $myRankPos - 1 ?> (<?= htmlspecialchars($aboveName) ?>)
+                            </span>
+                        <?php elseif ($myRankPos === 1): ?>
+                            <span class="tp-arena-gap-pill" style="background: rgba(16, 185, 129, 0.22); border-color: rgba(52, 211, 153, 0.5); color: #d1fae5;">
+                                <i class="fas fa-shield-alt"></i> Pertahankan Tahta #1!
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="tp-arena-sub">
+                        Selesaikan task sebelum deadline dan kejar <strong>Rating Bintang 5 ⭐</strong> untuk melesat di klasemen tim.
+                    </div>
+                <?php else: ?>
+                    <div class="tp-arena-title">
+                        <span>Arena Eksekusi Proyek &amp; Evaluasi Bintang 5</span>
+                        <span class="tp-arena-rank-pill">
+                            <i class="fas fa-rocket"></i> LIVE PERFORMANCE HUB
+                        </span>
+                    </div>
+                    <div class="tp-arena-sub">
+                        Kelola penugasan, ACC pengajuan mandiri, dan dorong kompetisi positif lewat <strong>Rating Bintang 1–5 ⭐</strong>.
+                    </div>
+                <?php endif; ?>
+
+                <div class="tp-arena-chips">
+                    <?php if ($myLbRow !== null && $myLbRow->skor_akhir !== null): ?>
+                        <span class="tp-arena-chip">
+                            <i class="fas fa-chart-line text-info"></i>
+                            Skor Akhir: <strong><?= number_format((float)$myLbRow->skor_akhir, 1) ?></strong> (Grade <?= htmlspecialchars($myLbRow->grade) ?>)
+                        </span>
+                        <span class="tp-arena-chip">
+                            <i class="fas fa-star text-warning"></i>
+                            Rating Agregat: <strong><?= number_format((float)$myLbRow->rating_agregat, 2) ?> / 5.0</strong>
+                        </span>
+                    <?php endif; ?>
+                    <span class="tp-arena-chip">
+                        <i class="fas fa-tasks text-primary"></i>
+                        Task Aktif Saya: <strong><?= (int)$kpi['my_active'] ?></strong>
+                    </span>
+                    <?php if ((int)$kpi['need_review'] > 0): ?>
+                        <span class="tp-arena-chip chip-urgent">
+                            <i class="fas fa-bolt text-warning"></i>
+                            <strong><?= (int)$kpi['need_review'] ?> Task</strong> Menunggu Rating Anda
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($kpi['waiting_acc_hrd']) && (int)$kpi['waiting_acc_hrd'] > 0): ?>
+                        <span class="tp-arena-chip chip-urgent">
+                            <i class="fas fa-hourglass-start text-warning"></i>
+                            <strong><?= (int)$kpi['waiting_acc_hrd'] ?> Pengajuan</strong> Butuh ACC HRD
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="tp-arena-actions">
+                <button type="button" class="btn btn-sm tp-btn-lb-jump" id="btnJumpLeaderboard">
+                    <i class="fas fa-trophy mr-1"></i> Klasemen Leaderboard
+                </button>
+                <button type="button" class="btn btn-sm tp-btn-cta-arena" id="btnOpenModalBuatTask">
+                    <i class="fas fa-plus-circle mr-1"></i> + Buat / Ajukan Task Proyek
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- KARTU KONTROL FILTER & STATUS SUPERVISI -->
     <div class="tp-control-card">
@@ -936,30 +1555,29 @@ $namaBulanList = [
                 <label class="font-weight-bold text-dark mr-1 mb-0" style="font-size: 13px;">
                     <i class="far fa-calendar-alt text-primary mr-1"></i> Periode Semester:
                 </label>
-                <select name="semester" class="form-control form-control-sm" style="min-width: 195px; border-radius: 6px;">
+                <select name="semester" class="form-control form-control-sm" style="min-width: 195px; border-radius: 8px;">
                     <option value="1" <?= ((string)($filterSemester ?? '') === '1') ? 'selected' : '' ?>>Semester 1 (Januari – Juni)</option>
                     <option value="2" <?= ((string)($filterSemester ?? '') === '2') ? 'selected' : '' ?>>Semester 2 (Juli – Desember)</option>
                 </select>
 
-                <select name="tahun" class="form-control form-control-sm" style="min-width: 95px; border-radius: 6px;">
+                <select name="tahun" class="form-control form-control-sm" style="min-width: 95px; border-radius: 8px;">
                     <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
                         <option value="<?= $y ?>" <?= ((string)$filterTahun === (string)$y) ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
 
-                <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 6px; font-weight: 600; padding: 4px 12px;">
-                    <i class="fas fa-filter"></i> Terapkan
+                <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 8px; font-weight: 700; padding: 5px 14px;">
+                    <i class="fas fa-filter mr-1"></i> Terapkan
                 </button>
-                <a href="<?= base_url('task_proyek' . ($switch === 'kepegawaian' ? '?nav=kepegawaian' : '')) ?>" class="btn btn-sm btn-default" style="border-radius: 6px; padding: 4px 12px; border: 1px solid #cbd5e1;">
+                <a href="<?= base_url('task_proyek' . ($switch === 'kepegawaian' ? '?nav=kepegawaian' : '')) ?>" class="btn btn-sm btn-default" style="border-radius: 8px; padding: 5px 12px; border: 1px solid #cbd5e1; font-weight: 600;">
                     Reset
                 </a>
             </form>
 
-            <!-- Tombol Beri Task / Ajukan Mandiri (Tersedia untuk SEMUA Karyawan) -->
-            <div>
-                <button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnOpenModalBuatTask" style="border-radius: 6px; padding: 6px 14px;">
-                    <i class="fas fa-plus-circle mr-1"></i> + Buat / Ajukan Task Proyek
-                </button>
+            <div class="d-none d-md-flex align-items-center" style="gap: 8px;">
+                <span class="badge badge-light border px-2 py-1" style="font-size: 11.5px; border-radius: 8px; color: #334155;">
+                    <i class="fas fa-globe text-info mr-1"></i> Total Task Tim: <strong><?= !empty($semua_task) ? count($semua_task) : 0 ?></strong>
+                </span>
             </div>
         </div>
 
@@ -1229,12 +1847,16 @@ $namaBulanList = [
     </div>
 
     <!-- PANEL UTAMA BERBASIS TAB -->
-    <section class="card card-featured card-featured-primary">
+    <section class="card card-featured card-featured-primary tp-workspace-card">
         <header class="card-header">
             <div class="card-actions">
                 <a href="#" class="card-action card-action-toggle" data-card-toggle></a>
             </div>
-            <h2 class="card-title"><i class="fas fa-project-diagram mr-1"></i> Workspace Penugasan Proyek & Evaluasi Bintang 5</h2>
+            <h2 class="card-title">
+                <i class="fas fa-project-diagram text-warning mr-1"></i>
+                Workspace Penugasan Proyek &amp; Evaluasi Bintang 5
+                <span class="tp-workspace-pill"><i class="fas fa-bolt"></i> KOMPETITIF &bull; REALTIME</span>
+            </h2>
         </header>
         <div class="card-body">
             <?php
@@ -1281,10 +1903,15 @@ $namaBulanList = [
 
             <div class="tab-content pt-3">
                 <!-- ================= TAB 1: TUGAS SAYA (SEBAGAI KARYAWAN) ================= -->
-                <div id="tab_tugas_saya" class="tab-pane <?= !$openTabAtasan ? 'active' : '' ?>" role="tabpanel">
-                    <div class="alert alert-info py-2 mb-3">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        <strong>Daftar Tugas Anda:</strong> Klik tombol <strong>Update Progres / Detail</strong> untuk mencentang checklist pekerjaan, dan klik <strong>Submit Selesai</strong> jika pekerjaan sudah 100% tuntas agar Atasan dapat memberikan penilaian <strong>Rating Bintang (1–5 ⭐)</strong>.
+                <div id="tab_tugas_saya" class="tab-pane <?= $openTabSaya ? 'active' : '' ?>" role="tabpanel">
+                    <div class="tp-tab-banner tp-banner-blue">
+                        <div>
+                            <i class="fas fa-crosshairs mr-1"></i>
+                            <strong>Misi Eksekusi Anda:</strong> Klik <strong>Detail / Progres</strong> untuk mencentang checklist pekerjaan, lalu klik <strong>Submit Selesai</strong> saat tuntas 100% sebelum deadline untuk mengunci <strong>Rating Bintang 5 ⭐</strong>!
+                        </div>
+                        <span class="badge badge-primary px-2 py-1" style="border-radius: 999px; font-weight: 700;">
+                            <i class="fas fa-bolt mr-1"></i> <?= (int)$kpi['my_active'] ?> Aktif &bull; <?= (int)$kpi['my_done'] ?> Selesai
+                        </span>
                     </div>
 
                     <div class="table-responsive">
@@ -1420,17 +2047,18 @@ $namaBulanList = [
                 <!-- ================= TAB 2: PENUGASAN KE KARYAWAN (SEBAGAI ATASAN) ================= -->
                 <?php if ($canGiveTask || count($tugas_atasan) > 0): ?>
                 <div id="tab_tugas_atasan" class="tab-pane <?= $openTabAtasan ? 'active' : '' ?>" role="tabpanel">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                    <div class="tp-tab-banner tp-banner-emerald">
                         <div>
-                            <span class="text-muted">Memantau progres tugas yang diberikan kepada karyawan dan memberikan penilaian <strong>Rating Bintang 5</strong>.</span>
+                            <i class="fas fa-medal mr-1"></i>
+                            <strong>Panel Penugasan &amp; Evaluasi:</strong> Pantau progres eksekusi tim secara real-time dan berikan penilaian <strong>Rating Bintang 5 ⭐</strong> yang objektif.
                         </div>
                         <?php if ($canViewAll): ?>
-                            <div class="btn-group btn-group-sm mt-2 mt-md-0">
+                            <div class="btn-group btn-group-sm tp-mode-switch">
                                 <a href="<?= base_url('task_proyek?mode=all' . ($switch === 'kepegawaian' ? '&nav=kepegawaian' : '')) ?>" class="btn <?= ($viewMode !== 'mine') ? 'btn-primary' : 'btn-default' ?>">
-                                    <i class="fas fa-globe"></i> Semua Penugasan Perusahaan
+                                    <i class="fas fa-globe mr-1"></i> Semua Penugasan Perusahaan
                                 </a>
                                 <a href="<?= base_url('task_proyek?mode=mine' . ($switch === 'kepegawaian' ? '&nav=kepegawaian' : '')) ?>" class="btn <?= ($viewMode === 'mine') ? 'btn-primary' : 'btn-default' ?>">
-                                    <i class="fas fa-user-tie"></i> Hanya Penugasan Dari Saya
+                                    <i class="fas fa-user-tie mr-1"></i> Hanya Penugasan Dari Saya
                                 </a>
                             </div>
                         <?php endif; ?>
@@ -1611,31 +2239,29 @@ $namaBulanList = [
 
                 <!-- ================= TAB 3: SEMUA TASK PERUSAHAAN (MONITORING TIM) ================= -->
                 <div id="tab_semua_task" class="tab-pane <?= $openTabSemua ? 'active' : '' ?>" role="tabpanel">
-                    <div class="alert alert-light border py-2 mb-3" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px;">
-                            <div>
-                                <i class="fas fa-users text-primary mr-1"></i>
-                                <strong>Monitoring Seluruh Task Perusahaan:</strong> Halaman transparansi untuk melihat tugas yang sedang dikerjakan rekan kerja di seluruh divisi PT Visi Yosindo Medikal.
-                            </div>
-                            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
-                                <label class="font-weight-bold text-dark small mb-0"><i class="fas fa-filter text-muted mr-1"></i> Saring:</label>
-                                <select id="filter_semua_karyawan" class="form-control form-control-sm" style="min-width: 170px; border-radius: 6px;">
-                                    <option value="">-- Semua Karyawan --</option>
-                                    <?php foreach ($list_semua_karyawan_all as $kAll): ?>
-                                        <option value="<?= htmlspecialchars(strtolower($kAll->nama)) ?>"><?= htmlspecialchars($kAll->nama) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <select id="filter_semua_status" class="form-control form-control-sm" style="min-width: 150px; border-radius: 6px;">
-                                    <option value="">-- Semua Status --</option>
-                                    <option value="Menunggu ACC HRD">Menunggu ACC HRD</option>
-                                    <option value="Baru">Baru / Belum Mulai</option>
-                                    <option value="Sedang Dikerjakan">Sedang Dikerjakan</option>
-                                    <option value="Menunggu Penilaian">Menunggu Penilaian</option>
-                                    <option value="Perlu Revisi">Perlu Revisi</option>
-                                    <option value="Selesai">Selesai & Dinilai</option>
-                                    <option value="Ditolak">Ditolak HRD</option>
-                                </select>
-                            </div>
+                    <div class="tp-tab-banner tp-banner-cyan">
+                        <div>
+                            <i class="fas fa-broadcast-tower mr-1"></i>
+                            <strong>Radar Task Perusahaan:</strong> Transparansi seluruh proyek lintas divisi PT Visi Yosindo Medikal untuk mendorong akuntabilitas dan kolaborasi tim.
+                        </div>
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <label class="font-weight-bold text-dark small mb-0"><i class="fas fa-filter text-primary mr-1"></i> Saring:</label>
+                            <select id="filter_semua_karyawan" class="form-control form-control-sm" style="min-width: 170px; border-radius: 8px;">
+                                <option value="">-- Semua Karyawan --</option>
+                                <?php foreach ($list_semua_karyawan_all as $kAll): ?>
+                                    <option value="<?= htmlspecialchars(strtolower($kAll->nama)) ?>"><?= htmlspecialchars($kAll->nama) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <select id="filter_semua_status" class="form-control form-control-sm" style="min-width: 150px; border-radius: 8px;">
+                                <option value="">-- Semua Status --</option>
+                                <option value="Menunggu ACC HRD">Menunggu ACC HRD</option>
+                                <option value="Baru">Baru / Belum Mulai</option>
+                                <option value="Sedang Dikerjakan">Sedang Dikerjakan</option>
+                                <option value="Menunggu Penilaian">Menunggu Penilaian</option>
+                                <option value="Perlu Revisi">Perlu Revisi</option>
+                                <option value="Selesai">Selesai & Dinilai</option>
+                                <option value="Ditolak">Ditolak HRD</option>
+                            </select>
                         </div>
                     </div>
 
@@ -4074,6 +4700,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    });
+
+    // Sinkronkan kelas li.active pada nav-tabs-tp (kompatibel Bootstrap 3 & 4)
+    $('.nav-tabs-tp a[data-toggle="tab"]').on('shown.bs.tab', function() {
+        $('.nav-tabs-tp > li').removeClass('active');
+        $(this).closest('li').addClass('active');
+        if ($.fn.dataTable) {
+            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+        }
+    });
+
+    // Quick-jump dari Arena Hero ke Tab Leaderboard KPI
+    $('#btnJumpLeaderboard').on('click', function() {
+        var $lbTab = $('.nav-tabs-tp a[href="#tab_leaderboard"]').first();
+        if ($lbTab.length) {
+            $lbTab.tab('show');
+        }
+        var $panel = $('.tp-workspace-card').first();
+        if ($panel.length && $('html, body').length) {
+            $('html, body').animate({
+                scrollTop: Math.max(0, $panel.offset().top - 70)
+            }, 380);
+        }
     });
 });
 </script>
