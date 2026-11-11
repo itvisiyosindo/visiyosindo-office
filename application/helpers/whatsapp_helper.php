@@ -5025,5 +5025,153 @@ if (!function_exists('waSalamSenin')) {
 }
 
 // ==============================================================================
+// 13. ANTI-SPAM COOLDOWN RESEND NOTIFIKASI WA (MAKS 1X PER JAM PER SURAT)
+// ==============================================================================
+if (!function_exists('_ensureWaResendCooldownTable')) {
+	function _ensureWaResendCooldownTable($CI)
+	{
+		static $ensured = false;
+		if ($ensured) {
+			return;
+		}
+		$CI->db->query(
+			"CREATE TABLE IF NOT EXISTS `wa_resend_cooldown` (
+				`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+				`surat_type` VARCHAR(40) NOT NULL,
+				`surat_id` INT UNSIGNED NOT NULL,
+				`last_sent_at` DATETIME NOT NULL,
+				`last_sent_by` INT UNSIGNED NOT NULL DEFAULT 0,
+				PRIMARY KEY (`id`),
+				UNIQUE KEY `uq_surat` (`surat_type`, `surat_id`),
+				KEY `idx_last_sent` (`last_sent_at`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+		);
+		$ensured = true;
+	}
+}
+
+if (!function_exists('getWaResendCooldownMapFromRows')) {
+	/**
+	 * Ambil sisa detik cooldown resend WA per surat dalam satu batch query DataTables.
+	 */
+	function getWaResendCooldownMapFromRows($suratType, array $rows, $idField, $cooldownSeconds = 3600)
+	{
+		$ids = [];
+		foreach ($rows as $row) {
+			if (is_object($row) && isset($row->$idField)) {
+				$idVal = (int)$row->$idField;
+			} elseif (is_array($row) && isset($row[$idField])) {
+				$idVal = (int)$row[$idField];
+			} else {
+				$idVal = 0;
+			}
+			if ($idVal > 0) {
+				$ids[$idVal] = $idVal;
+			}
+		}
+		if (empty($ids)) {
+			return [];
+		}
+
+		$CI = &get_instance();
+		_ensureWaResendCooldownTable($CI);
+
+		$idList       = array_values($ids);
+		$placeholders = implode(',', array_fill(0, count($idList), '?'));
+		$params       = array_merge([(int)$cooldownSeconds, (string)$suratType], $idList, [(int)$cooldownSeconds]);
+
+		$sql = "SELECT surat_id, GREATEST(0, ? - TIMESTAMPDIFF(SECOND, last_sent_at, NOW())) AS remaining
+				FROM wa_resend_cooldown
+				WHERE surat_type = ?
+				  AND surat_id IN ($placeholders)
+				  AND TIMESTAMPDIFF(SECOND, last_sent_at, NOW()) < ?";
+		$query = $CI->db->query($sql, $params);
+
+		$map = [];
+		foreach ($query->result() as $r) {
+			$rem = (int)$r->remaining;
+			if ($rem > 0) {
+				$map[(int)$r->surat_id] = $rem;
+			}
+		}
+		return $map;
+	}
+}
+
+if (!function_exists('claimWaResendCooldown')) {
+	/**
+	 * Klaim slot resend WA secara atomik (maks 1x per $cooldownSeconds per surat).
+	 * Return ['allowed' => bool, 'remaining' => int].
+	 */
+	function claimWaResendCooldown($suratType, $suratId, $userId = 0, $cooldownSeconds = 3600)
+	{
+		$suratType       = (string)$suratType;
+		$suratId         = (int)$suratId;
+		$userId          = (int)$userId;
+		$cooldownSeconds = (int)$cooldownSeconds;
+
+		$CI = &get_instance();
+		_ensureWaResendCooldownTable($CI);
+
+		$CI->db->query(
+			"INSERT IGNORE INTO wa_resend_cooldown (surat_type, surat_id, last_sent_at, last_sent_by)
+			 VALUES (?, ?, NOW(), ?)",
+			[$suratType, $suratId, $userId]
+		);
+		if ($CI->db->affected_rows() > 0) {
+			return ['allowed' => true, 'remaining' => 0];
+		}
+
+		$CI->db->query(
+			"UPDATE wa_resend_cooldown
+			 SET last_sent_at = NOW(), last_sent_by = ?
+			 WHERE surat_type = ?
+			   AND surat_id = ?
+			   AND TIMESTAMPDIFF(SECOND, last_sent_at, NOW()) >= ?",
+			[$userId, $suratType, $suratId, $cooldownSeconds]
+		);
+		if ($CI->db->affected_rows() > 0) {
+			return ['allowed' => true, 'remaining' => 0];
+		}
+
+		$row = $CI->db->query(
+			"SELECT GREATEST(0, ? - TIMESTAMPDIFF(SECOND, last_sent_at, NOW())) AS remaining
+			 FROM wa_resend_cooldown
+			 WHERE surat_type = ? AND surat_id = ?
+			 LIMIT 1",
+			[$cooldownSeconds, $suratType, $suratId]
+		)->row();
+
+		$remaining = $row ? max(1, (int)$row->remaining) : $cooldownSeconds;
+		return ['allowed' => false, 'remaining' => $remaining];
+	}
+}
+
+if (!function_exists('formatWaCooldownMessage')) {
+	function formatWaCooldownMessage($remainingSeconds)
+	{
+		$mins = max(1, (int)ceil(((int)$remainingSeconds) / 60));
+		return 'Notifikasi WA sudah dikirim sebelumnya. Batas kirim ulang adalah 1 kali per jam; silakan tunggu ' . $mins . ' menit lagi.';
+	}
+}
+
+if (!function_exists('buildWaResendButton')) {
+	/**
+	 * Render tombol Resend Notif aktif atau tombol disabled saat cooldown berjalan.
+	 */
+	function buildWaResendButton($resendUrl, $recipient, $cooldownRemaining = 0)
+	{
+		$cooldownRemaining = (int)$cooldownRemaining;
+		if ($cooldownRemaining > 0) {
+			$mins = max(1, (int)ceil($cooldownRemaining / 60));
+			return '<button type="button" class="btn btn-sm btn-secondary" disabled style="cursor: not-allowed; opacity: 0.78;" title="Sudah dikirim, tunggu ' . $mins . ' menit lagi (maks. 1x per jam)"><i class="fas fa-clock"></i> Tunggu ' . $mins . ' mnt</button>';
+		}
+		$recipientEsc = htmlspecialchars((string)$recipient, ENT_QUOTES, 'UTF-8');
+		$urlEsc       = htmlspecialchars((string)$resendUrl, ENT_QUOTES, 'UTF-8');
+		return '<a href="javascript:void(0)" class="btn btn-sm btn-success btn-resend-wa" title="Kirim Ulang Notifikasi WA ke ' . $recipientEsc . '" data-url="' . $urlEsc . '" data-recipient="' . $recipientEsc . '"><i class="fab fa-whatsapp"></i> Resend Notif</a>';
+	}
+}
+
+// ==============================================================================
 // END OF KEPEGAWAIAN & HRD TEMPLATES
 // ==============================================================================

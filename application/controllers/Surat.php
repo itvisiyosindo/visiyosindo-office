@@ -6112,6 +6112,7 @@ class Surat extends CI_Controller
 		//-------------------------------------------------------------------------------------------------------------------------------------------------------------------		
 		if ($param == 'my_surat') {
 			$dt    = $this->md_surat_list->getAllSuratByPengaju(sessPenggunaId());
+			$cooldownMap = getWaResendCooldownMapFromRows('pb', $dt['data'], 'idPB', 3600);
 			$start = $this->input->post('start');
 			$data  = array();
 			foreach ($dt['data'] as $row) {
@@ -6154,14 +6155,8 @@ class Surat extends CI_Controller
 
 				$kode_surat	= '<a href="surat/show/detail_surat/PB/' . $row->idPB . '">' . $row->kodePB . '</a>';
 				$cetak		= '<a href="surat/print_page/PB/' . $row->idPB . '">print</a>';
-				/*	if($row->stat_persetujuan == 0){
-				    $li_btn   = '
-                        <div class="btn-group" role="group" aria-label="First group">
-                            <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="'.$row->idPB.'" data-object="surat/delete/surat/pb/'.$row->idPB.'"><i class="bx bx-trash"></i></button>
-                        </div>';
-				}else{
-				    $li_btn = '<span class="badge badge-ecommerce badge-warning">No Edit</span>';
-				} */
+				$cooldownLeft = isset($cooldownMap[(int)$row->idPB]) ? $cooldownMap[(int)$row->idPB] : 0;
+				$li_btn       = $this->_buildPbActionButtons($row, $cooldownLeft, false);
 
 				$th = array();
 				$th[] = ++$start;
@@ -7777,6 +7772,7 @@ class Surat extends CI_Controller
 			die;
 		} else {
 			$dt    = $this->md_surat_list->getAllSurat();
+			$cooldownMap = getWaResendCooldownMapFromRows('pb', $dt['data'], 'idPB', 3600);
 
 			$start = $this->input->post('start');
 			$data  = array();
@@ -7818,10 +7814,8 @@ class Surat extends CI_Controller
 
 				//$kategori 	= '<a href="surat/ttd_update/pb/1/ttd_1/'.$row->idPB.'">'.$row->kategori.'</a>';
 				$kode_surat	= '<a href="surat/show/detail_surat/PB/' . $row->idPB . '/1">' . $row->kodePB . '</a>';
-				$aksi = '';
-				if (isAdmin()) {
-					$aksi = '<a href="javascript:void(0)" onclick="openAdminEditModal(\'pb\', \'' . encrypt($row->idPB) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>';
-				}
+				$cooldownLeft = isset($cooldownMap[(int)$row->idPB]) ? $cooldownMap[(int)$row->idPB] : 0;
+				$aksi         = $this->_buildPbActionButtons($row, $cooldownLeft, true);
 				$cetak		= '<a href="surat/print_page/PB/' . $row->idPB . '">print</a>';
 
 				$th = array();
@@ -8531,9 +8525,13 @@ class Surat extends CI_Controller
 
 	public function notifWaAddSurat($ulang, $detail)
 	{
-		//ambil data pengaju
-		$ambilDataPengaju 	= $this->md_pengguna->getById(sessPenggunaId());
-		$namaPengaju		= !empty($ambilDataPengaju) ? $ambilDataPengaju[0]->nama : 'User';
+		//ambil data pengaju (gunakan namaPengaju eksplisit jika dikirim dari resend admin)
+		if (!empty($detail['namaPengaju'])) {
+			$namaPengaju = $detail['namaPengaju'];
+		} else {
+			$ambilDataPengaju = $this->md_pengguna->getById(sessPenggunaId());
+			$namaPengaju      = !empty($ambilDataPengaju) ? $ambilDataPengaju[0]->nama : 'User';
+		}
 
 		for ($i = 1; $i <= $ulang; $i++) {
 			if ($i == 1) {
@@ -8893,6 +8891,9 @@ class Surat extends CI_Controller
 				$link_detail = 'surat/show/detail_surat/rekom/' . $detail['id'] . '/1';
 			} else if ($surat == 'keterangan') {
 				$link_detail = 'surat/show/detail_surat/keterangan/' . $detail['id'] . '/1';
+			}
+			if (!empty($detail['link'])) {
+				$link_detail = $detail['link'];
 			}
 
 			$dataWa = [
@@ -9296,7 +9297,7 @@ class Surat extends CI_Controller
 			$nope           = $dataPenerima[0]->no_hp;
 			$dataWa = [
 				'id'            => $detail['id'],
-				'link'          => 'surat/show/detail_surat/PB/' . $detail['id'] . '/1',
+				'link'          => !empty($detail['link']) ? $detail['link'] : 'surat/show/detail_surat/PB/' . $detail['id'] . '/1',
 				'namaSurat' 	=> $detail['namaSurat'],
 				'noPenerima' 	=> $nope,
 				'kodeSurat' 	=> $kode,
@@ -10899,14 +10900,244 @@ class Surat extends CI_Controller
 		}
 	}
 
+	/**
+	 * Tentukan tahap & penerima aktif resend notifikasi WA Pembiayaan Dinas.
+	 */
+	private function _getPbResendTarget($row)
+	{
+		$stat = isset($row->stat_persetujuan) ? (int)$row->stat_persetujuan : 0;
+		$isRejected = (
+			$stat >= 4 ||
+			(string)$row->persetujuan_ga === '2' ||
+			(string)$row->aju_ttd1 === '2' ||
+			(string)$row->aju_ttd2 === '2' ||
+			(string)$row->aju_ttd3 === '2' ||
+			(string)$row->lap_ttd1 === '2' ||
+			(string)$row->lap_ttd2 === '2' ||
+			(string)$row->lap_ttd3 === '2'
+		);
+		if ($isRejected) {
+			return ['can_resend' => false, 'stage' => 'rejected', 'recipient' => ''];
+		}
+
+		if ((string)$row->aju_ttd1 !== '1') {
+			return ['can_resend' => true, 'stage' => 'aju_1', 'recipient' => 'Head of Accounting and Tax'];
+		}
+		if ((string)$row->aju_ttd2 !== '1') {
+			return ['can_resend' => true, 'stage' => 'aju_2', 'recipient' => 'General Manager'];
+		}
+		if ((string)$row->aju_ttd3 !== '1') {
+			return ['can_resend' => true, 'stage' => 'aju_3', 'recipient' => 'Director of Corp Planning & Business Management'];
+		}
+
+		$hasLaporan = (trim((string)$row->tglLaporan) !== '' || $stat >= 2);
+		if (!$hasLaporan) {
+			return ['can_resend' => true, 'stage' => 'aju_done_fi', 'recipient' => 'Head of Accounting and Tax'];
+		}
+
+		if ((string)$row->persetujuan_ga !== '1') {
+			return ['can_resend' => true, 'stage' => 'lap_ga', 'recipient' => 'General Affair'];
+		}
+		if ((string)$row->lap_ttd1 !== '1') {
+			return ['can_resend' => true, 'stage' => 'lap_1', 'recipient' => 'Head of Accounting and Tax'];
+		}
+		if ((string)$row->lap_ttd2 !== '1') {
+			return ['can_resend' => true, 'stage' => 'lap_2', 'recipient' => 'General Manager'];
+		}
+		if ((string)$row->lap_ttd3 !== '1') {
+			return ['can_resend' => true, 'stage' => 'lap_3', 'recipient' => 'Director of Corp Planning & Business Management'];
+		}
+
+		return ['can_resend' => false, 'stage' => 'done', 'recipient' => ''];
+	}
+
+	/**
+	 * Bangun tombol kolom Aksi pada daftar Pembiayaan Dinas.
+	 */
+	private function _buildPbActionButtons($row, $cooldownRemaining = 0, $includeAdminEdit = false)
+	{
+		$target = $this->_getPbResendTarget($row);
+		$parts  = [];
+
+		if ($includeAdminEdit && isAdmin()) {
+			$parts[] = '<a href="javascript:void(0)" onclick="openAdminEditModal(\'pb\', \'' . encrypt($row->idPB) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>';
+		}
+
+		if ($target['can_resend']) {
+			$resendUrl = base_url('surat/resend_wa_surat/pb/' . encrypt($row->idPB));
+			$parts[]   = buildWaResendButton($resendUrl, $target['recipient'], $cooldownRemaining);
+		}
+
+		if (empty($parts)) {
+			return '';
+		}
+
+		return '<div class="d-flex align-items-center justify-content-center" style="gap: 4px; white-space: nowrap;">' . implode('', $parts) . '</div>';
+	}
+
 	public function resend_wa_surat($surat_type, $id_encrypted)
 	{
 		grantAccessFor('all');
-		$id = decrypt($id_encrypted);
+		$id = (int)decrypt($id_encrypted);
 
 		$referer = $this->input->server('HTTP_REFERER');
 		if (!$referer) {
-			$referer = 'surat/show/my_surat/' . $surat_type;
+			$referer = ($surat_type === 'pb') ? 'surat' : 'surat/show/my_surat/' . $surat_type;
+		}
+
+		if ($surat_type == 'pb') {
+			if ($id <= 0) {
+				$this->session->set_flashdata('error', 'Data Pembiayaan Dinas tidak valid.');
+				redirect($referer);
+				return;
+			}
+
+			$data = $this->md_surat_list->getPBById($id);
+			if (empty($data)) {
+				$this->session->set_flashdata('error', 'Data Pembiayaan Dinas tidak ditemukan.');
+				redirect($referer);
+				return;
+			}
+
+			$pb = $data[0];
+			$statusRow = $this->db->select('status')->where(['id_kat_surat' => 1, 'id_srt' => $id])->get('surat_list')->row();
+			$pb->stat_persetujuan = $statusRow ? $statusRow->status : '0';
+
+			$myId        = (int)sessPenggunaId();
+			$isOwner     = ((int)$pb->idPengaju === $myId);
+			$isPrivilege = (isAdmin() || isHrd() || isGa() || in_array($myId, [1, 23, 33, 54, 58, 69, 81, 106, 107, 109, 744, (int)GA_USER_ID], true));
+			if (!$isOwner && !$isPrivilege) {
+				$this->session->set_flashdata('error', 'Anda tidak memiliki akses untuk mengirim ulang notifikasi surat ini.');
+				redirect($referer);
+				return;
+			}
+
+			$kode   = $pb->kodePB;
+			$target = $this->_getPbResendTarget($pb);
+			if (!$target['can_resend']) {
+				$this->session->set_flashdata('error', 'Pembiayaan Dinas ' . $kode . ' sudah selesai disetujui atau ditolak.');
+				redirect($referer);
+				return;
+			}
+
+			$cooldown = claimWaResendCooldown('pb', $id, $myId, 3600);
+			if (!$cooldown['allowed']) {
+				$this->session->set_flashdata('error', formatWaCooldownMessage($cooldown['remaining']));
+				redirect($referer);
+				return;
+			}
+
+			$stage      = $target['stage'];
+			$pbLink     = 'surat/show/detail_surat/PB/' . $id . '/1';
+			$lapLink    = 'surat/show/detail_surat/laporan_PB/' . $id . '/1';
+
+			if ($stage === 'aju_1') {
+				$this->notifWaAddSurat(1, [
+					'id'          => $id,
+					'idPenerima1' => 106,
+					'idPenerima2' => '',
+					'namaSurat'   => 'Surat Biaya Perjalanan Dinas',
+					'penerima'    => '_Head of Accounting and Tax_',
+					'perihal'     => $pb->perihal,
+					'kode'        => $kode,
+					'namaPengaju' => $pb->pengaju,
+					'link'        => $pbLink
+				]);
+			} elseif ($stage === 'aju_2') {
+				$this->notifWaAprovPb(1, 1, [
+					'id'           => $id,
+					'idPenerima1'  => 33,
+					'idPenerima2'  => '',
+					'namaSurat'    => 'Surat Biaya Perjalanan Dinas',
+					'penerima'     => '_General Manager_',
+					'ttd_sebelum1' => 'Head of Accounting and Tax',
+					'ttd_sebelum2' => '',
+					'ttd_sebelum3' => '',
+					'link'         => $pbLink
+				]);
+			} elseif ($stage === 'aju_3') {
+				$this->notifWaAprovPb(1, 1, [
+					'id'           => $id,
+					'idPenerima1'  => 23,
+					'idPenerima2'  => '',
+					'namaSurat'    => 'Surat Biaya Perjalanan Dinas',
+					'penerima'     => '_Director of Corp Planning and Bussinees Management_',
+					'ttd_sebelum1' => 'Head of Accounting and Tax',
+					'ttd_sebelum2' => 'General Manager',
+					'ttd_sebelum3' => '',
+					'link'         => $pbLink
+				]);
+			} elseif ($stage === 'aju_done_fi') {
+				$this->notifWaAprov('pb', 1, 3, [
+					'id'           => $id,
+					'idPenerima1'  => '107',
+					'idPenerima2'  => '',
+					'namaSurat'    => 'Surat Biaya Perjalanan Dinas',
+					'penerima'     => '_Head of Accounting and Tax_',
+					'ttd_sebelum1' => 'Head of Accounting and Tax',
+					'ttd_sebelum2' => 'General Manager',
+					'ttd_sebelum3' => 'Director of Corp Planning and Bussinees Management',
+					'link'         => $pbLink
+				]);
+			} elseif ($stage === 'lap_ga') {
+				$sentPhones = [];
+				foreach (array_unique([(int)GA_USER_ID, 58]) as $gaUid) {
+					$gaUser = $this->md_pengguna->getById($gaUid);
+					$hp     = !empty($gaUser[0]->no_hp) ? trim((string)$gaUser[0]->no_hp) : '';
+					if ($hp !== '' && !isset($sentPhones[$hp])) {
+						$sentPhones[$hp] = true;
+						waSuratOpen([
+							'namaSurat'    => 'Laporan Surat Biaya Perjalanan Dinas',
+							'noPenerima'   => $hp,
+							'kodeSurat'    => $kode,
+							'namaPengaju'  => $pb->pengaju,
+							'perihal'      => $pb->perihal,
+							'link'         => $lapLink,
+							'namaPenerima' => urlencode('General Affair')
+						]);
+					}
+				}
+			} elseif ($stage === 'lap_1') {
+				$this->notifWaAprov('laporan_pb', 1, 1, [
+					'id'           => $id,
+					'idPenerima1'  => '107',
+					'idPenerima2'  => '',
+					'penerima'     => '_Head of Accounting and Tax_',
+					'ttd_sebelum1' => 'General Affair',
+					'ttd_sebelum2' => '',
+					'ttd_sebelum3' => '',
+					'link'         => $lapLink
+				]);
+			} elseif ($stage === 'lap_2') {
+				$this->notifWaAprovPb(1, 1, [
+					'id'           => $id,
+					'idPenerima1'  => 33,
+					'idPenerima2'  => '',
+					'namaSurat'    => 'Laporan Surat Biaya Perjalanan Dinas',
+					'penerima'     => '_General Manager_',
+					'ttd_sebelum1' => 'Head of Accounting and Tax',
+					'ttd_sebelum2' => '',
+					'ttd_sebelum3' => '',
+					'link'         => $lapLink
+				]);
+			} elseif ($stage === 'lap_3') {
+				$this->notifWaAprovPb(1, 1, [
+					'id'           => $id,
+					'idPenerima1'  => 23,
+					'idPenerima2'  => '',
+					'namaSurat'    => 'Laporan Surat Biaya Perjalanan Dinas',
+					'penerima'     => '_Director of Corp Planning and Bussinees Management_',
+					'ttd_sebelum1' => 'Head of Accounting and Tax',
+					'ttd_sebelum2' => 'General Manager',
+					'ttd_sebelum3' => '',
+					'link'         => $lapLink
+				]);
+			}
+
+			addLog('Resend Notif Pembiayaan Dinas', 'Mengirim ulang notifikasi WA Pembiayaan Dinas ' . $kode . ' ke ' . $target['recipient']);
+			$this->session->set_flashdata('success', 'Berhasil mengirim ulang notifikasi WA untuk Pembiayaan Dinas ' . $kode . ' ke ' . $target['recipient'] . '.');
+			redirect($referer);
+			return;
 		}
 
 		if ($surat_type == 'pbok') {

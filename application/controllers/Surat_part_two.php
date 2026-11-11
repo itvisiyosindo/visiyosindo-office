@@ -2893,6 +2893,7 @@ class Surat_part_two extends CI_Controller
     } else if ($param == 'permintaan_cuti') {
       //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
       $dt     = $this->md_surat_part_two->getAllCUTIbyID(sessPenggunaId());
+      $cooldownMap = getWaResendCooldownMapFromRows('cuti', $dt['data'], 'idGc', 3600);
       $start = $this->input->post('start');
       $data  = array();
       foreach ($dt['data'] as $row) {
@@ -2921,7 +2922,8 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $li_btn = $this->_buildCutiActionButtons($row, false, false);
+        $cooldownLeft = isset($cooldownMap[(int)$row->idGc]) ? $cooldownMap[(int)$row->idGc] : 0;
+        $li_btn = $this->_buildCutiActionButtons($row, false, false, 'btn-batal-cuti', '', $cooldownLeft);
 
         $th = array();
         $th[] = ++$start;
@@ -2941,6 +2943,7 @@ class Surat_part_two extends CI_Controller
     } else if ($param == 'list_cuti') {
       //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
       $dt     = $this->md_surat_part_two->getAllCUTI();
+      $cooldownMap = getWaResendCooldownMapFromRows('cuti', $dt['data'], 'idGc', 3600);
       $start = $this->input->post('start');
       $data  = array();
       foreach ($dt['data'] as $row) {
@@ -2969,7 +2972,8 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $li_btn = $this->_buildCutiActionButtons($row, false, true, 'btn-batal-cuti');
+        $cooldownLeft = isset($cooldownMap[(int)$row->idGc]) ? $cooldownMap[(int)$row->idGc] : 0;
+        $li_btn = $this->_buildCutiActionButtons($row, false, true, 'btn-batal-cuti', '', $cooldownLeft);
 
         $th = array();
         $th[] = ++$start;
@@ -3461,6 +3465,7 @@ class Surat_part_two extends CI_Controller
     } else if ($param == 'permintaan_cuti_sgm') {
       //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
       $dt     = $this->md_surat_part_two->getAllCutiSGMbyID(sessPenggunaId());
+      $cooldownMap = getWaResendCooldownMapFromRows('cuti_sgm', $dt['data'], 'idGc', 3600);
       $start = $this->input->post('start');
       $data  = array();
       foreach ($dt['data'] as $row) {
@@ -3487,7 +3492,8 @@ class Surat_part_two extends CI_Controller
 
         $pukul = $mulai . ' s/d ' . $akhir;
 
-        $li_btn = $this->_buildCutiActionButtons($row, true, true, 'btn-batal-cuti-sgm');
+        $cooldownLeft = isset($cooldownMap[(int)$row->idGc]) ? $cooldownMap[(int)$row->idGc] : 0;
+        $li_btn = $this->_buildCutiActionButtons($row, true, true, 'btn-batal-cuti-sgm', '', $cooldownLeft);
 
         $th = array();
         $th[] = ++$start;
@@ -3507,6 +3513,7 @@ class Surat_part_two extends CI_Controller
     } else if ($param == 'list_cuti_sgm') {
       //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
       $dt     = $this->md_surat_part_two->getAllCutiSGM();
+      $cooldownMap = getWaResendCooldownMapFromRows('cuti_sgm', $dt['data'], 'idGc', 3600);
       $start = $this->input->post('start');
       $data  = array();
       foreach ($dt['data'] as $row) {
@@ -3535,7 +3542,8 @@ class Surat_part_two extends CI_Controller
 
         $allowBatal = ($row->status != '3' && $row->status != '5' && (isAdmin() || (isset($row->idPengaju) && $row->idPengaju == sessPenggunaId())));
         $adminEdit  = isAdmin() ? '<a href="javascript:void(0)" onclick="openAdminEditModal(\'cuti_sgm\', \'' . encrypt($row->idGc) . '\')" class="btn btn-sm btn-warning" title="Edit Data (Admin)"><i class="fas fa-pencil-alt text-dark"></i></a>' : '';
-        $li_btn     = $this->_buildCutiActionButtons($row, true, $allowBatal, 'btn-batal-cuti-sgm', $adminEdit);
+        $cooldownLeft = isset($cooldownMap[(int)$row->idGc]) ? $cooldownMap[(int)$row->idGc] : 0;
+        $li_btn     = $this->_buildCutiActionButtons($row, true, $allowBatal, 'btn-batal-cuti-sgm', $adminEdit, $cooldownLeft);
 
         $th = array();
         $th[] = ++$start;
@@ -4480,7 +4488,7 @@ class Surat_part_two extends CI_Controller
   /**
    * Bangun tombol aksi pada tabel daftar Surat Cuti (Detail, Resend Notif WA, Batal).
    */
-  private function _buildCutiActionButtons($row, $isSgm = false, $allowBatal = false, $batalClass = 'btn-batal-cuti', $extraHtml = '')
+  private function _buildCutiActionButtons($row, $isSgm = false, $allowBatal = false, $batalClass = 'btn-batal-cuti', $extraHtml = '', $cooldownRemaining = 0)
   {
     $typeSlug  = $isSgm ? 'cuti_sgm' : 'cuti';
     $detailUrl = 'surat_part_two/show/detail/' . $typeSlug . '/' . $row->idGc;
@@ -4492,7 +4500,7 @@ class Surat_part_two extends CI_Controller
 
     if ($target['can_resend']) {
       $resendUrl = base_url('surat_part_two/resend_wa_cuti/' . encrypt($row->idGc) . '/' . $typeSlug);
-      $btns .= '<a href="javascript:void(0)" class="btn btn-sm btn-success btn-resend-wa" title="Kirim Ulang Notifikasi WA ke ' . htmlspecialchars($target['recipient']) . '" data-url="' . $resendUrl . '" data-recipient="' . htmlspecialchars($target['recipient']) . '"><i class="fab fa-whatsapp"></i> Resend Notif</a>';
+      $btns .= buildWaResendButton($resendUrl, $target['recipient'], $cooldownRemaining);
     }
 
     if ($extraHtml !== '') {
@@ -4553,6 +4561,13 @@ class Surat_part_two extends CI_Controller
 
     if (!$target['can_resend']) {
       $this->session->set_flashdata('error', 'Pengajuan cuti ' . $kode . ' sudah selesai disetujui atau dibatalkan.');
+      redirect($referer);
+      return;
+    }
+
+    $cooldown = claimWaResendCooldown($isSgm ? 'cuti_sgm' : 'cuti', $id, $myId, 3600);
+    if (!$cooldown['allowed']) {
+      $this->session->set_flashdata('error', formatWaCooldownMessage($cooldown['remaining']));
       redirect($referer);
       return;
     }
