@@ -2558,8 +2558,7 @@ class Absensi extends CI_Controller
             SELECT *
             FROM log
             WHERE pengguna_id = 94
-              AND data_created >= '2026-11-09 00:00:00'
-            ORDER BY data_created DESC
+            ORDER BY log_id DESC
             LIMIT 20
         ")->result();
 
