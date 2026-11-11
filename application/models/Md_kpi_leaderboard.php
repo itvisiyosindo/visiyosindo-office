@@ -102,7 +102,7 @@ class Md_kpi_leaderboard extends CI_Model
     {
         $map = [];
         $rows = $this->db->query("
-            SELECT pengguna_id, MIN(DATE(data_created)) AS first_masuk
+            SELECT pengguna_id, DATE(MIN(data_created)) AS first_masuk
             FROM absensi
             WHERE type_absen = 'masuk'
               AND data_created >= '2020-01-01 00:00:00'
@@ -384,8 +384,8 @@ class Md_kpi_leaderboard extends CI_Model
                 COALESCE(tsk.bintang_5, 0) AS bintang_5,
                 COALESCE(np.avg_nilai_point, lap.avg_nilai_lap) AS avg_nilai_laporan,
                 COALESCE(np.total_poin_laporan, lap.total_poin_lap, 0) AS total_poin_laporan,
-                COALESCE(penc.avg_nilai_pencapaian, lap_penc.avg_nilai_lap_penc) AS avg_nilai_pencapaian,
-                COALESCE(penc.total_pencapaian, lap_penc.total_lap_penc, 0) AS total_pencapaian,
+                COALESCE(penc.avg_nilai_pencapaian, lap.avg_nilai_lap_penc) AS avg_nilai_pencapaian,
+                COALESCE(penc.total_pencapaian, lap.total_lap_penc, 0) AS total_pencapaian,
                 COALESCE(pk.avg_nilai_pk, NULL) AS avg_nilai_pk,
                 COALESCE(pk.total_pk, 0) AS total_pk,
                 COALESCE(abs_data.hari_hadir, 0) AS abs_hari_hadir,
@@ -443,7 +443,23 @@ class Md_kpi_leaderboard extends CI_Model
                             THEN CAST(nilai AS DECIMAL(5,2))
                             ELSE NULL 
                         END
-                    ), 1) AS avg_nilai_lap
+                    ), 1) AS avg_nilai_lap,
+                    SUM(CASE WHEN (nilai_pencapaian_a > 0 OR nilai_pencapaian_b > 0) THEN 1 ELSE 0 END) AS total_lap_penc,
+                    ROUND(AVG(
+                        CASE
+                            WHEN (nilai_pencapaian_a > 0 OR nilai_pencapaian_b > 0) THEN
+                                CASE
+                                    WHEN (nilai_pencapaian_a > 0 AND nilai_pencapaian_a <= 100) AND (nilai_pencapaian_b > 0 AND nilai_pencapaian_b <= 100)
+                                    THEN (CAST(nilai_pencapaian_a AS DECIMAL(5,2)) + CAST(nilai_pencapaian_b AS DECIMAL(5,2))) / 2
+                                    WHEN (nilai_pencapaian_b > 0 AND nilai_pencapaian_b <= 100)
+                                    THEN CAST(nilai_pencapaian_b AS DECIMAL(5,2))
+                                    WHEN (nilai_pencapaian_a > 0 AND nilai_pencapaian_a <= 100)
+                                    THEN CAST(nilai_pencapaian_a AS DECIMAL(5,2))
+                                    ELSE NULL
+                                END
+                            ELSE NULL
+                        END
+                    ), 1) AS avg_nilai_lap_penc
                 FROM laporan
                 WHERE status != 3 {$wherePeriodeLap}
                 GROUP BY {$caseLap}
@@ -468,25 +484,6 @@ class Md_kpi_leaderboard extends CI_Model
                 WHERE 1=1 {$wherePeriodeLap}
                 GROUP BY {$caseNp}
             ) penc ON penc.id_pengguna = p.pengguna_id
-            LEFT JOIN (
-                SELECT 
-                    {$caseLap} AS id_pengaju,
-                    COUNT(*) AS total_lap_penc,
-                    ROUND(AVG(
-                        CASE 
-                            WHEN (nilai_pencapaian_a > 0 AND nilai_pencapaian_a <= 100) AND (nilai_pencapaian_b > 0 AND nilai_pencapaian_b <= 100) 
-                            THEN (CAST(nilai_pencapaian_a AS DECIMAL(5,2)) + CAST(nilai_pencapaian_b AS DECIMAL(5,2))) / 2
-                            WHEN (nilai_pencapaian_b > 0 AND nilai_pencapaian_b <= 100) 
-                            THEN CAST(nilai_pencapaian_b AS DECIMAL(5,2))
-                            WHEN (nilai_pencapaian_a > 0 AND nilai_pencapaian_a <= 100) 
-                            THEN CAST(nilai_pencapaian_a AS DECIMAL(5,2))
-                            ELSE NULL 
-                        END
-                    ), 1) AS avg_nilai_lap_penc
-                FROM laporan
-                WHERE status != 3 AND (nilai_pencapaian_a > 0 OR nilai_pencapaian_b > 0) {$wherePeriodeLap}
-                GROUP BY {$caseLap}
-            ) lap_penc ON lap_penc.id_pengaju = p.pengguna_id
             LEFT JOIN (
                 SELECT 
                     {$caseNp} AS id_pengguna,
@@ -530,7 +527,7 @@ class Md_kpi_leaderboard extends CI_Model
                 OR np.avg_nilai_point IS NOT NULL 
                 OR lap.avg_nilai_lap IS NOT NULL 
                 OR penc.avg_nilai_pencapaian IS NOT NULL
-                OR lap_penc.avg_nilai_lap_penc IS NOT NULL
+                OR lap.avg_nilai_lap_penc IS NOT NULL
                 OR pk.avg_nilai_pk IS NOT NULL
                 OR COALESCE(abs_data.total_absen_rec, 0) > 0
             )
@@ -804,19 +801,24 @@ class Md_kpi_leaderboard extends CI_Model
     }
 
     /**
-     * Ekstrak daftar peserta terperingkat + posisi karyawan target dari bundle leaderboard.
+     * Resolve semester & tahun default apabila belum diberikan.
      */
-    private function _extractSummaryFromBundle(array $bundle, array $targetIds)
+    private function _resolveDefaultPeriod($smtInt = null, $yInt = null)
     {
-        $lbList     = $bundle['leaderboard'];
-        $scoredList = [];
-        foreach ($lbList as $item) {
-            if ($item->skor_akhir !== null) {
-                $scoredList[] = $item;
-            }
+        if ($smtInt === null) {
+            $smtInt = ((int)date('n') <= 6) ? 1 : 2;
         }
-        $totalScored = count($scoredList);
+        if ($yInt === null) {
+            $yInt = (int)date('Y');
+        }
+        return [((int)$smtInt === 1) ? 1 : 2, (int)$yInt];
+    }
 
+    /**
+     * Cari peringkat, baris user, serta selisih poin ke peringkat di atasnya pada daftar terperingkat.
+     */
+    private function _findUserPositionInScoredList(array $scoredList, array $targetIds)
+    {
         $rank       = 0;
         $userRow    = null;
         $gapToAbove = null;
@@ -835,18 +837,38 @@ class Md_kpi_leaderboard extends CI_Model
             }
         }
 
-        if ($userRow === null) {
-            $userRow = $bundle['my_combined'];
-        }
-
         return [
-            'scored_list'  => $scoredList,
             'rank'         => $rank,
-            'total_ranked' => $totalScored,
-            'total_all'    => count($lbList),
             'row'          => $userRow,
             'gap_to_above' => $gapToAbove,
             'above_name'   => $aboveName,
+        ];
+    }
+
+    /**
+     * Ekstrak daftar peserta terperingkat + posisi karyawan target dari bundle leaderboard.
+     */
+    private function _extractSummaryFromBundle(array $bundle, array $targetIds)
+    {
+        $lbList     = $bundle['leaderboard'];
+        $scoredList = [];
+        foreach ($lbList as $item) {
+            if ($item->skor_akhir !== null) {
+                $scoredList[] = $item;
+            }
+        }
+
+        $pos     = $this->_findUserPositionInScoredList($scoredList, $targetIds);
+        $userRow = ($pos['row'] !== null) ? $pos['row'] : $bundle['my_combined'];
+
+        return [
+            'scored_list'  => $scoredList,
+            'rank'         => $pos['rank'],
+            'total_ranked' => count($scoredList),
+            'total_all'    => count($lbList),
+            'row'          => $userRow,
+            'gap_to_above' => $pos['gap_to_above'],
+            'above_name'   => $pos['above_name'],
             'sem_label'    => $bundle['sem_label'],
             'semester'     => $bundle['semester'],
             'tahun'        => $bundle['tahun'],
@@ -858,18 +880,128 @@ class Md_kpi_leaderboard extends CI_Model
      */
     private function _buildSummaryForUser($penggunaId, $smtInt = null, $yInt = null)
     {
-        if ($smtInt === null) {
-            $smtInt = ((int)date('n') <= 6) ? 1 : 2;
-        }
-        if ($yInt === null) {
-            $yInt = (int)date('Y');
-        }
+        list($smtInt, $yInt) = $this->_resolveDefaultPeriod($smtInt, $yInt);
 
         $targetIds = $this->resolveUserIds((int)$penggunaId);
         $bundle    = $this->buildLeaderboard($smtInt, $yInt, $targetIds);
         $summary   = $this->_extractSummaryFromBundle($bundle, $targetIds);
         $summary['target_ids'] = $targetIds;
         return $summary;
+    }
+
+    /**
+     * Path file cache ringan (per semester/tahun) untuk Podium Dashboard Home.
+     */
+    private function _getDashboardCacheFilePath($smtInt, $yInt)
+    {
+        $cacheDir = (defined('APPPATH') && is_dir(APPPATH . 'cache') && is_writable(APPPATH . 'cache'))
+            ? rtrim(APPPATH . 'cache', '/\\')
+            : rtrim(sys_get_temp_dir(), '/\\');
+        return $cacheDir . DIRECTORY_SEPARATOR . 'kpi_dash_podium_v1_' . (int)$yInt . '_s' . (int)$smtInt . '.json';
+    }
+
+    /**
+     * Baca cache JSON Podium Dashboard jika masih valid (tanggal hari ini & belum melewati TTL).
+     */
+    private function _readDashboardPodiumCache($smtInt, $yInt, $ttlSec = 600)
+    {
+        $file = $this->_getDashboardCacheFilePath($smtInt, $yInt);
+        if (!is_file($file)) {
+            return null;
+        }
+        $raw = @file_get_contents($file);
+        if ($raw === false || $raw === '') {
+            return null;
+        }
+        $data = @json_decode($raw, true);
+        if (!is_array($data) || empty($data['generated_date']) || empty($data['generated_at'])) {
+            return null;
+        }
+        if ($data['generated_date'] !== date('Y-m-d')) {
+            return null;
+        }
+        if ((time() - (int)$data['generated_at']) > (int)$ttlSec) {
+            return null;
+        }
+        if (!isset($data['items']) || !is_array($data['items'])) {
+            return null;
+        }
+        return $data;
+    }
+
+    /**
+     * Simpan daftar ringkas terperingkat ke file cache Podium Dashboard secara atomik.
+     */
+    private function _writeDashboardPodiumCache($smtInt, $yInt, array $summary)
+    {
+        $slimItems = [];
+        foreach ($summary['scored_list'] as $item) {
+            $slimItems[] = [
+                'pengguna_id'    => (int)$item->pengguna_id,
+                'nama'           => (string)($item->nama ?? ''),
+                'jabatan'        => (string)($item->jabatan ?? ''),
+                'skor_akhir'     => (float)$item->skor_akhir,
+                'grade'          => (string)($item->grade ?? ''),
+                'grade_badge'    => (string)($item->grade_badge ?? 'badge-secondary'),
+                'grade_color'    => (string)($item->grade_color ?? '#0f172a'),
+                'rating_agregat' => (float)$item->rating_agregat,
+                'skor_mutu'      => (float)$item->skor_mutu,
+                'skor_prod'      => (float)$item->skor_prod,
+                'sp_level'       => (int)($item->sp_level ?? 0),
+                'sp_label'       => (string)($item->sp_label ?? 'SP 0'),
+                'sp_cap'         => (int)($item->sp_cap ?? 100),
+            ];
+        }
+
+        $payload = [
+            'generated_date' => date('Y-m-d'),
+            'generated_at'   => time(),
+            'sem_label'      => (string)$summary['sem_label'],
+            'semester'       => (int)$summary['semester'],
+            'tahun'          => (int)$summary['tahun'],
+            'items'          => $slimItems,
+        ];
+
+        $encoded = json_encode($payload);
+        if ($encoded === false) {
+            return;
+        }
+
+        $file = $this->_getDashboardCacheFilePath($smtInt, $yInt);
+        $tmp  = $file . '.tmp.' . getmypid() . '.' . mt_rand(1000, 9999);
+        if (@file_put_contents($tmp, $encoded, LOCK_EX) !== false) {
+            if (!@rename($tmp, $file)) {
+                @unlink($tmp);
+                @file_put_contents($file, $encoded, LOCK_EX);
+            }
+        }
+    }
+
+    /**
+     * Susun output Podium Top N + posisi user login dari daftar item terperingkat (objek atau array).
+     */
+    private function _buildPodiumResponseFromItems(array $items, $currentPenggunaId, $limit, $semLabel, $smtInt, $yInt)
+    {
+        $scoredObjects = [];
+        foreach ($items as $item) {
+            $scoredObjects[] = is_object($item) ? $item : (object)$item;
+        }
+
+        $targetIds = $this->resolveUserIds((int)$currentPenggunaId);
+        $pos       = $this->_findUserPositionInScoredList($scoredObjects, $targetIds);
+
+        return [
+            'top_leaders'  => array_slice($scoredObjects, 0, max(1, (int)$limit)),
+            'my_ids'       => $targetIds,
+            'rank'         => $pos['rank'],
+            'total_ranked' => count($scoredObjects),
+            'row'          => $pos['row'],
+            'gap_to_above' => $pos['gap_to_above'],
+            'above_name'   => $pos['above_name'],
+            'sem_label'    => (string)$semLabel,
+            'semester'     => (int)$smtInt,
+            'tahun'        => (int)$yInt,
+        ];
     }
 
     /**
@@ -883,23 +1015,72 @@ class Md_kpi_leaderboard extends CI_Model
     }
 
     /**
-     * Ambil data Podium Top N (default Top 1, 2, 3) + ringkasan peringkat user login untuk Dashboard Home.
+     * Ambil Podium Dashboard HANYA dari cache file jika tersedia (<1ms, nol query database).
+     * Mengembalikan null apabila cache kosong/kedaluwarsa agar halaman Home tidak terblokir query berat.
      */
-    public function getDashboardTopPodium($currentPenggunaId, $limit = 3, $smtInt = null, $yInt = null)
+    public function getCachedDashboardTopPodiumIfWarm($currentPenggunaId, $limit = 3, $smtInt = null, $yInt = null, $ttlSec = 300)
     {
-        $summary = $this->_buildSummaryForUser($currentPenggunaId, $smtInt, $yInt);
+        list($smtInt, $yInt) = $this->_resolveDefaultPeriod($smtInt, $yInt);
+        $cached = $this->_readDashboardPodiumCache($smtInt, $yInt, $ttlSec);
+        if ($cached === null) {
+            return null;
+        }
+        return $this->_buildPodiumResponseFromItems(
+            $cached['items'],
+            $currentPenggunaId,
+            $limit,
+            $cached['sem_label'],
+            $cached['semester'],
+            $cached['tahun']
+        );
+    }
 
-        return [
-            'top_leaders'  => array_slice($summary['scored_list'], 0, max(1, (int)$limit)),
-            'my_ids'       => $summary['target_ids'],
-            'rank'         => $summary['rank'],
-            'total_ranked' => $summary['total_ranked'],
-            'row'          => $summary['row'],
-            'gap_to_above' => $summary['gap_to_above'],
-            'above_name'   => $summary['above_name'],
-            'sem_label'    => $summary['sem_label'],
-            'semester'     => $summary['semester'],
-            'tahun'        => $summary['tahun'],
-        ];
+    /**
+     * Ambil data Podium Top N (default Top 1, 2, 3) + ringkasan peringkat user login untuk Dashboard Home.
+     * Menggunakan shared file cache + file lock agar kalkulasi berat cukup berjalan 1x per TTL.
+     */
+    public function getDashboardTopPodium($currentPenggunaId, $limit = 3, $smtInt = null, $yInt = null, $useCache = true, $ttlSec = 300)
+    {
+        list($smtInt, $yInt) = $this->_resolveDefaultPeriod($smtInt, $yInt);
+        $cached = $useCache ? $this->_readDashboardPodiumCache($smtInt, $yInt, $ttlSec) : null;
+
+        if ($cached === null && $useCache) {
+            $lockFp = @fopen($this->_getDashboardCacheFilePath($smtInt, $yInt) . '.lock', 'c');
+            if ($lockFp) {
+                @flock($lockFp, LOCK_EX);
+                $cached = $this->_readDashboardPodiumCache($smtInt, $yInt, $ttlSec);
+            }
+            if ($cached === null) {
+                $summary = $this->_buildSummaryForUser($currentPenggunaId, $smtInt, $yInt);
+                $this->_writeDashboardPodiumCache($smtInt, $yInt, $summary);
+                $cached = [
+                    'items'     => $summary['scored_list'],
+                    'sem_label' => $summary['sem_label'],
+                    'semester'  => $summary['semester'],
+                    'tahun'     => $summary['tahun'],
+                ];
+            }
+            if ($lockFp) {
+                @flock($lockFp, LOCK_UN);
+                @fclose($lockFp);
+            }
+        } elseif ($cached === null) {
+            $summary = $this->_buildSummaryForUser($currentPenggunaId, $smtInt, $yInt);
+            $cached = [
+                'items'     => $summary['scored_list'],
+                'sem_label' => $summary['sem_label'],
+                'semester'  => $summary['semester'],
+                'tahun'     => $summary['tahun'],
+            ];
+        }
+
+        return $this->_buildPodiumResponseFromItems(
+            $cached['items'],
+            $currentPenggunaId,
+            $limit,
+            $cached['sem_label'],
+            $cached['semester'],
+            $cached['tahun']
+        );
     }
 }

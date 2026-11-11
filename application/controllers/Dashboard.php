@@ -105,9 +105,36 @@ class Dashboard extends CI_Controller
             $page_data['rekap_sisa_cuti_karyawan'] = $this->md_dashboard->getRekapSisaCutiKaryawanTahunBerjalan($pemerintah, $page_data['tahun_berjalan']);
         }
 
-        $page_data['lb_dashboard'] = $this->md_kpi_leaderboard->getDashboardTopPodium($pengguna_id, 3);
+        // Hanya baca cache podium jika sudah hangat (<1ms, nol query berat) agar halaman Home langsung terbuka cepat.
+        $page_data['lb_dashboard'] = $this->md_kpi_leaderboard->getCachedDashboardTopPodiumIfWarm($pengguna_id, 3);
 
         $this->load->view('index', $page_data);
+    }
+
+    /**
+     * Endpoint ringan async untuk memuat Podium Top 1-3 Leaderboard KPI ketika cache belum hangat.
+     */
+    public function ajax_kpi_podium()
+    {
+        grantAccessFor('all');
+
+        $pengguna_id = sessPenggunaId();
+        if (function_exists('session_write_close')) {
+            @session_write_close();
+        }
+
+        $lb_dashboard = $this->md_kpi_leaderboard->getDashboardTopPodium($pengguna_id, 3);
+        $html = $this->load->view('pages/_dashboard_kpi_podium', [
+            'lb_dashboard'  => $lb_dashboard,
+            'lb_async_mode' => false,
+        ], true);
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status' => true,
+                'html'   => $html,
+            ]));
     }
 
     public function pagination_log()
