@@ -34,13 +34,30 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
         $id = decrypt('2w5892');
+        $old_link = 'https://drive.google.com/file/d/1M0LQVW3v1fdr5SSb6v44nL_uYFLmcpGD/view?usp=drive_link';
+        $new_link = 'https://drive.google.com/file/d/19pbl1IFmdeer1IOEt6NUJSUefVIEw4vn/view?usp=drive_link';
+
+        // 1. Update tracking_barang
+        $this->db->where('id_tracking', $id)->update('tracking_barang', [
+            'link_resi' => $new_link
+        ]);
+
+        // 2. Check pengeluaran_barang id 2782
+        $pb = $this->db->get_where('pengeluaran_barang', ['id_pengeluaran_barang' => 2782])->row_array();
+
+        // 3. Check if old_link appears anywhere else in tracking_status
+        $ts_old = $this->db->like('bukti_penerima', '1M0LQVW3v1fdr5SSb6v44nL_uYFLmcpGD')->get('tracking_status')->result_array();
+
+        // 4. Reload updated tracking
         $this->load->model('md_tracking');
         $track = $this->md_tracking->getByWhereIDExtended(['t.id_tracking' => $id]);
-        $status = $this->md_tracking->getUpdateById(['t.id_tracking' => $id]);
+
         echo json_encode([
+            'status' => 'success',
             'id_tracking' => $id,
-            'tracking' => $track,
-            'status' => $status
+            'updated_link_resi' => $track[0]->link_resi,
+            'pengeluaran_barang' => $pb,
+            'tracking_status_old' => $ts_old
         ], JSON_PRETTY_PRINT);
     }
 
