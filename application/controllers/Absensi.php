@@ -2514,16 +2514,16 @@ class Absensi extends CI_Controller
             return;
         }
 
-        // Cari user yang bernama body, bodi, budi, dll
+        // Cari user yang bernama body, bodi, budi, dll atau jabatan security
         $users = $this->db->query("
             SELECT pengguna_id, nama, username, jabatan, id_divisi, is_active 
             FROM pengguna 
             WHERE nama LIKE '%body%' 
                OR nama LIKE '%bodi%' 
                OR nama LIKE '%budi%'
-               OR username LIKE '%body%'
-               OR username LIKE '%bodi%'
-               OR username LIKE '%budi%'
+               OR LOWER(jabatan) LIKE '%security%'
+               OR LOWER(jabatan) LIKE '%satpam%'
+               OR LOWER(nama) LIKE '%satpam%'
             ORDER BY pengguna_id ASC
         ")->result();
 
