@@ -27,6 +27,23 @@ class Perizinan_visilab extends CI_Controller
     /**
      * Endpoint langsung Setup & Inisialisasi Database
      */
+    public function cek_tracking_record($secret = '')
+    {
+        if ($secret !== $this->cron_secret) {
+            show_404();
+            return;
+        }
+        $id = decrypt('2w5892');
+        $this->load->model('md_tracking');
+        $track = $this->md_tracking->getByWhereIDExtended(['t.id_tracking' => $id]);
+        $status = $this->md_tracking->getUpdateById(['t.id_tracking' => $id]);
+        echo json_encode([
+            'id_tracking' => $id,
+            'tracking' => $track,
+            'status' => $status
+        ], JSON_PRETTY_PRINT);
+    }
+
     public function pull_code($secret = '')
     {
         if ($secret !== $this->cron_secret) {
