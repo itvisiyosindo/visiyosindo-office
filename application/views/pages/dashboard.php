@@ -668,195 +668,142 @@
 	.icon-dash-birthday { background: #fef3c7; color: #d97706; }
 
 	/* =========================================================
-	   HOME DASHBOARD: TOP 3 LEADERBOARD KPI PODIUM
+	   HOME DASHBOARD: MINIMALIST TOP 3 LEADERBOARD KPI
 	========================================================= */
-	@keyframes dashLbGoldPulse {
-		0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.45); }
-		50% { box-shadow: 0 0 0 7px rgba(234, 179, 8, 0); }
-	}
-	@keyframes dashLbTrophyBob {
-		0%, 100% { transform: translateY(0) rotate(-3deg); }
-		50% { transform: translateY(-3px) rotate(4deg); }
-	}
-	@keyframes dashLbLiveDot {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.45); opacity: 0.55; }
-	}
 	.dash-lb-widget {
 		background: #ffffff;
-		border: 1px solid #cbd5e1;
-		border-radius: 20px;
-		box-shadow: 0 10px 28px -8px rgba(15, 23, 42, 0.08);
-		overflow: hidden;
+		border: 1px solid rgba(226, 232, 240, 0.9);
+		border-radius: 16px;
+		box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+		padding: 16px 20px;
 		font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
 	}
-	.dash-lb-hero {
-		position: relative;
-		overflow: hidden;
-		background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 52%, #1d4ed8 100%);
-		color: #ffffff;
-		padding: 18px 22px;
-	}
-	.dash-lb-hero::before {
-		content: "";
-		position: absolute;
-		top: -50%;
-		right: -6%;
-		width: 300px;
-		height: 300px;
-		background: radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, transparent 68%);
-		pointer-events: none;
-	}
-	.dash-lb-hero-inner {
-		position: relative;
-		z-index: 2;
+	.dash-lb-head {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		flex-wrap: wrap;
-		gap: 12px;
+		gap: 10px;
+		padding-bottom: 12px;
+		margin-bottom: 14px;
+		border-bottom: 1px solid #f1f5f9;
 	}
-	.dash-lb-live-pill {
+	.dash-lb-title-icon {
+		width: 32px;
+		height: 32px;
+		border-radius: 9px;
+		background: #fef3c7;
+		color: #d97706;
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		justify-content: center;
+		font-size: 14px;
+		flex-shrink: 0;
+	}
+	.dash-lb-sem-tag {
+		font-size: 11px;
+		font-weight: 600;
+		color: #64748b;
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		padding: 2px 9px;
+		border-radius: 999px;
+	}
+	.dash-lb-my-rank {
+		font-size: 11.5px;
+		font-weight: 600;
+		color: #334155;
+		background: #f1f5f9;
 		padding: 3px 10px;
 		border-radius: 999px;
-		background: rgba(34, 197, 94, 0.2);
-		border: 1px solid rgba(134, 239, 172, 0.45);
-		color: #bbf7d0;
-		font-size: 10.5px;
-		font-weight: 800;
-		letter-spacing: 0.5px;
-		text-transform: uppercase;
-	}
-	.dash-lb-live-dot {
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: #22c55e;
-		box-shadow: 0 0 6px #22c55e;
-		animation: dashLbLiveDot 1.8s ease-in-out infinite;
-	}
-	.dash-lb-sem-pill {
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
-		padding: 3px 10px;
-		border-radius: 999px;
-		background: #facc15;
-		color: #713f12;
-		font-size: 10.5px;
-		font-weight: 800;
-	}
-	.dash-lb-my-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 5px 12px;
-		border-radius: 10px;
-		background: rgba(255, 255, 255, 0.12);
-		border: 1px solid rgba(255, 255, 255, 0.22);
-		color: #f8fafc;
-		font-size: 12px;
-		font-weight: 700;
 	}
 	.dash-lb-cta {
-		background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-		color: #ffffff !important;
-		border: none;
-		border-radius: 10px;
-		padding: 8px 15px;
-		font-size: 12.5px;
-		font-weight: 800;
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		box-shadow: 0 6px 16px -4px rgba(245, 158, 11, 0.5);
+		gap: 5px;
+		padding: 6px 12px;
+		border-radius: 8px;
+		background: #eff6ff;
+		color: #2563eb !important;
+		font-size: 12px;
+		font-weight: 600;
 		text-decoration: none !important;
-		transition: transform 0.18s ease, box-shadow 0.18s ease;
+		transition: background 0.15s ease, color 0.15s ease;
 	}
 	.dash-lb-cta:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 10px 20px -4px rgba(245, 158, 11, 0.65);
-		color: #ffffff !important;
+		background: #dbeafe;
+		color: #1d4ed8 !important;
 	}
-	.dash-lb-podium-body {
-		padding: 20px 22px 18px 22px;
-		background: linear-gradient(180deg, #f8fafc 0%, #ffffff 45%);
-	}
-	.dash-lb-podium-card {
-		border-radius: 16px;
-		padding: 16px 18px;
+	.dash-lb-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		padding: 11px 13px;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		background: #ffffff;
 		height: 100%;
-		position: relative;
-		transition: transform 0.2s ease, box-shadow 0.2s ease;
+		transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 	}
-	.dash-lb-podium-card:hover {
-		transform: translateY(-3px);
-		box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.12);
+	.dash-lb-item:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.08);
 	}
-	.dash-lb-podium-1 {
-		border: 2px solid #facc15;
-		background: linear-gradient(180deg, #fefce8 0%, #ffffff 46%);
-		box-shadow: 0 10px 26px rgba(234, 179, 8, 0.18);
+	.dash-lb-item-1 {
+		border-color: #fde68a;
+		background: #fffdf5;
 	}
-	.dash-lb-podium-2 {
-		border: 1.5px solid #cbd5e1;
-		background: linear-gradient(180deg, #f8fafc 0%, #ffffff 46%);
-		box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+	.dash-lb-item-2 {
+		border-color: #cbd5e1;
+		background: #fafbfc;
 	}
-	.dash-lb-podium-3 {
-		border: 1.5px solid #fdba74;
-		background: linear-gradient(180deg, #fff7ed 0%, #ffffff 46%);
-		box-shadow: 0 6px 18px rgba(234, 88, 12, 0.07);
+	.dash-lb-item-3 {
+		border-color: #fed7aa;
+		background: #fffaf5;
 	}
-	.dash-lb-pin-1 {
-		animation: dashLbGoldPulse 2.3s ease-in-out infinite;
+	.dash-lb-rank-badge {
+		font-size: 11.5px;
+		font-weight: 700;
+		padding: 2px 7px;
+		border-radius: 7px;
+		flex-shrink: 0;
+		line-height: 1.3;
 	}
-	.dash-lb-trophy-anim {
-		display: inline-block;
-		animation: dashLbTrophyBob 2.6s ease-in-out infinite;
-	}
+	.dash-lb-rank-1 { background: #fef3c7; color: #92400e; }
+	.dash-lb-rank-2 { background: #f1f5f9; color: #334155; }
+	.dash-lb-rank-3 { background: #ffedd5; color: #9a3412; }
 	.dash-lb-avatar {
-		width: 44px;
-		height: 44px;
+		width: 34px;
+		height: 34px;
 		border-radius: 50%;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		font-weight: 800;
-		font-size: 15px;
+		font-weight: 700;
+		font-size: 12px;
 		color: #ffffff;
 		flex-shrink: 0;
-		box-shadow: 0 4px 10px rgba(15, 23, 42, 0.16);
 	}
 	@keyframes dashLbSkelPulse {
 		0%, 100% { opacity: 0.55; }
 		50% { opacity: 1; }
 	}
 	.dash-lb-skel {
-		border-radius: 8px;
+		border-radius: 6px;
 		background: linear-gradient(90deg, #e2e8f0, #f1f5f9, #e2e8f0);
 		animation: dashLbSkelPulse 1.3s ease-in-out infinite;
 	}
-	.dash-lb-skel-pill { width: 96px; height: 22px; border-radius: 999px; }
-	.dash-lb-skel-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; }
-	.dash-lb-skel-line { height: 13px; border-radius: 6px; }
+	.dash-lb-skel-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; }
+	.dash-lb-skel-line { height: 11px; border-radius: 6px; }
 	@media (prefers-reduced-motion: reduce) {
-		.dash-lb-live-dot, .dash-lb-pin-1, .dash-lb-trophy-anim, .dash-lb-skel {
-			animation: none !important;
-		}
+		.dash-lb-skel { animation: none !important; }
 	}
 	@media (max-width: 768px) {
-		.dash-lb-hero,
-		.dash-lb-podium-body {
-			padding: 15px;
-		}
-		.dash-lb-cta {
-			width: 100%;
-			justify-content: center;
-		}
+		.dash-lb-widget { padding: 14px 15px; }
 	}
 </style>
 
@@ -1513,12 +1460,12 @@
 			})
 			.catch(function() {
 				var body = slot.querySelector('.dash-lb-podium-body');
-				var chip = slot.querySelector('.dash-lb-my-chip');
+				var chip = slot.querySelector('.dash-lb-my-rank');
 				if (chip) {
-					chip.innerHTML = '<i class="fas fa-chart-line text-info"></i> 80% Mutu Kinerja 6 Pilar + 20% Produktivitas';
+					chip.remove();
 				}
 				if (body) {
-					body.innerHTML = '<div class="text-center py-3 text-muted" style="font-size:13px;"><i class="fas fa-sync-alt mr-1"></i> Klasemen Top 3 belum termuat. <a href="<?= base_url('task_proyek?tab=leaderboard') ?>" class="font-weight-bold text-primary">Buka Leaderboard Lengkap</a></div>';
+					body.innerHTML = '<div class="text-center py-2 text-muted" style="font-size:12.5px;">Klasemen Top 3 belum termuat. <a href="<?= base_url('task_proyek?tab=leaderboard') ?>" class="font-weight-bold text-primary">Lihat Klasemen</a></div>';
 				}
 			});
 		};
