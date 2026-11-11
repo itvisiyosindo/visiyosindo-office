@@ -170,7 +170,8 @@ class Audit extends CI_Controller
         $payload = [
             'status_audit'        => $this->input->post('status_audit', TRUE),
             'kelengkapan_invoice' => $this->input->post('kelengkapan_invoice', TRUE),
-            'catatan_audit'       => $this->input->post('catatan_audit', TRUE)
+            'catatan_audit'       => $this->input->post('catatan_audit', TRUE),
+            'link_drive'          => $this->input->post('link_drive', TRUE)
         ];
 
         $ok = $this->md_audit_system->saveAuditKeuanganItem($idPbok, $payload);

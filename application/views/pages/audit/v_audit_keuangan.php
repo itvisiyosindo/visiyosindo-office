@@ -277,6 +277,14 @@
 													Wajib verifikasi fisik / nota
 												</div>
 											<?php endif; ?>
+
+											<div class="mt-1" id="wrap-drive-<?= $row['id_pbok'] ?>" style="<?= empty($row['link_drive']) ? 'display: none;' : '' ?>">
+												<?php if (!empty($row['link_drive'])): ?>
+													<a href="<?= htmlspecialchars($row['link_drive']) ?>" target="_blank" class="badge badge-success px-2 py-1 text-white btn-drive-audit" style="font-size: 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" title="Buka bukti valid hasil audit (Google Drive)">
+														<i class="fab fa-google-drive"></i> Bukti Valid Audit
+													</a>
+												<?php endif; ?>
+											</div>
 										</td>
 										<!-- Status Audit Keuangan -->
 										<td class="text-center" id="cell-status-pbok-<?= $row['id_pbok'] ?>">
@@ -406,6 +414,27 @@
 						</select>
 					</div>
 
+					<!-- Link Google Drive Bukti Valid Hasil Audit -->
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small text-dark d-flex justify-content-between align-items-center">
+							<span><i class="fab fa-google-drive text-success mr-1"></i> Link Google Drive / Bukti Valid Audit</span>
+							<span id="btnPreviewDriveWrapper" style="display: none;">
+								<a href="#" target="_blank" id="btnPreviewDrive" class="badge badge-primary px-2 py-1 text-white" style="font-size: 10.5px; border-radius: 4px; text-decoration: none;">
+									<i class="fas fa-external-link-alt"></i> Buka Link
+								</a>
+							</span>
+						</label>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text bg-white"><i class="fab fa-google-drive text-success"></i></span>
+							</div>
+							<input type="url" name="link_drive" id="keuanganInputLinkDrive" class="form-control" placeholder="https://drive.google.com/... (Link folder / bukti hasil audit)" autocomplete="off">
+						</div>
+						<small class="form-text text-muted" style="font-size: 10.5px;">
+							Tempat menaruh link Drive untuk memverifikasi dokumen invoice/nota versi valid yang diaudit.
+						</small>
+					</div>
+
 					<!-- Catatan Auditor -->
 					<div class="form-group mb-0">
 						<label class="font-weight-bold small text-dark">Catatan Auditor / Tim Finance</label>
@@ -452,7 +481,30 @@
 		$('#modalPbokItems').modal('show');
 	}
 
+	var currentKeuanganRow = null;
+
+	function updateDrivePreview(url) {
+		const wrap = document.getElementById('btnPreviewDriveWrapper');
+		const btn = document.getElementById('btnPreviewDrive');
+		if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+			btn.href = url;
+			wrap.style.display = 'inline-block';
+		} else {
+			wrap.style.display = 'none';
+		}
+	}
+
+	document.addEventListener('DOMContentLoaded', function() {
+		const linkInput = document.getElementById('keuanganInputLinkDrive');
+		if (linkInput) {
+			linkInput.addEventListener('input', function() {
+				updateDrivePreview(this.value.trim());
+			});
+		}
+	});
+
 	function openModalKeuangan(row) {
+		currentKeuanganRow = row;
 		document.getElementById('keuanganIdPbok').value = row.id_pbok;
 		document.getElementById('modalKeuanganKode').textContent = row.kode_pbok;
 		document.getElementById('modalKeuanganNominal').textContent = 'Rp ' + Number(row.total_nominal || 0).toLocaleString('id-ID');
@@ -473,6 +525,10 @@
 		document.getElementById('keuanganSelectStatus').value = row.status_audit || 'Sesuai & Valid';
 		document.getElementById('keuanganSelectKelengkapan').value = row.kelengkapan_invoice || 'Lengkap';
 		document.getElementById('keuanganInputCatatan').value = row.catatan_audit || '';
+
+		const driveVal = row.link_drive || '';
+		document.getElementById('keuanganInputLinkDrive').value = driveVal;
+		updateDrivePreview(driveVal);
 
 		$('#modalAuditKeuangan').modal('show');
 	}
@@ -499,6 +555,14 @@
 				const idPbok = formData.get('id_pbok');
 				const statusVal = formData.get('status_audit');
 				const catatanVal = formData.get('catatan_audit');
+				const linkDriveVal = (formData.get('link_drive') || '').trim();
+
+				if (currentKeuanganRow && String(currentKeuanganRow.id_pbok) === String(idPbok)) {
+					currentKeuanganRow.status_audit = statusVal;
+					currentKeuanganRow.catatan_audit = catatanVal;
+					currentKeuanganRow.link_drive = linkDriveVal;
+					currentKeuanganRow.kelengkapan_invoice = formData.get('kelengkapan_invoice');
+				}
 
 				// Update Status DOM
 				const statusCell = document.getElementById('cell-status-pbok-' + idPbok);
@@ -514,6 +578,22 @@
 						html += `<div class="small text-muted mt-1" style="font-size: 11px;">"${escapeHtml(catatanVal)}"</div>`;
 					}
 					statusCell.innerHTML = html;
+				}
+
+				// Update Drive Link DOM di kolom Invoice & Lampiran
+				const wrapDrive = document.getElementById('wrap-drive-' + idPbok);
+				if (wrapDrive) {
+					if (linkDriveVal) {
+						wrapDrive.style.display = 'block';
+						wrapDrive.innerHTML = `
+							<a href="${escapeHtml(linkDriveVal)}" target="_blank" class="badge badge-success px-2 py-1 text-white btn-drive-audit" style="font-size: 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" title="Buka bukti valid hasil audit (Google Drive)">
+								<i class="fab fa-google-drive"></i> Bukti Valid Audit
+							</a>
+						`;
+					} else {
+						wrapDrive.style.display = 'none';
+						wrapDrive.innerHTML = '';
+					}
 				}
 
 				$('#modalAuditKeuangan').modal('hide');

@@ -73,6 +73,7 @@ class Md_audit_system extends CI_Model
 
         // Jika tabel sudah ada di DB, tidak perlu jalankan CREATE TABLE lagi (menghemat metadata locks)
         if ($this->hasTable('sasaran_mutu_records') && $this->hasTable('audit_kinerja_records') && $this->hasTable('audit_keuangan_records')) {
+            $this->ensureAuditKeuanganColumns();
             return;
         }
 
@@ -122,14 +123,33 @@ class Md_audit_system extends CI_Model
                 status_audit VARCHAR(50) DEFAULT 'Belum Diverifikasi',
                 catatan_audit TEXT,
                 kelengkapan_invoice VARCHAR(50) DEFAULT 'Lengkap',
+                link_drive TEXT,
                 audited_by INT,
                 audited_by_name VARCHAR(150),
                 updated_at DATETIME,
                 UNIQUE KEY uq_pbok (id_pbok)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        } else {
+            $this->ensureAuditKeuanganColumns();
         }
 
         $this->db->db_debug = $orig;
+    }
+
+    /**
+     * Memastikan kolom link_drive tersedia di tabel audit_keuangan_records
+     */
+    private function ensureAuditKeuanganColumns()
+    {
+        if ($this->hasTable('audit_keuangan_records')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $fields = @$this->db->list_fields('audit_keuangan_records');
+            if (is_array($fields) && !in_array('link_drive', $fields)) {
+                @$this->db->query("ALTER TABLE audit_keuangan_records ADD COLUMN link_drive TEXT NULL AFTER kelengkapan_invoice;");
+            }
+            $this->db->db_debug = $orig;
+        }
     }
 
     /**
@@ -1546,6 +1566,7 @@ class Md_audit_system extends CI_Model
                     $statusAudit = isset($auditInfo['status_audit']) ? $auditInfo['status_audit'] : ($hasLampiran ? 'Lampiran Tersedia' : 'Belum Ada Lampiran');
                     $catatanAudit = isset($auditInfo['catatan_audit']) ? $auditInfo['catatan_audit'] : '';
                     $kelengkapanInvoice = isset($auditInfo['kelengkapan_invoice']) ? $auditInfo['kelengkapan_invoice'] : ($hasLampiran ? 'Lengkap' : 'Tidak Ada File');
+                    $linkDrive = isset($auditInfo['link_drive']) ? $auditInfo['link_drive'] : '';
 
                     if ($status && $status !== 'all') {
                         if (strcasecmp($statusAudit, $status) !== 0) {
@@ -1579,6 +1600,7 @@ class Md_audit_system extends CI_Model
                         'status_audit'         => $statusAudit,
                         'kelengkapan_invoice'  => $kelengkapanInvoice,
                         'catatan_audit'        => $catatanAudit,
+                        'link_drive'           => $linkDrive,
                         'audited_by_name'      => isset($auditInfo['audited_by_name']) ? $auditInfo['audited_by_name'] : '',
                         'updated_at'           => isset($auditInfo['updated_at']) ? $auditInfo['updated_at'] : ''
                     ];
@@ -1638,12 +1660,14 @@ class Md_audit_system extends CI_Model
         $statusAudit = isset($payload['status_audit']) ? trim($payload['status_audit']) : 'Sesuai & Valid';
         $kelengkapanInvoice = isset($payload['kelengkapan_invoice']) ? trim($payload['kelengkapan_invoice']) : 'Lengkap';
         $catatanAudit = isset($payload['catatan_audit']) ? trim($payload['catatan_audit']) : '';
+        $linkDrive = isset($payload['link_drive']) ? trim($payload['link_drive']) : '';
 
         $record = [
             'id_pbok'              => $idPbok,
             'status_audit'         => $statusAudit,
             'kelengkapan_invoice'  => $kelengkapanInvoice,
             'catatan_audit'        => $catatanAudit,
+            'link_drive'           => $linkDrive,
             'audited_by'           => $userId,
             'audited_by_name'      => $userName,
             'updated_at'           => $now
@@ -1651,6 +1675,7 @@ class Md_audit_system extends CI_Model
 
         // 1. Simpan DB jika tabel tersedia
         if ($this->hasTable('audit_keuangan_records')) {
+            $this->ensureAuditKeuanganColumns();
             $orig = $this->db->db_debug;
             $this->db->db_debug = FALSE;
             $exist = @$this->db->get_where('audit_keuangan_records', ['id_pbok' => $idPbok])->row();
