@@ -161,12 +161,15 @@ class Task_proyek extends CI_Controller
         $filterBulan    = $this->input->get('bulan', TRUE);
         $filterTahun    = $this->input->get('tahun', TRUE);
 
-        if ($filterSemester !== '1' && $filterSemester !== '2') {
-            if (!empty($filterBulan) && (int)$filterBulan >= 1 && (int)$filterBulan <= 12) {
-                $filterSemester = ((int)$filterBulan <= 6) ? '1' : '2';
-            } else {
-                $filterSemester = ((int)date('n') <= 6) ? '1' : '2';
-            }
+        $lbBulanInt = (!empty($filterBulan) && is_numeric($filterBulan) && (int)$filterBulan >= 1 && (int)$filterBulan <= 12)
+            ? (int)$filterBulan
+            : null;
+        $filterBulan = ($lbBulanInt !== null) ? (string)$lbBulanInt : '';
+
+        if ($lbBulanInt !== null) {
+            $filterSemester = ($lbBulanInt <= 6) ? '1' : '2';
+        } elseif ($filterSemester !== '1' && $filterSemester !== '2') {
+            $filterSemester = ((int)date('n') <= 6) ? '1' : '2';
         }
         if (empty($filterTahun) || $filterTahun === 'all' || !is_numeric($filterTahun)) {
             $filterTahun = date('Y');
@@ -369,8 +372,8 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        // 4. Leaderboard & Rekap Rating Kinerja Karyawan per Semester (via shared Md_kpi_leaderboard)
-        $lbBundle      = $this->md_kpi_leaderboard->buildLeaderboard($smtInt, $yInt, $myReceiverIds);
+        // 4. Leaderboard & Rekap Rating Kinerja Karyawan per Semester / Per Bulan (via shared Md_kpi_leaderboard)
+        $lbBundle      = $this->md_kpi_leaderboard->buildLeaderboard($smtInt, $yInt, $myReceiverIds, $lbBulanInt);
         $leaderboard   = $lbBundle['leaderboard'];
         $myCombinedKpi = $lbBundle['my_combined'];
 
@@ -389,6 +392,10 @@ class Task_proyek extends CI_Controller
         $page_data['viewMode']                = $viewMode;
         $page_data['filterSemester']          = $filterSemester;
         $page_data['semLabel']                = $semLabel;
+        $page_data['lbLabel']                 = $lbBundle['sem_label'];
+        $page_data['lbIsMonthly']             = !empty($lbBundle['is_monthly']);
+        $page_data['lbStart']                 = $lbBundle['sem_start'];
+        $page_data['lbEnd']                   = $lbBundle['sem_end'];
         $page_data['filterBulan']             = $filterBulan;
         $page_data['filterTahun']             = $filterTahun;
         $page_data['namaBulanList']           = [

@@ -1864,6 +1864,8 @@ $namaBulanList = [
             break;
         }
     }
+    $lbActiveLabel = !empty($lbLabel) ? (string)$lbLabel : (string)$semLabel;
+    $lbMonthlyMode = !empty($lbIsMonthly);
     ?>
 
     <!-- ARENA HERO BANNER & ACTION COMMAND -->
@@ -1872,12 +1874,12 @@ $namaBulanList = [
             <div>
                 <div class="tp-arena-live-pill">
                     <span class="tp-arena-live-dot"></span>
-                    Performance &amp; Task Arena &bull; <?= htmlspecialchars($semLabel) ?> <?= (int)$filterTahun ?>
+                    Performance &amp; Task Arena &bull; <?= htmlspecialchars($lbActiveLabel) ?>
                 </div>
 
                 <?php if ($myRankPos > 0 && $myLbRow !== null): ?>
                     <div class="tp-arena-title">
-                        <span>Klasemen KPI Anda:</span>
+                        <span>Klasemen KPI <?= $lbMonthlyMode ? '(Bulanan)' : '' ?> Anda:</span>
                         <span class="tp-arena-rank-pill">
                             <?php if ($myRankPos === 1): ?>
                                 <i class="fas fa-crown"></i> #1 PEMIMPIN KLASEMEN
@@ -1965,16 +1967,24 @@ $namaBulanList = [
                 <?php if (!empty($viewMode)): ?>
                     <input type="hidden" name="mode" value="<?= htmlspecialchars($viewMode) ?>">
                 <?php endif; ?>
+                <input type="hidden" name="tab" id="tpTopFilterTab" value="<?= $openTabLeaderboard ? 'leaderboard' : '' ?>">
 
                 <label class="font-weight-bold text-dark mr-1 mb-0" style="font-size: 13px;">
-                    <i class="far fa-calendar-alt text-primary mr-1"></i> Periode Semester:
+                    <i class="far fa-calendar-alt text-primary mr-1"></i> Periode:
                 </label>
-                <select name="semester" class="form-control form-control-sm" style="min-width: 195px; border-radius: 8px;">
+                <select name="semester" id="tpTopFilterSemester" class="form-control form-control-sm" style="min-width: 185px; border-radius: 8px;">
                     <option value="1" <?= ((string)($filterSemester ?? '') === '1') ? 'selected' : '' ?>>Semester 1 (Januari – Juni)</option>
                     <option value="2" <?= ((string)($filterSemester ?? '') === '2') ? 'selected' : '' ?>>Semester 2 (Juli – Desember)</option>
                 </select>
 
-                <select name="tahun" class="form-control form-control-sm" style="min-width: 95px; border-radius: 8px;">
+                <select name="bulan" id="tpTopFilterBulan" class="form-control form-control-sm" style="min-width: 165px; border-radius: 8px;" title="Filter Leaderboard KPI per Bulan">
+                    <option value="">-- Semua Bulan (Leaderboard) --</option>
+                    <?php foreach ($namaBulanList as $bNum => $bNama): ?>
+                        <option value="<?= $bNum ?>" <?= ((string)($filterBulan ?? '') === (string)$bNum) ? 'selected' : '' ?>>Bulan <?= $bNama ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <select name="tahun" class="form-control form-control-sm" style="min-width: 90px; border-radius: 8px;">
                     <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
                         <option value="<?= $y ?>" <?= ((string)$filterTahun === (string)$y) ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
@@ -2872,9 +2882,13 @@ $namaBulanList = [
                                         <span class="tp-lb-live-dot"></span> LIVE KLASEMEN
                                     </span>
                                     <span class="badge px-2 py-1" style="background: #facc15; color: #713f12; font-weight: 800; font-size: 11px; border-radius: 999px;">
-                                        <i class="fas fa-bolt mr-1 tp-lb-bolt-anim"></i> ARENA KPI <?= strtoupper(htmlspecialchars($semLabel ?? '')) ?>
+                                        <i class="fas fa-bolt mr-1 tp-lb-bolt-anim"></i> ARENA KPI <?= strtoupper(htmlspecialchars($lbActiveLabel)) ?>
                                     </span>
-                                    <span class="tp-lb-chip"><i class="fas fa-sync-alt tp-lb-spin-slow"></i> Reset Per Semester</span>
+                                    <?php if ($lbMonthlyMode): ?>
+                                        <span class="tp-lb-chip"><i class="fas fa-calendar-day"></i> Mode Bulanan (<?= htmlspecialchars($lbStart ?? '') ?> s/d <?= htmlspecialchars($lbEnd ?? '') ?>)</span>
+                                    <?php else: ?>
+                                        <span class="tp-lb-chip"><i class="fas fa-sync-alt tp-lb-spin-slow"></i> Reset Per Semester</span>
+                                    <?php endif; ?>
                                     <span class="tp-lb-chip"><i class="fas fa-balance-scale"></i> 80% Mutu + 20% Volume</span>
                                 </div>
                                 <h4 class="font-weight-bold mb-1" style="color: #ffffff; letter-spacing: -0.3px;">
@@ -2899,6 +2913,58 @@ $namaBulanList = [
                                 <span class="badge badge-danger px-2 py-1" style="border-radius: 8px;">Grade D &lt; 65</span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Filter Khusus Periode Leaderboard (Semester / Bulan) -->
+                    <?php
+                    $curNowMonth = (int)date('n');
+                    $curNowYear  = (int)date('Y');
+                    $navQueryPrefix  = (!empty($switch) && $switch === 'kepegawaian') ? 'nav=kepegawaian&' : '';
+                    $modeQueryPrefix = (!empty($viewMode)) ? ('mode=' . urlencode($viewMode) . '&') : '';
+                    $urlLbSemester   = base_url('task_proyek?' . $navQueryPrefix . $modeQueryPrefix . 'tab=leaderboard&semester=' . (int)$filterSemester . '&tahun=' . (int)$filterTahun);
+                    $urlLbThisMonth  = base_url('task_proyek?' . $navQueryPrefix . $modeQueryPrefix . 'tab=leaderboard&bulan=' . $curNowMonth . '&tahun=' . $curNowYear);
+                    $isCurMonthSelected = ($lbMonthlyMode && (int)$filterBulan === $curNowMonth && (int)$filterTahun === $curNowYear);
+                    ?>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 p-3" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; gap: 10px; box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);">
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <span class="font-weight-bold text-dark" style="font-size: 12.5px;">
+                                <i class="fas fa-calendar-check text-primary mr-1"></i> Filter Klasemen:
+                            </span>
+                            <a href="<?= $urlLbSemester ?>" class="btn btn-sm <?= !$lbMonthlyMode ? 'btn-primary font-weight-bold' : 'btn-outline-secondary' ?>" style="border-radius: 999px; font-size: 12px; padding: 4px 12px;">
+                                <i class="fas fa-layer-group mr-1"></i> 1 Semester Penuh
+                            </a>
+                            <a href="<?= $urlLbThisMonth ?>" class="btn btn-sm <?= $isCurMonthSelected ? 'btn-warning font-weight-bold text-dark' : 'btn-outline-secondary' ?>" style="border-radius: 999px; font-size: 12px; padding: 4px 12px;">
+                                <i class="fas fa-bolt mr-1"></i> Bulan Ini (<?= $namaBulanList[$curNowMonth] ?>)
+                            </a>
+                        </div>
+
+                        <form method="GET" action="<?= base_url('task_proyek') ?>" class="form-inline" style="gap: 7px; display: flex; flex-wrap: wrap; align-items: center;">
+                            <?php if (!empty($switch) && $switch === 'kepegawaian'): ?>
+                                <input type="hidden" name="nav" value="kepegawaian">
+                            <?php endif; ?>
+                            <?php if (!empty($viewMode)): ?>
+                                <input type="hidden" name="mode" value="<?= htmlspecialchars($viewMode) ?>">
+                            <?php endif; ?>
+                            <input type="hidden" name="tab" value="leaderboard">
+                            <input type="hidden" name="semester" value="<?= htmlspecialchars($filterSemester) ?>">
+
+                            <select name="bulan" class="form-control form-control-sm" onchange="this.form.submit()" style="min-width: 175px; border-radius: 8px; font-weight: 600;">
+                                <option value="">-- Semua Bulan (1 Semester) --</option>
+                                <?php foreach ($namaBulanList as $bNum => $bNama): ?>
+                                    <option value="<?= $bNum ?>" <?= ((string)($filterBulan ?? '') === (string)$bNum) ? 'selected' : '' ?>>Bulan <?= $bNama ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <select name="tahun" class="form-control form-control-sm" onchange="this.form.submit()" style="min-width: 85px; border-radius: 8px; font-weight: 600;">
+                                <?php for ($y = date('Y') + 1; $y >= 2024; $y--): ?>
+                                    <option value="<?= $y ?>" <?= ((string)$filterTahun === (string)$y) ? 'selected' : '' ?>><?= $y ?></option>
+                                <?php endfor; ?>
+                            </select>
+
+                            <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 8px; font-weight: 700; padding: 4px 12px;">
+                                <i class="fas fa-search mr-1"></i> Tampilkan
+                            </button>
+                        </form>
                     </div>
 
                     <!-- Top 3 Champions Podium & Rank 4-5 Spotlight -->
@@ -5220,9 +5286,22 @@ document.addEventListener('DOMContentLoaded', function() {
     $('.nav-tabs-tp a[data-toggle="tab"]').on('shown.bs.tab', function() {
         $('.nav-tabs-tp > li').removeClass('active');
         $(this).closest('li').addClass('active');
+        var href = $(this).attr('href') || '';
+        $('#tpTopFilterTab').val(href === '#tab_leaderboard' ? 'leaderboard' : '');
         if ($.fn.dataTable) {
             $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         }
+    });
+
+    // Sinkronkan pilihan Bulan & Semester di Filter Bar atas agar tidak bertentangan
+    $('#tpTopFilterBulan').on('change', function() {
+        var m = parseInt($(this).val(), 10);
+        if (!isNaN(m) && m >= 1 && m <= 12) {
+            $('#tpTopFilterSemester').val(m <= 6 ? '1' : '2');
+        }
+    });
+    $('#tpTopFilterSemester').on('change', function() {
+        $('#tpTopFilterBulan').val('');
     });
 
     // Quick-jump dari Arena Hero ke Tab Leaderboard KPI

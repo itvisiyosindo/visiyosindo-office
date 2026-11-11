@@ -303,15 +303,31 @@ class Md_kpi_leaderboard extends CI_Model
     }
 
     /**
-     * Bangun Leaderboard KPI Lengkap untuk semester & tahun tertentu.
+     * Bangun Leaderboard KPI Lengkap untuk periode semester atau bulan tertentu.
      */
-    public function buildLeaderboard($smtInt, $yInt, array $targetReceiverIds = [])
+    public function buildLeaderboard($smtInt, $yInt, array $targetReceiverIds = [], $bulanInt = null)
     {
-        $smtInt   = ((int)$smtInt === 1) ? 1 : 2;
-        $yInt     = ((int)$yInt > 0) ? (int)$yInt : (int)date('Y');
-        $semStart = ($smtInt === 1) ? "{$yInt}-01-01" : "{$yInt}-07-01";
-        $semEnd   = ($smtInt === 1) ? "{$yInt}-06-30" : "{$yInt}-12-31";
-        $semLabel = ($smtInt === 1) ? "Semester 1 (Jan–Jun {$yInt})" : "Semester 2 (Jul–Des {$yInt})";
+        $bulanInt  = ($bulanInt !== null && is_numeric($bulanInt) && (int)$bulanInt >= 1 && (int)$bulanInt <= 12) ? (int)$bulanInt : null;
+        $isMonthly = ($bulanInt !== null);
+        $smtInt    = $isMonthly ? (($bulanInt <= 6) ? 1 : 2) : (((int)$smtInt === 1) ? 1 : 2);
+        $yInt      = ((int)$yInt > 0) ? (int)$yInt : (int)date('Y');
+
+        if ($isMonthly) {
+            $mPad     = str_pad((string)$bulanInt, 2, '0', STR_PAD_LEFT);
+            $lastDay  = (int)date('t', strtotime("{$yInt}-{$mPad}-01"));
+            $semStart = "{$yInt}-{$mPad}-01";
+            $semEnd   = "{$yInt}-{$mPad}-" . str_pad((string)$lastDay, 2, '0', STR_PAD_LEFT);
+            $namaBulanList = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+            ];
+            $semLabel = 'Bulan ' . $namaBulanList[$bulanInt] . ' ' . $yInt;
+        } else {
+            $semStart = ($smtInt === 1) ? "{$yInt}-01-01" : "{$yInt}-07-01";
+            $semEnd   = ($smtInt === 1) ? "{$yInt}-06-30" : "{$yInt}-12-31";
+            $semLabel = ($smtInt === 1) ? "Semester 1 (Jan–Jun {$yInt})" : "Semester 2 (Jul–Des {$yInt})";
+        }
 
         $accountMergeMap  = $this->getAccountMergeMap();
         $duplicateIds     = array_keys($accountMergeMap);
@@ -327,7 +343,11 @@ class Md_kpi_leaderboard extends CI_Model
         $absFullEnd      = $semEnd;
         $absEnd          = ($absFullEnd > $todayYmd) ? $todayYmd : $absFullEnd;
         $currentSmt      = ((int)date('n') <= 6) ? 1 : 2;
-        $spRefDate       = ($yInt === (int)date('Y') && $smtInt === $currentSmt) ? $todayYmd : $semEnd;
+        if ($isMonthly) {
+            $spRefDate = ($yInt === (int)date('Y') && $bulanInt === (int)date('n')) ? $todayYmd : $semEnd;
+        } else {
+            $spRefDate = ($yInt === (int)date('Y') && $smtInt === $currentSmt) ? $todayYmd : $semEnd;
+        }
         $wherePeriodeAbs = ($absEnd < $absStart)
             ? " AND 1 = 0"
             : " AND a.data_created >= '{$absStart} 00:00:00' AND a.data_created <= '{$absEnd} 23:59:59'";
@@ -585,10 +605,15 @@ class Md_kpi_leaderboard extends CI_Model
             $spKode  = $spInfo ? $spInfo['kode'] : '';
             $spAkhir = $spInfo ? $spInfo['tgl_akhir'] : '';
 
-            $volTask = min(100.0, ((int)$lb->task_selesai / 2) * 100.0);
-            $volLap  = min(100.0, ((int)$lb->total_poin_laporan / 120) * 100.0);
-            $volPenc = min(100.0, ((int)$lb->total_pencapaian / 10) * 100.0);
-            $volPk   = min(100.0, ((int)$lb->total_pk / 1) * 100.0);
+            $targetVolTask = $isMonthly ? 1 : 2;
+            $targetVolLap  = $isMonthly ? 20 : 120;
+            $targetVolPenc = $isMonthly ? 2 : 10;
+            $targetVolPk   = 1;
+
+            $volTask = min(100.0, ((int)$lb->task_selesai / $targetVolTask) * 100.0);
+            $volLap  = min(100.0, ((int)$lb->total_poin_laporan / $targetVolLap) * 100.0);
+            $volPenc = min(100.0, ((int)$lb->total_pencapaian / $targetVolPenc) * 100.0);
+            $volPk   = min(100.0, ((int)$lb->total_pk / $targetVolPk) * 100.0);
 
             if ($isExemptPk) {
                 $pillarDefs = [
@@ -796,6 +821,8 @@ class Md_kpi_leaderboard extends CI_Model
             'sem_end'     => $semEnd,
             'sem_label'   => $semLabel,
             'semester'    => $smtInt,
+            'bulan'       => $bulanInt,
+            'is_monthly'  => $isMonthly,
             'tahun'       => $yInt,
         ];
     }
