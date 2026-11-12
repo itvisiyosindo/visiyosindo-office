@@ -30,12 +30,20 @@ class Md_asset_passport extends CI_Model
      */
     public function ensure_tables()
     {
-        if (self::$initialized || !isset($this->db) || !$this->db->conn_id) {
-            return false;
+        if (self::$initialized) {
+            return true;
         }
 
-        $origDebug = $this->db->db_debug;
-        $this->db->db_debug = FALSE;
+        $db = $this->db;
+        if (!$db) {
+            return false;
+        }
+        if (empty($db->conn_id)) {
+            $db->initialize();
+        }
+
+        $origDebug = $db->db_debug;
+        $db->db_debug = FALSE;
 
         $sqlPassport = "CREATE TABLE IF NOT EXISTS `{$this->table}` (
             `id_passport` INT(11) NOT NULL AUTO_INCREMENT,
@@ -76,7 +84,7 @@ class Md_asset_passport extends CI_Model
             KEY `idx_pengujian` (`id_pengujian`),
             KEY `idx_status_data` (`status_data`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-        @$this->db->query($sqlPassport);
+        $this->_execCreateTable($sqlPassport);
 
         $sqlService = "CREATE TABLE IF NOT EXISTS `{$this->table_service}` (
             `id_service` INT(11) NOT NULL AUTO_INCREMENT,
@@ -102,7 +110,7 @@ class Md_asset_passport extends CI_Model
             KEY `idx_passport_srv` (`id_passport`),
             KEY `idx_tiket_srv` (`id_tiket`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-        @$this->db->query($sqlService);
+        $this->_execCreateTable($sqlService);
 
         $sqlLog = "CREATE TABLE IF NOT EXISTS `{$this->table_log}` (
             `id_log` INT(11) NOT NULL AUTO_INCREMENT,
@@ -116,23 +124,39 @@ class Md_asset_passport extends CI_Model
             KEY `idx_passport_log` (`id_passport`),
             KEY `idx_aksi_ip` (`aksi`, `ip_address`, `created_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-        @$this->db->query($sqlLog);
+        $this->_execCreateTable($sqlLog);
 
         // Kolom relasi aman pada tabel eksisting
-        if ($this->db->table_exists('tiket')) {
+        if ($db->table_exists('tiket')) {
             $this->_addColumnIfMissing('tiket', 'id_passport', 'INT(11) DEFAULT NULL');
         }
-        if ($this->db->table_exists('preventif_maintenance')) {
+        if ($db->table_exists('preventif_maintenance')) {
             $this->_addColumnIfMissing('preventif_maintenance', 'id_passport', 'INT(11) DEFAULT NULL');
         }
-        if ($this->db->table_exists('task_proyek')) {
+        if ($db->table_exists('task_proyek')) {
             $this->_addColumnIfMissing('task_proyek', 'id_tiket', 'INT(11) DEFAULT NULL');
             $this->_addColumnIfMissing('task_proyek', 'id_passport', 'INT(11) DEFAULT NULL');
         }
 
-        $this->db->db_debug = $origDebug;
-        self::$initialized = true;
-        return true;
+        $db->db_debug = $origDebug;
+        if ($db->table_exists($this->table)) {
+            self::$initialized = true;
+            return true;
+        }
+        return false;
+    }
+
+    private function _execCreateTable($sql)
+    {
+        $ok = @$this->db->query($sql);
+        if (!$ok) {
+            $fallback = str_replace(
+                ['DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci', 'DEFAULT CHARSET=utf8mb4'],
+                'DEFAULT CHARSET=utf8',
+                $sql
+            );
+            @$this->db->query($fallback);
+        }
     }
 
     private function _addColumnIfMissing($table, $column, $definition)
