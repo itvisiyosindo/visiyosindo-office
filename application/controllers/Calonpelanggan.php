@@ -669,29 +669,104 @@ class calonpelanggan extends CI_Controller
         $kolom = 5;
         $nomor = 1;
 
-        foreach ($data as $marketing) {
+        // Kelompokkan data per calon pelanggan agar Nama RS tidak berulang jika memiliki banyak Modality / PIC
+        $groupedData = [];
+        foreach ($data as $row) {
+            $cid = $row->id;
+            if (!isset($groupedData[$cid])) {
+                $groupedData[$cid] = [
+                    'info'       => $row,
+                    'modalities' => [],
+                    'pics'       => []
+                ];
+            }
 
+            if (!empty($row->id_modality)) {
+                $groupedData[$cid]['modalities'][$row->id_modality] = [
+                    'kategori' => $row->kategorimodality,
+                    'merk'     => $row->merkmodality,
+                    'nama'     => $row->namamodality
+                ];
+            }
+
+            if (!empty($row->id_pic)) {
+                $groupedData[$cid]['pics'][$row->id_pic] = [
+                    'nama'    => $row->namapic,
+                    'jabatan' => $row->jabatanpic,
+                    'telepon' => $row->teleponpic
+                ];
+            }
+        }
+
+        $mergeCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'M', 'N', 'O', 'P', 'Q'];
+
+        foreach ($groupedData as $group) {
+            $marketing  = $group['info'];
+            $modalities = !empty($group['modalities']) ? array_values($group['modalities']) : [
+                ['kategori' => '', 'merk' => '', 'nama' => '']
+            ];
+            $pics = array_values($group['pics']);
+
+            $namapic_list    = [];
+            $jabatanpic_list = [];
+            $teleponpic_list = [];
+            foreach ($pics as $p) {
+                if (trim((string)$p['nama']) !== '')    $namapic_list[]    = $p['nama'];
+                if (trim((string)$p['jabatan']) !== '') $jabatanpic_list[] = $p['jabatan'];
+                if (trim((string)$p['telepon']) !== '') $teleponpic_list[] = $p['telepon'];
+            }
+
+            $namapic_str    = implode("\n", $namapic_list);
+            $jabatanpic_str = implode("\n", $jabatanpic_list);
+            $teleponpic_str = implode("\n", $teleponpic_list);
+
+            $startRow = $kolom;
+            $modCount = count($modalities);
+            $endRow   = $startRow + $modCount - 1;
+
+            // Set informasi utama calon pelanggan pada baris pertama grup
             $spreadsheet->setActiveSheetIndex(0)
-                ->setCellValue('A' . $kolom, $nomor)
-                ->setCellValue('B' . $kolom, $marketing->kodecaloncustomer)
-                ->setCellValue('C' . $kolom, $marketing->namamarketing)
-                ->setCellValue('D' . $kolom, $marketing->namacaloncustomer)
-                ->setCellValue('E' . $kolom, $marketing->tipecustomer)
-                ->setCellValue('F' . $kolom, $marketing->alamatcaloncustomer)
-                ->setCellValue('G' . $kolom, $marketing->kota)
-                ->setCellValue('H' . $kolom, $marketing->provinsi)
-                ->setCellValue('I' . $kolom, date('j F Y', strtotime($marketing->data_created)))
-                ->setCellValue('J' . $kolom, $marketing->kategorimodality)
-                ->setCellValue('K' . $kolom, $marketing->merkmodality)
-                ->setCellValue('L' . $kolom, $marketing->namamodality)
-                ->setCellValue('M' . $kolom, $marketing->namapic)
-                ->setCellValue('N' . $kolom, $marketing->jabatanpic)
-                ->setCellValue('O' . $kolom, $marketing->teleponpic)
-                ->setCellValue('P' . $kolom, $marketing->email)
-                ->setCellValue('Q' . $kolom, $marketing->website);
+                ->setCellValue('A' . $startRow, $nomor)
+                ->setCellValue('B' . $startRow, $marketing->kodecaloncustomer)
+                ->setCellValue('C' . $startRow, $marketing->namamarketing)
+                ->setCellValue('D' . $startRow, $marketing->namacaloncustomer)
+                ->setCellValue('E' . $startRow, $marketing->tipecustomer)
+                ->setCellValue('F' . $startRow, $marketing->alamatcaloncustomer)
+                ->setCellValue('G' . $startRow, $marketing->kota)
+                ->setCellValue('H' . $startRow, $marketing->provinsi)
+                ->setCellValue('I' . $startRow, date('j F Y', strtotime($marketing->data_created)))
+                ->setCellValue('M' . $startRow, $namapic_str)
+                ->setCellValue('N' . $startRow, $jabatanpic_str)
+                ->setCellValue('O' . $startRow, $teleponpic_str)
+                ->setCellValue('P' . $startRow, $marketing->email)
+                ->setCellValue('Q' . $startRow, $marketing->website);
 
-            $kolom++;
+            // Set baris-baris modality
+            foreach ($modalities as $idx => $mod) {
+                $curRow = $startRow + $idx;
+                $spreadsheet->setActiveSheetIndex(0)
+                    ->setCellValue('J' . $curRow, $mod['kategori'])
+                    ->setCellValue('K' . $curRow, $mod['merk'])
+                    ->setCellValue('L' . $curRow, $mod['nama']);
+            }
+
+            // Merge cell kolom utama jika modality lebih dari 1
+            if ($endRow > $startRow) {
+                foreach ($mergeCols as $colLetter) {
+                    $sheet->mergeCells($colLetter . $startRow . ':' . $colLetter . $endRow);
+                }
+            }
+
+            if (count($pics) > 1) {
+                $sheet->getStyle('M' . $startRow . ':O' . $startRow)->getAlignment()->setWrapText(true);
+            }
+
+            $kolom = $endRow + 1;
             $nomor++;
+        }
+
+        if ($kolom > 5) {
+            $sheet->getStyle('A5:Q' . ($kolom - 1))->applyFromArray($style_row);
         }
 
         // Set width kolom

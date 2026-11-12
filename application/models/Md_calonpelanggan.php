@@ -181,6 +181,9 @@ class Md_calonpelanggan extends CI_Model
     function getAllCalonPelangganByTGL($pengguna_id = NULL, $tglawal, $tglakhir)
     {
         $this->db->order_by('capel.data_created', 'DESC');
+        $this->db->order_by('capel.id', 'DESC');
+        $this->db->order_by('pelmod.id', 'ASC');
+        $this->db->order_by('pic.id', 'ASC');
         //return $this->db
         $query = $this->db
             ->select('
@@ -202,9 +205,11 @@ class Md_calonpelanggan extends CI_Model
                 capel.email,
                 capel.website,
                 capel.data_created,
+                pelmod.id as id_modality,
                 pelmod.nama as namamodality,
                 pelmod.merk as merkmodality,
                 masmod.nama as kategorimodality,
+                pic.id as id_pic,
                 pic.namapic,
                 pic.jabatanpic,
                 pic.teleponpic
@@ -215,10 +220,11 @@ class Md_calonpelanggan extends CI_Model
             ->join('pengguna p', 'capel.idmarketing=p.pengguna_id')
             ->join('provinsi prov', 'capel.provinsi=prov.kode')
             ->join('kota kot', 'capel.kota = kot.id')
-            ->join('pelanggananmodality pelmod', 'capel.id = pelmod.id_pelanggan', 'left')
+            ->join('pelanggananmodality pelmod', 'capel.id = pelmod.id_pelanggan AND pelmod.deleted = 0', 'left')
             ->join('masterkategorimodality masmod', 'pelmod.kategori=masmod.id', 'left')
-            ->join('calonpelangganpic pic', 'capel.id=pic.idpic', 'left')
+            ->join('calonpelangganpic pic', 'capel.id=pic.idpic AND pic.deleted = 0', 'left')
             //->where('capel.idmarketing', $pengguna_id)
+            ->where('capel.deleted', 0)
             ->where('capel.data_created >=', date('Y-m-d', strtotime($tglawal)))
             ->where('capel.data_created <=', date('Y-m-d', strtotime($tglakhir)));
         //->get()
