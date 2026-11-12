@@ -34,11 +34,7 @@ class Funnel extends CI_Controller
         $page_data['page_name']     = 'marketing/v_funnels';
         $page_data['page_title']    = 'Funnel';
         $page_data['page_desc']     = 'Management Data Funnel';
-        if (isAdmin() || isHrd() || isCRO()) {
-            $page_data['pelanggan']  = $this->md_calonpelanggan->getAllCalonPelangganFunnel();
-        } else {
-            $page_data['pelanggan']  = $this->md_calonpelanggan->getAllCalonPelangganFunnelByPenggunaID(sessPenggunaId());
-        }
+        $page_data['pelanggan']     = $this->md_calonpelanggan->getAllCalonPelangganFunnel();
 
 
         $page_data['statusfunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(1);
@@ -63,11 +59,7 @@ class Funnel extends CI_Controller
         $page_data['page_name']     = 'marketing/v_funnels_beta';
         $page_data['page_title']    = 'Funnel';
         $page_data['page_desc']     = 'Management Data Funnel';
-        if (isAdmin() || isHrd() || isCRO()) {
-            $page_data['pelanggan']  = $this->md_calonpelanggan->getAllCalonPelangganFunnel();
-        } else {
-            $page_data['pelanggan']  = $this->md_calonpelanggan->getAllCalonPelangganFunnelByPenggunaID(sessPenggunaId());
-        }
+        $page_data['pelanggan']     = $this->md_calonpelanggan->getAllCalonPelangganFunnel();
 
 
         $page_data['statusfunnel']  = $this->md_funnel->getMasterStatusFunnelByRencana(1);
@@ -346,13 +338,16 @@ class Funnel extends CI_Controller
     {
         // $pic = $this->md_pelangganan->getAllPICPelangganById($id);
         // echo json_encode($pic) ;
-        $where = array('calonpelangganpic.idpic' => $id);
+        $where = array(
+            'calonpelangganpic.idpic' => $id,
+            'calonpelangganpic.deleted' => 0
+        );
         $result = $this->db
             ->select('
                  calonpelangganpic.id,    
                 (CONCAT(calonpelangganpic.namapic,\' - \' ,calonpelangganpic.jabatanpic,\' - \',calonpelangganpic.teleponpic)) as namapic
             ')
-            ->join('pelangganan', 'pelangganan.idcalonpelanggan=calonpelangganpic.idpic')
+            ->join('pelangganan', 'pelangganan.idcalonpelanggan=calonpelangganpic.idpic', 'left')
             ->get_where('calonpelangganpic', $where)
             ->result();
 

@@ -169,13 +169,24 @@ class calonpelanggan extends CI_Controller
     {
         $page_data['switch'] = $this->id_navbar();
 
+        $namaCalon = trim((string)$this->input->post('namacaloncustomer'));
+        if ($namaCalon === '') {
+            ajaxReturnDie('error', 'Nama Calon Customer tidak boleh kosong..!!');
+        }
+
+        $existingCalon = $this->Md_calonpelanggan->checkDuplicateNamaCalon($namaCalon);
+        if ($existingCalon) {
+            $oleh = !empty($existingCalon->namamarketing) ? ' (Marketing: ' . $existingCalon->namamarketing . ')' : '';
+            ajaxReturnDie('error', 'Nama Calon Customer "' . $existingCalon->namacaloncustomer . '" sudah terdaftar' . $oleh . '. Silakan gunakan atau update data yang sudah ada.');
+        }
+
         $kode = sprintf('%03d', $this->Md_calonpelanggan->getCalonNoUrut() + 1);
         $kodeprov = $this->input->post('provinsi');
         $kodekota = sprintf('%02d', $this->input->post('kota'));
         $kelas = $this->input->post('kelascustomer');
 
         $data['kodecaloncustomer']    = $kodeprov . '/' . $kodekota . '/' . $kelas . '/' . $kode; //$this->input->post('kodecaloncustomer');
-        $data['namacaloncustomer']  = $this->input->post('namacaloncustomer');
+        $data['namacaloncustomer']  = $namaCalon;
         $data['statuscaloncustomer'] = $this->input->post('statuscaloncustomer');
         $data['tipecustomer'] = $this->input->post('tipecustomer');
         $data['kelascustomer']    = $this->input->post('kelascustomer');
@@ -194,19 +205,41 @@ class calonpelanggan extends CI_Controller
         $insert = $this->db->insert_id();
 
         $result = array();
-        foreach ($_POST['namapic'] as $key => $val) {
-            $result[] = array(
-                'namapic' => $_POST['namapic'][$key],
-                'jabatanpic' => $_POST['jabatanpic'][$key],
-                'teleponpic' => $_POST['teleponpic'][$key],
-                'idpic' => $insert
-            );
+        if (!empty($_POST['namapic']) && is_array($_POST['namapic'])) {
+            foreach ($_POST['namapic'] as $key => $val) {
+                $result[] = array(
+                    'namapic' => $_POST['namapic'][$key],
+                    'jabatanpic' => isset($_POST['jabatanpic'][$key]) ? $_POST['jabatanpic'][$key] : '',
+                    'teleponpic' => isset($_POST['teleponpic'][$key]) ? $_POST['teleponpic'][$key] : '',
+                    'idpic' => $insert
+                );
+            }
         }
-        $this->Md_calonpelanggan->addpiccalon($result);
+        if (!empty($result)) {
+            $this->Md_calonpelanggan->addpiccalon($result);
+        }
 
         /** LOG */
         addLog('Penambahan Calon Pelanggan', 'Menambah Calon Pelanggan "' . $data['namacaloncustomer'] . '"');
         ajaxReturnDie('success', 'Calon Pelanggan berhasil ditambahkan', 'reload_table');
+    }
+
+    public function cek_nama_calon()
+    {
+        grantAccessFor('all');
+        $nama = trim((string)$this->input->post('namacaloncustomer'));
+        $excludeId = $this->input->post('id');
+        $existing = $this->Md_calonpelanggan->checkDuplicateNamaCalon($nama, $excludeId);
+        if ($existing) {
+            $oleh = !empty($existing->namamarketing) ? ' (Marketing: ' . $existing->namamarketing . ')' : '';
+            echo json_encode([
+                'exists' => true,
+                'msg'    => 'Nama Calon Customer "' . $existing->namacaloncustomer . '" sudah terdaftar' . $oleh . '. Silakan gunakan atau update data yang sudah ada.'
+            ]);
+        } else {
+            echo json_encode(['exists' => false]);
+        }
+        die;
     }
     public function addpic()
     {
@@ -291,8 +324,19 @@ class calonpelanggan extends CI_Controller
         grantAccessFor('all');
 
         $id =  $this->input->post('id');
+        $namaCalon = trim((string)$this->input->post('namacaloncustomer'));
+        if ($namaCalon === '') {
+            ajaxReturnDie('error', 'Nama Calon Customer tidak boleh kosong..!!');
+        }
+
+        $existingCalon = $this->Md_calonpelanggan->checkDuplicateNamaCalon($namaCalon, $id);
+        if ($existingCalon) {
+            $oleh = !empty($existingCalon->namamarketing) ? ' (Marketing: ' . $existingCalon->namamarketing . ')' : '';
+            ajaxReturnDie('error', 'Nama Calon Customer "' . $existingCalon->namacaloncustomer . '" sudah terdaftar' . $oleh . '.');
+        }
+
         $data['kodecaloncustomer'] = $this->input->post('kodecaloncustomer');
-        $data['namacaloncustomer']  = $this->input->post('namacaloncustomer');
+        $data['namacaloncustomer']  = $namaCalon;
         $data['tipecustomer'] = $this->input->post('tipecustomer');
         $data['kelascustomer']    = $this->input->post('kelascustomer');
         $data['provinsi']    = $this->input->post('provinsi');
@@ -391,11 +435,7 @@ class calonpelanggan extends CI_Controller
     {
         grantAccessFor('all');
         $pengguna_id = sessPenggunaId();
-        if (isAdmin() || isHrd() || isCRO() || $pengguna_id == '105' || $pengguna_id == '745' || $pengguna_id == '755') {
-            $dt    = $this->Md_calonpelanggan->getAllCalonPelanggan($pengguna_id);
-        } else {
-            $dt    = $this->Md_calonpelanggan->getAllCalonPelangganByPenggunaID($pengguna_id);
-        }
+        $dt    = $this->Md_calonpelanggan->getAllCalonPelanggan($pengguna_id);
         $start = $this->input->post('start');
         $data  = array();
         $index = 1;

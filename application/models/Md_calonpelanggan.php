@@ -307,20 +307,41 @@ class Md_calonpelanggan extends CI_Model
             ->get()->result();
     }
 
+    function checkDuplicateNamaCalon($nama, $excludeId = null)
+    {
+        $normalized = preg_replace('/[\s\.,\-]+/', '', strtolower(trim((string)$nama)));
+        if ($normalized === '') {
+            return null;
+        }
+
+        $this->db->select('calonpelanggan.id, calonpelanggan.kodecaloncustomer, calonpelanggan.namacaloncustomer, pengguna.nama as namamarketing')
+            ->from('calonpelanggan')
+            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id', 'left')
+            ->where('calonpelanggan.deleted', 0)
+            ->where("REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(calonpelanggan.namacaloncustomer)), '.', ''), ',', ''), '-', ''), ' ', '') =", $normalized);
+
+        if (!empty($excludeId)) {
+            $this->db->where('calonpelanggan.id !=', $excludeId);
+        }
+
+        return $this->db->limit(1)->get()->row();
+    }
+
     function getAllCalonPelangganFunnel()
     {
-        $this->db->order_by('calonpelanggan.id', 'desc');
+        $this->db->where('calonpelanggan.deleted', 0);
+        $this->db->order_by('calonpelanggan.namacaloncustomer', 'ASC');
         return $this->db
             ->get('calonpelanggan')
             ->result();
     }
 
-    function getAllCalonPelangganFunnelByPenggunaID($pengguna_id)
+    function getAllCalonPelangganFunnelByPenggunaID($pengguna_id = null)
     {
-        $where = array('calonpelanggan.pengguna_id' => $pengguna_id);
+        $this->db->where('calonpelanggan.deleted', 0);
         $this->db->order_by('calonpelanggan.namacaloncustomer', 'ASC');
         return $this->db
-            ->get_where('calonpelanggan', $where)
+            ->get('calonpelanggan')
             ->result();
     }
 

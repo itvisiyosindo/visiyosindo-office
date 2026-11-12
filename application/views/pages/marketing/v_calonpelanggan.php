@@ -725,6 +725,7 @@
 
 				$('#btn-show-add-form').click(function() {
 					$("#grouppic").hide();
+					$('#btn-simpan-form-calon').prop('disabled', false);
 					$('.form-control').val(null)
 					var object = 'calonpelanggan'
 					$('#main-modal-calon #modal-form-calon').attr('action', 'calonpelanggan/add')
@@ -900,14 +901,15 @@
 						},
 						success: function(result) {
 							var pesan = typeof result === 'string' ? $.parseJSON(result) : result;
+							var isError = (pesan.status === 'error' || pesan.status === false);
 							Swal.fire({
-								type: 'success',
-								icon: 'success',
+								type: isError ? 'error' : 'success',
+								icon: isError ? 'error' : 'success',
 								title: pesan.msg,
-								showConfirmButton: false,
-								timer: 2000
+								showConfirmButton: isError,
+								timer: isError ? undefined : 2000
 							});
-							if (typeof table !== 'undefined') {
+							if (!isError && typeof table !== 'undefined') {
 								table.ajax.reload(null, false);
 							}
 						},
@@ -917,11 +919,39 @@
 
 				$('#main-modal-calon #namacaloncustomer').on('change', function() {
 					$('#count').val(i);
-					if ($('#main-modal-calon #namacaloncustomer').val() == '') {
+					var namaInput = $.trim($('#main-modal-calon #namacaloncustomer').val());
+					if (namaInput == '') {
 						$("#main-modal-calon #grouppic").hide();
+						$('#btn-simpan-form-calon').prop('disabled', false);
 					} else {
-						$("#main-modal-calon #grouppic").show();
-					};
+						$.ajax({
+							type: "POST",
+							url: "calonpelanggan/cek_nama_calon",
+							dataType: "json",
+							data: {
+								namacaloncustomer: namaInput
+							},
+							success: function(res) {
+								if (res && res.exists) {
+									Swal.fire({
+										type: 'warning',
+										icon: 'warning',
+										title: 'Nama Customer Sudah Terdaftar',
+										text: res.msg
+									});
+									$("#main-modal-calon #grouppic").hide();
+									$('#btn-simpan-form-calon').prop('disabled', true);
+								} else {
+									$("#main-modal-calon #grouppic").show();
+									$('#btn-simpan-form-calon').prop('disabled', false);
+								}
+							},
+							error: function() {
+								$("#main-modal-calon #grouppic").show();
+								$('#btn-simpan-form-calon').prop('disabled', false);
+							}
+						});
+					}
 				});
 
 				$('#main-modal-calon #tipecustomer').on('change', function() {

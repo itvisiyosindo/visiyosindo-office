@@ -160,11 +160,7 @@ class Pelangganan extends CI_Controller
     {
         grantAccessFor('all');
          $pengguna_id = sessPenggunaId();
-        if (isAdmin() || isHrd() || isCRO()) {
-            $dt    = $this->md_pelangganan->getAllPelangganan($pengguna_id);
-        }else{
-             $dt    = $this->md_pelangganan->getAllPelanggananByPenggunaID($pengguna_id);
-        }
+        $dt    = $this->md_pelangganan->getAllPelangganan($pengguna_id);
        
         $start = $this->input->post('start');
         $data  = array();
