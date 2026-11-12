@@ -339,18 +339,22 @@ class Md_calonpelanggan extends CI_Model
 
         $normExpr = "REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(calonpelanggan.namacaloncustomer)), '.', ''), ',', ''), '-', ''), ' ', '')";
         $this->db->group_start()
-            ->where("$normExpr =", $normFull);
+            ->where($normExpr . ' = ' . $this->db->escape($normFull), NULL, FALSE);
         if ($normCore !== '' && strlen($normCore) >= 4) {
-            $this->db->or_like('calonpelanggan.namacaloncustomer', trim(preg_replace('/^(rumah sakit umum daerah|rumah sakit umum|rumah sakit|rsud|rsu|rsia|rs|pt|cv|klinik)\s+/i', '', trim((string)$nama))), 'both');
+            $this->db->or_like('calonpelanggan.namacaloncustomer', trim(preg_replace('/^(rumah sakit umum daerah|rumah sakit umum|rumah sakit|rsud|rsu|rsia|rs|pt|cv|klinik)\.?\s+/i', '', trim((string)$nama))), 'both');
         }
         $normAlamat = preg_replace('/[\s\.,\-]+/', '', strtolower(trim((string)$alamat)));
         if (strlen($normAlamat) >= 12) {
             $addrExpr = "REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(calonpelanggan.alamatcaloncustomer)), '.', ''), ',', ''), '-', ''), ' ', '')";
-            $this->db->or_where("$addrExpr =", $normAlamat);
+            $this->db->or_where($addrExpr . ' = ' . $this->db->escape($normAlamat), NULL, FALSE);
         }
         $this->db->group_end();
 
-        $candidates = $this->db->limit(25)->get()->result();
+        $query = $this->db->limit(25)->get();
+        if (!$query) {
+            return null;
+        }
+        $candidates = $query->result();
         foreach ($candidates as $row) {
             $rowFull = $this->normalizeNamaCalon($row->namacaloncustomer, false);
             $rowCore = $this->normalizeNamaCalon($row->namacaloncustomer, true);

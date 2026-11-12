@@ -952,12 +952,9 @@
 							var html = '';
 							if (res && res.exists) {
 								html += '<div class="alert alert-danger p-2 mb-1"><strong><i class="fa fa-exclamation-triangle"></i> Duplikat Terdeteksi!</strong><br>' + res.msg + '</div>';
-								$("#main-modal-calon #grouppic").hide();
-								$('#btn-simpan-form-calon').prop('disabled', true);
-							} else {
-								$("#main-modal-calon #grouppic").show();
-								$('#btn-simpan-form-calon').prop('disabled', false);
 							}
+							$("#main-modal-calon #grouppic").show();
+							$('#btn-simpan-form-calon').prop('disabled', false);
 
 							if (res && res.similar && res.similar.length > 0) {
 								html += '<div class="alert alert-warning p-2 mb-0"><strong>Data serupa yang sudah terdaftar di sistem:</strong><ul class="pl-3 mb-0 mt-1">';
