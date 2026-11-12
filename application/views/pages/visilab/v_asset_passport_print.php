@@ -7,20 +7,18 @@ if (!function_exists('hp')) {
         return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
     }
 }
-$sizeClass  = ($size === '7x4') ? 'size-7x4' : 'size-8x5';
-$themeParam = $this->input->get('theme', TRUE) ?: 'sapphire';
-$themeClass = ($themeParam === 'silver') ? 'theme-silver' : 'theme-sapphire';
-$idsParam   = trim((string)$this->input->get('ids', TRUE));
+$sizeClass = ($size === '7x4') ? 'size-7x4' : 'size-8x5';
+$idsParam  = trim((string)$this->input->get('ids', TRUE));
 
-$buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
+$buildPrintUrl = function ($newSize) use ($items, $idsParam) {
     $base = base_url('asset_passport/print_sticker');
     if ($idsParam !== '') {
-        return $base . '?ids=' . urlencode($idsParam) . '&size=' . $newSize . '&theme=' . $newTheme;
+        return $base . '?ids=' . urlencode($idsParam) . '&size=' . $newSize;
     }
     if (count($items) === 1 && !empty($items[0]->id_passport)) {
-        return $base . '/' . (int)$items[0]->id_passport . '?size=' . $newSize . '&theme=' . $newTheme;
+        return $base . '/' . (int)$items[0]->id_passport . '?size=' . $newSize;
     }
-    return $base . '?size=' . $newSize . '&theme=' . $newTheme;
+    return $base . '?size=' . $newSize;
 };
 ?>
 <!doctype html>
@@ -524,10 +522,8 @@ $buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
             <span style="font-size:12px; opacity:0.85; margin-left:8px;">(<?= count($items) ?> label siap cetak)</span>
         </div>
         <div class="toolbar-actions">
-            <a href="<?= hp($buildPrintUrl('8x5', $themeParam)) ?>" class="btn-tool <?= $size !== '7x4' ? 'active' : '' ?>">8.2 × 5.2 cm</a>
-            <a href="<?= hp($buildPrintUrl('7x4', $themeParam)) ?>" class="btn-tool <?= $size === '7x4' ? 'active' : '' ?>">7.2 × 4.4 cm</a>
-            <a href="<?= hp($buildPrintUrl($size, 'sapphire')) ?>" class="btn-tool <?= $themeParam !== 'silver' ? 'active' : '' ?>">Soft Blue Silver</a>
-            <a href="<?= hp($buildPrintUrl($size, 'silver')) ?>" class="btn-tool <?= $themeParam === 'silver' ? 'active' : '' ?>">Full Brushed Silver</a>
+            <a href="<?= hp($buildPrintUrl('8x5')) ?>" class="btn-tool <?= $size !== '7x4' ? 'active' : '' ?>">8.2 × 5.2 cm</a>
+            <a href="<?= hp($buildPrintUrl('7x4')) ?>" class="btn-tool <?= $size === '7x4' ? 'active' : '' ?>">7.2 × 4.4 cm</a>
             <button type="button" class="btn-tool btn-tool-primary" onclick="window.print()">
                 <i class="fas fa-print"></i> Print / Simpan PDF
             </button>
@@ -544,7 +540,7 @@ $buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
             </div>
         <?php else: ?>
             <?php foreach ($items as $idx => $item): ?>
-                <div class="sticker-card <?= $sizeClass ?> <?= $themeClass ?>">
+                <div class="sticker-card <?= $sizeClass ?>">
                     <div class="st-shimmer-overlay"></div>
                     <img src="<?= base_url('assets/img/passport/logo_vym.png') ?>" class="st-watermark" alt="">
 
@@ -582,10 +578,6 @@ $buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
                             <div class="st-meta-line">
                                 <span class="st-meta-label">Instansi:</span>
                                 <span class="st-meta-val"><?= hp($item->nama_instansi) ?></span>
-                            </div>
-                            <div class="st-meta-line">
-                                <span class="st-meta-label">Berlaku s/d:</span>
-                                <span class="st-meta-val"><?= hp($item->earliest_exp_label) ?></span>
                             </div>
                             <div class="st-badge-row">
                                 <span class="st-badge-verified">
