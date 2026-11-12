@@ -394,6 +394,11 @@ class Tiket extends CI_Controller
 
 
             $datalog2 = $this->md_tiket->getById($id_tiket);
+            try {
+                $this->load->model('Md_asset_passport');
+                $this->Md_asset_passport->sync_task_status_from_tiket($id_tiket);
+            } catch (\Throwable $e) {
+            }
             addLog('Memperbaharui Tiket', 'Mengubah status tiket "' . $datalog2[0]->subject . '" menjadi "' . $status_tiket . '"');
             ajaxReturnDie('success', 'Status Tiket Berhasil Diubah', TRUE);
         } else if ($param == 'prioritas') {
@@ -476,6 +481,17 @@ class Tiket extends CI_Controller
                     'subject'       => $data['subject']
                 ];
                 $this->sendWaTiketGantiPIC($dataTiket);
+                try {
+                    $this->load->model('Md_asset_passport');
+                    $this->Md_asset_passport->sync_task_from_tiket($id_tiket, $idPenerimaBaru, [], sessPenggunaId());
+                } catch (\Throwable $e) {
+                }
+            }
+
+            try {
+                $this->load->model('Md_asset_passport');
+                $this->Md_asset_passport->sync_task_status_from_tiket($id_tiket);
+            } catch (\Throwable $e) {
             }
 
             addLog('Memperbaharui Tiket', 'Memperbaharui data Tiket ' . $data['subject']);
@@ -628,6 +644,12 @@ class Tiket extends CI_Controller
                     $this->sendWaTiketMultiPic('support', $dataSupport);
                 }
             }
+            try {
+                $this->load->model('Md_asset_passport');
+                $picSupportArr = is_array($this->input->post('pic_support', TRUE)) ? $this->input->post('pic_support', TRUE) : [];
+                $this->Md_asset_passport->sync_task_from_tiket($id_tiket, $penerima, $picSupportArr, sessPenggunaId());
+            } catch (\Throwable $e) {
+            }
             /** LOG */
             addLog('Menambah Tiket', 'Menambah Tiket ' . $kodeTiket);
             ajaxReturnDie('success', 'Tiket berhasil ditambahkan', TRUE);
@@ -751,6 +773,12 @@ class Tiket extends CI_Controller
             ];
             // NOTIF WA LAPORAN AKHIR TIKET TEKNISI (REQ BANG RICKI) - DINONAKTIFKAN SEMENTARA
             // $this->sendWaTiket(11, $dataGroup);
+
+            try {
+                $this->load->model('Md_asset_passport');
+                $this->Md_asset_passport->sync_task_status_from_tiket($id_tiket);
+            } catch (\Throwable $e) {
+            }
 
             addLog('Memperbaharui Tiket', 'Mengirim Laporan Akhir untuk Tiket ' . $datalog2[0]->kode_tiket);
             ajaxReturnDie('success', 'Laporan Akhir Berhasil Dikirim', TRUE);

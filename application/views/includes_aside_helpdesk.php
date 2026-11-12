@@ -815,6 +815,14 @@
 						</li>
 					<?php } ?>
 
+					<!-- Menu QR Asset Passport -->
+					<li class="<?= in_array($page_name, ['visilab/v_asset_passport']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('asset_passport?nav=helpdesk') ?>">
+							<i class="fas fa-qrcode" aria-hidden="true"></i>
+							<span>QR Asset Passport</span>
+						</a>
+					</li>
+
 					<!-- Menu Maintenance Aset IT -->
 					<?php
 					$isITStaff = isAdmin() || isCRO() || isGa() || sessPenggunaId() == '778' || sessPenggunaId() == '755' || sessPenggunaId() == '769' || sessPenggunaId() == '107';

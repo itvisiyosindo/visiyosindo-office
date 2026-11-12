@@ -172,3 +172,11 @@ $route['audit_kinerja'] = 'audit/kinerja';
 $route['audit_kinerja/(:any)'] = 'audit/kinerja';
 $route['audit_keuangan'] = 'audit/keuangan';
 $route['audit_keuangan/(:any)'] = 'audit/keuangan';
+
+// Digital QR Asset Passport (Public & Admin)
+$route['passport'] = 'Passport/index';
+$route['passport/lapor_kerusakan'] = 'Passport/lapor_kerusakan';
+$route['passport/(:any)'] = 'Passport/view/$1';
+$route['asset_passport'] = 'Asset_passport/index';
+$route['asset_passport/(:any)'] = 'Asset_passport/$1';
+$route['asset_passport/(:any)/(:any)'] = 'Asset_passport/$1/$2';

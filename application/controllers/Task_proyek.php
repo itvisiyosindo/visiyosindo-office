@@ -1258,6 +1258,12 @@ class Task_proyek extends CI_Controller
         }
 
         try {
+            $this->load->model('Md_asset_passport');
+            $this->Md_asset_passport->sync_tiket_from_task($id_task);
+        } catch (\Throwable $e) {
+        }
+
+        try {
             addLog('Submit Task Selesai', 'Menyelesaikan Task ' . $task->kode_task . ' - ' . $task->judul);
         } catch (\Throwable $e) {
         }
@@ -1424,6 +1430,12 @@ class Task_proyek extends CI_Controller
                     'pesan'    => $pesanWa
                 ]);
             }
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $this->load->model('Md_asset_passport');
+            $this->Md_asset_passport->sync_tiket_from_task($id_task);
         } catch (\Throwable $e) {
         }
 

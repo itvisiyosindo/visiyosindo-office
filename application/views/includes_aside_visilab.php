@@ -60,6 +60,13 @@
 						</a>
 					</li>
 
+					<li class="<?= in_array($page_name, ['visilab/v_asset_passport']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('asset_passport') ?>">
+							<i class="fas fa-qrcode" aria-hidden="true"></i>
+							<span>QR Asset Passport</span>
+						</a>
+					</li>
+
 					<li class="<?= in_array($page_name, ['visilab/v_jadwal_list']) ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('visilab_jadwal') ?>">
 							<i class="fas fa-calendar-week" aria-hidden="true"></i>
