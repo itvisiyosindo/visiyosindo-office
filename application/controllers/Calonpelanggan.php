@@ -170,14 +170,15 @@ class calonpelanggan extends CI_Controller
         $page_data['switch'] = $this->id_navbar();
 
         $namaCalon = trim((string)$this->input->post('namacaloncustomer'));
+        $alamatCalon = trim((string)$this->input->post('alamatcaloncustomer'));
         if ($namaCalon === '') {
             ajaxReturnDie('error', 'Nama Calon Customer tidak boleh kosong..!!');
         }
 
-        $existingCalon = $this->Md_calonpelanggan->checkDuplicateNamaCalon($namaCalon);
+        $existingCalon = $this->Md_calonpelanggan->checkDuplicateNamaCalon($namaCalon, null, $alamatCalon);
         if ($existingCalon) {
             $oleh = !empty($existingCalon->namamarketing) ? ' (Marketing: ' . $existingCalon->namamarketing . ')' : '';
-            ajaxReturnDie('error', 'Nama Calon Customer "' . $existingCalon->namacaloncustomer . '" sudah terdaftar' . $oleh . '. Silakan gunakan atau update data yang sudah ada.');
+            ajaxReturnDie('error', 'Nama/Alamat Calon Customer "' . $existingCalon->namacaloncustomer . '" sudah terdaftar' . $oleh . '. Silakan gunakan atau update data yang sudah ada.');
         }
 
         $kode = sprintf('%03d', $this->Md_calonpelanggan->getCalonNoUrut() + 1);
@@ -228,16 +229,22 @@ class calonpelanggan extends CI_Controller
     {
         grantAccessFor('all');
         $nama = trim((string)$this->input->post('namacaloncustomer'));
+        $alamat = trim((string)$this->input->post('alamatcaloncustomer'));
         $excludeId = $this->input->post('id');
-        $existing = $this->Md_calonpelanggan->checkDuplicateNamaCalon($nama, $excludeId);
+        $existing = $this->Md_calonpelanggan->checkDuplicateNamaCalon($nama, $excludeId, $alamat);
+        $similar = $this->Md_calonpelanggan->searchSimilarCalon($nama, $alamat, $excludeId);
         if ($existing) {
             $oleh = !empty($existing->namamarketing) ? ' (Marketing: ' . $existing->namamarketing . ')' : '';
             echo json_encode([
-                'exists' => true,
-                'msg'    => 'Nama Calon Customer "' . $existing->namacaloncustomer . '" sudah terdaftar' . $oleh . '. Silakan gunakan atau update data yang sudah ada.'
+                'exists'  => true,
+                'msg'     => 'Data Customer "' . $existing->namacaloncustomer . '" sudah terdaftar' . $oleh . '. Silakan gunakan atau update data yang sudah ada.',
+                'similar' => $similar
             ]);
         } else {
-            echo json_encode(['exists' => false]);
+            echo json_encode([
+                'exists'  => false,
+                'similar' => $similar
+            ]);
         }
         die;
     }

@@ -362,6 +362,7 @@
 					<div class="form-group">
 						<label for="nama" class="form-control-label">Nama Calon Customer <span class="text-danger">*</span> :</label>
 						<input type="text" class="form-control" id="namacaloncustomer" name="namacaloncustomer" required>
+						<div id="detect-calon-box" class="mt-2" style="display:none; font-size:12px;"></div>
 					</div>
 					<div class="form-group">
 						<label for="tipe" class="form-control-label">Tipe Customer <span class="text-danger">*</span> :</label>
@@ -725,6 +726,7 @@
 
 				$('#btn-show-add-form').click(function() {
 					$("#grouppic").hide();
+					$("#detect-calon-box").hide().html('');
 					$('#btn-simpan-form-calon').prop('disabled', false);
 					$('.form-control').val(null)
 					var object = 'calonpelanggan'
@@ -917,41 +919,73 @@
 					//	window.location.reload();
 				})
 
-				$('#main-modal-calon #namacaloncustomer').on('change', function() {
+				var timerCekCalon = null;
+				function jalankanDeteksiCalon() {
 					$('#count').val(i);
 					var namaInput = $.trim($('#main-modal-calon #namacaloncustomer').val());
+					var alamatInput = $.trim($('#main-modal-calon #alamatcaloncustomer').val());
+					var $box = $('#detect-calon-box');
+
 					if (namaInput == '') {
 						$("#main-modal-calon #grouppic").hide();
+						$box.hide().html('');
 						$('#btn-simpan-form-calon').prop('disabled', false);
-					} else {
-						$.ajax({
-							type: "POST",
-							url: "calonpelanggan/cek_nama_calon",
-							dataType: "json",
-							data: {
-								namacaloncustomer: namaInput
-							},
-							success: function(res) {
-								if (res && res.exists) {
-									Swal.fire({
-										type: 'warning',
-										icon: 'warning',
-										title: 'Nama Customer Sudah Terdaftar',
-										text: res.msg
-									});
-									$("#main-modal-calon #grouppic").hide();
-									$('#btn-simpan-form-calon').prop('disabled', true);
-								} else {
-									$("#main-modal-calon #grouppic").show();
-									$('#btn-simpan-form-calon').prop('disabled', false);
-								}
-							},
-							error: function() {
+						return;
+					}
+
+					if (namaInput.length < 3 && alamatInput.length < 5) {
+						$("#main-modal-calon #grouppic").show();
+						$box.hide().html('');
+						$('#btn-simpan-form-calon').prop('disabled', false);
+						return;
+					}
+
+					$.ajax({
+						type: "POST",
+						url: "calonpelanggan/cek_nama_calon",
+						dataType: "json",
+						data: {
+							namacaloncustomer: namaInput,
+							alamatcaloncustomer: alamatInput
+						},
+						success: function(res) {
+							var html = '';
+							if (res && res.exists) {
+								html += '<div class="alert alert-danger p-2 mb-1"><strong><i class="fa fa-exclamation-triangle"></i> Duplikat Terdeteksi!</strong><br>' + res.msg + '</div>';
+								$("#main-modal-calon #grouppic").hide();
+								$('#btn-simpan-form-calon').prop('disabled', true);
+							} else {
 								$("#main-modal-calon #grouppic").show();
 								$('#btn-simpan-form-calon').prop('disabled', false);
 							}
-						});
-					}
+
+							if (res && res.similar && res.similar.length > 0) {
+								html += '<div class="alert alert-warning p-2 mb-0"><strong>Data serupa yang sudah terdaftar di sistem:</strong><ul class="pl-3 mb-0 mt-1">';
+								$.each(res.similar, function(idx, item) {
+									var lok = (item.kota ? item.kota : '') + (item.provinsi ? ', ' + item.provinsi : '');
+									var mkt = item.namamarketing ? ' — <em>Marketing: ' + item.namamarketing + '</em>' : '';
+									var almt = item.alamatcaloncustomer ? '<br><small class="text-muted">Alamat: ' + item.alamatcaloncustomer + '</small>' : '';
+									html += '<li><strong>' + item.namacaloncustomer + '</strong>' + (lok ? ' (' + lok + ')' : '') + mkt + almt + '</li>';
+								});
+								html += '</ul></div>';
+							}
+
+							if (html !== '') {
+								$box.html(html).show();
+							} else {
+								$box.hide().html('');
+							}
+						},
+						error: function() {
+							$("#main-modal-calon #grouppic").show();
+							$('#btn-simpan-form-calon').prop('disabled', false);
+						}
+					});
+				}
+
+				$('#main-modal-calon #namacaloncustomer, #main-modal-calon #alamatcaloncustomer').on('input keyup change', function() {
+					clearTimeout(timerCekCalon);
+					timerCekCalon = setTimeout(jalankanDeteksiCalon, 250);
 				});
 
 				$('#main-modal-calon #tipecustomer').on('change', function() {

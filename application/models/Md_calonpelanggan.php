@@ -307,24 +307,101 @@ class Md_calonpelanggan extends CI_Model
             ->get()->result();
     }
 
-    function checkDuplicateNamaCalon($nama, $excludeId = null)
+    function normalizeNamaCalon($nama, $stripPrefix = false)
     {
-        $normalized = preg_replace('/[\s\.,\-]+/', '', strtolower(trim((string)$nama)));
-        if ($normalized === '') {
+        $s = strtolower(trim((string)$nama));
+        $s = preg_replace('/[\.,\-\/\(\)]+/', ' ', $s);
+        $s = preg_replace('/\s+/', ' ', trim($s));
+        if ($stripPrefix) {
+            $s = preg_replace('/^(rumah sakit umum daerah|rumah sakit umum|rumah sakit ibu dan anak|rumah sakit|rsud|rsu|rsia|rs|pt|cv|ud|klinik)\s+/i', '', $s);
+        }
+        return str_replace(' ', '', $s);
+    }
+
+    function checkDuplicateNamaCalon($nama, $excludeId = null, $alamat = '')
+    {
+        $normFull = $this->normalizeNamaCalon($nama, false);
+        $normCore = $this->normalizeNamaCalon($nama, true);
+        if ($normFull === '') {
             return null;
         }
 
-        $this->db->select('calonpelanggan.id, calonpelanggan.kodecaloncustomer, calonpelanggan.namacaloncustomer, pengguna.nama as namamarketing')
+        $this->db->select('calonpelanggan.id, calonpelanggan.kodecaloncustomer, calonpelanggan.namacaloncustomer, calonpelanggan.alamatcaloncustomer, kota.nama as kota, provinsi.nama as provinsi, pengguna.nama as namamarketing')
             ->from('calonpelanggan')
             ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id', 'left')
-            ->where('calonpelanggan.deleted', 0)
-            ->where("REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(calonpelanggan.namacaloncustomer)), '.', ''), ',', ''), '-', ''), ' ', '') =", $normalized);
+            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode', 'left')
+            ->join('kota', 'calonpelanggan.kota = kota.id', 'left')
+            ->where('calonpelanggan.deleted', 0);
 
         if (!empty($excludeId)) {
             $this->db->where('calonpelanggan.id !=', $excludeId);
         }
 
-        return $this->db->limit(1)->get()->row();
+        $normExpr = "REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(calonpelanggan.namacaloncustomer)), '.', ''), ',', ''), '-', ''), ' ', '')";
+        $this->db->group_start()
+            ->where("$normExpr =", $normFull);
+        if ($normCore !== '' && strlen($normCore) >= 4) {
+            $this->db->or_like('calonpelanggan.namacaloncustomer', trim(preg_replace('/^(rumah sakit umum daerah|rumah sakit umum|rumah sakit|rsud|rsu|rsia|rs|pt|cv|klinik)\s+/i', '', trim((string)$nama))), 'both');
+        }
+        $normAlamat = preg_replace('/[\s\.,\-]+/', '', strtolower(trim((string)$alamat)));
+        if (strlen($normAlamat) >= 12) {
+            $addrExpr = "REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(calonpelanggan.alamatcaloncustomer)), '.', ''), ',', ''), '-', ''), ' ', '')";
+            $this->db->or_where("$addrExpr =", $normAlamat);
+        }
+        $this->db->group_end();
+
+        $candidates = $this->db->limit(25)->get()->result();
+        foreach ($candidates as $row) {
+            $rowFull = $this->normalizeNamaCalon($row->namacaloncustomer, false);
+            $rowCore = $this->normalizeNamaCalon($row->namacaloncustomer, true);
+            if ($rowFull === $normFull || ($normCore !== '' && strlen($normCore) >= 4 && $rowCore === $normCore)) {
+                return $row;
+            }
+            if (strlen($normAlamat) >= 12) {
+                $rowAddr = preg_replace('/[\s\.,\-]+/', '', strtolower(trim((string)$row->alamatcaloncustomer)));
+                if ($rowAddr !== '' && $rowAddr === $normAlamat) {
+                    return $row;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function searchSimilarCalon($nama, $alamat = '', $excludeId = null)
+    {
+        $nama = trim((string)$nama);
+        $alamat = trim((string)$alamat);
+        if (strlen($nama) < 3 && strlen($alamat) < 5) {
+            return [];
+        }
+
+        $this->db->select('calonpelanggan.id, calonpelanggan.kodecaloncustomer, calonpelanggan.namacaloncustomer, calonpelanggan.alamatcaloncustomer, kota.nama as kota, provinsi.nama as provinsi, pengguna.nama as namamarketing')
+            ->from('calonpelanggan')
+            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id', 'left')
+            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode', 'left')
+            ->join('kota', 'calonpelanggan.kota = kota.id', 'left')
+            ->where('calonpelanggan.deleted', 0);
+
+        if (!empty($excludeId)) {
+            $this->db->where('calonpelanggan.id !=', $excludeId);
+        }
+
+        $this->db->group_start();
+        if (strlen($nama) >= 3) {
+            $cleanKeyword = trim(preg_replace('/^(rumah sakit umum daerah|rumah sakit umum|rumah sakit|rsud|rsu|rsia|rs|pt|cv|klinik)\.?\s+/i', '', $nama));
+            $this->db->like('calonpelanggan.namacaloncustomer', $nama, 'both');
+            if ($cleanKeyword !== '' && strlen($cleanKeyword) >= 3 && strtolower($cleanKeyword) !== strtolower($nama)) {
+                $this->db->or_like('calonpelanggan.namacaloncustomer', $cleanKeyword, 'both');
+            }
+        }
+        if (strlen($alamat) >= 5) {
+            $this->db->or_like('calonpelanggan.alamatcaloncustomer', $alamat, 'both');
+        }
+        $this->db->group_end();
+
+        $this->db->order_by('calonpelanggan.namacaloncustomer', 'ASC');
+        return $this->db->limit(8)->get()->result();
     }
 
     function getAllCalonPelangganFunnel()
