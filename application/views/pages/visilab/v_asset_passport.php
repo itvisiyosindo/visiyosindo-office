@@ -292,7 +292,7 @@ $topikList     = $sources['topik'] ?? [];
 							<div class="border rounded p-2 text-center bg-light">
 								<label class="font-weight-bold small d-block text-left">Foto Produk</label>
 								<img id="preview-foto" src="<?= base_url('assets/img/device.png') ?>" alt="Preview" style="max-height:130px; width:auto; border-radius:8px; margin-bottom:8px; object-fit:contain;">
-								<input type="file" name="foto_produk_file" id="f_foto_file" class="form-control-file form-control-sm mb-2" accept="image/*">
+								<input type="file" name="foto_produk_file" id="f_foto_file" class="form-control-file form-control-sm mb-2" accept="image/*,.webp,.jfif,.avif,.heic,.heif,.bmp,.tiff,.svg">
 								<input type="text" name="foto_produk_url" id="f_foto_url" class="form-control form-control-sm" placeholder="Atau tempel URL foto produk...">
 							</div>
 						</div>

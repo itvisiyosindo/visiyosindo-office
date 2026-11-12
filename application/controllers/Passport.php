@@ -113,10 +113,11 @@ class Passport extends CI_Controller
                 @mkdir($uploadDir, 0755, true);
             }
             $this->load->library('upload');
+            $allowedExt = ['jpg', 'jpeg', 'jpe', 'jfif', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'avif', 'heic', 'heif', 'pdf'];
             $config = [
                 'upload_path'   => $uploadDir,
-                'allowed_types' => 'jpg|jpeg|png|webp|pdf|JPG|JPEG|PNG|WEBP|PDF',
-                'max_size'      => 6144,
+                'allowed_types' => implode('|', array_merge($allowedExt, array_map('strtoupper', $allowedExt))),
+                'max_size'      => 8192,
                 'encrypt_name'  => true
             ];
             $this->upload->initialize($config);
@@ -124,8 +125,22 @@ class Passport extends CI_Controller
                 $up = $this->upload->data();
                 $fotoUrl = base_url('uploads/passport/reports/' . $up['file_name']);
             } else {
-                echo json_encode(['status' => false, 'message' => 'Upload lampiran gagal: ' . strip_tags($this->upload->display_errors())]);
-                return;
+                $origName = (string)($_FILES['foto_kerusakan']['name'] ?? '');
+                $tmpPath  = (string)($_FILES['foto_kerusakan']['tmp_name'] ?? '');
+                $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                $isImg    = in_array($ext, $allowedExt, true) && $ext !== 'pdf' && $tmpPath !== '' && is_uploaded_file($tmpPath) && (@getimagesize($tmpPath) !== false || in_array($ext, ['webp', 'avif', 'heic', 'heif'], true));
+                if ($isImg) {
+                    $newName = (function_exists('random_bytes') ? bin2hex(random_bytes(16)) : md5(uniqid('', true))) . '.' . $ext;
+                    if (@move_uploaded_file($tmpPath, $uploadDir . $newName)) {
+                        $fotoUrl = base_url('uploads/passport/reports/' . $newName);
+                    } else {
+                        echo json_encode(['status' => false, 'message' => 'Gagal menyimpan file foto ke server.']);
+                        return;
+                    }
+                } else {
+                    echo json_encode(['status' => false, 'message' => 'Upload lampiran gagal: ' . strip_tags($this->upload->display_errors())]);
+                    return;
+                }
             }
         }
 

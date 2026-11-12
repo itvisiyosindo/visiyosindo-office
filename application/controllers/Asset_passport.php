@@ -153,10 +153,11 @@ class Asset_passport extends CI_Controller
                 @mkdir($uploadDir, 0755, true);
             }
             $this->load->library('upload');
+            $allowedExt = ['jpg', 'jpeg', 'jpe', 'jfif', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'avif', 'heic', 'heif', 'svg', 'ico'];
             $config = [
                 'upload_path'   => $uploadDir,
-                'allowed_types' => 'jpg|jpeg|png|webp|JPG|JPEG|PNG|WEBP',
-                'max_size'      => 5120,
+                'allowed_types' => implode('|', array_merge($allowedExt, array_map('strtoupper', $allowedExt))),
+                'max_size'      => 8192,
                 'encrypt_name'  => true
             ];
             $this->upload->initialize($config);
@@ -164,8 +165,23 @@ class Asset_passport extends CI_Controller
                 $up = $this->upload->data();
                 $fotoPath = 'uploads/passport/products/' . $up['file_name'];
             } else {
-                echo json_encode(['status' => false, 'message' => 'Gagal upload foto produk: ' . strip_tags($this->upload->display_errors())]);
-                return;
+                // Fallback jika MIME OS/server berbeda padahal ekstensi & isi benar-benar gambar
+                $origName = (string)($_FILES['foto_produk_file']['name'] ?? '');
+                $tmpPath  = (string)($_FILES['foto_produk_file']['tmp_name'] ?? '');
+                $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                $isImg    = in_array($ext, $allowedExt, true) && $tmpPath !== '' && is_uploaded_file($tmpPath) && (@getimagesize($tmpPath) !== false || in_array($ext, ['webp', 'avif', 'heic', 'heif', 'svg'], true));
+                if ($isImg) {
+                    $newName = (function_exists('random_bytes') ? bin2hex(random_bytes(16)) : md5(uniqid('', true))) . '.' . $ext;
+                    if (@move_uploaded_file($tmpPath, $uploadDir . $newName)) {
+                        $fotoPath = 'uploads/passport/products/' . $newName;
+                    } else {
+                        echo json_encode(['status' => false, 'message' => 'Gagal menyimpan file foto produk ke server.']);
+                        return;
+                    }
+                } else {
+                    echo json_encode(['status' => false, 'message' => 'Gagal upload foto produk: ' . strip_tags($this->upload->display_errors())]);
+                    return;
+                }
             }
         }
 

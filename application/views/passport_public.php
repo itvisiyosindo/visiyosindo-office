@@ -788,8 +788,8 @@ if (!function_exists('h')) {
 
                             <div class="form-group mb-0">
                                 <label class="font-weight-bold small">Foto / Lampiran Kendala (Opsional)</label>
-                                <input type="file" name="foto_kerusakan" class="form-control-file" accept="image/*,.pdf">
-                                <small class="text-muted">Format JPG, PNG, WEBP, atau PDF (Maks 4 MB, otomatis dikompres).</small>
+                                <input type="file" name="foto_kerusakan" class="form-control-file" accept="image/*,.webp,.jfif,.avif,.heic,.heif,.bmp,.tiff,.pdf">
+                                <small class="text-muted">Mendukung JPG, PNG, WEBP, JFIF, AVIF, HEIC, BMP, atau PDF.</small>
                             </div>
                         </div>
                         <div class="modal-footer border-top-0 pt-0">
