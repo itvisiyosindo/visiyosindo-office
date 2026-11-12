@@ -45,84 +45,120 @@
 		body {
 			margin: 0;
 			padding: 0;
+			width: 100%;
 			min-height: 100%;
 			font-family: 'Plus Jakarta Sans', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-			background: var(--vym-navy);
+			background: var(--vym-bg);
 			color: var(--vym-ink);
 			-webkit-font-smoothing: antialiased;
 			overflow-x: hidden;
 		}
 
-		/* Full-Screen Static Background Photo */
-		.auth-bg-stage {
-			position: fixed;
-			inset: 0;
-			z-index: 0;
-			background: linear-gradient(135deg, #091428 0%, #102a52 100%);
-			overflow: hidden;
-		}
-
-		.auth-bg-photo {
-			position: absolute;
-			inset: 0;
-			background-size: cover;
-			background-position: center 34%;
-			background-repeat: no-repeat;
-		}
-
-		.auth-bg-stage::after {
-			content: '';
-			position: fixed;
-			inset: 0;
-			background:
-				radial-gradient(circle at center, rgba(8, 17, 34, 0.14) 0%, rgba(8, 17, 34, 0.44) 100%),
-				linear-gradient(180deg, rgba(8, 17, 34, 0.34) 0%, rgba(8, 17, 34, 0.16) 46%, rgba(8, 17, 34, 0.66) 100%);
-			z-index: 2;
-			pointer-events: none;
-		}
-
-		/* Main Foreground Shell */
-		.auth-shell {
-			position: relative;
-			z-index: 5;
+		.auth-container {
+			display: flex;
 			min-height: 100vh;
 			width: 100%;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: space-between;
-			padding: 18px 24px 16px;
-			gap: 12px;
+			overflow-x: hidden;
 		}
 
-		@media (max-width: 575.98px) {
-			.auth-shell {
-				padding: 16px 14px 18px;
-				gap: 14px;
+		/* Left Hero Showcase */
+		.auth-slider-section {
+			flex: 1.22;
+			position: relative;
+			background: linear-gradient(135deg, #0b1d39 0%, #102a52 100%);
+			overflow: hidden;
+			display: flex;
+			align-items: stretch;
+			justify-content: center;
+		}
+
+		@media (max-width: 991.98px) {
+			.auth-slider-section {
+				display: none;
 			}
 		}
 
-		/* Top Navigation / Brand Bar */
-		.auth-topbar {
+		.auth-carousel {
+			position: absolute;
+			inset: 0;
 			width: 100%;
-			max-width: 1180px;
+			height: 100%;
+		}
+
+		.carousel-slide {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s linear;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+			padding: 36px 36px 76px;
+			z-index: 1;
+		}
+
+		.carousel-slide.active {
+			opacity: 1;
+			visibility: visible;
+			z-index: 2;
+		}
+
+		.carousel-slide-bg {
+			position: absolute;
+			inset: 0;
+			background-size: cover;
+			background-position: center 42%;
+			transform: scale(1.06);
+			transition: transform 7s cubic-bezier(0.22, 1, 0.36, 1);
+			z-index: 0;
+		}
+
+		.carousel-slide.active .carousel-slide-bg {
+			transform: scale(1);
+		}
+
+		.carousel-slide::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(
+				180deg,
+				rgba(9, 20, 38, 0.30) 0%,
+				rgba(9, 20, 38, 0.04) 36%,
+				rgba(9, 20, 38, 0.22) 64%,
+				rgba(8, 17, 34, 0.90) 100%
+			);
+			z-index: 1;
+			pointer-events: none;
+		}
+
+		/* Top Brand Pill */
+		.brand-overlay {
+			position: absolute;
+			top: 28px;
+			left: 36px;
+			right: 36px;
+			z-index: 10;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
 			gap: 12px;
+			pointer-events: none;
 		}
 
 		.brand-pill {
 			display: inline-flex;
 			align-items: center;
-			gap: 11px;
+			gap: 12px;
 			background: rgba(255, 255, 255, 0.92);
 			backdrop-filter: blur(14px);
 			-webkit-backdrop-filter: blur(14px);
 			border: 1px solid rgba(255, 255, 255, 0.85);
 			border-radius: 999px;
-			padding: 6px 16px 6px 9px;
-			box-shadow: 0 12px 28px rgba(8, 17, 34, 0.22);
+			padding: 7px 18px 7px 10px;
+			box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+			pointer-events: auto;
 		}
 
 		.brand-logo-wrap {
@@ -168,13 +204,13 @@
 			background: rgba(15, 23, 42, 0.56);
 			backdrop-filter: blur(12px);
 			-webkit-backdrop-filter: blur(12px);
-			border: 1px solid rgba(255, 255, 255, 0.24);
+			border: 1px solid rgba(255, 255, 255, 0.22);
 			color: #ffffff;
 			font-size: 11.5px;
 			font-weight: 600;
 			padding: 7px 14px;
 			border-radius: 999px;
-			box-shadow: 0 8px 20px rgba(8, 17, 34, 0.2);
+			pointer-events: auto;
 		}
 
 		.hero-status-dot {
@@ -185,68 +221,247 @@
 			box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.28);
 		}
 
-		@media (max-width: 639.98px) {
-			.auth-topbar {
-				justify-content: center;
-			}
-
-			.hero-status-chip {
-				display: none;
-			}
-		}
-
-		/* Centered Login Stage */
-		.auth-center-stage {
+		/* Bottom Slide Glass Card */
+		.slide-content-card {
+			position: relative;
+			z-index: 2;
+			color: #ffffff;
 			width: 100%;
-			flex: 1;
-			display: flex;
-			align-items: center;
-			justify-content: center;
+			max-width: 100%;
+			background: rgba(9, 20, 40, 0.68);
+			backdrop-filter: blur(18px);
+			-webkit-backdrop-filter: blur(18px);
+			border: 1px solid rgba(255, 255, 255, 0.18);
+			border-radius: 20px;
+			padding: 18px 24px;
+			transform: translateY(14px);
+			transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+			box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
 		}
 
-		/* Bottom Bar (Centered Copyright) */
-		.auth-bottombar {
-			width: 100%;
-			max-width: 1180px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
+		.carousel-slide.active .slide-content-card {
+			transform: translateY(0);
 		}
 
-		.auth-slide-caption {
+		.slide-badge {
 			display: inline-flex;
 			align-items: center;
-			gap: 10px;
-			background: rgba(9, 20, 40, 0.56);
-			backdrop-filter: blur(12px);
-			-webkit-backdrop-filter: blur(12px);
-			border: 1px solid rgba(255, 255, 255, 0.18);
+			gap: 6px;
+			background: rgba(56, 189, 248, 0.18);
+			border: 1px solid rgba(56, 189, 248, 0.38);
+			color: #bae6fd;
+			font-size: 10.5px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.6px;
+			padding: 4px 10px;
 			border-radius: 999px;
-			padding: 6px 16px;
-			color: rgba(248, 250, 252, 0.92);
-			font-size: 12px;
-			font-weight: 500;
-			text-align: center;
+			margin-bottom: 8px;
 		}
 
-		.auth-slide-caption strong {
-			color: #38bdf8;
+		.slide-title {
+			font-size: 20px;
+			font-weight: 800;
+			margin: 0 0 4px 0;
+			line-height: 1.25;
+			color: #ffffff;
+			letter-spacing: -0.3px;
+		}
+
+		.slide-desc {
+			font-size: 13px;
+			color: rgba(241, 245, 249, 0.90);
+			line-height: 1.5;
+			margin: 0;
+		}
+
+		/* Bottom Controls Bar */
+		.carousel-controls-bar {
+			position: absolute;
+			bottom: 24px;
+			left: 36px;
+			right: 36px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			z-index: 10;
+		}
+
+		.carousel-indicators-custom {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.indicator-dot {
+			width: 24px;
+			height: 5px;
+			background: rgba(255, 255, 255, 0.35);
+			border-radius: 999px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+
+		.indicator-dot:hover {
+			background: rgba(255, 255, 255, 0.65);
+		}
+
+		.indicator-dot.active {
+			background: var(--vym-cyan);
+			width: 48px;
+			box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
+		}
+
+		.carousel-nav-group {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.carousel-counter {
+			color: rgba(255, 255, 255, 0.82);
+			font-size: 12px;
 			font-weight: 700;
+			letter-spacing: 0.8px;
+			margin-right: 4px;
+		}
+
+		.carousel-nav-btn {
+			width: 34px;
+			height: 34px;
+			border-radius: 50%;
+			border: 1px solid rgba(255, 255, 255, 0.25);
+			background: rgba(15, 23, 42, 0.45);
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+			color: #ffffff;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			padding: 0;
+		}
+
+		.carousel-nav-btn:hover {
+			background: rgba(37, 99, 235, 0.85);
+			border-color: rgba(56, 189, 248, 0.65);
+			transform: translateY(-1px);
+		}
+
+		/* Right Section: Modern Ambient Backdrop + Form */
+		.auth-form-section {
+			flex: 0.82;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 28px 24px;
+			background:
+				radial-gradient(circle at 88% 12%, rgba(56, 189, 248, 0.16) 0%, transparent 42%),
+				radial-gradient(circle at 12% 88%, rgba(37, 99, 235, 0.12) 0%, transparent 44%),
+				var(--vym-bg);
+			position: relative;
+			overflow-y: auto;
+		}
+
+		.auth-form-section::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background-image: radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+			background-size: 24px 24px;
+			pointer-events: none;
+			opacity: 0.55;
+		}
+
+		@media (max-width: 991.98px) {
+			.auth-form-section {
+				flex: 1;
+				width: 100%;
+				padding: 24px 16px 28px;
+				justify-content: flex-start;
+			}
+		}
+
+		/* Mobile Hero Photo Preview (shown on < 992px) */
+		.mobile-hero-banner {
+			display: none;
+			width: 100%;
+			max-width: 440px;
+			height: 158px;
+			border-radius: 22px;
+			overflow: hidden;
+			position: relative;
+			margin-bottom: 18px;
+			box-shadow: 0 14px 30px -10px rgba(15, 23, 42, 0.22);
+			z-index: 2;
+		}
+
+		.mobile-hero-banner img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			object-position: center 35%;
+			display: block;
+		}
+
+		.mobile-hero-banner::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(180deg, rgba(11, 29, 57, 0.05) 35%, rgba(11, 29, 57, 0.82) 100%);
+		}
+
+		.mobile-hero-caption {
+			position: absolute;
+			left: 16px;
+			right: 16px;
+			bottom: 12px;
+			z-index: 2;
+			color: #ffffff;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+		}
+
+		.mobile-hero-caption strong {
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: -0.1px;
+		}
+
+		.mobile-hero-caption span {
+			font-size: 10.5px;
+			font-weight: 600;
+			padding: 3px 9px;
+			border-radius: 999px;
+			background: rgba(56, 189, 248, 0.24);
+			border: 1px solid rgba(56, 189, 248, 0.45);
+			color: #e0f2fe;
+			white-space: nowrap;
+		}
+
+		@media (max-width: 991.98px) {
+			.mobile-hero-banner {
+				display: block;
+			}
 		}
 
 		/* Form Card */
 		.auth-form-card {
 			width: 100%;
-			max-width: 424px;
-			background: rgba(255, 255, 255, 0.91);
-			backdrop-filter: blur(22px) saturate(165%);
-			-webkit-backdrop-filter: blur(22px) saturate(165%);
+			max-width: 440px;
+			background: rgba(255, 255, 255, 0.96);
+			backdrop-filter: blur(14px);
+			-webkit-backdrop-filter: blur(14px);
 			border-radius: 24px;
 			box-shadow:
-				0 32px 64px -16px rgba(8, 17, 34, 0.45),
-				0 10px 24px -6px rgba(15, 23, 42, 0.18),
-				0 0 0 1px rgba(255, 255, 255, 0.75);
-			padding: 30px 32px 26px;
+				0 24px 48px -12px rgba(15, 23, 42, 0.09),
+				0 4px 16px -4px rgba(37, 99, 235, 0.06),
+				0 0 0 1px rgba(226, 232, 240, 0.95);
+			padding: 34px 34px 30px;
 			position: relative;
 			z-index: 2;
 			overflow: hidden;
@@ -556,31 +771,95 @@
 </head>
 
 <body>
-	<!-- Full-Screen Static Background Photo -->
-	<div class="auth-bg-stage" aria-hidden="true">
-		<div class="auth-bg-photo" style="background-image: url('<?= base_url('assets/img/gedung-visilab.jpg') ?>');"></div>
-	</div>
-
-	<div class="auth-shell">
-		<!-- Top Brand Bar -->
-		<header class="auth-topbar">
-			<div class="brand-pill">
-				<span class="brand-logo-wrap">
-					<img src="<?= base_url('assets/img/logovym2023.png') ?>" alt="logo vym" class="brand-logo-mini" />
-				</span>
-				<span class="brand-text-group">
-					<span class="brand-name"><?= $this->config->item('apps_name') ?></span>
-					<span class="brand-sub">PT Visi Yosindo Medikal</span>
-				</span>
+	<div class="auth-container">
+		<!-- Left Section: Slider -->
+		<div class="auth-slider-section">
+			<!-- Top Bar -->
+			<div class="brand-overlay">
+				<div class="brand-pill">
+					<span class="brand-logo-wrap">
+						<img src="<?= base_url('assets/img/logovym2023.png') ?>" alt="logo vym" class="brand-logo-mini" />
+					</span>
+					<span class="brand-text-group">
+						<span class="brand-name"><?= $this->config->item('apps_name') ?></span>
+						<span class="brand-sub">PT Visi Yosindo Medikal</span>
+					</span>
+				</div>
+				<div class="hero-status-chip">
+					<span class="hero-status-dot"></span>
+					<span>Visilab &bull; Visi Academy</span>
+				</div>
 			</div>
-			<div class="hero-status-chip">
-				<span class="hero-status-dot"></span>
-				<span>Visilab &bull; Visi Academy</span>
-			</div>
-		</header>
 
-		<!-- Centered Auth Form Card -->
-		<main class="auth-center-stage">
+			<div class="auth-carousel">
+				<!-- Slide 1 (New Building Photo) -->
+				<div class="carousel-slide active">
+					<div class="carousel-slide-bg" style="background-image: url('<?= base_url('assets/img/gedung-visilab.jpg') ?>');"></div>
+					<div class="slide-content-card">
+						<span class="slide-badge">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
+							Kantor Pusat &amp; Visi Academy
+						</span>
+						<h3 class="slide-title">Integrated Office System</h3>
+						<p class="slide-desc">Sistem operasional terpadu PT Visi Yosindo Medikal untuk menunjang produktivitas, persetujuan surat, dan koordinasi tim secara efisien.</p>
+					</div>
+				</div>
+				<!-- Slide 2 -->
+				<div class="carousel-slide">
+					<div class="carousel-slide-bg" style="background-image: url('https://visiyosindo.com/storage/galleries/Aqkh8BmsUM7Vqpfj6rP8gNwe0j7NQCA4w7g7eiYO.jpg');"></div>
+					<div class="slide-content-card">
+						<span class="slide-badge">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+							Healthcare Solutions
+						</span>
+						<h3 class="slide-title">Visi Yosindo Medikal</h3>
+						<p class="slide-desc">Mitra terpercaya penyedia alat kesehatan berkualitas tinggi serta pelatihan &amp; layanan perizinan proteksi radiasi di Indonesia.</p>
+					</div>
+				</div>
+				<!-- Slide 3 -->
+				<div class="carousel-slide">
+					<div class="carousel-slide-bg" style="background-image: url('https://visiyosindo.com/storage/galleries/oM0IEUBtdewkoxkWYGhlZj6VqlW91gq05nM4bOjl.jpg');"></div>
+					<div class="slide-content-card">
+						<span class="slide-badge">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+							Quick Response
+						</span>
+						<h3 class="slide-title">Helpdesk &amp; Service Center</h3>
+						<p class="slide-desc">Kemudahan pelaporan masalah teknis, pemantauan status tiket, dan respons cepat untuk menjamin kepuasan pelanggan.</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Carousel Controls -->
+			<div class="carousel-controls-bar">
+				<div class="carousel-indicators-custom">
+					<div class="indicator-dot active" data-slide-to="0"></div>
+					<div class="indicator-dot" data-slide-to="1"></div>
+					<div class="indicator-dot" data-slide-to="2"></div>
+				</div>
+				<div class="carousel-nav-group">
+					<span class="carousel-counter" id="carousel-counter">01 / 03</span>
+					<button type="button" class="carousel-nav-btn" id="carousel-prev" aria-label="Slide sebelumnya">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+					</button>
+					<button type="button" class="carousel-nav-btn" id="carousel-next" aria-label="Slide berikutnya">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Right Section: Form Box -->
+		<div class="auth-form-section">
+			<!-- Mobile Building Photo Banner -->
+			<div class="mobile-hero-banner">
+				<img src="<?= base_url('assets/img/gedung-visilab.jpg') ?>" alt="Gedung PT Visi Yosindo Medikal - Visilab & Visi Academy" />
+				<div class="mobile-hero-caption">
+					<strong>PT Visi Yosindo Medikal</strong>
+					<span>Visilab &amp; Visi Academy</span>
+				</div>
+			</div>
+
 			<div class="auth-form-card">
 				<!-- Logo -->
 				<div class="auth-logo-box">
@@ -745,14 +1024,12 @@
 					<?= form_close() ?>
 				<?php } ?>
 			</div>
-		</main>
 
-		<!-- Bottom Bar: Centered Copyright -->
-		<footer class="auth-bottombar">
-			<div class="auth-slide-caption">
-				<span>&copy; 2022 - <?= date('Y') ?> <strong>PT VISI YOSINDO MEDIKAL</strong>. All Rights Reserved.</span>
+			<!-- Footer Copyright inside Form Area -->
+			<div class="auth-footer">
+				&copy; 2022 - <?= date('Y') ?> PT VISI YOSINDO MEDIKAL. All Rights Reserved.
 			</div>
-		</footer>
+		</div>
 	</div>
 
 	<input type="hidden" name="token" value="<?= $this->security->get_csrf_hash() ?>">
@@ -801,6 +1078,65 @@
 					}
 				});
 			});
+
+			// Vanilla JS: Carousel Slider Auto Change & Controls
+			var slides = Array.prototype.slice.call(document.querySelectorAll('.carousel-slide'));
+			var dots = Array.prototype.slice.call(document.querySelectorAll('.indicator-dot'));
+			var counterEl = document.getElementById('carousel-counter');
+			var prevBtn = document.getElementById('carousel-prev');
+			var nextBtn = document.getElementById('carousel-next');
+			var currentIndex = 0;
+			var slideInterval = 5500;
+			var timer = null;
+
+			function showSlide(index) {
+				if (!slides.length) return;
+				var safeIndex = (index + slides.length) % slides.length;
+				slides.forEach(function(slide) { slide.classList.remove('active'); });
+				dots.forEach(function(dot) { dot.classList.remove('active'); });
+
+				slides[safeIndex].classList.add('active');
+				if (dots[safeIndex]) dots[safeIndex].classList.add('active');
+				currentIndex = safeIndex;
+				if (counterEl) {
+					counterEl.textContent = '0' + (safeIndex + 1) + ' / 0' + slides.length;
+				}
+			}
+
+			function resetTimer() {
+				if (timer) clearInterval(timer);
+				timer = setInterval(function() {
+					showSlide(currentIndex + 1);
+				}, slideInterval);
+			}
+
+			if (slides.length > 1) {
+				resetTimer();
+
+				dots.forEach(function(dot) {
+					dot.addEventListener('click', function() {
+						var idx = parseInt(dot.getAttribute('data-slide-to'), 10);
+						if (!isNaN(idx)) {
+							showSlide(idx);
+							resetTimer();
+						}
+					});
+				});
+
+				if (prevBtn) {
+					prevBtn.addEventListener('click', function() {
+						showSlide(currentIndex - 1);
+						resetTimer();
+					});
+				}
+
+				if (nextBtn) {
+					nextBtn.addEventListener('click', function() {
+						showSlide(currentIndex + 1);
+						resetTimer();
+					});
+				}
+			}
 
 			// AJAX form submit for login with button loading protection & sweetalert
 			var loginForm = document.getElementById('kt_login_signin_form');
