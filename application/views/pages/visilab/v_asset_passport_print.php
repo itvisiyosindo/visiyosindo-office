@@ -32,7 +32,7 @@ $buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
     <link rel="shortcut icon" href="<?= base_url('assets/img/favicon.png') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('assets/vendor/font-awesome/css/all.min.css') ?>">
     <style>
         * {
@@ -453,24 +453,47 @@ $buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
         .st-footer {
             position: relative;
             z-index: 2;
-            background: linear-gradient(90deg, #dde6f2 0%, #f1f5f9 50%, #dde6f2 100%);
-            border-top: 0.2mm solid rgba(148, 163, 184, 0.55);
-            color: #334155;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(90deg, #e2eaf4 0%, #f8fafc 50%, #e2eaf4 100%);
+            border-top: 0.25mm solid rgba(148, 163, 184, 0.6);
+            color: #1e3a6e;
             text-align: center;
-            font-size: 5.1pt;
+            font-size: 5.3pt;
             font-weight: 600;
-            padding: 0.95mm 2mm;
-            letter-spacing: 0.15px;
+            padding: 1.15mm 2.5mm;
+            letter-spacing: 0.25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.4mm;
+            white-space: nowrap;
         }
 
-        .st-footer strong {
-            color: #1e3a8a;
+        .st-footer .st-f-tag {
+            background: #1d4489;
+            color: #ffffff;
+            font-size: 4.5pt;
             font-weight: 700;
+            letter-spacing: 0.45px;
+            padding: 0.35mm 1.4mm;
+            border-radius: 0.8mm;
+            text-transform: uppercase;
+        }
+
+        .st-footer .st-f-sep {
+            color: #94a3b8;
+            font-weight: 400;
         }
 
         .size-7x4 .st-footer {
             font-size: 4.5pt;
-            padding: 0.75mm 1.5mm;
+            padding: 0.9mm 1.8mm;
+            gap: 1mm;
+        }
+
+        .size-7x4 .st-footer .st-f-tag {
+            font-size: 4pt;
+            padding: 0.25mm 1.1mm;
         }
 
         @media print {
@@ -573,7 +596,14 @@ $buildPrintUrl = function ($newSize, $newTheme) use ($items, $idsParam) {
                     </div>
 
                     <div class="st-footer">
-                        <strong>Scan QR:</strong> Izin BAPETEN • LUK • Kalibrasi • Riwayat &amp; Lapor Servis
+                        <span class="st-f-tag">Info QR</span>
+                        <span>Izin BAPETEN</span>
+                        <span class="st-f-sep">|</span>
+                        <span>LUK</span>
+                        <span class="st-f-sep">|</span>
+                        <span>Kalibrasi</span>
+                        <span class="st-f-sep">|</span>
+                        <span>Riwayat &amp; Lapor Kerusakan</span>
                     </div>
                 </div>
             <?php endforeach; ?>
