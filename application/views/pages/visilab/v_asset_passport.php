@@ -605,11 +605,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				data: null,
 				className: 'text-center align-middle',
 				render: function(r) {
-					return '<div class="btn-group btn-group-sm">'
-						+ '<button type="button" class="btn btn-info btn-detail" data-id="' + r.id_passport + '" title="Detail, QR & Riwayat"><i class="fas fa-qrcode"></i></button>'
-						+ '<a href="' + esc(r.print_url) + '" target="_blank" class="btn btn-dark" title="Cetak Stiker QR"><i class="fas fa-print"></i></a>'
-						+ '<button type="button" class="btn btn-warning btn-edit" data-id="' + r.id_passport + '" title="Edit"><i class="fas fa-edit"></i></button>'
-						+ '<button type="button" class="btn btn-danger btn-hapus" data-id="' + r.id_passport + '" data-nama="' + esc(r.nama_produk) + '" title="Hapus"><i class="fas fa-trash"></i></button>'
+					var printUrl = window.location.origin + '/asset_passport/print_sticker/' + r.id_passport;
+					return '<div class="d-inline-flex align-items-center justify-content-center" style="gap:4px; white-space:nowrap; position:relative; z-index:2;">'
+						+ '<button type="button" class="btn btn-sm btn-info btn-ap-detail px-2 py-1" data-id="' + r.id_passport + '" title="Detail, QR & Riwayat" style="cursor:pointer;"><i class="fas fa-qrcode"></i></button>'
+						+ '<a href="' + esc(printUrl) + '" target="_blank" class="btn btn-sm btn-dark btn-ap-print px-2 py-1" title="Cetak Stiker QR" style="cursor:pointer;"><i class="fas fa-print"></i></a>'
+						+ '<button type="button" class="btn btn-sm btn-warning btn-ap-edit px-2 py-1" data-id="' + r.id_passport + '" title="Edit" style="cursor:pointer;"><i class="fas fa-edit"></i></button>'
+						+ '<button type="button" class="btn btn-sm btn-danger btn-ap-hapus px-2 py-1" data-id="' + r.id_passport + '" data-nama="' + esc(r.nama_produk) + '" title="Hapus" style="cursor:pointer;"><i class="fas fa-trash"></i></button>'
 						+ '</div>';
 				}
 			}
@@ -617,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 
 	function loadData() {
-		$.getJSON('<?= base_url('asset_passport/data_json') ?>', {
+		$.getJSON(window.location.origin + '/asset_passport/data_json', {
 			kategori_layanan: $('#filter-kategori').val(),
 			search: $('#filter-search').val()
 		}, function(res) {
@@ -664,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			Swal.fire('Info', 'Centang minimal 1 alat untuk cetak batch stiker QR.', 'info');
 			return;
 		}
-		window.open('<?= base_url('asset_passport/print_sticker') ?>?ids=' + ids.join(','), '_blank');
+		window.open(window.location.origin + '/asset_passport/print_sticker?ids=' + ids.join(','), '_blank');
 	});
 
 	// Extra non-TLD rows
@@ -728,47 +729,57 @@ document.addEventListener('DOMContentLoaded', function() {
 		$('#modal-passport').modal('show');
 	});
 
-	$(document).on('click', '.btn-edit', function() {
-		var id = $(this).data('id');
-		$.getJSON('<?= base_url('asset_passport/detail/') ?>' + id, function(res) {
-			if (!res || !res.status) {
-				Swal.fire('Gagal', 'Data tidak ditemukan.', 'error');
-				return;
-			}
-			var d = res.data;
-			$('#form-passport')[0].reset();
-			$('#f_id_passport').val(d.id_passport);
-			$('#f_id_perizinan').val(d.id_perizinan || '');
-			$('#f_id_pengujian').val(d.id_pengujian || '');
-			$('#f_id_pelanggan').val(d.id_pelanggan || '');
-			$('#f_nama_instansi').val(d.nama_instansi || '');
-			$('#f_lokasi_ruangan').val(d.lokasi_ruangan || '');
-			$('#f_nama_produk').val(d.nama_produk || '');
-			$('#f_merk_tipe').val(d.merk_tipe || '');
-			$('#f_serial_number').val(d.serial_number || '');
-			$('#f_tgl_exp_izin').val(d.tgl_exp_izin || '');
-			$('#f_tgl_exp_luk').val(d.tgl_exp_luk || '');
-			$('#f_tgl_exp_kalibrasi').val(d.tgl_exp_kalibrasi || '');
-			$('#f_kode_uji_terakhir').val(d.kode_uji_terakhir || '');
-			$('#f_jenis_uji_terakhir').val(d.jenis_uji_terakhir || '');
-			$('#f_link_sertifikat').val(d.link_sertifikat || '');
-			$('#f_link_lhu').val(d.link_lhu || '');
-			$('#f_kategori_layanan').val(d.kategori_layanan || '1');
-			$('#f_default_teknisi_id').val(d.default_teknisi_id || '');
-			$('#f_id_topik_default').val(d.id_topik_default || '');
-			$('#f_catatan_internal').val(d.catatan_internal || '');
-			$('#f_is_active').val(d.is_active != null ? d.is_active : '1');
-			$('#preview-foto').attr('src', d.foto_url || '<?= base_url('assets/img/device.png') ?>');
+	$(document).on('click', '.btn-ap-edit', function(e) {
+		e.preventDefault();
+		var id = $(this).attr('data-id');
+		$.ajax({
+			url: window.location.origin + '/asset_passport/detail/' + id,
+			type: 'GET',
+			dataType: 'json',
+			success: function(res) {
+				if (!res || !res.status) {
+					Swal.fire('Gagal', (res && res.message) ? res.message : 'Data tidak ditemukan.', 'error');
+					return;
+				}
+				var d = res.data;
+				$('#form-passport')[0].reset();
+				$('#f_id_passport').val(d.id_passport);
+				$('#f_id_perizinan').val(d.id_perizinan || '');
+				$('#f_id_pengujian').val(d.id_pengujian || '');
+				$('#f_id_pelanggan').val(d.id_pelanggan || '');
+				$('#f_nama_instansi').val(d.nama_instansi || '');
+				$('#f_lokasi_ruangan').val(d.lokasi_ruangan || '');
+				$('#f_nama_produk').val(d.nama_produk || '');
+				$('#f_merk_tipe').val(d.merk_tipe || '');
+				$('#f_serial_number').val(d.serial_number || '');
+				$('#f_tgl_exp_izin').val(d.tgl_exp_izin || '');
+				$('#f_tgl_exp_luk').val(d.tgl_exp_luk || '');
+				$('#f_tgl_exp_kalibrasi').val(d.tgl_exp_kalibrasi || '');
+				$('#f_kode_uji_terakhir').val(d.kode_uji_terakhir || '');
+				$('#f_jenis_uji_terakhir').val(d.jenis_uji_terakhir || '');
+				$('#f_link_sertifikat').val(d.link_sertifikat || '');
+				$('#f_link_lhu').val(d.link_lhu || '');
+				$('#f_kategori_layanan').val(d.kategori_layanan || '1');
+				$('#f_default_teknisi_id').val(d.default_teknisi_id || '');
+				$('#f_id_topik_default').val(d.id_topik_default || '');
+				$('#f_catatan_internal').val(d.catatan_internal || '');
+				$('#f_is_active').val(d.is_active != null ? d.is_active : '1');
+				var fotoSrc = d.foto_url || (window.location.origin + '/assets/img/device.png');
+				$('#preview-foto').attr('src', fotoSrc);
 
-			$('#extra-fields-container').empty();
-			if (Array.isArray(d.info_tambahan)) {
-				d.info_tambahan.forEach(function(item) {
-					addExtraRow(item.label, item.value);
-				});
-			}
+				$('#extra-fields-container').empty();
+				if (Array.isArray(d.info_tambahan)) {
+					d.info_tambahan.forEach(function(item) {
+						addExtraRow(item.label, item.value);
+					});
+				}
 
-			$('#modal-passport-title').html('<i class="fas fa-edit mr-1"></i> Edit QR Asset Passport (' + esc(d.kode_passport) + ')');
-			$('#modal-passport').modal('show');
+				$('#modal-passport-title').html('<i class="fas fa-edit mr-1"></i> Edit QR Asset Passport (' + esc(d.kode_passport) + ')');
+				$('#modal-passport').modal('show');
+			},
+			error: function(xhr) {
+				Swal.fire('Error', 'Gagal mengambil data edit (HTTP ' + xhr.status + ').', 'error');
+			}
 		});
 	});
 
@@ -853,22 +864,34 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	});
 
-	$(document).on('click', '.btn-hapus', function() {
-		var id = $(this).data('id');
-		var nama = $(this).data('nama');
+	$(document).on('click', '.btn-ap-hapus', function(e) {
+		e.preventDefault();
+		var id = $(this).attr('data-id');
+		var nama = $(this).attr('data-nama');
 		Swal.fire({
 			title: 'Hapus QR Passport?',
 			text: 'Alat "' + nama + '" tidak akan bisa diakses lewat QR lagi.',
 			icon: 'warning',
 			showCancelButton: true,
 			confirmButtonColor: '#dc2626',
-			confirmButtonText: 'Ya, Hapus'
+			confirmButtonText: 'Ya, Hapus',
+			cancelButtonText: 'Batal'
 		}).then(function(r) {
 			if (r.isConfirmed || r.value) {
-				$.getJSON('<?= base_url('asset_passport/delete/') ?>' + id, function(res) {
-					if (res && res.status) {
-						Swal.fire('Dihapus', res.message, 'success');
-						loadData();
+				$.ajax({
+					url: window.location.origin + '/asset_passport/delete/' + id,
+					type: 'GET',
+					dataType: 'json',
+					success: function(res) {
+						if (res && res.status) {
+							Swal.fire('Dihapus', res.message, 'success');
+							loadData();
+						} else {
+							Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal menghapus data.', 'warning');
+						}
+					},
+					error: function(xhr) {
+						Swal.fire('Error', 'Gagal menghapus data (HTTP ' + xhr.status + ').', 'error');
 					}
 				});
 			}
@@ -885,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		var html = '';
 		list.forEach(function(item) {
 			var delBtn = item.source === 'manual'
-				? '<button type="button" class="btn btn-xs btn-outline-danger btn-del-srv ml-2" data-id="' + item.ref_id + '"><i class="fas fa-trash"></i></button>'
+				? '<button type="button" class="btn btn-sm btn-outline-danger btn-del-srv ml-2 py-0 px-2" data-id="' + item.ref_id + '"><i class="fas fa-trash"></i></button>'
 				: '';
 			html += '<div class="border rounded p-2 mb-2 bg-light">'
 				+ '<div class="d-flex justify-content-between align-items-start">'
@@ -920,42 +943,68 @@ document.addEventListener('DOMContentLoaded', function() {
 	$('#link_record_type').on('change', populateLinkSelect);
 
 	function openDetail(id) {
-		$.getJSON('<?= base_url('asset_passport/detail/') ?>' + id, function(res) {
-			if (!res || !res.status) return;
-			var d = res.data;
-			linkableCache = res.linkable || { tikets: [], pms: [] };
+		$.ajax({
+			url: window.location.origin + '/asset_passport/detail/' + id,
+			type: 'GET',
+			dataType: 'json',
+			success: function(res) {
+				if (!res || !res.status) {
+					Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal memuat detail alat.', 'warning');
+					return;
+				}
+				var d = res.data;
+				linkableCache = res.linkable || { tikets: [], pms: [] };
 
-			$('#detail-title').text(d.nama_produk + ' — ' + d.nama_instansi);
-			$('#detail-kode').text(d.kode_passport);
-			$('#detail-sn').text('S/N: ' + (d.serial_number || '-'));
-			$('#detail-public-url').val(d.public_url);
-			$('#detail-open-public').attr('href', d.public_url);
-			$('#detail-print-btn').attr('href', d.print_url);
-			$('#srv_id_passport').val(d.id_passport);
-			$('#link_id_passport').val(d.id_passport);
+				var publicUrl = window.location.origin + '/passport/' + d.qr_token;
+				var printUrl  = window.location.origin + '/asset_passport/print_sticker/' + d.id_passport;
 
-			var $qrBox = $('#detail-qr-canvas').empty();
-			if (typeof QRCode !== 'undefined') {
-				new QRCode($qrBox[0], { text: d.public_url, width: 170, height: 170 });
-			} else {
-				$qrBox.html('<img src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(d.public_url) + '" alt="QR">');
+				$('#detail-title').text(d.nama_produk + ' — ' + d.nama_instansi);
+				$('#detail-kode').text(d.kode_passport);
+				$('#detail-sn').text('S/N: ' + (d.serial_number || '-'));
+				$('#detail-public-url').val(publicUrl);
+				$('#detail-open-public').attr('href', publicUrl);
+				$('#detail-print-btn').attr('href', printUrl);
+				$('#srv_id_passport').val(d.id_passport);
+				$('#link_id_passport').val(d.id_passport);
+
+				var $qrBox = $('#detail-qr-canvas').empty();
+				try {
+					if (typeof QRCode !== 'undefined') {
+						new QRCode($qrBox[0], { text: publicUrl, width: 170, height: 170 });
+					} else {
+						$qrBox.html('<img src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(publicUrl) + '" alt="QR">');
+					}
+				} catch (err) {
+					$qrBox.html('<img src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(publicUrl) + '" alt="QR">');
+				}
+
+				renderDetailHistory(res.history || []);
+				populateLinkSelect();
+				$('#modal-detail-passport').modal('show');
+			},
+			error: function(xhr) {
+				Swal.fire('Error', 'Gagal membuka detail QR (HTTP ' + xhr.status + ').', 'error');
 			}
-
-			renderDetailHistory(res.history || []);
-			populateLinkSelect();
-			$('#modal-detail-passport').modal('show');
 		});
 	}
 
-	$(document).on('click', '.btn-detail', function() {
-		openDetail($(this).data('id'));
+	$(document).on('click', '.btn-ap-detail', function(e) {
+		e.preventDefault();
+		openDetail($(this).attr('data-id'));
 	});
 
 	$('#btn-copy-url').on('click', function() {
-		var el = document.getElementById('detail-public-url');
-		el.select();
-		document.execCommand('copy');
-		Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Link QR disalin!', showConfirmButton: false, timer: 1800 });
+		var val = $('#detail-public-url').val() || '';
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(val).then(function() {
+				Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Link QR disalin!', showConfirmButton: false, timer: 1800 });
+			});
+		} else {
+			var el = document.getElementById('detail-public-url');
+			el.select();
+			document.execCommand('copy');
+			Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Link QR disalin!', showConfirmButton: false, timer: 1800 });
+		}
 	});
 
 	$('#form-add-service').on('submit', function(e) {
@@ -970,13 +1019,16 @@ document.addEventListener('DOMContentLoaded', function() {
 			} else {
 				Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal menyimpan.', 'warning');
 			}
-		}, 'json');
+		}, 'json').fail(function(xhr) {
+			Swal.fire('Error', 'Gagal menyimpan riwayat (HTTP ' + xhr.status + ').', 'error');
+		});
 	});
 
-	$(document).on('click', '.btn-del-srv', function() {
-		var srvId = $(this).data('id');
+	$(document).on('click', '.btn-del-srv', function(e) {
+		e.preventDefault();
+		var srvId = $(this).attr('data-id');
 		var idPassport = $('#srv_id_passport').val();
-		$.getJSON('<?= base_url('asset_passport/delete_service/') ?>' + srvId, function(res) {
+		$.getJSON(window.location.origin + '/asset_passport/delete_service/' + srvId, function(res) {
 			if (res && res.status) {
 				openDetail(idPassport);
 			}
@@ -993,7 +1045,9 @@ document.addEventListener('DOMContentLoaded', function() {
 			} else {
 				Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal menautkan.', 'warning');
 			}
-		}, 'json');
+		}, 'json').fail(function(xhr) {
+			Swal.fire('Error', 'Gagal menautkan data (HTTP ' + xhr.status + ').', 'error');
+		});
 	});
 });
 </script>

@@ -386,11 +386,11 @@ class Md_asset_passport extends CI_Model
 
         if (!empty($row->id_perizinan) && $this->db->table_exists('visilab_perizinan_alat')) {
             // Sengaja TIDAK memilih tgl_evaluasi_tld
-            $izin = @$this->db->select('id, nama_instansi, pihak_ketiga, jenis_alat, status_jasa, status_perizinan, progres_perizinan, tgl_terbit, tgl_jatuh_tempo, tgl_exp_luk, tgl_exp_kalibrasi')
+            $qIzin = @$this->db->select('id, nama_instansi, pihak_ketiga, jenis_alat, status_jasa, status_perizinan, progres_perizinan, tgl_terbit, tgl_jatuh_tempo, tgl_exp_luk, tgl_exp_kalibrasi')
                 ->from('visilab_perizinan_alat')
                 ->where('id', (int)$row->id_perizinan)
-                ->get()
-                ->row();
+                ->get();
+            $izin = $qIzin ? $qIzin->row() : null;
             if ($izin) {
                 if (!empty($izin->tgl_jatuh_tempo)) {
                     $row->tgl_exp_izin = $izin->tgl_jatuh_tempo;
@@ -409,12 +409,12 @@ class Md_asset_passport extends CI_Model
         }
 
         if (!empty($row->id_pengujian) && $this->db->table_exists('pengujian_visilab')) {
-            $uji = @$this->db->select('id, kode, jenis_uji, jenis_alat, nama_alat, serial_number, jadwal, jadwal_end, link_lhu, link_sertifikat, link_instalasi, status, id_pengujian, created_at')
+            $qUji = @$this->db->select('id, kode, jenis_uji, jenis_alat, nama_alat, serial_number, jadwal, jadwal_end, link_lhu, link_sertifikat, link_instalasi, status, id_pengujian, created_at')
                 ->from('pengujian_visilab')
                 ->where('id', (int)$row->id_pengujian)
                 ->where('status !=', 0)
-                ->get()
-                ->row();
+                ->get();
+            $uji = $qUji ? $qUji->row() : null;
             if ($uji) {
                 if (!empty($uji->kode)) {
                     $row->kode_uji_terakhir = $uji->kode;
@@ -554,8 +554,8 @@ class Md_asset_passport extends CI_Model
         $this->db->db_debug = FALSE;
 
         // 1. Dari Tiket (perbaikan / laporan kerusakan)
-        if ($this->db->table_exists('tiket')) {
-            $tikets = @$this->db->select('
+        if ($this->db->table_exists('tiket') && $this->db->field_exists('id_passport', 'tiket')) {
+            $qTiket = @$this->db->select('
                 t.id_tiket,
                 t.kode_tiket,
                 t.subject,
@@ -574,8 +574,8 @@ class Md_asset_passport extends CI_Model
                 ->where('t.id_passport', $id_passport)
                 ->where('t.status_data', 1)
                 ->order_by('t.created_at', 'DESC')
-                ->get()
-                ->result();
+                ->get();
+            $tikets = $qTiket ? $qTiket->result() : [];
 
             if (!empty($tikets)) {
                 foreach ($tikets as $t) {
@@ -610,8 +610,8 @@ class Md_asset_passport extends CI_Model
         }
 
         // 2. Dari Preventif Maintenance
-        if ($this->db->table_exists('preventif_maintenance')) {
-            $pms = @$this->db->select('
+        if ($this->db->table_exists('preventif_maintenance') && $this->db->field_exists('id_passport', 'preventif_maintenance')) {
+            $qPm = @$this->db->select('
                 pm.id_pm,
                 pm.kode_pm,
                 pm.subject,
@@ -627,8 +627,8 @@ class Md_asset_passport extends CI_Model
                 ->where('pm.id_passport', $id_passport)
                 ->where('pm.status_data', 1)
                 ->order_by('pm.tanggal_pm', 'DESC')
-                ->get()
-                ->result();
+                ->get();
+            $pms = $qPm ? $qPm->result() : [];
 
             if (!empty($pms)) {
                 foreach ($pms as $pm) {
@@ -664,14 +664,14 @@ class Md_asset_passport extends CI_Model
 
         // 3. Dari Service Manual (visilab_asset_passport_service)
         if ($this->db->table_exists($this->table_service)) {
-            $manuals = @$this->db->select('*')
+            $qMan = @$this->db->select('*')
                 ->from($this->table_service)
                 ->where('id_passport', $id_passport)
                 ->where('status_data', 1)
                 ->where('sumber', 'manual')
                 ->order_by('tanggal_service', 'DESC')
-                ->get()
-                ->result();
+                ->get();
+            $manuals = $qMan ? $qMan->result() : [];
 
             if (!empty($manuals)) {
                 foreach ($manuals as $m) {
@@ -1206,24 +1206,26 @@ class Md_asset_passport extends CI_Model
 
         $tikets = [];
         if ($this->db->table_exists('tiket')) {
-            $this->db->select('id_tiket, kode_tiket, subject, pelanggan, status_tiket, created_at, id_passport')
+            $this->db->select('id_tiket, kode_tiket, subject, pelanggan, status_tiket, created_at')
                 ->from('tiket')
                 ->where('status_data', 1);
             if (!empty($id_pelanggan)) {
                 $this->db->where('id_pelanggan', (int)$id_pelanggan);
             }
-            $tikets = @$this->db->order_by('id_tiket', 'DESC')->limit(100)->get()->result() ?: [];
+            $qT = @$this->db->order_by('id_tiket', 'DESC')->limit(100)->get();
+            $tikets = $qT ? $qT->result() : [];
         }
 
         $pms = [];
         if ($this->db->table_exists('preventif_maintenance')) {
-            $this->db->select('id_pm, kode_pm, subject, tanggal_pm, status_pm, id_passport')
+            $this->db->select('id_pm, kode_pm, subject, tanggal_pm, status_pm')
                 ->from('preventif_maintenance')
                 ->where('status_data', 1);
             if (!empty($id_pelanggan)) {
                 $this->db->where('id_pelanggan', (int)$id_pelanggan);
             }
-            $pms = @$this->db->order_by('id_pm', 'DESC')->limit(100)->get()->result() ?: [];
+            $qP = @$this->db->order_by('id_pm', 'DESC')->limit(100)->get();
+            $pms = $qP ? $qP->result() : [];
         }
 
         $this->db->db_debug = $origDebug;

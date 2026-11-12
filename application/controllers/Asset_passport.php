@@ -69,29 +69,35 @@ class Asset_passport extends CI_Controller
     public function detail($id = 0)
     {
         grantAccessFor('all');
-
-        $id = (int)$id;
-        $row = $this->Md_asset_passport->get_by_id($id);
-        if (!$row) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['status' => false, 'message' => 'Data QR Passport tidak ditemukan.']);
-            return;
-        }
-
-        $row->public_url = base_url('passport/' . $row->qr_token);
-        $row->print_url  = base_url('asset_passport/print_sticker/' . $row->id_passport);
-        $row->foto_url   = $this->_resolve_foto_url($row->foto_produk);
-
-        $history  = $this->Md_asset_passport->get_service_history($id);
-        $linkable = $this->Md_asset_passport->get_linkable_records($row->id_pelanggan);
-
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode([
-            'status'   => true,
-            'data'     => $row,
-            'history'  => $history,
-            'linkable' => $linkable
-        ]);
+
+        try {
+            $id = (int)$id;
+            $row = $this->Md_asset_passport->get_by_id($id);
+            if (!$row) {
+                echo json_encode(['status' => false, 'message' => 'Data QR Passport tidak ditemukan.']);
+                return;
+            }
+
+            $row->public_url = base_url('passport/' . $row->qr_token);
+            $row->print_url  = base_url('asset_passport/print_sticker/' . $row->id_passport);
+            $row->foto_url   = $this->_resolve_foto_url($row->foto_produk);
+
+            $history  = $this->Md_asset_passport->get_service_history($id);
+            $linkable = $this->Md_asset_passport->get_linkable_records($row->id_pelanggan);
+
+            echo json_encode([
+                'status'   => true,
+                'data'     => $row,
+                'history'  => $history,
+                'linkable' => $linkable
+            ]);
+        } catch (\Throwable $e) {
+            echo json_encode([
+                'status'  => false,
+                'message' => 'Gagal memuat detail QR Passport: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function save()
