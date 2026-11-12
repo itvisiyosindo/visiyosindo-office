@@ -24,15 +24,15 @@ if (!function_exists('h')) {
     <link rel="stylesheet" href="<?= base_url('assets/js/sweetalert2/sweetalert2.min.css') ?>">
     <style>
         :root {
-            --navy: #0f2744;
-            --navy-light: #1a3a63;
-            --teal: #0d9488;
-            --teal-soft: #ccfbf1;
-            --bg: #f1f5f9;
+            --navy: #143061;
+            --navy-light: #254f96;
+            --teal: #2563eb;
+            --teal-soft: #dbeafe;
+            --bg: #eef3f9;
             --card-bg: #ffffff;
             --text: #0f172a;
             --muted: #64748b;
-            --border: #e2e8f0;
+            --border: #d8e2ef;
         }
 
         * {
@@ -42,18 +42,18 @@ if (!function_exists('h')) {
         body {
             margin: 0;
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
+            background: linear-gradient(180deg, #e7eef7 0%, #f4f7fb 35%, #eef3f9 100%);
             color: var(--text);
             padding-bottom: 92px;
         }
 
         .passport-topbar {
-            background: linear-gradient(135deg, #071630 0%, #102a5c 55%, #163d7a 100%);
+            background: linear-gradient(135deg, #112852 0%, #1d4282 55%, #2b5cb0 100%);
             color: #fff;
             padding: 18px 16px 60px;
             position: relative;
-            border-bottom: 3px solid #eab308;
-            box-shadow: 0 6px 24px rgba(7, 22, 48, 0.28);
+            border-bottom: 2px solid #cbd5e1;
+            box-shadow: 0 6px 24px rgba(17, 40, 82, 0.18);
         }
 
         .brand-row {
@@ -79,14 +79,14 @@ if (!function_exists('h')) {
         }
 
         .brand-logo-wrap {
-            background: #fff;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
             border-radius: 10px;
             padding: 5px 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid rgba(234, 179, 8, 0.65);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
             height: 40px;
         }
 
@@ -99,31 +99,31 @@ if (!function_exists('h')) {
 
         .brand-title {
             font-size: 13.5px;
-            font-weight: 800;
-            letter-spacing: 0.35px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
             line-height: 1.2;
         }
 
         .brand-sub {
             font-size: 10.5px;
-            color: #fde047;
-            font-weight: 700;
-            letter-spacing: 0.6px;
+            color: #dbeafe;
+            font-weight: 600;
+            letter-spacing: 0.75px;
             text-transform: uppercase;
             margin-bottom: 2px;
         }
 
         .verified-chip {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
-            border: 1px solid rgba(110, 231, 183, 0.65);
-            color: #d1fae5;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(226, 232, 240, 0.16) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            color: #f8fafc;
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 700;
             padding: 6px 12px;
             border-radius: 999px;
             white-space: nowrap;
-            letter-spacing: 0.4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            letter-spacing: 0.45px;
+            backdrop-filter: blur(6px);
         }
 
         .passport-container {
@@ -135,10 +135,10 @@ if (!function_exists('h')) {
         }
 
         .p-card {
-            background: var(--card-bg);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             border-radius: 18px;
-            border: 1px solid #dbe4f0;
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+            border: 1px solid #d5dfec;
+            box-shadow: 0 10px 28px rgba(17, 40, 82, 0.06);
             margin-bottom: 16px;
             overflow: hidden;
         }
