@@ -817,41 +817,91 @@ if (!function_exists('h')) {
             });
         }
 
+        function compressPublicImage(file, maxDim, quality) {
+            return new Promise(function(resolve) {
+                if (!file || !file.type || file.type.indexOf('image/') !== 0 || file.size <= 700 * 1024) {
+                    resolve(file);
+                    return;
+                }
+                var img = new Image();
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    img.onload = function() {
+                        var w = img.width;
+                        var h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round(h * maxDim / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round(w * maxDim / h);
+                                h = maxDim;
+                            }
+                        }
+                        var canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        canvas.toBlob(function(blob) {
+                            if (blob && blob.size < file.size) {
+                                resolve(new File([blob], (file.name || 'kendala').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = function() { resolve(file); };
+                    img.src = ev.target.result;
+                };
+                reader.onerror = function() { resolve(file); };
+                reader.readAsDataURL(file);
+            });
+        }
+
         $('#formLaporKerusakan').on('submit', function(e) {
             e.preventDefault();
+            var formEl = this;
             var $btn = $('#btnSubmitLapor');
             var origHtml = $btn.html();
             $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengirim...');
 
-            var formData = new FormData(this);
-            $.ajax({
-                url: '<?= base_url('passport/lapor_kerusakan') ?>',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                success: function(res) {
-                    $btn.prop('disabled', false).html(origHtml);
-                    if (res && res.status) {
-                        $('#modalLaporKerusakan').modal('hide');
-                        $('#formLaporKerusakan')[0].reset();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Laporan Terkirim!',
-                            html: 'Tiket Anda berhasil dicatat dengan nomor:<br><strong style="font-size:18px;color:#0f2744;">' + (res.kode_tiket || '-') + '</strong><br><br><small>Konfirmasi telah dikirim ke WhatsApp Anda dan tim teknisi kami segera menindaklanjuti.</small>',
-                            confirmButtonColor: '#0d9488'
-                        }).then(function() {
-                            window.location.reload();
-                        });
-                    } else {
-                        Swal.fire('Perhatian', (res && res.message) ? res.message : 'Gagal mengirim laporan.', 'warning');
-                    }
-                },
-                error: function() {
-                    $btn.prop('disabled', false).html(origHtml);
-                    Swal.fire('Error', 'Terjadi gangguan jaringan. Silakan coba kembali.', 'error');
+            var fileInput = formEl.querySelector('input[name="foto_kerusakan"]');
+            var rawFile = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+
+            compressPublicImage(rawFile, 1400, 0.82).then(function(finalFile) {
+                var formData = new FormData(formEl);
+                if (finalFile) {
+                    formData.set('foto_kerusakan', finalFile, finalFile.name || 'kendala.jpg');
                 }
+                $.ajax({
+                    url: window.location.origin + '/passport/lapor_kerusakan',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(res) {
+                        $btn.prop('disabled', false).html(origHtml);
+                        if (res && res.status) {
+                            $('#modalLaporKerusakan').modal('hide');
+                            formEl.reset();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Laporan Terkirim!',
+                                html: 'Tiket Anda berhasil dicatat dengan nomor:<br><strong style="font-size:18px;color:#0f2744;">' + (res.kode_tiket || '-') + '</strong><br><br><small>Konfirmasi telah dikirim ke WhatsApp Anda dan tim teknisi kami segera menindaklanjuti.</small>',
+                                confirmButtonColor: '#0d9488'
+                            }).then(function() {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire('Perhatian', (res && res.message) ? res.message : 'Gagal mengirim laporan.', 'warning');
+                        }
+                    },
+                    error: function() {
+                        $btn.prop('disabled', false).html(origHtml);
+                        Swal.fire('Error', 'Terjadi gangguan jaringan. Silakan coba kembali.', 'error');
+                    }
+                });
             });
         });
     </script>

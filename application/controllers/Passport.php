@@ -55,6 +55,14 @@ class Passport extends CI_Controller
     {
         header('Content-Type: application/json; charset=utf-8');
 
+        if (empty($_POST) && empty($_FILES) && !empty($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 0) {
+            echo json_encode([
+                'status'  => false,
+                'message' => 'Ukuran foto/lampiran terlalu besar melebihi batas server (maks 4 MB). Silakan pilih file yang lebih kecil.'
+            ]);
+            return;
+        }
+
         // Honeypot anti-bot
         $honeypot = trim((string)$this->input->post('website_url', TRUE));
         if ($honeypot !== '') {

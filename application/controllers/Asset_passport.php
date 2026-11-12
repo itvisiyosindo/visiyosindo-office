@@ -99,6 +99,14 @@ class Asset_passport extends CI_Controller
         grantAccessFor('all');
         header('Content-Type: application/json; charset=utf-8');
 
+        if (empty($_POST) && empty($_FILES) && !empty($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 0) {
+            echo json_encode([
+                'status'  => false,
+                'message' => 'Ukuran file foto terlalu besar melebihi batas server (maksimal 4 MB). Silakan pilih/perkecil foto terlebih dahulu.'
+            ]);
+            return;
+        }
+
         $id_passport   = (int)$this->input->post('id_passport', TRUE);
         $nama_produk   = trim((string)$this->input->post('nama_produk', TRUE));
         $nama_instansi = trim((string)$this->input->post('nama_instansi', TRUE));
@@ -112,8 +120,16 @@ class Asset_passport extends CI_Controller
             }
         }
 
-        if ($nama_produk === '' || $nama_instansi === '') {
+        if ($nama_produk === '' && $nama_instansi === '') {
             echo json_encode(['status' => false, 'message' => 'Nama Produk dan Nama Instansi / Pelanggan wajib diisi.']);
+            return;
+        }
+        if ($nama_instansi === '') {
+            echo json_encode(['status' => false, 'message' => 'Nama Instansi / RS wajib diisi.']);
+            return;
+        }
+        if ($nama_produk === '') {
+            echo json_encode(['status' => false, 'message' => 'Nama Produk / Alat wajib diisi.']);
             return;
         }
 

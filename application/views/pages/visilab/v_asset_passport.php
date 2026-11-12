@@ -772,32 +772,84 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	});
 
+	function compressImageFile(file, maxDim, quality) {
+		return new Promise(function(resolve) {
+			if (!file || !file.type || file.type.indexOf('image/') !== 0 || file.size <= 700 * 1024) {
+				resolve(file);
+				return;
+			}
+			var img = new Image();
+			var reader = new FileReader();
+			reader.onload = function(ev) {
+				img.onload = function() {
+					var w = img.width;
+					var h = img.height;
+					if (w > maxDim || h > maxDim) {
+						if (w > h) {
+							h = Math.round(h * maxDim / w);
+							w = maxDim;
+						} else {
+							w = Math.round(w * maxDim / h);
+							h = maxDim;
+						}
+					}
+					var canvas = document.createElement('canvas');
+					canvas.width = w;
+					canvas.height = h;
+					var ctx = canvas.getContext('2d');
+					ctx.drawImage(img, 0, 0, w, h);
+					canvas.toBlob(function(blob) {
+						if (blob && blob.size < file.size) {
+							resolve(new File([blob], (file.name || 'foto').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+						} else {
+							resolve(file);
+						}
+					}, 'image/jpeg', quality);
+				};
+				img.onerror = function() { resolve(file); };
+				img.src = ev.target.result;
+			};
+			reader.onerror = function() { resolve(file); };
+			reader.readAsDataURL(file);
+		});
+	}
+
 	$('#form-passport').on('submit', function(e) {
 		e.preventDefault();
+		var formEl = this;
 		var $btn = $('#btn-save-passport');
 		$btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
 
-		$.ajax({
-			url: '<?= base_url('asset_passport/save') ?>',
-			type: 'POST',
-			data: new FormData(this),
-			processData: false,
-			contentType: false,
-			dataType: 'json',
-			success: function(res) {
-				$btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan QR Passport');
-				if (res && res.status) {
-					$('#modal-passport').modal('hide');
-					Swal.fire('Berhasil!', res.message, 'success');
-					loadData();
-				} else {
-					Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal menyimpan data.', 'warning');
-				}
-			},
-			error: function() {
-				$btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan QR Passport');
-				Swal.fire('Error', 'Terjadi kesalahan pada server.', 'error');
+		var fileInput = document.getElementById('f_foto_file');
+		var rawFile = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+
+		compressImageFile(rawFile, 1400, 0.82).then(function(finalFile) {
+			var fd = new FormData(formEl);
+			if (finalFile) {
+				fd.set('foto_produk_file', finalFile, finalFile.name || 'produk.jpg');
 			}
+			$.ajax({
+				url: window.location.origin + '/asset_passport/save',
+				type: 'POST',
+				data: fd,
+				processData: false,
+				contentType: false,
+				dataType: 'json',
+				success: function(res) {
+					$btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan QR Passport');
+					if (res && res.status) {
+						$('#modal-passport').modal('hide');
+						Swal.fire('Berhasil!', res.message, 'success');
+						loadData();
+					} else {
+						Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal menyimpan data.', 'warning');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan QR Passport');
+					Swal.fire('Error', 'Terjadi kesalahan pada server.', 'error');
+				}
+			});
 		});
 	});
 
@@ -909,7 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	$('#form-add-service').on('submit', function(e) {
 		e.preventDefault();
 		var idPassport = $('#srv_id_passport').val();
-		$.post('<?= base_url('asset_passport/add_service') ?>', $(this).serialize(), function(res) {
+		$.post(window.location.origin + '/asset_passport/add_service', $(this).serialize(), function(res) {
 			if (res && res.status) {
 				$('#form-add-service')[0].reset();
 				$('#srv_id_passport').val(idPassport);
@@ -934,7 +986,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	$('#form-link-record').on('submit', function(e) {
 		e.preventDefault();
 		var idPassport = $('#link_id_passport').val();
-		$.post('<?= base_url('asset_passport/link_record') ?>', $(this).serialize(), function(res) {
+		$.post(window.location.origin + '/asset_passport/link_record', $(this).serialize(), function(res) {
 			if (res && res.status) {
 				openDetail(idPassport);
 				Swal.fire('Berhasil', res.message, 'success');
