@@ -728,79 +728,81 @@ if (!function_exists('h')) {
                     </button>
                 </div>
             </div>
-
-            <!-- Modal Form Lapor Kerusakan (Tanpa OTP) -->
-            <div class="modal fade" id="modalLaporKerusakan" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content" style="border-radius:16px; border:0;">
-                        <div class="modal-header" style="background:var(--navy); color:#fff; border-radius:16px 16px 0 0;">
-                            <h5 class="modal-title font-weight-bold" style="font-size:15px;">
-                                <i class="fas fa-tools mr-2"></i>Lapor Kerusakan Alat
-                            </h5>
-                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <form id="formLaporKerusakan" enctype="multipart/form-data">
-                            <div class="modal-body">
-                                <input type="hidden" name="qr_token" value="<?= h($passport->qr_token) ?>">
-                                <input type="text" name="website_url" class="honeypot-field" tabindex="-1" autocomplete="off">
-
-                                <div class="alert alert-light border mb-3" style="font-size:12.5px; border-radius:10px;">
-                                    <strong><?= h($passport->nama_produk) ?></strong><br>
-                                    <span class="text-muted">S/N: <?= h($passport->serial_number ?: '-') ?> • <?= h($passport->nama_instansi) ?></span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="font-weight-bold small">Nama Pelapor <span class="text-danger">*</span></label>
-                                    <input type="text" name="nama_pelapor" class="form-control" placeholder="Misal: Budi (Radiologi / IPSRS)" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="font-weight-bold small">No. WhatsApp Aktif <span class="text-danger">*</span></label>
-                                    <input type="tel" name="no_wa" class="form-control" placeholder="0812xxxxxxxx" required>
-                                    <small class="text-muted">Nomor tiket & konfirmasi akan dikirim ke WhatsApp ini.</small>
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group col-8">
-                                        <label class="font-weight-bold small">Jenis Kendala <span class="text-danger">*</span></label>
-                                        <input type="text" name="judul_keluhan" class="form-control" placeholder="Misal: Alat mati / Error eksposi" required>
-                                    </div>
-                                    <div class="form-group col-4">
-                                        <label class="font-weight-bold small">Urgensi</label>
-                                        <select name="prioritas" class="form-control">
-                                            <option value="3" selected>High</option>
-                                            <option value="4">Urgent</option>
-                                            <option value="2">Medium</option>
-                                            <option value="1">Low</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="font-weight-bold small">Detail Kerusakan <span class="text-danger">*</span></label>
-                                    <textarea name="deskripsi" rows="3" class="form-control" placeholder="Jelaskan gejala kerusakan, kode error yang muncul, atau kondisi alat saat ini..." required></textarea>
-                                </div>
-
-                                <div class="form-group mb-0">
-                                    <label class="font-weight-bold small">Foto / Lampiran Kendala (Opsional)</label>
-                                    <input type="file" name="foto_kerusakan" class="form-control-file" accept="image/*,.pdf">
-                                    <small class="text-muted">Format JPG, PNG, WEBP, atau PDF (Maks 6 MB).</small>
-                                </div>
-                            </div>
-                            <div class="modal-footer border-top-0 pt-0">
-                                <button type="button" class="btn btn-light" data-dismiss="modal">Batal</button>
-                                <button type="submit" class="btn btn-danger font-weight-bold" id="btnSubmitLapor">
-                                    <i class="fas fa-paper-plane mr-1"></i> Kirim Laporan Sekarang
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
         <?php endif; ?>
     </main>
+
+    <?php if ($found): ?>
+        <!-- Modal Form Lapor Kerusakan (Tanpa OTP) - Ditaruh langsung di bawah body agar di atas backdrop -->
+        <div class="modal fade" id="modalLaporKerusakan" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="border-radius:16px; border:0;">
+                    <div class="modal-header" style="background:var(--navy); color:#fff; border-radius:16px 16px 0 0;">
+                        <h5 class="modal-title font-weight-bold" style="font-size:15px;">
+                            <i class="fas fa-tools mr-2"></i>Lapor Kerusakan Alat
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form id="formLaporKerusakan" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <input type="hidden" name="qr_token" value="<?= h($passport->qr_token) ?>">
+                            <input type="text" name="website_url" class="honeypot-field" tabindex="-1" autocomplete="off">
+
+                            <div class="alert alert-light border mb-3" style="font-size:12.5px; border-radius:10px;">
+                                <strong><?= h($passport->nama_produk) ?></strong><br>
+                                <span class="text-muted">S/N: <?= h($passport->serial_number ?: '-') ?> • <?= h($passport->nama_instansi) ?></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="font-weight-bold small">Nama Pelapor <span class="text-danger">*</span></label>
+                                <input type="text" name="nama_pelapor" class="form-control" placeholder="Misal: Budi (Radiologi / IPSRS)" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="font-weight-bold small">No. WhatsApp Aktif <span class="text-danger">*</span></label>
+                                <input type="tel" name="no_wa" class="form-control" placeholder="0812xxxxxxxx" required>
+                                <small class="text-muted">Nomor tiket & konfirmasi akan dikirim ke WhatsApp ini.</small>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-8">
+                                    <label class="font-weight-bold small">Jenis Kendala <span class="text-danger">*</span></label>
+                                    <input type="text" name="judul_keluhan" class="form-control" placeholder="Misal: Alat mati / Error eksposi" required>
+                                </div>
+                                <div class="form-group col-4">
+                                    <label class="font-weight-bold small">Urgensi</label>
+                                    <select name="prioritas" class="form-control">
+                                        <option value="3" selected>High</option>
+                                        <option value="4">Urgent</option>
+                                        <option value="2">Medium</option>
+                                        <option value="1">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="font-weight-bold small">Detail Kerusakan <span class="text-danger">*</span></label>
+                                <textarea name="deskripsi" rows="3" class="form-control" placeholder="Jelaskan gejala kerusakan, kode error yang muncul, atau kondisi alat saat ini..." required></textarea>
+                            </div>
+
+                            <div class="form-group mb-0">
+                                <label class="font-weight-bold small">Foto / Lampiran Kendala (Opsional)</label>
+                                <input type="file" name="foto_kerusakan" class="form-control-file" accept="image/*,.pdf">
+                                <small class="text-muted">Format JPG, PNG, WEBP, atau PDF (Maks 4 MB, otomatis dikompres).</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-danger font-weight-bold" id="btnSubmitLapor">
+                                <i class="fas fa-paper-plane mr-1"></i> Kirim Laporan Sekarang
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <script src="<?= base_url('assets/vendor/jquery/jquery.js') ?>"></script>
     <script src="<?= base_url('assets/vendor/popper/umd/popper.min.js') ?>"></script>
