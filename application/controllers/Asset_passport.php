@@ -14,7 +14,7 @@ class Asset_passport extends CI_Controller
         date_default_timezone_set('Asia/Jakarta');
         $this->load->model('Md_asset_passport');
         $this->load->model('md_pengguna');
-        $this->load->helper(['url', 'form', 'mandatory_helper']);
+        $this->load->helper(['url', 'form', 'mandatory_helper', 'whatsapp_helper']);
     }
 
     private function _id_navbar()
@@ -233,6 +233,32 @@ class Asset_passport extends CI_Controller
         }
 
         $savedId = $this->Md_asset_passport->save_passport($id_passport, $payload);
+
+        // Kirim notifikasi WA ke grup saat QR Asset Passport baru dibuat
+        if ($id_passport <= 0 && $savedId > 0 && function_exists('sendWaGroup')) {
+            try {
+                $savedRow = $this->Md_asset_passport->get_by_id($savedId);
+                if ($savedRow) {
+                    $qrLink = 'https://office.visiyosindo.id/passport/' . $savedRow->qr_token;
+                    $snTxt  = !empty($savedRow->serial_number) ? $savedRow->serial_number : '-';
+                    $targetGrp = ((int)$payload['kategori_layanan'] === 2) ? 'VISILAB' : 'TEKNISI MEDIKAL PT. VYM';
+                    $pesanBaru = "*[QR ASSET PASSPORT BARU TERDAFTAR]* 📲\n\n"
+                        . "🔖 *Kode:* {$savedRow->kode_passport}\n"
+                        . "🏥 *Instansi:* {$savedRow->nama_instansi}\n"
+                        . "🔬 *Produk:* {$savedRow->nama_produk}\n"
+                        . "🔢 *No. Seri:* {$snTxt}\n"
+                        . "🔗 *Link QR:* {$qrLink}";
+
+                    @sendWaGroup([
+                        'devId'     => hostWa('2'),
+                        'penerima'  => $targetGrp,
+                        'pesan'     => $pesanBaru,
+                        'immediate' => true
+                    ]);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
 
         if (function_exists('addlog')) {
             @addlog('QR Asset Passport', ($id_passport > 0 ? 'Update' : 'Tambah') . ' QR Passport #' . $savedId . ' - ' . $nama_produk);

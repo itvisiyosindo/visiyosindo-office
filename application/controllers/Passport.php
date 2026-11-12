@@ -205,13 +205,15 @@ class Passport extends CI_Controller
                     . "\nSilakan cek detailnya di: https://office.visiyosindo.id/tiket";
 
                 @sendWa([
-                    'devId'    => hostWa('2'),
-                    'penerima' => $picUser->no_hp,
-                    'pesan'    => $pesanPic
+                    'devId'      => hostWa('2'),
+                    'penerima'   => $picUser->no_hp,
+                    'pesan'      => $pesanPic,
+                    'immediate'  => true,
+                    'bypass_24h' => true
                 ]);
             }
 
-            // 2. Notif ke Grup Teknisi Medikal PT. VYM
+            // 2. Notif ke Grup Teknisi Medikal PT. VYM (dan VISILAB bila kategori Visilab)
             if (function_exists('sendWaGroup')) {
                 $pesanGrup = "*[TIKET SERVICE BARU - QR PASSPORT]* 🛠️\n\n"
                     . "🎫 *Tiket:* {$kodeTiket}\n"
@@ -222,11 +224,18 @@ class Passport extends CI_Controller
                     . "👤 *Pelapor:* {$input['nama_pelapor']} ({$input['no_wa']})\n"
                     . "\nCek detail di https://office.visiyosindo.id/tiket";
 
-                @sendWaGroup([
-                    'devId'    => hostWa('2'),
-                    'penerima' => 'TEKNISI MEDIKAL PT. VYM',
-                    'pesan'    => $pesanGrup
-                ]);
+                $targetGroups = ['TEKNISI MEDIKAL PT. VYM'];
+                if ((int)($passport->kategori_layanan ?? 1) === 2) {
+                    $targetGroups[] = 'VISILAB';
+                }
+                foreach ($targetGroups as $grp) {
+                    @sendWaGroup([
+                        'devId'     => hostWa('2'),
+                        'penerima'  => $grp,
+                        'pesan'     => $pesanGrup,
+                        'immediate' => true
+                    ]);
+                }
             }
 
             // 3. Konfirmasi ke Pelapor RS
@@ -240,9 +249,11 @@ class Passport extends CI_Controller
                     . "Tim kami akan segera menindaklanjuti laporan ini. Terima kasih atas kepercayaannya.";
 
                 @sendWa([
-                    'devId'    => hostWa('2'),
-                    'penerima' => $input['no_wa'],
-                    'pesan'    => $pesanCust
+                    'devId'      => hostWa('2'),
+                    'penerima'   => $input['no_wa'],
+                    'pesan'      => $pesanCust,
+                    'immediate'  => true,
+                    'bypass_24h' => true
                 ]);
             }
         } catch (\Throwable $e) {
