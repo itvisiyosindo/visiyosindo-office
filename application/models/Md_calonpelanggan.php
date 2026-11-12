@@ -110,9 +110,9 @@ class Md_calonpelanggan extends CI_Model
                 calonpelanggan.data_created
             ')
             ->from('calonpelanggan')
-            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id')
-            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode')
-            ->join('kota', 'calonpelanggan.kota = kota.id')
+            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id', 'left')
+            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode', 'left')
+            ->join('kota', 'calonpelanggan.kota = kota.id', 'left')
             ->where('calonpelanggan.statuscaloncustomer', 1)
             ->where('calonpelanggan.deleted', 0)
             ->generate();
@@ -140,9 +140,9 @@ class Md_calonpelanggan extends CI_Model
                 calonpelanggan.data_created
             ')
             ->from('calonpelanggan')
-            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id')
-            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode')
-            ->join('kota', 'calonpelanggan.kota = kota.id')
+            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id', 'left')
+            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode', 'left')
+            ->join('kota', 'calonpelanggan.kota = kota.id', 'left')
             ->where('calonpelanggan.statuscaloncustomer', 1)
             ->where('calonpelanggan.pengguna_id', $pengguna_id)
             ->generate();
@@ -170,9 +170,9 @@ class Md_calonpelanggan extends CI_Model
                 calonpelanggan.website,
                 calonpelanggan.data_created
             ')
-            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id')
-            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode')
-            ->join('kota', 'calonpelanggan.kota = kota.id')
+            ->join('pengguna', 'pengguna.pengguna_id = calonpelanggan.pengguna_id', 'left')
+            ->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode', 'left')
+            ->join('kota', 'calonpelanggan.kota = kota.id', 'left')
             ->get_where('calonpelanggan', $where)
             ->result();
     }

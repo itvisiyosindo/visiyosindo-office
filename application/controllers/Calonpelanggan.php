@@ -171,8 +171,28 @@ class calonpelanggan extends CI_Controller
 
         $namaCalon = trim((string)$this->input->post('namacaloncustomer'));
         $alamatCalon = trim((string)$this->input->post('alamatcaloncustomer'));
+        $tipeCustomer = trim((string)$this->input->post('tipecustomer'));
+        $kelasCustomer = trim((string)$this->input->post('kelascustomer'));
+        $provinsi = trim((string)$this->input->post('provinsi'));
+        $kota = trim((string)$this->input->post('kota'));
+
         if ($namaCalon === '') {
             ajaxReturnDie('error', 'Nama Calon Customer tidak boleh kosong..!!');
+        }
+        if ($tipeCustomer === '') {
+            ajaxReturnDie('error', 'Tipe Customer wajib dipilih..!!');
+        }
+        if ($kelasCustomer === '') {
+            ajaxReturnDie('error', 'Kelas Customer wajib dipilih..!!');
+        }
+        if ($provinsi === '') {
+            ajaxReturnDie('error', 'Provinsi wajib dipilih..!!');
+        }
+        if ($kota === '') {
+            ajaxReturnDie('error', 'Kabupaten/Kota wajib dipilih..!!');
+        }
+        if ($alamatCalon === '') {
+            ajaxReturnDie('error', 'Alamat Calon Customer tidak boleh kosong..!!');
         }
 
         $existingCalon = $this->Md_calonpelanggan->checkDuplicateNamaCalon($namaCalon, null, $alamatCalon);
@@ -182,25 +202,26 @@ class calonpelanggan extends CI_Controller
         }
 
         $kode = sprintf('%03d', $this->Md_calonpelanggan->getCalonNoUrut() + 1);
-        $kodeprov = $this->input->post('provinsi');
-        $kodekota = sprintf('%02d', $this->input->post('kota'));
-        $kelas = $this->input->post('kelascustomer');
+        $kodeprov = $provinsi;
+        $kodekota = sprintf('%02d', (int)$kota);
+        $kelas = $kelasCustomer;
 
         $data['kodecaloncustomer']    = $kodeprov . '/' . $kodekota . '/' . $kelas . '/' . $kode; //$this->input->post('kodecaloncustomer');
         $data['namacaloncustomer']  = $namaCalon;
-        $data['statuscaloncustomer'] = $this->input->post('statuscaloncustomer');
-        $data['tipecustomer'] = $this->input->post('tipecustomer');
-        $data['kelascustomer']    = $this->input->post('kelascustomer');
         $data['statuscaloncustomer'] = 1;
+        $data['tipecustomer'] = $tipeCustomer;
+        $data['kelascustomer']    = $kelasCustomer;
         $data['namapihakketiga'] = $this->input->post('namapihakketiga');
-        $data['provinsi']    = $this->input->post('provinsi');
-        $data['kota']    = $this->input->post('kota');
-        $data['alamatcaloncustomer'] = $this->input->post('alamatcaloncustomer');
+        $data['provinsi']    = $provinsi;
+        $data['kota']    = $kota;
+        $data['alamatcaloncustomer'] = $alamatCalon;
         $data['email']    = $this->input->post('email');
         $data['website'] = $this->input->post('website');
-        $data['idmarketing'] = sessPenggunaId();
-        $data['pengguna_id'] = sessPenggunaId();
 
+        $marketingPost = $this->input->post('namamarketing');
+        $marketingId = (!empty($marketingPost) && is_numeric($marketingPost)) ? $marketingPost : sessPenggunaId();
+        $data['idmarketing'] = $marketingId;
+        $data['pengguna_id'] = $marketingId;
 
         $this->Md_calonpelanggan->addcalon($data);
         $insert = $this->db->insert_id();
@@ -208,12 +229,14 @@ class calonpelanggan extends CI_Controller
         $result = array();
         if (!empty($_POST['namapic']) && is_array($_POST['namapic'])) {
             foreach ($_POST['namapic'] as $key => $val) {
-                $result[] = array(
-                    'namapic' => $_POST['namapic'][$key],
-                    'jabatanpic' => isset($_POST['jabatanpic'][$key]) ? $_POST['jabatanpic'][$key] : '',
-                    'teleponpic' => isset($_POST['teleponpic'][$key]) ? $_POST['teleponpic'][$key] : '',
-                    'idpic' => $insert
-                );
+                if (!empty(trim((string)$_POST['namapic'][$key]))) {
+                    $result[] = array(
+                        'namapic' => $_POST['namapic'][$key],
+                        'jabatanpic' => isset($_POST['jabatanpic'][$key]) ? $_POST['jabatanpic'][$key] : '',
+                        'teleponpic' => isset($_POST['teleponpic'][$key]) ? $_POST['teleponpic'][$key] : '',
+                        'idpic' => $insert
+                    );
+                }
             }
         }
         if (!empty($result)) {

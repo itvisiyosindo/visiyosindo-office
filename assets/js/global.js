@@ -288,6 +288,7 @@ function handleResponse(resp) {
             location.reload()
         }
         else if (resp['reload'] == 'reload_table') {
+            $('.modal.show, .modal:visible').modal('hide');
             $("table").each(function () {
                 var table_id = $(this).attr('id')
                 if ($.fn.DataTable && $.fn.DataTable.isDataTable('#' + table_id)) {

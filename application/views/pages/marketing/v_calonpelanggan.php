@@ -341,20 +341,17 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="control-label">Nama Marketing</label>
+						<label class="control-label">Nama Marketing <span class="text-danger">*</span> :</label>
 						<select class="select-transaction input-group-sm form-control" name="namamarketing" id="namamarketing">
 							<?php if ($nama_marketing != NULL): ?>
-								<option>— Pilih Nama Marketing —</option>
-								<?php foreach ($nama_marketing as $value):
-									if ($pengguna_id == $value->pengguna_id) { ?>
-										<option value="<?php echo $value->pengguna_id; ?>" selected=true><?php echo $value->nama; ?></option>
-									<?php
-									}
-									?>
-									<option value="<?php $value->pengguna_id; ?>"><?php echo $value->nama; ?></option>
+								<option value="">— Pilih Nama Marketing —</option>
+								<?php foreach ($nama_marketing as $value): ?>
+									<option value="<?php echo $value->pengguna_id; ?>" <?php echo ($pengguna_id == $value->pengguna_id) ? 'selected' : ''; ?>>
+										<?php echo $value->nama; ?>
+									</option>
 								<?php endforeach; ?>
 							<?php else: ?>
-								<option>— Tidak ada data —</option>
+								<option value="">— Tidak ada data —</option>
 							<?php endif; ?>
 						</select>
 						<?php echo form_error('namamarketing'); ?>
@@ -385,12 +382,12 @@
 						</select>
 					</div>
 					<div class="form-group" id='dpihakketiga'>
-						<label for="namapihakketiga" class="form-control-label">Nama Pihak Ketiga <span class="text-danger">*</span> :</label>
+						<label for="namapihakketiga" class="form-control-label">Nama Pihak Ketiga :</label>
 						<input type="text" class="form-control" id="namapihakketiga" name="namapihakketiga">
 					</div>
 					<div class="form-group">
-						<label class="control-label">Provinsi</label>
-						<select class="select-transaction input-group-sm form-control" name="provinsi" id="provinsi">
+						<label class="control-label">Provinsi <span class="text-danger">*</span> :</label>
+						<select class="select-transaction input-group-sm form-control" name="provinsi" id="provinsi" required>
 							<?php if ($provinsi != NULL): ?>
 								<option value=''>— Pilih Provinsi —</option>
 								<?php foreach ($provinsi as $value): ?>
@@ -403,15 +400,15 @@
 						<?php echo form_error('provinsi'); ?>
 					</div>
 					<div class="form-group">
-						<label class="control-label">Kabupaten/Kota</label>
-						<select name="kota" class="form-control" id="kota">
+						<label class="control-label">Kabupaten/Kota <span class="text-danger">*</span> :</label>
+						<select name="kota" class="form-control" id="kota" required>
 							<option value=''>- Pilih Kabupaten/Kota -</option>
 						</select>
 						<?php echo form_error('kota'); ?>
 					</div>
 					<div class="form-group">
 						<label for="alamat" class="form-control-label">Alamat <span class="text-danger">*</span> :</label>
-						<textarea name="alamatcaloncustomer" class="form-control" id="alamatcaloncustomer" cols="15" rows="3"></textarea>
+						<textarea name="alamatcaloncustomer" class="form-control" id="alamatcaloncustomer" cols="15" rows="3" required></textarea>
 					</div>
 					<div class="form-group">
 						<div class="form-group" id="grouppic">
@@ -425,12 +422,12 @@
 								</div>
 								<label class="control-label col-sm-9" for="jabatanpic">Jabatan PIC:</label>
 								<div class="col-sm-9">
-									<input type="email" class="form-control" id="jabatanpic" placeholder="Masukkan Jabatan PIC" name="jabatanpic[]" autocomplete="off">
+									<input type="text" class="form-control" id="jabatanpic" placeholder="Masukkan Jabatan PIC" name="jabatanpic[]" autocomplete="off">
 								</div>
 								<label class="control-label col-sm-6" for="teleponpic">Telepon PIC:</label>
 								<div class="col-sm-12">
 									<div class="input-group mb-12">
-										<input type="number" class="form-control" id="teleponpic" placeholder="Masukkan Telepon PIC" name="teleponpic[]" autocomplete="off">
+										<input type="text" class="form-control" id="teleponpic" placeholder="Masukkan Telepon PIC" name="teleponpic[]" autocomplete="off">
 										<span class="input-group-append">&nbsp &nbsp &nbsp</span>
 										<span class="input-group-append">
 											<button type="button" name="add" id="add" class="btn btn-success">Tambah PIC</button>
@@ -441,12 +438,12 @@
 						</div>
 						<div class="form-group">
 							</br>
-							<label for="kota" class="form-control-label">Email <span class="text-danger">*</span> :</label>
-							<input type="text" class="form-control" id="email" name="email" required>
+							<label for="email" class="form-control-label">Email :</label>
+							<input type="email" class="form-control" id="email" name="email" placeholder="contoh@domain.com">
 						</div>
 						<div class="form-group">
-							<label for="kota" class="form-control-label">Website <span class="text-danger">*</span> :</label>
-							<input type="text" class="form-control" id="website" name="website" required>
+							<label for="website" class="form-control-label">Website :</label>
+							<input type="text" class="form-control" id="website" name="website" placeholder="www.contoh.com">
 						</div>
 					</div>
 				</div>
@@ -589,7 +586,7 @@
 				$('#add').click(function() {
 					if ($('#namapic').val() != '') {
 						i++;
-						$('#dynamic_field').append('<div id="row' + i + '"><div class="form-group"><div id="dynamic_field"><label class="control-label col-sm-9" for="namapic">Nama PIC:</label><div class="col-sm-9"><input hidden type="text" class="form-control" id="picpic" name="picpic" value=""><input type="text" class="form-control" id="namapic" placeholder="Masukkkan Nama PIC" name="namapic[]" autocomplete="off"></div><label class="control-label col-sm-9" for="jabatanpic">Jabatan PIC:</label><div class="col-sm-9"><input type="email" class="form-control" id="jabatanpic" placeholder="Masukkan Jabatan PIC" name="jabatanpic[]" autocomplete="off"></div><label class="control-label col-sm-6" for="teleponpic">Telepon PIC:</label><div class="col-sm-10"><div class="input-group mb-12"><input type="number" class="form-control" id="teleponpic" placeholder="Masukkan Telepon PIC" name="teleponpic[]" autocomplete="off"><span class="input-group-append">&nbsp &nbsp &nbsp</span><span class="input-group-append"><button type="button" name="remove" id="' + i + '" class="btn btn-danger btn_remove">X</button></span></div></div></div></div>');
+						$('#dynamic_field').append('<div id="row' + i + '"><div class="form-group"><div id="dynamic_field"><label class="control-label col-sm-9" for="namapic">Nama PIC:</label><div class="col-sm-9"><input hidden type="text" class="form-control" id="picpic" name="picpic" value=""><input type="text" class="form-control" id="namapic" placeholder="Masukkkan Nama PIC" name="namapic[]" autocomplete="off"></div><label class="control-label col-sm-9" for="jabatanpic">Jabatan PIC:</label><div class="col-sm-9"><input type="text" class="form-control" id="jabatanpic" placeholder="Masukkan Jabatan PIC" name="jabatanpic[]" autocomplete="off"></div><label class="control-label col-sm-6" for="teleponpic">Telepon PIC:</label><div class="col-sm-10"><div class="input-group mb-12"><input type="text" class="form-control" id="teleponpic" placeholder="Masukkan Telepon PIC" name="teleponpic[]" autocomplete="off"><span class="input-group-append">&nbsp &nbsp &nbsp</span><span class="input-group-append"><button type="button" name="remove" id="' + i + '" class="btn btn-danger btn_remove">X</button></span></div></div></div></div>');
 						$('#count').val(i);
 					};
 				});
@@ -725,27 +722,89 @@
 
 
 				$('#btn-show-add-form').click(function() {
-					$("#grouppic").hide();
+					$("#grouppic").show();
 					$("#detect-calon-box").hide().html('');
 					$('#btn-simpan-form-calon').prop('disabled', false);
-					$('.form-control').val(null)
-					var object = 'calonpelanggan'
-					$('#main-modal-calon #modal-form-calon').attr('action', 'calonpelanggan/add')
-					$('#main-modal-calon').modal()
+					$('#main-modal-calon #modal-form-calon')[0].reset();
+					$('#main-modal-calon #kota').html('<option value="">- Pilih Kabupaten/Kota -</option>');
+					$('#main-modal-calon #kodecaloncustomer').val('');
+					$('#main-modal-calon #alamatcaloncustomer').val('');
+					$('#main-modal-calon #modal-form-calon').attr('action', 'calonpelanggan/add');
+					$('#main-modal-calon').modal('show');
+				});
 
-				})
+				$('#btn-simpan-form-calon').click(function(e) {
+					var nama = $.trim($('#main-modal-calon #namacaloncustomer').val());
+					var tipe = $('#main-modal-calon #tipecustomer').val();
+					var kelas = $('#main-modal-calon #kelascustomer').val();
+					var prov = $('#main-modal-calon #provinsi').val();
+					var kota = $('#main-modal-calon #kota').val();
+					var alamat = $.trim($('#main-modal-calon #alamatcaloncustomer').val());
 
-				$('#btn-simpan-form-calon').click(function() {
-					//	alert($('#kodecaloncustomer').val())
-					if ($('#propinsi').val() != '') {
-						if ($('#kota').val() != '') {
-							if ($('#kelascustomer').val() != '') {
-								var kodecc = $('#provinsi').val() + "/" + $('#kota').val() + "/" + $('#kelascustomer').val() + "/" + "<?= sprintf('%03d', $kodecaloncustomer); ?>"
-								$('#kodecaloncustomer').val(kodecc)
-							}
-						}
+					if (!nama) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Bidang Belum Lengkap',
+							text: 'Nama Calon Customer wajib diisi!'
+						});
+						$('#main-modal-calon #namacaloncustomer').focus();
+						e.stopImmediatePropagation();
+						return false;
 					}
-				})
+					if (!tipe) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Bidang Belum Lengkap',
+							text: 'Silakan pilih Tipe Customer!'
+						});
+						$('#main-modal-calon #tipecustomer').focus();
+						e.stopImmediatePropagation();
+						return false;
+					}
+					if (!kelas) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Bidang Belum Lengkap',
+							text: 'Silakan pilih Kelas Customer!'
+						});
+						$('#main-modal-calon #kelascustomer').focus();
+						e.stopImmediatePropagation();
+						return false;
+					}
+					if (!prov) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Bidang Belum Lengkap',
+							text: 'Silakan pilih Provinsi!'
+						});
+						$('#main-modal-calon #provinsi').focus();
+						e.stopImmediatePropagation();
+						return false;
+					}
+					if (!kota) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Bidang Belum Lengkap',
+							text: 'Silakan pilih Kabupaten/Kota!'
+						});
+						$('#main-modal-calon #kota').focus();
+						e.stopImmediatePropagation();
+						return false;
+					}
+					if (!alamat) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Bidang Belum Lengkap',
+							text: 'Alamat Calon Customer wajib diisi!'
+						});
+						$('#main-modal-calon #alamatcaloncustomer').focus();
+						e.stopImmediatePropagation();
+						return false;
+					}
+
+					var kodecc = prov + "/" + pad(kota, 2) + "/" + kelas + "/" + "<?= sprintf('%03d', $kodecaloncustomer); ?>";
+					$('#main-modal-calon #kodecaloncustomer').val(kodecc);
+				});
 
 
 				$("#chkberkasdokumen").on("change", function(e) {
