@@ -540,7 +540,7 @@
 					<div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-							<button type="button" id="btn-edit-form-pelanggan" class="btn btn-success btn-edit" data-dismiss="modal">Update</button>
+							<button type="button" id="btn-edit-form-pelanggan" class="btn btn-success" data-dismiss="modal">Update</button>
 						</div>
 					</div>
 
@@ -899,7 +899,7 @@
 
 						},
 						success: function(result) {
-							var pesan = $.parseJSON(result)
+							var pesan = typeof result === 'string' ? $.parseJSON(result) : result;
 							Swal.fire({
 								type: 'success',
 								icon: 'success',
@@ -907,6 +907,9 @@
 								showConfirmButton: false,
 								timer: 2000
 							});
+							if (typeof table !== 'undefined') {
+								table.ajax.reload(null, false);
+							}
 						},
 					});
 					//	window.location.reload();

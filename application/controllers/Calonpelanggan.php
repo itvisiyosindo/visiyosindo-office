@@ -102,7 +102,14 @@ class calonpelanggan extends CI_Controller
         $data['alamatpengiriman']    = $this->input->post('alamatpengiriman');
         $data['alamatpenagihan'] = $this->input->post('alamatpenagihan');
         $data['keterangan'] = $this->input->post('keterangan');
-        $data['pengguna_id'] = sessPenggunaId();
+        if (sessPenggunaId() == '33') {
+            $calonAsal = $this->db->get_where('calonpelanggan', ['id' => $data['idcalonpelanggan']])->row();
+            $data['pengguna_id'] = ($calonAsal && !empty($calonAsal->idmarketing) && $calonAsal->idmarketing != 33)
+                ? $calonAsal->idmarketing
+                : (($calonAsal && !empty($calonAsal->pengguna_id)) ? $calonAsal->pengguna_id : sessPenggunaId());
+        } else {
+            $data['pengguna_id'] = sessPenggunaId();
+        }
 
         //ajaxReturnDie('error', json_encode( $this->input->post('chkberkas[]')));
         $jumlahberkas = $this->input->post('jumlahberkas');
@@ -293,7 +300,9 @@ class calonpelanggan extends CI_Controller
         $data['alamatcaloncustomer'] = $this->input->post('alamatcaloncustomer');
         $data['email']    = $this->input->post('email');
         $data['website'] = $this->input->post('website');
-        $data['pengguna_id'] = sessPenggunaId();
+        if (sessPenggunaId() != '33') {
+            $data['pengguna_id'] = sessPenggunaId();
+        }
 
         $this->Md_calonpelanggan->update($id, $data);
 
@@ -343,7 +352,9 @@ class calonpelanggan extends CI_Controller
         $data['namapic'] = $this->input->post('namapic');
         $data['jabatanpic']  = $this->input->post('jabatanpic');
         $data['teleponpic'] = $this->input->post('teleponpic');
-        $data['pengguna_id'] = sessPenggunaId();
+        if (sessPenggunaId() != '33') {
+            $data['pengguna_id'] = sessPenggunaId();
+        }
 
         $this->Md_calonpelanggan->updatepic($id, $data);
 

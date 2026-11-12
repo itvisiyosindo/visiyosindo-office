@@ -21,9 +21,11 @@ class Md_pelangganan extends CI_Model
    function hapus($id,$pengguna_id)
     {
         $data = array(
-            'deleted' => 1,
-            'pengguna_id' => $pengguna_id
+            'deleted' => 1
         );
+        if ($pengguna_id != '33') {
+            $data['pengguna_id'] = $pengguna_id;
+        }
         $this->db->where('id', $id);
         $this->db->update('pelangganan', $data);
     }

@@ -145,25 +145,50 @@ class Tiket extends CI_Controller
 
             $kodeTiket = $kodeTiket . "/TKN/" . $bulanTiket . "/" . $tahunTiket;
 
+            $subject = trim((string)$this->input->post('subject', TRUE));
+            $kategori = trim((string)$this->input->post('kategori', TRUE));
+            $prioritas = trim((string)$this->input->post('prioritas', TRUE));
+
+            if ($subject === '') {
+                ajaxReturnDie('error', 'Subject tiket wajib diisi');
+            }
+            if ($kategori === '' || !is_numeric($kategori)) {
+                ajaxReturnDie('error', 'Kategori tiket wajib dipilih');
+            }
+            if ($prioritas === '' || !is_numeric($prioritas)) {
+                ajaxReturnDie('error', 'Prioritas tiket wajib dipilih');
+            }
+
             $data['kode_tiket']            = $kodeTiket;
-            $data['subject']              = $this->input->post('subject', TRUE);
+            $data['subject']              = $subject;
 
             // Cek apakah pelanggan manual (non-terdaftar)
             $isPelangganManual = $this->input->post('pelanggan_manual_flag', TRUE);
             if ($isPelangganManual) {
+                $pelangganManual = trim((string)$this->input->post('pelanggan_manual', TRUE));
+                if ($pelangganManual === '') {
+                    ajaxReturnDie('error', 'Nama pelanggan manual wajib diisi');
+                }
                 $data['id_pelanggan']      = NULL;
-                $data['pelanggan']         = $this->input->post('pelanggan_manual', TRUE);
+                $data['pelanggan']         = $pelangganManual;
             } else {
-                $data['id_pelanggan']      = $this->input->post('list_pelanggan', TRUE);
-                $dataPelanggan             = $this->md_pelanggan->getById($data['id_pelanggan']);
+                $idPelanggan = trim((string)$this->input->post('list_pelanggan', TRUE));
+                if ($idPelanggan === '') {
+                    ajaxReturnDie('error', 'Pelanggan wajib dipilih');
+                }
+                $dataPelanggan = $this->md_pelanggan->getById($idPelanggan);
+                if (empty($dataPelanggan)) {
+                    ajaxReturnDie('error', 'Data pelanggan tidak ditemukan');
+                }
+                $data['id_pelanggan']      = $idPelanggan;
                 $data['pelanggan']         = $dataPelanggan[0]->identitas_pelanggan;
             }
 
             $data['nama_cp']              = $this->input->post('nama_contact_person', TRUE);
             $data['nomer_cp']              = $this->input->post('contact_person', TRUE);
             $data['id_pembuat']            = sessPenggunaId();
-            $data['id_topik']              = $this->input->post('kategori', TRUE);
-            $data['prioritas']             = $this->input->post('prioritas', TRUE);
+            $data['id_topik']              = (int)$kategori;
+            $data['prioritas']             = (int)$prioritas;
             //$data['id_penerima']       	= 15;
             $data['deskripsi']             = $this->input->post('deskripsi', TRUE);
             $data['file_pendukung']        = $this->input->post('attachment', TRUE);
@@ -175,26 +200,24 @@ class Tiket extends CI_Controller
             $data['waktu_mulai']           = date_db_format($this->input->post('start', TRUE));
             $data['waktu_selesai']         = date_db_format($this->input->post('end', TRUE));
             $data['log_tiket']    = 1;
+            $data['perusahaan']   = 0;
 
             //Pilih Notifikasi Pemilih Teknisi
             //1(non Visilab) ke arifa
             $id_visilab                 = $this->input->post('id_visilab', TRUE) ?: '1';
-            $data['id_visilab']            = $id_visilab;
-
-            if ($id_visilab == 1) {
-                $data['id_penerima']    = 755;
-            } else if ($id_visilab == 2) { //1(Visilab) ke Rendy
-                $data['id_penerima']    = 751;
-            }
+            $data['id_visilab']            = (int)$id_visilab;
+            $data['id_penerima']           = ($id_visilab == 2) ? 751 : 755; // 2 (Visilab) ke Intan/Rendy, 1 ke Arifa
 
             $this->md_tiket->addTiket($data);
+            $newTiketId = (int)$this->db->insert_id();
 
             //Membuat OPEN TICKET
-            //$data1['id_tiket']			= $id_tiket;
+            $data1['id_tiket']              = $newTiketId;
             $data1['kode_tiket']            = $kodeTiket;
             $data1['id_pembuat']            = sessPenggunaId();
-            $data1['update']                  = $this->input->post('subject', TRUE);
-            $data1['status']                  = "1";
+            $data1['update']                = $subject;
+            $data1['status']                = "1";
+            $data1['file_update']           = '';
 
             $this->md_tiket->addUpdateTiket($data1);
 
@@ -205,7 +228,11 @@ class Tiket extends CI_Controller
                 'subject'   => $data['subject'],
                 'namaPelanggan' => $data['pelanggan']
             ];
-            $this->sendWaTiket(8, $dataTiket);
+            try {
+                $this->sendWaTiket(8, $dataTiket);
+            } catch (\Throwable $e) {
+                log_message('error', 'Gagal kirim WA Tiket::add: ' . $e->getMessage());
+            }
 
             addLog('Menambahkan Tiket', 'Menambah Tiket ' . $kodeTiket);
             ajaxReturnDie('success', 'Tiket berhasil ditambahkan', TRUE);
@@ -1604,6 +1631,9 @@ class Tiket extends CI_Controller
 
         //ambil nomor
         $dataPenerima     = $this->md_pengguna->getById($dataTiket['idPenerima']);
+        if (empty($dataPenerima)) {
+            return FALSE;
+        }
         $nope           = $dataPenerima[0]->no_hp;
         $nama           = $dataPenerima[0]->nama;
 

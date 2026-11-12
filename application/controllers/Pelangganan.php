@@ -104,7 +104,9 @@ class Pelangganan extends CI_Controller
              $data['alamatpengiriman'] = $this->input->post('alamatpengiriman');
              $data['alamatpenagihan'] = $this->input->post('alamatpenagihan');
              $data['keterangan'] = $this->input->post('keterangan');   
-             $data['pengguna_id'] = sessPenggunaId();   
+             if (sessPenggunaId() != '33') {
+                 $data['pengguna_id'] = sessPenggunaId();   
+             }
 
         $this->md_pelangganan->update($id, $data);
 

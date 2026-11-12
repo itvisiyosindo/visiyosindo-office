@@ -388,12 +388,44 @@
 
 		// Event Add
 		$('#btn-show-add-form').click(function() {
-			$('.form-control').val(null)
+			$('#modal-form .form-control').val(null)
 			$('.btn-isactive').remove()
 			$('#chk_pelanggan_manual').prop('checked', false).trigger('change');
-			$('#main-modal #modal-form').attr('action', 'tiket/add')
+			$('#list_pelanggan, #kategori').val('').trigger('change');
+			$('#id_visilab').val('1').trigger('change');
+			$('#main-modal #modal-form').attr('action', '<?= base_url("tiket/add") ?>')
 			$('#main-modal').modal()
 		})
+
+		// Validasi field wajib sebelum handler .btn-save di global.js mengirim AJAX
+		$('#main-modal .btn-save').on('click', function(e) {
+			var actionUrl = $('#modal-form').attr('action') || '';
+			if (actionUrl.indexOf('tiket/add') === -1) {
+				return;
+			}
+
+			var isManual = $('#chk_pelanggan_manual').is(':checked');
+			var pelangganValid = isManual
+				? $.trim($('#pelanggan_manual').val()) !== ''
+				: $.trim($('#list_pelanggan').val() || '') !== '';
+
+			var missing = [];
+			if (!pelangganValid) missing.push('Pelanggan');
+			if ($.trim($('#subject').val()) === '') missing.push('Subject');
+			if ($.trim($('#kategori').val() || '') === '') missing.push('Kategori Tiket');
+			if ($.trim($('#prioritas').val() || '') === '') missing.push('Prioritas');
+
+			if (missing.length > 0) {
+				e.stopPropagation();
+				Swal.fire({
+					title: 'Data Belum Lengkap',
+					text: 'Mohon lengkapi field wajib berikut: ' + missing.join(', '),
+					icon: 'warning',
+					confirmButtonColor: '#2563eb',
+					confirmButtonText: 'OK'
+				});
+			}
+		});
 
 		// Toggle pelanggan manual di form tambah
 		$('#chk_pelanggan_manual').change(function() {
