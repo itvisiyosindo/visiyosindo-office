@@ -18,21 +18,22 @@ if (!function_exists('h')) {
     <link rel="shortcut icon" href="<?= base_url('assets/img/favicon.png') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap/css/bootstrap.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/vendor/font-awesome/css/all.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/js/sweetalert2/sweetalert2.min.css') ?>">
     <style>
         :root {
-            --navy: #143061;
-            --navy-light: #254f96;
-            --teal: #2563eb;
-            --teal-soft: #dbeafe;
-            --bg: #eef3f9;
+            --navy: #142d59;
+            --navy-mid: #1e4282;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --bg: #f4f7fb;
             --card-bg: #ffffff;
             --text: #0f172a;
+            --text-soft: #334155;
             --muted: #64748b;
-            --border: #d8e2ef;
+            --border: #e2e8f0;
         }
 
         * {
@@ -41,23 +42,32 @@ if (!function_exists('h')) {
 
         body {
             margin: 0;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, #e7eef7 0%, #f4f7fb 35%, #eef3f9 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
             color: var(--text);
-            padding-bottom: 92px;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 96px;
         }
 
         .passport-topbar {
-            background: linear-gradient(135deg, #112852 0%, #1d4282 55%, #2b5cb0 100%);
+            background: linear-gradient(135deg, #0f2448 0%, #1b3f7d 60%, #2656a3 100%);
             color: #fff;
-            padding: 18px 16px 60px;
+            padding: 20px 16px 64px;
             position: relative;
-            border-bottom: 2px solid #cbd5e1;
-            box-shadow: 0 6px 24px rgba(17, 40, 82, 0.18);
+        }
+
+        .passport-topbar::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(203, 213, 225, 0.15) 0%, rgba(248, 250, 252, 0.7) 50%, rgba(203, 213, 225, 0.15) 100%);
         }
 
         .brand-row {
-            max-width: 680px;
+            max-width: 720px;
             margin: 0 auto;
             display: flex;
             align-items: center;
@@ -75,117 +85,154 @@ if (!function_exists('h')) {
         .brand-logos-pair {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 11px;
+            padding: 6px 10px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
         }
 
-        .brand-logo-wrap {
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-            border-radius: 10px;
-            padding: 5px 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.85);
-            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
-            height: 40px;
-        }
-
-        .brand-logo-wrap img {
-            height: 28px;
+        .brand-logos-pair img {
+            height: 25px;
             width: auto;
             display: block;
             object-fit: contain;
         }
 
+        .brand-logo-sep {
+            width: 1px;
+            height: 20px;
+            background: #cbd5e1;
+        }
+
         .brand-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 13.5px;
             font-weight: 700;
-            letter-spacing: 0.3px;
-            line-height: 1.2;
+            letter-spacing: 0.2px;
+            line-height: 1.25;
+            color: #ffffff;
         }
 
         .brand-sub {
-            font-size: 10.5px;
-            color: #dbeafe;
+            font-size: 10px;
+            color: #bfdbfe;
             font-weight: 600;
-            letter-spacing: 0.75px;
+            letter-spacing: 0.9px;
             text-transform: uppercase;
             margin-bottom: 2px;
         }
 
         .verified-chip {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(226, 232, 240, 0.16) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.35);
             color: #f8fafc;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 600;
             padding: 6px 12px;
             border-radius: 999px;
             white-space: nowrap;
-            letter-spacing: 0.45px;
-            backdrop-filter: blur(6px);
+            letter-spacing: 0.4px;
+            backdrop-filter: blur(8px);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .verified-chip i {
+            color: #93c5fd;
         }
 
         .passport-container {
-            max-width: 680px;
-            margin: -40px auto 0;
-            padding: 0 14px;
+            max-width: 720px;
+            margin: -42px auto 0;
+            padding: 0 16px;
             position: relative;
             z-index: 2;
         }
 
         .p-card {
-            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: 18px;
-            border: 1px solid #d5dfec;
-            box-shadow: 0 10px 28px rgba(17, 40, 82, 0.06);
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid #e4eaf3;
+            box-shadow: 0 4px 20px rgba(15, 35, 70, 0.045);
             margin-bottom: 16px;
             overflow: hidden;
         }
 
         .p-card-body {
-            padding: 18px;
+            padding: 20px;
         }
 
         .p-card-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 14px;
-            font-weight: 800;
+            font-weight: 700;
             color: var(--navy);
-            margin: 0 0 14px;
+            margin: 0 0 16px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 9px;
+            padding-bottom: 11px;
+            border-bottom: 1px solid #f1f5f9;
         }
 
         .p-card-title i {
-            color: var(--teal);
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
         }
 
         /* Product Hero */
         .product-hero {
             display: flex;
-            gap: 16px;
+            gap: 18px;
             align-items: center;
         }
 
         .product-photo-box {
-            width: 112px;
-            height: 112px;
+            width: 120px;
+            height: 120px;
             border-radius: 14px;
-            border: 1px solid var(--border);
+            border: 1px solid #e2e8f0;
             background: #f8fafc;
             flex-shrink: 0;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            padding: 6px;
         }
 
         .product-photo-box img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            border-radius: 10px;
             cursor: zoom-in;
+        }
+
+        .photo-zoom-hint {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            background: rgba(15, 23, 42, 0.65);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            pointer-events: none;
         }
 
         .product-photo-placeholder {
@@ -203,67 +250,90 @@ if (!function_exists('h')) {
         }
 
         .product-name {
-            font-size: 18px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 19px;
             font-weight: 800;
             color: var(--text);
             margin: 0 0 4px;
-            line-height: 1.3;
+            line-height: 1.28;
+            letter-spacing: -0.2px;
         }
 
         .product-meta {
             font-size: 13px;
             color: var(--muted);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
         }
 
         .sn-pill {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            border: 1px solid #dbe3ee;
             color: #1e293b;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 4px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 5px 10px;
             border-radius: 8px;
             margin-right: 6px;
             margin-bottom: 6px;
         }
 
-        .instansi-strip {
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 1px dashed var(--border);
-            display: flex;
-            flex-wrap: wrap;
+        .sn-pill i {
+            color: #2563eb;
+            font-size: 12px;
+        }
+
+        .instansi-grid {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #f1f5f9;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
-            justify-content: space-between;
-            font-size: 12.5px;
+        }
+
+        .instansi-item {
+            background: #f8fafc;
+            border: 1px solid #edf2f7;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .instansi-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
         }
 
         .instansi-item strong {
             display: block;
             color: var(--text);
+            font-size: 13px;
             font-weight: 700;
+            line-height: 1.35;
         }
 
-        .instansi-item span {
-            color: var(--muted);
-            font-size: 11.5px;
-        }
-
-        /* Compliance Rows */
+        /* Compliance Rows - Calm Pastel SaaS Style */
         .comp-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 12px 14px;
+            padding: 13px 15px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            background: #f8fafc;
+            border: 1px solid #e5ebf3;
+            border-left: 3.5px solid #94a3b8;
+            background: #ffffff;
             margin-bottom: 10px;
+            transition: background 0.15s;
         }
 
         .comp-item:last-child {
@@ -271,22 +341,22 @@ if (!function_exists('h')) {
         }
 
         .comp-item.st-valid {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
+            border-left-color: #10b981;
+            background: #fcfefd;
         }
 
         .comp-item.st-warning {
-            background: #fffbeb;
-            border-color: #fde68a;
+            border-left-color: #f59e0b;
+            background: #fffdf7;
         }
 
         .comp-item.st-expired {
-            background: #fef2f2;
-            border-color: #fecaca;
+            border-left-color: #ef4444;
+            background: #fffafa;
         }
 
         .comp-label {
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 700;
             color: var(--text);
         }
@@ -297,18 +367,41 @@ if (!function_exists('h')) {
             margin-top: 2px;
         }
 
-        .comp-badge {
-            font-size: 11.5px;
-            font-weight: 700;
-            padding: 5px 10px;
-            border-radius: 999px;
-            white-space: nowrap;
+        .comp-date strong {
+            color: var(--text-soft);
+            font-weight: 600;
         }
 
-        .comp-badge.st-valid { background: #16a34a; color: #fff; }
-        .comp-badge.st-warning { background: #d97706; color: #fff; }
-        .comp-badge.st-expired { background: #dc2626; color: #fff; }
-        .comp-badge.st-none { background: #94a3b8; color: #fff; }
+        .comp-badge {
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 5px 11px;
+            border-radius: 999px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .comp-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .comp-badge.st-valid { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .comp-badge.st-valid::before { background: #10b981; }
+
+        .comp-badge.st-warning { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .comp-badge.st-warning::before { background: #f59e0b; }
+
+        .comp-badge.st-expired { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .comp-badge.st-expired::before { background: #ef4444; }
+
+        .comp-badge.st-none { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        .comp-badge.st-none::before { background: #94a3b8; }
 
         /* Office Info Grid */
         .info-grid {
@@ -319,9 +412,9 @@ if (!function_exists('h')) {
 
         .info-box {
             background: #f8fafc;
-            border: 1px solid var(--border);
+            border: 1px solid #edf2f7;
             border-radius: 10px;
-            padding: 10px 12px;
+            padding: 11px 13px;
         }
 
         .info-box small {
@@ -329,12 +422,12 @@ if (!function_exists('h')) {
             font-size: 11px;
             color: var(--muted);
             font-weight: 600;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
 
         .info-box div {
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 600;
             color: var(--text);
             word-break: break-word;
         }
@@ -343,7 +436,7 @@ if (!function_exists('h')) {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 12px;
+            margin-top: 14px;
         }
 
         .btn-doc {
@@ -355,38 +448,39 @@ if (!function_exists('h')) {
             padding: 10px 14px;
             border-radius: 10px;
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 600;
             text-decoration: none !important;
-            border: 1px solid #0d9488;
-            color: #0f766e;
-            background: #f0fdfa;
-            transition: all 0.2s;
+            border: 1px solid #cbd5e1;
+            color: #1e3a8a;
+            background: #f8fafc;
+            transition: all 0.18s ease;
         }
 
         .btn-doc:hover {
-            background: #0d9488;
-            color: #fff;
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #1d4ed8;
         }
 
         /* Timeline Service */
         .timeline-list {
             position: relative;
-            padding-left: 20px;
+            padding-left: 22px;
         }
 
         .timeline-list::before {
             content: '';
             position: absolute;
             left: 6px;
-            top: 6px;
-            bottom: 6px;
-            width: 2px;
+            top: 8px;
+            bottom: 8px;
+            width: 1.5px;
             background: #e2e8f0;
         }
 
         .tl-item {
             position: relative;
-            padding-bottom: 16px;
+            padding-bottom: 14px;
         }
 
         .tl-item:last-child {
@@ -395,21 +489,21 @@ if (!function_exists('h')) {
 
         .tl-dot {
             position: absolute;
-            left: -20px;
-            top: 4px;
-            width: 14px;
-            height: 14px;
+            left: -22px;
+            top: 6px;
+            width: 13px;
+            height: 13px;
             border-radius: 50%;
-            background: var(--teal);
+            background: #2563eb;
             border: 3px solid #fff;
-            box-shadow: 0 0 0 1px var(--teal);
+            box-shadow: 0 0 0 1px #bfdbfe;
         }
 
         .tl-card {
             background: #f8fafc;
-            border: 1px solid var(--border);
+            border: 1px solid #e7edf5;
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 13px 15px;
         }
 
         .tl-head {
@@ -437,49 +531,70 @@ if (!function_exists('h')) {
             color: #334155;
             white-space: pre-line;
             margin: 0;
+            line-height: 1.5;
         }
 
-        /* Sticky CTA Bottom */
+        .passport-footer-note {
+            text-align: center;
+            font-size: 11.5px;
+            color: #64748b;
+            padding: 6px 0 14px;
+        }
+
+        /* Sticky CTA Bottom - Clean & Calm */
         .sticky-action-bar {
             position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(8px);
-            border-top: 1px solid var(--border);
-            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #e2e8f0;
+            padding: 11px 16px;
             z-index: 50;
-            box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.08);
+            box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.05);
         }
 
         .sticky-inner {
-            max-width: 680px;
+            max-width: 720px;
             margin: 0 auto;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
+            justify-content: space-between;
+        }
+
+        .sticky-help-text {
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.3;
+        }
+
+        .sticky-help-text strong {
+            display: block;
+            color: #0f172a;
+            font-size: 12.5px;
         }
 
         .btn-lapor {
-            flex: 1;
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            background: #be123c;
             color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 13px 18px;
-            font-size: 14.5px;
-            font-weight: 800;
+            border: 1px solid #9f1239;
+            border-radius: 10px;
+            padding: 11px 18px;
+            font-size: 13.5px;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.32);
+            white-space: nowrap;
+            transition: background 0.18s ease, transform 0.1s ease;
         }
 
         .btn-lapor:hover {
-            filter: brightness(1.05);
+            background: #9f1239;
         }
 
         .honeypot-field {
@@ -490,21 +605,29 @@ if (!function_exists('h')) {
             width: 0;
         }
 
-        @media (max-width: 520px) {
+        @media (max-width: 560px) {
             .product-hero {
                 flex-direction: column;
                 align-items: flex-start;
             }
             .product-photo-box {
                 width: 100%;
-                height: 190px;
+                height: 185px;
             }
+            .instansi-grid,
             .info-grid {
                 grid-template-columns: 1fr;
             }
             .comp-item {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+            .sticky-help-text {
+                display: none;
+            }
+            .btn-lapor {
+                width: 100%;
+                padding: 12px 16px;
             }
         }
     </style>
@@ -515,12 +638,9 @@ if (!function_exists('h')) {
         <div class="brand-row">
             <div class="brand-left">
                 <div class="brand-logos-pair">
-                    <div class="brand-logo-wrap">
-                        <img src="<?= base_url('assets/img/passport/logo_vym.png') ?>" alt="PT Visi Yosindo Medikal">
-                    </div>
-                    <div class="brand-logo-wrap">
-                        <img src="<?= base_url('assets/img/passport/logo_visilab.png') ?>" alt="Visilab">
-                    </div>
+                    <img src="<?= base_url('assets/img/passport/logo_vym.png') ?>" alt="PT Visi Yosindo Medikal">
+                    <span class="brand-logo-sep"></span>
+                    <img src="<?= base_url('assets/img/passport/logo_visilab.png') ?>" alt="Visilab">
                 </div>
                 <div>
                     <div class="brand-sub">Digital Asset Passport</div>
@@ -562,6 +682,7 @@ if (!function_exists('h')) {
                         <div class="product-photo-box">
                             <?php if (!empty($passport->foto_url)): ?>
                                 <img src="<?= h($passport->foto_url) ?>" alt="<?= h($passport->nama_produk) ?>" onclick="previewImageModal('<?= h($passport->foto_url) ?>')">
+                                <span class="photo-zoom-hint"><i class="fas fa-search-plus"></i></span>
                             <?php else: ?>
                                 <div class="product-photo-placeholder">
                                     <i class="fas fa-x-ray"></i>
@@ -576,26 +697,26 @@ if (!function_exists('h')) {
                             <?php endif; ?>
                             <div>
                                 <span class="sn-pill">
-                                    <i class="fas fa-barcode text-primary"></i>
+                                    <i class="fas fa-barcode"></i>
                                     S/N: <?= h($passport->serial_number ?: '-') ?>
                                 </span>
                                 <span class="sn-pill">
-                                    <i class="fas fa-id-badge text-info"></i>
+                                    <i class="fas fa-id-badge"></i>
                                     <?= h($passport->kode_passport) ?>
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="instansi-strip">
+                    <div class="instansi-grid">
                         <div class="instansi-item">
                             <span>Instansi / Fasyankes</span>
-                            <strong><i class="fas fa-hospital text-info mr-1"></i> <?= h($passport->nama_instansi) ?></strong>
+                            <strong><i class="fas fa-hospital text-primary mr-1"></i> <?= h($passport->nama_instansi) ?></strong>
                         </div>
                         <?php if (!empty($passport->lokasi_ruangan)): ?>
                             <div class="instansi-item">
                                 <span>Lokasi / Ruangan</span>
-                                <strong><i class="fas fa-map-marker-alt text-danger mr-1"></i> <?= h($passport->lokasi_ruangan) ?></strong>
+                                <strong><i class="fas fa-map-marker-alt text-primary mr-1"></i> <?= h($passport->lokasi_ruangan) ?></strong>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -740,11 +861,19 @@ if (!function_exists('h')) {
                 </div>
             </section>
 
+            <div class="passport-footer-note">
+                Dokumen Digital Terverifikasi &bull; PT Visi Yosindo Medikal &amp; Visilab
+            </div>
+
             <!-- Tombol Lapor Kerusakan Sticky di Bawah -->
             <div class="sticky-action-bar">
                 <div class="sticky-inner">
+                    <div class="sticky-help-text">
+                        <strong>Ada kendala pada unit ini?</strong>
+                        Laporan langsung terhubung ke tim teknisi resmi.
+                    </div>
                     <button type="button" class="btn-lapor" data-toggle="modal" data-target="#modalLaporKerusakan">
-                        <i class="fas fa-exclamation-triangle"></i> Lapor Kerusakan / Panggil Teknisi
+                        <i class="fas fa-tools"></i> Lapor Kerusakan / Panggil Teknisi
                     </button>
                 </div>
             </div>
