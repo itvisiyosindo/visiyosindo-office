@@ -456,14 +456,14 @@ class Md_asset_passport extends CI_Model
     private function _map_pengujian_status($code)
     {
         $map = [
-            1  => 'Baru Diajukan',
-            2  => 'Disetujui Staff Teknis',
-            3  => 'Disetujui Manager Puncak',
-            4  => 'Disetujui Finance',
-            5  => 'Disetujui Direktur',
+            1  => 'Permohonan Pengujian Diterima',
+            2  => 'Verifikasi Teknis',
+            3  => 'Dalam Proses Pengujian & Evaluasi',
+            4  => 'Administrasi & Proses Evaluasi',
+            5  => 'Proses Penerbitan Sertifikat / LHU',
             10 => 'Sertifikat & LHU Terbit'
         ];
-        return $map[$code] ?? 'Dalam Proses / Ditolak';
+        return $map[$code] ?? 'Dalam Proses';
     }
 
     /**

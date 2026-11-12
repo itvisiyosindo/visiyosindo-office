@@ -746,12 +746,12 @@ if (!function_exists('h')) {
                 </div>
             </section>
 
-            <!-- 3. Informasi & Dokumen Resmi dari Office (Non-TLD) -->
+            <!-- 3. Informasi & Dokumen Resmi (Non-TLD) -->
             <?php if ($hasOfficeInfo || $hasDocs): ?>
                 <section class="p-card">
                     <div class="p-card-body">
                         <h2 class="p-card-title">
-                            <i class="fas fa-file-medical-alt"></i> Data Pengujian & Dokumen Resmi Office
+                            <i class="fas fa-file-medical-alt"></i> Data Pengujian & Dokumen Resmi
                         </h2>
 
                         <?php if ($hasOfficeInfo): ?>
@@ -770,13 +770,13 @@ if (!function_exists('h')) {
                                 <?php endif; ?>
                                 <?php if (!empty($passport->live_uji_status_label)): ?>
                                     <div class="info-box">
-                                        <small>Progres Uji Visilab</small>
+                                        <small>Status Pengujian (Visilab)</small>
                                         <div><?= h($passport->live_uji_status_label) ?></div>
                                     </div>
                                 <?php endif; ?>
                                 <?php if (!empty($passport->live_status_perizinan) && $passport->live_status_perizinan !== '-'): ?>
                                     <div class="info-box">
-                                        <small>Status Perizinan Office</small>
+                                        <small>Status Proses Perizinan</small>
                                         <div><?= h($passport->live_status_perizinan) ?></div>
                                     </div>
                                 <?php endif; ?>
