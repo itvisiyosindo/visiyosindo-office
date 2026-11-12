@@ -48,10 +48,12 @@ if (!function_exists('h')) {
         }
 
         .passport-topbar {
-            background: linear-gradient(135deg, var(--navy) 0%, #14375f 65%, #0f4c5c 100%);
+            background: linear-gradient(135deg, #071630 0%, #102a5c 55%, #163d7a 100%);
             color: #fff;
-            padding: 16px 16px 56px;
+            padding: 18px 16px 60px;
             position: relative;
+            border-bottom: 3px solid #eab308;
+            box-shadow: 0 6px 24px rgba(7, 22, 48, 0.28);
         }
 
         .brand-row {
@@ -61,12 +63,19 @@ if (!function_exists('h')) {
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .brand-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+        }
+
+        .brand-logos-pair {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .brand-logo-wrap {
@@ -76,44 +85,50 @@ if (!function_exists('h')) {
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(234, 179, 8, 0.65);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+            height: 40px;
         }
 
         .brand-logo-wrap img {
-            height: 26px;
+            height: 28px;
             width: auto;
             display: block;
+            object-fit: contain;
         }
 
         .brand-title {
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 800;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.35px;
             line-height: 1.2;
         }
 
         .brand-sub {
-            font-size: 11px;
-            color: #99f6e4;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            font-size: 10.5px;
+            color: #fde047;
+            font-weight: 700;
+            letter-spacing: 0.6px;
             text-transform: uppercase;
+            margin-bottom: 2px;
         }
 
         .verified-chip {
-            background: rgba(16, 185, 129, 0.18);
-            border: 1px solid rgba(52, 211, 153, 0.45);
-            color: #a7f3d0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
+            border: 1px solid rgba(110, 231, 183, 0.65);
+            color: #d1fae5;
             font-size: 11px;
-            font-weight: 700;
-            padding: 5px 10px;
+            font-weight: 800;
+            padding: 6px 12px;
             border-radius: 999px;
             white-space: nowrap;
+            letter-spacing: 0.4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
         .passport-container {
             max-width: 680px;
-            margin: -38px auto 0;
+            margin: -40px auto 0;
             padding: 0 14px;
             position: relative;
             z-index: 2;
@@ -121,9 +136,9 @@ if (!function_exists('h')) {
 
         .p-card {
             background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            border-radius: 18px;
+            border: 1px solid #dbe4f0;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
             margin-bottom: 16px;
             overflow: hidden;
         }
@@ -499,8 +514,13 @@ if (!function_exists('h')) {
     <header class="passport-topbar">
         <div class="brand-row">
             <div class="brand-left">
-                <div class="brand-logo-wrap">
-                    <img src="<?= base_url('assets/img/logovym2023.png') ?>" alt="PT Visi Yosindo Medikal">
+                <div class="brand-logos-pair">
+                    <div class="brand-logo-wrap">
+                        <img src="<?= base_url('assets/img/passport/logo_vym.png') ?>" alt="PT Visi Yosindo Medikal">
+                    </div>
+                    <div class="brand-logo-wrap">
+                        <img src="<?= base_url('assets/img/passport/logo_visilab.png') ?>" alt="Visilab">
+                    </div>
                 </div>
                 <div>
                     <div class="brand-sub">Digital Asset Passport</div>
