@@ -164,6 +164,7 @@ class Pengguna extends CI_Controller
             $page_data['data_pengguna']  = $this->md_pengguna->getByWhere(['p.pengguna_id' => $targetPenggunaId]);
             $page_data['data_salary']    = $this->md_salary->getByWhere(['sl.pengguna_id' => $targetPenggunaId]);
             $this->load->model('md_kpi_leaderboard');
+            $this->_ensureKtaColumn();
             $page_data['kpi_rank_summary'] = $this->md_kpi_leaderboard->getUserLeaderboardSummary($targetPenggunaId);
             $page_data['page_name']     = 'v_pengguna_detail';
             $page_data['page_title']    = 'Detail Karyawan';
@@ -286,7 +287,13 @@ class Pengguna extends CI_Controller
             // addLog('Memperbaharui Karyawan', 'Memperbaharui data Karyawan ' . $data2[0]->nama);
             ajaxReturnDie('success', 'Pengguna berhasil diperbaharui', TRUE);
         } else if ($param == 'file') {
-            $pengguna_id = decrypt($this->input->post('pengguna_id'));
+            $raw_id = $this->input->post('pengguna_id');
+            $pengguna_id = is_numeric($raw_id) ? (int)$raw_id : (int)decrypt($raw_id);
+            $myId = (int)sessPenggunaId();
+            if ($pengguna_id <= 0 || ($pengguna_id !== $myId && !isAdmin() && !isHrd() && !isGa())) {
+                ajaxReturnDie('error', 'Anda tidak memiliki hak akses untuk mengubah dokumen profil ini.', FALSE);
+            }
+            $this->_ensureKtaColumn();
             $karyawan = $this->md_pengguna->getById($pengguna_id);
 
             //cek file sebelumnya, jika ada hapus file itu
@@ -908,5 +915,22 @@ class Pengguna extends CI_Controller
         echo '<a href="' . base_url('pengguna') . '" style="display:inline-block; padding:10px 18px; background:#2563eb; color:#ffffff; text-decoration:none; border-radius:8px; font-weight:600;">&laquo; Kembali ke Data Karyawan</a>';
         echo '</div>';
         echo '</div>';
+    }
+
+    /**
+     * Memastikan kolom file_kta tersedia pada tabel pengguna dan foldernya ada
+     */
+    private function _ensureKtaColumn()
+    {
+        if (!$this->db->field_exists('file_kta', 'pengguna')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            @$this->db->query("ALTER TABLE `pengguna` ADD COLUMN `file_kta` VARCHAR(255) NULL AFTER `file_passport`;");
+            $this->db->db_debug = $orig;
+        }
+        $ktaDir = FCPATH . 'uploads/file_karyawan/kta';
+        if (!is_dir($ktaDir)) {
+            @mkdir($ktaDir, 0755, true);
+        }
     }
 }

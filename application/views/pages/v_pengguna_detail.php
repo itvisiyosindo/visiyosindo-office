@@ -1406,6 +1406,12 @@
             }
         }
 
+        $isSecurityStaff = in_array((int)$emp->pengguna_id, [94, 724], true)
+            || stripos($emp->nama, 'boddy') !== false
+            || stripos($emp->nama, 'muammar') !== false
+            || stripos($emp->nama, 'muamar') !== false
+            || (isset($emp->jabatan) && (stripos($emp->jabatan, 'security') !== false || stripos($emp->jabatan, 'satpam') !== false));
+
         $docsList = [
             ['type' => 'foto',                 'field' => 'file_foto',                 'title' => 'Pas Foto',                     'icon' => 'fas fa-camera'],
             ['type' => 'ktp',                  'field' => 'file_ktp',                  'title' => 'KTP',                          'icon' => 'fas fa-id-card'],
@@ -1422,6 +1428,15 @@
             ['type' => 'npwp',                 'field' => 'file_npwp',                 'title' => 'Kartu NPWP',                   'icon' => 'fas fa-file-invoice'],
             ['type' => 'passport',             'field' => 'file_passport',             'title' => 'Paspor',                       'icon' => 'fas fa-passport']
         ];
+
+        if ($isSecurityStaff) {
+            $docsList[] = [
+                'type'  => 'kta',
+                'field' => 'file_kta',
+                'title' => 'KTA Satpam / Security',
+                'icon'  => 'fas fa-id-badge'
+            ];
+        }
         $uploadedDocsCount = 0;
         foreach ($docsList as $dItem) {
             $fName = $dItem['field'];
@@ -2344,7 +2359,7 @@
                                                 <i class="fas fa-eye"></i> Lihat
                                             </button>
                                         <?php endif; ?>
-                                        <?php if (isAdmin() || isHrd() || isGa()): ?>
+                                        <?php if (isAdmin() || isHrd() || isGa() || (int)sessPenggunaId() === (int)$data_pengguna[0]->pengguna_id): ?>
                                             <button type="button" class="btn <?= $hasDoc ? 'btn-outline-primary' : 'btn-primary' ?> btn-doc btn-upload-file" data-type="<?= htmlspecialchars($docItem['type']) ?>" title="<?= $hasDoc ? 'Ganti File' : 'Upload File' ?>">
                                                 <i class="fas fa-upload"></i> <?= $hasDoc ? 'Ganti' : 'Upload' ?>
                                             </button>
@@ -2739,7 +2754,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'domisili': 'Surat Domisili',
         'sertifikat_vaksin': 'Sertifikat Vaksin',
         'npwp': 'Kartu NPWP',
-        'passport': 'Paspor'
+        'passport': 'Paspor',
+        'kta': 'KTA Satpam / Security'
     };
 
     // Reset Password Modal

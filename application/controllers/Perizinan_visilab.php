@@ -132,6 +132,19 @@ class Perizinan_visilab extends CI_Controller
             }
         }
 
+        // Pastikan kolom file_kta di tabel pengguna ada
+        $ktaColReady = false;
+        if (!$this->db->field_exists('file_kta', 'pengguna')) {
+            $this->db->query("ALTER TABLE `pengguna` ADD COLUMN `file_kta` VARCHAR(255) NULL AFTER `file_passport`;");
+            $ktaColReady = true;
+        } else {
+            $ktaColReady = true;
+        }
+        $ktaDir = FCPATH . 'uploads/file_karyawan/kta';
+        if (!is_dir($ktaDir)) {
+            @mkdir($ktaDir, 0755, true);
+        }
+
         $allData = $this->md_perizinan_visilab->get_all([]);
         $allStats = $this->md_perizinan_visilab->get_summary_stats();
 
