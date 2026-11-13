@@ -907,40 +907,88 @@ class BukuTamu extends CI_Controller
     }
     $userAgent = substr((string) $this->input->user_agent(), 0, 255);
 
-    // --- 3. Column alias map ---
-    $aliasMap = [
-      'nama'     => ['nama', 'nama lengkap', 'nama dokter', 'nama radiografer', 'nama ppr', 'nama peserta', 'nama customer', 'nama tamu', 'nama pengunjung'],
-      'nomorwa'  => ['no wa', 'wa', 'nomor wa', 'nomor whatsapp', 'no hp', 'no. hp', 'no handphone', 'no. handphone', 'nomor telepon', 'no telepon', 'no. telepon', 'kontak', 'tlp/hp', 'tlp', 'telepon', 'phone', 'handphone', 'hp', 'whatsapp'],
-      'instansi' => ['instansi', 'nama instansi', 'instanasi', 'rumah sakit/klinik', 'rs/klinik', 'perusahaan', 'kantor', 'nama rs', 'nama rumah sakit', 'rs'],
-      'jabatan'  => ['jabatan', 'pekerjaan', 'spesialis', 'jabatan di op', 'profesi', 'posisi', 'divisi'],
-      'email'    => ['email', 'email address', 'email aktif', 'e-mail', 'surel'],
-      'tipe_rs'  => ['tipe rs', 'tipe rs/klinik', 'rs tipe', 'tipe rumah sakit', 'tipe'],
-      'kota'     => ['kota', 'kabupaten', 'kab/kota', 'kota/kabupaten', 'city'],
-      'provinsi' => ['provinsi', 'prov', 'province'],
-      'kebutuhan'=> ['kebutuhan', 'kebutuhan produk', 'catatan', 'minat produk', 'notes', 'keterangan'],
-    ];
+    // --- 3. Helper: Match field name intelligently ---
+    $matchField = function ($label) {
+      $str = strtolower(trim((string) $label));
+      if ($str === '') return null;
+
+      $cleanStr = preg_replace('/\s*\(.*?\)\s*/', ' ', $str);
+      $cleanStr = trim(preg_replace('/\s+/', ' ', $cleanStr));
+
+      // 1. Nomor WA / Phone check first
+      if (preg_match('/\b(wa|whatsapp|nomor wa|no wa|no hp|nomor hp|telepon|handphone|phone|kontak|tlp|hp)\b/i', $cleanStr) || 
+          strpos($str, 'wa') !== false || 
+          strpos($str, 'telepon') !== false || 
+          strpos($str, 'kontak') !== false || 
+          strpos($str, 'handphone') !== false) {
+        return 'nomorwa';
+      }
+
+      // 2. Email
+      if (strpos($str, 'email') !== false || strpos($str, 'surel') !== false) {
+        return 'email';
+      }
+
+      // 3. Instansi / Perusahaan / RS
+      if (preg_match('/\b(instansi|instanasi|rumah sakit|klinik|perusahaan|kantor|rs)\b/i', $cleanStr) ||
+          strpos($str, 'instansi') !== false || strpos($str, 'rumah sakit') !== false || strpos($str, 'klinik') !== false) {
+        return 'instansi';
+      }
+
+      // 4. Jabatan / Pekerjaan
+      if (preg_match('/\b(jabatan|pekerjaan|spesialis|profesi|posisi|divisi|role)\b/i', $cleanStr)) {
+        return 'jabatan';
+      }
+
+      // 5. Tipe RS
+      if (strpos($cleanStr, 'tipe rs') !== false || strpos($cleanStr, 'tipe rumah sakit') !== false) {
+        return 'tipe_rs';
+      }
+
+      // 6. Alamat / Kota / Provinsi
+      if (strpos($cleanStr, 'alamat') !== false) {
+        return 'kebutuhan';
+      }
+      if (preg_match('/\b(kota|kabupaten|kab\/kota)\b/i', $cleanStr)) {
+        return 'kota';
+      }
+      if (preg_match('/\b(provinsi|prov)\b/i', $cleanStr)) {
+        return 'provinsi';
+      }
+
+      // 7. Nama Lengkap / Tamu / Dokter / Peserta
+      if (preg_match('/\b(nama|lengkap|dokter|radiografer|ppr|peserta|customer|tamu|pengunjung|audiens)\b/i', $cleanStr)) {
+        return 'nama';
+      }
+
+      // 8. Kebutuhan / Catatan
+      if (preg_match('/\b(kebutuhan|minat|catatan|notes|keterangan)\b/i', $cleanStr)) {
+        return 'kebutuhan';
+      }
+
+      return null;
+    };
 
     // --- 4. Helper: detect header row ---
-    $detectHeader = function ($sheet) use ($aliasMap) {
+    $detectHeader = function ($sheet) use ($matchField) {
       $allRows = [];
       foreach ($sheet->getRowIterator(1, 6) as $row) {
         $cells = [];
         foreach ($row->getCellIterator() as $cell) {
-          $cells[] = strtolower(trim((string) $cell->getValue()));
+          $cells[] = (string) $cell->getValue();
         }
         $allRows[] = $cells;
       }
       foreach ($allRows as $rowIdx => $cells) {
-        $matchCount = 0;
+        $matchedFields = [];
         foreach ($cells as $cell) {
-          foreach ($aliasMap as $field => $aliases) {
-            if (in_array($cell, $aliases)) {
-              $matchCount++;
-              break;
-            }
+          $field = $matchField($cell);
+          if ($field !== null && !in_array($field, $matchedFields)) {
+            $matchedFields[] = $field;
           }
         }
-        if ($matchCount >= 2) {
+        // Minimal ada 2 field penting (misal: nama + wa, atau nama + email/instansi)
+        if (count($matchedFields) >= 2) {
           return $rowIdx + 1; // 1-based
         }
       }
@@ -948,18 +996,14 @@ class BukuTamu extends CI_Controller
     };
 
     // --- 5. Helper: map header row to field names ---
-    $buildColMap = function ($sheet, $headerRowNum) use ($aliasMap) {
+    $buildColMap = function ($sheet, $headerRowNum) use ($matchField) {
       $colMap = [];
       $row = $sheet->getRowIterator($headerRowNum, $headerRowNum)->current();
-      $colIdx = 0;
       foreach ($row->getCellIterator() as $col => $cell) {
-        $label = strtolower(trim((string) $cell->getValue()));
-        foreach ($aliasMap as $field => $aliases) {
-          if (in_array($label, $aliases) && !isset($colMap[$field])) {
-            $colMap[$field] = $col; // e.g. 'A', 'B', ...
-          }
+        $field = $matchField($cell->getValue());
+        if ($field !== null && !isset($colMap[$field])) {
+          $colMap[$field] = $col; // e.g. 'A', 'B', ...
         }
-        $colIdx++;
       }
       return $colMap;
     };
@@ -1034,13 +1078,13 @@ class BukuTamu extends CI_Controller
 
       $colMap = $buildColMap($sheet, $headerRowNum);
 
-      if (empty($colMap['nama']) && empty($colMap['nomorwa'])) {
+      if (empty($colMap['nama']) || empty($colMap['nomorwa'])) {
         $sheetDetails[] = [
           'sheet'     => $sheetName,
           'imported'  => 0,
           'duplicate' => 0,
           'skipped'   => 0,
-          'note'      => 'Kolom Nama/No WA tidak ditemukan, sheet dilewati.',
+          'note'      => 'Kolom Nama atau No WA tidak ditemukan, sheet dilewati.',
         ];
         continue;
       }
