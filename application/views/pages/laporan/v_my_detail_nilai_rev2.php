@@ -318,7 +318,7 @@ if (!function_exists('lap_limit_text')) {
 						<input type="number" min="60" max="100" step="1" id="bulk-nilai-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 					</div>
 					<div class="col-md-3 col-sm-12 mb-2 mb-md-0">
-						<button type="submit" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
+						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 					</div>
 					<div class="col-md-5 col-sm-12">
 						<small class="text-muted">Mengisi seluruh field nilai B lalu langsung menyimpan ke database (catatan tidak diubah).</small>
@@ -993,8 +993,7 @@ if (!function_exists('lap_limit_text')) {
 					});
 			}
 
-			$(document).on('submit', '#bulk-nilai-form', function(e) {
-				e.preventDefault();
+			$(document).on('click', '#btn-bulk-nilai-submit', function(e) {
 
 				var nilaiInput = $('#bulk-nilai-input').val();
 				var nilaiBulk = parseFloat(nilaiInput);

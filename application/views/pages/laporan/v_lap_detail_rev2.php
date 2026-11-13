@@ -491,7 +491,7 @@ if (!function_exists('lap_limit_text')) {
 								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 							</div>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
-								<button type="submit" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
+								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 							</div>
 							<div class="col-lg-6 col-md-4 col-sm-12">
 								<small class="text-muted">Khusus HRD. Mengisi semua input nilai A lalu menyimpan otomatis ke database.</small>
@@ -1428,8 +1428,7 @@ if (!function_exists('lap_limit_text')) {
 							});
 					}
 
-					$(document).on('submit', '#bulk-nilai-adm-form', function(e) {
-						e.preventDefault();
+					$(document).on('click', '#btn-bulk-nilai-adm-submit', function(e) {
 
 						var nilaiInput = $('#bulk-nilai-adm-input').val();
 						var nilaiBulk = parseFloat(nilaiInput);
