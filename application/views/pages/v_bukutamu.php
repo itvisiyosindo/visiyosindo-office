@@ -830,7 +830,7 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			$('#export-selected-info').text(n + ' kegiatan dipilih');
 		});
 
-		// Download Excel per event yang dipilih menggunakan hidden iframe sequential
+		// Download 1 file Excel berisi semua kegiatan yang dipilih dalam 1 sheet (tabel terpisah per kegiatan)
 		$('#btn-export').click(function() {
 			var checked = $('.export-kegiatan-cb:checked');
 			if (checked.length === 0) {
@@ -839,55 +839,37 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			}
 			$('#main-modal-marketing').modal('hide');
 
-			var items = [];
+			var selectedIds = [];
 			checked.each(function() {
-				items.push({
-					id: $(this).val(),
-					nama: $(this).data('nama') || $(this).closest('.custom-checkbox').find('label').text().trim()
-				});
+				selectedIds.push($(this).val());
 			});
 
 			Swal.fire({
-				title: 'Mengunduh ' + items.length + ' File Excel...',
-				html: 'Mohon tunggu proses unduh sedang berjalan.',
+				title: 'Menyiapkan File Excel...',
+				html: 'Sedang menggabungkan rekapan <b>' + selectedIds.length + ' kegiatan</b> ke dalam 1 sheet Excel.',
 				allowOutsideClick: false,
 				didOpen: function() {
 					Swal.showLoading();
 				}
 			});
 
-			var index = 0;
-			function triggerNextDownload() {
-				if (index >= items.length) {
-					setTimeout(function() {
-						Swal.fire({
-							icon: 'success',
-							title: 'Selesai!',
-							text: items.length + ' file Excel berhasil diunduh.',
-							timer: 2500,
-							showConfirmButton: false
-						});
-					}, 1000);
-					return;
-				}
+			var downloadUrl = '<?= base_url('BukuTamu/exportlaporan') ?>?idmarketing=' + encodeURIComponent(selectedIds.join(','));
 
-				var item = items[index];
-				var downloadUrl = '<?= base_url('BukuTamu/exportlaporan') ?>?idmarketing=' + encodeURIComponent(item.id) + '&namamarketing=' + encodeURIComponent(item.nama);
+			var iframe = document.createElement('iframe');
+			iframe.style.display = 'none';
+			iframe.src = downloadUrl;
+			document.body.appendChild(iframe);
 
-				var iframe = document.createElement('iframe');
-				iframe.style.display = 'none';
-				iframe.src = downloadUrl;
-				document.body.appendChild(iframe);
-
-				setTimeout(function() {
-					$(iframe).remove();
-				}, 15000);
-
-				index++;
-				setTimeout(triggerNextDownload, 800);
-			}
-
-			triggerNextDownload();
+			setTimeout(function() {
+				Swal.fire({
+					icon: 'success',
+					title: 'Berhasil!',
+					text: 'File Excel rekapan (' + selectedIds.length + ' kegiatan) berhasil diunduh.',
+					timer: 2500,
+					showConfirmButton: false
+				});
+				$(iframe).remove();
+			}, 2000);
 		});
 
 		// Show manual guest input modal

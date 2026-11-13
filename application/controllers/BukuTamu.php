@@ -502,139 +502,190 @@ class BukuTamu extends CI_Controller
   {
     grantAccessFor('all');
 
-    $idKegiatan   = $this->input->get('idmarketing');
+    $idParam      = $this->input->get('idmarketing');
     $namaKegiatan = $this->input->get('namamarketing');
 
-    // Query by ID jika tersedia, fallback ke nama (kompatibel dengan cara lama)
-    if (is_numeric($idKegiatan) && (int)$idKegiatan > 0) {
-      $this->db->order_by('bt.created_at', 'DESC');
-      $data = $this->db
-        ->select('bt.nama, bt.id_bukutamu, bt.nomorwa, bt.email, bt.jabatan, bt.instansi, bt.tipe_rs, bt.provinsi, bt.kota, bt.kegiatan, bt.created_at, bc.nama as nama_kegiatan')
-        ->from('bukutamu bt')
-        ->join('bukutamu_config bc', 'bt.kegiatan=bc.id')
-        ->where('bc.id', (int)$idKegiatan)
-        ->get()->result();
-      // Ambil nama event dari data jika ada, atau dari parameter
-      if (!empty($data)) {
-        $namaKegiatan = $data[0]->nama_kegiatan;
-      } elseif (empty($namaKegiatan)) {
-        $namaKegiatan = 'Event';
+    // Parse apakah single ID atau multi ID (koma terpisah)
+    $ids = [];
+    if (!empty($idParam)) {
+      $rawIds = is_array($idParam) ? $idParam : explode(',', (string)$idParam);
+      foreach ($rawIds as $val) {
+        $cleanId = (int)trim($val);
+        if ($cleanId > 0) {
+          $ids[] = $cleanId;
+        }
       }
-    } else {
-      $data = $this->md_bukutamu->getAllKegiatan($idKegiatan ?: null);
     }
 
+    // Kelompokkan data per kegiatan: eventId => ['nama' => ..., 'data' => [...]]
+    $groupedEvents = [];
 
+    if (!empty($ids)) {
+      foreach ($ids as $singleId) {
+        $rows = $this->db
+          ->select('bt.nama, bt.id_bukutamu, bt.nomorwa, bt.email, bt.jabatan, bt.instansi, bt.tipe_rs, bt.provinsi, bt.kota, bt.kegiatan, bt.created_at, bc.nama as nama_kegiatan')
+          ->from('bukutamu bt')
+          ->join('bukutamu_config bc', 'bt.kegiatan=bc.id')
+          ->where('bc.id', $singleId)
+          ->order_by('bt.created_at', 'DESC')
+          ->get()->result();
+
+        $eventTitle = '';
+        if (!empty($rows)) {
+          $eventTitle = $rows[0]->nama_kegiatan;
+        } else {
+          $cfg = $this->db->get_where('bukutamu_config', ['id' => $singleId])->row();
+          $eventTitle = ($cfg && !empty($cfg->nama)) ? $cfg->nama : ('Kegiatan ID ' . $singleId);
+        }
+
+        $groupedEvents[] = [
+          'id'    => $singleId,
+          'judul' => $eventTitle,
+          'rows'  => $rows
+        ];
+      }
+    } else {
+      // Fallback query lama (kompatibel)
+      $data = $this->md_bukutamu->getAllKegiatan($idParam ?: null);
+      $groupedEvents[] = [
+        'id'    => 0,
+        'judul' => !empty($namaKegiatan) ? $namaKegiatan : 'Event Buku Tamu',
+        'rows'  => $data ?: []
+      ];
+    }
 
     $spreadsheet = new Spreadsheet;
     $sheet = $spreadsheet->getActiveSheet();
 
     // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
     $style_col = [
-      'font' => ['bold' => true], // Set font nya jadi bold
+      'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+      'fill' => [
+        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+        'startColor' => ['rgb' => '1E3A8A'] // Deep Blue Header
+      ],
       'alignment' => [
-        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+        'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
       ],
       'borders' => [
-        'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
-        'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
-        'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
-        'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+        'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']]
       ]
     ];
-
 
     // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
     $style_row = [
       'alignment' => [
-        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
       ],
       'borders' => [
-        'top' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
-        'right' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
-        'bottom' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
-        'left' => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+        'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]
       ]
     ];
 
-    $sheet->setCellValue('A1', "DATA BUKU TAMU " . strtoupper($namaKegiatan));
-    $sheet->mergeCells('A1:L1'); // Set Merge Cell pada kolom A1 sampai E1
-    $sheet->getStyle('A1')->getFont()->setBold(true); // Set bold kolom A1
+    $curRow = 1;
 
-    // Buat header tabel nya pada baris ke 3
-    $sheet->setCellValue('A4', 'No');
-    $sheet->setCellValue('B4', 'Nama');
-    $sheet->setCellValue('C4', 'No HP');
-    $sheet->setCellValue('D4', 'Email');
-    $sheet->setCellValue('E4', 'Jabatan');
-    $sheet->setCellValue('F4', 'Instansi');
-    $sheet->setCellValue('G4', 'Tipe Rumah Sakit');
-    $sheet->setCellValue('H4', 'Provinsi');
-    $sheet->setCellValue('I4', 'Kota');
-    $sheet->setCellValue('J4', 'Tanggal');
-    $sheet->setCellValue('K4', 'Kegiatan');
+    // Loop tiap event untuk dibuatkan tabel terpisah dalam 1 sheet yang sama
+    foreach ($groupedEvents as $evIdx => $eventGroup) {
+      $evTitle = strtoupper($eventGroup['judul']);
+      $evRows  = $eventGroup['rows'];
 
-    // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-    $sheet->getStyle('A4')->applyFromArray($style_col);
-    $sheet->getStyle('B4')->applyFromArray($style_col);
-    $sheet->getStyle('C4')->applyFromArray($style_col);
-    $sheet->getStyle('D4')->applyFromArray($style_col);
-    $sheet->getStyle('E4')->applyFromArray($style_col);
-    $sheet->getStyle('F4')->applyFromArray($style_col);
-    $sheet->getStyle('G4')->applyFromArray($style_col);
-    $sheet->getStyle('H4')->applyFromArray($style_col);
-    $sheet->getStyle('I4')->applyFromArray($style_col);
-    $sheet->getStyle('J4')->applyFromArray($style_col);
-    $sheet->getStyle('K4')->applyFromArray($style_col);
+      // Judul Event / Tabel
+      $sheet->setCellValue('A' . $curRow, "DATA BUKU TAMU: " . $evTitle);
+      $sheet->mergeCells('A' . $curRow . ':K' . $curRow);
+      $sheet->getStyle('A' . $curRow)->getFont()->setBold(true)->setSize(13);
+      $sheet->getStyle('A' . $curRow)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+      $sheet->getRowDimension($curRow)->setRowHeight(28);
+      $curRow++;
 
+      // Sub-keterangan total peserta
+      $sheet->setCellValue('A' . $curRow, "Total Peserta: " . count($evRows) . " Orang");
+      $sheet->mergeCells('A' . $curRow . ':K' . $curRow);
+      $sheet->getStyle('A' . $curRow)->getFont()->setItalic(true)->setSize(10)->getColor()->setRGB('475569');
+      $curRow += 2; // Beri jarak 1 baris sebelum header tabel
 
-    $kolom = 5;
-    $nomor = 1;
+      // Header Kolom Tabel
+      $headerRow = $curRow;
+      $sheet->setCellValue('A' . $headerRow, 'No');
+      $sheet->setCellValue('B' . $headerRow, 'Nama');
+      $sheet->setCellValue('C' . $headerRow, 'No HP');
+      $sheet->setCellValue('D' . $headerRow, 'Email');
+      $sheet->setCellValue('E' . $headerRow, 'Jabatan');
+      $sheet->setCellValue('F' . $headerRow, 'Instansi');
+      $sheet->setCellValue('G' . $headerRow, 'Tipe Rumah Sakit');
+      $sheet->setCellValue('H' . $headerRow, 'Provinsi');
+      $sheet->setCellValue('I' . $headerRow, 'Kota');
+      $sheet->setCellValue('J' . $headerRow, 'Tanggal Daftar');
+      $sheet->setCellValue('K' . $headerRow, 'Kegiatan');
 
-    foreach ($data as $marketing) {
+      $sheet->getStyle('A' . $headerRow . ':K' . $headerRow)->applyFromArray($style_col);
+      $sheet->getRowDimension($headerRow)->setRowHeight(24);
+      $curRow++;
 
-      $spreadsheet->setActiveSheetIndex(0)
-        ->setCellValue('A' . $kolom, $nomor)
-        ->setCellValue('B' . $kolom, $marketing->nama)
-        ->setCellValue('C' . $kolom, $marketing->nomorwa)
-        ->setCellValue('D' . $kolom, $marketing->email)
-        ->setCellValue('E' . $kolom, $marketing->jabatan)
-        ->setCellValue('F' . $kolom, $marketing->instansi)
-        ->setCellValue('G' . $kolom, $marketing->tipe_rs ?: '-')
-        ->setCellValue('H' . $kolom, $marketing->provinsi ?: '-')
-        ->setCellValue('I' . $kolom, $marketing->kota ?: '-')
-        ->setCellValue('J' . $kolom, date('d-M-Y | H:i', strtotime($marketing->created_at)))
-        ->setCellValue('K' . $kolom, $marketing->nama_kegiatan);
+      // Isi Data Tabel
+      if (!empty($evRows)) {
+        $no = 1;
+        foreach ($evRows as $row) {
+          $sheet->setCellValue('A' . $curRow, $no);
+          $sheet->setCellValue('B' . $curRow, $row->nama ?: '-');
+          $sheet->setCellValueExplicit('C' . $curRow, (string)$row->nomorwa, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+          $sheet->setCellValue('D' . $curRow, $row->email ?: '-');
+          $sheet->setCellValue('E' . $curRow, $row->jabatan ?: '-');
+          $sheet->setCellValue('F' . $curRow, $row->instansi ?: '-');
+          $sheet->setCellValue('G' . $curRow, $row->tipe_rs ?: '-');
+          $sheet->setCellValue('H' . $curRow, $row->provinsi ?: '-');
+          $sheet->setCellValue('I' . $curRow, $row->kota ?: '-');
+          $sheet->setCellValue('J' . $curRow, !empty($row->created_at) ? date('d-M-Y | H:i', strtotime($row->created_at)) : '-');
+          $sheet->setCellValue('K' . $curRow, $row->nama_kegiatan ?: $eventGroup['judul']);
 
-      $kolom++;
-      $nomor++;
+          $sheet->getStyle('A' . $curRow . ':K' . $curRow)->applyFromArray($style_row);
+          $sheet->getStyle('A' . $curRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+          $sheet->getStyle('J' . $curRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+          $curRow++;
+          $no++;
+        }
+      } else {
+        // Jika tidak ada data pada event ini
+        $sheet->setCellValue('A' . $curRow, 'Belum ada data buku tamu untuk kegiatan ini.');
+        $sheet->mergeCells('A' . $curRow . ':K' . $curRow);
+        $sheet->getStyle('A' . $curRow . ':K' . $curRow)->applyFromArray($style_row);
+        $sheet->getStyle('A' . $curRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A' . $curRow)->getFont()->setItalic(true)->getColor()->setRGB('94A3B8');
+        $curRow++;
+      }
+
+      // Beri jarak kosong 3 baris sebelum tabel kegiatan berikutnya
+      $curRow += 3;
     }
 
     // Set width kolom
-    $sheet->getColumnDimension('A')->setWidth(5); // Set width kolom A
-    $sheet->getColumnDimension('B')->setWidth(35); // Set width kolom B
-    $sheet->getColumnDimension('C')->setWidth(25); // Set width kolom C
-    $sheet->getColumnDimension('D')->setWidth(27); // Set width kolom D
-    $sheet->getColumnDimension('E')->setWidth(30); // Set width kolom E
-    $sheet->getColumnDimension('F')->setWidth(35); // Set width kolom F
-    $sheet->getColumnDimension('G')->setWidth(20); // Set width kolom G
-    $sheet->getColumnDimension('H')->setWidth(25); // Set width kolom H
-    $sheet->getColumnDimension('I')->setWidth(25); // Set width kolom I
-    $sheet->getColumnDimension('J')->setWidth(25); // Set width kolom J
-    $sheet->getColumnDimension('K')->setWidth(45); // Set width kolom K
+    $sheet->getColumnDimension('A')->setWidth(6);
+    $sheet->getColumnDimension('B')->setWidth(35);
+    $sheet->getColumnDimension('C')->setWidth(25);
+    $sheet->getColumnDimension('D')->setWidth(27);
+    $sheet->getColumnDimension('E')->setWidth(30);
+    $sheet->getColumnDimension('F')->setWidth(35);
+    $sheet->getColumnDimension('G')->setWidth(20);
+    $sheet->getColumnDimension('H')->setWidth(25);
+    $sheet->getColumnDimension('I')->setWidth(25);
+    $sheet->getColumnDimension('J')->setWidth(22);
+    $sheet->getColumnDimension('K')->setWidth(40);
 
-    // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
-    $sheet->getDefaultRowDimension()->setRowHeight(-1);
     // Set orientasi kertas jadi LANDSCAPE
     $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-    // Set judul file excel nya
-    $sheet->setTitle("Data Buku Tamu");
+    $sheet->setTitle("Rekapan Buku Tamu");
     ob_end_clean();
-    // Proses file excel
-    $filename = "Data Buku Tamu - " . preg_replace('/[\/\\\\:*?"<>|]/', '-', strtoupper($namaKegiatan)) . ".xlsx";
+
+    // Penamaan file excel
+    if (count($groupedEvents) === 1) {
+      $filename = "Data Buku Tamu - " . preg_replace('/[\/\\\\:*?"<>|]/', '-', strtoupper($groupedEvents[0]['judul'])) . ".xlsx";
+    } else {
+      $filename = "Rekapan Data Buku Tamu - Multi Event (" . count($groupedEvents) . " Kegiatan).xlsx";
+    }
+
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment; filename=' . $filename);
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
