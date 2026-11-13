@@ -29,7 +29,7 @@
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-6" for="teleponpic">Telepon PIC:</label>
-                        <input type="number" class="form-control" id="teleponpic" placeholder="Masukkan Telepon PIC" name="teleponpic" autocomplete="off">
+                        <input type="tel" class="form-control" id="teleponpic" placeholder="Masukkan Telepon PIC" name="teleponpic" autocomplete="off">
                     </div>
                 </div>
             </div>

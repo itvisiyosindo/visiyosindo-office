@@ -130,6 +130,7 @@ class Funnel extends CI_Controller
         $data['keterangan'] = $this->input->post('keterangan');
         $data['kendala']    = $this->input->post('kendala');
         $data['idmarketing'] = sessPenggunaId();
+        $data['idmarketing2'] = $this->input->post('idmarketing2') ?: NULL;
         $data['pengguna_id'] = sessPenggunaId();
 
 
@@ -182,6 +183,7 @@ class Funnel extends CI_Controller
         $data['tujuankegiatan']    = $this->input->post('tujuankegiatan');
         $data['keterangan']    = $this->input->post('keterangan');
         $data['kendala'] = $this->input->post('alamatcaloncustomer');
+        $data['idmarketing2'] = $this->input->post('idmarketing2') ?: NULL;
         $data['pengguna_id'] = sessPenggunaId();
 
 

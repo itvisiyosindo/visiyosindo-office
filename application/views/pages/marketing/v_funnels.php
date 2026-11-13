@@ -294,6 +294,15 @@
 							<label for="tujuankegiatan" class="form-control-label">Tujuan Kegiatan <span class="text-danger">*</span> :</label>
 							<input type="text" class="form-control" id="tujuankegiatan" name="tujuankegiatan" required/>
 						</div>			
+						<div class="form-group">
+							<label class="form-control-label">PIC Marketing 2 :</label>
+							<select class="form-control" name="idmarketing2" id="idmarketing2">
+								<option value="">-- Tidak ada --</option>
+								<?php foreach($nama_marketing as $m): ?>
+								<option value="<?= $m->pengguna_id ?>"><?= $m->nama ?></option>
+								<?php endforeach; ?>
+							</select>
+						</div>
 						<div class="form-group" id='picpic' style="display: inline-block;">
 									<label for="pic" class="form-control-label">PIC <span class="text-danger">*</span> :</label>
 									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic[]" style="display: inline-block;"  multiple disabled="disabled" >
@@ -490,6 +499,15 @@
 							<label for="tujuankegiatan" class="form-control-label">Tujuan Kegiatan <span class="text-danger">*</span> :</label>
 							<input type="text" class="form-control" id="tujuankegiatan" name="tujuankegiatan" required/>
 						</div>	
+						<div class="form-group">
+							<label class="form-control-label">PIC Marketing 2 :</label>
+							<select class="form-control" name="idmarketing2" id="idmarketing2">
+								<option value="">-- Tidak ada --</option>
+								<?php foreach($nama_marketing as $m): ?>
+								<option value="<?= $m->pengguna_id ?>"><?= $m->nama ?></option>
+								<?php endforeach; ?>
+							</select>
+						</div>
 						<div class="form-group" id="merek">
 							<label class="control-label">Merk Product</label>
 							<select class="select-transaction input-group-sm form-control" name="merkproduct" id="merkproduct">
@@ -710,6 +728,7 @@
 										$('#main-modal-funneledit #namaproduct').val(result['idproduct']);
 										$('#main-modal-funneledit #keterangan').val(result['keterangan']);
 										$('#main-modal-funneledit #kendala').val(result['kendala']);
+										$('#main-modal-funneledit #idmarketing2').val(result['idmarketing2'] || '');
 										$('#main-modal-funneledit').modal();
 								}
     					},
@@ -735,7 +754,8 @@
 									idkategori: $('#main-modal-funneledit #idkategori').val(),
 									namaproduct: $('#main-modal-funneledit #namaproduct').val(),
 									keterangan: $('#main-modal-funneledit #keterangan').val(),
-									kendala: $('#main-modal-funneledit #kendala').val(),      
+									kendala: $('#main-modal-funneledit #kendala').val(),
+									idmarketing2: $('#main-modal-funneledit #idmarketing2').val(),
 									
 							},
 							success: function(result) { 

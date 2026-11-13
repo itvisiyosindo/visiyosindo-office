@@ -17,7 +17,7 @@ class Md_funnel extends CI_Model
             funnel.id,
             calonpelanggan.namacaloncustomer,
             CONCAT(provinsi.nama, " - ", kota.nama) as provinsikota,
-            c.nama as namamarketing,
+            CONCAT(c.nama, IFNULL(CONCAT(" & ", p2.nama), "")) as namamarketing,
             funnel.jenispekerjaan,
             msf_main.nama as namastatus,
             kategori_barang.nama_kategori,
@@ -37,6 +37,7 @@ class Md_funnel extends CI_Model
         $this->datatables->join('masterstatusfunnel msf_main', 'funnel.statusfunnel = msf_main.id');
         $this->datatables->join('pengguna d', 'd.pengguna_id = funnel.pengguna_id');
         $this->datatables->join('pengguna c', 'c.pengguna_id = calonpelanggan.pengguna_id');
+        $this->datatables->join('pengguna p2', 'p2.pengguna_id = funnel.idmarketing2', 'left');
         $this->datatables->join('provinsi', 'calonpelanggan.provinsi = provinsi.kode', 'left');
         $this->datatables->join('kota', 'calonpelanggan.kota = kota.id', 'left');
         $this->datatables->join('masterprogresskerjafunnel mpkf', 'funnel.progressfunnel = mpkf.id', 'left');
@@ -46,7 +47,8 @@ class Md_funnel extends CI_Model
 
         // --- FILTER LOGIC ---
         if (!empty($filters['idmarketing'])) {
-            $this->datatables->where('funnel.idmarketing', $filters['idmarketing']);
+            $idm = (int) $filters['idmarketing'];
+            $this->datatables->where("(funnel.idmarketing = $idm OR funnel.idmarketing2 = $idm)");
         }
         if (!empty($filters['tgl_awal'])) {
             $this->datatables->where('funnel.tanggal >=', $filters['tgl_awal']);
@@ -57,7 +59,8 @@ class Md_funnel extends CI_Model
 
         // Restriction berdasarkan login (Jika bukan admin)
         if ($restrict_id !== NULL) {
-            $this->datatables->where('funnel.pengguna_id', $restrict_id);
+            $rid = (int) $restrict_id;
+            $this->datatables->where("(funnel.pengguna_id = $rid OR funnel.idmarketing2 = $rid)");
         }
 
         return $this->datatables->generate();
@@ -489,6 +492,7 @@ class Md_funnel extends CI_Model
                 masterprogresskerjafunnel.nama as namaprogress,
                 funnel.keterangan,
                 funnel.kendala,
+                funnel.idmarketing2,
                 funnel.data_created
             ')
             ->join('calonpelanggan', 'funnel.idpelanggan = calonpelanggan.id')
