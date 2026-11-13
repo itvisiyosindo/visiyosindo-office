@@ -4913,6 +4913,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 1. Tutup modal detail task
                     $('#modalDetailTask').modal('hide');
 
+                    var resData = res.data || {};
+                    var autoStar = parseInt(resData.rating_bintang, 10) || 5;
+                    var starBadgeHtml = buildStarsJs(autoStar);
+
                     // 2. Update langsung row di tabel Tugas Saya tanpa refresh Chrome
                     if ($.fn.dataTable && $.fn.dataTable.isDataTable('#datatable_tugas_saya')) {
                         var dtSaya = $('#datatable_tugas_saya').DataTable();
@@ -4927,7 +4931,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             );
                             // Kolom Status (Index 6)
                             $trSaya.find('td').eq(6).html(
-                                '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>'
+                                '<span class="tp-status-badge tp-st-4"><i class="fas fa-check-circle"></i> Selesai & Dinilai</span>'
+                            );
+                            // Kolom Rating (Index 7)
+                            $trSaya.find('td').eq(7).html(
+                                '<div style="white-space: nowrap;">' + starBadgeHtml + '</div>'
                             );
                             // Kolom Aksi (Index 8) -> Hilangkan tombol submit selesai jika ada
                             $trSaya.find('button[data-focus="submit"]').remove();
@@ -4951,16 +4959,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             );
                             // Kolom Status (Index 7)
                             $trAtasan.find('td').eq(7).html(
-                                '<span class="tp-status-badge tp-st-2"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>'
+                                '<span class="tp-status-badge tp-st-4"><i class="fas fa-check-circle"></i> Selesai & Dinilai</span>'
                             );
                             // Kolom Rating (Index 8)
                             $trAtasan.find('td').eq(8).html(
-                                '<span class="badge badge-warning"><i class="fas fa-star"></i> Siap Dinilai</span>'
+                                '<div style="white-space: nowrap;">' + starBadgeHtml + '</div>'
                             );
                             // Kolom Aksi Atasan (Index 9)
                             var btnReviewHtml = '<div class="tp-action-stack">' +
-                                '<button type="button" class="btn btn-xs btn-warning font-weight-bold btn-detail-task" data-id="' + idTask + '" data-focus="review">' +
-                                '<i class="fas fa-star"></i> Beri Rating ⭐' +
+                                '<button type="button" class="btn btn-xs btn-primary btn-detail-task" data-id="' + idTask + '" data-focus="detail">' +
+                                '<i class="fas fa-eye"></i> Detail' +
                                 '</button></div>';
                             $trAtasan.find('td').eq(9).html(btnReviewHtml);
 
@@ -4972,19 +4980,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     var $badgeReview = $('#badge_need_review');
                     if ($badgeReview.length) {
                         var curReview = parseInt($badgeReview.text(), 10) || 0;
-                        $badgeReview.html((curReview + 1) + ' Perlu Rating <i class="fas fa-star text-warning"></i>').removeClass('badge-secondary').addClass('badge-warning');
-                    }
-                    var $kpiReview = $('#kpi_need_review');
-                    if ($kpiReview.length) {
-                        var curKpi = parseInt($kpiReview.text(), 10) || 0;
-                        $kpiReview.html((curKpi + 1) + ' <small style="font-size: 13px; font-weight: 600; color:#64748b;">Task</small>');
+                        if (curReview > 0) {
+                            $badgeReview.html((curReview - 1) + ' Perlu Rating <i class="fas fa-star text-warning"></i>');
+                        }
                     }
 
-                    // 5. Tampilkan SweetAlert sukses TANPA me-reload Chrome
+                    // 5. Tampilkan SweetAlert sukses
                     if (window.swal) {
-                        swal('Terkirim!', res.msg || 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!', 'success');
+                        swal('Selesai & Dinilai!', res.msg || 'Hasil pekerjaan berhasil diselesaikan dan dinilai otomatis!', 'success');
                     } else {
-                        alert(res.msg || 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!');
+                        alert(res.msg || 'Hasil pekerjaan berhasil diselesaikan dan dinilai otomatis!');
                     }
                 } else {
                     if (window.swal) {
