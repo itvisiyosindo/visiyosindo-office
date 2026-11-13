@@ -500,8 +500,29 @@ class BukuTamu extends CI_Controller
 
   public function exportlaporan()
   {
+    grantAccessFor('all');
 
-    $data = $this->md_bukutamu->getAllKegiatan($this->input->get('idmarketing'));
+    $idKegiatan   = $this->input->get('idmarketing');
+    $namaKegiatan = $this->input->get('namamarketing');
+
+    // Query by ID jika tersedia, fallback ke nama (kompatibel dengan cara lama)
+    if (is_numeric($idKegiatan) && (int)$idKegiatan > 0) {
+      $this->db->order_by('bt.created_at', 'DESC');
+      $data = $this->db
+        ->select('bt.nama, bt.id_bukutamu, bt.nomorwa, bt.email, bt.jabatan, bt.instansi, bt.tipe_rs, bt.provinsi, bt.kota, bt.kegiatan, bt.created_at, bc.nama as nama_kegiatan')
+        ->from('bukutamu bt')
+        ->join('bukutamu_config bc', 'bt.kegiatan=bc.id')
+        ->where('bc.id', (int)$idKegiatan)
+        ->get()->result();
+      // Ambil nama event dari data jika ada, atau dari parameter
+      if (!empty($data)) {
+        $namaKegiatan = $data[0]->nama_kegiatan;
+      } elseif (empty($namaKegiatan)) {
+        $namaKegiatan = 'Event';
+      }
+    } else {
+      $data = $this->md_bukutamu->getAllKegiatan($idKegiatan ?: null);
+    }
 
 
 
@@ -537,7 +558,7 @@ class BukuTamu extends CI_Controller
       ]
     ];
 
-    $sheet->setCellValue('A1', "DATA BUKU TAMU " . strtoupper($this->input->get('namamarketing'))); // Set kolom A1 dengan tulisan "DATA SISWA"
+    $sheet->setCellValue('A1', "DATA BUKU TAMU " . strtoupper($namaKegiatan));
     $sheet->mergeCells('A1:L1'); // Set Merge Cell pada kolom A1 sampai E1
     $sheet->getStyle('A1')->getFont()->setBold(true); // Set bold kolom A1
 
@@ -611,7 +632,7 @@ class BukuTamu extends CI_Controller
     $sheet->setTitle("Data Buku Tamu");
     ob_end_clean();
     // Proses file excel
-    $filename = "Data Buku Tamu - " . strtoupper($this->input->get('namamarketing')) . ".xlsx";
+    $filename = "Data Buku Tamu - " . preg_replace('/[\/\\\\:*?"<>|]/', '-', strtoupper($namaKegiatan)) . ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename=' . $filename);
     header('Cache-Control: max-age=0');

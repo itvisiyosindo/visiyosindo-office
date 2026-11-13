@@ -1,4 +1,4 @@
-<header class="page-header">
+﻿<header class="page-header">
 	<h2><i class="fas fa-digital-tachograph"></i>&nbsp;<?= $page_title ?></h2>
 	<div class="right-wrapper text-left">
 		<ol class="breadcrumbs">
@@ -252,48 +252,46 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 
 
 
-<div id="main-modal-marketing" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content ">
+<div id="main-modal-marketing" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" style="display: none;" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
 			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Cetak Buku Tamu </h5>
+				<h5 class="modal-title font-weight-bold"><i class="fas fa-file-excel mr-2"></i> Export Rekapan Buku Tamu</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
 			</div>
-			<?= form_open('#', array('id' => 'modal-form-marketing', 'autocomplete' => 'off')); ?>
 			<div class="modal-body">
-				<div class="dt-marketing-form">
-					<!--<div class="form-group" style="display: flex;">
-				        <div style="flex: 50%;padding: 10px;">
-						<input class="form-control"  data-provide="datepicker" name="tglawal" id="tglawal" data-date-format="yyyy-mm-dd" placeholder="Pilih Tanggal Awal" required>
-						</div>
-						<div style="flex: 50%;padding: 10px;">
-						<input class="form-control"  data-provide="datepicker" name="tglakhir" id="tglakhir" data-date-format="yyyy-mm-dd" placeholder="Pilih Tanggal Akhir" required>
-						</div>
-					</div>-->
-					<div class="form-group">
-						<label class="control-label">Nama Kegiatan</label>
-						<select class="select-transaction input-group-sm form-control" name="namamarketing" id="namamarketing">
-							<?php if ($nama_kegiatan != NULL): ?>
-								<option value=''>Semua Kegiatan</option>
-								<?php foreach ($nama_kegiatan as $value): ?>
-									<option value="<?php echo $value->nama; ?>"><?php echo $value->nama; ?></option>
-								<?php endforeach; ?>
-							<?php else: ?>
-								<option value=''>— Tidak ada data —</option>
-							<?php endif; ?>
-						</select>
-						<?php echo form_error('nama_marketing'); ?>
+				<div class="d-flex justify-content-between align-items-center mb-2">
+					<label class="font-weight-bold mb-0">Pilih Kegiatan yang akan di-export:</label>
+					<div>
+						<button type="button" id="btn-check-all" class="btn btn-xs btn-outline-secondary mr-1">Pilih Semua</button>
+						<button type="button" id="btn-uncheck-all" class="btn btn-xs btn-outline-secondary">Batalkan Semua</button>
 					</div>
-
 				</div>
+				<div id="export-kegiatan-list" style="max-height:350px;overflow-y:auto;border:1px solid #e2e5ec;border-radius:6px;padding:10px;">
+					<?php if ($nama_kegiatan != NULL): ?>
+						<?php foreach ($nama_kegiatan as $value): ?>
+							<div class="custom-control custom-checkbox mb-1">
+								<input type="checkbox" class="custom-control-input export-kegiatan-cb"
+									id="cb_<?= $value->id ?>"
+									value="<?= $value->id ?>"
+									data-nama="<?= htmlspecialchars($value->nama, ENT_QUOTES) ?>">
+								<label class="custom-control-label" for="cb_<?= $value->id ?>">
+									<?= htmlspecialchars($value->nama) ?>
+								</label>
+							</div>
+						<?php endforeach; ?>
+					<?php else: ?>
+						<p class="text-muted mb-0">— Tidak ada kegiatan —</p>
+					<?php endif; ?>
+				</div>
+				<div class="mt-2 text-muted small" id="export-selected-info">0 kegiatan dipilih</div>
 			</div>
 			<div class="modal-footer">
-				<!-- <div class="is_aktif"></div>
-				<input type="hidden" id="ID" name="ID"> -->
-				<button type="button" class="btn btn-secondary btn-clear-form" data-dismiss="modal">Tutup</button>
-				<button type="button" id="btn-export" class="btn btn-success btn-clear-form">Export Excel</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+				<button type="button" id="btn-export" class="btn btn-success font-weight-bold">
+					<i class="fas fa-file-excel mr-1"></i> Download Excel
+				</button>
 			</div>
-			<?= form_close(); ?>
 		</div>
 	</div>
 </div>
@@ -815,28 +813,41 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 		})
 
 		$('#btn-cetaklaporan-form').click(function() {
-			var labelKegiatan = $filterKegiatan.find('option:selected').text();
-			if ($filterKegiatan.val()) {
-				$('#namamarketing').val(labelKegiatan);
-			} else {
-				$('#namamarketing').val('');
+			$('#main-modal-marketing').modal('show');
+		});
+
+		// Pilih semua / batalkan semua checkbox
+		$('#btn-check-all').click(function() {
+			$('.export-kegiatan-cb').prop('checked', true).trigger('change');
+		});
+		$('#btn-uncheck-all').click(function() {
+			$('.export-kegiatan-cb').prop('checked', false).trigger('change');
+		});
+
+		// Update info jumlah terpilih
+		$(document).on('change', '.export-kegiatan-cb', function() {
+			var n = $('.export-kegiatan-cb:checked').length;
+			$('#export-selected-info').text(n + ' kegiatan dipilih');
+		});
+
+		// Download Excel per event yang dipilih
+		$('#btn-export').click(function() {
+			var checked = $('.export-kegiatan-cb:checked');
+			if (checked.length === 0) {
+				Swal.fire('Peringatan', 'Pilih minimal satu kegiatan untuk di-export!', 'warning');
+				return;
 			}
-			$('#main-modal-marketing').modal()
-
-
-		})
-
-		$("#btn-export").click(function() {
-
-			//tglawal = $("#tglawal").val();
-			//tglakhir = $("#tglakhir").val(); 
-			//window.open("<?php echo base_url(); ?>BukuTamu/exportlaporan/search?tglawal="+encodeURIComponent(tglawal)+"&tglakhir="+encodeURIComponent(tglakhir)+"&idmarketing="+encodeURIComponent(idmarketing)+"&namamarketing="+encodeURIComponent(namamarketing),"_blank");
-
-			idmarketing = $("#namamarketing").val();
-			namamarketing = $("#namamarketing option:selected").text();
-			window.open("<?php echo base_url(); ?>BukuTamu/exportlaporan/search?idmarketing=" + encodeURIComponent(idmarketing) + "&namamarketing=" + encodeURIComponent(namamarketing), "_blank");
-			$('#main-modal-marketing').modal('hide')
-
+			$('#main-modal-marketing').modal('hide');
+			var delay = 0;
+			checked.each(function() {
+				var id   = $(this).val();
+				var nama = $(this).data('nama');
+				setTimeout(function() {
+					window.open('<?= base_url('BukuTamu/exportlaporan') ?>?idmarketing=' + encodeURIComponent(id) + '&namamarketing=' + encodeURIComponent(nama), '_blank');
+				}, delay);
+				delay += 400;
+			});
+		});
 		});
 
 		// Show manual guest input modal
