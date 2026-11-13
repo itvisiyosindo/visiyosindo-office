@@ -678,4 +678,17 @@ class Md_pengguna extends CI_Model
 
         return $this->db->get()->result();
     }
+
+    public function getAllPegawaiLengkap()
+    {
+        $this->db->select('pg.*, d.nama as nama_divisi');
+        $this->db->from('pengguna pg');
+        $this->db->join('divisi d', 'd.id_divisi = pg.id_divisi', 'left');
+        $this->db->where("pg.pengguna_id NOT IN (1, 727, 714, 84, 109, 110, 79, 54, 72, 81, 70, 58, 69, 57, 74, 56, 83, 55, 107, 86, 77, 743)", NULL, FALSE);
+        $this->db->where('pg.status', 1);
+        $this->db->where('pg.is_active', 1);
+        $this->db->order_by('pg.nama', 'ASC');
+
+        return $this->db->get()->result();
+    }
 }
