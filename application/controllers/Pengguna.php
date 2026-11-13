@@ -520,6 +520,27 @@ class Pengguna extends CI_Controller
             addlog($aksi, $ket);
 
     }
+
+    public function cetakRekapKaryawan()
+    {
+        grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+
+        $dt = [
+            'title_pdf' => 'Rekap Data Karyawan',
+            'data'      => $this->md_pengguna->getAllPegawaiLengkap(),
+        ];
+
+        // Format A4 Landscape, margin tipis agar data muat rapi
+        $mpdf = new Mpdf(['format' => 'A4-L']);
+        $mpdf->AddPage('L', '', '', '', '', 6, 6, 6, 6);
+
+        $file_pdf = 'Rekap_Data_Karyawan_' . date('Ymd_His');
+        $html = $this->load->view('pages/v_print/print_rekap_karyawan', $dt, true);
+        $mpdf->WriteHTML($html);
+        $mpdf->Output($file_pdf . '.pdf', 'I');
+
+        addLog('Pengguna', 'Cetak Rekap Data Karyawan PDF');
+    }
     
     public function exportExcel()
     {

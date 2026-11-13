@@ -800,6 +800,9 @@
                 <i class="fas fa-sync-alt mr-1"></i> Sinkronkan 15 Email Kantor
             </a>
             <?php } ?>
+            <a href="javascript:;" id="btn-rekap-karyawan-pdf" class="btn-action" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; box-shadow: 0 2px 4px rgba(3, 105, 161, 0.2);" title="Rekap data lengkap karyawan (tgl lahir, jabatan, masa kerja, dll) ke PDF dengan Kop Surat">
+                <i class="fas fa-file-pdf mr-1"></i> Rekap PDF (Kop Surat)
+            </a>
             <a href="javascript:;" id="btn-laporan-cetak-form" class="btn-action btn-action-print">
                 <i class="fas fa-print"></i> Cetak Laporan
             </a>
@@ -1118,6 +1121,11 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#main-modal #modal-form').attr('action', 'pengguna/reset');
         $('#main-modal').modal();
         togglePasswordForm('show');
+    });
+
+    // Rekap PDF Button (Kop Surat)
+    $('#btn-rekap-karyawan-pdf').on('click', function() {
+        window.open("<?php echo base_url('pengguna/cetakRekapKaryawan'); ?>", "_blank");
     });
 
     // Print Button
