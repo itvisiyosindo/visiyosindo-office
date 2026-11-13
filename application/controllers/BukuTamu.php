@@ -985,11 +985,17 @@ class BukuTamu extends CI_Controller
       }
 
       // Create new event
-      $this->db->insert('bukutamu_config', [
-        'nama'      => $sheetTitle,
-        'is_active' => 1,
-        'created_at'=> date('Y-m-d H:i:s'),
-      ]);
+      $insertEvent = ['nama' => $sheetTitle];
+      if ($this->db->field_exists('pengguna_id', 'bukutamu_config')) {
+        $insertEvent['pengguna_id'] = sessPenggunaId();
+      }
+      if ($this->db->field_exists('is_active', 'bukutamu_config')) {
+        $insertEvent['is_active'] = 1;
+      }
+      if ($this->db->field_exists('created_at', 'bukutamu_config')) {
+        $insertEvent['created_at'] = date('Y-m-d H:i:s');
+      }
+      $this->db->insert('bukutamu_config', $insertEvent);
       $newId = (int) $this->db->insert_id();
       $eventCache[$sheetTitle] = $newId;
       return $newId;
