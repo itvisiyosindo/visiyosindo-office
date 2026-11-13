@@ -978,7 +978,7 @@ class BukuTamu extends CI_Controller
       }
 
       // Try case-insensitive
-      $row = $this->db->where("LOWER(nama) = LOWER('" . $this->db->escape_str($sheetTitle) . "'")->get('bukutamu_config')->row();
+      $row = $this->db->where("LOWER(nama) = LOWER('" . $this->db->escape_str($sheetTitle) . "')", NULL, FALSE)->get('bukutamu_config')->row();
       if ($row) {
         $eventCache[$sheetTitle] = (int) $row->id;
         return (int) $row->id;
