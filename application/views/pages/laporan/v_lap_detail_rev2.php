@@ -1475,6 +1475,8 @@ if (!function_exists('lap_limit_text')) {
 									text: 'Bulk action nilai HRD berhasil disimpan otomatis ke database.',
 									timer: 1500,
 									showConfirmButton: false
+								}).then(function() {
+									window.location.reload();
 								});
 							},
 							function(label, msg) {
