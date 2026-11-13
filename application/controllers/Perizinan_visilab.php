@@ -41,9 +41,16 @@ class Perizinan_visilab extends CI_Controller
             $opcacheReset = @opcache_reset();
         }
         // Force clear opcache for the modified view if possible
-        $viewFile = APPPATH . 'views/pages/visilab/v_perizinan_alat.php';
-        if (function_exists('opcache_invalidate') && file_exists($viewFile)) {
-            @opcache_invalidate($viewFile, true);
+        $viewFiles = [
+            APPPATH . 'views/pages/visilab/v_perizinan_alat.php',
+            APPPATH . 'views/pages/v_bukutamu.php',
+            APPPATH . 'controllers/BukuTamu.php',
+            APPPATH . 'models/Md_bukutamu.php',
+        ];
+        foreach ($viewFiles as $vf) {
+            if (function_exists('opcache_invalidate') && file_exists($vf)) {
+                @opcache_invalidate($vf, true);
+            }
         }
         echo json_encode([
             'status'        => true,

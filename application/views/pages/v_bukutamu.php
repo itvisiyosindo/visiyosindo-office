@@ -830,7 +830,7 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			$('#export-selected-info').text(n + ' kegiatan dipilih');
 		});
 
-		// Download Excel per event yang dipilih
+		// Download Excel per event yang dipilih menggunakan hidden iframe sequential
 		$('#btn-export').click(function() {
 			var checked = $('.export-kegiatan-cb:checked');
 			if (checked.length === 0) {
@@ -838,15 +838,56 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 				return;
 			}
 			$('#main-modal-marketing').modal('hide');
-			var delay = 0;
+
+			var items = [];
 			checked.each(function() {
-				var id   = $(this).val();
-				var nama = $(this).data('nama');
-				setTimeout(function() {
-					window.open('<?= base_url('BukuTamu/exportlaporan') ?>?idmarketing=' + encodeURIComponent(id) + '&namamarketing=' + encodeURIComponent(nama), '_blank');
-				}, delay);
-				delay += 400;
+				items.push({
+					id: $(this).val(),
+					nama: $(this).data('nama') || $(this).closest('.custom-checkbox').find('label').text().trim()
+				});
 			});
+
+			Swal.fire({
+				title: 'Mengunduh ' + items.length + ' File Excel...',
+				html: 'Mohon tunggu proses unduh sedang berjalan.',
+				allowOutsideClick: false,
+				didOpen: function() {
+					Swal.showLoading();
+				}
+			});
+
+			var index = 0;
+			function triggerNextDownload() {
+				if (index >= items.length) {
+					setTimeout(function() {
+						Swal.fire({
+							icon: 'success',
+							title: 'Selesai!',
+							text: items.length + ' file Excel berhasil diunduh.',
+							timer: 2500,
+							showConfirmButton: false
+						});
+					}, 1000);
+					return;
+				}
+
+				var item = items[index];
+				var downloadUrl = '<?= base_url('BukuTamu/exportlaporan') ?>?idmarketing=' + encodeURIComponent(item.id) + '&namamarketing=' + encodeURIComponent(item.nama);
+
+				var iframe = document.createElement('iframe');
+				iframe.style.display = 'none';
+				iframe.src = downloadUrl;
+				document.body.appendChild(iframe);
+
+				setTimeout(function() {
+					$(iframe).remove();
+				}, 15000);
+
+				index++;
+				setTimeout(triggerNextDownload, 800);
+			}
+
+			triggerNextDownload();
 		});
 
 		// Show manual guest input modal
