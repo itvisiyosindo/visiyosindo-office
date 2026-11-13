@@ -495,7 +495,8 @@ class Md_bukutamu extends CI_Model
         $total_instansi_unik = (int) ($instansi_row->total ?? 0);
 
         $nomorwa_row = $this->db->select('COUNT(DISTINCT NULLIF(TRIM(bt.nomorwa), "")) AS total', false)
-            ->from('bukutamu bt');
+            ->from('bukutamu bt')
+            ->where("bt.nomorwa NOT LIKE 'IMPORT_%'");
         $this->applyBukuTamuFilter($kegiatan_id, $tanggal_mulai, $tanggal_selesai, 'bt');
         $nomorwa_row = $this->db->get()->row();
         $total_nomorwa_unik = (int) ($nomorwa_row->total ?? 0);

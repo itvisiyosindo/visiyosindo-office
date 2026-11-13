@@ -156,10 +156,12 @@ class BukuTamu extends CI_Controller
     foreach ($dt['data'] as $row) {
       $id_enc = encrypt($row->id_bukutamu);
 
+      $noWaDisplay = (strpos((string)$row->nomorwa, 'IMPORT_') === 0) ? '-' : (string)$row->nomorwa;
+
       $th = array();
       $th[] = $index;
       $th[] = htmlspecialchars($row->nama);
-      $th[] = htmlspecialchars($row->nomorwa);
+      $th[] = htmlspecialchars($noWaDisplay);
       $th[] = htmlspecialchars($row->email);
       $th[] = htmlspecialchars($row->jabatan);
       $th[] = htmlspecialchars($row->instansi);
@@ -626,9 +628,10 @@ class BukuTamu extends CI_Controller
       if (!empty($evRows)) {
         $no = 1;
         foreach ($evRows as $row) {
+          $noWaExcel = (strpos((string)$row->nomorwa, 'IMPORT_') === 0) ? '-' : (string)$row->nomorwa;
           $sheet->setCellValue('A' . $curRow, $no);
           $sheet->setCellValue('B' . $curRow, $row->nama ?: '-');
-          $sheet->setCellValueExplicit('C' . $curRow, (string)$row->nomorwa, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+          $sheet->setCellValueExplicit('C' . $curRow, $noWaExcel, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
           $sheet->setCellValue('D' . $curRow, $row->email ?: '-');
           $sheet->setCellValue('E' . $curRow, $row->jabatan ?: '-');
           $sheet->setCellValue('F' . $curRow, $row->instansi ?: '-');
@@ -804,6 +807,10 @@ class BukuTamu extends CI_Controller
     if (!$row) {
       echo json_encode(['status' => 'error', 'message' => 'Data tidak ditemukan.']);
       return;
+    }
+
+    if (isset($row->nomorwa) && strpos((string)$row->nomorwa, 'IMPORT_') === 0) {
+      $row->nomorwa = '';
     }
 
     echo json_encode([
