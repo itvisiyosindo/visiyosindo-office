@@ -16,104 +16,342 @@
     $bl_labels   = json_encode(array_map(function($r){ return $r->bulan; }, $stats['per_bulan']));
     $bl_data     = json_encode(array_map(function($r){ return (int)$r->total; }, $stats['per_bulan']));
 ?>
-<div class="row mb-3" id="dashboard-calonpelanggan">
-    <div class="col-12 mb-2">
-        <div class="row">
-            <div class="col-md-3 col-6 mb-2">
-                <div class="card shadow-sm h-100" style="border-left:4px solid #0d6efd">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Total Calon Pelanggan</div>
-                        <div class="h4 font-weight-bold text-primary"><?= number_format($stats['total']) ?></div>
-                    </div>
+<style>
+	.cp-kpi-card {
+		background: #ffffff;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+		transition: all 0.2s ease;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+	.cp-kpi-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+	}
+	.cp-kpi-body {
+		padding: 16px 18px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.cp-kpi-icon {
+		width: 46px;
+		height: 46px;
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		flex-shrink: 0;
+	}
+	.cp-panel-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+	.cp-panel-header {
+		background: #f8fafc;
+		border-bottom: 1px solid #e2e8f0;
+		padding: 12px 18px;
+		font-weight: 700;
+		font-size: 13.5px;
+		color: #1e293b;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.cp-panel-body {
+		padding: 16px;
+		flex: 1;
+		position: relative;
+	}
+	.cp-duplikat-item {
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+	.cp-duplikat-item:hover {
+		background-color: #fef2f2 !important;
+	}
+</style>
+
+<div class="row mb-4" id="dashboard-calonpelanggan">
+    <!-- 4 KPI Modern Summary Cards -->
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <div class="cp-kpi-card" style="border-left: 4px solid #2563eb;">
+            <div class="cp-kpi-body">
+                <div>
+                    <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Total Calon Pelanggan</div>
+                    <div class="h3 font-weight-bold text-dark mb-0 mt-1"><?= number_format($stats['total']) ?></div>
+                    <div class="small text-muted mt-1"><i class="fas fa-database mr-1"></i> Data Terdaftar</div>
                 </div>
-            </div>
-            <div class="col-md-3 col-6 mb-2">
-                <div class="card shadow-sm h-100" style="border-left:4px solid #198754">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Tambah Bulan Ini</div>
-                        <div class="h4 font-weight-bold text-success"><?= number_format($stats['bulan_ini']) ?></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6 mb-2">
-                <div class="card shadow-sm h-100" style="border-left:4px solid #dc3545">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Grup Nama Duplikat</div>
-                        <div class="h4 font-weight-bold text-danger"><?= number_format($stats['duplikat']) ?></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6 mb-2">
-                <div class="card shadow-sm h-100" style="border-left:4px solid #fd7e14">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Total Data Duplikat</div>
-                        <div class="h4 font-weight-bold text-warning"><?= number_format($stats['jml_duplikat']) ?></div>
-                    </div>
+                <div class="cp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                    <i class="fas fa-users"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-7 mb-2">
-        <div class="card shadow-sm">
-            <div class="card-header py-2 px-3"><strong><i class="fas fa-chart-line"></i> Trend Tambah Calon (12 Bulan)</strong></div>
-            <div class="card-body py-2"><canvas id="chartBulan" height="80"></canvas></div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <div class="cp-kpi-card" style="border-left: 4px solid #10b981;">
+            <div class="cp-kpi-body">
+                <div>
+                    <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Tambah Bulan Ini</div>
+                    <div class="h3 font-weight-bold text-success mb-0 mt-1"><?= number_format($stats['bulan_ini']) ?></div>
+                    <div class="small text-muted mt-1"><i class="fas fa-calendar-check mr-1 text-success"></i> <?= date('F Y') ?></div>
+                </div>
+                <div class="cp-kpi-icon" style="background: #ecfdf5; color: #10b981;">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-5 mb-2">
-        <div class="card shadow-sm">
-            <div class="card-header py-2 px-3"><strong><i class="fas fa-users"></i> Calon per Marketing</strong></div>
-            <div class="card-body py-2"><canvas id="chartMarketing" height="130"></canvas></div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <div class="cp-kpi-card" style="border-left: 4px solid #ef4444;">
+            <div class="cp-kpi-body">
+                <div>
+                    <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Grup Nama Duplikat</div>
+                    <div class="h3 font-weight-bold text-danger mb-0 mt-1"><?= number_format($stats['duplikat']) ?></div>
+                    <div class="small text-danger mt-1"><i class="fas fa-exclamation-triangle mr-1"></i> Perlu Validasi</div>
+                </div>
+                <div class="cp-kpi-icon" style="background: #fef2f2; color: #ef4444;">
+                    <i class="fas fa-clone"></i>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-5 mb-2">
-        <div class="card shadow-sm">
-            <div class="card-header py-2 px-3"><strong><i class="fas fa-map-marker-alt"></i> Calon per Provinsi</strong></div>
-            <div class="card-body py-2"><canvas id="chartProvinsi" height="130"></canvas></div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <div class="cp-kpi-card" style="border-left: 4px solid #f59e0b;">
+            <div class="cp-kpi-body">
+                <div>
+                    <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Total Baris Duplikat</div>
+                    <div class="h3 font-weight-bold text-warning mb-0 mt-1"><?= number_format($stats['jml_duplikat']) ?></div>
+                    <div class="small text-muted mt-1"><i class="fas fa-copy mr-1 text-warning"></i> Entri Serupa</div>
+                </div>
+                <div class="cp-kpi-icon" style="background: #fffbeb; color: #f59e0b;">
+                    <i class="fas fa-copy"></i>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-7 mb-2">
-        <div class="card shadow-sm border-danger">
-            <div class="card-header py-2 px-3 bg-danger text-white"><strong><i class="fas fa-clone"></i> Daftar Nama Duplikat</strong></div>
-            <div class="card-body py-2" style="max-height:220px;overflow-y:auto">
-                <div id="duplikat-loading" class="text-muted text-center py-2"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
-                <table class="table table-sm table-bordered d-none" id="tbl-duplikat">
-                    <thead><tr><th>#</th><th>Nama</th><th>Jumlah</th></tr></thead>
+
+    <!-- Chart: Trend Bulanan (12 Bulan) -->
+    <div class="col-lg-7 mb-3">
+        <div class="cp-panel-card">
+            <div class="cp-panel-header">
+                <span><i class="fas fa-chart-line text-primary mr-1"></i> Trend Penambahan Calon Pelanggan (12 Bulan)</span>
+            </div>
+            <div class="cp-panel-body">
+                <div style="position: relative; height: 210px; width: 100%;">
+                    <canvas id="chartBulan"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart: Per Marketing -->
+    <div class="col-lg-5 mb-3">
+        <div class="cp-panel-card">
+            <div class="cp-panel-header">
+                <span><i class="fas fa-user-tie text-success mr-1"></i> Distribusi Calon per Marketing</span>
+            </div>
+            <div class="cp-panel-body">
+                <div style="position: relative; height: 210px; width: 100%;">
+                    <canvas id="chartMarketing"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart: Per Provinsi -->
+    <div class="col-lg-5 mb-3">
+        <div class="cp-panel-card">
+            <div class="cp-panel-header">
+                <span><i class="fas fa-map-marked-alt text-warning mr-1"></i> Top 7 Sebaran Provinsi</span>
+            </div>
+            <div class="cp-panel-body">
+                <div style="position: relative; height: 230px; width: 100%;">
+                    <canvas id="chartProvinsi"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daftar Nama Duplikat Interaktif -->
+    <div class="col-lg-7 mb-3">
+        <div class="cp-panel-card" style="border-top: 3px solid #ef4444;">
+            <div class="cp-panel-header">
+                <span class="text-danger"><i class="fas fa-exclamation-circle mr-1"></i> Daftar Calon Pelanggan Duplikat</span>
+                <small class="text-muted">Klik nama untuk filter tabel di bawah</small>
+            </div>
+            <div class="cp-panel-body p-0" style="max-height: 245px; overflow-y: auto;">
+                <div id="duplikat-loading" class="text-muted text-center py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat data duplikat...</div>
+                <table class="table table-sm table-hover mb-0 d-none" id="tbl-duplikat" style="font-size: 13px;">
+                    <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th style="width: 45px;" class="text-center">#</th>
+                            <th>Nama Customer Duplikat</th>
+                            <th style="width: 90px;" class="text-center">Jumlah</th>
+                            <th style="width: 80px;" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
                     <tbody id="duplikat-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
+
 <script>
-(function(){
-    if (typeof Chart === 'undefined') { return; }
-    new Chart(document.getElementById('chartBulan'), {
-        type: 'line',
-        data: { labels: <?= $bl_labels ?>, datasets: [{ label: 'Calon Baru', data: <?= $bl_data ?>, borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,0.1)', fill:true, tension:0.3, pointRadius:4 }] },
-        options: { plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true} } }
-    });
-    new Chart(document.getElementById('chartMarketing'), {
-        type: 'bar',
-        data: { labels: <?= $pm_labels ?>, datasets: [{ label: 'Jumlah', data: <?= $pm_data ?>, backgroundColor:'#198754' }] },
-        options: { indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true} } }
-    });
-    new Chart(document.getElementById('chartProvinsi'), {
-        type: 'bar',
-        data: { labels: <?= $prov_labels ?>, datasets: [{ label: 'Jumlah', data: <?= $prov_data ?>, backgroundColor:'#fd7e14' }] },
-        options: { indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true} } }
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    function initCharts() {
+        if (typeof Chart === 'undefined') {
+            setTimeout(initCharts, 100);
+            return;
+        }
+
+        // 1. Chart Trend Bulanan (Line Chart)
+        var ctxBulan = document.getElementById('chartBulan');
+        if (ctxBulan) {
+            new Chart(ctxBulan.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: <?= $bl_labels ?>,
+                    datasets: [{
+                        label: 'Calon Baru',
+                        data: <?= $bl_data ?>,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#2563eb',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    scales: {
+                        yAxes: [{
+                            ticks: { beginAtZero: true, precision: 0 },
+                            gridLines: { color: '#f1f5f9' }
+                        }],
+                        xAxes: [{
+                            gridLines: { display: false }
+                        }]
+                    }
+                }
+            });
+        }
+
+        // 2. Chart Marketing (Horizontal Bar)
+        var ctxMarketing = document.getElementById('chartMarketing');
+        if (ctxMarketing) {
+            new Chart(ctxMarketing.getContext('2d'), {
+                type: 'horizontalBar',
+                data: {
+                    labels: <?= $pm_labels ?>,
+                    datasets: [{
+                        label: 'Calon Terdaftar',
+                        data: <?= $pm_data ?>,
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    scales: {
+                        xAxes: [{
+                            ticks: { beginAtZero: true, precision: 0 },
+                            gridLines: { color: '#f1f5f9' }
+                        }],
+                        yAxes: [{
+                            gridLines: { display: false }
+                        }]
+                    }
+                }
+            });
+        }
+
+        // 3. Chart Provinsi (Horizontal Bar)
+        var ctxProv = document.getElementById('chartProvinsi');
+        if (ctxProv) {
+            new Chart(ctxProv.getContext('2d'), {
+                type: 'horizontalBar',
+                data: {
+                    labels: <?= $prov_labels ?>,
+                    datasets: [{
+                        label: 'Jumlah Calon',
+                        data: <?= $prov_data ?>,
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    scales: {
+                        xAxes: [{
+                            ticks: { beginAtZero: true, precision: 0 },
+                            gridLines: { color: '#f1f5f9' }
+                        }],
+                        yAxes: [{
+                            gridLines: { display: false }
+                        }]
+                    }
+                }
+            });
+        }
+    }
+
+    initCharts();
+
+    // Load Duplikat Data via AJAX + Click to Filter Table
     $.get('<?= site_url('calonpelanggan/getduplikat') ?>', function(res) {
         var rows = '';
         if (res && res.length > 0) {
-            $.each(res, function(i, r) { rows += '<tr><td>'+(i+1)+'</td><td>'+r.nama+'</td><td><span class="badge badge-danger">'+r.jumlah+'</span></td></tr>'; });
+            $.each(res, function(i, r) {
+                var safeName = $('<div>').text(r.nama).html();
+                var rawName  = $('<div>').text(r.nama).text();
+                rows += '<tr class="cp-duplikat-item" data-nama="' + rawName + '">' +
+                    '<td class="text-center text-muted">' + (i + 1) + '</td>' +
+                    '<td class="font-weight-bold text-dark">' + safeName + '</td>' +
+                    '<td class="text-center"><span class="badge badge-danger px-2 py-1">' + r.jumlah + ' Data</span></td>' +
+                    '<td class="text-center"><button type="button" class="btn btn-xs btn-outline-danger btn-filter-duplikat" data-nama="' + rawName + '"><i class="fas fa-search"></i> Cari</button></td>' +
+                    '</tr>';
+            });
         } else {
-            rows = '<tr><td colspan="3" class="text-center text-success">Tidak ada duplikat</td></tr>';
+            rows = '<tr><td colspan="4" class="text-center text-success py-3"><i class="fas fa-check-circle mr-1"></i> Tidak ditemukan data calon pelanggan duplikat. Bersih!</td></tr>';
         }
         $('#duplikat-body').html(rows);
         $('#tbl-duplikat').removeClass('d-none');
         $('#duplikat-loading').addClass('d-none');
     }, 'json');
-})();
+
+    // Klik tombol cari / baris duplikat langsung memfilter DataTables di bawah
+    $(document).on('click', '.cp-duplikat-item, .btn-filter-duplikat', function(e) {
+        var nama = $(this).data('nama');
+        if (nama && typeof table !== 'undefined') {
+            table.search(nama).draw();
+            $('html, body').animate({
+                scrollTop: $('#kt_table_1').offset().top - 120
+            }, 400);
+        }
+    });
+});
 </script>
 <?php endif; ?>
 
