@@ -1022,7 +1022,8 @@ class BukuTamu extends CI_Controller
       }
 
       // Try case-insensitive
-      $row = $this->db->where("LOWER(nama) = LOWER('" . $this->db->escape_str($sheetTitle) . "')", NULL, FALSE)->get('bukutamu_config')->row();
+      $escapedTitle = $this->db->escape_str($sheetTitle);
+      $row = $this->db->query("SELECT * FROM `bukutamu_config` WHERE LOWER(nama) = LOWER('{$escapedTitle}') LIMIT 1")->row();
       if ($row) {
         $eventCache[$sheetTitle] = (int) $row->id;
         return (int) $row->id;
@@ -1078,16 +1079,19 @@ class BukuTamu extends CI_Controller
 
       $colMap = $buildColMap($sheet, $headerRowNum);
 
-      if (empty($colMap['nama']) || empty($colMap['nomorwa'])) {
+      if (empty($colMap['nama'])) {
         $sheetDetails[] = [
           'sheet'     => $sheetName,
           'imported'  => 0,
           'duplicate' => 0,
           'skipped'   => 0,
-          'note'      => 'Kolom Nama atau No WA tidak ditemukan, sheet dilewati.',
+          'note'      => 'Kolom Nama tidak ditemukan, sheet dilewati.',
         ];
         continue;
       }
+
+      // Flag: sheet ini tidak memiliki kolom nomor HP
+      $hasNoWaCol = !empty($colMap['nomorwa']);
 
       // Determine event ID for this sheet
       if ($fixedEventId !== null) {
@@ -1123,8 +1127,15 @@ class BukuTamu extends CI_Controller
 
         $normalizedNoWa = $this->md_bukutamu->normalizeNoWa($nomorwa);
 
-        // Skip invalid phone numbers (must be at least 8 digits)
-        if ($normalizedNoWa === '' || strlen($normalizedNoWa) < 8) {
+        // Handle sheets without phone column: generate synthetic identifier from name
+        if (!$hasNoWaCol) {
+          if ($nama === '') {
+            $sheetSkipped++;
+            continue;
+          }
+          $normalizedNoWa = 'IMPORT_' . substr(md5(strtolower(trim($nama))), 0, 12);
+        } elseif ($normalizedNoWa === '' || strlen($normalizedNoWa) < 8) {
+          // Sheet has phone column but this row's phone is invalid/empty → skip
           $sheetSkipped++;
           continue;
         }
