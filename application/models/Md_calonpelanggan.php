@@ -519,4 +519,53 @@ class Md_calonpelanggan extends CI_Model
             return $nourut->id;
         }
     }
+
+    function getStatsCalon()
+    {
+        $base = "FROM calonpelanggan WHERE deleted = 0 AND statuscaloncustomer = 1";
+
+        $total      = $this->db->query("SELECT COUNT(id) AS n $base")->row(0)->n ?? 0;
+        $bulan_ini  = $this->db->query("SELECT COUNT(id) AS n $base AND MONTH(data_created)=MONTH(NOW()) AND YEAR(data_created)=YEAR(NOW())")->row(0)->n ?? 0;
+        $duplikat   = $this->db->query("SELECT COUNT(*) AS n FROM (SELECT LOWER(TRIM(namacaloncustomer)) as nama, COUNT(*) as cnt $base GROUP BY LOWER(TRIM(namacaloncustomer)) HAVING cnt > 1) dup")->row(0)->n ?? 0;
+        $jml_duplikat = $this->db->query("SELECT SUM(cnt) AS n FROM (SELECT COUNT(*) as cnt $base GROUP BY LOWER(TRIM(namacaloncustomer)) HAVING cnt > 1) dup")->row(0)->n ?? 0;
+
+        $per_marketing = $this->db->query("
+            SELECT p.nama, COUNT(c.id) AS total
+            FROM calonpelanggan c
+            LEFT JOIN pengguna p ON p.pengguna_id = c.pengguna_id
+            WHERE c.deleted = 0 AND c.statuscaloncustomer = 1
+            GROUP BY c.pengguna_id
+            ORDER BY total DESC
+            LIMIT 10
+        ")->result();
+
+        $per_provinsi = $this->db->query("
+            SELECT prov.nama as provinsi, COUNT(c.id) AS total
+            FROM calonpelanggan c
+            LEFT JOIN provinsi prov ON prov.kode = c.provinsi
+            WHERE c.deleted = 0 AND c.statuscaloncustomer = 1
+            GROUP BY c.provinsi
+            ORDER BY total DESC
+            LIMIT 10
+        ")->result();
+
+        $per_bulan = $this->db->query("
+            SELECT DATE_FORMAT(data_created,'%Y-%m') as bulan, COUNT(id) AS total
+            FROM calonpelanggan
+            WHERE deleted = 0 AND statuscaloncustomer = 1
+              AND data_created >= DATE_SUB(NOW(), INTERVAL 11 MONTH)
+            GROUP BY bulan
+            ORDER BY bulan ASC
+        ")->result();
+
+        return [
+            'total'         => $total,
+            'bulan_ini'     => $bulan_ini,
+            'duplikat'      => (int)$duplikat,
+            'jml_duplikat'  => (int)$jml_duplikat,
+            'per_marketing' => $per_marketing,
+            'per_provinsi'  => $per_provinsi,
+            'per_bulan'     => $per_bulan,
+        ];
+    }
 }

@@ -7,6 +7,152 @@
 	</div>
 </header>
 
+<?php if (!empty($stats) && (isAdmin() || isHrd() || isCRO() || isTeamMarketing())): ?>
+<?php
+    $pm_labels = json_encode(array_map(fn($r) => $r->nama ?? 'Unknown', $stats['per_marketing']));
+    $pm_data   = json_encode(array_map(fn($r) => (int)$r->total, $stats['per_marketing']));
+    $prov_labels = json_encode(array_map(fn($r) => $r->provinsi ?? 'Unknown', $stats['per_provinsi']));
+    $prov_data   = json_encode(array_map(fn($r) => (int)$r->total, $stats['per_provinsi']));
+    $bl_labels = json_encode(array_map(fn($r) => $r->bulan, $stats['per_bulan']));
+    $bl_data   = json_encode(array_map(fn($r) => (int)$r->total, $stats['per_bulan']));
+?>
+<!-- DASHBOARD ANALYTICS CALON PELANGGAN -->
+<div class="row mb-3" id="dashboard-calonpelanggan">
+
+    <!-- Stat Cards -->
+    <div class="col-12 mb-3">
+        <div class="row g-2">
+            <div class="col-md-3 col-6">
+                <div class="card border-left-primary shadow-sm h-100" style="border-left:4px solid #0d6efd">
+                    <div class="card-body py-2 px-3">
+                        <div class="text-xs text-muted mb-1">Total Calon Pelanggan</div>
+                        <div class="h4 mb-0 font-weight-bold text-primary"><?= number_format($stats['total']) ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card border-left-success shadow-sm h-100" style="border-left:4px solid #198754">
+                    <div class="card-body py-2 px-3">
+                        <div class="text-xs text-muted mb-1">Tambah Bulan Ini</div>
+                        <div class="h4 mb-0 font-weight-bold text-success"><?= number_format($stats['bulan_ini']) ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card shadow-sm h-100" style="border-left:4px solid #dc3545">
+                    <div class="card-body py-2 px-3">
+                        <div class="text-xs text-muted mb-1">Nama Duplikat <small class="text-danger">(grup)</small></div>
+                        <div class="h4 mb-0 font-weight-bold text-danger"><?= number_format($stats['duplikat']) ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card shadow-sm h-100" style="border-left:4px solid #fd7e14">
+                    <div class="card-body py-2 px-3">
+                        <div class="text-xs text-muted mb-1">Total Data Duplikat</div>
+                        <div class="h4 mb-0 font-weight-bold text-warning"><?= number_format($stats['jml_duplikat']) ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart: Trend Bulanan -->
+    <div class="col-md-7 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header py-2 px-3"><strong><i class="fas fa-chart-line"></i> Trend Tambah Calon (12 Bulan)</strong></div>
+            <div class="card-body py-2"><canvas id="chartBulan" height="80"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Chart: Per Marketing -->
+    <div class="col-md-5 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header py-2 px-3"><strong><i class="fas fa-users"></i> Calon per Marketing</strong></div>
+            <div class="card-body py-2"><canvas id="chartMarketing" height="130"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Chart: Per Provinsi -->
+    <div class="col-md-5 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header py-2 px-3"><strong><i class="fas fa-map-marker-alt"></i> Calon per Provinsi</strong></div>
+            <div class="card-body py-2"><canvas id="chartProvinsi" height="130"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Duplikat info panel -->
+    <div class="col-md-7 mb-3">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header py-2 px-3 bg-danger text-white"><strong><i class="fas fa-clone"></i> Data Nama Duplikat</strong></div>
+            <div class="card-body py-2" style="max-height:200px;overflow-y:auto">
+                <div id="duplikat-loading" class="text-muted text-center py-2"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
+                <table class="table table-sm table-bordered d-none" id="tbl-duplikat">
+                    <thead><tr><th>#</th><th>Nama</th><th>Jumlah</th></tr></thead>
+                    <tbody id="duplikat-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function(){
+    if (typeof Chart === 'undefined') return;
+
+    // Trend bulanan
+    new Chart(document.getElementById('chartBulan'), {
+        type: 'line',
+        data: {
+            labels: <?= $bl_labels ?>,
+            datasets: [{ label: 'Calon Baru', data: <?= $bl_data ?>,
+                borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,0.1)', fill:true, tension:0.3, pointRadius:4 }]
+        },
+        options: { plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, ticks:{stepSize:1}} } }
+    });
+
+    // Per marketing
+    new Chart(document.getElementById('chartMarketing'), {
+        type: 'bar',
+        data: {
+            labels: <?= $pm_labels ?>,
+            datasets: [{ label: 'Jumlah', data: <?= $pm_data ?>,
+                backgroundColor: '#198754' }]
+        },
+        options: { indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true, ticks:{stepSize:1}} } }
+    });
+
+    // Per provinsi
+    new Chart(document.getElementById('chartProvinsi'), {
+        type: 'bar',
+        data: {
+            labels: <?= $prov_labels ?>,
+            datasets: [{ label: 'Jumlah', data: <?= $prov_data ?>,
+                backgroundColor: '#fd7e14' }]
+        },
+        options: { indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true, ticks:{stepSize:1}} } }
+    });
+
+    // Load duplikat list via ajax
+    $.get('<?= site_url('calonpelanggan/getduplikat') ?>', function(res) {
+        var rows = '';
+        if (res && res.length > 0) {
+            $.each(res, function(i, r) {
+                rows += '<tr><td>'+(i+1)+'</td><td>'+r.nama+'</td><td><span class="badge badge-danger">'+r.jumlah+'</span></td></tr>';
+            });
+            $('#duplikat-body').html(rows);
+            $('#tbl-duplikat').removeClass('d-none');
+        } else {
+            $('#duplikat-body').html('<tr><td colspan="3" class="text-center text-success">Tidak ada duplikat 🎉</td></tr>');
+            $('#tbl-duplikat').removeClass('d-none');
+        }
+        $('#duplikat-loading').addClass('d-none');
+    }, 'json');
+})();
+</script>
+<?php endif; ?>
+
 <div class="row">
 	<div class="col">
 		<div class="card-body">

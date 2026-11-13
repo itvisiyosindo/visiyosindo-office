@@ -48,8 +48,24 @@ class calonpelanggan extends CI_Controller
         $page_data['page_name']     = 'marketing/v_calonpelanggan';
         $page_data['page_title']    = 'CalonPelanggan';
         $page_data['page_desc']     = 'Management Data Calon Pelanggan';
+        $page_data['stats']         = $this->Md_calonpelanggan->getStatsCalon();
 
         $this->load->view('index', $page_data);
+    }
+
+    public function getduplikat()
+    {
+        grantAccessFor('all');
+        $result = $this->db->query("
+            SELECT TRIM(namacaloncustomer) as nama, COUNT(*) as jumlah
+            FROM calonpelanggan
+            WHERE deleted = 0 AND statuscaloncustomer = 1
+            GROUP BY LOWER(TRIM(namacaloncustomer))
+            HAVING jumlah > 1
+            ORDER BY jumlah DESC, nama ASC
+        ")->result();
+        echo json_encode($result);
+        die;
     }
 
     public function addpelanggan()
