@@ -138,16 +138,15 @@
     <table id="table">
         <thead>
             <tr>
-                <th style="width: 2%;">No</th>
-                <th style="width: 14%;">Nama Karyawan</th>
-                <th style="width: 6%;">NPP</th>
-                <th style="width: 9%;">NIK</th>
-                <th style="width: 8%;">Tgl Lahir / Usia</th>
-                <th style="width: 10%;">Divisi</th>
-                <th style="width: 11%;">Jabatan</th>
-                <th style="width: 6%;">Status</th>
-                <th style="width: 7%;">Tgl Masuk</th>
-                <th style="width: 10%;">Masa Kerja</th>
+                <th style="width: 3%;">No</th>
+                <th style="width: 17%;">Nama Karyawan</th>
+                <th style="width: 7%;">NPP</th>
+                <th style="width: 11%;">NIK</th>
+                <th style="width: 9%;">Tgl Lahir / Usia</th>
+                <th style="width: 14%;">Jabatan</th>
+                <th style="width: 7%;">Status</th>
+                <th style="width: 8%;">Tgl Masuk</th>
+                <th style="width: 11%;">Masa Kerja</th>
                 <th style="width: 8%;">Pendidikan</th>
                 <th style="width: 9%;">No. HP</th>
             </tr>
@@ -208,7 +207,6 @@
                             <br><small style="color:#64748b;">(<?= $usia_text ?>)</small>
                         <?php endif; ?>
                     </td>
-                    <td><?= htmlspecialchars($row->nama_divisi ?? '-'); ?></td>
                     <td><?= htmlspecialchars($row->jabatan ?? '-'); ?></td>
                     <td class="text-center"><?= $status_badge; ?></td>
                     <td class="text-center"><?= $tgl_masuk_text; ?></td>
