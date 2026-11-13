@@ -1012,6 +1012,10 @@ class BukuTamu extends CI_Controller
     $eventCache = [];
     $findOrCreateEvent = function ($sheetTitle) use (&$eventCache) {
       $sheetTitle = trim($sheetTitle);
+      // Prefix "PPR " untuk sheet yang mengandung kata "batch"
+      if (preg_match('/\bbatch\b/i', $sheetTitle) && !preg_match('/^PPR\s/i', $sheetTitle)) {
+        $sheetTitle = 'PPR ' . $sheetTitle;
+      }
       if (isset($eventCache[$sheetTitle])) return $eventCache[$sheetTitle];
 
       // Try exact match first
