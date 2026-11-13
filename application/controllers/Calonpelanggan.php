@@ -410,10 +410,10 @@ class calonpelanggan extends CI_Controller
     {
         grantAccessFor('all');
         $par = explode(",", decryptvym($param1));
-        $data['id'] = $par[0];
-        $data['namapic'] = $par[1];
-        $data['jabatanpic'] = $par[2];
-        $data['teleponpic'] = $par[3];
+        $data['id'] = isset($par[0]) ? $par[0] : '';
+        $data['namapic'] = isset($par[1]) ? $par[1] : '';
+        $data['jabatanpic'] = isset($par[2]) ? $par[2] : '';
+        $data['teleponpic'] = isset($par[3]) ? $par[3] : '';
         echo json_encode($data);
         die;
     }

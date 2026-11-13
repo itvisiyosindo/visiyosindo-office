@@ -25,7 +25,7 @@
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-9" for="jabatanpic">Jabatan PIC:</label>
-                        <input type="email" class="form-control" id="jabatanpic" placeholder="Masukkan Jabatan PIC" name="jabatanpic" autocomplete="off">
+                        <input type="text" class="form-control" id="jabatanpic" placeholder="Masukkan Jabatan PIC" name="jabatanpic" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-6" for="teleponpic">Telepon PIC:</label>
