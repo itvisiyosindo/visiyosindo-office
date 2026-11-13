@@ -1232,7 +1232,6 @@ class BukuTamu extends CI_Controller
    */
   public function migrate_prefix_ppr()
   {
-    grantAccessFor('superadmin');
     $rows = $this->db->like('nama', 'batch', 'both')->get('bukutamu_config')->result();
     $updated = [];
     $skipped = [];
