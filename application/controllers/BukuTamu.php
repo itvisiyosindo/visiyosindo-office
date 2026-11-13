@@ -1225,4 +1225,35 @@ class BukuTamu extends CI_Controller
     $writer->save('php://output');
     exit;
   }
+
+  /**
+   * ONE-TIME MIGRATION: Tambah prefix "PPR " pada event yang namanya mengandung kata "BATCH"
+   * Hapus method ini setelah dijalankan sekali.
+   */
+  public function migrate_prefix_ppr()
+  {
+    grantAccessFor('superadmin');
+    $rows = $this->db->like('nama', 'batch', 'both')->get('bukutamu_config')->result();
+    $updated = [];
+    $skipped = [];
+    foreach ($rows as $row) {
+      // Sudah ada prefix PPR → skip
+      if (preg_match('/^PPR\s/i', $row->nama)) {
+        $skipped[] = $row->nama;
+        continue;
+      }
+      // Mengandung kata "batch" (word boundary)
+      if (preg_match('/\bbatch\b/i', $row->nama)) {
+        $newName = 'PPR ' . $row->nama;
+        $this->db->where('id', $row->id)->update('bukutamu_config', ['nama' => $newName]);
+        $updated[] = $row->nama . ' → ' . $newName;
+      } else {
+        $skipped[] = $row->nama;
+      }
+    }
+    echo '<pre>';
+    echo "✅ Updated (" . count($updated) . "):\n" . implode("\n", $updated) . "\n\n";
+    echo "⏭ Skipped (" . count($skipped) . "):\n" . implode("\n", $skipped);
+    echo '</pre>';
+  }
 }
