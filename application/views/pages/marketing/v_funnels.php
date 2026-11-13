@@ -303,9 +303,9 @@
 								<?php endforeach; ?>
 							</select>
 						</div>
-						<div class="form-group" id='picpic' style="display: inline-block;">
+						<div class="form-group" id='picpic' style="width: 100%;">
 									<label for="pic" class="form-control-label">PIC <span class="text-danger">*</span> :</label>
-									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic[]" style="display: inline-block;"  multiple disabled="disabled" >
+									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic" style="width: 100%;" multiple>
 									
 									</select>
 						</div>
@@ -881,7 +881,10 @@
 			}
         });
 		$('#btn-show-add-form').click(function() {
-			$('.form-control').val(null)
+			$('.form-control').val(null);
+			var $picSelect = $("#main-modal-funnel select[name='pic[]']");
+			$picSelect.find('option').remove();
+			$picSelect.trigger('change');
 			$('#main-modal-funnel #modal-form-funnel').attr('action', 'funnel/addfunnel')
 			$('#main-modal-funnel').modal()
 		})
@@ -903,9 +906,12 @@
 
 		$('#main-modal-funnel #namapelanggan').on('change', function(){
 			$("#main-modal-funnel #provinsikota").val(null);
+			var $select = $("#main-modal-funnel select[name='pic[]']");
+			$select.find('option').remove();
 			if ($('#main-modal-funnel #namapelanggan').val()==''){
 					$('#main-modal-funnel #idpelanggan').val('');
 					$('#main-modal-funnel #namacalonpelanggan').val('');
+					$select.trigger('change');
 			}else{
 				  $('#main-modal-funnel #idpelanggan').val($('#main-modal-funnel #namapelanggan').val());
 					$('#main-modal-funnel #namacalonpelanggan').val($('#main-modal-funnel #namapelanggan option:selected').text());
@@ -925,20 +931,20 @@
 							dataType: 'json', 
 							async: false,
               success: function(data) {
-								var $select = $("select[name='pic[]']");					
-                $select.find('option').remove();
+								$select.prop('disabled', false).removeAttr('disabled');
 								for (var i=0; i<data.length; i++) {
                     $select.append("<option value=\""+
 														data[i].id +
-													"\" selected>"+
+													"\">"+
 														data[i].namapic +
 													"</option>"
 												);
-												$select.find('option').css("overflow","hidden");
                 };
+								$select.trigger('change');
     					}
           	});
 					}else{
+						$select.trigger('change');
 					}
 			}; 
 		});
