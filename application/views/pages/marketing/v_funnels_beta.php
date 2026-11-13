@@ -240,11 +240,10 @@
 							<label for="tujuankegiatan" class="form-control-label">Tujuan Kegiatan <span class="text-danger">*</span> :</label>
 							<input type="text" class="form-control" id="tujuankegiatan" name="tujuankegiatan" required/>
 						</div>			
-						<div class="form-group" id='picpic' style="display: inline-block;">
-									<label for="pic" class="form-control-label">PIC <span class="text-danger">*</span> :</label>
-									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic[]" style="display: inline-block;" multiple >
-									
-									</select>
+						<div class="form-group" id='picpic' style="width:100%;">
+							<label for="pic-select-beta" class="form-control-label">PIC <span class="text-danger">*</span> :</label>
+							<select class="form-control" name="pic[]" id="pic-select-beta" style="width:100%;" multiple data-placeholder="-- Pilih PIC (Bisa lebih dari 1) --">
+							</select>
 						</div>
 						<div class="form-group" id="merek">
 							<label class="control-label">Merk Product</label>
@@ -773,7 +772,7 @@
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)
 			// Load semua PIC saat form add dibuka
-			var $picSelect = $("select[name='pic[]']");
+			var $picSelect = $("#pic-select-beta");
 			$picSelect.find('option').remove();
 			$.ajax({
 				type: 'GET',
@@ -830,7 +829,7 @@
     					}
           	});
 					// Load semua PIC lalu pre-select yang terkait customer
-					var $select = $("select[name='pic[]']");
+					var $select = $("#pic-select-beta");
 					$select.find('option').remove();
 					$.ajax({
 						type: 'GET',
