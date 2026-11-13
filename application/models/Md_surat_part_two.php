@@ -580,6 +580,64 @@ class Md_surat_part_two extends CI_Model
 			->where('f.id', $id);
 		$res = $this->db->get()->result();
 
+		// Khusus BA 743: tukar posisi Dian dan Arifa jika salah satu di id_diketahui dan lainnya di id_disetujui
+		if ((int)$id === 743 && !empty($res) && isset($res[0])) {
+			$row = $res[0];
+			$current_ba = $this->db->select('id_diketahui, id_disetujui, ttd_diketahui, ttd_disetujui')->get_where('surat_berita_acara', ['id' => 743])->row();
+			if ($current_ba) {
+				$old_diketahui = (int)$current_ba->id_diketahui;
+				$old_disetujui = (int)$current_ba->id_disetujui;
+
+				// Lakukan swap di database surat_berita_acara
+				$this->db->where('id', 743)->update('surat_berita_acara', [
+					'id_diketahui'  => $old_disetujui,
+					'id_disetujui'  => $old_diketahui,
+					'ttd_diketahui' => $current_ba->ttd_disetujui,
+					'ttd_disetujui' => $current_ba->ttd_diketahui
+				]);
+
+				// Ambil ulang data fresh setelah swap
+				return $this->db->select('
+					f.id as id_ba,
+					f.kode_ba,
+					f.analisis,
+					f.hasil,
+					f.penanganan,
+					f.tanggal,
+					f.id_pengaju as idPengaju,
+					f.id_diketahui,
+					f.id_disetujui,
+					f.lampiran,
+					f.status,
+					f.ttd_diketahui,
+					f.ttd_disetujui,
+					f.ttd_dir,
+					f.ttd_dir2,
+					f.id_dir,
+					f.status_dir,
+					p.nama as pengaju,
+					p.short_name as nama_ttd,
+					p.jabatan as jabatan,
+					p2.nama as nama_diketahui,
+					p2.short_name as nama_ttd_diketahui,
+					p2.jabatan as jabatan_diketahui,
+					p3.nama as nama_disetujui,
+					p3.short_name as nama_ttd_disetujui,
+					p3.jabatan as jabatan_disetujui,
+					p4.nama as nama_dir,
+					p4.jabatan as jabatan_dir
+				')
+				->from('surat_berita_acara f')
+				->join('pengguna p', 'f.id_pengaju=p.pengguna_id')
+				->join('pengguna p2', 'f.id_diketahui=p2.pengguna_id')
+				->join('pengguna p3', 'f.id_disetujui=p3.pengguna_id')
+				->join('pengguna p4', 'f.id_dir=p4.pengguna_id', 'left')
+				->where('f.id', 743)
+				->get()
+				->result();
+			}
+		}
+
 		// Khusus BA 728: pastikan Bob Ariyos (ID 54) terdaftar sebagai Disetujui di sebelah kanan Meilina Safitri
 		if ((int)$id === 728 && !empty($res) && isset($res[0])) {
 			$row = $res[0];
