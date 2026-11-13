@@ -305,7 +305,7 @@
 						</div>
 						<div class="form-group" id='picpic' style="width: 100%;">
 									<label for="pic-select" class="form-control-label">PIC <span class="text-danger">*</span> :</label>
-									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic-select" style="width: 100%;" multiple>
+									<select class="form-control populate" name="pic[]" id="pic-select" style="width: 100%;" multiple data-placeholder="-- Pilih PIC (Bisa lebih dari 1) --">
 									
 									</select>
 						</div>
@@ -883,11 +883,17 @@
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null);
 			var $picSelect = $("#main-modal-funnel #pic-select");
-			$picSelect.find('option').remove();
+			$picSelect.empty();
+			$picSelect.removeData('__select2');
 			if ($.isFunction($.fn.select2) && $picSelect.data('select2')) {
 				$picSelect.select2('destroy');
 			}
-			$picSelect.select2({ width: '100%' });
+			$picSelect.select2({
+				theme: 'bootstrap',
+				width: '100%',
+				placeholder: '-- Pilih PIC (Bisa lebih dari 1) --',
+				dropdownParent: $('#main-modal-funnel')
+			});
 			$('#main-modal-funnel #modal-form-funnel').attr('action', 'funnel/addfunnel')
 			$('#main-modal-funnel').modal()
 		})
@@ -910,14 +916,20 @@
 		$('#main-modal-funnel #namapelanggan').on('change', function(){
 			$("#main-modal-funnel #provinsikota").val(null);
 			var $select = $("#main-modal-funnel #pic-select");
-			$select.find('option').remove();
+			$select.empty();
+			$select.removeData('__select2');
 			if ($.isFunction($.fn.select2) && $select.data('select2')) {
 				$select.select2('destroy');
 			}
 			if ($('#main-modal-funnel #namapelanggan').val()==''){
 					$('#main-modal-funnel #idpelanggan').val('');
 					$('#main-modal-funnel #namacalonpelanggan').val('');
-					$select.select2({ width: '100%' });
+					$select.select2({
+						theme: 'bootstrap',
+						width: '100%',
+						placeholder: '-- Pilih PIC (Bisa lebih dari 1) --',
+						dropdownParent: $('#main-modal-funnel')
+					});
 			}else{
 				  $('#main-modal-funnel #idpelanggan').val($('#main-modal-funnel #namapelanggan').val());
 					$('#main-modal-funnel #namacalonpelanggan').val($('#main-modal-funnel #namapelanggan option:selected').text());
@@ -946,11 +958,22 @@
 													"</option>"
 												);
                 };
-								$select.select2({ width: '100%' });
+								$select.val(null);
+								$select.select2({
+									theme: 'bootstrap',
+									width: '100%',
+									placeholder: '-- Pilih PIC (Bisa lebih dari 1) --',
+									dropdownParent: $('#main-modal-funnel')
+								});
     					}
           	});
 					}else{
-						$select.select2({ width: '100%' });
+						$select.select2({
+							theme: 'bootstrap',
+							width: '100%',
+							placeholder: '-- Pilih PIC (Bisa lebih dari 1) --',
+							dropdownParent: $('#main-modal-funnel')
+						});
 					}
 			}; 
 		});
