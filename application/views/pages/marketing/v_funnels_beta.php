@@ -769,95 +769,57 @@
                 $('#main-modal-marketing').modal('hide')
 			//}
         });
+		// Cache semua PIC - fetch sekali saja
+		var allPicCache = null;
+		function loadAllPicToSelect($sel, preSelectIds) {
+			$sel.empty();
+			if (allPicCache && allPicCache.length > 0) {
+				for (var i = 0; i < allPicCache.length; i++) {
+					$sel.append('<option value="' + allPicCache[i].id + '">' + allPicCache[i].namapic + '</option>');
+				}
+			}
+			if (preSelectIds && preSelectIds.length > 0) {
+				$sel.val(preSelectIds);
+			}
+			if (!$sel.data('select2')) {
+				$sel.select2({ theme: 'bootstrap', width: '100%', placeholder: '-- Pilih PIC (Bisa lebih dari 1) --', dropdownParent: $('#main-modal-funnel') });
+			} else {
+				$sel.trigger('change.select2');
+			}
+		}
+		$.ajax({ type: 'GET', url: 'funnel/getallpic', dataType: 'json', success: function(data) { allPicCache = data; } });
+
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)
-			// Load semua PIC saat form add dibuka
-			var $picSelect = $("#pic-select-beta");
-			$picSelect.find('option').remove();
-			$.ajax({
-				type: 'GET',
-				url: 'funnel/getallpic',
-				dataType: 'json',
-				async: false,
-				success: function(data) {
-					for (var i = 0; i < data.length; i++) {
-						$picSelect.append('<option value="' + data[i].id + '">' + data[i].namapic + '</option>');
-					}
-					$picSelect.select2({
-						theme: 'bootstrap',
-						width: '100%',
-						placeholder: '-- Pilih PIC (Bisa lebih dari 1) --',
-						dropdownParent: $('#main-modal-funnel')
-					});
-				}
-			});
+			var $picSelect = $('#pic-select-beta');
+			loadAllPicToSelect($picSelect, []);
 			$('#main-modal-funnel #modal-form-funnel').attr('action', 'funnel/addfunnel')
 			$('#main-modal-funnel').modal()
 		})
 
-
-		$('#main-modal-funnel #rencana').on("change",function(e) { 
-   			var rencana = $('#rencana').is(':checked') ? true : false;
-				var chk = 0;
-				
-				if(rencana==true){
-						chk=1;
-				}else{
-						chk=0;
-				}
-					var url = "<?php echo site_url('funnel/statusfunnel');?>/"+chk;
-					$('#statusfunnel').load(url);
-							return false;
-		})
-
 		$('#main-modal-funnel #namapelanggan').on('change', function(){
-			$("#main-modal-funnel #provinsikota").val(null);
+			$('#main-modal-funnel #provinsikota').val(null);
 			if ($('#main-modal-funnel #namapelanggan').val()==''){
-					$('#main-modal-funnel #idpelanggan').val('');
-					$('#main-modal-funnel #namacalonpelanggan').val('');
+				$('#main-modal-funnel #idpelanggan').val('');
+				$('#main-modal-funnel #namacalonpelanggan').val('');
 			}else{
-				  $('#main-modal-funnel #idpelanggan').val($('#main-modal-funnel #namapelanggan').val());
-					$('#main-modal-funnel #namacalonpelanggan').val($('#main-modal-funnel #namapelanggan option:selected').text());
-					var kode = this.value;
-					if(kode>0){
-						$.ajax({ 
-							type: "GET",   
-              url: "funnel/getprovinsikota/"+kode,   
-							async: false,
-              success: function(provinsikota) {
-									$('#main-modal-funnel #provinsikota').val(provinsikota);
-    					}
-          	});
-					// Load semua PIC lalu pre-select yang terkait customer
-					var $select = $("#pic-select-beta");
-					$select.find('option').remove();
-					$.ajax({
-						type: 'GET',
-						url: 'funnel/getallpic',
-						dataType: 'json',
-						async: false,
-						success: function(allData) {
-							for (var i=0; i<allData.length; i++) {
-								$select.append('<option value="' + allData[i].id + '">' + allData[i].namapic + '</option>');
-							}
-						}
-					});
-					$.ajax({
-						type: 'GET',
-						url: 'funnel/getpic/'+kode,
-						dataType: 'json',
-						async: false,
-						success: function(data) {
-							var selectedIds = [];
-							for (var i=0; i<data.length; i++) {
-								selectedIds.push(String(data[i].id));
-							}
-							$select.val(selectedIds).trigger('change');
-						}
-					});
-					}else{
-					}
-			}; 
+				$('#main-modal-funnel #idpelanggan').val($('#main-modal-funnel #namapelanggan').val());
+				$('#main-modal-funnel #namacalonpelanggan').val($('#main-modal-funnel #namapelanggan option:selected').text());
+				var kode = this.value;
+				if(kode>0){
+					// Provinsi async (tidak blokir UI)
+					$.ajax({ type: 'GET', url: 'funnel/getprovinsikota/'+kode, success: function(provinsikota) {
+						$('#main-modal-funnel #provinsikota').val(provinsikota);
+					}});
+					// Ambil PIC yang terkait customer, lalu pakai cache semua PIC
+					var $sel = $('#pic-select-beta');
+					$.ajax({ type: 'GET', url: 'funnel/getpic/'+kode, dataType: 'json', success: function(data) {
+						var selectedIds = [];
+						for (var i=0; i<data.length; i++) { selectedIds.push(String(data[i].id)); }
+						loadAllPicToSelect($sel, selectedIds);
+					}});
+				}
+			};
 		});
 		$('#main-modal-funnel #merkproduct').on('change', function() {
 			var kode = this.value;
