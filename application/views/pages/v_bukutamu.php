@@ -134,9 +134,10 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			<p>Kelola data pengunjung berdasarkan event dan rentang tanggal dengan statistik realtime.</p>
 		</div>
 		<div class="btm-actions">
-			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah Kegiatan</a>
+			<a href="javascript:;" id="btn-show-import-modal" class="btn btn-sm btn-success font-weight-bold"><i class="fas fa-file-excel mr-1"></i> Import Excel Multi-Sheet</a>
+			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-info"><i class="icons icon-plus"></i>&nbsp;Tambah Kegiatan</a>
 			<a href="javascript:;" id="btn-show-qr-modal" class="btn btn-sm btn-warning text-dark font-weight-bold"><i class="fas fa-qrcode"></i>&nbsp;QR Code Agenda</a>
-			<a href="javascript:;" id="btn-show-tamu-form" class="btn btn-sm btn-info"><i class="icons icon-user-follow"></i>&nbsp;Tambah Tamu Manual</a>
+			<a href="javascript:;" id="btn-show-tamu-form" class="btn btn-sm btn-secondary"><i class="icons icon-user-follow"></i>&nbsp;Tambah Tamu Manual</a>
 			<a href="javascript:;" id="btn-cetaklaporan-form" class="btn btn-sm btn-primary"><i class="fas fa-print"></i>&nbsp;Cetak Rekapan</a>
 		</div>
 	</div>
@@ -465,6 +466,84 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
 				<button type="submit" class="btn btn-primary btn-update-tamu"><i class="fas fa-save"></i> Simpan Perubahan</button>
+			</div>
+			<?= form_close(); ?>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Import Excel Multi-Sheet -->
+<div id="modal-import-excel" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content" style="border-radius: 14px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+			<div class="modal-header bg-success text-white py-3">
+				<h5 class="modal-title font-weight-bold" id="importModalLabel"><i class="fas fa-file-excel mr-2"></i> Import Data Buku Tamu dari Excel (Multi-Sheet)</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<?= form_open_multipart('#', array('id' => 'form-import-excel')); ?>
+			<div class="modal-body p-4">
+				<div class="alert alert-info py-2 px-3 mb-3" style="font-size: 13px; border-radius: 8px;">
+					<i class="fas fa-info-circle mr-1"></i> <strong>Fitur Cerdas Multi-Sheet:</strong>
+					<ul class="mb-0 pl-3 mt-1">
+						<li>Membaca <strong>seluruh sheet</strong> sekaligus dalam 1 file Excel (.xlsx / .xls / .csv).</li>
+						<li>Mendeteksi header baris otomatis (baris 1 s/d 5) dan mengenali variasi nama kolom (Nama/Nama Peserta/Dokter, No WA/HP/Kontak, Instansi/RS, Jabatan/Spesialis, Kota, Provinsi, dll).</li>
+						<li>Dilengkapi <strong>pencegah duplikat</strong>: nomor kontak yang sudah ada di event terkait otomatis dilewati agar data tetap rapi.</li>
+					</ul>
+				</div>
+
+				<div class="form-group mb-3">
+					<label class="font-weight-bold text-dark">Pilih File Excel : <span class="text-danger">*</span></label>
+					<div class="custom-file">
+						<input type="file" class="custom-file-input" id="import_file_excel" name="file_excel" accept=".xlsx,.xls,.csv" required>
+						<label class="custom-file-label" for="import_file_excel" id="label-file-excel">Pilih file .xlsx / .xls / .csv...</label>
+					</div>
+					<small class="form-text text-muted mt-1">
+						Ingin format standar? <a href="<?= base_url('BukuTamu/download_template_import') ?>" class="text-success font-weight-bold" target="_blank"><i class="fas fa-download mr-1"></i>Download Template Contoh Excel</a>
+					</small>
+				</div>
+
+				<div class="form-group mb-3">
+					<label class="font-weight-bold text-dark">Target Event / Agenda :</label>
+					<div class="p-3" style="background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+						<div class="custom-control custom-radio mb-2">
+							<input type="radio" id="mode_event_auto" name="target_mode" class="custom-control-input" value="auto" checked>
+							<label class="custom-control-label font-weight-bold text-dark" for="mode_event_auto">
+								<i class="fas fa-magic text-success mr-1"></i> Otomatis Sesuai Nama Sheet (Rekomendasi)
+							</label>
+							<small class="text-muted d-block ml-4">Setiap sheet akan dicocokkan otomatis dengan Event yang bernama sama. Jika belum ada di sistem, event baru akan dibuatkan otomatis!</small>
+						</div>
+						<div class="custom-control custom-radio">
+							<input type="radio" id="mode_event_manual" name="target_mode" class="custom-control-input" value="manual">
+							<label class="custom-control-label font-weight-bold text-dark" for="mode_event_manual">
+								<i class="fas fa-check-circle text-primary mr-1"></i> Pilih 1 Event untuk Semua Sheet
+							</label>
+						</div>
+
+						<div id="wrap_select_manual_event" class="mt-2 ml-4" style="display: none;">
+							<select class="form-control form-control-sm" id="import_manual_kegiatan_id" name="manual_kegiatan_id">
+								<option value="">-- Pilih Event Target --</option>
+								<?php if (!empty($nama_kegiatan)): ?>
+									<?php foreach ($nama_kegiatan as $value): ?>
+										<option value="<?= (int) $value->id ?>"><?= html_escape($value->nama) ?></option>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<div id="import-progress-area" style="display: none;">
+					<div class="progress mb-2" style="height: 18px; border-radius: 9px;">
+						<div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 100%;">Memproses import data...</div>
+					</div>
+					<div class="text-center text-muted small"><i class="fas fa-spinner fa-spin mr-1"></i> Sedang memindai seluruh sheet dan menyimpan data. Mohon tunggu sejenak...</div>
+				</div>
+			</div>
+			<div class="modal-footer bg-light py-2">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+				<button type="submit" class="btn btn-success font-weight-bold px-4" id="btn-submit-import">
+					<i class="fas fa-cloud-upload-alt mr-1"></i> Mulai Import Sekarang
+				</button>
 			</div>
 			<?= form_close(); ?>
 		</div>
@@ -1008,6 +1087,112 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 							Swal.fire('Gagal!', 'Terjadi kesalahan sistem.', 'error');
 						}
 					});
+				}
+			});
+		});
+
+		// Import Excel Multi-Sheet Handlers
+		$('#btn-show-import-modal').on('click', function() {
+			$('#form-import-excel')[0].reset();
+			$('#label-file-excel').text('Pilih file .xlsx / .xls / .csv...');
+			$('#wrap_select_manual_event').hide();
+			$('#import-progress-area').hide();
+			$('#btn-submit-import').prop('disabled', false).html('<i class="fas fa-cloud-upload-alt mr-1"></i> Mulai Import Sekarang');
+			$('#modal-import-excel').modal('show');
+		});
+
+		$('#import_file_excel').on('change', function() {
+			var fileName = $(this).val().split('\\').pop();
+			$('#label-file-excel').text(fileName ? fileName : 'Pilih file .xlsx / .xls / .csv...');
+		});
+
+		$('input[name="target_mode"]').on('change', function() {
+			if ($(this).val() === 'manual') {
+				$('#wrap_select_manual_event').slideDown(150);
+			} else {
+				$('#wrap_select_manual_event').slideUp(150);
+			}
+		});
+
+		$('#form-import-excel').on('submit', function(e) {
+			e.preventDefault();
+
+			var fileInput = document.getElementById('import_file_excel');
+			if (!fileInput.files || !fileInput.files[0]) {
+				Swal.fire('Peringatan', 'Silakan pilih file Excel terlebih dahulu!', 'warning');
+				return;
+			}
+
+			var targetMode = $('input[name="target_mode"]:checked').val();
+			var targetEvent = 'auto';
+			if (targetMode === 'manual') {
+				var manualEventVal = $('#import_manual_kegiatan_id').val();
+				if (!manualEventVal) {
+					Swal.fire('Peringatan', 'Silakan pilih event tujuan terlebih dahulu!', 'warning');
+					return;
+				}
+				targetEvent = manualEventVal;
+			}
+
+			var formData = new FormData();
+			formData.append('file_excel', fileInput.files[0]);
+			formData.append('target_event', targetEvent);
+			formData.append('<?= $this->security->get_csrf_token_name() ?>', '<?= $this->security->get_csrf_hash() ?>');
+
+			$('#import-progress-area').slideDown(200);
+			$('#btn-submit-import').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengimport...');
+
+			$.ajax({
+				url: '<?= base_url('BukuTamu/import_excel') ?>',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				dataType: 'json',
+				success: function(res) {
+					$('#import-progress-area').hide();
+					$('#btn-submit-import').prop('disabled', false).html('<i class="fas fa-cloud-upload-alt mr-1"></i> Mulai Import Sekarang');
+
+					if (res.status === 'success') {
+						$('#modal-import-excel').modal('hide');
+
+						// Build breakdown table HTML
+						var detailsHtml = '<div class="text-left mt-2" style="max-height: 250px; overflow-y: auto; font-size: 12px;">' +
+							'<table class="table table-sm table-bordered table-striped">' +
+							'<thead class="thead-light"><tr><th>Sheet</th><th>Masuk</th><th>Duplikat</th><th>Keterangan</th></tr></thead><tbody>';
+
+						if (res.sheet_details && res.sheet_details.length > 0) {
+							$.each(res.sheet_details, function(i, s) {
+								detailsHtml += '<tr>' +
+									'<td><strong>' + s.sheet + '</strong></td>' +
+									'<td class="text-success font-weight-bold">+' + s.imported + '</td>' +
+									'<td class="text-warning font-weight-bold">' + s.duplicate + '</td>' +
+									'<td><small>' + (s.note || '-') + '</small></td>' +
+									'</tr>';
+							});
+						}
+						detailsHtml += '</tbody></table></div>';
+
+						Swal.fire({
+							title: 'Import Berhasil!',
+							html: '<p class="mb-2">' + res.message + '</p>' +
+								'<div class="badge badge-success p-2 mr-2">Berhasil Masuk: ' + res.total_imported + '</div>' +
+								'<div class="badge badge-warning p-2">Duplikat Dilewati: ' + res.total_duplicate + '</div>' +
+								detailsHtml,
+							icon: 'success',
+							confirmButtonText: 'Tutup & Perbarui Data'
+						}).then(function() {
+							location.reload();
+						});
+					} else {
+						Swal.fire('Import Gagal', res.message || 'Terjadi kesalahan sistem saat memproses file.', 'error');
+					}
+				},
+				error: function(xhr, status, error) {
+					$('#import-progress-area').hide();
+					$('#btn-submit-import').prop('disabled', false).html('<i class="fas fa-cloud-upload-alt mr-1"></i> Mulai Import Sekarang');
+					var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : (error || 'Gagal terhubung ke server');
+					Swal.fire('Gagal!', 'Terjadi kesalahan sistem: ' + msg, 'error');
 				}
 			});
 		});

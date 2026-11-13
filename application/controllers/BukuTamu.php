@@ -3,6 +3,7 @@
 use Mpdf\Mpdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 use FontLib\Table\Type\post;
 
@@ -860,5 +861,303 @@ class BukuTamu extends CI_Controller
     addlog($aksi, $ket);
 
     ajaxReturnDie('success', 'Data tamu berhasil dihapus', 'reload_table');
+  }
+
+  /**
+   * AJAX: Import Excel Multi-Sheet ke Buku Tamu
+   * POST params:
+   *   - file_excel       : file upload (.xlsx/.xls/.csv)
+   *   - target_event     : 'auto' | integer id kegiatan
+   */
+  public function import_excel()
+  {
+    grantAccessFor('all');
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    // --- 1. Validate upload ---
+    if (empty($_FILES['file_excel']['tmp_name'])) {
+      echo json_encode(['status' => 'error', 'message' => 'File Excel tidak ditemukan.']);
+      return;
+    }
+
+    $tmpPath  = $_FILES['file_excel']['tmp_name'];
+    $origName = isset($_FILES['file_excel']['name']) ? $_FILES['file_excel']['name'] : '';
+    $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+    if (!in_array($ext, ['xlsx', 'xls', 'csv'])) {
+      echo json_encode(['status' => 'error', 'message' => 'Format file harus .xlsx, .xls, atau .csv.']);
+      return;
+    }
+
+    // --- 2. Load spreadsheet ---
+    try {
+      $reader = IOFactory::createReaderForFile($tmpPath);
+      $reader->setReadDataOnly(true);
+      $spreadsheet = $reader->load($tmpPath);
+    } catch (\Exception $e) {
+      echo json_encode(['status' => 'error', 'message' => 'Gagal membaca file: ' . $e->getMessage()]);
+      return;
+    }
+
+    $targetEvent = $this->input->post('target_event', true);
+    $ipAddress   = (string) $this->input->ip_address();
+    if ($ipAddress === '' || $ipAddress === '0.0.0.0') {
+      $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+    }
+    $userAgent = substr((string) $this->input->user_agent(), 0, 255);
+
+    // --- 3. Column alias map ---
+    $aliasMap = [
+      'nama'     => ['nama', 'nama lengkap', 'nama dokter', 'nama radiografer', 'nama ppr', 'nama peserta', 'nama customer', 'nama tamu', 'nama pengunjung'],
+      'nomorwa'  => ['no wa', 'wa', 'nomor wa', 'nomor whatsapp', 'no hp', 'no. hp', 'no handphone', 'no. handphone', 'nomor telepon', 'no telepon', 'no. telepon', 'kontak', 'tlp/hp', 'tlp', 'telepon', 'phone', 'handphone', 'hp', 'whatsapp'],
+      'instansi' => ['instansi', 'nama instansi', 'instanasi', 'rumah sakit/klinik', 'rs/klinik', 'perusahaan', 'kantor', 'nama rs', 'nama rumah sakit', 'rs'],
+      'jabatan'  => ['jabatan', 'pekerjaan', 'spesialis', 'jabatan di op', 'profesi', 'posisi', 'divisi'],
+      'email'    => ['email', 'email address', 'email aktif', 'e-mail', 'surel'],
+      'tipe_rs'  => ['tipe rs', 'tipe rs/klinik', 'rs tipe', 'tipe rumah sakit', 'tipe'],
+      'kota'     => ['kota', 'kabupaten', 'kab/kota', 'kota/kabupaten', 'city'],
+      'provinsi' => ['provinsi', 'prov', 'province'],
+      'kebutuhan'=> ['kebutuhan', 'kebutuhan produk', 'catatan', 'minat produk', 'notes', 'keterangan'],
+    ];
+
+    // --- 4. Helper: detect header row ---
+    $detectHeader = function ($sheet) use ($aliasMap) {
+      $allRows = [];
+      foreach ($sheet->getRowIterator(1, 6) as $row) {
+        $cells = [];
+        foreach ($row->getCellIterator() as $cell) {
+          $cells[] = strtolower(trim((string) $cell->getValue()));
+        }
+        $allRows[] = $cells;
+      }
+      foreach ($allRows as $rowIdx => $cells) {
+        $matchCount = 0;
+        foreach ($cells as $cell) {
+          foreach ($aliasMap as $field => $aliases) {
+            if (in_array($cell, $aliases)) {
+              $matchCount++;
+              break;
+            }
+          }
+        }
+        if ($matchCount >= 2) {
+          return $rowIdx + 1; // 1-based
+        }
+      }
+      return null;
+    };
+
+    // --- 5. Helper: map header row to field names ---
+    $buildColMap = function ($sheet, $headerRowNum) use ($aliasMap) {
+      $colMap = [];
+      $row = $sheet->getRowIterator($headerRowNum, $headerRowNum)->current();
+      $colIdx = 0;
+      foreach ($row->getCellIterator() as $col => $cell) {
+        $label = strtolower(trim((string) $cell->getValue()));
+        foreach ($aliasMap as $field => $aliases) {
+          if (in_array($label, $aliases) && !isset($colMap[$field])) {
+            $colMap[$field] = $col; // e.g. 'A', 'B', ...
+          }
+        }
+        $colIdx++;
+      }
+      return $colMap;
+    };
+
+    // --- 6. Helper: find or create event by name ---
+    $eventCache = [];
+    $findOrCreateEvent = function ($sheetTitle) use (&$eventCache) {
+      $sheetTitle = trim($sheetTitle);
+      if (isset($eventCache[$sheetTitle])) return $eventCache[$sheetTitle];
+
+      // Try exact match first
+      $row = $this->db->get_where('bukutamu_config', ['nama' => $sheetTitle])->row();
+      if ($row) {
+        $eventCache[$sheetTitle] = (int) $row->id;
+        return (int) $row->id;
+      }
+
+      // Try case-insensitive
+      $row = $this->db->where("LOWER(nama) = LOWER('" . $this->db->escape_str($sheetTitle) . "'")->get('bukutamu_config')->row();
+      if ($row) {
+        $eventCache[$sheetTitle] = (int) $row->id;
+        return (int) $row->id;
+      }
+
+      // Create new event
+      $this->db->insert('bukutamu_config', [
+        'nama'      => $sheetTitle,
+        'is_active' => 1,
+        'created_at'=> date('Y-m-d H:i:s'),
+      ]);
+      $newId = (int) $this->db->insert_id();
+      $eventCache[$sheetTitle] = $newId;
+      return $newId;
+    };
+
+    // --- 7. Determine fixed event ID (if manual mode) ---
+    $fixedEventId = null;
+    if (is_numeric($targetEvent) && (int) $targetEvent > 0) {
+      $fixedEventId = (int) $targetEvent;
+      if (!$this->md_bukutamu->isKegiatanExists($fixedEventId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Event yang dipilih tidak ditemukan.']);
+        return;
+      }
+    }
+
+    // --- 8. Loop all sheets ---
+    $totalImported  = 0;
+    $totalDuplicate = 0;
+    $totalSkipped   = 0;
+    $sheetDetails   = [];
+
+    foreach ($spreadsheet->getAllSheets() as $sheet) {
+      $sheetName    = $sheet->getTitle();
+      $headerRowNum = $detectHeader($sheet);
+
+      if ($headerRowNum === null) {
+        $sheetDetails[] = [
+          'sheet'     => $sheetName,
+          'imported'  => 0,
+          'duplicate' => 0,
+          'skipped'   => 0,
+          'note'      => 'Header tidak terdeteksi, sheet dilewati.',
+        ];
+        continue;
+      }
+
+      $colMap = $buildColMap($sheet, $headerRowNum);
+
+      if (empty($colMap['nama']) && empty($colMap['nomorwa'])) {
+        $sheetDetails[] = [
+          'sheet'     => $sheetName,
+          'imported'  => 0,
+          'duplicate' => 0,
+          'skipped'   => 0,
+          'note'      => 'Kolom Nama/No WA tidak ditemukan, sheet dilewati.',
+        ];
+        continue;
+      }
+
+      // Determine event ID for this sheet
+      if ($fixedEventId !== null) {
+        $kegiatanId = $fixedEventId;
+      } else {
+        $kegiatanId = $findOrCreateEvent($sheetName);
+      }
+
+      $sheetImported  = 0;
+      $sheetDuplicate = 0;
+      $sheetSkipped   = 0;
+      $highestRow     = $sheet->getHighestDataRow();
+
+      for ($rowNum = $headerRowNum + 1; $rowNum <= $highestRow; $rowNum++) {
+        // Read cell value helper
+        $getCell = function ($col) use ($sheet, $rowNum) {
+          if (empty($col)) return '';
+          try {
+            return trim((string) $sheet->getCell($col . $rowNum)->getCalculatedValue());
+          } catch (\Exception $e) {
+            return trim((string) $sheet->getCell($col . $rowNum)->getValue());
+          }
+        };
+
+        $nama    = isset($colMap['nama'])    ? $getCell($colMap['nama'])    : '';
+        $nomorwa = isset($colMap['nomorwa']) ? $getCell($colMap['nomorwa']) : '';
+
+        // Skip empty rows
+        if ($nama === '' && $nomorwa === '') {
+          $sheetSkipped++;
+          continue;
+        }
+
+        $normalizedNoWa = $this->md_bukutamu->normalizeNoWa($nomorwa);
+
+        // Skip invalid phone numbers (must be at least 8 digits)
+        if ($normalizedNoWa === '' || strlen($normalizedNoWa) < 8) {
+          $sheetSkipped++;
+          continue;
+        }
+
+        $data = [
+          'nama'      => $nama,
+          'nomorwa'   => $normalizedNoWa,
+          'email'     => isset($colMap['email'])     ? $getCell($colMap['email'])     : '',
+          'jabatan'   => isset($colMap['jabatan'])   ? $getCell($colMap['jabatan'])   : '',
+          'instansi'  => isset($colMap['instansi'])  ? $getCell($colMap['instansi'])  : '',
+          'tipe_rs'   => isset($colMap['tipe_rs'])   ? $getCell($colMap['tipe_rs'])   : '',
+          'provinsi'  => isset($colMap['provinsi'])  ? $getCell($colMap['provinsi'])  : '',
+          'kota'      => isset($colMap['kota'])      ? $getCell($colMap['kota'])      : '',
+          'kebutuhan' => isset($colMap['kebutuhan']) ? $getCell($colMap['kebutuhan']) : '',
+          'kegiatan'  => $kegiatanId,
+        ];
+
+        $result = $this->md_bukutamu->saveWithDuplicateGuard($data, $ipAddress, $userAgent);
+
+        if (($result['status'] ?? '') === 'inserted') {
+          $sheetImported++;
+          $totalImported++;
+        } elseif (($result['status'] ?? '') === 'duplicate') {
+          $sheetDuplicate++;
+          $totalDuplicate++;
+        } else {
+          $sheetSkipped++;
+          $totalSkipped++;
+        }
+      }
+
+      $sheetDetails[] = [
+        'sheet'     => $sheetName,
+        'imported'  => $sheetImported,
+        'duplicate' => $sheetDuplicate,
+        'skipped'   => $sheetSkipped,
+        'note'      => '',
+      ];
+    }
+
+    // Add log
+    addlog('Import Buku Tamu Excel', 'Import multi-sheet: ' . $totalImported . ' data masuk, ' . $totalDuplicate . ' duplikat dari file ' . $origName);
+
+    echo json_encode([
+      'status'        => 'success',
+      'message'       => 'Import selesai. Total ' . $totalImported . ' data berhasil diimport.',
+      'total_imported'  => $totalImported,
+      'total_duplicate' => $totalDuplicate,
+      'total_skipped'   => $totalSkipped,
+      'sheet_details'   => $sheetDetails,
+    ]);
+  }
+
+  /**
+   * Download template Excel import Buku Tamu
+   */
+  public function download_template_import()
+  {
+    grantAccessFor('all');
+
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Buku Tamu');
+
+    $headers = ['Nama Lengkap', 'No WA', 'Email', 'Jabatan', 'Instansi', 'Tipe RS', 'Provinsi', 'Kota', 'Kebutuhan'];
+    foreach ($headers as $i => $h) {
+      $col = chr(65 + $i);
+      $sheet->setCellValue($col . '1', $h);
+      $sheet->getStyle($col . '1')->getFont()->setBold(true);
+      $sheet->getColumnDimension($col)->setWidth(20);
+    }
+
+    // Sample row
+    $sheet->fromArray([
+      ['dr. Andi Susanto', '08123456789', 'andi@rsabc.com', 'Dokter Spesialis', 'RS ABC Kota X', 'B', 'Jawa Barat', 'Bandung', 'Alat Radiologi'],
+    ], null, 'A2');
+
+    $filename = 'Template_Import_BukuTamu.xlsx';
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
   }
 }
