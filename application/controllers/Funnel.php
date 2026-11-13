@@ -338,8 +338,6 @@ class Funnel extends CI_Controller
 
     function getpic($id)
     {
-        // $pic = $this->md_pelangganan->getAllPICPelangganById($id);
-        // echo json_encode($pic) ;
         $where = array(
             'calonpelangganpic.idpic' => $id,
             'calonpelangganpic.deleted' => 0
@@ -351,6 +349,18 @@ class Funnel extends CI_Controller
             ')
             ->join('pelangganan', 'pelangganan.idcalonpelanggan=calonpelangganpic.idpic', 'left')
             ->get_where('calonpelangganpic', $where)
+            ->result();
+
+        echo json_encode($result);
+    }
+
+    function getallpic()
+    {
+        $result = $this->db
+            ->select('id, CONCAT(namapic, \' - \', jabatanpic, \' - \', teleponpic) as namapic')
+            ->where('deleted', 0)
+            ->order_by('namapic', 'asc')
+            ->get('calonpelangganpic')
             ->result();
 
         echo json_encode($result);

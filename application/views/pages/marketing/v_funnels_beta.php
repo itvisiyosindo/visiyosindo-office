@@ -242,7 +242,7 @@
 						</div>			
 						<div class="form-group" id='picpic' style="display: inline-block;">
 									<label for="pic" class="form-control-label">PIC <span class="text-danger">*</span> :</label>
-									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic[]" style="display: inline-block;"  multiple disabled="disabled" >
+									<select data-plugin-selectTwo class="form-control populate" name="pic[]" id="pic[]" style="display: inline-block;" multiple >
 									
 									</select>
 						</div>
@@ -772,6 +772,26 @@
         });
 		$('#btn-show-add-form').click(function() {
 			$('.form-control').val(null)
+			// Load semua PIC saat form add dibuka
+			var $picSelect = $("select[name='pic[]']");
+			$picSelect.find('option').remove();
+			$.ajax({
+				type: 'GET',
+				url: 'funnel/getallpic',
+				dataType: 'json',
+				async: false,
+				success: function(data) {
+					for (var i = 0; i < data.length; i++) {
+						$picSelect.append('<option value="' + data[i].id + '">' + data[i].namapic + '</option>');
+					}
+					$picSelect.select2({
+						theme: 'bootstrap',
+						width: '100%',
+						placeholder: '-- Pilih PIC (Bisa lebih dari 1) --',
+						dropdownParent: $('#main-modal-funnel')
+					});
+				}
+			});
 			$('#main-modal-funnel #modal-form-funnel').attr('action', 'funnel/addfunnel')
 			$('#main-modal-funnel').modal()
 		})
@@ -809,25 +829,33 @@
 									$('#main-modal-funnel #provinsikota').val(provinsikota);
     					}
           	});
-						$.ajax({ 
-							type: "GET",   
-              url: "funnel/getpic/"+kode,  
-							dataType: 'json', 
-							async: false,
-              success: function(data) {
-								var $select = $("select[name='pic[]']");					
-                $select.find('option').remove();
-								for (var i=0; i<data.length; i++) {
-                    $select.append("<option value=\""+
-														data[i].id +
-													"\" selected>"+
-														data[i].namapic +
-													"</option>"
-												);
-												$select.find('option').css("overflow","hidden");
-                };
-    					}
-          	});
+					// Load semua PIC lalu pre-select yang terkait customer
+					var $select = $("select[name='pic[]']");
+					$select.find('option').remove();
+					$.ajax({
+						type: 'GET',
+						url: 'funnel/getallpic',
+						dataType: 'json',
+						async: false,
+						success: function(allData) {
+							for (var i=0; i<allData.length; i++) {
+								$select.append('<option value="' + allData[i].id + '">' + allData[i].namapic + '</option>');
+							}
+						}
+					});
+					$.ajax({
+						type: 'GET',
+						url: 'funnel/getpic/'+kode,
+						dataType: 'json',
+						async: false,
+						success: function(data) {
+							var selectedIds = [];
+							for (var i=0; i<data.length; i++) {
+								selectedIds.push(String(data[i].id));
+							}
+							$select.val(selectedIds).trigger('change');
+						}
+					});
 					}else{
 					}
 			}; 
