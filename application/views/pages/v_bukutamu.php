@@ -1,4 +1,4 @@
-﻿<header class="page-header">
+<header class="page-header">
 	<h2><i class="fas fa-digital-tachograph"></i>&nbsp;<?= $page_title ?></h2>
 	<div class="right-wrapper text-left">
 		<ol class="breadcrumbs">
@@ -847,7 +847,6 @@ $kegiatan_aktif_label = (isset($kegiatan) && is_object($kegiatan) && !empty($keg
 				}, delay);
 				delay += 400;
 			});
-		});
 		});
 
 		// Show manual guest input modal
