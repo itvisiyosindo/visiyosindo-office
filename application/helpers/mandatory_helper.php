@@ -919,7 +919,18 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 		$diffSec  = strtotime($refDate) - strtotime($deadlineDate);
 		$diffDays = (int)floor($diffSec / 86400);
 
-		if ($diffDays >= 1) {
+		if ($diffDays <= 0) {
+			// Tepat waktu / Sebelum Deadline -> Otomatis Bintang 5
+			$res['is_late']     = false;
+			$res['hari_telat']  = 0;
+			$res['max_bintang'] = 5;
+		} elseif ($diffDays === 1) {
+			// Telat 1 Hari dari deadline -> Maksimal Bintang 4
+			$res['is_late']     = true;
+			$res['hari_telat']  = 1;
+			$res['max_bintang'] = 4;
+		} else {
+			// Telat 2 hari atau lebih -> Langsung Bintang 1
 			$res['is_late']     = true;
 			$res['hari_telat']  = $diffDays;
 			$res['max_bintang'] = 1;
@@ -936,6 +947,11 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 			if ($spCalc > $res['sp_level']) {
 				$res['sp_level'] = $spCalc;
 			}
+		}
+
+		// Jika sudah kena SP, nilai maksimal terkunci di Bintang 1
+		if ($res['sp_level'] > 0) {
+			$res['max_bintang'] = 1;
 		}
 
 		if ($res['sp_level'] >= 3) {
@@ -962,9 +978,9 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 			if ($res['sp_level'] > $dbSp) {
 				$updates['sp_level'] = $res['sp_level'];
 			}
-			if ($res['is_late'] && !empty($t->rating_bintang) && (int)$t->rating_bintang > 1) {
-				$updates['rating_bintang'] = 1;
-				$t->rating_bintang = 1;
+			if ($res['is_late'] && !empty($t->rating_bintang) && (int)$t->rating_bintang > $res['max_bintang']) {
+				$updates['rating_bintang'] = $res['max_bintang'];
+				$t->rating_bintang = $res['max_bintang'];
 			}
 			if (!empty($updates) && isset($CI->db)) {
 				@$CI->db->where('id_task', (int)$t->id_task)->update('task_proyek', $updates);

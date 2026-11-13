@@ -1172,31 +1172,60 @@ class Task_proyek extends CI_Controller
             }
         }
 
-        $this->db->where('id_task', $id_task)->update('task_proyek', [
+        // Evaluasi keterlambatan & penilaian otomatis berdasarkan deadline submit
+        $eval = function_exists('evaluateTaskDeadlineAndSp')
+            ? evaluateTaskDeadlineAndSp($task, false)
+            : ['is_late' => false, 'hari_telat' => 0, 'max_bintang' => 5, 'sp_level' => 0];
+
+        $autoStar = isset($eval['max_bintang']) ? (int)$eval['max_bintang'] : 5;
+        if (!empty($eval['sp_level']) && $eval['sp_level'] > 0) {
+            $autoStar = 1;
+        }
+
+        if ($autoStar === 5) {
+            $autoUlasan = 'Penilaian otomatis sistem: Selesai tepat waktu sebelum batas deadline (5/5 ⭐).';
+        } elseif ($autoStar === 4) {
+            $autoUlasan = 'Penilaian otomatis sistem: Terlambat 1 hari dari batas deadline (Maksimal 4/5 ⭐).';
+        } else {
+            $spKet = !empty($eval['sp_label']) ? ' [' . $eval['sp_label'] . ']' : '';
+            $autoUlasan = 'Penilaian otomatis sistem: Terlambat ' . (int)$eval['hari_telat'] . ' hari dari batas deadline' . $spKet . ' (Maksimal 1/5 ⭐).';
+        }
+
+        $nowStr = date('Y-m-d H:i:s');
+        $updateTaskData = [
             'progres'         => 100,
-            'status_task'     => 2, // Menunggu Review & Penilaian Bintang Atasan
+            'status_task'     => 4, // Langsung Selesai & Dinilai Otomatis
+            'rating_bintang'  => $autoStar,
+            'ulasan_atasan'   => $autoUlasan,
+            'tgl_dinilai'     => $nowStr,
             'catatan_bawahan' => $catatan_bawahan,
             'bukti_selesai'   => $bukti_selesai,
-            'tgl_submit'      => date('Y-m-d H:i:s'),
+            'tgl_submit'      => $nowStr,
             'checklist_json'  => !empty($checklist) ? json_encode($checklist, JSON_UNESCAPED_UNICODE) : $task->checklist_json
-        ]);
+        ];
+        if (!empty($eval['sp_level'])) {
+            $updateTaskData['sp_level'] = (int)$eval['sp_level'];
+        }
 
+        $this->db->where('id_task', $id_task)->update('task_proyek', $updateTaskData);
+
+        $starIconText = str_repeat('⭐', $autoStar) . ' (' . $autoStar . '/5)';
         $this->db->insert('task_proyek_log', [
             'id_task'     => $id_task,
             'id_pengguna' => $myId,
-            'aksi'        => 'Submit Hasil Kerja (100%)',
-            'catatan'     => $catatan_bawahan,
+            'aksi'        => 'Submit Selesai (Dinilai Otomatis ' . $starIconText . ')',
+            'catatan'     => $catatan_bawahan . ' | ' . $autoUlasan,
             'lampiran'    => $bukti_selesai
         ]);
 
-        // Kirim WA bahwa task sudah selesai dan siap dinilai bintang
+        // Kirim WA bahwa task selesai dan sudah otomatis dinilai bintang
         try {
             $isTaskMandiri = ((int)$task->is_mandiri === 1 || (int)$task->id_pemberi === (int)$task->id_penerima || (int)$task->id_pemberi === $myId);
             $bawahan = $this->db->select('nama')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
             $namaPelaksana = ($bawahan && !empty($bawahan->nama)) ? $bawahan->nama : 'Karyawan';
 
             if ($isTaskMandiri) {
-                // Tugas Mandiri / Ke Diri Sendiri: Notifikasi dikirimkan ke Atasan Langsung & HRD/Manajemen (BUKAN ke diri sendiri)
+                // Tugas Mandiri / Ke Diri Sendiri: Notifikasi dikirimkan ke Atasan Langsung & HRD/Manajemen
                 $notifList = [];
                 $userSelf = $this->db->select('id_atasan')->from('pengguna')->where('pengguna_id', $myId)->get()->row();
                 if ($userSelf && !empty($userSelf->id_atasan) && (int)$userSelf->id_atasan !== $myId) {
@@ -1213,14 +1242,16 @@ class Task_proyek extends CI_Controller
                 }
 
                 if (!empty($notifList) && function_exists('sendWa')) {
-                    $pesanWa = "[TASK MANDIRI SELESAI] *MENUNGGU PENILAIAN HRD / ATASAN*" .
+                    $pesanWa = "[TASK MANDIRI SELESAI & DINILAI OTOMATIS]" .
                         "%0A%0AHalo Rekan Atasan & HRD," .
                         "%0AKaryawan (*" . $namaPelaksana . "*) telah menyelesaikan Tugas Mandiri:" .
                         "%0A%0A- *Kode*: " . $task->kode_task .
                         "%0A- *Judul*: " . $task->judul .
+                        "%0A- *Rating Otomatis*: " . $starIconText .
+                        "%0A- *Keterangan*: " . $autoUlasan .
                         "%0A- *Hasil*: " . $catatan_bawahan .
                         ($bukti_selesai ? "%0A- *Bukti*: " . $bukti_selesai : "") .
-                        "%0A%0ASilakan berikan *Penilaian Rating Bintang (1-5 ⭐)* di https://office.visiyosindo.id/task_proyek";
+                        "%0A%0AMonitoring tugas di https://office.visiyosindo.id/task_proyek";
                     $sentHps = [];
                     foreach ($notifList as $rec) {
                         $hp = (!empty($rec->no_hp)) ? $rec->no_hp : ((!empty($rec->nohp)) ? $rec->nohp : '');
@@ -1239,14 +1270,16 @@ class Task_proyek extends CI_Controller
                 $atasan = $this->db->select('nama, no_hp, nohp')->from('pengguna')->where('pengguna_id', $task->id_pemberi)->get()->row();
                 $noHpAtasan = ($atasan && !empty($atasan->no_hp)) ? $atasan->no_hp : (($atasan && !empty($atasan->nohp)) ? $atasan->nohp : '');
                 if (!empty($noHpAtasan) && function_exists('sendWa')) {
-                    $pesanWa = "[TASK SELESAI] *MENUNGGU PENILAIAN RATING ATASAN*" .
+                    $pesanWa = "[TASK SELESAI & DINILAI OTOMATIS]" .
                         "%0A%0AHalo *" . $atasan->nama . "*," .
                         "%0AKaryawan (*" . $namaPelaksana . "*) telah menyelesaikan Task:" .
                         "%0A%0A- *Kode*: " . $task->kode_task .
                         "%0A- *Judul*: " . $task->judul .
+                        "%0A- *Rating Otomatis*: " . $starIconText .
+                        "%0A- *Keterangan*: " . $autoUlasan .
                         "%0A- *Hasil*: " . $catatan_bawahan .
                         ($bukti_selesai ? "%0A- *Bukti*: " . $bukti_selesai : "") .
-                        "%0A%0ASilakan berikan *Penilaian Rating Bintang (1-5 ⭐)* di https://office.visiyosindo.id/task_proyek";
+                        "%0A%0ADetail tugas di https://office.visiyosindo.id/task_proyek";
                     @sendWa([
                         'devId'    => hostWa('2'),
                         'penerima' => $noHpAtasan,
@@ -1264,7 +1297,7 @@ class Task_proyek extends CI_Controller
         }
 
         try {
-            addLog('Submit Task Selesai', 'Menyelesaikan Task ' . $task->kode_task . ' - ' . $task->judul);
+            addLog('Submit Task Selesai', 'Menyelesaikan Task ' . $task->kode_task . ' - ' . $task->judul . ' (Nilai ' . $autoStar . ' Bintang)');
         } catch (\Throwable $e) {
         }
 
@@ -1275,10 +1308,12 @@ class Task_proyek extends CI_Controller
             'catatan_bawahan' => $catatan_bawahan,
             'bukti_selesai'   => $bukti_selesai,
             'progres'         => 100,
-            'status_task'     => 2
+            'status_task'     => 4,
+            'rating_bintang'  => $autoStar,
+            'ulasan_atasan'   => $autoUlasan
         ];
 
-        ajaxReturnDie('success', 'Hasil pekerjaan berhasil dikirim ke Atasan untuk dinilai!', $responseData);
+        ajaxReturnDie('success', 'Task berhasil diselesaikan dan dinilai otomatis: ' . $starIconText . '!', $responseData);
     }
 
     /**
@@ -1381,15 +1416,23 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        // Evaluasi keterlambatan: jika lewat deadline, maksimal bintang adalah 1 walaupun selesai
-        $eval = function_exists('evaluateTaskDeadlineAndSp') ? evaluateTaskDeadlineAndSp($task, false) : ['is_late' => false, 'sp_level' => 0];
-        if (!empty($eval['is_late']) && $rating_bintang > 1) {
-            $rating_bintang = 1;
+        // Evaluasi keterlambatan & batasan bintang sesuai deadline
+        $eval = function_exists('evaluateTaskDeadlineAndSp')
+            ? evaluateTaskDeadlineAndSp($task, false)
+            : ['is_late' => false, 'hari_telat' => 0, 'max_bintang' => 5, 'sp_level' => 0];
+
+        $maxStarAllowed = isset($eval['max_bintang']) ? (int)$eval['max_bintang'] : 5;
+        if (!empty($eval['sp_level']) && (int)$eval['sp_level'] > 0) {
+            $maxStarAllowed = 1;
+        }
+
+        if ($rating_bintang > $maxStarAllowed) {
+            $rating_bintang = $maxStarAllowed;
         }
 
         $starText = str_repeat('⭐', $rating_bintang) . ' (' . $rating_bintang . '/5)';
         $defaultUlasan = !empty($eval['is_late'])
-            ? 'Pekerjaan selesai melewati batas deadline (Maksimal 1 Bintang).'
+            ? 'Pekerjaan disetujui atasan (Disesuaikan aturan deadline: Maksimal ' . $maxStarAllowed . ' Bintang).'
             : 'Pekerjaan selesai dengan baik.';
 
         $updateData = [

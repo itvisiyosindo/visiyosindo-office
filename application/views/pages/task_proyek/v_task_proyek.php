@@ -3799,7 +3799,7 @@ $namaBulanList = [
                             <div id="wrapStarPicker" class="p-3 mb-3 rounded text-center" style="background:#fffbeb; border:1px dashed #f59e0b;">
                                 <div id="wrapOverdueMaxStarAlert" class="alert alert-danger py-2 px-3 mb-2 text-left small" style="display:none;">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>Melewati Batas Deadline (<span id="lblOverdueDays">0</span> hari):</strong> Sesuai aturan kedisiplinan, task/proyek yang selesai melewati tanggal deadline <strong>maksimal mendapatkan Rating Bintang 1 (⭐ 1/5)</strong>.
+                                    <strong>Melewati Batas Deadline (<span id="lblOverdueDays">0</span> hari):</strong> Sesuai aturan kedisiplinan, task yang terlambat <strong>maksimal mendapatkan Rating Bintang <span id="lblMaxAllowedStars">1</span> (⭐ <span id="lblMaxAllowedStars2">1</span>/5)</strong>.
                                 </div>
                                 <div class="small font-weight-bold text-uppercase mb-1" style="color:#b45309;">Klik Bintang untuk Memberikan Nilai Kualitas Kerja Karyawan:</div>
                                 <div class="star-rating-picker my-1" id="starPickerWidget">
@@ -4700,25 +4700,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya Menunggu Penilaian (2) serta BELUM pernah diberi bintang
                 var isAlreadyRated = (stInt === 4 && parseInt(t.rating_bintang, 10) > 0);
-                window.currentTaskMaxStar = isLate ? 1 : 5;
+                var allowedMaxStar = 5;
+                if (isLate) {
+                    if (hariTelat === 1) {
+                        allowedMaxStar = 4;
+                    } else {
+                        allowedMaxStar = 1;
+                    }
+                }
+                if (parseInt(t.sp_level, 10) > 0) {
+                    allowedMaxStar = 1;
+                }
+                window.currentTaskMaxStar = allowedMaxStar;
+
                 if (isLate) {
                     $('#lblOverdueDays').text(hariTelat);
+                    $('#lblMaxAllowedStars').text(allowedMaxStar);
+                    $('#lblMaxAllowedStars2').text(allowedMaxStar);
                     $('#wrapOverdueMaxStarAlert').show();
                     $('#starPickerWidget .star-btn').each(function() {
                         var sVal = parseInt($(this).data('val'), 10);
-                        if (sVal > 1) {
-                            $(this).css({ opacity: 0.25, cursor: 'not-allowed' }).attr('title', 'Terkunci: Maksimal Bintang 1 karena melewati deadline');
+                        if (sVal > allowedMaxStar) {
+                            $(this).css({ opacity: 0.25, cursor: 'not-allowed' }).attr('title', 'Terkunci: Maksimal Bintang ' + allowedMaxStar + ' karena keterlambatan deadline');
+                        } else {
+                            $(this).css({ opacity: 1, cursor: 'pointer' }).removeAttr('title');
                         }
                     });
                 } else {
                     $('#wrapOverdueMaxStarAlert').hide();
-                    $('#starPickerWidget .star-btn').css({ opacity: 1, cursor: 'pointer' });
+                    $('#starPickerWidget .star-btn').css({ opacity: 1, cursor: 'pointer' }).removeAttr('title');
                 }
 
                 if (canReview && stInt === 2 && !isAlreadyRated) {
                     $('#panelAtasanReview').show();
-                    var initStar = 5;
-                    if (isLate) initStar = 1;
+                    var initStar = allowedMaxStar;
                     setStarPickerValue(initStar);
                     $('#rev_ulasan_atasan').val('');
                 } else {
