@@ -40,10 +40,18 @@ class Passport extends CI_Controller
         $passport->foto_url = $this->_resolve_foto_url($passport->foto_produk);
         $serviceHistory = $this->Md_asset_passport->get_service_history($passport->id_passport);
 
+        $pelangganList = $this->db->select('id_pelanggan, identitas_pelanggan, kota')
+            ->from('pelanggan')
+            ->where('status', 1)
+            ->order_by('identitas_pelanggan', 'ASC')
+            ->get()
+            ->result();
+
         $this->load->view('passport_public', [
             'found'           => true,
             'passport'        => $passport,
-            'service_history' => $serviceHistory
+            'service_history' => $serviceHistory,
+            'pelanggan_list'  => $pelangganList
         ]);
     }
 
@@ -76,6 +84,9 @@ class Passport extends CI_Controller
         $judul_keluhan = trim((string)$this->input->post('judul_keluhan', TRUE));
         $deskripsi     = trim((string)$this->input->post('deskripsi', TRUE));
         $prioritas     = (int)$this->input->post('prioritas', TRUE) ?: 3;
+        $nama_instansi = trim((string)$this->input->post('nama_instansi', TRUE));
+        $lokasi_ruangan= trim((string)$this->input->post('lokasi_ruangan', TRUE));
+        $serial_number = trim((string)$this->input->post('serial_number', TRUE));
 
         if ($token === '') {
             echo json_encode(['status' => false, 'message' => 'Token QR alat tidak valid.']);
@@ -85,6 +96,12 @@ class Passport extends CI_Controller
         $passport = $this->Md_asset_passport->get_by_token($token);
         if (!$passport || (int)$passport->is_active !== 1) {
             echo json_encode(['status' => false, 'message' => 'Data alat tidak ditemukan atau sudah dinonaktifkan.']);
+            return;
+        }
+
+        $isJenis = !empty($passport->tipe_passport) && $passport->tipe_passport === 'jenis';
+        if ($isJenis && $nama_instansi === '') {
+            echo json_encode(['status' => false, 'message' => 'Nama Rumah Sakit / Instansi wajib diisi.']);
             return;
         }
 
@@ -149,7 +166,10 @@ class Passport extends CI_Controller
             'no_wa'         => $no_wa,
             'judul_keluhan' => $judul_keluhan,
             'deskripsi'     => $deskripsi,
-            'prioritas'     => $prioritas
+            'prioritas'     => $prioritas,
+            'nama_instansi' => $nama_instansi,
+            'lokasi_ruangan'=> $lokasi_ruangan,
+            'serial_number' => $serial_number
         ], $fotoUrl);
 
         if (empty($res['success'])) {
@@ -163,7 +183,10 @@ class Passport extends CI_Controller
             'no_wa'         => $cleanWa,
             'judul_keluhan' => $judul_keluhan,
             'deskripsi'     => $deskripsi,
-            'foto_url'      => $fotoUrl
+            'foto_url'      => $fotoUrl,
+            'nama_instansi' => $nama_instansi,
+            'lokasi_ruangan'=> $lokasi_ruangan,
+            'serial_number' => $serial_number
         ]);
 
         echo json_encode([
@@ -179,8 +202,10 @@ class Passport extends CI_Controller
         try {
             $kodeTiket = $res['kode_tiket'];
             $kodeTask  = $res['kode_task'];
-            $snText    = !empty($passport->serial_number) ? $passport->serial_number : '-';
-            $lokasi    = !empty($passport->lokasi_ruangan) ? " ({$passport->lokasi_ruangan})" : '';
+            $isJenis   = !empty($passport->tipe_passport) && $passport->tipe_passport === 'jenis';
+            $instansiText = !empty($input['nama_instansi']) ? $input['nama_instansi'] : $passport->nama_instansi;
+            $snText    = !empty($input['serial_number']) ? $input['serial_number'] : (!empty($passport->serial_number) ? $passport->serial_number : '-');
+            $lokasi    = !empty($input['lokasi_ruangan']) ? " ({$input['lokasi_ruangan']})" : (!empty($passport->lokasi_ruangan) ? " ({$passport->lokasi_ruangan})" : '');
 
             // 1. Notif ke Teknisi PIC / Koordinator Penerima
             $picUser = $this->db->select('nama, no_hp')
@@ -190,12 +215,12 @@ class Passport extends CI_Controller
                 ->row();
 
             if ($picUser && !empty($picUser->no_hp) && function_exists('sendWa')) {
-                $pesanPic = "*[LAPORAN KERUSAKAN QR PASSPORT]* 🛠️\n\n"
+                $pesanPic = "*[LAPORAN KERUSAKAN QR PASSPORT" . ($isJenis ? " - JENIS ALAT" : "") . "]* 🛠️\n\n"
                     . "Halo *{$picUser->nama}*,\n"
                     . "Ada laporan kerusakan alat baru dari scan QR pelanggan:\n\n"
                     . "🎫 *Kode Tiket:* {$kodeTiket}\n"
                     . ($kodeTask ? "📋 *Task Otomatis:* {$kodeTask}\n" : "⏳ *Status:* Menunggu Dispatch Teknisi\n")
-                    . "🏥 *Instansi:* {$passport->nama_instansi}{$lokasi}\n"
+                    . "🏥 *Instansi:* {$instansiText}{$lokasi}\n"
                     . "🔬 *Produk:* {$passport->nama_produk}\n"
                     . "🔢 *No. Seri:* {$snText}\n"
                     . "👤 *Pelapor:* {$input['nama_pelapor']} ({$input['no_wa']})\n"
@@ -215,10 +240,10 @@ class Passport extends CI_Controller
 
             // 2. Notif ke Grup Teknisi Medikal PT. VYM (dan VISILAB bila kategori Visilab)
             if (function_exists('sendWaGroup')) {
-                $pesanGrup = "*[TIKET SERVICE BARU - QR PASSPORT]* 🛠️\n\n"
+                $pesanGrup = "*[TIKET SERVICE BARU - QR PASSPORT" . ($isJenis ? " - JENIS ALAT" : "") . "]* 🛠️\n\n"
                     . "🎫 *Tiket:* {$kodeTiket}\n"
                     . ($kodeTask ? "📋 *Task:* {$kodeTask} (PIC: " . ($picUser->nama ?? '-') . ")\n" : "")
-                    . "🏥 *Instansi:* {$passport->nama_instansi}{$lokasi}\n"
+                    . "🏥 *Instansi:* {$instansiText}{$lokasi}\n"
                     . "🔬 *Alat:* {$passport->nama_produk} (SN: {$snText})\n"
                     . "⚠️ *Keluhan:* {$input['judul_keluhan']}\n"
                     . "👤 *Pelapor:* {$input['nama_pelapor']} ({$input['no_wa']})\n"
@@ -241,7 +266,7 @@ class Passport extends CI_Controller
             // 3. Konfirmasi ke Pelapor RS
             if (!empty($input['no_wa']) && function_exists('sendWa')) {
                 $pesanCust = "*KONFIRMASI LAPORAN KERUSAKAN ALAT* ✅\n\n"
-                    . "Yth. Bapak/Ibu *{$input['nama_pelapor']}* ({$passport->nama_instansi}),\n\n"
+                    . "Yth. Bapak/Ibu *{$input['nama_pelapor']}* ({$instansiText}),\n\n"
                     . "Laporan kendala alat Anda telah kami terima dan diteruskan ke tim teknisi PT Visi Yosindo Medikal.\n\n"
                     . "🎫 *Nomor Tiket:* {$kodeTiket}\n"
                     . "🔬 *Alat:* {$passport->nama_produk} (SN: {$snText})\n"

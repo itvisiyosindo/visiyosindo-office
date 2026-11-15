@@ -7,7 +7,7 @@ if (!function_exists('hp')) {
         return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
     }
 }
-$sizeClass = ($size === '7x4') ? 'size-7x4' : 'size-8x5';
+$sizeClass = ($size === '7x4') ? 'size-7x4' : (($size === '5x3') ? 'size-5x3' : 'size-8x5');
 $idsParam  = trim((string)$this->input->get('ids', TRUE));
 
 $buildPrintUrl = function ($newSize) use ($items, $idsParam) {
@@ -146,6 +146,59 @@ $buildPrintUrl = function ($newSize) use ($items, $idsParam) {
         .sticker-card.size-7x4 {
             width: 72mm;
             height: 44mm;
+        }
+
+        /* Ukuran Mini Kompak 5.5 x 3.5 cm (Ideal untuk pendamping Stiker Ukes Kalibrasi BAPETEN) */
+        .sticker-card.size-5x3 {
+            width: 55mm;
+            height: 35mm;
+            border-radius: 2.2mm;
+        }
+        .size-5x3 .st-header {
+            padding: 1.2mm 2.2mm;
+        }
+        .size-5x3 .st-logos-pair {
+            padding: 0.4mm 1mm;
+        }
+        .size-5x3 .st-logos-pair img {
+            height: 3.2mm;
+        }
+        .size-5x3 .st-brand-main {
+            font-size: 5.2pt;
+        }
+        .size-5x3 .st-brand-sub {
+            font-size: 4.2pt;
+        }
+        .size-5x3 .st-subbar {
+            font-size: 4.2pt;
+            padding: 0.4mm 1.8mm;
+        }
+        .size-5x3 .st-body {
+            gap: 1.8mm;
+            padding: 1.2mm 2mm;
+        }
+        .size-5x3 .qr-box {
+            width: 15mm;
+            height: 15mm;
+        }
+        .size-5x3 .qr-scan-caption {
+            font-size: 3.6pt;
+        }
+        .size-5x3 .st-product-name {
+            font-size: 6.2pt;
+            margin-bottom: 0.5mm;
+        }
+        .size-5x3 .st-meta-line {
+            font-size: 4.8pt;
+            margin-bottom: 0.2mm;
+        }
+        .size-5x3 .st-badge-verified {
+            font-size: 4pt;
+            padding: 0.35mm 1.2mm;
+        }
+        .size-5x3 .st-footer {
+            font-size: 4.5pt;
+            padding: 0.8mm 1.8mm;
         }
 
         /* Diagonal soft metallic sheen */
@@ -522,8 +575,11 @@ $buildPrintUrl = function ($newSize) use ($items, $idsParam) {
             <span style="font-size:12px; opacity:0.85; margin-left:8px;">(<?= count($items) ?> label siap cetak)</span>
         </div>
         <div class="toolbar-actions">
-            <a href="<?= hp($buildPrintUrl('8x5')) ?>" class="btn-tool <?= $size !== '7x4' ? 'active' : '' ?>">8.2 × 5.2 cm</a>
-            <a href="<?= hp($buildPrintUrl('7x4')) ?>" class="btn-tool <?= $size === '7x4' ? 'active' : '' ?>">7.2 × 4.4 cm</a>
+            <a href="<?= hp($buildPrintUrl('8x5')) ?>" class="btn-tool <?= ($size !== '7x4' && $size !== '5x3') ? 'active' : '' ?>">Standar (8.2 × 5.2 cm)</a>
+            <a href="<?= hp($buildPrintUrl('7x4')) ?>" class="btn-tool <?= $size === '7x4' ? 'active' : '' ?>">Sedang (7.2 × 4.4 cm)</a>
+            <a href="<?= hp($buildPrintUrl('5x3')) ?>" class="btn-tool <?= $size === '5x3' ? 'active' : '' ?>" style="background:rgba(16, 185, 129, 0.25); border-color:#10b981;">
+                <i class="fas fa-tag"></i> Mini Pendamping Ukes (5.5 × 3.5 cm)
+            </a>
             <button type="button" class="btn-tool btn-tool-primary" onclick="window.print()">
                 <i class="fas fa-print"></i> Print / Simpan PDF
             </button>
@@ -544,6 +600,9 @@ $buildPrintUrl = function ($newSize) use ($items, $idsParam) {
                     <div class="st-shimmer-overlay"></div>
                     <img src="<?= base_url('assets/img/passport/logo_vym.png') ?>" class="st-watermark" alt="">
 
+                    <?php
+                        $isJenis = !empty($item->tipe_passport) && $item->tipe_passport === 'jenis';
+                    ?>
                     <div>
                         <div class="st-header">
                             <div class="st-logos-pair">
@@ -553,12 +612,12 @@ $buildPrintUrl = function ($newSize) use ($items, $idsParam) {
                             </div>
                             <div class="st-header-text">
                                 <div class="st-brand-main">PT VISI YOSINDO MEDIKAL</div>
-                                <div class="st-brand-sub">VISILAB • DIGITAL ASSET PASSPORT</div>
+                                <div class="st-brand-sub"><?= $isJenis ? 'VISILAB • PASSPORT JENIS ALAT' : 'VISILAB • DIGITAL ASSET PASSPORT' ?></div>
                             </div>
                         </div>
                         <div class="st-silver-ribbon"></div>
                         <div class="st-subbar">
-                            <span>VERIFIED MEDICAL EQUIPMENT</span>
+                            <span><?= $isJenis ? 'VERIFIED EQUIPMENT TYPE' : 'VERIFIED MEDICAL EQUIPMENT' ?></span>
                             <span class="st-subbar-code"><?= hp($item->kode_passport) ?></span>
                         </div>
                     </div>
@@ -571,31 +630,42 @@ $buildPrintUrl = function ($newSize) use ($items, $idsParam) {
 
                         <div class="st-info">
                             <div class="st-product-name"><?= hp($item->nama_produk) ?></div>
-                            <div class="st-meta-line">
-                                <span class="st-meta-label">S/N:</span>
-                                <span class="st-sn-mono"><?= hp($item->serial_number ?: '-') ?></span>
-                            </div>
-                            <div class="st-meta-line">
-                                <span class="st-meta-label">Instansi:</span>
-                                <span class="st-meta-val"><?= hp($item->nama_instansi) ?></span>
-                            </div>
+                            <?php if (!empty($item->merk_tipe)): ?>
+                                <div class="st-meta-line">
+                                    <span class="st-meta-label">Model:</span>
+                                    <span class="st-meta-val"><?= hp($item->merk_tipe) ?></span>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!$isJenis): ?>
+                                <div class="st-meta-line">
+                                    <span class="st-meta-label">S/N:</span>
+                                    <span class="st-sn-mono"><?= hp($item->serial_number ?: '-') ?></span>
+                                </div>
+                                <div class="st-meta-line">
+                                    <span class="st-meta-label">Instansi:</span>
+                                    <span class="st-meta-val"><?= hp($item->nama_instansi) ?></span>
+                                </div>
+                            <?php else: ?>
+                                <div class="st-meta-line">
+                                    <span class="st-meta-label">Pendamping:</span>
+                                    <span class="st-meta-val text-primary">Stiker Ukes/Kalibrasi</span>
+                                </div>
+                            <?php endif; ?>
                             <div class="st-badge-row">
                                 <span class="st-badge-verified">
-                                    <i class="fas fa-check-circle"></i> TERVERIFIKASI RESMI
+                                    <i class="fas fa-check-circle"></i> <?= $isJenis ? 'LAYANAN SERVIS &amp; SOP' : 'TERVERIFIKASI RESMI' ?>
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     <div class="st-footer">
-                        <span class="st-f-tag">Info QR</span>
-                        <span>Izin BAPETEN</span>
+                        <span class="st-f-tag"><?= $isJenis ? 'Fasilitas QR' : 'Info QR' ?></span>
+                        <span><?= $isJenis ? 'Manual Book / SOP' : 'Izin BAPETEN' ?></span>
                         <span class="st-f-sep">|</span>
-                        <span>LUK</span>
+                        <span><?= $isJenis ? 'Kalibrasi &amp; Ukes' : 'LUK' ?></span>
                         <span class="st-f-sep">|</span>
-                        <span>Kalibrasi</span>
-                        <span class="st-f-sep">|</span>
-                        <span>Riwayat &amp; Lapor Kerusakan</span>
+                        <span>Lapor Kerusakan Cepat</span>
                     </div>
                 </div>
             <?php endforeach; ?>

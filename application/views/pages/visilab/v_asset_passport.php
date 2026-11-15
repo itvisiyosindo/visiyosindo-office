@@ -164,6 +164,11 @@ $topikList     = $sources['topik'] ?? [];
 			</div>
 
 			<div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+				<select id="filter-tipe" class="form-control form-control-sm" style="width: 170px;">
+					<option value="">Semua Tipe QR</option>
+					<option value="jenis">QR Jenis Alat (Katalog/Model)</option>
+					<option value="unit">QR Unit Fisik (S/N Tertentu)</option>
+				</select>
 				<select id="filter-kategori" class="form-control form-control-sm" style="width: 175px;">
 					<option value="">Semua Layanan</option>
 					<option value="1">Medikal / After-Sales</option>
@@ -206,8 +211,31 @@ $topikList     = $sources['topik'] ?? [];
 				<div class="modal-body">
 					<input type="hidden" name="id_passport" id="f_id_passport">
 
+					<!-- Pilihan Tipe Passport: Per Jenis Alat vs Per Unit Spesifik -->
+					<div class="p-2 mb-3 rounded border" style="background:#f1f5f9;">
+						<label class="font-weight-bold small d-block mb-1 text-dark">
+							<i class="fas fa-layer-group text-primary mr-1"></i> Tipe QR Asset Passport:
+						</label>
+						<div class="d-flex" style="gap:20px;">
+							<div class="custom-control custom-radio">
+								<input type="radio" id="tipe_passport_jenis" name="tipe_passport" value="jenis" class="custom-control-input" checked>
+								<label class="custom-control-label font-weight-bold text-dark" for="tipe_passport_jenis">
+									QR Per Jenis / Model Alat
+									<small class="d-block text-muted font-weight-normal">Bisa dicetak massal &amp; ditempel berdampingan dengan stiker ukes/kalibrasi BAPETEN.</small>
+								</label>
+							</div>
+							<div class="custom-control custom-radio">
+								<input type="radio" id="tipe_passport_unit" name="tipe_passport" value="unit" class="custom-control-input">
+								<label class="custom-control-label font-weight-bold text-dark" for="tipe_passport_unit">
+									QR Per Unit Fisik Tertentu
+									<small class="d-block text-muted font-weight-normal">Khusus 1 nomor seri alat dan 1 instansi tertentu.</small>
+								</label>
+							</div>
+						</div>
+					</div>
+
 					<!-- Tarik Data Otomatis dari Office -->
-					<div class="source-pull-box">
+					<div class="source-pull-box" id="box-tarik-office" style="display:none;">
 						<div class="font-weight-bold text-dark mb-2" style="font-size:13px;">
 							<i class="fas fa-magic text-info mr-1"></i> Tarik Data Otomatis dari Office (Opsional — tanpa TLD)
 						</div>
@@ -254,6 +282,15 @@ $topikList     = $sources['topik'] ?? [];
 						<div class="col-md-8">
 							<div class="row">
 								<div class="col-md-6 form-group">
+									<label class="font-weight-bold small">Nama Jenis / Model Alat <span class="text-danger">*</span></label>
+									<input type="text" name="nama_produk" id="f_nama_produk" class="form-control form-control-sm" placeholder="Contoh: Mobile X-Ray 100mA" required>
+								</div>
+								<div class="col-md-6 form-group">
+									<label class="font-weight-bold small">Merk / Tipe / Spesifikasi</label>
+									<input type="text" name="merk_tipe" id="f_merk_tipe" class="form-control form-control-sm" placeholder="Contoh: Siemens / Multix / VYM-XR100">
+								</div>
+
+								<div class="col-md-6 form-group box-unit-only" style="display:none;">
 									<label class="font-weight-bold small">Pelanggan Terdaftar (Master RS/Klinik)</label>
 									<select name="id_pelanggan" id="f_id_pelanggan" class="form-control form-control-sm">
 										<option value="">-- Pilih Pelanggan (atau isi instansi manual) --</option>
@@ -264,25 +301,30 @@ $topikList     = $sources['topik'] ?? [];
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-6 form-group">
-									<label class="font-weight-bold small">Nama Instansi / RS (Tampil di QR) <span class="text-danger">*</span></label>
-									<input type="text" name="nama_instansi" id="f_nama_instansi" class="form-control form-control-sm" required>
+								<div class="col-md-6 form-group box-unit-only" style="display:none;">
+									<label class="font-weight-bold small">Nama Instansi / RS (Tampil di QR) <span class="text-danger text-instansi-req">*</span></label>
+									<input type="text" name="nama_instansi" id="f_nama_instansi" class="form-control form-control-sm" placeholder="Nama Rumah Sakit / Klinik">
 								</div>
-								<div class="col-md-6 form-group">
-									<label class="font-weight-bold small">Nama Produk / Alat <span class="text-danger">*</span></label>
-									<input type="text" name="nama_produk" id="f_nama_produk" class="form-control form-control-sm" placeholder="Contoh: Mobile X-Ray 100mA" required>
-								</div>
-								<div class="col-md-6 form-group">
+								<div class="col-md-6 form-group box-unit-only" style="display:none;">
 									<label class="font-weight-bold small">Nomor Seri Produk (Serial Number)</label>
 									<input type="text" name="serial_number" id="f_serial_number" class="form-control form-control-sm" placeholder="Contoh: SN-2026-0089">
 								</div>
-								<div class="col-md-6 form-group">
-									<label class="font-weight-bold small">Merk / Tipe</label>
-									<input type="text" name="merk_tipe" id="f_merk_tipe" class="form-control form-control-sm" placeholder="Contoh: Siemens / Multix">
-								</div>
-								<div class="col-md-6 form-group">
+								<div class="col-md-6 form-group box-unit-only" style="display:none;">
 									<label class="font-weight-bold small">Lokasi / Ruangan di RS</label>
 									<input type="text" name="lokasi_ruangan" id="f_lokasi_ruangan" class="form-control form-control-sm" placeholder="Contoh: Ruang Radiologi Lt. 1">
+								</div>
+
+								<!-- Khusus QR Jenis Alat: Link Manual Book & SOP -->
+								<div class="col-md-12 form-group box-jenis-only">
+									<label class="font-weight-bold small">
+										<i class="fas fa-book-open text-primary mr-1"></i> Link Manual Book / SOP Pengoperasian (PDF / Cloud)
+									</label>
+									<input type="text" name="link_manual_book" id="f_link_manual_book" class="form-control form-control-sm" placeholder="https://drive.google.com/... atau https://...">
+									<small class="text-muted">Pihak faskes/RS dapat langsung mengunduh buku panduan resmi saat scan stiker QR.</small>
+								</div>
+								<div class="col-md-12 form-group box-jenis-only">
+									<label class="font-weight-bold small">Ringkasan Petunjuk / Deskripsi Pengoperasian Singkat</label>
+									<textarea name="deskripsi_alat" id="f_deskripsi_alat" rows="2" class="form-control form-control-sm" placeholder="Petunjuk keselamatan umum atau panduan dasar alat..."></textarea>
 								</div>
 							</div>
 						</div>
@@ -298,38 +340,40 @@ $topikList     = $sources['topik'] ?? [];
 						</div>
 					</div>
 
-					<hr class="my-2">
-					<div class="row">
-						<div class="col-md-4 form-group">
-							<label class="font-weight-bold small">Masa Aktif Izin BAPETEN</label>
-							<input type="date" name="tgl_exp_izin" id="f_tgl_exp_izin" class="form-control form-control-sm">
+					<div id="section-compliance-details" style="display:none;">
+						<hr class="my-2">
+						<div class="row">
+							<div class="col-md-4 form-group">
+								<label class="font-weight-bold small">Masa Aktif Izin BAPETEN</label>
+								<input type="date" name="tgl_exp_izin" id="f_tgl_exp_izin" class="form-control form-control-sm">
+							</div>
+							<div class="col-md-4 form-group">
+								<label class="font-weight-bold small">Masa Aktif LUK (Uji Kesesuaian)</label>
+								<input type="date" name="tgl_exp_luk" id="f_tgl_exp_luk" class="form-control form-control-sm">
+							</div>
+							<div class="col-md-4 form-group">
+								<label class="font-weight-bold small">Masa Aktif Kalibrasi Alat</label>
+								<input type="date" name="tgl_exp_kalibrasi" id="f_tgl_exp_kalibrasi" class="form-control form-control-sm">
+							</div>
 						</div>
-						<div class="col-md-4 form-group">
-							<label class="font-weight-bold small">Masa Aktif LUK (Uji Kesesuaian)</label>
-							<input type="date" name="tgl_exp_luk" id="f_tgl_exp_luk" class="form-control form-control-sm">
-						</div>
-						<div class="col-md-4 form-group">
-							<label class="font-weight-bold small">Masa Aktif Kalibrasi Alat</label>
-							<input type="date" name="tgl_exp_kalibrasi" id="f_tgl_exp_kalibrasi" class="form-control form-control-sm">
-						</div>
-					</div>
 
-					<div class="row">
-						<div class="col-md-3 form-group">
-							<label class="font-weight-bold small">No. Register Uji Terakhir</label>
-							<input type="text" name="kode_uji_terakhir" id="f_kode_uji_terakhir" class="form-control form-control-sm" placeholder="001/UKES/VISILAB/...">
-						</div>
-						<div class="col-md-3 form-group">
-							<label class="font-weight-bold small">Jenis Uji Terakhir</label>
-							<input type="text" name="jenis_uji_terakhir" id="f_jenis_uji_terakhir" class="form-control form-control-sm" placeholder="Uji Kesesuaian / Paparan">
-						</div>
-						<div class="col-md-3 form-group">
-							<label class="font-weight-bold small">Link Sertifikat Resmi</label>
-							<input type="text" name="link_sertifikat" id="f_link_sertifikat" class="form-control form-control-sm" placeholder="https://...">
-						</div>
-						<div class="col-md-3 form-group">
-							<label class="font-weight-bold small">Link Dokumen LHU</label>
-							<input type="text" name="link_lhu" id="f_link_lhu" class="form-control form-control-sm" placeholder="https://...">
+						<div class="row">
+							<div class="col-md-3 form-group">
+								<label class="font-weight-bold small">No. Register Uji Terakhir</label>
+								<input type="text" name="kode_uji_terakhir" id="f_kode_uji_terakhir" class="form-control form-control-sm" placeholder="001/UKES/VISILAB/...">
+							</div>
+							<div class="col-md-3 form-group">
+								<label class="font-weight-bold small">Jenis Uji Terakhir</label>
+								<input type="text" name="jenis_uji_terakhir" id="f_jenis_uji_terakhir" class="form-control form-control-sm" placeholder="Uji Kesesuaian / Paparan">
+							</div>
+							<div class="col-md-3 form-group">
+								<label class="font-weight-bold small">Link Sertifikat Resmi</label>
+								<input type="text" name="link_sertifikat" id="f_link_sertifikat" class="form-control form-control-sm" placeholder="https://...">
+							</div>
+							<div class="col-md-3 form-group">
+								<label class="font-weight-bold small">Link Dokumen LHU</label>
+								<input type="text" name="link_lhu" id="f_link_lhu" class="form-control form-control-sm" placeholder="https://...">
+							</div>
 						</div>
 					</div>
 
@@ -568,8 +612,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				data: null,
 				className: 'align-middle',
 				render: function(r) {
-					return '<div class="font-weight-bold text-primary">' + esc(r.nama_produk) + '</div>'
-						+ '<div class="small text-muted">S/N: <strong>' + esc(r.serial_number || '-') + '</strong> • ' + esc(r.kode_passport) + '</div>'
+					var isJenis = r.tipe_passport === 'jenis';
+					var tipeBadge = isJenis
+						? '<span class="badge badge-primary mr-1" style="font-size:10px;"><i class="fas fa-boxes mr-1"></i>Jenis Alat</span>'
+						: '<span class="badge badge-light border mr-1" style="font-size:10px;"><i class="fas fa-microchip mr-1"></i>Unit</span>';
+					return '<div>' + tipeBadge + '<strong class="text-primary">' + esc(r.nama_produk) + '</strong></div>'
+						+ '<div class="small text-muted">' + (isJenis ? 'Kode: ' + esc(r.kode_passport) : 'S/N: <strong>' + esc(r.serial_number || '-') + '</strong> • ' + esc(r.kode_passport)) + '</div>'
 						+ (r.merk_tipe ? '<div class="small text-muted">' + esc(r.merk_tipe) + '</div>' : '');
 				}
 			},
@@ -577,6 +625,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				data: null,
 				className: 'align-middle',
 				render: function(r) {
+					var isJenis = r.tipe_passport === 'jenis';
+					if (isJenis) {
+						return '<div class="font-weight-bold text-success"><i class="fas fa-tags mr-1"></i>Katalog Model / Tipe</div>'
+							+ '<div class="small text-muted">Pendamping Stiker Ukes BAPETEN</div>'
+							+ '<div class="small text-muted">Scan: ' + (r.total_scan || 0) + 'x</div>';
+					}
 					return '<div class="font-weight-bold">' + esc(r.nama_instansi) + '</div>'
 						+ (r.lokasi_ruangan ? '<div class="small text-muted"><i class="fas fa-map-marker-alt text-danger"></i> ' + esc(r.lokasi_ruangan) + '</div>' : '')
 						+ '<div class="small text-muted">Scan: ' + (r.total_scan || 0) + 'x</div>';
@@ -619,6 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	function loadData() {
 		$.getJSON(window.location.origin + '/asset_passport/data_json', {
+			tipe_passport: $('#filter-tipe').val(),
 			kategori_layanan: $('#filter-kategori').val(),
 			search: $('#filter-search').val()
 		}, function(res) {
@@ -639,6 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	loadData();
 
+	$('#filter-tipe').on('change', loadData);
 	$('#filter-kategori').on('change', loadData);
 	var searchTimer = null;
 	$('#filter-search').on('keyup', function() {
@@ -720,9 +776,33 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	});
 
+	// Toggle tampilan form berdasarkan Tipe Passport (Jenis vs Unit)
+	function applyTipePassportForm(tipe) {
+		if (tipe === 'jenis') {
+			$('.box-unit-only').hide();
+			$('#box-tarik-office').hide();
+			$('#section-compliance-details').hide();
+			$('.box-jenis-only').show();
+			$('#f_nama_instansi').prop('required', false);
+			$('.text-instansi-req').hide();
+		} else {
+			$('.box-unit-only').show();
+			$('#box-tarik-office').show();
+			$('#section-compliance-details').show();
+			$('.box-jenis-only').hide();
+			$('#f_nama_instansi').prop('required', true);
+			$('.text-instansi-req').show();
+		}
+	}
+	$('input[name="tipe_passport"]').on('change', function() {
+		applyTipePassportForm($(this).val());
+	});
+
 	$('#btn-tambah-passport').on('click', function() {
 		$('#form-passport')[0].reset();
 		$('#f_id_passport').val('');
+		$('#tipe_passport_jenis').prop('checked', true);
+		applyTipePassportForm('jenis');
 		$('#preview-foto').attr('src', '<?= base_url('assets/img/device.png') ?>');
 		$('#extra-fields-container').empty();
 		$('#modal-passport-title').html('<i class="fas fa-qrcode mr-1"></i> Buat QR Asset Passport Baru');
@@ -744,6 +824,14 @@ document.addEventListener('DOMContentLoaded', function() {
 				var d = res.data;
 				$('#form-passport')[0].reset();
 				$('#f_id_passport').val(d.id_passport);
+				var curTipe = d.tipe_passport === 'jenis' ? 'jenis' : 'unit';
+				if (curTipe === 'jenis') {
+					$('#tipe_passport_jenis').prop('checked', true);
+				} else {
+					$('#tipe_passport_unit').prop('checked', true);
+				}
+				applyTipePassportForm(curTipe);
+
 				$('#f_id_perizinan').val(d.id_perizinan || '');
 				$('#f_id_pengujian').val(d.id_pengujian || '');
 				$('#f_id_pelanggan').val(d.id_pelanggan || '');
@@ -752,6 +840,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				$('#f_nama_produk').val(d.nama_produk || '');
 				$('#f_merk_tipe').val(d.merk_tipe || '');
 				$('#f_serial_number').val(d.serial_number || '');
+				$('#f_link_manual_book').val(d.link_manual_book || '');
+				$('#f_deskripsi_alat').val(d.deskripsi_alat || '');
 				$('#f_tgl_exp_izin').val(d.tgl_exp_izin || '');
 				$('#f_tgl_exp_luk').val(d.tgl_exp_luk || '');
 				$('#f_tgl_exp_kalibrasi').val(d.tgl_exp_kalibrasi || '');

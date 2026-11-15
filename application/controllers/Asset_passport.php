@@ -47,6 +47,7 @@ class Asset_passport extends CI_Controller
         grantAccessFor('all');
 
         $filters = [
+            'tipe_passport'    => $this->input->get('tipe_passport', TRUE),
             'kategori_layanan' => $this->input->get('kategori_layanan', TRUE),
             'search'           => $this->input->get('search', TRUE)
         ];
@@ -114,6 +115,7 @@ class Asset_passport extends CI_Controller
         }
 
         $id_passport   = (int)$this->input->post('id_passport', TRUE);
+        $tipe_passport = trim((string)$this->input->post('tipe_passport', TRUE)) === 'jenis' ? 'jenis' : 'unit';
         $nama_produk   = trim((string)$this->input->post('nama_produk', TRUE));
         $nama_instansi = trim((string)$this->input->post('nama_instansi', TRUE));
         $id_pelanggan  = (int)$this->input->post('id_pelanggan', TRUE);
@@ -126,16 +128,19 @@ class Asset_passport extends CI_Controller
             }
         }
 
-        if ($nama_produk === '' && $nama_instansi === '') {
-            echo json_encode(['status' => false, 'message' => 'Nama Produk dan Nama Instansi / Pelanggan wajib diisi.']);
-            return;
+        if ($tipe_passport === 'jenis') {
+            if ($nama_instansi === '') {
+                $nama_instansi = 'Katalog Jenis Alat VYM / Visilab';
+            }
         }
-        if ($nama_instansi === '') {
-            echo json_encode(['status' => false, 'message' => 'Nama Instansi / RS wajib diisi.']);
-            return;
-        }
+
         if ($nama_produk === '') {
-            echo json_encode(['status' => false, 'message' => 'Nama Produk / Alat wajib diisi.']);
+            echo json_encode(['status' => false, 'message' => 'Nama Produk / Jenis Alat wajib diisi.']);
+            return;
+        }
+
+        if ($tipe_passport === 'unit' && $nama_instansi === '') {
+            echo json_encode(['status' => false, 'message' => 'Nama Instansi / RS wajib diisi untuk QR Unit Alat.']);
             return;
         }
 
@@ -203,6 +208,7 @@ class Asset_passport extends CI_Controller
         $myId = (int)(function_exists('sessPenggunaId') ? sessPenggunaId() : 0);
 
         $payload = [
+            'tipe_passport'      => $tipe_passport,
             'id_pelanggan'       => $id_pelanggan > 0 ? $id_pelanggan : null,
             'nama_instansi'      => $nama_instansi,
             'lokasi_ruangan'     => trim((string)$this->input->post('lokasi_ruangan', TRUE)) ?: null,
@@ -212,6 +218,8 @@ class Asset_passport extends CI_Controller
             'merk_tipe'          => trim((string)$this->input->post('merk_tipe', TRUE)) ?: null,
             'serial_number'      => trim((string)$this->input->post('serial_number', TRUE)) ?: null,
             'foto_produk'        => $fotoPath ?: null,
+            'link_manual_book'   => trim((string)$this->input->post('link_manual_book', TRUE)) ?: null,
+            'deskripsi_alat'     => trim((string)$this->input->post('deskripsi_alat', TRUE)) ?: null,
             'tgl_exp_izin'       => $this->_norm_date($this->input->post('tgl_exp_izin', TRUE)),
             'tgl_exp_luk'        => $this->_norm_date($this->input->post('tgl_exp_luk', TRUE)),
             'tgl_exp_kalibrasi'  => $this->_norm_date($this->input->post('tgl_exp_kalibrasi', TRUE)),

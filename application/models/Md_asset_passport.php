@@ -47,10 +47,11 @@ class Md_asset_passport extends CI_Model
 
         $sqlPassport = "CREATE TABLE IF NOT EXISTS `{$this->table}` (
             `id_passport` INT(11) NOT NULL AUTO_INCREMENT,
+            `tipe_passport` VARCHAR(20) DEFAULT 'unit',
             `kode_passport` VARCHAR(50) NOT NULL,
             `qr_token` VARCHAR(64) NOT NULL,
             `id_pelanggan` INT(11) DEFAULT NULL,
-            `nama_instansi` VARCHAR(255) NOT NULL,
+            `nama_instansi` VARCHAR(255) DEFAULT NULL,
             `lokasi_ruangan` VARCHAR(150) DEFAULT NULL,
             `id_perizinan` INT(11) DEFAULT NULL,
             `id_pengujian` INT(11) DEFAULT NULL,
@@ -58,6 +59,8 @@ class Md_asset_passport extends CI_Model
             `merk_tipe` VARCHAR(150) DEFAULT NULL,
             `serial_number` VARCHAR(150) DEFAULT NULL,
             `foto_produk` VARCHAR(255) DEFAULT NULL,
+            `link_manual_book` TEXT DEFAULT NULL,
+            `deskripsi_alat` TEXT DEFAULT NULL,
             `tgl_exp_izin` DATE DEFAULT NULL,
             `tgl_exp_luk` DATE DEFAULT NULL,
             `tgl_exp_kalibrasi` DATE DEFAULT NULL,
@@ -79,6 +82,7 @@ class Md_asset_passport extends CI_Model
             PRIMARY KEY (`id_passport`),
             UNIQUE KEY `uk_kode_passport` (`kode_passport`),
             UNIQUE KEY `uk_qr_token` (`qr_token`),
+            KEY `idx_tipe_passport` (`tipe_passport`),
             KEY `idx_pelanggan` (`id_pelanggan`),
             KEY `idx_perizinan` (`id_perizinan`),
             KEY `idx_pengujian` (`id_pengujian`),
@@ -125,6 +129,11 @@ class Md_asset_passport extends CI_Model
             KEY `idx_aksi_ip` (`aksi`, `ip_address`, `created_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
         $this->_execCreateTable($sqlLog);
+
+        // Auto tambah kolom baru jika tabel sudah pernah dibuat sebelumnya
+        $this->_addColumnIfMissing($this->table, 'tipe_passport', "VARCHAR(20) DEFAULT 'unit'");
+        $this->_addColumnIfMissing($this->table, 'link_manual_book', "TEXT DEFAULT NULL");
+        $this->_addColumnIfMissing($this->table, 'deskripsi_alat', "TEXT DEFAULT NULL");
 
         // Kolom relasi aman pada tabel eksisting
         if ($db->table_exists('tiket')) {
@@ -187,12 +196,12 @@ class Md_asset_passport extends CI_Model
     }
 
     /**
-     * Generate kode paspor unik: VYM-QR-YYYY-0001
+     * Generate kode paspor unik: VYM-QR-YYYY-0001 atau VYM-TYPE-001
      */
-    public function generate_kode_passport()
+    public function generate_kode_passport($tipe = 'unit')
     {
         $year = date('Y');
-        $prefix = "VYM-QR-{$year}-";
+        $prefix = ($tipe === 'jenis') ? "VYM-TYPE-" : "VYM-QR-{$year}-";
         $row = $this->db->select('kode_passport')
             ->from($this->table)
             ->like('kode_passport', $prefix, 'after')
@@ -207,7 +216,8 @@ class Md_asset_passport extends CI_Model
             $lastNum = (int)end($parts);
             $next = $lastNum + 1;
         }
-        return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+        $pad = ($tipe === 'jenis') ? 3 : 4;
+        return $prefix . str_pad((string)$next, $pad, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -227,6 +237,10 @@ class Md_asset_passport extends CI_Model
             ->join('pelanggan pl', 'pl.id_pelanggan = ap.id_pelanggan', 'left')
             ->join('pengguna pg', 'pg.pengguna_id = ap.default_teknisi_id', 'left')
             ->where('ap.status_data', 1);
+
+        if (!empty($filters['tipe_passport'])) {
+            $this->db->where('ap.tipe_passport', $filters['tipe_passport']);
+        }
 
         if (!empty($filters['kategori_layanan'])) {
             $this->db->where('ap.kategori_layanan', (int)$filters['kategori_layanan']);
@@ -721,7 +735,8 @@ class Md_asset_passport extends CI_Model
             return $id_passport;
         }
 
-        $data['kode_passport'] = $this->generate_kode_passport();
+        $tipe = !empty($data['tipe_passport']) && $data['tipe_passport'] === 'jenis' ? 'jenis' : 'unit';
+        $data['kode_passport'] = $this->generate_kode_passport($tipe);
         $data['qr_token']      = $this->generate_unique_token();
         $data['status_data']   = 1;
         $data['created_at']    = date('Y-m-d H:i:s');
@@ -818,23 +833,30 @@ class Md_asset_passport extends CI_Model
         $idTopik = !empty($passport->id_topik_default) ? (int)$passport->id_topik_default : $this->_find_default_topik_id();
         $prioritas = in_array((int)($input['prioritas'] ?? 3), [1, 2, 3, 4], true) ? (int)$input['prioritas'] : 3;
 
+        $isJenis = !empty($passport->tipe_passport) && $passport->tipe_passport === 'jenis';
+        $namaInstansi = !empty($input['nama_instansi']) ? trim((string)$input['nama_instansi']) : $passport->nama_instansi;
+        $lokasiRuangan = !empty($input['lokasi_ruangan']) ? trim((string)$input['lokasi_ruangan']) : $passport->lokasi_ruangan;
+        $serialNumber = !empty($input['serial_number']) ? trim((string)$input['serial_number']) : ($passport->serial_number ?: '-');
+
         $subject = '[QR] ' . trim((string)$input['judul_keluhan']) . ' - ' . $passport->nama_produk;
-        if (!empty($passport->serial_number)) {
-            $subject .= ' (SN: ' . $passport->serial_number . ')';
+        if (!empty($serialNumber) && $serialNumber !== '-') {
+            $subject .= ' (SN: ' . $serialNumber . ')';
         }
 
-        $deskripsiFull = "Laporan Kerusakan via Scan QR Asset Passport ({$passport->kode_passport})\n"
-            . "Instansi: {$passport->nama_instansi}" . (!empty($passport->lokasi_ruangan) ? " ({$passport->lokasi_ruangan})" : "") . "\n"
-            . "Produk: {$passport->nama_produk}\n"
-            . "Nomor Seri: " . ($passport->serial_number ?: '-') . "\n"
+        $deskripsiFull = "Laporan Kerusakan via Scan QR Asset Passport ({$passport->kode_passport}" . ($isJenis ? " - Jenis Alat" : "") . ")\n"
+            . "Instansi / RS: {$namaInstansi}" . (!empty($lokasiRuangan) ? " ({$lokasiRuangan})" : "") . "\n"
+            . "Produk / Tipe: {$passport->nama_produk}" . (!empty($passport->merk_tipe) ? " [{$passport->merk_tipe}]" : "") . "\n"
+            . "Nomor Seri Alat: {$serialNumber}\n"
             . "Pelapor: {$input['nama_pelapor']} (WA: {$input['no_wa']})\n\n"
-            . "Keluhan:\n{$input['deskripsi']}";
+            . "Keluhan / Gejala Kerusakan:\n{$input['deskripsi']}";
+
+        $idPelanggan = !empty($input['id_pelanggan']) ? (int)$input['id_pelanggan'] : (!empty($passport->id_pelanggan) ? (int)$passport->id_pelanggan : null);
 
         $tiketData = [
             'kode_tiket'         => $kodeTiket,
             'subject'            => substr($subject, 0, 250),
-            'id_pelanggan'       => !empty($passport->id_pelanggan) ? (int)$passport->id_pelanggan : null,
-            'pelanggan'          => $passport->nama_instansi,
+            'id_pelanggan'       => $idPelanggan,
+            'pelanggan'          => $namaInstansi ?: 'Pelanggan Umum',
             'nama_cp'            => $input['nama_pelapor'],
             'nomer_cp'           => $input['no_wa'],
             'id_pembuat'         => $coordinatorId, // Pembuat sistem atas nama koordinator

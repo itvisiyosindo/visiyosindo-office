@@ -666,13 +666,15 @@ if (!function_exists('h')) {
             </div>
         <?php else: ?>
             <?php
+            $isJenis   = !empty($passport->tipe_passport) && $passport->tipe_passport === 'jenis';
             $compItems = $passport->compliance_summary['items'] ?? [];
-            $hasDocs   = !empty($passport->link_lhu) || !empty($passport->link_sertifikat);
+            $hasDocs   = !empty($passport->link_lhu) || !empty($passport->link_sertifikat) || !empty($passport->link_manual_book);
             $hasOfficeInfo = !empty($passport->kode_uji_terakhir)
                 || !empty($passport->jenis_uji_terakhir)
                 || !empty($passport->live_status_perizinan)
                 || !empty($passport->live_uji_status_label)
-                || !empty($passport->info_tambahan);
+                || !empty($passport->info_tambahan)
+                || !empty($passport->deskripsi_alat);
             ?>
 
             <!-- 1. Identitas & Foto Produk -->
@@ -691,15 +693,28 @@ if (!function_exists('h')) {
                             <?php endif; ?>
                         </div>
                         <div style="flex:1; min-width:0;">
+                            <div class="mb-1">
+                                <?php if ($isJenis): ?>
+                                    <span class="badge badge-primary px-2 py-1" style="font-size:10.5px; font-weight:700; letter-spacing:0.4px;">
+                                        <i class="fas fa-boxes mr-1"></i> PASSPORT JENIS ALAT
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge badge-info px-2 py-1" style="font-size:10.5px; font-weight:700; letter-spacing:0.4px;">
+                                        <i class="fas fa-microchip mr-1"></i> PASSPORT UNIT ALAT
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                             <h1 class="product-name"><?= h($passport->nama_produk) ?></h1>
                             <?php if (!empty($passport->merk_tipe)): ?>
                                 <div class="product-meta"><?= h($passport->merk_tipe) ?></div>
                             <?php endif; ?>
                             <div>
-                                <span class="sn-pill">
-                                    <i class="fas fa-barcode"></i>
-                                    S/N: <?= h($passport->serial_number ?: '-') ?>
-                                </span>
+                                <?php if (!$isJenis): ?>
+                                    <span class="sn-pill">
+                                        <i class="fas fa-barcode"></i>
+                                        S/N: <?= h($passport->serial_number ?: '-') ?>
+                                    </span>
+                                <?php endif; ?>
                                 <span class="sn-pill">
                                     <i class="fas fa-id-badge"></i>
                                     <?= h($passport->kode_passport) ?>
@@ -708,22 +723,40 @@ if (!function_exists('h')) {
                         </div>
                     </div>
 
-                    <div class="instansi-grid">
-                        <div class="instansi-item">
-                            <span>Instansi / Fasyankes</span>
-                            <strong><i class="fas fa-hospital text-primary mr-1"></i> <?= h($passport->nama_instansi) ?></strong>
-                        </div>
-                        <?php if (!empty($passport->lokasi_ruangan)): ?>
+                    <?php if (!$isJenis): ?>
+                        <div class="instansi-grid">
                             <div class="instansi-item">
-                                <span>Lokasi / Ruangan</span>
-                                <strong><i class="fas fa-map-marker-alt text-primary mr-1"></i> <?= h($passport->lokasi_ruangan) ?></strong>
+                                <span>Instansi / Fasyankes</span>
+                                <strong><i class="fas fa-hospital text-primary mr-1"></i> <?= h($passport->nama_instansi) ?></strong>
                             </div>
-                        <?php endif; ?>
-                    </div>
+                            <?php if (!empty($passport->lokasi_ruangan)): ?>
+                                <div class="instansi-item">
+                                    <span>Lokasi / Ruangan</span>
+                                    <strong><i class="fas fa-map-marker-alt text-primary mr-1"></i> <?= h($passport->lokasi_ruangan) ?></strong>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-light border mt-3 mb-0" style="font-size:12.5px; border-radius:10px; background:#f8fafc;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shield-alt text-success fa-2x mr-3"></i>
+                                <div>
+                                    <strong class="text-dark d-block">Peralatan Terdaftar &amp; Didukung Resmi</strong>
+                                    <span class="text-muted">Didukung oleh <strong>PT Visi Yosindo Medikal</strong> &amp; <strong>Visilab</strong> (Uji Kesesuaian BAPETEN &amp; Kalibrasi).</span>
+                                </div>
+                            </div>
+                            <?php if (!empty($passport->deskripsi_alat)): ?>
+                                <div class="mt-2 pt-2 border-top text-dark" style="font-size:12px; line-height:1.5;">
+                                    <?= nl2br(h($passport->deskripsi_alat)) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </section>
 
-            <!-- 2. Masa Aktif Kepatuhan (Izin BAPETEN, LUK, Kalibrasi - Tanpa TLD) -->
+            <!-- 2. Masa Aktif Kepatuhan (Hanya ditampilkan untuk unit spesifik yang punya data) -->
+            <?php if (!$isJenis && !empty($compItems)): ?>
             <section class="p-card">
                 <div class="p-card-body">
                     <h2 class="p-card-title">
@@ -745,6 +778,7 @@ if (!function_exists('h')) {
                     <?php endforeach; ?>
                 </div>
             </section>
+            <?php endif; ?>
 
             <!-- 3. Informasi & Dokumen Resmi (Non-TLD) -->
             <?php if ($hasOfficeInfo || $hasDocs): ?>
@@ -793,6 +827,11 @@ if (!function_exists('h')) {
 
                         <?php if ($hasDocs): ?>
                             <div class="doc-btn-row">
+                                <?php if (!empty($passport->link_manual_book)): ?>
+                                    <a href="<?= h($passport->link_manual_book) ?>" target="_blank" rel="noopener" class="btn-doc" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">
+                                        <i class="fas fa-book-open"></i> Unduh Manual Book / SOP
+                                    </a>
+                                <?php endif; ?>
                                 <?php if (!empty($passport->link_sertifikat)): ?>
                                     <a href="<?= h($passport->link_sertifikat) ?>" target="_blank" rel="noopener" class="btn-doc">
                                         <i class="fas fa-certificate"></i> Unduh Sertifikat Resmi
@@ -899,9 +938,31 @@ if (!function_exists('h')) {
                             <input type="text" name="website_url" class="honeypot-field" tabindex="-1" autocomplete="off">
 
                             <div class="alert alert-light border mb-3" style="font-size:12.5px; border-radius:10px;">
-                                <strong><?= h($passport->nama_produk) ?></strong><br>
-                                <span class="text-muted">S/N: <?= h($passport->serial_number ?: '-') ?> • <?= h($passport->nama_instansi) ?></span>
+                                <strong><?= h($passport->nama_produk) ?></strong> <?= !empty($passport->merk_tipe) ? '— ' . h($passport->merk_tipe) : '' ?><br>
+                                <?php if (!$isJenis): ?>
+                                    <span class="text-muted">S/N: <?= h($passport->serial_number ?: '-') ?> • <?= h($passport->nama_instansi) ?></span>
+                                <?php else: ?>
+                                    <span class="badge badge-primary">QR Jenis / Model Alat</span>
+                                    <span class="text-muted ml-1">Silakan lengkapi nama Rumah Sakit &amp; Serial Number di bawah.</span>
+                                <?php endif; ?>
                             </div>
+
+                            <?php if ($isJenis): ?>
+                                <div class="form-row">
+                                    <div class="form-group col-12">
+                                        <label class="font-weight-bold small">Nama Instansi / Rumah Sakit / Klinik <span class="text-danger">*</span></label>
+                                        <input type="text" name="nama_instansi" class="form-control" placeholder="Contoh: RSUD Pasar Minggu / RS Hermina" required>
+                                    </div>
+                                    <div class="form-group col-md-6 col-12">
+                                        <label class="font-weight-bold small">Lokasi / Ruangan</label>
+                                        <input type="text" name="lokasi_ruangan" class="form-control" placeholder="Contoh: Ruang Radiologi 1 / IGD">
+                                    </div>
+                                    <div class="form-group col-md-6 col-12">
+                                        <label class="font-weight-bold small">Nomor Seri Alat (S/N)</label>
+                                        <input type="text" name="serial_number" class="form-control" placeholder="Lihat stiker ukes di sebelah (opsional)">
+                                    </div>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="form-group">
                                 <label class="font-weight-bold small">Nama Pelapor <span class="text-danger">*</span></label>
