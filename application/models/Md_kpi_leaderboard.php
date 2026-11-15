@@ -703,7 +703,7 @@ class Md_kpi_leaderboard extends CI_Model
             }
 
             if ($skorMutu !== null) {
-                $skorAkhirRaw = round(($skorMutu * 0.80) + ($skorProd * 0.20), 1);
+                $skorAkhirRaw = round(($skorMutu * 0.85) + ($skorProd * 0.15), 1);
                 $skorAkhir    = min($skorAkhirRaw, (float)$spCap);
                 $isCappedSp   = ($skorAkhirRaw > (float)$spCap);
             } else {

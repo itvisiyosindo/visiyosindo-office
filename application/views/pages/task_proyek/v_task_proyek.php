@@ -2889,7 +2889,7 @@ $namaBulanList = [
                                     <?php else: ?>
                                         <span class="tp-lb-chip"><i class="fas fa-sync-alt tp-lb-spin-slow"></i> Reset Per Semester</span>
                                     <?php endif; ?>
-                                    <span class="tp-lb-chip"><i class="fas fa-balance-scale"></i> 80% Mutu + 20% Volume</span>
+                                    <span class="tp-lb-chip" style="background: rgba(56, 189, 248, 0.22); border-color: rgba(125, 211, 252, 0.45);"><i class="fas fa-balance-scale"></i> 85% Mutu + 15% Volume</span>
                                 </div>
                                 <h4 class="font-weight-bold mb-1" style="color: #ffffff; letter-spacing: -0.3px;">
                                     <i class="fas fa-trophy text-warning mr-2 tp-lb-trophy-anim"></i>Klasemen Performa Karyawan Terbaik
@@ -2905,11 +2905,16 @@ $namaBulanList = [
                                     </span>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
-                                <span class="badge badge-success px-2 py-1" style="border-radius: 8px;">Grade A &ge; 85</span>
-                                <span class="badge badge-primary px-2 py-1" style="border-radius: 8px;">Grade B 75–84</span>
-                                <span class="badge badge-warning px-2 py-1" style="border-radius: 8px;">Grade C 65–74</span>
-                                <span class="badge badge-danger px-2 py-1" style="border-radius: 8px;">Grade D &lt; 65</span>
+                            <div class="d-flex flex-column align-items-md-end" style="gap: 8px;">
+                                <button type="button" class="btn btn-sm btn-light font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalPanduanKpi" style="border-radius: 999px; font-size: 12px; padding: 6px 16px; color: #0b1d39; border: 1px solid #facc15; background: #fffbe8;">
+                                    <i class="fas fa-question-circle text-warning mr-1"></i> Aturan & Simulasi KPI
+                                </button>
+                                <div class="d-flex align-items-center flex-wrap" style="gap: 6px; font-size: 11px;">
+                                    <span class="badge badge-success px-2 py-1" style="border-radius: 8px;">Grade A &ge; 85</span>
+                                    <span class="badge badge-primary px-2 py-1" style="border-radius: 8px;">Grade B 75–84</span>
+                                    <span class="badge badge-warning px-2 py-1" style="border-radius: 8px;">Grade C 65–74</span>
+                                    <span class="badge badge-danger px-2 py-1" style="border-radius: 8px;">Grade D &lt; 65</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3093,7 +3098,7 @@ $namaBulanList = [
                                         </th>
                                         <th class="text-center align-middle" style="min-width: 135px; background: #ecfdf5 !important;">
                                             <div class="text-success font-weight-bold">Skor Akhir</div>
-                                            <small class="text-muted" style="font-size: 9.5px;">80% Mutu + 20% Vol</small>
+                                            <small class="text-muted" style="font-size: 9.5px;">85% Mutu + 15% Vol</small>
                                         </th>
                                         <th class="text-center align-middle" style="min-width: 130px;">Rating Agregat</th>
                                         <th class="text-center align-middle" style="min-width: 120px;">Grade Kinerja</th>
@@ -3928,6 +3933,190 @@ $namaBulanList = [
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= MODAL ATURAN & SIMULASI SISTEM PENILAIAN LEADERBOARD KPI ================= -->
+<div class="modal fade" id="modalPanduanKpi" tabindex="-1" role="dialog" aria-labelledby="modalPanduanKpiLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document" style="max-width: 900px;">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 15px 35px rgba(15,23,42,0.18);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0b1d39 0%, #1e3a8a 100%); color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 18px 24px;">
+                <div class="d-flex align-items-center" style="gap: 12px;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(250, 204, 21, 0.2); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(250, 204, 21, 0.4);">
+                        <i class="fas fa-balance-scale text-warning" style="font-size: 20px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title font-weight-bold mb-0" id="modalPanduanKpiLabel" style="color: #ffffff; font-size: 17px;">
+                            Panduan Lengkap & Aturan Sistem Penilaian Leaderboard KPI
+                        </h5>
+                        <small style="color: #cbd5e1; font-size: 12px;">Transparan, Objektif, dan Berkeadilan &bull; PT Visi Yosindo Medika</small>
+                    </div>
+                </div>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.85; text-shadow: none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4" style="background: #f8fafc; font-size: 13.5px; line-height: 1.6; color: #334155;">
+                
+                <!-- 1. Ringkasan Formula Utama -->
+                <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center mb-2" style="gap: 8px;">
+                            <span class="badge badge-primary px-2 py-1" style="font-size: 11px;">RUMUS UTAMA</span>
+                            <h6 class="font-weight-bold text-dark mb-0" style="font-size: 15px;">Kombinasi Mutu (85%) & Volume (15%)</h6>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            Skor akhir tidak hanya menilai seberapa bagus nilai Anda (kualitas), tetapi juga mengapresiasi keaktifan dan kedisiplinan kerja Anda (kuantitas):
+                        </p>
+                        <div class="p-3 rounded text-center font-weight-bold" style="background: #f0fdf4; border: 1.5px dashed #22c55e; color: #166534; font-size: 15px;">
+                            Skor Akhir KPI = (Skor Mutu &times; 85%) + (Skor Volume &times; 15%)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Pembagian Bobot Pilar Mutu -->
+                <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-body p-3 p-md-4">
+                        <h6 class="font-weight-bold text-dark mb-3" style="font-size: 15px;">
+                            <i class="fas fa-layer-group text-primary mr-1"></i> Pembagian Bobot Mutu (Kualitas 85%)
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm mb-0 text-center" style="font-size: 12.5px;">
+                                <thead class="bg-light text-dark font-weight-bold">
+                                    <tr>
+                                        <th class="text-left" style="width: 28%;">Pilar Penilaian</th>
+                                        <th style="width: 18%;">Karyawan Reguler</th>
+                                        <th style="width: 22%;">Bebas PK (HR/GA/Dir)</th>
+                                        <th class="text-left">Cara Pengukuran Mutu</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-left font-weight-bold"><i class="fas fa-tasks text-primary mr-1"></i> Task Proyek</td>
+                                        <td><span class="badge badge-primary px-2 py-1">40%</span></td>
+                                        <td><span class="badge badge-primary px-2 py-1">50%</span></td>
+                                        <td class="text-left">Rating bintang atasan (⭐1–5 dikonversi ke skala 20–100).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left font-weight-bold"><i class="fas fa-clipboard-check text-info mr-1"></i> Laporan Mingguan</td>
+                                        <td><span class="badge badge-info px-2 py-1">20%</span></td>
+                                        <td><span class="badge badge-info px-2 py-1">20%</span></td>
+                                        <td class="text-left">Nilai evaluasi atasan (0–100). <em>Jika belum diisi/dinilai dihitung 0</em>.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left font-weight-bold"><i class="fas fa-book-reader text-teal mr-1" style="color: #0d9488;"></i> Product Knowledge (PK)</td>
+                                        <td><span class="badge text-white px-2 py-1" style="background:#0d9488;">10%</span></td>
+                                        <td><span class="badge badge-light text-muted px-2 py-1 border">Bebas (0%)</span></td>
+                                        <td class="text-left">Rata-rata nilai ujian kuis pemahaman produk.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left font-weight-bold"><i class="fas fa-user-clock text-primary mr-1"></i> Absensi Kehadiran</td>
+                                        <td><span class="badge badge-secondary px-2 py-1">15%</span></td>
+                                        <td><span class="badge badge-secondary px-2 py-1">15%</span></td>
+                                        <td class="text-left">Persentase masuk tepat waktu. <strong>Terlambat memotong nilai pilar absensi</strong>.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left font-weight-bold"><i class="fas fa-star text-indigo mr-1" style="color: #6366f1;"></i> Evaluasi Semester</td>
+                                        <td><span class="badge text-white px-2 py-1" style="background:#6366f1;">15%</span></td>
+                                        <td><span class="badge text-white px-2 py-1" style="background:#6366f1;">15%</span></td>
+                                        <td class="text-left">Nilai evaluasi kinerja akhir semester (rahasia).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Bagaimana Volume (15%) Dihitung? -->
+                <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-body p-3 p-md-4">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 15px;">
+                            <i class="fas fa-chart-line text-success mr-1"></i> Apa itu Skor Volume (Produktivitas 15%)?
+                        </h6>
+                        <p class="text-muted small mb-2">
+                            Skor Volume mengukur seberapa banyak Anda memenuhi target kuantitas kerja:
+                        </p>
+                        <div class="row" style="row-gap: 10px;">
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded bg-light small">
+                                    <strong>&bull; Volume Task Proyek:</strong> Target 2 task selesai per semester (1 per bulan). Selesai 1 task = 50%, selesai &ge;2 task = 100%.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded bg-light small">
+                                    <strong>&bull; Volume Laporan:</strong> Target 120 poin aktivitas laporan per semester (20 poin per bulan). Semakin rajin input laporan, volume mendekati 100%.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded bg-light small">
+                                    <strong>&bull; Volume Kuis PK:</strong> Target minimal mengikuti 1 kali kuis PK (&ge;1 kuis = 100%).
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded bg-light small">
+                                    <strong>&bull; Volume Absensi:</strong> Rasio total hari kehadiran terhadap total hari kerja resmi (100% jika hadir penuh).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Studi Kasus Riil (Kenapa Si A Bisa Di Atas Si B?) -->
+                <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-body p-3 p-md-4">
+                        <h6 class="font-weight-bold text-dark mb-3" style="font-size: 15px;">
+                            <i class="fas fa-lightbulb text-warning mr-1"></i> Studi Kasus Riil & Contoh Perhitungan
+                        </h6>
+                        
+                        <!-- Case 1 -->
+                        <div class="p-3 mb-3 rounded border-left" style="border-left: 4px solid #0284c7 !important; background: #f0f9ff;">
+                            <h6 class="font-weight-bold text-primary mb-1" style="font-size: 13.5px;">Kasus 1: Nilai Laporan Tinggi vs Kehadiran & Volume Task (Pak Deni vs Bu Yolanda)</h6>
+                            <p class="small text-muted mb-2">
+                                <strong>Bu Yolanda (GM):</strong> Nilai Mutu Laporan 95.0, Kuis PK 97.5 (Mutu Sangat Tinggi = 96.6). Namun, baru menyelesaikan 1 Task (Volume task 50%) dan ada 8 kali terlambat absensi (Nilai Absensi 88.8, Volume Total = 70%).<br>
+                                <strong>Pak Deni (Medical Engineer):</strong> Nilai Mutu Laporan 83.2, Kuis 92.5 (Mutu = 95.0). Namun, sudah menyelesaikan 2 Task (Volume task 100%) dan hanya 2 kali telat (Nilai Absensi 98.8, Volume Total = 79%).
+                            </p>
+                            <div class="small bg-white p-2 rounded border">
+                                <strong>Kalkulasi dengan Skema 85% Mutu + 15% Volume:</strong><br>
+                                &bull; Bu Yolanda: (96.6 &times; 0.85) + (70.0 &times; 0.15) = 82.11 + 10.50 = <strong>92.6</strong><br>
+                                &bull; Pak Deni: (95.0 &times; 0.85) + (79.0 &times; 0.15) = 80.75 + 11.85 = <strong>92.6</strong><br>
+                                <span class="text-success font-weight-bold">&rarr; Keduanya seimbang! Kualitas manajerial Bu Yolanda diapresiasi tinggi, dan kerajinan teknis Pak Deni tetap dihargai adil.</span>
+                            </div>
+                        </div>
+
+                        <!-- Case 2 -->
+                        <div class="p-3 rounded border-left" style="border-left: 4px solid #eab308 !important; background: #fefce8;">
+                            <h6 class="font-weight-bold text-dark mb-1" style="font-size: 13.5px;">Kasus 2: Kenapa Laporan yang Belum Diisi Tidak Boleh Masuk Juara 1?</h6>
+                            <p class="small text-muted mb-1">
+                                Jika seorang karyawan belum mengisi laporan mingguan sama sekali, pilar laporannya otomatis <strong>bernilai 0</strong> dan berstatus <strong>Parsial</strong>. Karyawan yang rajin mengisi laporan mingguan dan dinilai oleh atasan diprioritaskan di atas karyawan yang laporannya kosong.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Plafon SP & Grade -->
+                <div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-body p-3 p-md-4">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 15px;">
+                            <i class="fas fa-shield-alt text-danger mr-1"></i> Plafon Surat Peringatan (SP Cap)
+                        </h6>
+                        <p class="text-muted small mb-2">
+                            Karyawan dengan SP aktif memiliki batasan maksimal skor akhir, berapapun nilai kinerjanya:
+                        </p>
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <span class="badge badge-success px-3 py-2" style="font-size: 12px;">SP 0: Maks 100%</span>
+                            <span class="badge badge-warning px-3 py-2 text-dark" style="font-size: 12px;">SP 1: Maks 80%</span>
+                            <span class="badge text-white px-3 py-2" style="background:#ea580c; font-size: 12px;">SP 2: Maks 60%</span>
+                            <span class="badge badge-danger px-3 py-2" style="font-size: 12px;">SP 3: Maks 40%</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer bg-light" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding: 12px 24px;">
+                <button type="button" class="btn btn-secondary font-weight-bold" data-dismiss="modal" style="border-radius: 8px;">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
