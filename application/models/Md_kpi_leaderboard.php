@@ -651,7 +651,7 @@ class Md_kpi_leaderboard extends CI_Model
                 if ($pd['prod'] !== null) {
                     $prodWeightSum += $pd['weight'];
                 }
-                if ($pd['routine']) {
+                if ($pd['routine'] && (!isset($pd['is_real_graded']) || $pd['is_real_graded'])) {
                     $routineActive++;
                 }
             }
