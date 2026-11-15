@@ -2281,22 +2281,24 @@ class Laporan extends CI_Controller
             return (int)$jobs[0]->id;
         };
 
-        // Pemetaan target jobdesk untuk masing-masing hari
-        $jobSenin = $findJobId(['aplikasi', 'sistem', 'web', 'program', 'develop', 'it', 'software']);
-        $jobSelasa = $findJobId(['riset', 'konsep', 'analisis', 'kebutuhan', 'aplikasi', 'sistem']);
-        $jobRabu = $findJobId(['desain', 'ui', 'ux', 'mockup', 'presentasi', 'sistem', 'aplikasi']);
-        $jobKamis = $findJobId(['hardware', 'troubleshoot', 'komputer', 'perangkat', 'pemeliharaan', 'support', 'jaringan']);
-        $jobJumat = $findJobId(['bug', 'debug', 'maintenance', 'perbaikan', 'troubleshoot', 'aplikasi', 'sistem']);
+        // Pemetaan target jobdesk berdasarkan fokus pekerjaan
+        $jobDev = $findJobId(['aplikasi', 'sistem', 'web', 'program', 'develop', 'software', 'it']);
+        $jobRiset = $findJobId(['riset', 'konsep', 'analisis', 'kebutuhan', 'aplikasi', 'sistem']);
+        $jobDesain = $findJobId(['desain', 'ui', 'ux', 'mockup', 'presentasi', 'sistem']);
+        $jobSupport = $findJobId(['hardware', 'troubleshoot', 'komputer', 'perangkat', 'pemeliharaan', 'support', 'jaringan']);
+        $jobBugFix = $findJobId(['bug', 'debug', 'maintenance', 'perbaikan', 'troubleshoot', 'aplikasi']);
+        $jobAdmin = $findJobId(['administrasi', 'dokumen', 'laporan', 'arsip', 'surat', 'it']);
 
-        // 3. Susun data laporan mingguan 9 - 13 November 2026
+        // 3. Susun data laporan mingguan 9 - 13 November 2026 (Dipecah per item aktivitas)
         $entries = [
+            // --- SENIN, 09 November 2026 ---
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobSenin,
+                'id_job' => $jobDev,
                 'tanggal' => '2026-11-09',
-                'progress' => 'Pengembangan integrasi Task Proyek otomatis ke modul Sasaran Mutu dan Audit Kinerja internal, implementasi filter jobdesk per jabatan, serta optimasi query loading instan.',
+                'progress' => 'Pengembangan integrasi otomatis penugasan Task Proyek langsung ke modul Sasaran Mutu dan Audit Kinerja.',
                 'status_pekerjaan' => 'SELESAI',
-                'ket_hasil' => 'Fitur sinkronisasi otomatis task proyek ke sasaran mutu aktif dan query audit kinerja berjalan instan tanpa kendala.',
+                'ket_hasil' => 'Penyelesaian task proyek otomatis tersinkronisasi ke sasaran mutu dan bukti link dokumen Google Drive.',
                 'pihak' => 'TIDAK ADA',
                 'keterangan' => '',
                 'pencapaian' => '1',
@@ -2305,11 +2307,39 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobSelasa,
+                'id_job' => $jobDev,
+                'tanggal' => '2026-11-09',
+                'progress' => 'Implementasi auto-filter jobdesk per jabatan pengguna serta fitur import data sasaran mutu dari file Excel dan Google Sheets.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Filter jabatan aktif otomatis dan import data sasaran mutu berhasil diproses tanpa kendala.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobDev,
+                'tanggal' => '2026-11-09',
+                'progress' => 'Optimasi query database pada modul audit kinerja untuk peningkatan performa kecepatan akses halaman.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Loading halaman audit kinerja meningkat signifikan dari beberapa detik menjadi instan.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+
+            // --- SELASA, 10 November 2026 ---
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobRiset,
                 'tanggal' => '2026-11-10',
-                'progress' => 'Melakukan persiapan, riset kebutuhan, dan pengembangan konsep Visilab Equipment Passport serta menyiapkan kebutuhan desain dan identitas QR Code aset fisik.',
+                'progress' => 'Melakukan persiapan, riset kebutuhan fungsional, dan pengembangan konsep Visilab Equipment Passport.',
                 'status_pekerjaan' => 'SELESAI',
-                'ket_hasil' => 'Konsep alur sistem paspor aset digital selesai dirumuskan dan struktur format identitas QR Code alat kesehatan siap diimplementasikan.',
+                'ket_hasil' => 'Arsitektur dan alur kerja paspor digital alat kesehatan selesai dirumuskan.',
                 'pihak' => 'TIDAK ADA',
                 'keterangan' => '',
                 'pencapaian' => '1',
@@ -2318,11 +2348,26 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobRabu,
+                'id_job' => $jobRiset,
+                'tanggal' => '2026-11-10',
+                'progress' => 'Menyiapkan rancangan kebutuhan desain dan identitas penomoran QR Code aset fisik alat kesehatan.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Format stiker fisik QR Code dan struktur URL scan publik berhasil ditentukan.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+
+            // --- RABU, 11 November 2026 ---
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobDesain,
                 'tanggal' => '2026-11-11',
-                'progress' => 'Membuat mockup UI/UX Visilab Equipment Passport, merancang tampilan paspor digital alat kesehatan, menyusun materi presentasi untuk manajemen beserta narasi penjelasan manfaat sistem.',
+                'progress' => 'Merancang mockup antarmuka UI/UX Visilab Equipment Passport dan tampilan paspor digital alat kesehatan.',
                 'status_pekerjaan' => 'SELESAI',
-                'ket_hasil' => 'Mockup UI/UX paspor digital selesai dirancang responsif dan dokumen slide presentasi manajemen selesai disusun.',
+                'ket_hasil' => 'Prototipe tampilan UI/UX paspor digital alat kesehatan selesai dirancang dengan layout modern dan responsif.',
                 'pihak' => 'TIDAK ADA',
                 'keterangan' => '',
                 'pencapaian' => '1',
@@ -2331,11 +2376,39 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobKamis,
+                'id_job' => $jobDesain,
+                'tanggal' => '2026-11-11',
+                'progress' => 'Menyusun materi dan slide presentasi teknis pengenalan inovasi sistem paspor aset untuk manajemen.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Dokumen materi presentasi inovasi paspor aset siap dipaparkan ke jajaran manajemen.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobDesain,
+                'tanggal' => '2026-11-11',
+                'progress' => 'Menyiapkan narasi penjelasan manfaat sistem, analisis mitigasi kendala, dan koordinasi teknis pelaksanaan implementasi.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Poin-poin narasi manfaat efisiensi sistem dan mitigasi teknis selesai dipetakan.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+
+            // --- KAMIS, 12 November 2026 ---
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobSupport,
                 'tanggal' => '2026-11-12',
-                'progress' => 'Melakukan troubleshooting perangkat PC dan laptop kerja staf operasional, penyesuaian dokumen Jobdesk Security pada sistem, dan pembubuhan tanda tangan dokumen BAP perusahaan.',
+                'progress' => 'Melakukan troubleshooting perangkat hardware PC dan laptop kerja staf operasional kantor.',
                 'status_pekerjaan' => 'SELESAI',
-                'ket_hasil' => 'Perangkat PC/laptop staf berfungsi normal kembali dan kelengkapan administrasi dokumen jobdesk security tervalidasi.',
+                'ket_hasil' => 'Kendala pada PC dan laptop staf berhasil diperbaiki dan perangkat dapat digunakan kembali secara normal.',
                 'pihak' => 'TIDAK ADA',
                 'keterangan' => '',
                 'pencapaian' => '1',
@@ -2344,35 +2417,83 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobJumat,
-                'tanggal' => '2026-11-13',
-                'progress' => 'Melakukan debugging dan optimasi pengambilan data AJAX customer pada form CRM / Funnel, perbaikan validasi form Calon Pelanggan, dan konversi dokumen PDF pendukung.',
+                'id_job' => $jobAdmin,
+                'tanggal' => '2026-11-12',
+                'progress' => 'Melakukan pemeliharaan dan penyesuaian dokumen Jobdesk Security pada sistem kepegawaian (termasuk kelengkapan KTA).',
                 'status_pekerjaan' => 'SELESAI',
-                'ket_hasil' => 'Proses loading dropdown customer kembali cepat responsif dan form calon pelanggan berhasil menyimpan data tanpa error.',
+                'ket_hasil' => 'Dokumen jobdesk security dan berkas KTA atas nama Muammar Alfha Azahari berhasil disesuaikan dan tervalidasi.',
                 'pihak' => 'TIDAK ADA',
                 'keterangan' => '',
                 'pencapaian' => '1',
                 'jenis' => 'JOBDESK RUTIN',
                 'status' => 1
             ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobAdmin,
+                'tanggal' => '2026-11-12',
+                'progress' => 'Pengelolaan berkas administrasi dan pembubuhan tanda tangan elektronik pada dokumen Berita Acara (BAP) perusahaan.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Dokumen Berita Acara (BAP) bertanda tangan selesai diproses dan terarsip rapi.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+
+            // --- JUMAT, 13 November 2026 ---
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobBugFix,
+                'tanggal' => '2026-11-13',
+                'progress' => 'Debugging alur AJAX dan parsing data customer pada dropdown form CRM / Funnel untuk mengatasi proses loading lambat.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Proses pengambilan data AJAX customer kembali optimal dan loading dropdown berjalan cepat.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobBugFix,
+                'tanggal' => '2026-11-13',
+                'progress' => 'Perbaikan validasi form Calon Pelanggan (pengecekan field wajib) dan optimasi relasi LEFT JOIN database agar data tersimpan selalu muncul di tabel.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Form calon pelanggan berhasil memvalidasi input kosong dan data yang tersimpan langsung tampil di tabel.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobAdmin,
+                'tanggal' => '2026-11-13',
+                'progress' => 'Pengelolaan, kompresi, dan konversi dokumen digital PDF pendukung operasional kantor.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'File dokumen PDF berhasil dikonversi dan terkompresi dengan ukuran optimal tanpa mengurangi keterbacaan.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ]
         ];
 
+        // Hapus data laporan Dimas pada rentang minggu 9 - 13 Nov 2026 terlebih dahulu agar bersih dan tidak duplikat
+        $this->db->where('id_pengaju', $uid)
+            ->where('tanggal >=', '2026-11-09')
+            ->where('tanggal <=', '2026-11-13')
+            ->delete('laporan');
+
         $inserted = 0;
-        $updated = 0;
-
         foreach ($entries as $row) {
-            $exist = $this->db->get_where('laporan', [
-                'id_pengaju' => $row['id_pengaju'],
-                'tanggal' => $row['tanggal']
-            ])->row();
-
-            if ($exist) {
-                $this->db->where('id', $exist->id)->update('laporan', $row);
-                $updated++;
-            } else {
-                $this->db->insert('laporan', $row);
-                $inserted++;
-            }
+            $this->db->insert('laporan', $row);
+            $inserted++;
         }
 
         addLog('Laporan', "Inject otomatis laporan mingguan Dimas Chandra Winata (Insert: {$inserted}, Update: {$updated})");
