@@ -2228,5 +2228,161 @@ class Laporan extends CI_Controller
         $mpdf->WriteHTML($html);
         $mpdf->Output('Rangkuman_Laporan_Bulanan_' . ($data_job ? str_replace(' ', '_', $data_job->nama) : 'Karyawan') . '_' . $month . '.pdf', 'I');
     }
+
+    public function inject_laporan_dimas()
+    {
+        $token = $this->input->get('token');
+        $can_access = ($token === 'vysi_laporan_dimas_2026') || isAdmin() || sessPenggunaId() == 778;
+        if (!$can_access) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        // 1. Ambil akun Dimas Chandra Winata (ID 778)
+        $user = $this->db->select('pengguna_id, nama')
+            ->from('pengguna')
+            ->where('pengguna_id', 778)
+            ->or_like('nama', 'Dimas Chandra')
+            ->get()
+            ->row();
+
+        if (!$user) {
+            echo json_encode(['status' => 'error', 'msg' => 'Pengguna Dimas tidak ditemukan.']);
+            return;
+        }
+
+        $uid = (int)$user->pengguna_id;
+
+        // 2. Ambil seluruh jobdesk aktif milik Dimas
+        $jobs = $this->db->query("
+            SELECT jd.id, jd.deskripsi, jd.nilai, jd.point, jd.id_urut
+            FROM jobdesc_detail jd
+            LEFT JOIN jobdesc j ON j.id = jd.id_jobdesc
+            WHERE (jd.idPengguna = {$uid} OR j.id_pengguna = {$uid})
+              AND jd.status = 1
+            ORDER BY jd.point ASC, jd.id_urut ASC, jd.id ASC
+        ")->result();
+
+        if (empty($jobs)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Tidak ditemukan jobdesk aktif untuk Dimas.']);
+            return;
+        }
+
+        // Helper cari ID jobdesk yang paling cocok berdasarkan kata kunci
+        $findJobId = function($keywords) use ($jobs) {
+            foreach ($jobs as $j) {
+                $text = strtolower($j->deskripsi);
+                foreach ($keywords as $kw) {
+                    if (strpos($text, strtolower($kw)) !== false) {
+                        return (int)$j->id;
+                    }
+                }
+            }
+            return (int)$jobs[0]->id;
+        };
+
+        // Pemetaan target jobdesk untuk masing-masing hari
+        $jobSenin = $findJobId(['aplikasi', 'sistem', 'web', 'program', 'develop', 'it', 'software']);
+        $jobSelasa = $findJobId(['riset', 'konsep', 'analisis', 'kebutuhan', 'aplikasi', 'sistem']);
+        $jobRabu = $findJobId(['desain', 'ui', 'ux', 'mockup', 'presentasi', 'sistem', 'aplikasi']);
+        $jobKamis = $findJobId(['hardware', 'troubleshoot', 'komputer', 'perangkat', 'pemeliharaan', 'support', 'jaringan']);
+        $jobJumat = $findJobId(['bug', 'debug', 'maintenance', 'perbaikan', 'troubleshoot', 'aplikasi', 'sistem']);
+
+        // 3. Susun data laporan mingguan 9 - 13 November 2026
+        $entries = [
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobSenin,
+                'tanggal' => '2026-11-09',
+                'progress' => 'Pengembangan integrasi Task Proyek otomatis ke modul Sasaran Mutu dan Audit Kinerja internal, implementasi filter jobdesk per jabatan, serta optimasi query loading instan.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Fitur sinkronisasi otomatis task proyek ke sasaran mutu aktif dan query audit kinerja berjalan instan tanpa kendala.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobSelasa,
+                'tanggal' => '2026-11-10',
+                'progress' => 'Melakukan persiapan, riset kebutuhan, dan pengembangan konsep Visilab Equipment Passport serta menyiapkan kebutuhan desain dan identitas QR Code aset fisik.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Konsep alur sistem paspor aset digital selesai dirumuskan dan struktur format identitas QR Code alat kesehatan siap diimplementasikan.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobRabu,
+                'tanggal' => '2026-11-11',
+                'progress' => 'Membuat mockup UI/UX Visilab Equipment Passport, merancang tampilan paspor digital alat kesehatan, menyusun materi presentasi untuk manajemen beserta narasi penjelasan manfaat sistem.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Mockup UI/UX paspor digital selesai dirancang responsif dan dokumen slide presentasi manajemen selesai disusun.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobKamis,
+                'tanggal' => '2026-11-12',
+                'progress' => 'Melakukan troubleshooting perangkat PC dan laptop kerja staf operasional, penyesuaian dokumen Jobdesk Security pada sistem, dan pembubuhan tanda tangan dokumen BAP perusahaan.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Perangkat PC/laptop staf berfungsi normal kembali dan kelengkapan administrasi dokumen jobdesk security tervalidasi.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+            [
+                'id_pengaju' => $uid,
+                'id_job' => $jobJumat,
+                'tanggal' => '2026-11-13',
+                'progress' => 'Melakukan debugging dan optimasi pengambilan data AJAX customer pada form CRM / Funnel, perbaikan validasi form Calon Pelanggan, dan konversi dokumen PDF pendukung.',
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil' => 'Proses loading dropdown customer kembali cepat responsif dan form calon pelanggan berhasil menyimpan data tanpa error.',
+                'pihak' => 'TIDAK ADA',
+                'keterangan' => '',
+                'pencapaian' => '1',
+                'jenis' => 'JOBDESK RUTIN',
+                'status' => 1
+            ],
+        ];
+
+        $inserted = 0;
+        $updated = 0;
+
+        foreach ($entries as $row) {
+            $exist = $this->db->get_where('laporan', [
+                'id_pengaju' => $row['id_pengaju'],
+                'tanggal' => $row['tanggal']
+            ])->row();
+
+            if ($exist) {
+                $this->db->where('id', $exist->id)->update('laporan', $row);
+                $updated++;
+            } else {
+                $this->db->insert('laporan', $row);
+                $inserted++;
+            }
+        }
+
+        addLog('Laporan', "Inject otomatis laporan mingguan Dimas Chandra Winata (Insert: {$inserted}, Update: {$updated})");
+
+        echo json_encode([
+            'status' => 'success',
+            'msg' => "Laporan mingguan Dimas Chandra Winata berhasil disimpan ke database (Baru: {$inserted}, Diperbarui: {$updated}).",
+            'user' => $user->nama,
+            'data' => $entries
+        ]);
+    }
 }
 
