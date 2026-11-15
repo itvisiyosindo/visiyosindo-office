@@ -615,21 +615,24 @@ class Md_kpi_leaderboard extends CI_Model
             $volPenc = min(100.0, ((int)$lb->total_pencapaian / $targetVolPenc) * 100.0);
             $volPk   = min(100.0, ((int)$lb->total_pk / $targetVolPk) * 100.0);
 
+            // Laporan mingguan wajib rutin: jika belum diisi/dinilai maka dianggap 0
+            $skorLapCalc = $hasLap ? $skorLap : 0.0;
+
             if ($isExemptPk) {
                 $pillarDefs = [
-                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.50, 'label' => 'Task', 'routine' => true],
-                    ['active' => $hasLap,  'mutu' => $skorLap,  'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true],
-                    ['active' => $hasAbs,  'mutu' => $skorAbs,  'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
-                    ['active' => $hasEval, 'mutu' => $skorEval, 'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
+                    ['active' => $hasTask, 'mutu' => $skorTask,    'prod' => $volTask, 'weight' => 0.50, 'label' => 'Task', 'routine' => true],
+                    ['active' => true,     'mutu' => $skorLapCalc, 'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true, 'is_real_graded' => $hasLap],
+                    ['active' => $hasAbs,  'mutu' => $skorAbs,     'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
+                    ['active' => $hasEval, 'mutu' => $skorEval,    'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
                 ];
                 $routineTarget = 3;
             } else {
                 $pillarDefs = [
-                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.40, 'label' => 'Task', 'routine' => true],
-                    ['active' => $hasLap,  'mutu' => $skorLap,  'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true],
-                    ['active' => $hasPk,   'mutu' => $skorPk,   'prod' => $volPk,   'weight' => 0.10, 'label' => 'PK',   'routine' => true],
-                    ['active' => $hasAbs,  'mutu' => $skorAbs,  'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
-                    ['active' => $hasEval, 'mutu' => $skorEval, 'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
+                    ['active' => $hasTask, 'mutu' => $skorTask,    'prod' => $volTask, 'weight' => 0.40, 'label' => 'Task', 'routine' => true],
+                    ['active' => true,     'mutu' => $skorLapCalc, 'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true, 'is_real_graded' => $hasLap],
+                    ['active' => $hasPk,   'mutu' => $skorPk,      'prod' => $volPk,   'weight' => 0.10, 'label' => 'PK',   'routine' => true],
+                    ['active' => $hasAbs,  'mutu' => $skorAbs,     'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
+                    ['active' => $hasEval, 'mutu' => $skorEval,    'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
                 ];
                 $routineTarget = 4;
             }
