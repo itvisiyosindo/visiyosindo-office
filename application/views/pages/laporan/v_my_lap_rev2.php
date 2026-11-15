@@ -878,6 +878,7 @@ foreach ($data_detail as $row) {
         $nilaiRataB = ($cnt_pa_b > 0) ? ($total_nilai_b / $cnt_pa_b) : 0;
         $nilaiRataPencapaian = ($cnt_pa_a > 0 || $cnt_pa_b > 0) ? (($nilaiRataA + $nilaiRataB) / (($cnt_pa_a > 0 && $cnt_pa_b > 0) ? 2 : 1)) : 0;
         ?>
+        <?php if (false): ?>
         <!-- PENCAPAIAN MINGGUAN -->
         <div class="card laporan-card mb-4">
             <div class="card-body p-3 p-md-4">
@@ -969,6 +970,7 @@ foreach ($data_detail as $row) {
             </div>
         </div>
         <!-- PENCAPAIAN MINGGUAN -->
+        <?php endif; ?>
 	</div>
 </div>
 <?php
@@ -1127,7 +1129,7 @@ foreach ($data_detail as $row) {
                 <?php
                 $skor_aktif = [];
                 if ($rataAll > 0) $skor_aktif[] = $rataAll;
-                if ($nilaiRataPencapaian > 0) $skor_aktif[] = $nilaiRataPencapaian;
+                // if ($nilaiRataPencapaian > 0) $skor_aktif[] = $nilaiRataPencapaian;
                 if ($nilaiRataPumum > 0) $skor_aktif[] = $nilaiRataPumum;
                 $totalRataAkhir = count($skor_aktif) > 0 ? (array_sum($skor_aktif) / count($skor_aktif)) : 0;
                 ?>
@@ -1148,17 +1150,7 @@ foreach ($data_detail as $row) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md col-sm-6">
-                            <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
-                                <div>
-                                    <div class="text-muted small font-weight-500">Pencapaian</div>
-                                    <div class="font-weight-bold text-dark mt-1" style="font-size: 18px;"><?= number_format($nilaiRataPencapaian, 2) ?></div>
-                                </div>
-                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef9c3; color: #ca8a04; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-trophy"></i>
-                                </div>
-                            </div>
-                        </div>
+                        <?php /* Pencapaian widget removed */ ?>
                         <div class="col-md col-sm-6">
                             <div class="p-3 bg-white rounded border shadow-sm d-flex justify-content-between align-items-center h-100">
                                 <div>
@@ -1434,6 +1426,7 @@ foreach ($data_detail as $row) {
 		</div>
 	</div>
 </div>
+<?php if (false): ?>
 <div id="main-modal-pencapaian" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content ">
@@ -1491,6 +1484,8 @@ foreach ($data_detail as $row) {
 		</div>
 	</div>
 </div>
+
+<?php endif; ?>
 <!-- Modal Indikator Skala Penilaian -->
 <div id="main-modal-indikatorPenilaian" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog modal-custom" role="document">

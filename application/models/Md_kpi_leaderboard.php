@@ -617,23 +617,21 @@ class Md_kpi_leaderboard extends CI_Model
 
             if ($isExemptPk) {
                 $pillarDefs = [
-                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.30, 'label' => 'Task', 'routine' => true],
+                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.50, 'label' => 'Task', 'routine' => true],
                     ['active' => $hasLap,  'mutu' => $skorLap,  'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true],
-                    ['active' => $hasPenc, 'mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.20, 'label' => 'Penc', 'routine' => true],
                     ['active' => $hasAbs,  'mutu' => $skorAbs,  'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
                     ['active' => $hasEval, 'mutu' => $skorEval, 'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
                 ];
-                $routineTarget = 4;
+                $routineTarget = 3;
             } else {
                 $pillarDefs = [
-                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.25, 'label' => 'Task', 'routine' => true],
+                    ['active' => $hasTask, 'mutu' => $skorTask, 'prod' => $volTask, 'weight' => 0.40, 'label' => 'Task', 'routine' => true],
                     ['active' => $hasLap,  'mutu' => $skorLap,  'prod' => $volLap,  'weight' => 0.20, 'label' => 'Lap',  'routine' => true],
-                    ['active' => $hasPenc, 'mutu' => $skorPenc, 'prod' => $volPenc, 'weight' => 0.15, 'label' => 'Penc', 'routine' => true],
                     ['active' => $hasPk,   'mutu' => $skorPk,   'prod' => $volPk,   'weight' => 0.10, 'label' => 'PK',   'routine' => true],
                     ['active' => $hasAbs,  'mutu' => $skorAbs,  'prod' => $volAbs,  'weight' => 0.15, 'label' => 'Abs',  'routine' => true],
                     ['active' => $hasEval, 'mutu' => $skorEval, 'prod' => null,     'weight' => 0.15, 'label' => 'Eval', 'routine' => false],
                 ];
-                $routineTarget = 5;
+                $routineTarget = 4;
             }
 
             $activePillars = [];

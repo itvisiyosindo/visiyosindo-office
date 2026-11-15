@@ -2895,9 +2895,8 @@ $namaBulanList = [
                                     <i class="fas fa-trophy text-warning mr-2 tp-lb-trophy-anim"></i>Klasemen Performa Karyawan Terbaik
                                 </h4>
                                 <div class="d-flex align-items-center flex-wrap mt-2" style="gap: 6px;">
-                                    <span class="tp-lb-chip">Task 25%</span>
+                                    <span class="tp-lb-chip">Task 40%</span>
                                     <span class="tp-lb-chip">Laporan 20%</span>
-                                    <span class="tp-lb-chip">Pencapaian 15%</span>
                                     <span class="tp-lb-chip">Product Knowledge 10%</span>
                                     <span class="tp-lb-chip">Absensi 15% <small style="opacity:.85;">(Telat -poin)</small></span>
                                     <span class="tp-lb-chip">Evaluasi Smt 15%</span>
@@ -3070,15 +3069,11 @@ $namaBulanList = [
                                         <th class="align-middle" style="min-width: 145px;">Jabatan</th>
                                         <th class="text-center align-middle" style="min-width: 110px;">
                                             <div>Task Proyek</div>
-                                            <small class="badge badge-primary" style="font-size: 9.5px;">Mutu 25%</small>
+                                            <small class="badge badge-primary" style="font-size: 9.5px;">Mutu 40%</small>
                                         </th>
                                         <th class="text-center align-middle" style="min-width: 110px;">
                                             <div>Laporan</div>
                                             <small class="badge badge-info" style="font-size: 9.5px;">Mutu 20%</small>
-                                        </th>
-                                        <th class="text-center align-middle" style="min-width: 110px;">
-                                            <div>Pencapaian</div>
-                                            <small class="badge text-white" style="font-size: 9.5px; background-color: #8b5cf6;">Mutu 15%</small>
                                         </th>
                                         <th class="text-center align-middle" style="min-width: 135px;">
                                             <div>Product Knowledge</div>
@@ -3154,17 +3149,6 @@ $namaBulanList = [
                                                     <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_lap) ?>%; background:#0ea5e9;"></div></div>
                                                     <div class="small text-muted" style="font-size: 10.5px;">
                                                         Poin: <?= number_format($lb->total_poin_laporan, 0) ?>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="text-muted small">Belum dinilai</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center align-middle">
-                                                <?php if ($lb->skor_penc !== null): ?>
-                                                    <div class="font-weight-bold" style="font-size: 14px; color: #7c3aed;"><?= number_format($lb->skor_penc, 1) ?></div>
-                                                    <div class="tp-lb-bar-track"><div class="tp-lb-bar-fill" style="width:<?= min(100, (float)$lb->skor_penc) ?>%; background:#8b5cf6;"></div></div>
-                                                    <div class="small text-muted" style="font-size: 10.5px;">
-                                                        <i class="fas fa-award mr-1" style="color: #8b5cf6;"></i><?= (int)$lb->total_pencapaian ?> item
                                                     </div>
                                                 <?php else: ?>
                                                     <span class="text-muted small">Belum dinilai</span>
