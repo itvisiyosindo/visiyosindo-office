@@ -2268,12 +2268,26 @@ class Laporan extends CI_Controller
             return;
         }
 
-        // Helper cari ID jobdesk yang paling cocok berdasarkan kata kunci
-        $findJobId = function($keywords) use ($jobs) {
+        // Helper cari ID jobdesk yang paling cocok berdasarkan potongan teks deskripsi yang pasti ada
+        $findJobId = function($exactWords) use ($jobs) {
             foreach ($jobs as $j) {
                 $text = strtolower($j->deskripsi);
-                foreach ($keywords as $kw) {
-                    if (strpos($text, strtolower($kw)) !== false) {
+                $allMatch = true;
+                foreach ($exactWords as $w) {
+                    if (strpos($text, strtolower($w)) === false) {
+                        $allMatch = false;
+                        break;
+                    }
+                }
+                if ($allMatch) {
+                    return (int)$j->id;
+                }
+            }
+            // Fallback cari per kata
+            foreach ($jobs as $j) {
+                $text = strtolower($j->deskripsi);
+                foreach ($exactWords as $w) {
+                    if (strpos($text, strtolower($w)) !== false) {
                         return (int)$j->id;
                     }
                 }
@@ -2281,20 +2295,28 @@ class Laporan extends CI_Controller
             return (int)$jobs[0]->id;
         };
 
-        // Pemetaan target jobdesk berdasarkan fokus pekerjaan
-        $jobDev = $findJobId(['aplikasi', 'sistem', 'web', 'program', 'develop', 'software', 'it']);
-        $jobRiset = $findJobId(['riset', 'konsep', 'analisis', 'kebutuhan', 'aplikasi', 'sistem']);
-        $jobDesain = $findJobId(['desain', 'ui', 'ux', 'mockup', 'presentasi', 'sistem']);
-        $jobSupport = $findJobId(['hardware', 'troubleshoot', 'komputer', 'perangkat', 'pemeliharaan', 'support', 'jaringan']);
-        $jobBugFix = $findJobId(['bug', 'debug', 'maintenance', 'perbaikan', 'troubleshoot', 'aplikasi']);
-        $jobAdmin = $findJobId(['administrasi', 'dokumen', 'laporan', 'arsip', 'surat', 'it']);
+        // Pemetaan presisi ke baris jobdesk Dimas:
+        // No 2: Melakukan instalasi, konfigurasi, pemeliharaan, dan troubleshooting perangkat IT perusahaan (komputer, laptop...)
+        $jobPerangkat = $findJobId(['instalasi', 'konfigurasi', 'troubleshooting']);
+        
+        // No 8: Mengelola akun email, aplikasi, sistem, dan media kerja serta menjaga keamanan akun...
+        $jobAkunSecurity = $findJobId(['mengelola akun', 'keamanan']);
 
-        // 3. Susun data laporan mingguan 9 - 13 November 2026 (Dipecah per item aktivitas)
+        // No 11: Menganalisis kebutuhan dan mengembangkan sistem atau aplikasi sesuai kebutuhan perusahaan
+        $jobDevAnalisis = $findJobId(['menganalisis kebutuhan', 'mengembangkan sistem']);
+
+        // No 12: Berkoordinasi dengan divisi terkait untuk mengevaluasi, memperbaiki, dan menyempurnakan sistem...
+        $jobKoordinasi = $findJobId(['berkoordinasi', 'mengevaluasi']);
+
+        // No 14: Melakukan maintenance, update, dan troubleshooting terhadap sistem dan aplikasi perusahaan
+        $jobMaintenance = $findJobId(['maintenance', 'troubleshooting terhadap sistem']);
+
+        // 3. Susun data laporan mingguan 9 - 13 November 2026 (Dipecah per item aktivitas & jobdesk yang tepat)
         $entries = [
             // --- SENIN, 09 November 2026 ---
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobDev,
+                'id_job' => $jobDevAnalisis,
                 'tanggal' => '2026-11-09',
                 'progress' => 'Pengembangan integrasi otomatis penugasan Task Proyek langsung ke modul Sasaran Mutu dan Audit Kinerja.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2307,7 +2329,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobDev,
+                'id_job' => $jobDevAnalisis,
                 'tanggal' => '2026-11-09',
                 'progress' => 'Implementasi auto-filter jobdesk per jabatan pengguna serta fitur import data sasaran mutu dari file Excel dan Google Sheets.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2320,7 +2342,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobDev,
+                'id_job' => $jobMaintenance,
                 'tanggal' => '2026-11-09',
                 'progress' => 'Optimasi query database pada modul audit kinerja untuk peningkatan performa kecepatan akses halaman.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2335,7 +2357,7 @@ class Laporan extends CI_Controller
             // --- SELASA, 10 November 2026 ---
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobRiset,
+                'id_job' => $jobDevAnalisis,
                 'tanggal' => '2026-11-10',
                 'progress' => 'Melakukan persiapan, riset kebutuhan fungsional, dan pengembangan konsep Visilab Equipment Passport.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2348,7 +2370,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobRiset,
+                'id_job' => $jobDevAnalisis,
                 'tanggal' => '2026-11-10',
                 'progress' => 'Menyiapkan rancangan kebutuhan desain dan identitas penomoran QR Code aset fisik alat kesehatan.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2363,7 +2385,7 @@ class Laporan extends CI_Controller
             // --- RABU, 11 November 2026 ---
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobDesain,
+                'id_job' => $jobDevAnalisis,
                 'tanggal' => '2026-11-11',
                 'progress' => 'Merancang mockup antarmuka UI/UX Visilab Equipment Passport dan tampilan paspor digital alat kesehatan.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2376,7 +2398,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobDesain,
+                'id_job' => $jobKoordinasi,
                 'tanggal' => '2026-11-11',
                 'progress' => 'Menyusun materi dan slide presentasi teknis pengenalan inovasi sistem paspor aset untuk manajemen.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2389,7 +2411,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobDesain,
+                'id_job' => $jobKoordinasi,
                 'tanggal' => '2026-11-11',
                 'progress' => 'Menyiapkan narasi penjelasan manfaat sistem, analisis mitigasi kendala, dan koordinasi teknis pelaksanaan implementasi.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2404,7 +2426,7 @@ class Laporan extends CI_Controller
             // --- KAMIS, 12 November 2026 ---
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobSupport,
+                'id_job' => $jobPerangkat,
                 'tanggal' => '2026-11-12',
                 'progress' => 'Melakukan troubleshooting perangkat hardware PC dan laptop kerja staf operasional kantor.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2417,7 +2439,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobAdmin,
+                'id_job' => $jobAkunSecurity,
                 'tanggal' => '2026-11-12',
                 'progress' => 'Melakukan pemeliharaan dan penyesuaian dokumen Jobdesk Security pada sistem kepegawaian (termasuk kelengkapan KTA).',
                 'status_pekerjaan' => 'SELESAI',
@@ -2430,7 +2452,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobAdmin,
+                'id_job' => $jobAkunSecurity,
                 'tanggal' => '2026-11-12',
                 'progress' => 'Pengelolaan berkas administrasi dan pembubuhan tanda tangan elektronik pada dokumen Berita Acara (BAP) perusahaan.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2445,7 +2467,7 @@ class Laporan extends CI_Controller
             // --- JUMAT, 13 November 2026 ---
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobBugFix,
+                'id_job' => $jobMaintenance,
                 'tanggal' => '2026-11-13',
                 'progress' => 'Debugging alur AJAX dan parsing data customer pada dropdown form CRM / Funnel untuk mengatasi proses loading lambat.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2458,7 +2480,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobBugFix,
+                'id_job' => $jobMaintenance,
                 'tanggal' => '2026-11-13',
                 'progress' => 'Perbaikan validasi form Calon Pelanggan (pengecekan field wajib) dan optimasi relasi LEFT JOIN database agar data tersimpan selalu muncul di tabel.',
                 'status_pekerjaan' => 'SELESAI',
@@ -2471,7 +2493,7 @@ class Laporan extends CI_Controller
             ],
             [
                 'id_pengaju' => $uid,
-                'id_job' => $jobAdmin,
+                'id_job' => $jobAkunSecurity,
                 'tanggal' => '2026-11-13',
                 'progress' => 'Pengelolaan, kompresi, dan konversi dokumen digital PDF pendukung operasional kantor.',
                 'status_pekerjaan' => 'SELESAI',
