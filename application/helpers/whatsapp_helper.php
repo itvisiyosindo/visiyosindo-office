@@ -3911,23 +3911,7 @@ function sendWa($dataSend)
 	);
 
 	if (!$isGroupTarget && empty($dataSend['bypass_24h'])) {
-		// Pengecualian: Jika pesan merupakan notifikasi approval/tanda tangan surat resmi kantor atau dikirim via WhaCenter Gateway,
-		// jangan blokir agar atasan/pemeriksa tetap menerima pemberitahuan meskipun belum membalas chat bot hari ini.
-		$isOfficialDocNotification = (
-			!empty($dataSend['template_name']) ||
-			!empty($dataSend['devId']) ||
-			(!empty($dataSend['pesan']) && (
-				stripos($dataSend['pesan'], 'notifikasi') !== false ||
-				stripos($dataSend['pesan'], 'approval') !== false ||
-				stripos($dataSend['pesan'], 'persetujuan') !== false ||
-				stripos($dataSend['pesan'], 'tanda tangan') !== false ||
-				stripos($dataSend['pesan'], 'pengajuan') !== false ||
-				stripos($dataSend['pesan'], 'berita acara') !== false ||
-				stripos($dataSend['pesan'], 'cuti') !== false
-			))
-		);
-
-		if (!$isOfficialDocNotification && function_exists('get_instance')) {
+		if (function_exists('get_instance')) {
 			$ci = &get_instance();
 			if (!isset($ci->Md_whatsapp_session)) {
 				$ci->load->model('Md_whatsapp_session');
