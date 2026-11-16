@@ -82,35 +82,27 @@
     html.modern .logo .brand-wrapper {
         display: flex !important;
         align-items: center !important;
-        gap: 12px !important;
+        gap: 10px !important;
     }
 
-    html.modern .logo .brand-logo-img-box {
-        width: 36px;
-        height: 36px;
-        border-radius: 9px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(56, 189, 248, 0.35);
+    html.modern .logo .brand-icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 14px rgba(14, 165, 233, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.1);
+        font-size: 14px;
+        box-shadow: 0 0 12px rgba(14, 165, 233, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2);
         flex-shrink: 0;
-        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-        padding: 4px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    html.modern .logo:hover .brand-logo-img-box {
-        transform: scale(1.08) rotate(3deg);
-        border-color: #38bdf8;
-        box-shadow: 0 0 18px rgba(56, 189, 248, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.2);
-    }
-
-    html.modern .logo .brand-logo-img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    html.modern .logo:hover .brand-icon-box {
+        transform: rotate(-8deg) scale(1.08);
+        box-shadow: 0 0 16px rgba(14, 165, 233, 0.8), 0 4px 8px rgba(0, 0, 0, 0.3);
     }
 
     html.modern .logo b.brand-title {
