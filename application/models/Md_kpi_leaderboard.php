@@ -428,7 +428,7 @@ class Md_kpi_leaderboard extends CI_Model
         // ---------------------------------------------------------
         if ($this->db->table_exists('po_masuk')) {
             $poRows = $this->db->query("
-                SELECT id_po, nomor_po, nama_customer, created_at, tanggal_po,
+                SELECT id_po, no_po, nama_customer, created_at, tanggal_po,
                        cro_status, cro_date, cro_user_id,
                        acc_status, acc_date, acc_user_id,
                        pajak_status, pajak_date, pajak_user_id,
@@ -452,7 +452,7 @@ class Md_kpi_leaderboard extends CI_Model
                 $baseStart = (!empty($po->created_at) && $po->created_at !== '0000-00-00 00:00:00')
                     ? $po->created_at
                     : ($po->tanggal_po . ' 08:00:00');
-                $docNo = !empty($po->nomor_po) ? $po->nomor_po : ('PO #' . $po->id_po);
+                $docNo = !empty($po->no_po) ? $po->no_po : ('PO #' . $po->id_po);
 
                 // --- Tahap 1: CRO ---
                 $croUid = !empty($po->cro_user_id) ? (int)$po->cro_user_id : $defaultPoApprovers['cro'];
