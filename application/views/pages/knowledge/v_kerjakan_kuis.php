@@ -50,9 +50,29 @@ $durasiSec = max(10, $durasiSec);
         border-color: #86efac;
         background: #fcfffd;
     }
+    .cbt-question-header {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+    .cbt-question-badge {
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+    .cbt-question-text {
+        flex: 1;
+        min-width: 0;
+        font-size: 15px;
+        line-height: 1.55;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
     .cbt-option-label {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         padding: 12px 16px;
         border: 1.5px solid #e2e8f0;
         border-radius: 10px;
@@ -61,6 +81,8 @@ $durasiSec = max(10, $durasiSec);
         transition: all 0.15s ease;
         background: #ffffff;
         user-select: none;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     .cbt-option-label:hover {
         background: #f8fafc;
@@ -76,9 +98,23 @@ $durasiSec = max(10, $durasiSec);
     .cbt-option-radio {
         width: 20px;
         height: 20px;
+        flex-shrink: 0;
         accent-color: #10b981;
-        margin-right: 14px;
+        margin-right: 12px;
+        margin-top: 2px;
         cursor: pointer;
+    }
+    .cbt-option-letter {
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .cbt-option-text {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
     .cbt-bottom-bar {
         position: sticky;
@@ -112,6 +148,18 @@ $durasiSec = max(10, $durasiSec);
             border-radius: 10px;
             margin-bottom: 14px;
         }
+        .cbt-question-header {
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .cbt-question-badge {
+            margin-right: 0 !important;
+        }
+        .cbt-question-text {
+            font-size: 14.5px;
+            width: 100%;
+        }
         .cbt-option-label {
             padding: 10px 12px;
             font-size: 13.5px;
@@ -119,9 +167,12 @@ $durasiSec = max(10, $durasiSec);
             border-radius: 8px;
         }
         .cbt-option-radio {
-            margin-right: 10px;
+            margin-right: 8px;
             width: 18px;
             height: 18px;
+        }
+        .cbt-option-text {
+            font-size: 13.5px;
         }
         .cbt-bottom-bar {
             padding: 12px 14px;
@@ -181,11 +232,11 @@ $durasiSec = max(10, $durasiSec);
 
         <?php $nomor = 1; foreach ($soal_list as $s): ?>
             <div class="cbt-question-card" id="card_soal_<?= $s->id_soal ?>">
-                <div class="d-flex align-items-start mb-3">
-                    <span class="badge badge-primary px-3 py-2 mr-3 font-weight-bold" style="font-size: 13px; border-radius: 8px;">
+                <div class="cbt-question-header">
+                    <span class="badge badge-primary px-3 py-2 mr-3 font-weight-bold cbt-question-badge">
                         No. <?= $nomor++ ?>
                     </span>
-                    <div class="font-weight-bold text-dark" style="font-size: 15px; line-height: 1.5; white-space: pre-line;">
+                    <div class="font-weight-bold text-dark cbt-question-text">
                         <?= htmlspecialchars($s->pertanyaan) ?>
                     </div>
                 </div>
@@ -193,26 +244,26 @@ $durasiSec = max(10, $durasiSec);
                 <div class="options-container pl-md-4">
                     <label class="cbt-option-label" data-soal="<?= $s->id_soal ?>">
                         <input type="radio" name="jawaban[<?= $s->id_soal ?>]" value="A" class="cbt-option-radio">
-                        <span class="badge badge-light border mr-2 font-weight-bold">A</span>
-                        <span style="font-size: 14px;"><?= htmlspecialchars($s->pilihan_a) ?></span>
+                        <span class="badge badge-light border mr-2 font-weight-bold cbt-option-letter">A</span>
+                        <span class="cbt-option-text"><?= htmlspecialchars($s->pilihan_a) ?></span>
                     </label>
 
                     <label class="cbt-option-label" data-soal="<?= $s->id_soal ?>">
                         <input type="radio" name="jawaban[<?= $s->id_soal ?>]" value="B" class="cbt-option-radio">
-                        <span class="badge badge-light border mr-2 font-weight-bold">B</span>
-                        <span style="font-size: 14px;"><?= htmlspecialchars($s->pilihan_b) ?></span>
+                        <span class="badge badge-light border mr-2 font-weight-bold cbt-option-letter">B</span>
+                        <span class="cbt-option-text"><?= htmlspecialchars($s->pilihan_b) ?></span>
                     </label>
 
                     <label class="cbt-option-label" data-soal="<?= $s->id_soal ?>">
                         <input type="radio" name="jawaban[<?= $s->id_soal ?>]" value="C" class="cbt-option-radio">
-                        <span class="badge badge-light border mr-2 font-weight-bold">C</span>
-                        <span style="font-size: 14px;"><?= htmlspecialchars($s->pilihan_c) ?></span>
+                        <span class="badge badge-light border mr-2 font-weight-bold cbt-option-letter">C</span>
+                        <span class="cbt-option-text"><?= htmlspecialchars($s->pilihan_c) ?></span>
                     </label>
 
                     <label class="cbt-option-label" data-soal="<?= $s->id_soal ?>">
                         <input type="radio" name="jawaban[<?= $s->id_soal ?>]" value="D" class="cbt-option-radio">
-                        <span class="badge badge-light border mr-2 font-weight-bold">D</span>
-                        <span style="font-size: 14px;"><?= htmlspecialchars($s->pilihan_d) ?></span>
+                        <span class="badge badge-light border mr-2 font-weight-bold cbt-option-letter">D</span>
+                        <span class="cbt-option-text"><?= htmlspecialchars($s->pilihan_d) ?></span>
                     </label>
                 </div>
             </div>

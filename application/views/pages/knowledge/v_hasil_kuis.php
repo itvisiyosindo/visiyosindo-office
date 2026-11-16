@@ -324,7 +324,7 @@ $jawabanAudit = !empty($peserta->jawaban_json) ? json_decode($peserta->jawaban_j
                         ?>
                             <div class="review-opt-row" style="<?= $rowStyle ?>">
                                 <?= $iconLeft ?>
-                                <span class="mr-2" style="flex: 1;"><?= htmlspecialchars($teksOpsi) ?></span>
+                                <span class="mr-2" style="flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: break-word;"><?= htmlspecialchars($teksOpsi) ?></span>
                                 <?= $badgeTag ?>
                             </div>
                         <?php endforeach; ?>
