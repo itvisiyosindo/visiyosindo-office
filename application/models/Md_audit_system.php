@@ -210,18 +210,33 @@ class Md_audit_system extends CI_Model
 
         $normUser = $norm($userJabatan);
         $normDiv  = $norm($userDivisi);
-        $combined = trim($normUser . ' ' . $normDiv);
+        // Gunakan jabatan sebagai sumber utama; jangan gabungkan divisi 'IT' bawaan DB karena banyak pegawai non-IT memiliki id_divisi = IT
+        $normDivSafe = ($normDiv === 'it') ? '' : $normDiv;
+        $combined = trim($normUser . ' ' . $normDivSafe);
 
-        // 1. Exact match langsung (case-insensitive & clean symbols)
+        // 0. Jika Security / Office Boy / Management Trainee (belum ada di master posisi Sasaran Mutu), jangan dipaksa ke posisi lain
+        if (preg_match('/\b(security|satpam|keamanan|office boy|ob|cleaning service|management trainee)\b/', $normUser)) {
+            return null;
+        }
+
+        // 1. Exact match langsung (case-insensitive & clean symbols, abaikan kata penghubung 'and'/'dan')
+        $stripConn = function($str) use ($norm) {
+            return preg_replace('/\s+/', ' ', trim(preg_replace('/\b(and|dan)\b/', ' ', $norm($str))));
+        };
         foreach ($positions as $p) {
-            if ($norm($p) === $normUser) {
+            if ($norm($p) === $normUser || $stripConn($p) === $stripConn($userJabatan)) {
                 return $p;
             }
         }
 
-        // 2. Kamus Pemetaan Akurat (Domain Rules Spesifik Perusahaan)
-        // IT / Developer
-        if (preg_match('/\b(it|programmer|developer|software|web|edp|hardware|system)\b/', $combined)) {
+        // 2. Kamus Pemetaan Akurat (Domain Rules Spesifik Perusahaan - berbasis Jabatan terlebih dahulu)
+        // Product Specialist / Aplicant (misal: Vera Puspita Sari - "Aplicant & Product Specialist")
+        if (preg_match('/\b(product specialist|aplikasi|specialist product|aplicant|applicant)\b/', $normUser)) {
+            return 'Aplicant and Specialist Product';
+        }
+
+        // IT / Developer -> HANYA dari nama Jabatan ($normUser), BUKAN dari nama Divisi DB ($normDiv) yang sering berisi default 'IT'
+        if (preg_match('/\b(it|programmer|developer|software|web|edp|hardware)\b/', $normUser)) {
             return 'IT Support & Development';
         }
 
@@ -264,8 +279,8 @@ class Md_audit_system extends CI_Model
             return 'General Affair';
         }
 
-        // Gudang / Warehouse
-        if (preg_match('/\b(gudang|warehouse|logistik|pjt)\b/', $combined)) {
+        // Gudang / Warehouse / Helper
+        if (preg_match('/\b(gudang|warehouse|logistik|pjt|helper)\b/', $combined)) {
             if (preg_match('/\b(pjt|penanggung jawab|kepala gudang)\b/', $combined)) {
                 return 'PJT & Warehouse';
             }
@@ -278,8 +293,8 @@ class Md_audit_system extends CI_Model
             return 'Admin Warehouse';
         }
 
-        // Visilab / Laboratorium
-        if (preg_match('/\b(visilab|laboratorium|kalibrasi|pengujian)\b/', $combined)) {
+        // Visilab / Laboratorium / Staff Mutu / Staff Teknis / Penguji
+        if (preg_match('/\b(visilab|laboratorium|kalibrasi|pengujian|staff mutu|staf mutu|staff teknis|staf teknis|penguji)\b/', $combined)) {
             if (preg_match('/\b(head|kepala|manajer|manager)\b/', $normUser)) {
                 return 'Head of Visilab';
             }
@@ -296,7 +311,7 @@ class Md_audit_system extends CI_Model
         }
 
         // Teknisi / Service / Medical Engineer
-        if (preg_match('/\b(teknisi|technician|service|elektromedis|electromedical|engineer)\b/', $combined)) {
+        if (preg_match('/\b(teknisi|technician|service|elektromedis|electromedical|engineer|technical support)\b/', $combined)) {
             if (preg_match('/\b(head|kepala|kabag|spv|supervisor|lead)\b/', $normUser)) {
                 return 'Head of Technician';
             }
@@ -309,8 +324,8 @@ class Md_audit_system extends CI_Model
             return 'Technical Support';
         }
 
-        // Sales & Marketing
-        if (preg_match('/\b(sgm)\b/', $combined)) {
+        // Sales & Marketing & SGM
+        if (preg_match('/\b(sgm|sumpah gajah mada)\b/', $combined)) {
             return 'Head of SGM';
         }
         if (preg_match('/\b(gm|general manager)\b/', $normUser)) {
@@ -322,10 +337,10 @@ class Md_audit_system extends CI_Model
         if (preg_match('/\b(regulatory|import|ekspor|impor|izin edar)\b/', $combined)) {
             return 'Regulatory & Import Officer';
         }
-        if (preg_match('/\b(product specialist|aplikasi|specialist product|aplicant)\b/', $combined)) {
+        if (preg_match('/\b(product specialist|aplikasi|specialist product|aplicant|applicant)\b/', $combined)) {
             return 'Aplicant and Specialist Product';
         }
-        if (preg_match('/\b(customer relationship|cro|customer service|cs|layanan pelanggan)\b/', $combined)) {
+        if (preg_match('/\b(customer relationship|cro|customer service|cs|layanan pelanggan)\b/', $normUser)) {
             return 'Customer Relationship Officer';
         }
         if (preg_match('/\b(digital marketing|digimar)\b/', $combined)) {
@@ -1271,20 +1286,31 @@ class Md_audit_system extends CI_Model
         }
 
         $jabatan = '';
+        $divisi  = '';
         if ($this->db->conn_id) {
             $orig_debug = $this->db->db_debug;
             $this->db->db_debug = FALSE;
-            $u = @$this->db->select('jabatan')->where('pengguna_id', $userId)->get('pengguna')->row();
-            if ($u) $jabatan = $u->jabatan;
+            $u = @$this->db->select('p.jabatan, d.nama as nama_divisi')
+                ->from('pengguna p')
+                ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
+                ->where('p.pengguna_id', $userId)
+                ->get()->row();
+            if ($u) {
+                $jabatan = trim((string)$u->jabatan);
+                $divisi  = trim((string)$u->nama_divisi);
+            }
             $this->db->db_debug = $orig_debug;
         }
+        $resolvedPos = $this->resolveUserPosition($jabatan, $divisi);
 
         $smData = $this->getSasaranMutuData($year);
         $syncedCount = 0;
 
         foreach ($smData['data'] as $item) {
             $isTarget = false;
-            if (!empty($jabatan) && (strcasecmp($item['posisi'], $jabatan) === 0 || stripos($item['posisi'], $jabatan) !== false || stripos($jabatan, $item['posisi']) !== false)) {
+            if (!empty($resolvedPos) && strcasecmp($item['posisi'], $resolvedPos) === 0) {
+                $isTarget = true;
+            } else if (!empty($jabatan) && (strcasecmp($item['posisi'], $jabatan) === 0 || stripos($item['posisi'], $jabatan) !== false || stripos($jabatan, $item['posisi']) !== false)) {
                 $isTarget = true;
             } else if (!empty($item['laporan_count']) || !empty($item['task_count'])) {
                 $isTarget = true;
