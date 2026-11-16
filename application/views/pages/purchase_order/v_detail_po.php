@@ -55,6 +55,67 @@
 	</style>
 </header>
 <div class="col-xl-12 mb-8 mb-xl-0;" style=" margin: auto;">
+	<?php
+	if (function_exists('renderApprovalTimelineBar') && !empty($data_po[0])) {
+		$poRow = $data_po[0];
+		$baseStart = $poRow->tgl_Pengajuan ?? $poRow->tanggal;
+		$stGm  = ($poRow->ttd_gm == '1') ? 'approved' : (($poRow->ttd_gm == '2') ? 'rejected' : 'pending');
+		$stPjt = ($poRow->ttd_1 == '1') ? 'approved' : (($poRow->ttd_1 == '2') ? 'rejected' : (($poRow->ttd_gm == '1') ? 'pending' : 'waiting_prev'));
+		$stAcc = ($poRow->ttd_2 == '1') ? 'approved' : (($poRow->ttd_2 == '2') ? 'rejected' : (($poRow->ttd_1 == '1') ? 'pending' : 'waiting_prev'));
+		$stCor = ($poRow->ttd_3 == '1') ? 'approved' : (($poRow->ttd_3 == '2') ? 'rejected' : (($poRow->ttd_2 == '1') ? 'pending' : 'waiting_prev'));
+		$stDir = ($poRow->ttd_4 == '1') ? 'approved' : (($poRow->ttd_4 == '2') ? 'rejected' : (($poRow->ttd_3 == '1') ? 'pending' : 'waiting_prev'));
+
+		$stagesPurchaseOrder = [
+			[
+				'label'          => '1. TTD General Manager',
+				'approver'       => 'Yolanda Pratiwi',
+				'role'           => 'General Manager',
+				'status'         => $stGm,
+				'timestamp'      => $poRow->ttd_gm_at ?? null,
+				'prev_timestamp' => $baseStart
+			],
+			[
+				'label'          => '2. TTD PJT & Warehouse',
+				'approver'       => 'Fitri Andriani',
+				'role'           => 'Penanggung Jawab Teknis',
+				'status'         => $stPjt,
+				'timestamp'      => $poRow->ttd_1_at ?? null,
+				'prev_timestamp' => $poRow->ttd_gm_at ?: $baseStart
+			],
+			[
+				'label'          => '3. TTD Head Accounting & Tax',
+				'approver'       => 'Dirangga Madali',
+				'role'           => 'Head of Accounting and Tax',
+				'status'         => $stAcc,
+				'timestamp'      => $poRow->ttd_2_at ?? null,
+				'prev_timestamp' => $poRow->ttd_1_at ?: ($poRow->ttd_gm_at ?: $baseStart)
+			],
+			[
+				'label'          => '4. TTD Director Corp. Planning',
+				'approver'       => 'Meilina Safitri, S.E',
+				'role'           => 'Director of Corporate Planning & Business Management',
+				'status'         => $stCor,
+				'timestamp'      => $poRow->ttd_3_at ?? null,
+				'prev_timestamp' => $poRow->ttd_2_at ?: ($poRow->ttd_1_at ?: ($poRow->ttd_gm_at ?: $baseStart))
+			],
+			[
+				'label'          => '5. TTD Director',
+				'approver'       => 'Bob Ariyos',
+				'role'           => 'Director',
+				'status'         => $stDir,
+				'timestamp'      => $poRow->ttd_4_at ?? null,
+				'prev_timestamp' => $poRow->ttd_3_at ?: ($poRow->ttd_2_at ?: ($poRow->ttd_1_at ?: ($poRow->ttd_gm_at ?: $baseStart)))
+			]
+		];
+
+		echo renderApprovalTimelineBar(
+			'Tracking Waktu & Kecepatan Approval TTD Purchase Order (' . ($poRow->kode_po ?? '-') . ')',
+			$stagesPurchaseOrder,
+			$baseStart,
+			$poRow->pengaju ?? 'Pengaju'
+		);
+	}
+	?>
 	<div class="card-body" style="background-color:#FFFFFF; padding:5%;">
 	    <div class="table-responsive">
         <div class="text-center mt-0">

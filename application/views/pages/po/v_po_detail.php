@@ -300,6 +300,57 @@
             <?php endif; ?>
         </div>
 
+        <!-- TIMELINE & TRACKING BAR WAKTU APPROVAL PO (SLA MONITOR) -->
+        <?php
+        if (function_exists('renderApprovalTimelineBar')) {
+            $croSt = ($po->cro_status === 'sesuai') ? 'approved' : (in_array($po->cro_status, ['revisi', 'hold_indent'], true) ? 'revisi' : (($po->cro_status === 'ditolak') ? 'rejected' : 'pending'));
+            $accSt = ($po->acc_status === 'sesuai') ? 'approved' : (($po->acc_status === 'revisi') ? 'revisi' : (($po->acc_status === 'ditolak') ? 'rejected' : (($po->cro_status === 'sesuai') ? 'pending' : 'waiting_prev')));
+            $pjkSt = ($po->pajak_status === 'sesuai') ? 'approved' : (($po->pajak_status === 'revisi') ? 'revisi' : (($po->pajak_status === 'ditolak') ? 'rejected' : (($po->acc_status === 'sesuai') ? 'pending' : 'waiting_prev')));
+            $gmSt  = ($po->gm_status === 'disetujui') ? 'approved' : (($po->gm_status === 'ditolak') ? 'rejected' : (($po->pajak_status === 'sesuai') ? 'pending' : 'waiting_prev'));
+
+            $poTimelineStages = [
+                [
+                    'label'          => '1. Verifikasi CRO',
+                    'approver'       => !empty($po->nama_kroscek) ? $po->nama_kroscek : 'Syarifah Annisa (CRO)',
+                    'role'           => 'Customer Relationship Officer',
+                    'status'         => $croSt,
+                    'timestamp'      => $po->cro_date ?? null,
+                    'prev_timestamp' => $po->created_at ?? $po->tanggal_po
+                ],
+                [
+                    'label'          => '2. Verifikasi Accounting',
+                    'approver'       => !empty($po->nama_acc) ? $po->nama_acc : 'Dirangga Madali / Mulia',
+                    'role'           => 'Accounting & Finance',
+                    'status'         => $accSt,
+                    'timestamp'      => $po->acc_date ?? null,
+                    'prev_timestamp' => $po->cro_date ?: ($po->created_at ?? $po->tanggal_po)
+                ],
+                [
+                    'label'          => '3. Verifikasi Pajak',
+                    'approver'       => !empty($po->nama_pajak) ? $po->nama_pajak : 'Azhari Pratama',
+                    'role'           => 'Tax Officer',
+                    'status'         => $pjkSt,
+                    'timestamp'      => $po->pajak_date ?? null,
+                    'prev_timestamp' => $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po))
+                ],
+                [
+                    'label'          => '4. Approval GM',
+                    'approver'       => !empty($po->nama_gm) ? $po->nama_gm : 'Yolanda Pratiwi',
+                    'role'           => 'General Manager',
+                    'status'         => $gmSt,
+                    'timestamp'      => $po->gm_date ?? null,
+                    'prev_timestamp' => $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)))
+                ],
+            ];
+            echo renderApprovalTimelineBar(
+                'Tracking Waktu & Kecepatan Approval PO (CRO ➔ ACC ➔ Pajak ➔ GM)',
+                $poTimelineStages,
+                $po->created_at ?? $po->tanggal_po,
+                !empty($po->nama_pembuat) ? $po->nama_pembuat : ($po->nama_sales ?? 'Sales / Marketing')
+            );
+        }
+        ?>
+
         <!-- CARD 1: INFORMASI PO, CUSTOMER & TRANSAKSI -->
         <div class="card-modern">
             <div class="card-header-modern">

@@ -1,5 +1,39 @@
 <!-- View: v_sph_detail.php - Detail Surat Penawaran Harga -->
 
+<?php
+if (function_exists('renderApprovalTimelineBar')) {
+    $isFinalOrSigned = in_array($sph->status, ['final', 'signed'], true);
+    $isSigned        = ($sph->status === 'signed');
+    $finalTime       = !empty($sph->finalized_at) ? $sph->finalized_at : ($isSigned ? ($sph->signed_at ?: $sph->updated_at) : ($sph->status === 'final' ? $sph->updated_at : null));
+
+    $sphStages = [
+        [
+            'label'          => '1. Finalisasi Draft SPH',
+            'approver'       => !empty($sph->created_by_nama) ? $sph->created_by_nama : 'Pembuat SPH',
+            'role'           => 'Verifikasi Draft Penawaran',
+            'status'         => $isFinalOrSigned ? 'approved' : (($sph->status === 'cancelled') ? 'rejected' : 'pending'),
+            'timestamp'      => $finalTime,
+            'prev_timestamp' => $sph->created_at
+        ],
+        [
+            'label'          => '2. TTD & Persetujuan SPH',
+            'approver'       => !empty($sph->nama_ttd) ? $sph->nama_ttd : 'General Manager',
+            'role'           => !empty($sph->jabatan_ttd) ? $sph->jabatan_ttd : 'Pejabat Penandatangan',
+            'status'         => $isSigned ? 'approved' : (($sph->status === 'cancelled') ? 'rejected' : 'pending'),
+            'timestamp'      => $sph->signed_at ?? null,
+            'prev_timestamp' => $finalTime ?: $sph->created_at
+        ]
+    ];
+
+    echo renderApprovalTimelineBar(
+        'Tracking Waktu & Kecepatan Approval TTD SPH (' . ($sph->nomor_surat ?? '-') . ')',
+        $sphStages,
+        $sph->created_at ?? null,
+        !empty($sph->created_by_nama) ? $sph->created_by_nama : 'Pembuat SPH'
+    );
+}
+?>
+
 <div class="row">
     <div class="col-lg-8">
         <!-- Info SPH -->

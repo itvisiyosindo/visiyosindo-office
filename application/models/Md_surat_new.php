@@ -121,9 +121,36 @@ class Md_surat_new extends CI_Model
 					$this->db->insert('surat_po', $data);
 			}
 
+		private function _ensureSuratPoTimestampColumns()
+		{
+			static $checked = false;
+			if ($checked) return;
+			$checked = true;
+			$origDebug = $this->db->db_debug;
+			$this->db->db_debug = FALSE;
+			foreach (['ttd_1_at', 'ttd_2_at', 'ttd_3_at'] as $col) {
+				$chk = @$this->db->query("SHOW COLUMNS FROM `surat_po` LIKE '{$col}'");
+				if ($chk && $chk->num_rows() === 0) {
+					@$this->db->query("ALTER TABLE `surat_po` ADD COLUMN `{$col}` DATETIME DEFAULT NULL");
+				}
+			}
+			$this->db->db_debug = $origDebug;
+		}
+
 		//UPDATE 
 		function updatePo($id, $data)
 			{
+				$this->_ensureSuratPoTimestampColumns();
+				$now = date('Y-m-d H:i:s');
+				if (isset($data['ttd_1']) && !isset($data['ttd_1_at'])) {
+					$data['ttd_1_at'] = $now;
+				}
+				if (isset($data['ttd_2']) && !isset($data['ttd_2_at'])) {
+					$data['ttd_2_at'] = $now;
+				}
+				if (isset($data['ttd_3']) && !isset($data['ttd_3_at'])) {
+					$data['ttd_3_at'] = $now;
+				}
 				$this->db->where('id', $id);
 				$this->db->update('surat_po', $data);
 			}
@@ -183,6 +210,7 @@ class Md_surat_new extends CI_Model
 
 		function getDetailPoById($id)
 		{
+				$this->_ensureSuratPoTimestampColumns();
 				$this->db->select('
 					
 						f.id as idGc,
@@ -205,6 +233,9 @@ class Md_surat_new extends CI_Model
 						f.ttd_1,
 						f.ttd_2,
 						f.ttd_3,
+						f.ttd_1_at,
+						f.ttd_2_at,
+						f.ttd_3_at,
 						f.jenis,
 						f.created_at,
 						p.nama as pengaju,

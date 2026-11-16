@@ -1001,3 +1001,395 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 		return $res;
 	}
 }
+
+if (!function_exists('formatApprovalDurationInfo')) {
+	/**
+	 * Menghitung selisih durasi waktu respon approval dan klasifikasi kecepatannya (Cepat / Normal / Lama).
+	 */
+	function formatApprovalDurationInfo($startDt, $endDt = null, $isWaiting = false)
+	{
+		$res = [
+			'valid'      => false,
+			'seconds'    => 0,
+			'text'       => '-',
+			'tier'       => 'none', // 'fast', 'normal', 'slow'
+			'badge_bg'   => '#f1f5f9',
+			'badge_text' => '#475569',
+			'badge_bdr'  => '#cbd5e1',
+			'icon'       => 'fa-clock',
+			'label_tier' => ''
+		];
+
+		if (empty($startDt) || strpos((string)$startDt, '0000-00-00') !== false) {
+			return $res;
+		}
+		// Jika hanya tanggal (YYYY-MM-DD), anggap jam 08:00:00
+		$startStr = trim((string)$startDt);
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $startStr)) {
+			$startStr .= ' 08:00:00';
+		}
+		$tsStart = strtotime($startStr);
+		if (!$tsStart || $tsStart <= 0) {
+			return $res;
+		}
+
+		if ($isWaiting && (empty($endDt) || strpos((string)$endDt, '0000-00-00') !== false)) {
+			$tsEnd = time();
+		} else {
+			if (empty($endDt) || strpos((string)$endDt, '0000-00-00') !== false) {
+				return $res;
+			}
+			$endStr = trim((string)$endDt);
+			if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $endStr)) {
+				$endStr .= ' 17:00:00';
+			}
+			$tsEnd = strtotime($endStr);
+			if (!$tsEnd || $tsEnd <= 0) {
+				return $res;
+			}
+		}
+
+		$diff = max(0, $tsEnd - $tsStart);
+		$res['valid']   = true;
+		$res['seconds'] = $diff;
+
+		$days  = (int)floor($diff / 86400);
+		$hours = (int)floor(($diff % 86400) / 3600);
+		$mins  = (int)floor(($diff % 3600) / 60);
+
+		$parts = [];
+		if ($days > 0) {
+			$parts[] = $days . ' Hari';
+		}
+		if ($hours > 0) {
+			$parts[] = $hours . ' Jam';
+		}
+		if ($days === 0 && $mins > 0) {
+			$parts[] = $mins . ' Menit';
+		}
+		if (empty($parts)) {
+			$parts[] = '< 1 Menit';
+		}
+		$res['text'] = implode(' ', $parts);
+
+		if ($diff <= 4 * 3600) {
+			$res['tier']       = 'fast';
+			$res['badge_bg']   = '#dcfce7';
+			$res['badge_text'] = '#166534';
+			$res['badge_bdr']  = '#86efac';
+			$res['icon']       = 'fa-bolt';
+			$res['label_tier'] = 'Cepat';
+		} elseif ($diff <= 24 * 3600) {
+			$res['tier']       = 'normal';
+			$res['badge_bg']   = '#fef3c7';
+			$res['badge_text'] = '#92400e';
+			$res['badge_bdr']  = '#fcd34d';
+			$res['icon']       = 'fa-stopwatch';
+			$res['label_tier'] = 'Normal';
+		} else {
+			$res['tier']       = 'slow';
+			$res['badge_bg']   = '#fee2e2';
+			$res['badge_text'] = '#991b1b';
+			$res['badge_bdr']  = '#fca5a5';
+			$res['icon']       = 'fa-exclamation-triangle';
+			$res['label_tier'] = 'Lama';
+		}
+
+		return $res;
+	}
+}
+
+if (!function_exists('renderApprovalTimelineBar')) {
+	/**
+	 * Render komponen visual Timeline & Tracking Bar Waktu Approval (otomatis hilang saat Print/Cetak).
+	 */
+	function renderApprovalTimelineBar($title, array $stages, $createdAt = null, $creatorName = 'Pengaju')
+	{
+		static $cssInjected = false;
+		$html = '';
+
+		if (!$cssInjected) {
+			$cssInjected = true;
+			$html .= '<style>
+				.approval-timeline-tracker {
+					border: 1px solid #dbe4f0;
+					border-radius: 12px;
+					background: #ffffff;
+					box-shadow: 0 4px 16px rgba(15, 23, 42, 0.045);
+					margin-bottom: 20px;
+					overflow: hidden;
+					font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+				}
+				.att-header {
+					background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+					color: #ffffff;
+					padding: 12px 18px;
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					flex-wrap: wrap;
+					gap: 10px;
+				}
+				.att-header-title {
+					font-size: 14px;
+					font-weight: 700;
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					margin: 0;
+				}
+				.att-summary-badges {
+					display: flex;
+					align-items: center;
+					flex-wrap: wrap;
+					gap: 8px;
+				}
+				.att-pill {
+					font-size: 11.5px;
+					font-weight: 600;
+					padding: 4px 10px;
+					border-radius: 999px;
+					display: inline-flex;
+					align-items: center;
+					gap: 5px;
+				}
+				.att-body {
+					padding: 16px 18px;
+					background: #f8fafc;
+				}
+				.att-grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+					gap: 12px;
+				}
+				.att-step-card {
+					background: #ffffff;
+					border: 1px solid #e2e8f0;
+					border-top: 4px solid #94a3b8;
+					border-radius: 10px;
+					padding: 12px 14px;
+					position: relative;
+					transition: all 0.2s ease;
+				}
+				.att-step-card.st-approved {
+					border-top-color: #10b981;
+					background: #fcfefd;
+				}
+				.att-step-card.st-pending {
+					border-top-color: #f59e0b;
+					background: #fffdf7;
+					box-shadow: 0 2px 10px rgba(245, 158, 11, 0.12);
+				}
+				.att-step-card.st-rejected {
+					border-top-color: #ef4444;
+					background: #fffafa;
+				}
+				.att-step-top {
+					display: flex;
+					justify-content: space-between;
+					align-items: flex-start;
+					gap: 6px;
+					margin-bottom: 6px;
+				}
+				.att-step-label {
+					font-size: 12px;
+					font-weight: 700;
+					color: #1e293b;
+					line-height: 1.3;
+				}
+				.att-step-approver {
+					font-size: 12.5px;
+					font-weight: 700;
+					color: #0f172a;
+					margin-bottom: 2px;
+				}
+				.att-step-role {
+					font-size: 11px;
+					color: #64748b;
+					margin-bottom: 8px;
+				}
+				.att-time-row {
+					font-size: 11.5px;
+					color: #334155;
+					background: #f1f5f9;
+					border-radius: 6px;
+					padding: 5px 8px;
+					margin-bottom: 6px;
+					display: flex;
+					align-items: center;
+					gap: 6px;
+				}
+				.att-dur-badge {
+					display: inline-flex;
+					align-items: center;
+					gap: 5px;
+					font-size: 11px;
+					font-weight: 700;
+					padding: 4px 9px;
+					border-radius: 6px;
+					width: 100%;
+					justify-content: center;
+				}
+				@media print {
+					.approval-timeline-tracker, .no-print-tracker {
+						display: none !important;
+					}
+				}
+			</style>';
+		}
+
+		// Hitung durasi tiap tahap & cari tahap paling lama (bottleneck)
+		$slowestStage = null;
+		$maxSeconds   = 0;
+		$activeWaitingStage = null;
+		$lastCompletedTime  = $createdAt;
+
+		foreach ($stages as $idx => &$st) {
+			$refStart = !empty($st['prev_timestamp']) ? $st['prev_timestamp'] : $lastCompletedTime;
+			$st['ref_start'] = $refStart;
+
+			if (in_array($st['status'], ['approved', 'rejected', 'revisi'], true) && !empty($st['timestamp'])) {
+				$dur = formatApprovalDurationInfo($refStart, $st['timestamp'], false);
+				$st['dur_info'] = $dur;
+				if ($dur['valid'] && $dur['seconds'] >= $maxSeconds) {
+					$maxSeconds   = $dur['seconds'];
+					$slowestStage = [
+						'label'    => $st['label'],
+						'approver' => $st['approver'] ?? '',
+						'text'     => $dur['text'],
+						'tier'     => $dur['tier']
+					];
+				}
+				$lastCompletedTime = $st['timestamp'];
+			} elseif ($st['status'] === 'pending') {
+				$dur = formatApprovalDurationInfo($refStart, null, true);
+				$st['dur_info'] = $dur;
+				if (!$activeWaitingStage) {
+					$activeWaitingStage = [
+						'label'    => $st['label'],
+						'approver' => $st['approver'] ?? '',
+						'text'     => $dur['text']
+					];
+				}
+			} else {
+				$st['dur_info'] = formatApprovalDurationInfo(null, null, false);
+			}
+		}
+		unset($st);
+
+		$html .= '<div class="approval-timeline-tracker no-print-tracker">';
+		$html .= '<div class="att-header">';
+		$html .= '<div class="att-header-title"><i class="fas fa-stopwatch text-warning"></i> ' . htmlspecialchars($title) . '</div>';
+		$html .= '<div class="att-summary-badges">';
+
+		if (!empty($createdAt) && strpos((string)$createdAt, '0000-00-00') === false) {
+			$html .= '<span class="att-pill" style="background:rgba(255,255,255,0.15); color:#f8fafc;">'
+				. '<i class="far fa-calendar-plus"></i> Diajukan: ' . date('d/m/Y H:i', strtotime($createdAt))
+				. '</span>';
+		}
+
+		if ($slowestStage && $maxSeconds > 0) {
+			$slowBg = ($slowestStage['tier'] === 'slow') ? '#fee2e2; color:#991b1b;' : '#fef3c7; color:#92400e;';
+			$html .= '<span class="att-pill" style="background:' . $slowBg . '">'
+				. '<i class="fas fa-hourglass-end"></i> Respon Terlama: ' . htmlspecialchars($slowestStage['label'])
+				. ' (' . htmlspecialchars($slowestStage['text']) . ')'
+				. '</span>';
+		}
+
+		if ($activeWaitingStage) {
+			$html .= '<span class="att-pill" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a;">'
+				. '<i class="fas fa-spinner fa-spin"></i> Menunggu: ' . htmlspecialchars($activeWaitingStage['label'])
+				. ' (' . htmlspecialchars($activeWaitingStage['text']) . ')'
+				. '</span>';
+		}
+
+		$html .= '</div></div>'; // end header
+		$html .= '<div class="att-body"><div class="att-grid">';
+
+		// Card 0: Waktu Pengajuan Awal (jika ada)
+		if (!empty($createdAt) && strpos((string)$createdAt, '0000-00-00') === false) {
+			$tsCreated = strtotime($createdAt);
+			$fmtCreated = (date('H:i:s', $tsCreated) === '00:00:00')
+				? date('d/m/Y', $tsCreated)
+				: date('d/m/Y H:i', $tsCreated) . ' WIB';
+			$html .= '<div class="att-step-card st-approved">'
+				. '<div class="att-step-top">'
+				. '<span class="att-step-label">0. Pengajuan Awal</span>'
+				. '<span class="badge badge-primary" style="font-size:10px;"><i class="fas fa-paper-plane"></i> Diajukan</span>'
+				. '</div>'
+				. '<div class="att-step-approver">' . htmlspecialchars($creatorName ?: 'Pengaju') . '</div>'
+				. '<div class="att-step-role">Pembuat Dokumen</div>'
+				. '<div class="att-time-row"><i class="far fa-clock text-primary"></i> <strong>' . $fmtCreated . '</strong></div>'
+				. '<div class="att-dur-badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">'
+				. '<i class="fas fa-flag-checkered"></i> Titik Mulai Waktu Approval'
+				. '</div>'
+				. '</div>';
+		}
+
+		foreach ($stages as $st) {
+			$stCode = $st['status'] ?? 'waiting_prev';
+			$cardCls = '';
+			$badgeHtml = '<span class="badge badge-secondary" style="font-size:10px;">Menunggu Giliran</span>';
+
+			if ($stCode === 'approved') {
+				$cardCls = 'st-approved';
+				$badgeHtml = '<span class="badge badge-success" style="font-size:10px;"><i class="fas fa-check"></i> Disetujui</span>';
+			} elseif ($stCode === 'rejected') {
+				$cardCls = 'st-rejected';
+				$badgeHtml = '<span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-times"></i> Ditolak</span>';
+			} elseif ($stCode === 'revisi') {
+				$cardCls = 'st-rejected';
+				$badgeHtml = '<span class="badge badge-warning text-dark" style="font-size:10px;"><i class="fas fa-undo"></i> Revisi</span>';
+			} elseif ($stCode === 'pending') {
+				$cardCls = 'st-pending';
+				$badgeHtml = '<span class="badge badge-warning text-dark" style="font-size:10px;"><i class="fas fa-hourglass-half"></i> Menunggu TTD</span>';
+			}
+
+			$html .= '<div class="att-step-card ' . $cardCls . '">';
+			$html .= '<div class="att-step-top">';
+			$html .= '<span class="att-step-label">' . htmlspecialchars($st['label']) . '</span>';
+			$html .= $badgeHtml;
+			$html .= '</div>';
+
+			$html .= '<div class="att-step-approver">' . htmlspecialchars($st['approver'] ?? '-') . '</div>';
+			$html .= '<div class="att-step-role">' . htmlspecialchars($st['role'] ?? 'Pejabat Penyetuju') . '</div>';
+
+			$dur = $st['dur_info'];
+			if (!empty($st['timestamp']) && strpos((string)$st['timestamp'], '0000-00-00') === false) {
+				$fmtTime = date('d/m/Y H:i', strtotime($st['timestamp'])) . ' WIB';
+				$html .= '<div class="att-time-row"><i class="far fa-calendar-check text-success"></i> <strong>' . $fmtTime . '</strong></div>';
+				if (!empty($dur['valid'])) {
+					$html .= '<div class="att-dur-badge" style="background:' . $dur['badge_bg'] . '; color:' . $dur['badge_text'] . '; border:1px solid ' . $dur['badge_bdr'] . ';">'
+						. '<i class="fas ' . $dur['icon'] . '"></i> Respon: ' . htmlspecialchars($dur['text']) . ' (' . $dur['label_tier'] . ')'
+						. '</div>';
+				}
+			} elseif (in_array($stCode, ['approved', 'rejected', 'revisi'], true)) {
+				$html .= '<div class="att-time-row"><i class="fas fa-check-circle text-success"></i> <span>Sudah di-approve (Data lama)</span></div>';
+				$html .= '<div class="att-dur-badge" style="background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0;">'
+					. '<i class="fas fa-info-circle"></i> Waktu TTD tercatat mulai update ini'
+					. '</div>';
+			} elseif ($stCode === 'pending') {
+				$html .= '<div class="att-time-row"><i class="fas fa-clock text-warning"></i> <span>Belum di-approve</span></div>';
+				if (!empty($dur['valid'])) {
+					$html .= '<div class="att-dur-badge" style="background:' . $dur['badge_bg'] . '; color:' . $dur['badge_text'] . '; border:1px solid ' . $dur['badge_bdr'] . ';">'
+						. '<i class="fas fa-hourglass-half"></i> Menunggu: ' . htmlspecialchars($dur['text'])
+						. '</div>';
+				} else {
+					$html .= '<div class="att-dur-badge" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a;">'
+						. '<i class="fas fa-hourglass-half"></i> Menunggu Persetujuan Atasan'
+						. '</div>';
+				}
+			} else {
+				$html .= '<div class="att-time-row"><i class="fas fa-lock text-muted"></i> <span class="text-muted">Menunggu tahap sebelumnya</span></div>';
+				$html .= '<div class="att-dur-badge" style="background:#f8fafc; color:#94a3b8; border:1px dashed #cbd5e1;">'
+					. '<i class="fas fa-minus"></i> Belum Aktif'
+					. '</div>';
+			}
+
+			$html .= '</div>';
+		}
+
+		$html .= '</div></div></div>';
+		return $html;
+	}
+}

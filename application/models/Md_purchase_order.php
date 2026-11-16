@@ -171,6 +171,7 @@ class Md_purchase_order extends CI_Model
 			//Surat Izin Jam Kerja
 			function getPOById($id)
 			{
+					$this->_ensurePurchaseOrderTimestampColumns();
 					$this->db->select('
 						f.id as id_po,
 						f.kode_po,
@@ -192,6 +193,11 @@ class Md_purchase_order extends CI_Model
 						f.ttd_2,
 						f.ttd_3,
 						f.ttd_4,
+						f.ttd_gm_at,
+						f.ttd_1_at,
+						f.ttd_2_at,
+						f.ttd_3_at,
+						f.ttd_4_at,
 						p.nama as pengaju,
 						p.short_name as nama_ttd,
 						p.jabatan as jabatan
@@ -302,11 +308,34 @@ class Md_purchase_order extends CI_Model
 			}
 
 
-			function updatePO($id, $data)
-			{
-				$this->db->where('id', $id);
-				$this->db->update('purchase_order', $data);
+	private function _ensurePurchaseOrderTimestampColumns()
+	{
+		static $checked = false;
+		if ($checked) return;
+		$checked = true;
+		$origDebug = $this->db->db_debug;
+		$this->db->db_debug = FALSE;
+		foreach (['ttd_gm_at', 'ttd_1_at', 'ttd_2_at', 'ttd_3_at', 'ttd_4_at'] as $col) {
+			$chk = @$this->db->query("SHOW COLUMNS FROM `purchase_order` LIKE '{$col}'");
+			if ($chk && $chk->num_rows() === 0) {
+				@$this->db->query("ALTER TABLE `purchase_order` ADD COLUMN `{$col}` DATETIME DEFAULT NULL");
 			}
+		}
+		$this->db->db_debug = $origDebug;
+	}
+
+	function updatePO($id, $data)
+	{
+		$this->_ensurePurchaseOrderTimestampColumns();
+		$now = date('Y-m-d H:i:s');
+		foreach (['ttd_gm', 'ttd_1', 'ttd_2', 'ttd_3', 'ttd_4'] as $col) {
+			if (isset($data[$col]) && !isset($data[$col . '_at'])) {
+				$data[$col . '_at'] = $now;
+			}
+		}
+		$this->db->where('id', $id);
+		$this->db->update('purchase_order', $data);
+	}
 
 
 			function getSupplier()

@@ -53,6 +53,12 @@ class Perizinan_visilab extends CI_Controller
             APPPATH . 'views/pages/sph/v_sph_form.php',
             APPPATH . 'controllers/Passport.php',
             APPPATH . 'views/passport_public.php',
+            APPPATH . 'helpers/mandatory_helper.php',
+            APPPATH . 'views/pages/po/v_po_detail.php',
+            APPPATH . 'models/Md_surat_new.php',
+            APPPATH . 'views/pages/surat_new/v_detail_po.php',
+            APPPATH . 'models/Md_purchase_order.php',
+            APPPATH . 'views/pages/purchase_order/v_detail_po.php',
         ];
         foreach ($viewFiles as $vf) {
             if (function_exists('opcache_invalidate') && file_exists($vf)) {

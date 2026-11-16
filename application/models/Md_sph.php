@@ -279,6 +279,10 @@ class Md_sph extends CI_Model
             if ($chkCol && $chkCol->num_rows() === 0) {
                 @$this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `pembayaran_custom` VARCHAR(255) DEFAULT NULL AFTER `sistem_pembayaran`");
             }
+            $chkFin = @$this->db->query("SHOW COLUMNS FROM `{$this->table}` LIKE 'finalized_at'");
+            if ($chkFin && $chkFin->num_rows() === 0) {
+                @$this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `finalized_at` DATETIME DEFAULT NULL AFTER `status`");
+            }
         }
 
         $targetId = function_exists('decrypt') ? (int)decrypt('jd1172') : 0;
@@ -836,8 +840,12 @@ class Md_sph extends CI_Model
      */
     public function finalizeSph($id)
     {
+        $this->_ensureSphCustomPaymentSchemaAndData($id);
         $this->db->where('id', $id);
-        return $this->db->update($this->table, ['status' => 'final']);
+        return $this->db->update($this->table, [
+            'status'       => 'final',
+            'finalized_at' => date('Y-m-d H:i:s')
+        ]);
     }
 
     /**

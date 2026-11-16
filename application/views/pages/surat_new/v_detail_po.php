@@ -55,6 +55,60 @@
 	</style>
 </header>
 <div class="col-xl-10 mb-8 mb-xl-0;" style=" margin: auto;">
+	<?php
+	if (function_exists('renderApprovalTimelineBar') && !empty($data_po[0])) {
+		$poRow = $data_po[0];
+		$stGm = ($poRow->ttd_3 == '1') ? 'approved' : (($poRow->ttd_3 == '2') ? 'rejected' : 'pending');
+		$stagesSuratPo = [
+			[
+				'label'          => '1. TTD General Manager',
+				'approver'       => 'Yolanda Pratiwi',
+				'role'           => 'General Manager',
+				'status'         => $stGm,
+				'timestamp'      => $poRow->ttd_3_at ?? null,
+				'prev_timestamp' => $poRow->created_at ?? $poRow->tanggal
+			]
+		];
+
+		if ($poRow->jenis != 1) {
+			$stHr = ($poRow->ttd_2 == '1') ? 'approved' : (($poRow->ttd_2 == '2') ? 'rejected' : (($poRow->ttd_3 == '1') ? 'pending' : 'waiting_prev'));
+			$stagesSuratPo[] = [
+				'label'          => '2. TTD HR & Legal',
+				'approver'       => 'Dian Melati Amelia',
+				'role'           => 'HR & Legal',
+				'status'         => $stHr,
+				'timestamp'      => $poRow->ttd_2_at ?? null,
+				'prev_timestamp' => $poRow->ttd_3_at ?: ($poRow->created_at ?? $poRow->tanggal)
+			];
+			$stDir = ($poRow->ttd_1 == '1') ? 'approved' : (($poRow->ttd_1 == '2') ? 'rejected' : (($poRow->ttd_2 == '1') ? 'pending' : 'waiting_prev'));
+			$stagesSuratPo[] = [
+				'label'          => '3. TTD Director',
+				'approver'       => 'Meilina Safitri, S.E',
+				'role'           => 'Director of Corporate Planning & Business Management',
+				'status'         => $stDir,
+				'timestamp'      => $poRow->ttd_1_at ?? null,
+				'prev_timestamp' => $poRow->ttd_2_at ?: ($poRow->ttd_3_at ?: ($poRow->created_at ?? $poRow->tanggal))
+			];
+		} else {
+			$stDir = ($poRow->ttd_1 == '1') ? 'approved' : (($poRow->ttd_1 == '2') ? 'rejected' : (($poRow->ttd_3 == '1') ? 'pending' : 'waiting_prev'));
+			$stagesSuratPo[] = [
+				'label'          => '2. TTD Director',
+				'approver'       => 'Meilina Safitri, S.E',
+				'role'           => 'Director of Corporate Planning & Business Management',
+				'status'         => $stDir,
+				'timestamp'      => $poRow->ttd_1_at ?? null,
+				'prev_timestamp' => $poRow->ttd_3_at ?: ($poRow->created_at ?? $poRow->tanggal)
+			];
+		}
+
+		echo renderApprovalTimelineBar(
+			'Tracking Waktu & Kecepatan Approval TTD Surat PO (' . ($poRow->kode ?? '-') . ')',
+			$stagesSuratPo,
+			$poRow->created_at ?? $poRow->tanggal,
+			$poRow->pengaju ?? 'Pengaju'
+		);
+	}
+	?>
 	<div class="card-body" style="background-color:#FFFFFF; padding:5%;">
 
 		<div class="text-right">
