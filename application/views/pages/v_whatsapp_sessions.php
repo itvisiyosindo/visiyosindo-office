@@ -190,9 +190,15 @@ if (!empty($sessions)) {
                                         <td class="text-center text-muted small"><?= $no++ ?></td>
                                         <td>
                                             <strong class="text-dark">
-                                                <?= htmlspecialchars(!empty($row->nama_karyawan) ? $row->nama_karyawan : ($row->nama ?? 'Tamu / Customer')) ?>
+                                                <?php
+                                                    $displayName = !empty($row->nama_karyawan) ? $row->nama_karyawan : ($row->nama ?? 'Tamu / Customer');
+                                                    if (in_array((string)($row->pengguna_id ?? ''), ['106', '107']) || ($row->nama ?? '') === 'Head of Accounting and Tax' || ($row->nama_karyawan ?? '') === 'Head of Accounting and Tax') {
+                                                        $displayName = 'Dirangga Madali';
+                                                    }
+                                                    echo htmlspecialchars($displayName);
+                                                ?>
                                             </strong>
-                                            <?php if (!empty($row->nama_karyawan) && !empty($row->nama) && $row->nama !== $row->nama_karyawan): ?>
+                                            <?php if (!empty($row->nama) && $row->nama !== $displayName): ?>
                                                 <small class="text-muted d-block"><i class="fas fa-user-tag mr-1"></i><?= htmlspecialchars($row->nama) ?><?= !empty($row->jabatan) ? ' (' . htmlspecialchars($row->jabatan) . ')' : '' ?></small>
                                             <?php elseif (!empty($row->jabatan)): ?>
                                                 <small class="text-muted d-block"><i class="fas fa-briefcase mr-1"></i><?= htmlspecialchars($row->jabatan) ?></small>
