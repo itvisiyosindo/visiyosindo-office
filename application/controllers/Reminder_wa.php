@@ -210,7 +210,7 @@ class Reminder_wa extends CI_Controller
             }
 
             $lastSent = [];
-            $recent = $this->db->query("SELECT id, is_group, penerima, status, created_at, sent_at, LEFT(payload_json, 200) as snippet FROM tbl_wa_queue ORDER BY id DESC LIMIT 5")->result();
+            $recent = $this->db->query("SELECT id, is_group, penerima, status, created_at, sent_at, LEFT(payload_json, 200) as snippet FROM tbl_wa_queue WHERE is_group = 0 ORDER BY id DESC LIMIT 5")->result();
             foreach ($recent as $rc) {
                 $lastSent[] = [
                     'id'         => (int)$rc->id,
