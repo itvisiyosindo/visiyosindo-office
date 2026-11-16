@@ -34,15 +34,32 @@ class Audit extends CI_Controller
             return;
         }
 
-        $year   = $this->input->get('tahun', TRUE);
-        $divisi = $this->input->get('divisi', TRUE);
-        $posisi = $this->input->get('posisi', TRUE);
-        $search = $this->input->get('q', TRUE);
+        $year       = $this->input->get('tahun', TRUE);
+        $divisi     = $this->input->get('divisi', TRUE);
+        $posisi     = $this->input->get('posisi', TRUE);
+        $search     = $this->input->get('q', TRUE);
+        $pegawai_id = $this->input->get('pegawai_id', TRUE);
 
         if (empty($year)) {
             $year = 2026;
         } else {
             $year = (int)$year;
+        }
+
+        $divTree        = $this->md_audit_system->getDivisiAndPositions();
+        $pegawaiList    = $this->md_audit_system->getAuditKinerjaPegawaiList();
+        $selectedPegawai = null;
+
+        // Jika pegawai_id dipilih, cari detail pegawai dan kunci posisi serta divisinya
+        if (!empty($pegawai_id)) {
+            foreach ($pegawaiList as $peg) {
+                if ($peg['pengguna_id'] === (string)$pegawai_id) {
+                    $selectedPegawai = $peg;
+                    $posisi = $peg['posisi'];
+                    $divisi = $peg['divisi'];
+                    break;
+                }
+            }
         }
 
         if (empty($divisi)) {
@@ -52,8 +69,22 @@ class Audit extends CI_Controller
             $posisi = 'all';
         }
 
-        $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
-        $divTree   = $this->md_audit_system->getDivisiAndPositions();
+        // Jika belum ada pegawai yang dipilih dan tidak ada parameter posisi/divisi/q khusus
+        $hasEmployeeSelected = (!empty($selectedPegawai) || ($posisi !== 'all') || ($divisi !== 'all') || !empty($search));
+
+        if ($hasEmployeeSelected) {
+            $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
+        } else {
+            // Ketika baru membuka menu, jangan langsung render tabel raksasa seluruh data
+            $auditData = [
+                'year'                => $year,
+                'total_items'         => 0,
+                'verified_count'      => 0,
+                'need_evidence_count' => 0,
+                'pending_count'       => 0,
+                'data'                => []
+            ];
+        }
 
         $user_jabatan = '';
         $user_id = sessPenggunaId();
@@ -67,20 +98,24 @@ class Audit extends CI_Controller
             $this->db->db_debug = $orig_db_debug;
         }
 
-        $page_data['switch']        = 'kepegawaian';
-        $page_data['page_name']     = 'audit/v_audit_kinerja';
-        $page_data['page_title']    = 'Audit Kinerja Karyawan';
-        $page_data['page_desc']     = 'Audit Kinerja Seluruh Divisi: Jobdesk, Detail Proyek, Implementasi Kinerja & Link Dokumen Bukti';
-        $page_data['selected_year'] = $year;
-        $page_data['selected_div']  = $divisi;
-        $page_data['selected_pos']  = $posisi;
-        $page_data['search_query']  = $search;
-        $page_data['summary']       = $auditData;
-        $page_data['items']         = $auditData['data'];
-        $page_data['div_tree']      = $divTree;
-        $page_data['current_user_name'] = sessNama();
-        $page_data['current_user_id']   = sessPenggunaId();
-        $page_data['user_jabatan']  = $user_jabatan;
+        $page_data['switch']                = 'kepegawaian';
+        $page_data['page_name']             = 'audit/v_audit_kinerja';
+        $page_data['page_title']            = 'Audit Kinerja Karyawan';
+        $page_data['page_desc']             = 'Audit Kinerja Seluruh Divisi: Jobdesk, Detail Proyek, Implementasi Kinerja & Link Dokumen Bukti';
+        $page_data['selected_year']         = $year;
+        $page_data['selected_div']          = $divisi;
+        $page_data['selected_pos']          = $posisi;
+        $page_data['search_query']          = $search;
+        $page_data['selected_pegawai_id']   = $pegawai_id;
+        $page_data['selected_pegawai']      = $selectedPegawai;
+        $page_data['has_employee_selected'] = $hasEmployeeSelected;
+        $page_data['pegawai_list']          = $pegawaiList;
+        $page_data['summary']               = $auditData;
+        $page_data['items']                 = $auditData['data'];
+        $page_data['div_tree']              = $divTree;
+        $page_data['current_user_name']     = sessNama();
+        $page_data['current_user_id']       = sessPenggunaId();
+        $page_data['user_jabatan']          = $user_jabatan;
 
         $this->load->view('index', $page_data);
     }
@@ -237,10 +272,24 @@ class Audit extends CI_Controller
             return;
         }
 
-        $year   = (int)($this->input->get('tahun') ?: 2026);
-        $divisi = $this->input->get('divisi') ?: 'all';
-        $posisi = $this->input->get('posisi') ?: 'all';
-        $search = $this->input->get('q') ?: null;
+        $year       = (int)($this->input->get('tahun') ?: 2026);
+        $divisi     = $this->input->get('divisi') ?: 'all';
+        $posisi     = $this->input->get('posisi') ?: 'all';
+        $search     = $this->input->get('q') ?: null;
+        $pegawai_id = $this->input->get('pegawai_id', TRUE);
+
+        $selectedPegawai = null;
+        if (!empty($pegawai_id)) {
+            $pegawaiList = $this->md_audit_system->getAuditKinerjaPegawaiList();
+            foreach ($pegawaiList as $peg) {
+                if ($peg['pengguna_id'] === (string)$pegawai_id) {
+                    $selectedPegawai = $peg;
+                    $posisi = $peg['posisi'];
+                    $divisi = $peg['divisi'];
+                    break;
+                }
+            }
+        }
 
         $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
         $items = $auditData['data'];
@@ -250,8 +299,10 @@ class Audit extends CI_Controller
         $sheet->setTitle('Audit Kinerja ' . $year);
 
         // Header Dokumen
-        $sheet->setCellValue('A1', 'AUDIT KINERJA KARYAWAN - PT VISI YOSINDO MEDIKAL');
-        $sheet->setCellValue('A2', 'Tahun Periode: ' . $year . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s'));
+        $sheetTitle = !empty($selectedPegawai) ? ('AUDIT KINERJA - ' . strtoupper($selectedPegawai['nama'])) : 'AUDIT KINERJA KARYAWAN - PT VISI YOSINDO MEDIKAL';
+        $sheet->setCellValue('A1', $sheetTitle);
+        $subTitle = 'Tahun Periode: ' . $year . (!empty($selectedPegawai) ? (' | Posisi: ' . $selectedPegawai['posisi'] . ' (' . $selectedPegawai['divisi'] . ')') : '') . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s');
+        $sheet->setCellValue('A2', $subTitle);
         $sheet->mergeCells('A1:J1');
         $sheet->mergeCells('A2:J2');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);

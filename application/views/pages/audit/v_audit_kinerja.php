@@ -65,17 +65,188 @@
 		color: #1e40af;
 		text-decoration: none;
 	}
+	.employee-select-card {
+		background: #ffffff;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		padding: 24px;
+		box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+		margin-bottom: 20px;
+	}
+	.employee-grid-item {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 12px 14px;
+		cursor: pointer;
+		transition: all 0.2s ease-in-out;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		text-decoration: none !important;
+		color: inherit !important;
+	}
+	.employee-grid-item:hover {
+		border-color: #3b82f6;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+		background: #f8fafc;
+	}
+	.employee-grid-item.active {
+		border-color: #2563eb;
+		background: #eff6ff;
+		box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+	}
+	.employee-avatar-circle {
+		width: 42px;
+		height: 42px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+		color: #ffffff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 15px;
+		flex-shrink: 0;
+	}
+	.selected-employee-banner {
+		background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+		border-radius: 10px;
+		color: #ffffff;
+		padding: 16px 20px;
+		margin-bottom: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 12px;
+	}
 </style>
 
 <div class="row">
 	<div class="col-12">
+		<!-- Selection & Banner Section -->
+		<?php if (!empty($selected_pegawai)): ?>
+			<div class="selected-employee-banner shadow-sm">
+				<div class="d-flex align-items-center" style="gap: 15px;">
+					<div class="employee-avatar-circle" style="background: #ffffff; color: #1e293b; font-size: 18px; width: 48px; height: 48px;">
+						<?= strtoupper(substr($selected_pegawai['nama'], 0, 1)) ?>
+					</div>
+					<div>
+						<div class="small text-uppercase text-light font-weight-bold" style="opacity: 0.85;">Audit Kinerja Pegawai Terpilih</div>
+						<div class="h4 font-weight-bold mb-0 text-white"><?= htmlspecialchars($selected_pegawai['nama']) ?></div>
+						<div class="small mt-1 text-light">
+							<span class="badge badge-primary px-2 py-1 mr-1"><?= htmlspecialchars($selected_pegawai['divisi']) ?></span>
+							<span class="badge badge-light text-dark px-2 py-1"><?= htmlspecialchars($selected_pegawai['posisi']) ?></span>
+							<?php if (!empty($selected_pegawai['jabatan']) && $selected_pegawai['jabatan'] !== $selected_pegawai['posisi']): ?>
+								<span class="text-white-50 ml-1">(<?= htmlspecialchars($selected_pegawai['jabatan']) ?>)</span>
+							<?php endif; ?>
+						</div>
+					</div>
+				</div>
+				<div class="d-flex align-items-center" style="gap: 8px;">
+					<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-light font-weight-bold">
+						<i class="fas fa-users mr-1"></i> Pilih Pegawai Lain
+					</a>
+				</div>
+			</div>
+		<?php elseif ($has_employee_selected): ?>
+			<div class="selected-employee-banner shadow-sm" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+				<div class="d-flex align-items-center" style="gap: 12px;">
+					<div class="employee-avatar-circle" style="background: rgba(255,255,255,0.2); color: #fff; width: 44px; height: 44px;">
+						<i class="fas fa-filter"></i>
+					</div>
+					<div>
+						<div class="small text-uppercase text-light font-weight-bold" style="opacity: 0.85;">Filter Khusus Diterapkan</div>
+						<div class="h5 font-weight-bold mb-0 text-white">
+							<?= ($selected_pos !== 'all') ? htmlspecialchars($selected_pos) : (($selected_div !== 'all') ? htmlspecialchars($selected_div) : 'Pencarian: ' . htmlspecialchars($search_query)) ?>
+						</div>
+					</div>
+				</div>
+				<div>
+					<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-light font-weight-bold">
+						<i class="fas fa-users mr-1"></i> Kembali ke Daftar Pegawai
+					</a>
+				</div>
+			</div>
+		<?php endif; ?>
+
+		<!-- Employee Selector Box (Tampil jika belum pilih pegawai atau ingin ganti) -->
+		<?php if (!$has_employee_selected): ?>
+			<div class="employee-select-card">
+				<div class="d-flex align-items-center justify-content-between flex-wrap pb-3 mb-3 border-bottom" style="gap: 12px;">
+					<div>
+						<h4 class="font-weight-bold text-dark mb-1">
+							<i class="fas fa-user-check text-primary mr-2"></i>Pilih Pegawai untuk Audit Kinerja
+						</h4>
+						<p class="text-muted small mb-0">Silakan tentukan atau klik nama pegawai di bawah ini untuk melihat detail tabel audit kinerja.</p>
+					</div>
+					<div style="min-width: 280px;">
+						<div class="input-group">
+							<input type="text" id="quickSearchPegawai" class="form-control" placeholder="Cari nama / posisi pegawai..." onkeyup="filterPegawaiGrid();">
+							<div class="input-group-append">
+								<span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Quick Dropdown Select -->
+				<div class="row mb-3">
+					<div class="col-md-6 col-sm-12">
+						<label class="font-weight-bold small text-muted"><i class="fas fa-list-ul"></i> Dropdown Pilih Nama Pegawai:</label>
+						<select id="selectQuickPegawai" class="form-control" onchange="if(this.value){ window.location.href='<?= base_url('audit/kinerja?tahun=' . $selected_year . '&pegawai_id=') ?>' + this.value; }">
+							<option value="">-- Pilih / Ketik Nama Pegawai --</option>
+							<?php foreach ($pegawai_list as $peg): ?>
+								<option value="<?= htmlspecialchars($peg['pengguna_id']) ?>">
+									<?= htmlspecialchars($peg['nama']) ?> - <?= htmlspecialchars($peg['posisi']) ?> (<?= htmlspecialchars($peg['divisi']) ?>)
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="col-md-6 col-sm-12 text-md-right pt-md-4 mt-2">
+						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year . '&divisi=all&posisi=all') ?>" class="btn btn-sm btn-outline-secondary">
+							<i class="fas fa-table mr-1"></i> Tampilkan Seluruh Data Tabel Sekaligus
+						</a>
+					</div>
+				</div>
+
+				<!-- Grid Cards of Employees -->
+				<div class="row" id="pegawaiGridContainer" style="max-height: 480px; overflow-y: auto;">
+					<?php foreach ($pegawai_list as $peg): ?>
+						<div class="col-lg-3 col-md-4 col-sm-6 mb-3 pegawai-card-item" data-nama="<?= strtolower(htmlspecialchars($peg['nama'])) ?>" data-posisi="<?= strtolower(htmlspecialchars($peg['posisi'])) ?>" data-divisi="<?= strtolower(htmlspecialchars($peg['divisi'])) ?>">
+							<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year . '&pegawai_id=' . $peg['pengguna_id']) ?>" class="employee-grid-item">
+								<div class="employee-avatar-circle">
+									<?= strtoupper(substr($peg['nama'], 0, 1)) ?>
+								</div>
+								<div style="overflow: hidden;">
+									<div class="font-weight-bold text-dark text-truncate" title="<?= htmlspecialchars($peg['nama']) ?>">
+										<?= htmlspecialchars($peg['nama']) ?>
+									</div>
+									<div class="small text-muted text-truncate" style="font-size: 11px;" title="<?= htmlspecialchars($peg['posisi']) ?>">
+										<?= htmlspecialchars($peg['posisi']) ?>
+									</div>
+									<div class="badge badge-light border text-primary px-1 mt-1" style="font-size: 10px;">
+										<?= htmlspecialchars($peg['divisi']) ?>
+									</div>
+								</div>
+							</a>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		<?php endif; ?>
+
 		<!-- Summary Cards -->
+		<?php if ($has_employee_selected): ?>
 		<div class="row mb-3">
 			<div class="col-md-3 col-sm-6 mb-2">
 				<div class="stat-card-audit" style="border-left: 4px solid #3b82f6;">
 					<div class="text-muted small font-weight-bold text-uppercase">Total Item Audit Kinerja</div>
 					<div class="h3 font-weight-bold text-primary mb-0 mt-1"><?= $summary['total_items'] ?></div>
-					<div class="small text-muted mt-1"><i class="fas fa-sitemap"></i> Seluruh Karyawan / Divisi</div>
+					<div class="small text-muted mt-1"><i class="fas fa-sitemap"></i> <?= !empty($selected_pegawai) ? htmlspecialchars($selected_pegawai['nama']) : 'Sesuai Filter' ?></div>
 				</div>
 			</div>
 			<div class="col-md-3 col-sm-6 mb-2">
@@ -100,13 +271,14 @@
 				</div>
 			</div>
 		</div>
+		<?php endif; ?>
 
 		<!-- Filter Bar -->
 		<div class="filter-card">
 			<form method="GET" action="<?= base_url('audit/kinerja') ?>" id="formFilterKinerja">
 				<div class="row align-items-end">
 					<div class="col-md-2 col-sm-6 mb-2">
-						<label class="font-weight-bold small text-muted"><i class="far fa-calendar-alt"></i> Tahun Periode</label>
+						<label class="font-weight-bold small text-muted"><i class="far fa-calendar-alt"></i> Tahun</label>
 						<select name="tahun" id="filterTahun" class="form-control form-control-sm font-weight-bold" onchange="document.getElementById('formFilterKinerja').submit();">
 							<?php for ($y = 2026; $y <= 2030; $y++): ?>
 								<option value="<?= $y ?>" <?= $selected_year == $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -115,7 +287,19 @@
 					</div>
 
 					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="font-weight-bold small text-muted"><i class="fas fa-sitemap"></i> Divisi Karyawan</label>
+						<label class="font-weight-bold small text-muted"><i class="fas fa-user"></i> Nama Pegawai</label>
+						<select name="pegawai_id" id="filterPegawaiId" class="form-control form-control-sm" onchange="onPegawaiFilterChange(this.value);">
+							<option value="">-- Semua / Pilih Pegawai --</option>
+							<?php foreach ($pegawai_list as $peg): ?>
+								<option value="<?= htmlspecialchars($peg['pengguna_id']) ?>" <?= (!empty($selected_pegawai_id) && $selected_pegawai_id == $peg['pengguna_id']) ? 'selected' : '' ?>>
+									<?= htmlspecialchars($peg['nama']) ?> (<?= htmlspecialchars($peg['posisi']) ?>)
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<div class="col-md-2 col-sm-6 mb-2">
+						<label class="font-weight-bold small text-muted"><i class="fas fa-sitemap"></i> Divisi</label>
 						<select name="divisi" id="filterDivisi" class="form-control form-control-sm" onchange="updatePosisiDropdown(); document.getElementById('formFilterKinerja').submit();">
 							<option value="all">-- Semua Divisi --</option>
 							<?php foreach ($div_tree as $divName => $posList): ?>
@@ -125,7 +309,7 @@
 					</div>
 
 					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="font-weight-bold small text-muted"><i class="fas fa-user-tag"></i> Posisi / Karyawan</label>
+						<label class="font-weight-bold small text-muted"><i class="fas fa-user-tag"></i> Posisi</label>
 						<select name="posisi" id="filterPosisi" class="form-control form-control-sm" onchange="document.getElementById('formFilterKinerja').submit();">
 							<option value="all">-- Semua Posisi --</option>
 							<?php 
@@ -142,22 +326,19 @@
 					</div>
 
 					<div class="col-md-2 col-sm-6 mb-2">
-						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari Jobdesk / Bukti</label>
-						<input type="text" name="q" id="filterKinerjaQuery" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari rincian...">
-					</div>
-
-					<div class="col-md-2 col-sm-6 mb-2 text-right">
-						<button type="submit" class="btn btn-sm btn-primary btn-block mb-1">
-							<i class="fas fa-filter"></i> Terapkan
-						</button>
-						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-light border btn-block">
-							<i class="fas fa-undo"></i> Reset
-						</a>
+						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari Rincian</label>
+						<input type="text" name="q" id="filterKinerjaQuery" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari jobdesk/bukti...">
 					</div>
 				</div>
 
 				<div class="row mt-2 pt-2 border-top">
 					<div class="col-md-8 d-flex align-items-center flex-wrap" style="gap: 8px;">
+						<button type="submit" class="btn btn-sm btn-primary font-weight-bold">
+							<i class="fas fa-filter mr-1"></i> Terapkan Filter
+						</button>
+						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year) ?>" class="btn btn-sm btn-light border">
+							<i class="fas fa-undo mr-1"></i> Reset / Pilih Ulang
+						</a>
 						<?php if (!empty($user_jabatan)): ?>
 							<button type="button" class="btn btn-sm btn-info font-weight-bold" onclick="filterMyWorkKinerja('<?= htmlspecialchars($user_jabatan) ?>');" title="Filter jabatan: <?= htmlspecialchars($user_jabatan) ?>">
 								<i class="fas fa-user-check mr-1"></i> Pekerjaan Saya (<?= htmlspecialchars($user_jabatan) ?>)
@@ -166,7 +347,7 @@
 						<button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnSyncAllActivities" onclick="triggerSyncAllActivities();" title="Otomatis kumpulkan realisasi kerja dari Task Proyek & Laporan Mingguan ke Audit">
 							<i class="fas fa-sync-alt mr-1"></i> Tarik Sinkronisasi Task & Laporan
 						</button>
-						<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-outline-success font-weight-bold" title="Unduh data audit kinerja dalam format Excel resmi">
+						<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos) . (!empty($selected_pegawai_id) ? '&pegawai_id=' . urlencode($selected_pegawai_id) : '')) ?>" class="btn btn-sm btn-outline-success font-weight-bold" title="Unduh data audit kinerja dalam format Excel resmi">
 							<i class="fas fa-file-excel mr-1"></i> Export ke Excel (.xlsx)
 						</a>
 						<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-warning">
@@ -185,14 +366,20 @@
 			</form>
 		</div>
 
-		<!-- Table Card -->
+		<!-- Table Card (Tampil jika sudah ada pegawai atau filter yang dipilih) -->
+		<?php if ($has_employee_selected): ?>
 		<div class="card border-0 shadow-sm" style="border-radius: 10px;">
 			<div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-				<h5 class="mb-0 font-weight-bold text-dark">
-					<i class="fas fa-clipboard-check text-primary mr-1"></i> Data Audit Kinerja Karyawan (Tahun <?= $selected_year ?>)
-				</h5>
+				<div>
+					<h5 class="mb-0 font-weight-bold text-dark">
+						<i class="fas fa-clipboard-check text-primary mr-1"></i> Data Audit Kinerja <?= !empty($selected_pegawai) ? htmlspecialchars($selected_pegawai['nama']) : 'Karyawan' ?> (Tahun <?= $selected_year ?>)
+					</h5>
+					<?php if (!empty($selected_pegawai)): ?>
+						<span class="small text-muted"><i class="fas fa-briefcase"></i> Posisi: <strong><?= htmlspecialchars($selected_pegawai['posisi']) ?></strong> | Divisi: <strong><?= htmlspecialchars($selected_pegawai['divisi']) ?></strong></span>
+					<?php endif; ?>
+				</div>
 				<div class="d-flex align-items-center" style="gap: 8px;">
-					<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos)) ?>" class="btn btn-sm btn-success font-weight-bold shadow-sm">
+					<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos) . (!empty($selected_pegawai_id) ? '&pegawai_id=' . urlencode($selected_pegawai_id) : '')) ?>" class="btn btn-sm btn-success font-weight-bold shadow-sm">
 						<i class="fas fa-file-excel mr-1"></i> Unduh Excel (.xlsx)
 					</a>
 					<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-warning">
@@ -224,7 +411,7 @@
 								<tr>
 									<td colspan="9" class="text-center py-5 text-muted">
 										<i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-										Tidak ada data audit kinerja yang sesuai filter.
+										Tidak ada data audit kinerja yang sesuai untuk pegawai atau filter ini.
 									</td>
 								</tr>
 							<?php else: ?>
@@ -299,6 +486,7 @@
 				</div>
 			</div>
 		</div>
+		<?php endif; ?>
 	</div>
 </div>
 
@@ -651,6 +839,36 @@
 			qInput.value = jabatan;
 			document.getElementById('formFilterKinerja').submit();
 		}
+	}
+
+	function onPegawaiFilterChange(pegId) {
+		const form = document.getElementById('formFilterKinerja');
+		if (!form) return;
+		if (pegId) {
+			// Otomatis submit saat pegawai dipilih dari dropdown filter
+			form.submit();
+		} else {
+			// Jika memilih semua / kosong, reset pegawai_id
+			form.submit();
+		}
+	}
+
+	function filterPegawaiGrid() {
+		const input = document.getElementById('quickSearchPegawai');
+		if (!input) return;
+		const filter = input.value.toLowerCase().trim();
+		const items = document.querySelectorAll('.pegawai-card-item');
+
+		items.forEach(item => {
+			const nama = item.getAttribute('data-nama') || '';
+			const posisi = item.getAttribute('data-posisi') || '';
+			const divisi = item.getAttribute('data-divisi') || '';
+			if (nama.includes(filter) || posisi.includes(filter) || divisi.includes(filter)) {
+				item.style.display = '';
+			} else {
+				item.style.display = 'none';
+			}
+		});
 	}
 
 	function escapeHtml(text) {

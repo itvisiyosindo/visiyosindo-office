@@ -1332,6 +1332,63 @@ class Md_audit_system extends CI_Model
     }
 
     /**
+     * Mengambil daftar pegawai aktif yang telah dipetakan posisinya untuk modul Audit Kinerja
+     */
+    public function getAuditKinerjaPegawaiList()
+    {
+        $list = [];
+        if (!$this->db->conn_id) {
+            return $list;
+        }
+
+        $orig_debug = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+
+        // Ambil pegawai aktif non-sistem
+        $query = @$this->db->select('pg.pengguna_id, pg.nama, pg.jabatan, pg.email, d.nama as nama_divisi')
+            ->from('pengguna pg')
+            ->join('divisi d', 'd.id_divisi = pg.id_divisi', 'left')
+            ->where("pg.pengguna_id NOT IN (1, 727, 714, 84, 109, 110, 79, 54, 72, 81, 70, 58, 69, 57, 74, 56, 83, 55, 107, 86, 77, 743)", NULL, FALSE)
+            ->where('pg.status', 1)
+            ->where('pg.is_active', 1)
+            ->order_by('pg.nama', 'ASC')
+            ->get();
+
+        if ($query && $query->num_rows() > 0) {
+            $tree = $this->getDivisiAndPositions();
+
+            foreach ($query->result_array() as $row) {
+                $jabatan = trim((string)$row['jabatan']);
+                $divisi  = trim((string)$row['nama_divisi']);
+                $resolvedPos = $this->resolveUserPosition($jabatan, $divisi);
+
+                // Cari divisi sasaran mutu yang menaungi posisi resolved
+                $resolvedDiv = $divisi;
+                if (!empty($resolvedPos)) {
+                    foreach ($tree as $dName => $posArr) {
+                        if (in_array($resolvedPos, $posArr)) {
+                            $resolvedDiv = $dName;
+                            break;
+                        }
+                    }
+                }
+
+                $list[] = [
+                    'pengguna_id'  => (string)$row['pengguna_id'],
+                    'nama'         => $row['nama'],
+                    'jabatan'      => $jabatan,
+                    'divisi_db'    => $divisi,
+                    'posisi'       => $resolvedPos ?: $jabatan,
+                    'divisi'       => $resolvedDiv ?: 'General'
+                ];
+            }
+        }
+
+        $this->db->db_debug = $orig_debug;
+        return $list;
+    }
+
+    /**
      * Ambil data Audit Kinerja (jobdesk, detail proyek, implementasi nyata, link dokumen pekerjaan)
      */
     public function getAuditKinerjaData($year = 2026, $divisi = null, $posisi = null, $search = null)
