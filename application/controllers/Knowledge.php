@@ -31,11 +31,11 @@ class Knowledge extends CI_Controller
     private function _isAdminHrd()
     {
         $myId = (int)sessPenggunaId();
-        if (isAdmin() || isHrd() || in_array($myId, [1, 778], true)) {
+        if (isAdmin() || isHrd() || $myId === 1) {
             return true;
         }
 
-        // Cek juga jabatan pengguna di database apakah HR atau Legal / Kepegawaian
+        // Cek juga jabatan pengguna di database apakah HR / HRD / Kepegawaian
         $user = $this->db->select('jabatan, id_divisi')
             ->from('pengguna')
             ->where('pengguna_id', $myId)
@@ -43,8 +43,7 @@ class Knowledge extends CI_Controller
             ->row();
 
         if ($user && !empty($user->jabatan)) {
-            $jbt = strtolower($user->jabatan);
-            if (strpos($jbt, 'hr') !== false || strpos($jbt, 'human resource') !== false || strpos($jbt, 'kepegawaian') !== false) {
+            if (preg_match('/\b(hr|hrd|human resource|kepegawaian)\b/i', $user->jabatan)) {
                 return true;
             }
         }
@@ -195,15 +194,20 @@ class Knowledge extends CI_Controller
                 show_error('Data hasil kuis tidak ditemukan.', 404);
                 return;
             }
+            if (!$isAdminHrd && $peserta->status_pengerjaan !== 'selesai') {
+                redirect(base_url('knowledge/show/kerjakan/' . $id_kuis));
+                return;
+            }
 
             $page_data['switch']        = $this->id_navbar();
             $page_data['page_name']     = 'knowledge/v_hasil_kuis';
             $page_data['page_title']    = 'Hasil Kuis: ' . $kuis->judul_kuis;
-            $page_data['page_desc']     = 'Skor & Review Jawaban Soal';
+            $page_data['page_desc']     = $isAdminHrd ? 'Skor & Review Jawaban Soal' : 'Ringkasan Skor Hasil Ujian';
             $page_data['kuis']          = $kuis;
             $page_data['peserta']       = $peserta;
+            $page_data['is_admin_hrd']  = $isAdminHrd;
             $page_data['is_admin_view'] = ($isAdminHrd && $targetUserId !== $myId);
-            $page_data['soal_list']     = $this->md_knowledge->getSoalByKuis($id_kuis);
+            $page_data['soal_list']     = $isAdminHrd ? $this->md_knowledge->getSoalByKuis($id_kuis) : [];
             $this->load->view('index', $page_data);
 
         } else if ($param == 'detail') {

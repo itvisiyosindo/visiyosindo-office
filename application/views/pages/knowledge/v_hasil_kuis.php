@@ -226,15 +226,16 @@ $jawabanAudit = !empty($peserta->jawaban_json) ? json_decode($peserta->jawaban_j
         </div>
     </div>
 
+    <?php if (!empty($is_admin_hrd)): ?>
     <!-- =========================================================================
-         SECTION REVIEW LEMBAR JAWABAN (DETAIL SOAL, JAWABAN PESERTA, & KUNCI)
+         SECTION REVIEW LEMBAR JAWABAN (KHUSUS HRD & ADMINISTRATOR)
          ========================================================================= -->
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 px-1">
         <div>
             <h5 class="font-weight-bold text-dark mb-1">
-                <i class="fas fa-clipboard-check text-primary mr-2"></i> Review Lembar Jawaban & Pembahasan
+                <i class="fas fa-clipboard-check text-primary mr-2"></i> Review Lembar Jawaban & Pembahasan (Khusus HRD / Admin)
             </h5>
-            <small class="text-muted">Periksa jawaban pada setiap nomor soal. Kunci jawaban dan pembahasan ditampilkan untuk bahan evaluasi.</small>
+            <small class="text-muted">Periksa jawaban pada setiap nomor soal. Kunci jawaban dan pembahasan hanya ditampilkan untuk HRD dan Administrator.</small>
         </div>
         <div class="d-flex align-items-center mt-2 mt-md-0" style="gap: 6px;">
             <span class="badge badge-success px-2 py-1"><i class="fas fa-check mr-1"></i> Benar: <?= (int)$peserta->total_benar ?></span>
@@ -339,6 +340,7 @@ $jawabanAudit = !empty($peserta->jawaban_json) ? json_decode($peserta->jawaban_j
                 </div>
             </div>
         <?php endforeach; ?>
+    <?php endif; ?>
     <?php endif; ?>
 
     <!-- BOTTOM ACTION BUTTONS -->
