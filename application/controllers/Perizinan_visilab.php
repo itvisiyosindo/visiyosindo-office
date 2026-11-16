@@ -85,10 +85,23 @@ class Perizinan_visilab extends CI_Controller
         if ($action === 'inspect_po_124gkj') {
             $id = decrypt('124gkj');
             $po = $id ? $this->db->get_where('po_masuk', ['id_po' => $id])->row() : null;
+            $croUsers = $this->db->select('pengguna_id, nama, jabatan, id_divisi, level, login_type, is_active')
+                ->from('pengguna')
+                ->where('is_active', 1)
+                ->group_start()
+                    ->like('jabatan', 'CRO')
+                    ->or_like('jabatan', 'Customer Relationship')
+                    ->or_where('id_divisi', 9)
+                    ->or_where('pengguna_id', 755)
+                    ->or_where('pengguna_id', 725)
+                    ->or_where('pengguna_id', 778)
+                ->group_end()
+                ->get()->result();
             header('Content-Type: application/json');
             echo json_encode([
                 'decrypted_id' => $id,
-                'po' => $po
+                'po' => $po,
+                'cro_users' => $croUsers
             ]);
             return;
         }
