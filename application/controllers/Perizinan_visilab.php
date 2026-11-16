@@ -81,6 +81,15 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
 
+        $action = $this->input->get('action');
+        if ($action === 'swap_742_743') {
+            // Urutan benar: Arifa Zakyya (755) dulu sebagai Diketahui, baru Dian Melati Amelia (744) sebagai Disetujui
+            $this->db->where_in('id', [742, 743])->update('surat_berita_acara', [
+                'id_diketahui' => 755,
+                'id_disetujui' => 744
+            ]);
+        }
+
         $ba742 = $this->db->get_where('surat_berita_acara', ['id' => 742])->row();
         $ba743 = $this->db->get_where('surat_berita_acara', ['id' => 743])->row();
 
