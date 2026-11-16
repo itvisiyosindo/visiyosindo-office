@@ -779,8 +779,9 @@ class Po_system extends CI_Controller
         $page_data['my_jabatan'] = $my_jabatan;
 
         // Otorisasi Tahapan Approval
+        $myId       = (int)sessPenggunaId();
         $can_gudang = ((function_exists('isGudangUser') && isGudangUser()) || (function_exists('isAdminInventory') && isAdminInventory()) || stripos($my_jabatan, 'Gudang') !== false || stripos($my_jabatan, 'Warehouse') !== false || stripos($my_jabatan, 'Logistik') !== false);
-        $page_data['can_cro']   = (isAdmin() || (function_exists('isCRO') && isCRO()) || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false);
+        $page_data['can_cro']   = (isAdmin() || (function_exists('isCRO') && isCRO()) || in_array($myId, [1, 72, 725, 755, 778], true) || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false || stripos($my_jabatan, 'Customer Care') !== false);
         $page_data['can_acc']   = (isAdmin() || (function_exists('isAccountingUser') && isAccountingUser()) || stripos($my_jabatan, 'Accounting') !== false || stripos($my_jabatan, 'Finance') !== false);
         $page_data['can_pajak'] = (isAdmin() || (function_exists('isAccountingUser') && isAccountingUser()) || stripos($my_jabatan, 'Tax') !== false || stripos($my_jabatan, 'Pajak') !== false);
         $page_data['can_gm']    = (isAdmin() || (function_exists('isEksekutif') && isEksekutif()) || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
@@ -820,7 +821,8 @@ class Po_system extends CI_Controller
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'CRO');
         $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
-        $can_cro    = (isAdmin() || (function_exists('isCRO') && isCRO()) || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false);
+        $myId       = (int)sessPenggunaId();
+        $can_cro    = (isAdmin() || (function_exists('isCRO') && isCRO()) || in_array($myId, [1, 72, 725, 755, 778], true) || stripos($my_jabatan, 'CRO') !== false || stripos($my_jabatan, 'Customer Relationship') !== false || stripos($my_jabatan, 'Customer Care') !== false);
 
         if (!$can_cro) {
             $this->session->set_flashdata('error', 'Hanya CRO atau Administrator yang memiliki hak akses untuk approval tahap CRO!');

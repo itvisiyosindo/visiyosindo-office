@@ -1146,7 +1146,12 @@ if (!function_exists('getApprovalWaitWorkingHours')) {
 			if (function_exists('get_instance')) {
 				$ci = &get_instance();
 				if (isset($ci->db)) {
-					$hRows = $ci->db->select('tanggal')->from('hari_libur')->get()->result();
+					$hRows = [];
+					if ($ci->db->table_exists('absensi_config_libur')) {
+						$hRows = $ci->db->select('tgl as tanggal')->from('absensi_config_libur')->get()->result();
+					} elseif ($ci->db->table_exists('hari_libur')) {
+						$hRows = $ci->db->select('tanggal')->from('hari_libur')->get()->result();
+					}
 					if (!empty($hRows)) {
 						foreach ($hRows as $hr) {
 							if (!empty($hr->tanggal)) {
