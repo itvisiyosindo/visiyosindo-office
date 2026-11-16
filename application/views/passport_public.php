@@ -576,6 +576,36 @@ if (!function_exists('h')) {
             font-size: 12.5px;
         }
 
+        .sticky-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+
+        .btn-hubungi-admin {
+            background: #059669;
+            color: #fff !important;
+            border: 1px solid #047857;
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-size: 13.5px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none !important;
+            transition: background 0.18s ease, transform 0.1s ease;
+        }
+
+        .btn-hubungi-admin:hover {
+            background: #047857;
+            color: #fff !important;
+        }
+
         .btn-lapor {
             background: #be123c;
             color: #fff;
@@ -625,9 +655,15 @@ if (!function_exists('h')) {
             .sticky-help-text {
                 display: none;
             }
-            .btn-lapor {
+            .sticky-actions {
                 width: 100%;
-                padding: 12px 16px;
+                gap: 8px;
+            }
+            .btn-hubungi-admin,
+            .btn-lapor {
+                flex: 1 1 50%;
+                padding: 11px 10px;
+                font-size: 12.5px;
             }
         }
     </style>
@@ -654,14 +690,21 @@ if (!function_exists('h')) {
     </header>
 
     <main class="passport-container">
+        <?php
+        $croWaUrl = !empty($cro_contact['wa_url']) ? $cro_contact['wa_url'] : 'https://wa.me/6281261457547';
+        $croName  = !empty($cro_contact['name']) ? $cro_contact['name'] : 'Admin CRO';
+        ?>
         <?php if (!$found): ?>
             <div class="p-card">
                 <div class="p-card-body text-center py-5">
                     <i class="fas fa-qrcode fa-3x text-muted mb-3"></i>
                     <h4 class="font-weight-bold mb-2">QR Asset Passport Tidak Ditemukan</h4>
-                    <p class="text-muted mb-0" style="font-size:13.5px;">
+                    <p class="text-muted mb-3" style="font-size:13.5px;">
                         Kode QR alat tidak terdaftar atau telah dinonaktifkan. Silakan hubungi tim PT Visi Yosindo Medikal / Visilab untuk verifikasi lebih lanjut.
                     </p>
+                    <a href="<?= h($croWaUrl) ?>" target="_blank" rel="noopener" class="btn-hubungi-admin">
+                        <i class="fab fa-whatsapp fa-lg"></i> Hubungi Admin (CRO)
+                    </a>
                 </div>
             </div>
         <?php else: ?>
@@ -904,16 +947,21 @@ if (!function_exists('h')) {
                 Dokumen Digital Terverifikasi &bull; PT Visi Yosindo Medikal &amp; Visilab
             </div>
 
-            <!-- Tombol Lapor Kerusakan Sticky di Bawah -->
+            <!-- Tombol Hubungi Admin (CRO) & Lapor Kerusakan Sticky di Bawah -->
             <div class="sticky-action-bar">
                 <div class="sticky-inner">
                     <div class="sticky-help-text">
-                        <strong>Ada kendala pada unit ini?</strong>
-                        Laporan langsung terhubung ke tim teknisi resmi.
+                        <strong>Butuh bantuan atau ada kendala unit?</strong>
+                        Terhubung langsung ke Admin CRO &amp; tim teknisi resmi.
                     </div>
-                    <button type="button" class="btn-lapor" data-toggle="modal" data-target="#modalLaporKerusakan">
-                        <i class="fas fa-tools"></i> Lapor Kerusakan / Panggil Teknisi
-                    </button>
+                    <div class="sticky-actions">
+                        <a href="<?= h($croWaUrl) ?>" target="_blank" rel="noopener" class="btn-hubungi-admin" title="Chat WhatsApp ke <?= h($croName) ?> (CRO)">
+                            <i class="fab fa-whatsapp fa-lg"></i> Hubungi Admin
+                        </a>
+                        <button type="button" class="btn-lapor" data-toggle="modal" data-target="#modalLaporKerusakan">
+                            <i class="fas fa-tools"></i> Lapor Kerusakan
+                        </button>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>

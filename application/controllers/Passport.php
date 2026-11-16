@@ -24,12 +24,14 @@ class Passport extends CI_Controller
     {
         $token = trim((string)$token);
         $passport = $token !== '' ? $this->Md_asset_passport->get_by_token($token) : null;
+        $croContact = $this->_get_cro_contact($passport);
 
         if (!$passport || (int)$passport->is_active !== 1) {
             $this->load->view('passport_public', [
                 'found'           => false,
                 'passport'        => null,
-                'service_history' => []
+                'service_history' => [],
+                'cro_contact'     => $croContact
             ]);
             return;
         }
@@ -51,8 +53,79 @@ class Passport extends CI_Controller
             'found'           => true,
             'passport'        => $passport,
             'service_history' => $serviceHistory,
-            'pelanggan_list'  => $pelangganList
+            'pelanggan_list'  => $pelangganList,
+            'cro_contact'     => $croContact
         ]);
+    }
+
+    /**
+     * Ambil kontak WhatsApp CRO (Customer Relationship Officer) untuk tombol "Hubungi Admin"
+     */
+    private function _get_cro_contact($passport = null)
+    {
+        $croName  = 'Admin CRO PT Visi Yosindo Medikal';
+        $croPhone = '6281261457547'; // Default fallback nomor resmi kantor
+
+        $origDebug = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+        $croUser = @$this->db->select('pengguna_id, nama, jabatan, no_hp')
+            ->from('pengguna')
+            ->where('status', 1)
+            ->where('is_active', 1)
+            ->group_start()
+                ->where('pengguna_id', 725)
+                ->or_like('jabatan', 'Customer Relationship')
+                ->or_like('jabatan', 'CRO')
+            ->group_end()
+            ->where("no_hp IS NOT NULL AND TRIM(no_hp) != ''", null, false)
+            ->order_by("CASE WHEN pengguna_id = 725 THEN 0 ELSE 1 END", 'ASC', false)
+            ->limit(1)
+            ->get()
+            ->row();
+        $this->db->db_debug = $origDebug;
+
+        if ($croUser && !empty($croUser->no_hp)) {
+            $digits = preg_replace('/[^0-9]/', '', (string)$croUser->no_hp);
+            if (strpos($digits, '0') === 0) {
+                $digits = '62' . substr($digits, 1);
+            } elseif (strpos($digits, '8') === 0) {
+                $digits = '62' . $digits;
+            }
+            if (strlen($digits) >= 10) {
+                $croPhone = $digits;
+            }
+            if (!empty($croUser->nama)) {
+                $croName = trim((string)$croUser->nama);
+            }
+        }
+
+        if ($passport) {
+            $isJenis = !empty($passport->tipe_passport) && $passport->tipe_passport === 'jenis';
+            $produkStr = $passport->nama_produk . (!empty($passport->merk_tipe) ? ' (' . $passport->merk_tipe . ')' : '');
+            if ($isJenis) {
+                $text = "Halo Admin CRO PT Visi Yosindo Medikal, saya ingin menghubungi Admin terkait informasi alat dari QR Asset Passport:\n"
+                    . "• Nama Alat: {$produkStr}\n"
+                    . "• Kode Passport: {$passport->kode_passport}\n\n"
+                    . "Mohon bantuannya. Terima kasih.";
+            } else {
+                $instansiStr = $passport->nama_instansi . (!empty($passport->lokasi_ruangan) ? ' - ' . $passport->lokasi_ruangan : '');
+                $snStr = !empty($passport->serial_number) ? $passport->serial_number : '-';
+                $text = "Halo Admin CRO PT Visi Yosindo Medikal, saya ingin menghubungi Admin terkait unit alat dari QR Asset Passport:\n"
+                    . "• Instansi: {$instansiStr}\n"
+                    . "• Nama Alat: {$produkStr}\n"
+                    . "• No. Seri (S/N): {$snStr}\n"
+                    . "• Kode Passport: {$passport->kode_passport}\n\n"
+                    . "Mohon bantuannya. Terima kasih.";
+            }
+        } else {
+            $text = "Halo Admin CRO PT Visi Yosindo Medikal, saya membutuhkan bantuan terkait verifikasi QR Asset Passport alat kesehatan.";
+        }
+
+        return [
+            'name'   => $croName,
+            'phone'  => $croPhone,
+            'wa_url' => 'https://wa.me/' . $croPhone . '?text=' . rawurlencode($text)
+        ];
     }
 
     /**
