@@ -138,6 +138,31 @@
 		border-color: #2563eb;
 		box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 	}
+	.status-pill {
+		display: inline-block;
+		padding: 4px 12px;
+		border-radius: 20px;
+		font-size: 11px;
+		font-weight: 600;
+		cursor: pointer;
+		border: 1px solid #e2e8f0;
+		background: #f8fafc;
+		color: #475569;
+		transition: all 0.15s ease;
+		margin-right: 6px;
+		margin-bottom: 6px;
+	}
+	.status-pill:hover {
+		border-color: #059669;
+		color: #059669;
+		background: #f0fdf4;
+	}
+	.status-pill.active {
+		background: #0f172a;
+		color: #ffffff;
+		border-color: #0f172a;
+		box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+	}
 	.badge-divisi {
 		font-size: 10px;
 		font-weight: 600;
@@ -146,6 +171,13 @@
 		background-color: #eff6ff;
 		color: #1d4ed8;
 		border: 1px solid #bfdbfe;
+		display: inline-block;
+	}
+	.badge-audit-status {
+		font-size: 10px;
+		font-weight: 600;
+		border-radius: 6px;
+		padding: 3px 8px;
 		display: inline-block;
 	}
 	.selected-employee-banner {
@@ -176,7 +208,12 @@
 						<div class="h4 font-weight-bold mb-0 text-white"><?= htmlspecialchars($selected_pegawai['nama']) ?></div>
 						<div class="small mt-1 text-light">
 							<span class="badge badge-primary px-2 py-1 mr-1"><?= htmlspecialchars($selected_pegawai['divisi']) ?></span>
-							<span class="badge badge-light text-dark px-2 py-1"><?= htmlspecialchars($selected_pegawai['posisi']) ?></span>
+							<span class="badge badge-light text-dark px-2 py-1 mr-1"><?= htmlspecialchars($selected_pegawai['posisi']) ?></span>
+							<?php if (!empty($selected_pegawai['status_audit_label'])): ?>
+								<span class="badge <?= htmlspecialchars($selected_pegawai['status_audit_badge']) ?> px-2 py-1 font-weight-bold" style="font-size: 11px;">
+									<i class="fas fa-clipboard-check mr-1"></i><?= htmlspecialchars($selected_pegawai['status_audit_label']) ?>
+								</span>
+							<?php endif; ?>
 							<?php if (!empty($selected_pegawai['jabatan']) && $selected_pegawai['jabatan'] !== $selected_pegawai['posisi']): ?>
 								<span class="text-white-50 ml-1">(<?= htmlspecialchars($selected_pegawai['jabatan']) ?>)</span>
 							<?php endif; ?>
@@ -264,16 +301,26 @@
 					</div>
 				</div>
 
-				<!-- Division Category Filter Pills -->
+				<!-- Division & Status Category Filter Pills -->
 				<?php 
 				$divSummary = [];
+				$statusSummary = [
+					'terverifikasi' => 0,
+					'proses'        => 0,
+					'belum'         => 0,
+					'none'          => 0
+				];
 				foreach ($pegawai_list as $p) {
 					$dName = $p['divisi'] ?: 'General';
 					$divSummary[$dName] = ($divSummary[$dName] ?? 0) + 1;
+					$sCode = $p['status_audit_code'] ?? 'belum';
+					if (isset($statusSummary[$sCode])) {
+						$statusSummary[$sCode]++;
+					}
 				}
 				?>
-				<div class="mb-3 pt-2 border-top">
-					<span class="small font-weight-bold text-muted mr-2"><i class="fas fa-filter"></i> Filter Divisi:</span>
+				<div class="mb-2 pt-2 border-top d-flex align-items-center flex-wrap" style="gap: 4px;">
+					<span class="small font-weight-bold text-muted mr-2"><i class="fas fa-filter"></i> Divisi:</span>
 					<span class="divisi-pill active" onclick="filterByDivisiPill('all', this);">Semua (<?= count($pegawai_list) ?>)</span>
 					<?php foreach ($divSummary as $dName => $dCount): ?>
 						<span class="divisi-pill" onclick="filterByDivisiPill('<?= strtolower(htmlspecialchars($dName)) ?>', this);">
@@ -281,11 +328,29 @@
 						</span>
 					<?php endforeach; ?>
 				</div>
+				<div class="mb-3 d-flex align-items-center flex-wrap" style="gap: 4px;">
+					<span class="small font-weight-bold text-muted mr-2"><i class="fas fa-clipboard-check"></i> Status Audit:</span>
+					<span class="status-pill active" onclick="filterByStatusPill('all', this);">Semua Status</span>
+					<span class="status-pill" onclick="filterByStatusPill('terverifikasi', this);">
+						<span class="badge badge-success px-1 mr-1">✓</span> Terverifikasi (<?= $statusSummary['terverifikasi'] ?>)
+					</span>
+					<span class="status-pill" onclick="filterByStatusPill('proses', this);">
+						<span class="badge badge-warning text-dark px-1 mr-1">⏳</span> Sedang Proses (<?= $statusSummary['proses'] ?>)
+					</span>
+					<span class="status-pill" onclick="filterByStatusPill('belum', this);">
+						<span class="badge badge-secondary px-1 mr-1">○</span> Belum Diaudit (<?= $statusSummary['belum'] ?>)
+					</span>
+					<?php if ($statusSummary['none'] > 0): ?>
+						<span class="status-pill" onclick="filterByStatusPill('none', this);">
+							Non-Template (<?= $statusSummary['none'] ?>)
+						</span>
+					<?php endif; ?>
+				</div>
 
 				<!-- Grid Cards of Employees -->
-				<div class="row" id="pegawaiGridContainer" style="max-height: 520px; overflow-y: auto; padding-right: 4px;">
+				<div class="row" id="pegawaiGridContainer" style="max-height: 540px; overflow-y: auto; padding-right: 4px;">
 					<?php foreach ($pegawai_list as $peg): ?>
-						<div class="col-lg-3 col-md-4 col-sm-6 mb-3 pegawai-card-item" data-nama="<?= strtolower(htmlspecialchars($peg['nama'])) ?>" data-posisi="<?= strtolower(htmlspecialchars($peg['posisi'])) ?>" data-divisi="<?= strtolower(htmlspecialchars($peg['divisi'])) ?>">
+						<div class="col-lg-3 col-md-4 col-sm-6 mb-3 pegawai-card-item" data-nama="<?= strtolower(htmlspecialchars($peg['nama'])) ?>" data-posisi="<?= strtolower(htmlspecialchars($peg['posisi'])) ?>" data-divisi="<?= strtolower(htmlspecialchars($peg['divisi'])) ?>" data-status="<?= htmlspecialchars($peg['status_audit_code']) ?>">
 							<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year . '&pegawai_id=' . $peg['pengguna_id']) ?>" class="employee-grid-item">
 								<div class="employee-avatar-circle">
 									<?= strtoupper(substr($peg['nama'], 0, 1)) ?>
@@ -297,9 +362,12 @@
 									<div class="small text-muted text-truncate mb-1" style="font-size: 11px;" title="<?= htmlspecialchars($peg['posisi']) ?>">
 										<?= htmlspecialchars($peg['posisi']) ?>
 									</div>
-									<div>
+									<div class="d-flex align-items-center flex-wrap" style="gap: 4px;">
 										<span class="badge-divisi">
 											<?= htmlspecialchars($peg['divisi']) ?>
+										</span>
+										<span class="badge-audit-status <?= htmlspecialchars($peg['status_audit_badge']) ?>">
+											<?= htmlspecialchars($peg['status_audit_label']) ?>
 										</span>
 									</div>
 								</div>
@@ -396,6 +464,17 @@
 					</div>
 
 					<div class="col-md-2 col-sm-6 mb-2">
+						<label class="font-weight-bold small text-muted"><i class="fas fa-clipboard-check"></i> Status Audit</label>
+						<select name="status" id="filterStatus" class="form-control form-control-sm" onchange="document.getElementById('formFilterKinerja').submit();">
+							<option value="all">-- Semua Status --</option>
+							<option value="Terverifikasi / Sesuai" <?= (!empty($selected_status) && $selected_status === 'Terverifikasi / Sesuai') ? 'selected' : '' ?>>Terverifikasi / Sesuai</option>
+							<option value="Perlu Bukti Tambahan" <?= (!empty($selected_status) && $selected_status === 'Perlu Bukti Tambahan') ? 'selected' : '' ?>>Perlu Bukti Tambahan</option>
+							<option value="Temuan / Tidak Sesuai" <?= (!empty($selected_status) && $selected_status === 'Temuan / Tidak Sesuai') ? 'selected' : '' ?>>Temuan / Tidak Sesuai</option>
+							<option value="Belum Diaudit" <?= (!empty($selected_status) && $selected_status === 'Belum Diaudit') ? 'selected' : '' ?>>Belum Diaudit / Pending</option>
+						</select>
+					</div>
+
+					<div class="col-md-2 col-sm-6 mb-2">
 						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari Rincian</label>
 						<input type="text" name="q" id="filterKinerjaQuery" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="Cari jobdesk/bukti...">
 					</div>
@@ -417,7 +496,7 @@
 						<button type="button" class="btn btn-sm btn-success font-weight-bold shadow-sm" id="btnSyncAllActivities" onclick="triggerSyncAllActivities();" title="Otomatis kumpulkan realisasi kerja dari Task Proyek & Laporan Mingguan ke Audit">
 							<i class="fas fa-sync-alt mr-1"></i> Tarik Sinkronisasi Task & Laporan
 						</button>
-						<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos) . (!empty($selected_pegawai_id) ? '&pegawai_id=' . urlencode($selected_pegawai_id) : '')) ?>" class="btn btn-sm btn-outline-success font-weight-bold" title="Unduh data audit kinerja dalam format Excel resmi">
+						<a href="<?= base_url('audit/export_excel?tahun=' . $selected_year . '&divisi=' . urlencode($selected_div) . '&posisi=' . urlencode($selected_pos) . '&status=' . urlencode($selected_status ?? 'all') . (!empty($selected_pegawai_id) ? '&pegawai_id=' . urlencode($selected_pegawai_id) : '')) ?>" class="btn btn-sm btn-outline-success font-weight-bold" title="Unduh data audit kinerja dalam format Excel resmi">
 							<i class="fas fa-file-excel mr-1"></i> Export ke Excel (.xlsx)
 						</a>
 						<a href="<?= base_url('sasaran_mutu?tahun=' . $selected_year) ?>" class="btn btn-sm btn-outline-warning">
@@ -925,10 +1004,18 @@
 	}
 
 	let activeDivisiFilter = 'all';
+	let activeStatusFilter = 'all';
 
 	function filterByDivisiPill(divName, el) {
 		activeDivisiFilter = (divName || 'all').toLowerCase();
 		document.querySelectorAll('.divisi-pill').forEach(pill => pill.classList.remove('active'));
+		if (el) el.classList.add('active');
+		applyPegawaiFilters();
+	}
+
+	function filterByStatusPill(statusCode, el) {
+		activeStatusFilter = (statusCode || 'all').toLowerCase();
+		document.querySelectorAll('.status-pill').forEach(pill => pill.classList.remove('active'));
 		if (el) el.classList.add('active');
 		applyPegawaiFilters();
 	}
@@ -946,11 +1033,13 @@
 			const nama = item.getAttribute('data-nama') || '';
 			const posisi = item.getAttribute('data-posisi') || '';
 			const divisi = item.getAttribute('data-divisi') || '';
+			const status = item.getAttribute('data-status') || '';
 
 			const matchSearch = (!search || nama.includes(search) || posisi.includes(search) || divisi.includes(search));
 			const matchDiv = (activeDivisiFilter === 'all' || divisi === activeDivisiFilter || divisi.includes(activeDivisiFilter));
+			const matchStatus = (activeStatusFilter === 'all' || status === activeStatusFilter);
 
-			if (matchSearch && matchDiv) {
+			if (matchSearch && matchDiv && matchStatus) {
 				item.style.display = '';
 			} else {
 				item.style.display = 'none';

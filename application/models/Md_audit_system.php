@@ -1423,16 +1423,33 @@ class Md_audit_system extends CI_Model
 
     /**
      * Mengambil daftar pegawai aktif yang telah dipetakan posisinya untuk modul Audit Kinerja
+     * Dilengkapi dengan status audit kinerja karyawan pada tahun bersangkutan
      */
-    public function getAuditKinerjaPegawaiList()
+    public function getAuditKinerjaPegawaiList($year = 2026)
     {
         $list = [];
         if (!$this->db->conn_id) {
             return $list;
         }
 
+        $year = (int)$year;
+        if ($year < 2020) $year = 2026;
+
         $orig_debug = $this->db->db_debug;
         $this->db->db_debug = FALSE;
+
+        // Ambil mapping item sasaran mutu per posisi
+        $master = $this->getMasterTemplate();
+        $posItems = [];
+        foreach ($master as $m) {
+            $p = $m['posisi'] ?? '';
+            if ($p) {
+                $posItems[$p][] = $m['id'];
+            }
+        }
+
+        // Ambil catatan audit kinerja pada tahun tersebut
+        $auditRecords = $this->loadAuditKinerjaRecords($year);
 
         // Ambil pegawai aktif non-sistem
         $query = @$this->db->select('pg.pengguna_id, pg.nama, pg.jabatan, pg.email, d.nama as nama_divisi')
@@ -1452,14 +1469,65 @@ class Md_audit_system extends CI_Model
                 $divisi  = trim((string)$row['nama_divisi']);
                 $resolvedPos = $this->resolveUserPosition($jabatan, $divisi);
                 $resolvedDiv = $this->resolveUserDivision($jabatan, $divisi, $resolvedPos);
+                $finalPos    = $resolvedPos ?: $jabatan;
+
+                // Hitung status audit kinerja karyawan
+                $itemIds = isset($posItems[$finalPos]) ? $posItems[$finalPos] : [];
+                $totalItems = count($itemIds);
+                $verifiedCount = 0;
+                $needEvidenceCount = 0;
+                $temuanCount = 0;
+                $pendingCount = 0;
+
+                if ($totalItems > 0) {
+                    foreach ($itemIds as $itemId) {
+                        $rec = isset($auditRecords[$itemId]) ? $auditRecords[$itemId] : [];
+                        $st = isset($rec['status_audit']) && !empty($rec['status_audit']) ? $rec['status_audit'] : 'Belum Diaudit';
+                        if ($st === 'Terverifikasi / Sesuai') {
+                            $verifiedCount++;
+                        } else if ($st === 'Perlu Bukti Tambahan') {
+                            $needEvidenceCount++;
+                        } else if ($st === 'Temuan / Tidak Sesuai') {
+                            $temuanCount++;
+                        } else {
+                            $pendingCount++;
+                        }
+                    }
+
+                    if ($verifiedCount === $totalItems) {
+                        $statusAuditLabel = 'Terverifikasi';
+                        $statusAuditBadge = 'badge-success';
+                        $statusAuditCode  = 'terverifikasi';
+                    } else if ($verifiedCount > 0 || $needEvidenceCount > 0 || $temuanCount > 0) {
+                        $statusAuditLabel = $verifiedCount . '/' . $totalItems . ' Terverifikasi';
+                        $statusAuditBadge = 'badge-warning';
+                        $statusAuditCode  = 'proses';
+                    } else {
+                        $statusAuditLabel = 'Belum Diaudit (' . $totalItems . ')';
+                        $statusAuditBadge = 'badge-secondary';
+                        $statusAuditCode  = 'belum';
+                    }
+                } else {
+                    $statusAuditLabel = 'Non-Template';
+                    $statusAuditBadge = 'badge-light text-muted border';
+                    $statusAuditCode  = 'none';
+                }
 
                 $list[] = [
-                    'pengguna_id'  => (string)$row['pengguna_id'],
-                    'nama'         => $row['nama'],
-                    'jabatan'      => $jabatan,
-                    'divisi_db'    => $divisi,
-                    'posisi'       => $resolvedPos ?: $jabatan,
-                    'divisi'       => $resolvedDiv
+                    'pengguna_id'         => (string)$row['pengguna_id'],
+                    'nama'                => $row['nama'],
+                    'jabatan'             => $jabatan,
+                    'divisi_db'           => $divisi,
+                    'posisi'              => $finalPos,
+                    'divisi'              => $resolvedDiv,
+                    'total_audit'         => $totalItems,
+                    'verified_audit'      => $verifiedCount,
+                    'need_evidence_audit' => $needEvidenceCount,
+                    'temuan_audit'        => $temuanCount,
+                    'pending_audit'       => $pendingCount,
+                    'status_audit_label'  => $statusAuditLabel,
+                    'status_audit_badge'  => $statusAuditBadge,
+                    'status_audit_code'   => $statusAuditCode
                 ];
             }
         }
@@ -1471,7 +1539,7 @@ class Md_audit_system extends CI_Model
     /**
      * Ambil data Audit Kinerja (jobdesk, detail proyek, implementasi nyata, link dokumen pekerjaan)
      */
-    public function getAuditKinerjaData($year = 2026, $divisi = null, $posisi = null, $search = null)
+    public function getAuditKinerjaData($year = 2026, $divisi = null, $posisi = null, $search = null, $statusAuditFilter = null)
     {
         $smResult = $this->getSasaranMutuData($year, $divisi, $posisi, $search, false);
         $smData = $smResult['data'];
@@ -1500,6 +1568,13 @@ class Md_audit_system extends CI_Model
                 $needEvidenceCount++;
             } else {
                 $pendingCount++;
+            }
+
+            // Filter status audit jika diset
+            if (!empty($statusAuditFilter) && $statusAuditFilter !== 'all') {
+                if (strcasecmp($statusAudit, $statusAuditFilter) !== 0) {
+                    continue;
+                }
             }
 
             $list[] = [

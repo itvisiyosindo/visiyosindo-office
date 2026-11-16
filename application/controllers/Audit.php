@@ -37,6 +37,7 @@ class Audit extends CI_Controller
         $year       = $this->input->get('tahun', TRUE);
         $divisi     = $this->input->get('divisi', TRUE);
         $posisi     = $this->input->get('posisi', TRUE);
+        $status     = $this->input->get('status', TRUE);
         $search     = $this->input->get('q', TRUE);
         $pegawai_id = $this->input->get('pegawai_id', TRUE);
 
@@ -47,7 +48,7 @@ class Audit extends CI_Controller
         }
 
         $divTree        = $this->md_audit_system->getDivisiAndPositions();
-        $pegawaiList    = $this->md_audit_system->getAuditKinerjaPegawaiList();
+        $pegawaiList    = $this->md_audit_system->getAuditKinerjaPegawaiList($year);
         $selectedPegawai = null;
 
         // Jika pegawai_id dipilih, cari detail pegawai dan kunci posisi serta divisinya
@@ -68,12 +69,15 @@ class Audit extends CI_Controller
         if (empty($posisi)) {
             $posisi = 'all';
         }
+        if (empty($status)) {
+            $status = 'all';
+        }
 
         // Jika belum ada pegawai yang dipilih dan tidak ada parameter posisi/divisi/q khusus
-        $hasEmployeeSelected = (!empty($selectedPegawai) || ($posisi !== 'all') || ($divisi !== 'all') || !empty($search));
+        $hasEmployeeSelected = (!empty($selectedPegawai) || ($posisi !== 'all') || ($divisi !== 'all') || ($status !== 'all') || !empty($search));
 
         if ($hasEmployeeSelected) {
-            $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
+            $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search, $status);
         } else {
             // Ketika baru membuka menu, jangan langsung render tabel raksasa seluruh data
             $auditData = [
@@ -105,6 +109,7 @@ class Audit extends CI_Controller
         $page_data['selected_year']         = $year;
         $page_data['selected_div']          = $divisi;
         $page_data['selected_pos']          = $posisi;
+        $page_data['selected_status']       = $status;
         $page_data['search_query']          = $search;
         $page_data['selected_pegawai_id']   = $pegawai_id;
         $page_data['selected_pegawai']      = $selectedPegawai;
@@ -275,12 +280,13 @@ class Audit extends CI_Controller
         $year       = (int)($this->input->get('tahun') ?: 2026);
         $divisi     = $this->input->get('divisi') ?: 'all';
         $posisi     = $this->input->get('posisi') ?: 'all';
+        $status     = $this->input->get('status') ?: 'all';
         $search     = $this->input->get('q') ?: null;
         $pegawai_id = $this->input->get('pegawai_id', TRUE);
 
         $selectedPegawai = null;
         if (!empty($pegawai_id)) {
-            $pegawaiList = $this->md_audit_system->getAuditKinerjaPegawaiList();
+            $pegawaiList = $this->md_audit_system->getAuditKinerjaPegawaiList($year);
             foreach ($pegawaiList as $peg) {
                 if ($peg['pengguna_id'] === (string)$pegawai_id) {
                     $selectedPegawai = $peg;
@@ -291,7 +297,7 @@ class Audit extends CI_Controller
             }
         }
 
-        $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search);
+        $auditData = $this->md_audit_system->getAuditKinerjaData($year, $divisi, $posisi, $search, $status);
         $items = $auditData['data'];
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
