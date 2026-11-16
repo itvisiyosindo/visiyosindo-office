@@ -208,6 +208,20 @@ class Reminder_wa extends CI_Controller
                     'created_at'         => $r->created_at
                 ];
             }
+
+            $lastSent = [];
+            $recent = $this->db->query("SELECT id, is_group, penerima, status, created_at, sent_at, LEFT(payload, 200) as snippet FROM tbl_wa_queue ORDER BY id DESC LIMIT 5")->result();
+            foreach ($recent as $rc) {
+                $lastSent[] = [
+                    'id'         => (int)$rc->id,
+                    'is_group'   => (int)$rc->is_group,
+                    'penerima'   => $rc->penerima,
+                    'status'     => $rc->status,
+                    'created_at' => $rc->created_at,
+                    'sent_at'    => $rc->sent_at,
+                    'snippet'    => $rc->snippet
+                ];
+            }
         }
 
         $this->output
@@ -216,8 +230,10 @@ class Reminder_wa extends CI_Controller
                 'status'      => 'success',
                 'server_time' => date('Y-m-d H:i:s'),
                 'summary'     => $summary,
-                'queue_items' => $upcoming
+                'queue_items' => $upcoming,
+                'recent_logs' => $lastSent ?? []
             ], JSON_PRETTY_PRINT));
+        return;
     }
 
     /**
