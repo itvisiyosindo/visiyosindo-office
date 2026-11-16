@@ -547,6 +547,18 @@ class Md_knowledge extends CI_Model
     public function syncJadwalKuisStatus()
     {
         $nowSql = date('Y-m-d H:i:s');
+
+        // Penyesuaian jadwal tutup Kuis November 2026 ke 16 Nov 09:25 WIB
+        $this->db->query("
+            UPDATE pk_kuis
+            SET waktu_tutup = '2026-11-16 09:25:00'
+            WHERE is_deleted = 0
+              AND bulan = 11
+              AND tahun = 2026
+              AND DATE(waktu_buka) = '2026-11-16'
+              AND TIME(waktu_tutup) = '21:15:00'
+        ");
+
         $this->db->query("
             UPDATE pk_kuis k
             SET k.status = 'aktif'
@@ -557,6 +569,15 @@ class Md_knowledge extends CI_Model
               AND (k.waktu_tutup IS NULL OR k.waktu_tutup >= ?)
               AND (SELECT COUNT(*) FROM pk_soal s WHERE s.id_kuis = k.id_kuis) > 0
         ", [$nowSql, $nowSql]);
+
+        $this->db->query("
+            UPDATE pk_kuis k
+            SET k.status = 'selesai'
+            WHERE k.is_deleted = 0
+              AND k.status = 'aktif'
+              AND k.waktu_tutup IS NOT NULL
+              AND k.waktu_tutup < ?
+        ", [$nowSql]);
     }
 
     public function getKuisList($tahun = null, $bulan = null, $onlyActive = false)
