@@ -7,28 +7,167 @@
 	</div>
 </header>
 
+<style>
+	.table-card-container {
+		background: #ffffff;
+		border: 1px solid #cbd5e1;
+		border-radius: 12px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+		overflow: hidden;
+		margin-bottom: 25px;
+	}
+
+	.table-top-bar {
+		padding: 16px 20px;
+		background: #f8fafc;
+		border-bottom: 1px solid #cbd5e1;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.table-top-title {
+		font-size: 16px;
+		font-weight: 700;
+		color: #1e293b;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	#kt_table_1 {
+		width: 100% !important;
+		margin-bottom: 0 !important;
+		border-collapse: collapse !important;
+	}
+
+	#kt_table_1 thead th {
+		background-color: #f1f5f9 !important;
+		color: #334155 !important;
+		font-weight: 700 !important;
+		font-size: 12.5px !important;
+		text-transform: uppercase !important;
+		letter-spacing: 0.5px !important;
+		border: 1px solid #cbd5e1 !important;
+		padding: 12px 14px !important;
+		vertical-align: middle !important;
+		text-align: center;
+	}
+
+	#kt_table_1 tbody td {
+		padding: 11px 14px !important;
+		vertical-align: middle !important;
+		border: 1px solid #e2e8f0 !important;
+		font-size: 13px !important;
+		color: #1e293b;
+	}
+
+	#kt_table_1 tbody tr:nth-of-type(odd) {
+		background-color: #ffffff !important;
+	}
+
+	#kt_table_1 tbody tr:nth-of-type(even) {
+		background-color: #f8fafc !important;
+	}
+
+	#kt_table_1 tbody tr:hover {
+		background-color: #e0f2fe !important;
+	}
+
+	#kt_table_1 tbody tr:hover td {
+		background-color: transparent !important;
+		color: #0f172a !important;
+	}
+
+	.dataTables_wrapper {
+		padding: 15px !important;
+	}
+
+	.badge-status-modern {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 11.5px;
+		font-weight: 600;
+		padding: 5px 10px;
+		border-radius: 20px;
+		letter-spacing: 0.2px;
+		white-space: nowrap;
+		line-height: 1.2;
+	}
+	.badge-status-modern.status-baru {
+		background: #dcfce7;
+		color: #15803d;
+		border: 1px solid #bbf7d0;
+	}
+	.badge-status-modern.status-acc {
+		background: #e0f2fe;
+		color: #0369a1;
+		border: 1px solid #bae6fd;
+	}
+	.badge-status-modern.status-dir {
+		background: #fef3c7;
+		color: #b45309;
+		border: 1px solid #fde68a;
+	}
+	.badge-status-modern.status-reject {
+		background: #fee2e2;
+		color: #b91c1c;
+		border: 1px solid #fecaca;
+	}
+
+	.ba-action-group {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+		flex-wrap: nowrap;
+	}
+	.ba-action-group .btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 4px 9px;
+		font-size: 11.5px;
+		font-weight: 600;
+		border-radius: 6px;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+		transition: all 0.15s ease-in-out;
+		white-space: nowrap;
+	}
+	.ba-action-group .btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+	}
+</style>
+
 <div class="row">
-	<div class="col">
-		<div class="">
-				<a href="surat_part_two/show/pengajuan/ba" id="btn-a-gc" class="btn btn-sm btn-success">
-				    <i class="fas fa-plus"></i>&nbsp;&nbsp;Ajukan Berita Acara
+	<div class="col-12">
+		<div class="table-card-container">
+			<div class="table-top-bar">
+				<div class="table-top-title">
+					<i class="fas fa-file-contract text-primary"></i> Pengajuan Berita Acara Saya
+				</div>
+				<a href="<?= base_url('surat_part_two/show/pengajuan/ba') ?>" id="btn-a-gc" class="btn btn-sm btn-success font-weight-bold" style="border-radius: 6px;">
+				    <i class="fas fa-plus mr-1"></i> Ajukan Berita Acara
 				</a>
-		</div>
-		<br>
-		<div class="card-body">
+			</div>
 			<div class="table-responsive">
-				<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
+				<table class="table table-bordered" id="kt_table_1">
 					<thead>
 						<tr>
-							<th> # </th>
-							<th> No</th>
-							<th> Nama</th>
-							<th> Jabatan</th>
-							<th> Tanggal</th>
-							<th> Diketahui Oleh</th>
-							<th> Disetujui Oleh</th>
-							<th> Status</th>
-							<th> Aksi</th>
+							<th width="40"> # </th>
+							<th> No </th>
+							<th> Nama </th>
+							<th> Jabatan </th>
+							<th> Tanggal </th>
+							<th> Diketahui Oleh </th>
+							<th> Disetujui Oleh </th>
+							<th> Status </th>
+							<th width="140" class="text-center"> Aksi </th>
 						</tr>
 					</thead>
 				</table>
@@ -50,18 +189,17 @@
 				url: 'surat_part_two/pagination/permintaan_ba',
 				type: 'POST',
 				data: function(e) {
-					e.tahun = $('#tahun').val()
-					e.csrf_token = token
+					e.csrf_token = token;
 				}
 			},
 			columnDefs: [{
-				targets: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+				targets: [0, 4, 7, 8],
 				className: 'text-center'
 			}]
-		})
-	})
+		});
+	});
 
 	function updateDatatable() {
-		table.ajax.reload(null, false)
+		table.ajax.reload(null, false);
 	}
 </script>

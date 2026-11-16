@@ -120,6 +120,65 @@
 		border-radius: 4px !important;
 		border: 1px solid transparent !important;
 	}
+
+	/* Badge Status Modern & Rapi */
+	.badge-status-modern {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 11.5px;
+		font-weight: 600;
+		padding: 5px 10px;
+		border-radius: 20px;
+		letter-spacing: 0.2px;
+		white-space: nowrap;
+		line-height: 1.2;
+	}
+	.badge-status-modern.status-baru {
+		background: #dcfce7;
+		color: #15803d;
+		border: 1px solid #bbf7d0;
+	}
+	.badge-status-modern.status-acc {
+		background: #e0f2fe;
+		color: #0369a1;
+		border: 1px solid #bae6fd;
+	}
+	.badge-status-modern.status-dir {
+		background: #fef3c7;
+		color: #b45309;
+		border: 1px solid #fde68a;
+	}
+	.badge-status-modern.status-reject {
+		background: #fee2e2;
+		color: #b91c1c;
+		border: 1px solid #fecaca;
+	}
+
+	/* Action Buttons Styling */
+	.ba-action-group {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+		flex-wrap: nowrap;
+	}
+	.ba-action-group .btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 4px 9px;
+		font-size: 11.5px;
+		font-weight: 600;
+		border-radius: 6px;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+		transition: all 0.15s ease-in-out;
+		white-space: nowrap;
+	}
+	.ba-action-group .btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+	}
 </style>
 
 <div class="row">
@@ -162,7 +221,7 @@
 							<th> Diketahui Oleh </th>
 							<th> Disetujui Oleh </th>
 							<th> Status </th>
-							<th width="70"> Aksi </th>
+							<th width="140" class="text-center"> Aksi </th>
 						</tr>
 					</thead>
 				</table>

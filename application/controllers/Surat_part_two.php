@@ -3066,15 +3066,15 @@ class Surat_part_two extends CI_Controller
         $kode_ba  = '<a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="font-weight-bold text-primary" title="Buka Detail Berita Acara">' . $row->kode_ba . '</a>';
 
         if ($row->status == "0") {
-          $stat_surat = '<span class="badge badge-success px-2 py-1">Baru Diajukan</span>';
+          $stat_surat = '<span class="badge-status-modern status-baru"><i class="fas fa-clock"></i> Baru Diajukan</span>';
         } else if ($row->status == "1") {
-          $stat_surat = '<span class="badge badge-info px-2 py-1">Disetujui oleh ' . $row->nama_diketahui . '</span>';
+          $stat_surat = '<span class="badge-status-modern status-acc"><i class="fas fa-user-check"></i> Mengetahui: ' . htmlspecialchars($row->nama_diketahui) . '</span>';
         } else if ($row->status == "2") {
-          $stat_surat = '<span class="badge badge-info px-2 py-1">Disetujui oleh ' . $row->nama_disetujui . '</span>';
+          $stat_surat = '<span class="badge-status-modern status-acc"><i class="fas fa-check-double"></i> Menyetujui: ' . htmlspecialchars($row->nama_disetujui) . '</span>';
         } else if ($row->status == "3") {
-          $stat_surat = '<span class="badge badge-info px-2 py-1">Disetujui oleh Director</span>';
+          $stat_surat = '<span class="badge-status-modern status-dir"><i class="fas fa-award"></i> Disetujui Director</span>';
         } else {
-          $stat_surat = '<span class="badge badge-danger px-2 py-1">Ditolak</span>';
+          $stat_surat = '<span class="badge-status-modern status-reject"><i class="fas fa-times-circle"></i> Ditolak</span>';
         }
 
         $tgl_aju = date('d-M-Y', strtotime($row->tanggal));
@@ -3100,12 +3100,12 @@ class Surat_part_two extends CI_Controller
         }
 
         $li_btn   = '
-            <div class="btn-group btn-group-sm" role="group">
-                <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-primary" title="Lihat Detail"><i class="fas fa-eye"></i></a>
+            <div class="ba-action-group">
+                <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a>
                 ' . $resendBtn . '
-                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-pencil-alt"></i></a>' : '') . '
-                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="fas fa-trash"></i></button>' : '') . '
-                ' . (isAdmin() ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data (Admin)" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="fas fa-trash"></i></button>' : '') . '
+                ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-pencil-alt"></i> Edit</a>' : '') . '
+                ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="fas fa-trash"></i> Hapus</button>' : '') . '
+                ' . (isAdmin() ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data (Admin)" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="fas fa-trash"></i> Hapus</button>' : '') . '
             </div>';
 
         $th = array();
@@ -3132,22 +3132,18 @@ class Surat_part_two extends CI_Controller
       foreach ($dt['data'] as $row) {
 
 
-        $kode_ba  = '<a href="surat_part_two/show/detail/ba/' . $row->idGc . '">' . $row->kode_ba . '</a>';
-        //$cetak		= '<a href="surat/print_page/gc/'.$row->idGc.'">print</a>';
-
-
-
+        $kode_ba  = '<a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="font-weight-bold text-primary" title="Buka Detail Berita Acara">' . $row->kode_ba . '</a>';
 
         if ($row->status == "0") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-success">Baru Diajukan</span>';
+          $stat_surat = '<span class="badge-status-modern status-baru"><i class="fas fa-clock"></i> Baru Diajukan</span>';
         } else if ($row->status == "1") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh ' . $row->nama_diketahui . '</span>';
+          $stat_surat = '<span class="badge-status-modern status-acc"><i class="fas fa-user-check"></i> Mengetahui: ' . htmlspecialchars($row->nama_diketahui) . '</span>';
         } else if ($row->status == "2") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh ' . $row->nama_disetujui . '</span>';
+          $stat_surat = '<span class="badge-status-modern status-acc"><i class="fas fa-check-double"></i> Menyetujui: ' . htmlspecialchars($row->nama_disetujui) . '</span>';
         } else if ($row->status == "3") {
-          $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui oleh Director</span>';
+          $stat_surat = '<span class="badge-status-modern status-dir"><i class="fas fa-award"></i> Disetujui Director</span>';
         } else {
-          $stat_surat = '<span class="badge badge-ecommerce badge-danger">Ditolak</span>';
+          $stat_surat = '<span class="badge-status-modern status-reject"><i class="fas fa-times-circle"></i> Ditolak</span>';
         }
 
         $tgl_aju = date('d-M-Y', strtotime($row->tanggal));
@@ -3173,20 +3169,20 @@ class Surat_part_two extends CI_Controller
         }
 
         $li_btn   = '
-            <div class="btn-group" role="group" aria-label="First group">
-                <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-primary" title="Lihat Detail"><i class="fas fa-eye"></i></a>
+            <div class="ba-action-group">
+                <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i> Detail</a>
                 ' . $resendBtn . '
-                <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="bx bx-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="fas fa-trash"></i> Hapus</button>
             </div>';
 
         $th = array();
         $th[] = ++$start;
         $th[] = $kode_ba;
-        $th[] = $row->pengaju;
-        $th[] = $row->jabatan;
-        $th[] = $tgl_aju;
-        $th[] = $diketahui;
-        $th[] = $disetujui;
+        $th[] = '<span class="font-weight-bold text-dark">' . $row->pengaju . '</span>';
+        $th[] = '<span class="text-secondary">' . $row->jabatan . '</span>';
+        $th[] = '<span class="text-nowrap font-weight-500">' . $tgl_aju . '</span>';
+        $th[] = $diketahui ? $diketahui : '-';
+        $th[] = $disetujui ? $disetujui : '-';
         $th[] = $stat_surat;
         $th[] = $li_btn;
         $data[] = $th;
