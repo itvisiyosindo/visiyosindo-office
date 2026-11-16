@@ -530,7 +530,7 @@ $config['proxy_ips'] = '';
 
 $config['apps_name'] = 'Office Visi Yosindo Medikal';
 
-$config['apps_logo_text'] = '<div class="brand-wrapper"><div class="brand-icon-box"><i class="fas fa-bolt"></i></div><b class="brand-title"><span class="brand-system">OFFICE SYSTEM</span><span class="brand-company">PT. VISI YOSINDO MEDIKAL</span></b></div>';
+$config['apps_logo_text'] = '<b class="brand-title"><span class="brand-system">OFFICE SYSTEM</span><span class="brand-company">PT. VISI YOSINDO MEDIKAL</span></b>';
 
 $config['apps_mode'] = 'PKS';
 

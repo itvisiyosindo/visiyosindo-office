@@ -79,59 +79,29 @@
         opacity: 0.95;
     }
 
-    html.modern .logo .brand-wrapper {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-    }
-
-    html.modern .logo .brand-icon-box {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        box-shadow: 0 0 12px rgba(14, 165, 233, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2);
-        flex-shrink: 0;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    html.modern .logo:hover .brand-icon-box {
-        transform: rotate(-8deg) scale(1.08);
-        box-shadow: 0 0 16px rgba(14, 165, 233, 0.8), 0 4px 8px rgba(0, 0, 0, 0.3);
-    }
-
     html.modern .logo b.brand-title {
         display: flex !important;
         flex-direction: column !important;
         font-family: 'Poppins', sans-serif !important;
-        font-weight: 800 !important;
+        font-weight: 700 !important;
         text-align: left;
     }
 
     html.modern .logo .brand-system {
         font-size: 14.5px !important;
-        font-weight: 800 !important;
-        background: linear-gradient(90deg, #ffffff 0%, #e0f2fe 50%, #38bdf8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #ffffff !important;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        text-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        letter-spacing: 0.5px;
     }
 
     html.modern .logo .brand-company {
-        font-size: 9.5px !important;
-        color: #38bdf8 !important;
-        font-weight: 700 !important;
+        font-size: 10px !important;
+        color: #0ea5e9 !important;
+        /* Premium corporate cyan */
+        font-weight: 600 !important;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.2px;
         margin-top: 1px;
-        text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
     }
 
     @media only screen and (min-width: 768px) {
