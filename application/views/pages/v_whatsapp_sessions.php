@@ -189,7 +189,14 @@ if (!empty($sessions)) {
                                     <tr>
                                         <td class="text-center text-muted small"><?= $no++ ?></td>
                                         <td>
-                                            <strong class="text-dark"><?= htmlspecialchars($row->nama ?? 'Tamu / Customer') ?></strong>
+                                            <strong class="text-dark">
+                                                <?= htmlspecialchars(!empty($row->nama_karyawan) ? $row->nama_karyawan : ($row->nama ?? 'Tamu / Customer')) ?>
+                                            </strong>
+                                            <?php if (!empty($row->nama_karyawan) && !empty($row->nama) && $row->nama !== $row->nama_karyawan): ?>
+                                                <small class="text-muted d-block"><i class="fas fa-user-tag mr-1"></i><?= htmlspecialchars($row->nama) ?><?= !empty($row->jabatan) ? ' (' . htmlspecialchars($row->jabatan) . ')' : '' ?></small>
+                                            <?php elseif (!empty($row->jabatan)): ?>
+                                                <small class="text-muted d-block"><i class="fas fa-briefcase mr-1"></i><?= htmlspecialchars($row->jabatan) ?></small>
+                                            <?php endif; ?>
                                             <?php if (isset($row->is_karyawan_active) && $row->is_karyawan_active === '0'): ?>
                                                 <span class="badge badge-secondary ml-1" style="font-size: 10px;"><i class="fas fa-user-times mr-1"></i>Non-Aktif</span>
                                             <?php elseif (isset($row->is_karyawan_active) && $row->is_karyawan_active === '1'): ?>
