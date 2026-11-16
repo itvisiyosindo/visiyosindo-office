@@ -305,20 +305,20 @@ if (!function_exists('lap_limit_text')) {
 
 		<!-- 2. BULK ACTION CARD (IF ALLOWED) -->
 		<?php
-		$bulk_nilai_allowed_users = array(744, 29, 759);
+		$bulk_nilai_allowed_users = array(744, 29, 759, 1, 778);
 		$is_bulk_nilai_allowed = in_array((int) sessPenggunaId(), $bulk_nilai_allowed_users, true);
 		?>
 
 		<?php if ($is_bulk_nilai_allowed) { ?>
 		<div class="card mb-4" style="border-left: 4px solid #0ea5e9; border: 1px solid #e2e8f0; border-left-width: 4px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
 			<div class="card-body p-3">
-				<form id="bulk-nilai-form" class="row align-items-end">
+				<form id="bulk-nilai-form" class="row align-items-end" onsubmit="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event); return false;">
 					<div class="col-md-4 col-sm-12 mb-2 mb-md-0">
 						<label for="bulk-nilai-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai Penilai</strong></label>
 						<input type="number" min="60" max="100" step="1" id="bulk-nilai-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 					</div>
 					<div class="col-md-3 col-sm-12 mb-2 mb-md-0">
-						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
+						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 					</div>
 					<div class="col-md-5 col-sm-12">
 						<small class="text-muted">Mengisi seluruh field nilai B lalu langsung menyimpan ke database (catatan tidak diubah).</small>
@@ -377,6 +377,9 @@ if (!function_exists('lap_limit_text')) {
 							$no = 1;
 							$grouped_data = [];
 							$point_has_lap = [];
+							$point_has_nilai_isi_1 = [];
+							$point_fallback_row_id = [];
+							$point_score_rendered = [];
 							foreach ($data_detail as $row) {
 								$id_job = $row->id_lap;
 								if (!isset($grouped_data[$row->id])) {
@@ -384,8 +387,15 @@ if (!function_exists('lap_limit_text')) {
 								}
 								$grouped_data[$row->id][] = $row;
 
+								if ($row->nilai_isi == 1) {
+									$point_has_nilai_isi_1[$row->point] = true;
+								}
+
 								if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
 									$point_has_lap[$row->point] = true;
+									if (!isset($point_fallback_row_id[$row->point])) {
+										$point_fallback_row_id[$row->point] = $row->id;
+									}
 								}
 							}
 
@@ -441,10 +451,21 @@ if (!function_exists('lap_limit_text')) {
 								<td style="width:15%; word-wrap: break-word; white-space: normal;"><font color='#000000'>&nbsp;<?= !empty($row->id_lap) ? $row->keterangan : '' ?>&nbsp;</td>
 								<td>
 									<?php 
-									if ($row->nilai_isi == 1 && isset($point_has_lap[$row->point])) { 
+									$show_point_score = false;
+									if ($firstRow && !isset($point_score_rendered[$row->point]) && isset($point_has_lap[$row->point])) {
+										if ($row->nilai_isi == 1) {
+											$show_point_score = true;
+										} elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
+											$show_point_score = true;
+										}
+										if ($show_point_score) {
+											$point_score_rendered[$row->point] = true;
+										}
+									}
+									if ($show_point_score) { 
 										$nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
 									?>
-										<input class="form-control" type="text" name="nilaib[<?= $row->point ?>]" value="<?= htmlspecialchars($nilai_b) ?>" style="background-color: #ffffff;">
+										<input class="form-control" type="text" name="nilaib[<?= $row->point ?>]" data-point="<?= $row->point ?>" value="<?= htmlspecialchars($nilai_b) ?>" style="background-color: #ffffff;">
 									<?php } ?>
 								</td>
 							</tr>
@@ -925,128 +946,122 @@ if (!function_exists('lap_limit_text')) {
 </div>
 
 <script>
-	document.addEventListener('DOMContentLoaded', function() {
+	window.runBulkNilaiPenilai = function(e) {
+		if (e && typeof e.preventDefault === 'function') {
+			e.preventDefault();
+		}
+		var $ = window.jQuery;
+		var inputEl = document.getElementById('bulk-nilai-input');
+		var nilaiInput = inputEl ? inputEl.value.trim() : '';
+		var nilaiBulk = parseFloat(nilaiInput);
 
-		var isBulkNilaiAllowed = <?= $is_bulk_nilai_allowed ? 'true' : 'false' ?>;
-
-		if (isBulkNilaiAllowed) {
-			var bulkSaveTargets = [
-				{
-					formSelector: '#main-form',
-					requiredSelector: 'input[name^="nilaib["]',
-					label: 'Nilai Laporan Mingguan'
-				},
-				{
-					formSelector: '#main-form-pencapaian',
-					requiredSelector: 'input[name^="nilaipb["]',
-					label: 'Nilai Pencapaian'
-				},
-				{
-					formSelector: '#main-form-umum',
-					requiredSelector: 'input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]',
-					label: 'Nilai Umum'
-				}
-			];
-
-			function submitBulkForm(target) {
-				var $form = $(target.formSelector);
-				if (!$form.length || $form.find(target.requiredSelector).length === 0) {
-					return $.Deferred().resolve({ status: 'success', skipped: true }).promise();
-				}
-
-				var formData = new FormData($form[0]);
-				if (typeof token !== 'undefined' && token && !formData.has('csrf_token')) {
-					formData.append('csrf_token', token);
-				}
-
-				return $.ajax({
-					url: $form.attr('action'),
-					type: 'POST',
-					data: formData,
-					contentType: false,
-					processData: false,
-					dataType: 'JSON'
-				});
+		if (nilaiInput === '' || isNaN(nilaiBulk)) {
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Nilai tidak valid', 'Masukkan nilai antara 60 sampai 100.', 'warning');
+			} else {
+				alert('Masukkan nilai antara 60 sampai 100.');
 			}
+			return false;
+		}
 
-			function submitBulkSequential(index, onDone, onError) {
-				if (index >= bulkSaveTargets.length) {
-					onDone();
-					return;
-				}
-
-				var target = bulkSaveTargets[index];
-				submitBulkForm(target)
-					.done(function(resp) {
-						if (resp && resp.status === 'error') {
-							onError(target.label, resp.msg || 'Terjadi kesalahan saat menyimpan.');
-							return;
-						}
-						submitBulkSequential(index + 1, onDone, onError);
-					})
-					.fail(function(xhr) {
-						var msg = 'Gagal menyimpan data.';
-						if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
-							msg = xhr.responseJSON.msg;
-						}
-						onError(target.label, msg);
-					});
+		if (nilaiBulk < 60 || nilaiBulk > 100) {
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Nilai di luar rentang', 'Nilai yang diperbolehkan adalah 60 sampai 100.', 'warning');
+			} else {
+				alert('Nilai yang diperbolehkan adalah 60 sampai 100.');
 			}
+			return false;
+		}
 
-			$(document).on('click', '#btn-bulk-nilai-submit', function(e) {
+		var nilaiFinal = (Math.floor(nilaiBulk) === nilaiBulk)
+			? nilaiBulk.toString()
+			: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 
-				var nilaiInput = $('#bulk-nilai-input').val();
-				var nilaiBulk = parseFloat(nilaiInput);
-				var $submitBtn = $('#btn-bulk-nilai-submit');
-
-				if (nilaiInput === '' || isNaN(nilaiBulk)) {
-					Swal.fire('Nilai tidak valid', 'Masukkan nilai antara 60 sampai 100.', 'warning');
-					return;
+		var points = [];
+		if ($) {
+			$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
+				$(this).val(nilaiFinal);
+				var ptAttr = $(this).attr('data-point');
+				if (ptAttr) {
+					points.push(ptAttr);
 				}
-
-				if (nilaiBulk < 60 || nilaiBulk > 100) {
-					Swal.fire('Nilai di luar rentang', 'Nilai yang diperbolehkan adalah 60 sampai 100.', 'warning');
-					return;
-				}
-
-				var nilaiFinal = (Math.floor(nilaiBulk) === nilaiBulk)
-					? nilaiBulk.toString()
-					: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
-
-				$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
-					$(this).val(nilaiFinal);
-				});
-
-				$submitBtn.prop('disabled', true);
-
-				Swal.fire({
-					html: '<h4>Menyimpan bulk nilai ke database...</h4>',
-					icon: 'info',
-					allowOutsideClick: false,
-					showConfirmButton: false
-				});
-
-				submitBulkSequential(
-					0,
-					function() {
-						$submitBtn.prop('disabled', false);
-						Swal.fire({
-							icon: 'success',
-							title: 'Berhasil',
-							text: 'Bulk action berhasil disimpan otomatis ke database.',
-							timer: 1500,
-							showConfirmButton: false
-						}).then(function() {
-							window.location.reload();
-						});
-					},
-					function(label, msg) {
-						$submitBtn.prop('disabled', false);
-						Swal.fire('Gagal simpan ' + label, msg, 'error');
-					}
-				);
 			});
 		}
+
+		var submitBtn = document.getElementById('btn-bulk-nilai-submit');
+		if (submitBtn) submitBtn.disabled = true;
+
+		if (typeof Swal !== 'undefined') {
+			Swal.fire({
+				html: '<h4>Menyimpan bulk nilai ke database...</h4>',
+				icon: 'info',
+				allowOutsideClick: false,
+				showConfirmButton: false
+			});
+		}
+
+		var postData = {
+			mode: 'penilai',
+			pengguna_id: '<?= (int)$data_job->pengguna_id ?>',
+			wednesday: '<?= htmlspecialchars($wednesday, ENT_QUOTES) ?>',
+			nilai_bulk: nilaiFinal,
+			points: points
+		};
+		for (var i = 1; i <= 5; i++) {
+			var catEl = document.querySelector('input[name="catatanb' + i + '"]');
+			if (catEl) {
+				postData['catatanb' + i] = catEl.value;
+			}
+		}
+		if (typeof token !== 'undefined' && token) {
+			postData.csrf_token = token;
+		}
+
+		$.ajax({
+			url: '<?= base_url('laporan/inputBulkNilai') ?>',
+			type: 'POST',
+			data: postData,
+			dataType: 'JSON'
+		}).done(function(resp) {
+			if (submitBtn) submitBtn.disabled = false;
+			if (resp && resp.status === 'error') {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire('Gagal menyimpan', resp.msg || 'Terjadi kesalahan saat menyimpan.', 'error');
+				} else {
+					alert(resp.msg || 'Terjadi kesalahan saat menyimpan.');
+				}
+				return;
+			}
+			if (typeof Swal !== 'undefined') {
+				Swal.fire({
+					icon: 'success',
+					title: 'Berhasil',
+					text: (resp && resp.msg) ? resp.msg : 'Bulk action berhasil disimpan otomatis ke database.',
+					timer: 1300,
+					showConfirmButton: false
+				}).then(function() {
+					window.location.reload();
+				});
+			} else {
+				window.location.reload();
+			}
+		}).fail(function(xhr) {
+			if (submitBtn) submitBtn.disabled = false;
+			var msg = 'Gagal menyimpan data.';
+			if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
+				msg = xhr.responseJSON.msg;
+			}
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Gagal menyimpan', msg, 'error');
+			} else {
+				alert(msg);
+			}
+		});
+
+		return false;
+	};
+
+	document.addEventListener('DOMContentLoaded', function() {
 
 		$(document).on('click', '.btn-selesai', function() {
 			var id = $('#id').val();

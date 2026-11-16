@@ -437,22 +437,31 @@ if (!function_exists('lap_limit_text')) {
                                 }
                                 $nilaiRataLapA = ($jumlah_nilai_a > 0) ? ($total_nilai_a / $jumlah_nilai_a) : 0;
                                 $nilaiRataLap = ($jumlah_nilai_b > 0) ? ($total_nilai_b / $jumlah_nilai_b) : 0;
-                                $rataAll = ($nilaiRataLapA + $nilaiRataLap)/2;
+                                $rataAll = ($jumlah_nilai_a > 0 || $jumlah_nilai_b > 0) ? (($nilaiRataLapA + $nilaiRataLap) / (($jumlah_nilai_a > 0 && $jumlah_nilai_b > 0) ? 2 : 1)) : 0;
                             ?>
                             <tbody>
                               <?php 
 $no = 1;
 $grouped_data = [];
 $point_has_lap = [];
+$point_has_nilai_isi_1 = [];
+$point_fallback_row_id = [];
+$point_score_rendered = [];
 foreach ($data_detail as $row) {
     if (!isset($grouped_data[$row->id])) {
         $grouped_data[$row->id] = [];
     }
     $grouped_data[$row->id][] = $row;
+    if ($row->nilai_isi == 1 && !empty($row->point)) {
+        $point_has_nilai_isi_1[$row->point] = true;
+    }
     // Tandai point mana saja yang memiliki laporan terisi pada minggu ini
     if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
         if (!empty($row->point)) {
             $point_has_lap[$row->point] = true;
+            if (!isset($point_fallback_row_id[$row->point])) {
+                $point_fallback_row_id[$row->point] = $row->id;
+            }
         }
     }
 }
@@ -563,11 +572,25 @@ foreach ($data_detail as $row) {
                                         <?php } ?>
                                         <td><?= !empty($row->id_lap) ? $row->pihak : '<span class="text-muted small">-</span>' ?></td>
                                         <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $row->keterangan : '<span class="text-muted small">-</span>' ?></td>
+                                        <?php
+                                            $pt_nilai_a = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_a : '';
+                                            $pt_nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
+                                            $show_point_score = false;
+                                            if ($firstRow && !isset($point_score_rendered[$row->point])) {
+                                                if ($row->nilai_isi == 1) {
+                                                    $show_point_score = true;
+                                                } elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
+                                                    $show_point_score = true;
+                                                }
+                                                if ($show_point_score) {
+                                                    $point_score_rendered[$row->point] = true;
+                                                }
+                                            }
+                                        ?>
                                         <td style="text-align:center">
                                             <?php 
-                                            $nilai_a = '';
-                                            if ($row->nilai_isi == 1) { 
-                                                $nilai_a = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_a : '';
+                                            $nilai_a = $pt_nilai_a;
+                                            if ($show_point_score && $nilai_a !== '') { 
                                             ?>
                                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_a) ?></span>
                                             <?php 
@@ -578,9 +601,8 @@ foreach ($data_detail as $row) {
                                         </td>
                                         <td style="text-align:center">
                                             <?php 
-                                            $nilai_b = '';
-                                            if ($row->nilai_isi == 1) { 
-                                                $nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
+                                            $nilai_b = $pt_nilai_b;
+                                            if ($show_point_score && $nilai_b !== '') { 
                                             ?>
                                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_b) ?></span>
                                             <?php 

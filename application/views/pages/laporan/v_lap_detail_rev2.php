@@ -481,17 +481,17 @@ if (!function_exists('lap_limit_text')) {
 				<?php $id = $data_job->pengguna_id ?> 
 				<input type="hidden" name="id" id="id" value="<?= $data_job->pengguna_id ?>">
 
-				<?php $is_bulk_nilai_hrd_allowed = isHrd(); ?>
+				<?php $is_bulk_nilai_hrd_allowed = (isHrd() || isAdmin() || in_array((int)sessPenggunaId(), [1, 58, 69, 744, 778], true)); ?>
 				<?php if ($is_bulk_nilai_hrd_allowed) { ?>
 				<div class="card laporan-card mb-4" style="border-left: 4px solid #0ea5e9;">
 					<div class="card-body p-3">
-						<form id="bulk-nilai-adm-form" class="row align-items-end">
+						<form id="bulk-nilai-adm-form" class="row align-items-end" onsubmit="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event); return false;">
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
 								<label for="bulk-nilai-adm-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai HRD</strong></label>
 								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 							</div>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
-								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
+								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 							</div>
 							<div class="col-lg-6 col-md-4 col-sm-12">
 								<small class="text-muted">Khusus HRD. Mengisi semua input nilai A lalu menyimpan otomatis ke database.</small>
@@ -552,7 +552,7 @@ if (!function_exists('lap_limit_text')) {
 
                             $nilaiRataLapA = ($jumlah_nilai_a > 0) ? ($total_nilai_a / $jumlah_nilai_a) : 0;
                             $nilaiRataLap = ($jumlah_nilai_b > 0) ? ($total_nilai_b / $jumlah_nilai_b) : 0;
-                            $rataAll = ($nilaiRataLapA + $nilaiRataLap)/2;
+                            $rataAll = ($jumlah_nilai_a > 0 || $jumlah_nilai_b > 0) ? (($nilaiRataLapA + $nilaiRataLap) / (($jumlah_nilai_a > 0 && $jumlah_nilai_b > 0) ? 2 : 1)) : 0;
                         ?>
 
                         <tbody>
@@ -560,6 +560,9 @@ if (!function_exists('lap_limit_text')) {
                             $no = 1;
                             $grouped_data = [];
                             $point_has_lap = [];
+                            $point_has_nilai_isi_1 = [];
+                            $point_fallback_row_id = [];
+                            $point_score_rendered = [];
                             foreach ($data_detail as $row) {
 
                                 if (!isset($grouped_data[$row->id])) {
@@ -567,9 +570,16 @@ if (!function_exists('lap_limit_text')) {
                                 }
                                 $grouped_data[$row->id][] = $row;
 
+                                if ($row->nilai_isi == 1) {
+                                    $point_has_nilai_isi_1[$row->point] = true;
+                                }
+
                                 // Cek point yang punya id_lap
                                 if (!empty($row->id_lap) && $row->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
                                     $point_has_lap[$row->point] = true;
+                                    if (!isset($point_fallback_row_id[$row->point])) {
+                                        $point_fallback_row_id[$row->point] = $row->id;
+                                    }
                                 }
                             }
                             ?>
@@ -659,12 +669,22 @@ if (!function_exists('lap_limit_text')) {
                                     <?php } ?>
                                     <td><?= !empty($row->id_lap) ? $row->pihak : '' ?></td>
                                     <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $row->keterangan : '' ?></td>
+                                    <?php
+                                        $show_point_score = false;
+                                        if ($firstRow && !isset($point_score_rendered[$row->point]) && isset($point_has_lap[$row->point])) {
+                                            if ($row->nilai_isi == 1) {
+                                                $show_point_score = true;
+                                            } elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
+                                                $show_point_score = true;
+                                            }
+                                            if ($show_point_score) {
+                                                $point_score_rendered[$row->point] = true;
+                                            }
+                                        }
+                                    ?>
                                     <td style="text-align:center;">
                                         <?php 
-                                        if (
-                                                $row->nilai_isi == 1 && 
-                                                isset($point_has_lap[$row->point])
-                                        ) { 
+                                        if ($show_point_score) { 
                                                 $nilai_a = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_a : '';
                                         ?>
                                                 <input class="form-control form-control-sm text-center font-weight-bold score-input" type="number" min="60" max="100" step="any" name="nilaia[<?= $row->point ?>]" value="<?= htmlspecialchars($nilai_a) ?>" data-point="<?= $row->point ?>" style="border-radius: 6px; border-color: #cbd5e1; max-width: 80px; margin: 0 auto; background-color: #ffffff;">
@@ -674,10 +694,7 @@ if (!function_exists('lap_limit_text')) {
                                     </td>
                                     <td style="text-align:center">
                                         <?php 
-                                        if (
-                                                $row->nilai_isi == 1 && 
-                                                isset($point_has_lap[$row->point])
-                                        ) { 
+                                        if ($show_point_score) { 
                                                 $nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
                                         ?>
                                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_b) ?></span>
@@ -1359,132 +1376,126 @@ if (!function_exists('lap_limit_text')) {
 
 
 <script>
-	document.addEventListener('DOMContentLoaded', function() {
+	window.runBulkNilaiAdm = function(e) {
+		if (e && typeof e.preventDefault === 'function') {
+			e.preventDefault();
+		}
+		var $ = window.jQuery;
+		var inputEl = document.getElementById('bulk-nilai-adm-input');
+		var nilaiInput = inputEl ? inputEl.value.trim() : '';
+		var nilaiBulk = parseFloat(nilaiInput);
 
-				var isBulkNilaiHrdAllowed = <?= $is_bulk_nilai_hrd_allowed ? 'true' : 'false' ?>;
+		if (nilaiInput === '' || isNaN(nilaiBulk)) {
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Nilai tidak valid', 'Masukkan nilai antara 60 sampai 100.', 'warning');
+			} else {
+				alert('Masukkan nilai antara 60 sampai 100.');
+			}
+			return false;
+		}
 
-				if (isBulkNilaiHrdAllowed) {
-					var bulkSaveTargetsAdm = [
-						{
-							formSelector: '#main-form',
-							requiredSelector: 'input[name^="nilaia["]',
-							label: 'Nilai Laporan Mingguan'
-						},
-						{
-							formSelector: '#main-form-pencapaian',
-							requiredSelector: 'input[name^="nilaipa["]',
-							label: 'Nilai Pencapaian'
-						},
-						{
-							formSelector: '#main-form-umum',
-							requiredSelector: 'input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]',
-							label: 'Nilai Umum'
-						}
-					];
+		if (nilaiBulk < 60 || nilaiBulk > 100) {
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Nilai di luar rentang', 'Nilai yang diperbolehkan adalah 60 sampai 100.', 'warning');
+			} else {
+				alert('Nilai yang diperbolehkan adalah 60 sampai 100.');
+			}
+			return false;
+		}
 
-					function submitBulkFormAdm(target) {
-						var $form = $(target.formSelector);
-						if (!$form.length || $form.find(target.requiredSelector).length === 0) {
-							return $.Deferred().resolve({ status: 'success', skipped: true }).promise();
-						}
+		var nilaiFinal = (Math.floor(nilaiBulk) === nilaiBulk)
+			? nilaiBulk.toString()
+			: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 
-						var formData = new FormData($form[0]);
-						if (typeof token !== 'undefined' && token && !formData.has('csrf_token')) {
-							formData.append('csrf_token', token);
-						}
-
-						return $.ajax({
-							url: $form.attr('action'),
-							type: 'POST',
-							data: formData,
-							contentType: false,
-							processData: false,
-							dataType: 'JSON'
-						});
-					}
-
-					function submitBulkSequentialAdm(index, onDone, onError) {
-						if (index >= bulkSaveTargetsAdm.length) {
-							onDone();
-							return;
-						}
-
-						var target = bulkSaveTargetsAdm[index];
-						submitBulkFormAdm(target)
-							.done(function(resp) {
-								if (resp && resp.status === 'error') {
-									onError(target.label, resp.msg || 'Terjadi kesalahan saat menyimpan.');
-									return;
-								}
-
-								submitBulkSequentialAdm(index + 1, onDone, onError);
-							})
-							.fail(function(xhr) {
-								var msg = 'Gagal menyimpan data.';
-								if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
-									msg = xhr.responseJSON.msg;
-								}
-								onError(target.label, msg);
-							});
-					}
-
-					$(document).on('click', '#btn-bulk-nilai-adm-submit', function(e) {
-
-						var nilaiInput = $('#bulk-nilai-adm-input').val();
-						var nilaiBulk = parseFloat(nilaiInput);
-						var $submitBtn = $('#btn-bulk-nilai-adm-submit');
-
-						if (nilaiInput === '' || isNaN(nilaiBulk)) {
-							Swal.fire('Nilai tidak valid', 'Masukkan nilai antara 60 sampai 100.', 'warning');
-							return;
-						}
-
-						if (nilaiBulk < 60 || nilaiBulk > 100) {
-							Swal.fire('Nilai di luar rentang', 'Nilai yang diperbolehkan adalah 60 sampai 100.', 'warning');
-							return;
-						}
-
-						var nilaiFinal = (Math.floor(nilaiBulk) === nilaiBulk)
-							? nilaiBulk.toString()
-							: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
-
-						$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
-							$(this).val(nilaiFinal);
-							$(this).removeClass('is-invalid').addClass('is-valid');
-						});
-
-						recalculateAllScores();
-
-						$submitBtn.prop('disabled', true);
-
-						Swal.fire({
-							html: '<h4>Menyimpan bulk nilai HRD ke database...</h4>',
-							icon: 'info',
-							allowOutsideClick: false,
-							showConfirmButton: false
-						});
-
-						submitBulkSequentialAdm(
-							0,
-							function() {
-								$submitBtn.prop('disabled', false);
-								Swal.fire({
-									icon: 'success',
-									title: 'Berhasil',
-									text: 'Bulk action nilai HRD berhasil disimpan otomatis ke database.',
-									timer: 1500,
-									showConfirmButton: false
-								}).then(function() {
-									window.location.reload();
-								});
-							},
-							function(label, msg) {
-								$submitBtn.prop('disabled', false);
-								Swal.fire('Gagal simpan ' + label, msg, 'error');
-							}
-						);
-					});
+		var points = [];
+		if ($) {
+			$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
+				$(this).val(nilaiFinal);
+				$(this).removeClass('is-invalid').addClass('is-valid');
+				var ptAttr = $(this).attr('data-point');
+				if (ptAttr) {
+					points.push(ptAttr);
 				}
+			});
+			if (typeof window.recalculateAllScoresAdm === 'function') {
+				window.recalculateAllScoresAdm();
+			}
+		}
+
+		var submitBtn = document.getElementById('btn-bulk-nilai-adm-submit');
+		if (submitBtn) submitBtn.disabled = true;
+
+		if (typeof Swal !== 'undefined') {
+			Swal.fire({
+				html: '<h4>Menyimpan bulk nilai HRD ke database...</h4>',
+				icon: 'info',
+				allowOutsideClick: false,
+				showConfirmButton: false
+			});
+		}
+
+		var postData = {
+			mode: 'adm',
+			pengguna_id: '<?= (int)$data_job->pengguna_id ?>',
+			wednesday: '<?= htmlspecialchars($wednesday, ENT_QUOTES) ?>',
+			nilai_bulk: nilaiFinal,
+			points: points
+		};
+		for (var i = 1; i <= 5; i++) {
+			var catEl = document.querySelector('input[name="catatana' + i + '"]');
+			if (catEl) {
+				postData['catatana' + i] = catEl.value;
+			}
+		}
+		if (typeof token !== 'undefined' && token) {
+			postData.csrf_token = token;
+		}
+
+		$.ajax({
+			url: '<?= base_url('laporan/inputBulkNilai') ?>',
+			type: 'POST',
+			data: postData,
+			dataType: 'JSON'
+		}).done(function(resp) {
+			if (submitBtn) submitBtn.disabled = false;
+			if (resp && resp.status === 'error') {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire('Gagal menyimpan', resp.msg || 'Terjadi kesalahan saat menyimpan.', 'error');
+				} else {
+					alert(resp.msg || 'Terjadi kesalahan saat menyimpan.');
+				}
+				return;
+			}
+			if (typeof Swal !== 'undefined') {
+				Swal.fire({
+					icon: 'success',
+					title: 'Berhasil',
+					text: (resp && resp.msg) ? resp.msg : 'Bulk action nilai HRD berhasil disimpan otomatis ke database.',
+					timer: 1300,
+					showConfirmButton: false
+				}).then(function() {
+					window.location.reload();
+				});
+			} else {
+				window.location.reload();
+			}
+		}).fail(function(xhr) {
+			if (submitBtn) submitBtn.disabled = false;
+			var msg = 'Gagal menyimpan data.';
+			if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
+				msg = xhr.responseJSON.msg;
+			}
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Gagal menyimpan', msg, 'error');
+			} else {
+				alert(msg);
+			}
+		});
+
+		return false;
+	};
+
+	document.addEventListener('DOMContentLoaded', function() {
 
 
 				$(document).on('click', '.btn-selesai', function() {
@@ -1576,6 +1587,7 @@ if (!function_exists('lap_limit_text')) {
 					var avgGabungan = (avgLapAll + avgUmumTotal) / 2;
 					$('#card-sum-gabungan').text(avgGabungan.toFixed(2));
 				}
+				window.recalculateAllScoresAdm = recalculateAllScores;
 
 				// Real-time input validation on score fields
 				$(document).on('input change keyup', '.score-input', function() {

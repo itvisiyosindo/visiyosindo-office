@@ -762,25 +762,61 @@ class Md_laporan extends CI_Model
         return $rows;
     }
 
+    private function _weekBoundsFromDate($date)
+    {
+        $ts = !empty($date) ? strtotime($date) : time();
+        if (!$ts) $ts = time();
+        $dow = (int)date('N', $ts); // 1 (Mon) .. 7 (Sun)
+        $monTs = strtotime('-' . ($dow - 1) . ' days', strtotime(date('Y-m-d', $ts)));
+        $sunTs = $monTs + (6 * 86400);
+        return [date('Y-m-d', $monTs), date('Y-m-d', $sunTs)];
+    }
+
+    public function getNilaiPointMap($id_pengguna, $monday, $friday)
+    {
+        $this->db->where('id_pengguna', $id_pengguna);
+        $this->db->where('date >=', $monday);
+        $this->db->where('date <=', $friday);
+        $this->db->order_by('date', 'DESC');
+        $this->db->order_by('id', 'DESC');
+        $rows = $this->db->get('nilai_point')->result();
+
+        $map = [];
+        foreach ($rows as $np) {
+            $pt = $np->point;
+            if (!isset($map[$pt])) {
+                $map[$pt] = clone $np;
+            } else {
+                if (($map[$pt]->nilai_a === '' || $map[$pt]->nilai_a === null) && isset($np->nilai_a) && $np->nilai_a !== '' && $np->nilai_a !== null) {
+                    $map[$pt]->nilai_a = $np->nilai_a;
+                }
+                if (($map[$pt]->nilai_b === '' || $map[$pt]->nilai_b === null) && isset($np->nilai_b) && $np->nilai_b !== '' && $np->nilai_b !== null) {
+                    $map[$pt]->nilai_b = $np->nilai_b;
+                }
+            }
+        }
+        return $map;
+    }
+
     public function saveOrUpdateNilaiAdm($data)
     {
-        // Cek apakah data sudah ada berdasarkan kombinasi unik
+        list($mon, $sun) = $this->_weekBoundsFromDate($data['date'] ?? null);
         $this->db->where('point', $data['point']);
         $this->db->where('id_pengguna', $data['id_pengguna']);
-        $this->db->where('date', $data['date']);
+        $this->db->where('date >=', $mon);
+        $this->db->where('date <=', $sun);
 
         $query = $this->db->get('nilai_point');
 
         if ($query->num_rows() > 0) {
-            // Jika data sudah ada, update nilai_a saja
             $this->db->where('point', $data['point']);
             $this->db->where('id_pengguna', $data['id_pengguna']);
-            $this->db->where('date', $data['date']);
+            $this->db->where('date >=', $mon);
+            $this->db->where('date <=', $sun);
             $this->db->update('nilai_point', [
                 'nilai_a' => $data['nilai_a']
             ]);
         } else {
-            // Jika belum ada, insert baru
             $this->db->insert('nilai_point', $data);
         }
     }
@@ -789,19 +825,20 @@ class Md_laporan extends CI_Model
     {
         if (empty($items)) return;
 
-        // Fetch existing points for this user and date in ONE query
+        list($mon, $sun) = $this->_weekBoundsFromDate($date);
         $this->db->where('id_pengguna', $pengguna_id);
-        $this->db->where('date', $date);
+        $this->db->where('date >=', $mon);
+        $this->db->where('date <=', $sun);
         $existing = $this->db->get('nilai_point')->result();
         $existing_points = [];
         foreach ($existing as $row) {
-            $existing_points[$row->point] = $row->id;
+            $existing_points[$row->point][] = $row->id;
         }
 
         foreach ($items as $point => $nilai_a) {
             if ($nilai_a === '' || $nilai_a === null) continue;
-            if (isset($existing_points[$point])) {
-                $this->db->where('id', $existing_points[$point]);
+            if (!empty($existing_points[$point])) {
+                $this->db->where_in('id', $existing_points[$point]);
                 $this->db->update('nilai_point', ['nilai_a' => $nilai_a]);
             } else {
                 $this->db->insert('nilai_point', [
@@ -810,86 +847,90 @@ class Md_laporan extends CI_Model
                     'id_pengguna' => $pengguna_id,
                     'date' => $date
                 ]);
-                $existing_points[$point] = $this->db->insert_id();
+                $existing_points[$point] = [$this->db->insert_id()];
             }
         }
     }
 
     public function saveOrUpdateNilai($data)
     {
-        // Cek apakah data sudah ada berdasarkan kombinasi unik
+        list($mon, $sun) = $this->_weekBoundsFromDate($data['date'] ?? null);
         $this->db->where('point', $data['point']);
         $this->db->where('id_pengguna', $data['id_pengguna']);
-        $this->db->where('date', $data['date']);
+        $this->db->where('date >=', $mon);
+        $this->db->where('date <=', $sun);
 
         $query = $this->db->get('nilai_point');
 
         if ($query->num_rows() > 0) {
-            // Jika data sudah ada, update nilai_b saja
             $this->db->where('point', $data['point']);
             $this->db->where('id_pengguna', $data['id_pengguna']);
-            $this->db->where('date', $data['date']);
+            $this->db->where('date >=', $mon);
+            $this->db->where('date <=', $sun);
             $this->db->update('nilai_point', [
                 'nilai_b' => $data['nilai_b']
             ]);
         } else {
-            // Jika belum ada, insert baru
             $this->db->insert('nilai_point', $data);
         }
     }
 
     public function saveOrUpdateNilaiUmumAdm($data)
     {
+        list($mon, $sun) = $this->_weekBoundsFromDate($data['date'] ?? null);
         $this->db->where('id_pengguna', $data['id_pengguna']);
-        $this->db->where('date', $data['date']);
+        $this->db->where('date >=', $mon);
+        $this->db->where('date <=', $sun);
         $query = $this->db->get('penilaian_umum');
 
         if ($query->num_rows() > 0) {
-            // Data sudah ada, update semua nilaib1-5
-            $this->db->where('id_pengguna', $data['id_pengguna']);
-            $this->db->where('date', $data['date']);
-            $this->db->update('penilaian_umum', [
+            $upd = [
                 'nilaia1' => $data['nilaia1'],
                 'nilaia2' => $data['nilaia2'],
                 'nilaia3' => $data['nilaia3'],
                 'nilaia4' => $data['nilaia4'],
                 'nilaia5' => $data['nilaia5'],
-                'catatana1' => $data['catatana1'],
-                'catatana2' => $data['catatana2'],
-                'catatana3' => $data['catatana3'],
-                'catatana4' => $data['catatana4'],
-                'catatana5' => $data['catatana5']
-            ]);
+            ];
+            for ($i = 1; $i <= 5; $i++) {
+                if (array_key_exists('catatana' . $i, $data) && $data['catatana' . $i] !== null) {
+                    $upd['catatana' . $i] = $data['catatana' . $i];
+                }
+            }
+            $this->db->where('id_pengguna', $data['id_pengguna']);
+            $this->db->where('date >=', $mon);
+            $this->db->where('date <=', $sun);
+            $this->db->update('penilaian_umum', $upd);
         } else {
-            // Belum ada, insert baru
             $this->db->insert('penilaian_umum', $data);
         }
     }
 
     public function saveOrUpdateNilaiUmum($data)
     {
+        list($mon, $sun) = $this->_weekBoundsFromDate($data['date'] ?? null);
         $this->db->where('id_pengguna', $data['id_pengguna']);
-        $this->db->where('date', $data['date']);
+        $this->db->where('date >=', $mon);
+        $this->db->where('date <=', $sun);
         $query = $this->db->get('penilaian_umum');
 
         if ($query->num_rows() > 0) {
-            // Data sudah ada, update semua nilaib1-5
-            $this->db->where('id_pengguna', $data['id_pengguna']);
-            $this->db->where('date', $data['date']);
-            $this->db->update('penilaian_umum', [
+            $upd = [
                 'nilaib1' => $data['nilaib1'],
                 'nilaib2' => $data['nilaib2'],
                 'nilaib3' => $data['nilaib3'],
                 'nilaib4' => $data['nilaib4'],
                 'nilaib5' => $data['nilaib5'],
-                'catatanb1' => $data['catatanb1'],
-                'catatanb2' => $data['catatanb2'],
-                'catatanb3' => $data['catatanb3'],
-                'catatanb4' => $data['catatanb4'],
-                'catatanb5' => $data['catatanb5']
-            ]);
+            ];
+            for ($i = 1; $i <= 5; $i++) {
+                if (array_key_exists('catatanb' . $i, $data) && $data['catatanb' . $i] !== null) {
+                    $upd['catatanb' . $i] = $data['catatanb' . $i];
+                }
+            }
+            $this->db->where('id_pengguna', $data['id_pengguna']);
+            $this->db->where('date >=', $mon);
+            $this->db->where('date <=', $sun);
+            $this->db->update('penilaian_umum', $upd);
         } else {
-            // Belum ada, insert baru
             $this->db->insert('penilaian_umum', $data);
         }
     }

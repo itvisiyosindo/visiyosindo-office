@@ -175,17 +175,10 @@ class Laporan extends CI_Controller
                     $page_data['data_detail'] = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
                 }
 
-                // Ambil data nilai_point
-                $this->db->where('id_pengguna', $id_pengaju);
-                $this->db->where('date >=', $monday);
-                $this->db->where('date <=', $friday);
-                $nilai_points = $this->db->get('nilai_point')->result();
-
-                // Susun array untuk akses cepat
-                $page_data['nilai_point_map'] = [];
-                foreach ($nilai_points as $np) {
-                    $page_data['nilai_point_map'][$np->point] = $np;
-                }
+                // Ambil data nilai_point (digabung per minggu agar nilai A & B tidak saling menimpa)
+                $page_data['nilai_point_map'] = $this->md_laporan->getNilaiPointMap($id_pengaju, $monday, $friday);
+                $page_data['monday'] = $monday;
+                $page_data['friday'] = $friday;
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
                 $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
@@ -278,17 +271,10 @@ class Laporan extends CI_Controller
                     $page_data['data_detail'] = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $id_pengaju);
                 }
 
-                // Ambil data nilai_point
-                $this->db->where('id_pengguna', $id_pengaju);
-                $this->db->where('date >=', $monday);
-                $this->db->where('date <=', $friday);
-                $nilai_points = $this->db->get('nilai_point')->result();
-
-                // Susun array untuk akses cepat
-                $page_data['nilai_point_map'] = [];
-                foreach ($nilai_points as $np) {
-                    $page_data['nilai_point_map'][$np->point] = $np;
-                }
+                // Ambil data nilai_point (digabung per minggu agar nilai A & B tidak saling menimpa)
+                $page_data['nilai_point_map'] = $this->md_laporan->getNilaiPointMap($id_pengaju, $monday, $friday);
+                $page_data['monday'] = $monday;
+                $page_data['friday'] = $friday;
                 $page_data['data_detail_pencapaian'] = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $id_pengaju);
                 $page_data['data_project_selesai'] = $this->md_laporan->getProjectSelesaiPerMinggu($monday, $friday, $id_pengaju);
 
@@ -445,17 +431,10 @@ class Laporan extends CI_Controller
                 $startDate = date('d-m-Y', $monday_ts);
                 $endDate = date('d-m-Y', $sunday_ts);
 
-                // Ambil data nilai_point
-                $this->db->where('id_pengguna', $id_pengaju);
-                $this->db->where('date >=', $monday);
-                $this->db->where('date <=', $friday);
-                $nilai_points = $this->db->get('nilai_point')->result();
-
-                // Susun array untuk akses cepat
-                $page_data['nilai_point_map'] = [];
-                foreach ($nilai_points as $np) {
-                    $page_data['nilai_point_map'][$np->point] = $np;
-                }
+                // Ambil data nilai_point (digabung per minggu agar nilai A & B tidak saling menimpa)
+                $page_data['nilai_point_map'] = $this->md_laporan->getNilaiPointMap($id_pengaju, $monday, $friday);
+                $page_data['monday'] = $monday;
+                $page_data['friday'] = $friday;
 
                 // $page_data['data_detail'] = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $id_pengaju);
                 
@@ -1710,6 +1689,161 @@ class Laporan extends CI_Controller
 
         addlog('Laporan Mingguan', 'Mengisi Nilai Umum B');
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+    }
+
+    public function inputBulkNilai()
+    {
+        grantAccessFor('all');
+
+        $mode        = strtolower(trim((string)$this->input->post('mode'))); // 'adm' atau 'penilai'
+        $pengguna_id = (int)$this->input->post('pengguna_id');
+        $wednesday   = trim((string)$this->input->post('wednesday'));
+        $nilaiRaw    = trim((string)$this->input->post('nilai_bulk'));
+
+        if ($pengguna_id <= 0 || empty($wednesday)) {
+            ajaxReturnDie('error', 'Parameter pengguna atau periode minggu tidak valid.', FALSE);
+        }
+
+        if ($nilaiRaw === '' || !is_numeric($nilaiRaw)) {
+            ajaxReturnDie('error', 'Masukkan nilai antara 60 sampai 100.', FALSE);
+        }
+
+        $nilaiFloat = (float)$nilaiRaw;
+        if ($nilaiFloat < 60 || $nilaiFloat > 100) {
+            ajaxReturnDie('error', 'Nilai yang diperbolehkan adalah 60 sampai 100.', FALSE);
+        }
+
+        $nilaiStr = (floor($nilaiFloat) == $nilaiFloat)
+            ? (string)(int)$nilaiFloat
+            : rtrim(rtrim(number_format($nilaiFloat, 2, '.', ''), '0'), '.');
+
+        // Hitung rentang Senin - Minggu dari tanggal rabu
+        $wedTs = strtotime($wednesday);
+        if (!$wedTs) {
+            $wedTs = time();
+            $wednesday = date('Y-m-d', $wedTs);
+        }
+        $dow = (int)date('N', $wedTs);
+        $monTs = strtotime('-' . ($dow - 1) . ' days', strtotime(date('Y-m-d', $wedTs)));
+        $sunTs = $monTs + (6 * 86400);
+        $monday = date('Y-m-d', $monTs);
+        $friday = date('Y-m-d', $sunTs);
+
+        // 1. Kumpulkan semua point Laporan Mingguan yang perlu dinilai
+        $pointsToGrade = [];
+
+        // Dari form post jika ada
+        $postedPoints = $this->input->post('points');
+        if (is_array($postedPoints)) {
+            foreach ($postedPoints as $pt) {
+                $pt = trim((string)$pt);
+                if ($pt !== '') {
+                    $pointsToGrade[$pt] = $nilaiStr;
+                }
+            }
+        }
+
+        // Ambil juga langsung dari database agar point yang belum ter-render atau jobdesk baru tetap tersimpan
+        $detailRows = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $pengguna_id);
+        if (empty($detailRows)) {
+            $detailRows = $this->md_laporan->getLaporanMingguanRev1($monday, $friday, $pengguna_id);
+        }
+        if (empty($detailRows)) {
+            $detailRows = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $pengguna_id);
+        }
+
+        $pointsWithLap = [];
+        $pointsNilaiIsi1 = [];
+        if (!empty($detailRows)) {
+            foreach ($detailRows as $r) {
+                $pt = isset($r->point) ? trim((string)$r->point) : '';
+                if ($pt === '') continue;
+                if (!empty($r->id_lap) && $r->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
+                    $pointsWithLap[$pt] = true;
+                }
+                if ((int)($r->nilai_isi ?? 0) === 1) {
+                    $pointsNilaiIsi1[$pt] = true;
+                }
+            }
+        }
+
+        foreach ($pointsWithLap as $pt => $_) {
+            $pointsToGrade[$pt] = $nilaiStr;
+        }
+        if (empty($pointsToGrade) && !empty($pointsNilaiIsi1)) {
+            foreach ($pointsNilaiIsi1 as $pt => $_) {
+                $pointsToGrade[$pt] = $nilaiStr;
+            }
+        }
+
+        // Simpan Nilai Laporan Mingguan (nilai_point)
+        if ($mode === 'adm') {
+            if (!empty($pointsToGrade)) {
+                $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $pointsToGrade);
+            }
+        } else {
+            foreach ($pointsToGrade as $pt => $valB) {
+                $this->md_laporan->saveOrUpdateNilai([
+                    'point'       => $pt,
+                    'nilai_b'     => $valB,
+                    'id_pengguna' => $pengguna_id,
+                    'date'        => $wednesday
+                ]);
+            }
+        }
+
+        // 2. Simpan Nilai Pencapaian Arsip (jika ada di minggu tersebut)
+        $pencRows = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $pengguna_id);
+        if (!empty($pencRows)) {
+            foreach ($pencRows as $pr) {
+                if ($mode === 'adm') {
+                    $this->md_laporan->updatePencapaian($pr->id, ['nilai_a' => $nilaiStr]);
+                } else {
+                    $this->md_laporan->updatePencapaian($pr->id, ['nilai_b' => $nilaiStr]);
+                }
+            }
+        }
+
+        // 3. Simpan Penilaian Umum (nilaia1..5 atau nilaib1..5)
+        if ($mode === 'adm') {
+            $dataUmum = [
+                'id_pengguna' => $pengguna_id,
+                'date'        => $wednesday,
+                'nilaia1'     => $nilaiStr,
+                'nilaia2'     => $nilaiStr,
+                'nilaia3'     => $nilaiStr,
+                'nilaia4'     => $nilaiStr,
+                'nilaia5'     => $nilaiStr,
+            ];
+            for ($i = 1; $i <= 5; $i++) {
+                $cat = $this->input->post('catatana' . $i);
+                if ($cat !== null) {
+                    $dataUmum['catatana' . $i] = $cat;
+                }
+            }
+            $this->md_laporan->saveOrUpdateNilaiUmumAdm($dataUmum);
+            addlog('Laporan Mingguan', 'Bulk Nilai HRD (Nilai A): ' . $nilaiStr);
+        } else {
+            $dataUmum = [
+                'id_pengguna' => $pengguna_id,
+                'date'        => $wednesday,
+                'nilaib1'     => $nilaiStr,
+                'nilaib2'     => $nilaiStr,
+                'nilaib3'     => $nilaiStr,
+                'nilaib4'     => $nilaiStr,
+                'nilaib5'     => $nilaiStr,
+            ];
+            for ($i = 1; $i <= 5; $i++) {
+                $cat = $this->input->post('catatanb' . $i);
+                if ($cat !== null) {
+                    $dataUmum['catatanb' . $i] = $cat;
+                }
+            }
+            $this->md_laporan->saveOrUpdateNilaiUmum($dataUmum);
+            addlog('Laporan Mingguan', 'Bulk Nilai Penilai (Nilai B): ' . $nilaiStr);
+        }
+
+        ajaxReturnDie('success', 'Bulk nilai Laporan Mingguan & Penilaian Umum berhasil disimpan otomatis.', TRUE);
     }
 
 
