@@ -187,6 +187,93 @@ class Md_audit_system extends CI_Model
     }
 
     /**
+     * Resolusi divisi karyawan berdasarkan jabatan, posisi Sasaran Mutu, atau divisi DB
+     * Memastikan posisi seperti Security / OB / GA / Gudang / Medrep tidak salah default ke 'IT'
+     */
+    public function resolveUserDivision($userJabatan, $userDivisi = null, $resolvedPos = null)
+    {
+        $norm = function($str) {
+            $s = html_entity_decode((string)$str, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $s = str_replace(['&amp;', '&', '+', '/', '\\', '-', '_', '(', ')', ',', '.', ':', ';', '[', ']'], ' ', $s);
+            return preg_replace('/\s+/', ' ', strtolower(trim($s)));
+        };
+
+        $normUser = $norm($userJabatan);
+        $normDiv  = $norm($userDivisi);
+
+        // 1. Jika resolvedPos ada di tree Sasaran Mutu, cari divisi resminya
+        if (!empty($resolvedPos)) {
+            $tree = $this->getDivisiAndPositions();
+            foreach ($tree as $dName => $posArr) {
+                if (in_array($resolvedPos, $posArr)) {
+                    return $dName;
+                }
+            }
+        }
+
+        // 2. Pemetaan berbasis domain jabatan
+        // Security / OB / Cleaning Service / Driver
+        if (preg_match('/\b(security|satpam|keamanan|office boy|ob|cleaning service|driver|supir|kebersihan)\b/', $normUser)) {
+            return 'General Affair';
+        }
+
+        // HR & GA
+        if (preg_match('/\b(hr|hrd|legal|personalia|sdm|recruitment)\b/', $normUser)) {
+            return 'HRGA';
+        }
+        if (preg_match('/\b(ga|general affair|general affairs|umum)\b/', $normUser)) {
+            return 'General Affair';
+        }
+
+        // IT Support & Development
+        if (preg_match('/\b(it|programmer|developer|software|web|edp|hardware)\b/', $normUser)) {
+            return 'Support';
+        }
+
+        // Warehouse / Gudang / Logistik
+        if (preg_match('/\b(gudang|warehouse|logistik|pjt|helper)\b/', $normUser)) {
+            return 'Warehouse';
+        }
+
+        // Accounting / Tax / Finance
+        if (preg_match('/\b(akunting|accounting|keuangan|finance|tax|pajak|kasir)\b/', $normUser)) {
+            return 'Akunting, Finance, Tax';
+        }
+
+        // Teknisi / Service / Kalibrasi
+        if (preg_match('/\b(teknisi|technician|service|elektromedis|electromedical|engineer|technical support)\b/', $normUser)) {
+            return 'Teknisi';
+        }
+
+        // Visilab / Penguji / Laboratorium
+        if (preg_match('/\b(visilab|laboratorium|pengujian|penguji|staff mutu|staff teknis)\b/', $normUser)) {
+            return 'Visilab';
+        }
+
+        // Marketing / Sales / Medrep / CRO
+        if (preg_match('/\b(sales|marketing|medrep|representative|cro|customer relationship|content creator|digital marketing|desain|videografer)\b/', $normUser)) {
+            return 'Marketing';
+        }
+
+        // SGM
+        if (preg_match('/\b(sgm|sumpah gajah mada)\b/', $normUser)) {
+            return 'SGM';
+        }
+
+        // Direksi / Manajemen
+        if (preg_match('/\b(direktur|director|komisaris|owner|general manager|gm)\b/', $normUser)) {
+            return 'Manajemen';
+        }
+
+        // 3. Jika divisi DB bukan IT bawaan salah pasang, gunakan divisi DB
+        if (!empty($userDivisi) && $normDiv !== 'it' && $normDiv !== '') {
+            return $userDivisi;
+        }
+
+        return 'General';
+    }
+
+    /**
      * Deteksi dan cocokkan nama posisi karyawan dengan daftar master posisi Sasaran Mutu
      * Menghindari false match (seperti Direktur lain malah mencocokkan Director of Corporate Planning)
      */
@@ -1361,17 +1448,7 @@ class Md_audit_system extends CI_Model
                 $jabatan = trim((string)$row['jabatan']);
                 $divisi  = trim((string)$row['nama_divisi']);
                 $resolvedPos = $this->resolveUserPosition($jabatan, $divisi);
-
-                // Cari divisi sasaran mutu yang menaungi posisi resolved
-                $resolvedDiv = $divisi;
-                if (!empty($resolvedPos)) {
-                    foreach ($tree as $dName => $posArr) {
-                        if (in_array($resolvedPos, $posArr)) {
-                            $resolvedDiv = $dName;
-                            break;
-                        }
-                    }
-                }
+                $resolvedDiv = $this->resolveUserDivision($jabatan, $divisi, $resolvedPos);
 
                 $list[] = [
                     'pengguna_id'  => (string)$row['pengguna_id'],
@@ -1379,7 +1456,7 @@ class Md_audit_system extends CI_Model
                     'jabatan'      => $jabatan,
                     'divisi_db'    => $divisi,
                     'posisi'       => $resolvedPos ?: $jabatan,
-                    'divisi'       => $resolvedDiv ?: 'General'
+                    'divisi'       => $resolvedDiv
                 ];
             }
         }
