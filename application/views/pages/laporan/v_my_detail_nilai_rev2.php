@@ -305,8 +305,8 @@ if (!function_exists('lap_limit_text')) {
 
 		<!-- 2. BULK ACTION CARD (IF ALLOWED) -->
 		<?php
-		$bulk_nilai_allowed_users = array(744, 29, 759, 1, 778);
-		$is_bulk_nilai_allowed = in_array((int) sessPenggunaId(), $bulk_nilai_allowed_users, true);
+		$bulk_nilai_allowed_users = array(744, 29, 759, 1, 778, 58, 69);
+		$is_bulk_nilai_allowed = (isAdmin() || isAdminInventory() || isHrd() || in_array((int) sessPenggunaId(), $bulk_nilai_allowed_users, true));
 		?>
 
 		<?php if ($is_bulk_nilai_allowed) { ?>
@@ -314,14 +314,14 @@ if (!function_exists('lap_limit_text')) {
 			<div class="card-body p-3">
 				<form id="bulk-nilai-form" class="row align-items-end" onsubmit="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event); return false;">
 					<div class="col-md-4 col-sm-12 mb-2 mb-md-0">
-						<label for="bulk-nilai-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai Penilai</strong></label>
+						<label for="bulk-nilai-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai (Penilai / Admin)</strong></label>
 						<input type="number" min="60" max="100" step="1" id="bulk-nilai-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 					</div>
 					<div class="col-md-3 col-sm-12 mb-2 mb-md-0">
 						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 					</div>
 					<div class="col-md-5 col-sm-12">
-						<small class="text-muted">Mengisi seluruh field nilai B lalu langsung menyimpan ke database (catatan tidak diubah).</small>
+						<small class="text-muted">Khusus Penilai &amp; Administrator. Mengisi seluruh field nilai B lalu langsung menyimpan ke database.</small>
 					</div>
 				</form>
 			</div>

@@ -481,20 +481,33 @@ if (!function_exists('lap_limit_text')) {
 				<?php $id = $data_job->pengguna_id ?> 
 				<input type="hidden" name="id" id="id" value="<?= $data_job->pengguna_id ?>">
 
-				<?php $is_bulk_nilai_hrd_allowed = (isHrd() || isAdmin() || in_array((int)sessPenggunaId(), [1, 58, 69, 744, 778], true)); ?>
+				<?php
+				$is_admin_user = (isAdmin() || isAdminInventory() || in_array((int)sessPenggunaId(), [1, 778], true));
+				$is_bulk_nilai_hrd_allowed = ($is_admin_user || isHrd() || in_array((int)sessPenggunaId(), [58, 69, 744, 29, 759], true));
+				?>
 				<?php if ($is_bulk_nilai_hrd_allowed) { ?>
 				<div class="card laporan-card mb-4" style="border-left: 4px solid #0ea5e9;">
 					<div class="card-body p-3">
 						<form id="bulk-nilai-adm-form" class="row align-items-end" onsubmit="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event); return false;">
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
-								<label for="bulk-nilai-adm-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai HRD</strong></label>
+								<label for="bulk-nilai-adm-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai (HRD / Admin)</strong></label>
 								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 							</div>
+							<?php if ($is_admin_user): ?>
+							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
+								<label for="bulk-nilai-adm-mode" class="mb-1" style="font-size: 12.5px;"><strong>Target Kolom Nilai</strong></label>
+								<select id="bulk-nilai-adm-mode" class="form-control form-control-sm" style="border-radius: 6px;">
+									<option value="adm">Nilai A (HRD)</option>
+									<option value="penilai">Nilai B (Penilai / Atasan)</option>
+									<option value="both">Nilai A &amp; Nilai B Sekaligus</option>
+								</select>
+							</div>
+							<?php endif; ?>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
 								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 							</div>
-							<div class="col-lg-6 col-md-4 col-sm-12">
-								<small class="text-muted">Khusus HRD. Mengisi semua input nilai A lalu menyimpan otomatis ke database.</small>
+							<div class="col-lg-3 col-md-12 col-sm-12 mt-1 mt-lg-0">
+								<small class="text-muted">Khusus HRD &amp; Administrator. Mengisi semua nilai laporan mingguan &amp; penilaian umum lalu menyimpan otomatis.</small>
 							</div>
 						</form>
 					</div>
@@ -1434,8 +1447,11 @@ if (!function_exists('lap_limit_text')) {
 			});
 		}
 
+		var modeEl = document.getElementById('bulk-nilai-adm-mode');
+		var selectedMode = modeEl && modeEl.value ? modeEl.value : 'adm';
+
 		var postData = {
-			mode: 'adm',
+			mode: selectedMode,
 			pengguna_id: '<?= (int)$data_job->pengguna_id ?>',
 			wednesday: '<?= htmlspecialchars($wednesday, ENT_QUOTES) ?>',
 			nilai_bulk: nilaiFinal,

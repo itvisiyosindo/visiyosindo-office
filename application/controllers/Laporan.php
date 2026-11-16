@@ -1776,12 +1776,14 @@ class Laporan extends CI_Controller
             }
         }
 
+        $doAdm     = ($mode === 'adm' || $mode === 'both');
+        $doPenilai = ($mode === 'penilai' || $mode === 'both');
+
         // Simpan Nilai Laporan Mingguan (nilai_point)
-        if ($mode === 'adm') {
-            if (!empty($pointsToGrade)) {
-                $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $pointsToGrade);
-            }
-        } else {
+        if ($doAdm && !empty($pointsToGrade)) {
+            $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $pointsToGrade);
+        }
+        if ($doPenilai && !empty($pointsToGrade)) {
             foreach ($pointsToGrade as $pt => $valB) {
                 $this->md_laporan->saveOrUpdateNilai([
                     'point'       => $pt,
@@ -1796,16 +1798,17 @@ class Laporan extends CI_Controller
         $pencRows = $this->md_laporan->getPencapaianPerMingguRev2($monday, $friday, $pengguna_id);
         if (!empty($pencRows)) {
             foreach ($pencRows as $pr) {
-                if ($mode === 'adm') {
+                if ($doAdm) {
                     $this->md_laporan->updatePencapaian($pr->id, ['nilai_a' => $nilaiStr]);
-                } else {
+                }
+                if ($doPenilai) {
                     $this->md_laporan->updatePencapaian($pr->id, ['nilai_b' => $nilaiStr]);
                 }
             }
         }
 
         // 3. Simpan Penilaian Umum (nilaia1..5 atau nilaib1..5)
-        if ($mode === 'adm') {
+        if ($doAdm) {
             $dataUmum = [
                 'id_pengguna' => $pengguna_id,
                 'date'        => $wednesday,
@@ -1822,8 +1825,9 @@ class Laporan extends CI_Controller
                 }
             }
             $this->md_laporan->saveOrUpdateNilaiUmumAdm($dataUmum);
-            addlog('Laporan Mingguan', 'Bulk Nilai HRD (Nilai A): ' . $nilaiStr);
-        } else {
+            addlog('Laporan Mingguan', 'Bulk Nilai A (HRD/Admin): ' . $nilaiStr);
+        }
+        if ($doPenilai) {
             $dataUmum = [
                 'id_pengguna' => $pengguna_id,
                 'date'        => $wednesday,
@@ -1840,7 +1844,7 @@ class Laporan extends CI_Controller
                 }
             }
             $this->md_laporan->saveOrUpdateNilaiUmum($dataUmum);
-            addlog('Laporan Mingguan', 'Bulk Nilai Penilai (Nilai B): ' . $nilaiStr);
+            addlog('Laporan Mingguan', 'Bulk Nilai B (Penilai/Admin): ' . $nilaiStr);
         }
 
         ajaxReturnDie('success', 'Bulk nilai Laporan Mingguan & Penilaian Umum berhasil disimpan otomatis.', TRUE);
