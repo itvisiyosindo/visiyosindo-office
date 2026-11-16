@@ -71,26 +71,27 @@
 		border: 1px solid #e2e8f0;
 		padding: 24px;
 		box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-		margin-bottom: 20px;
+		margin-bottom: 25px;
 	}
 	.employee-grid-item {
 		background: #ffffff;
 		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		padding: 12px 14px;
+		border-radius: 10px;
+		padding: 14px 16px;
 		cursor: pointer;
 		transition: all 0.2s ease-in-out;
 		height: 100%;
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 14px;
 		text-decoration: none !important;
 		color: inherit !important;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 	}
 	.employee-grid-item:hover {
 		border-color: #3b82f6;
 		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+		box-shadow: 0 8px 16px rgba(59, 130, 246, 0.12);
 		background: #f8fafc;
 	}
 	.employee-grid-item.active {
@@ -99,17 +100,53 @@
 		box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 	}
 	.employee-avatar-circle {
-		width: 42px;
-		height: 42px;
+		width: 44px;
+		height: 44px;
 		border-radius: 50%;
-		background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+		background: linear-gradient(135deg, #2563eb, #1d4ed8);
 		color: #ffffff;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-weight: 700;
-		font-size: 15px;
+		font-size: 16px;
 		flex-shrink: 0;
+		box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+	}
+	.divisi-pill {
+		display: inline-block;
+		padding: 4px 12px;
+		border-radius: 20px;
+		font-size: 11px;
+		font-weight: 600;
+		cursor: pointer;
+		border: 1px solid #e2e8f0;
+		background: #f8fafc;
+		color: #475569;
+		transition: all 0.15s ease;
+		margin-right: 6px;
+		margin-bottom: 6px;
+	}
+	.divisi-pill:hover {
+		border-color: #3b82f6;
+		color: #2563eb;
+		background: #eff6ff;
+	}
+	.divisi-pill.active {
+		background: #2563eb;
+		color: #ffffff;
+		border-color: #2563eb;
+		box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+	}
+	.badge-divisi {
+		font-size: 10px;
+		font-weight: 600;
+		border-radius: 6px;
+		padding: 3px 8px;
+		background-color: #eff6ff;
+		color: #1d4ed8;
+		border: 1px solid #bfdbfe;
+		display: inline-block;
 	}
 	.selected-employee-banner {
 		background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -176,60 +213,94 @@
 		<!-- Employee Selector Box (Tampil jika belum pilih pegawai atau ingin ganti) -->
 		<?php if (!$has_employee_selected): ?>
 			<div class="employee-select-card">
-				<div class="d-flex align-items-center justify-content-between flex-wrap pb-3 mb-3 border-bottom" style="gap: 12px;">
+				<!-- Header Section & Search Bar -->
+				<div class="d-flex align-items-center justify-content-between flex-wrap pb-3 mb-3 border-bottom" style="gap: 16px;">
 					<div>
 						<h4 class="font-weight-bold text-dark mb-1">
 							<i class="fas fa-user-check text-primary mr-2"></i>Pilih Pegawai untuk Audit Kinerja
 						</h4>
-						<p class="text-muted small mb-0">Silakan tentukan atau klik nama pegawai di bawah ini untuk melihat detail tabel audit kinerja.</p>
+						<p class="text-muted small mb-0">Klik pada salah satu kartu karyawan atau gunakan pencarian untuk melihat rincian tabel audit kinerja.</p>
 					</div>
-					<div style="min-width: 280px;">
-						<div class="input-group">
-							<input type="text" id="quickSearchPegawai" class="form-control" placeholder="Cari nama / posisi pegawai..." onkeyup="filterPegawaiGrid();">
+					<div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+						<!-- Filter Tahun -->
+						<div class="d-flex align-items-center" style="gap: 6px;">
+							<span class="small font-weight-bold text-muted"><i class="far fa-calendar-alt"></i> Tahun:</span>
+							<select class="form-control form-control-sm font-weight-bold" style="width: 100px;" onchange="window.location.href='<?= base_url('audit/kinerja?tahun=') ?>' + this.value;">
+								<?php for ($y = 2026; $y <= 2030; $y++): ?>
+									<option value="<?= $y ?>" <?= $selected_year == $y ? 'selected' : '' ?>><?= $y ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+
+						<!-- Input Search -->
+						<div class="input-group" style="width: 280px;">
+							<input type="text" id="quickSearchPegawai" class="form-control form-control-sm" placeholder="Cari nama atau jabatan..." onkeyup="filterPegawaiGrid();">
 							<div class="input-group-append">
-								<span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+								<span class="input-group-text bg-white py-1 px-2"><i class="fas fa-search text-muted"></i></span>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<!-- Quick Dropdown Select -->
-				<div class="row mb-3">
-					<div class="col-md-6 col-sm-12">
-						<label class="font-weight-bold small text-muted"><i class="fas fa-list-ul"></i> Dropdown Pilih Nama Pegawai:</label>
-						<select id="selectQuickPegawai" class="form-control" onchange="if(this.value){ window.location.href='<?= base_url('audit/kinerja?tahun=' . $selected_year . '&pegawai_id=') ?>' + this.value; }">
-							<option value="">-- Pilih / Ketik Nama Pegawai --</option>
-							<?php foreach ($pegawai_list as $peg): ?>
-								<option value="<?= htmlspecialchars($peg['pengguna_id']) ?>">
-									<?= htmlspecialchars($peg['nama']) ?> - <?= htmlspecialchars($peg['posisi']) ?> (<?= htmlspecialchars($peg['divisi']) ?>)
-								</option>
-							<?php endforeach; ?>
-						</select>
+				<!-- Quick Dropdown & Tampilkan Semua Button -->
+				<div class="row align-items-center mb-3">
+					<div class="col-md-7 col-sm-12 mb-2 mb-md-0">
+						<div class="d-flex align-items-center" style="gap: 10px;">
+							<label class="font-weight-bold small text-muted text-nowrap mb-0"><i class="fas fa-list-ul"></i> Pilih Cepat:</label>
+							<select id="selectQuickPegawai" class="form-control form-control-sm" onchange="if(this.value){ window.location.href='<?= base_url('audit/kinerja?tahun=' . $selected_year . '&pegawai_id=') ?>' + this.value; }">
+								<option value="">-- Ketik / Pilih Nama Pegawai dari List --</option>
+								<?php foreach ($pegawai_list as $peg): ?>
+									<option value="<?= htmlspecialchars($peg['pengguna_id']) ?>">
+										<?= htmlspecialchars($peg['nama']) ?> - <?= htmlspecialchars($peg['posisi']) ?> (<?= htmlspecialchars($peg['divisi']) ?>)
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</div>
 					</div>
-					<div class="col-md-6 col-sm-12 text-md-right pt-md-4 mt-2">
-						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year . '&divisi=all&posisi=all') ?>" class="btn btn-sm btn-outline-secondary">
-							<i class="fas fa-table mr-1"></i> Tampilkan Seluruh Data Tabel Sekaligus
+					<div class="col-md-5 col-sm-12 text-md-right">
+						<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year . '&divisi=all&posisi=all') ?>" class="btn btn-sm btn-outline-primary font-weight-bold">
+							<i class="fas fa-table mr-1"></i> Tampilkan Seluruh Data Sekaligus
 						</a>
 					</div>
 				</div>
 
+				<!-- Division Category Filter Pills -->
+				<?php 
+				$divSummary = [];
+				foreach ($pegawai_list as $p) {
+					$dName = $p['divisi'] ?: 'General';
+					$divSummary[$dName] = ($divSummary[$dName] ?? 0) + 1;
+				}
+				?>
+				<div class="mb-3 pt-2 border-top">
+					<span class="small font-weight-bold text-muted mr-2"><i class="fas fa-filter"></i> Filter Divisi:</span>
+					<span class="divisi-pill active" onclick="filterByDivisiPill('all', this);">Semua (<?= count($pegawai_list) ?>)</span>
+					<?php foreach ($divSummary as $dName => $dCount): ?>
+						<span class="divisi-pill" onclick="filterByDivisiPill('<?= strtolower(htmlspecialchars($dName)) ?>', this);">
+							<?= htmlspecialchars($dName) ?> (<?= $dCount ?>)
+						</span>
+					<?php endforeach; ?>
+				</div>
+
 				<!-- Grid Cards of Employees -->
-				<div class="row" id="pegawaiGridContainer" style="max-height: 480px; overflow-y: auto;">
+				<div class="row" id="pegawaiGridContainer" style="max-height: 520px; overflow-y: auto; padding-right: 4px;">
 					<?php foreach ($pegawai_list as $peg): ?>
 						<div class="col-lg-3 col-md-4 col-sm-6 mb-3 pegawai-card-item" data-nama="<?= strtolower(htmlspecialchars($peg['nama'])) ?>" data-posisi="<?= strtolower(htmlspecialchars($peg['posisi'])) ?>" data-divisi="<?= strtolower(htmlspecialchars($peg['divisi'])) ?>">
 							<a href="<?= base_url('audit/kinerja?tahun=' . $selected_year . '&pegawai_id=' . $peg['pengguna_id']) ?>" class="employee-grid-item">
 								<div class="employee-avatar-circle">
 									<?= strtoupper(substr($peg['nama'], 0, 1)) ?>
 								</div>
-								<div style="overflow: hidden;">
+								<div style="overflow: hidden; flex: 1;">
 									<div class="font-weight-bold text-dark text-truncate" title="<?= htmlspecialchars($peg['nama']) ?>">
 										<?= htmlspecialchars($peg['nama']) ?>
 									</div>
-									<div class="small text-muted text-truncate" style="font-size: 11px;" title="<?= htmlspecialchars($peg['posisi']) ?>">
+									<div class="small text-muted text-truncate mb-1" style="font-size: 11px;" title="<?= htmlspecialchars($peg['posisi']) ?>">
 										<?= htmlspecialchars($peg['posisi']) ?>
 									</div>
-									<div class="badge badge-light border text-primary px-1 mt-1" style="font-size: 10px;">
-										<?= htmlspecialchars($peg['divisi']) ?>
+									<div>
+										<span class="badge-divisi">
+											<?= htmlspecialchars($peg['divisi']) ?>
+										</span>
 									</div>
 								</div>
 							</a>
@@ -239,7 +310,7 @@
 			</div>
 		<?php endif; ?>
 
-		<!-- Summary Cards -->
+		<!-- Summary Cards & Filter Bar (Hanya tampil saat karyawan/filter terpilih) -->
 		<?php if ($has_employee_selected): ?>
 		<div class="row mb-3">
 			<div class="col-md-3 col-sm-6 mb-2">
@@ -271,7 +342,6 @@
 				</div>
 			</div>
 		</div>
-		<?php endif; ?>
 
 		<!-- Filter Bar -->
 		<div class="filter-card">
@@ -365,6 +435,7 @@
 				</div>
 			</form>
 		</div>
+		<?php endif; ?>
 
 		<!-- Table Card (Tampil jika sudah ada pegawai atau filter yang dipilih) -->
 		<?php if ($has_employee_selected): ?>
@@ -853,17 +924,33 @@
 		}
 	}
 
+	let activeDivisiFilter = 'all';
+
+	function filterByDivisiPill(divName, el) {
+		activeDivisiFilter = (divName || 'all').toLowerCase();
+		document.querySelectorAll('.divisi-pill').forEach(pill => pill.classList.remove('active'));
+		if (el) el.classList.add('active');
+		applyPegawaiFilters();
+	}
+
 	function filterPegawaiGrid() {
+		applyPegawaiFilters();
+	}
+
+	function applyPegawaiFilters() {
 		const input = document.getElementById('quickSearchPegawai');
-		if (!input) return;
-		const filter = input.value.toLowerCase().trim();
+		const search = input ? input.value.toLowerCase().trim() : '';
 		const items = document.querySelectorAll('.pegawai-card-item');
 
 		items.forEach(item => {
 			const nama = item.getAttribute('data-nama') || '';
 			const posisi = item.getAttribute('data-posisi') || '';
 			const divisi = item.getAttribute('data-divisi') || '';
-			if (nama.includes(filter) || posisi.includes(filter) || divisi.includes(filter)) {
+
+			const matchSearch = (!search || nama.includes(search) || posisi.includes(search) || divisi.includes(search));
+			const matchDiv = (activeDivisiFilter === 'all' || divisi === activeDivisiFilter || divisi.includes(activeDivisiFilter));
+
+			if (matchSearch && matchDiv) {
 				item.style.display = '';
 			} else {
 				item.style.display = 'none';

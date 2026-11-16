@@ -188,7 +188,7 @@ class Md_audit_system extends CI_Model
 
     /**
      * Resolusi divisi karyawan berdasarkan jabatan, posisi Sasaran Mutu, atau divisi DB
-     * Memastikan posisi seperti Security / OB / GA / Gudang / Medrep tidak salah default ke 'IT'
+     * Memastikan posisi seperti Security / OB / GA / Gudang / Medrep / Marketing tidak salah default ke 'IT' atau 'Helper'
      */
     public function resolveUserDivision($userJabatan, $userDivisi = null, $resolvedPos = null)
     {
@@ -201,7 +201,25 @@ class Md_audit_system extends CI_Model
         $normUser = $norm($userJabatan);
         $normDiv  = $norm($userDivisi);
 
-        // 1. Jika resolvedPos ada di tree Sasaran Mutu, cari divisi resminya
+        // 1. Prioritas Utama: Posisi keamanan & kebersihan mutlak General Affair
+        if (preg_match('/\b(security|satpam|keamanan|office boy|ob|cleaning service|driver|supir|kebersihan)\b/', $normUser)) {
+            return 'General Affair';
+        }
+
+        // 2. Divisi Support resmi (Regulatory & IT)
+        if (preg_match('/\b(regulatory|import|ekspor|impor|izin edar)\b/', $normUser)) {
+            return 'Support';
+        }
+        if (preg_match('/\b(it|programmer|developer|software|web|edp|hardware)\b/', $normUser)) {
+            return 'Support';
+        }
+
+        // 3. Marketing & Kreatif
+        if (preg_match('/\b(digital marketing|content creator|videografer|videographer|desain|grafis|animator|sales|marketing|medrep|representative)\b/', $normUser)) {
+            return 'Marketing';
+        }
+
+        // 4. Jika resolvedPos ada di tree Sasaran Mutu, cari divisi resminya
         if (!empty($resolvedPos)) {
             $tree = $this->getDivisiAndPositions();
             foreach ($tree as $dName => $posArr) {
@@ -211,23 +229,13 @@ class Md_audit_system extends CI_Model
             }
         }
 
-        // 2. Pemetaan berbasis domain jabatan
-        // Security / OB / Cleaning Service / Driver
-        if (preg_match('/\b(security|satpam|keamanan|office boy|ob|cleaning service|driver|supir|kebersihan)\b/', $normUser)) {
-            return 'General Affair';
-        }
-
+        // 5. Pemetaan berbasis kata kunci jabatan lainnya
         // HR & GA
         if (preg_match('/\b(hr|hrd|legal|personalia|sdm|recruitment)\b/', $normUser)) {
             return 'HRGA';
         }
         if (preg_match('/\b(ga|general affair|general affairs|umum)\b/', $normUser)) {
             return 'General Affair';
-        }
-
-        // IT Support & Development
-        if (preg_match('/\b(it|programmer|developer|software|web|edp|hardware)\b/', $normUser)) {
-            return 'Support';
         }
 
         // Warehouse / Gudang / Logistik
@@ -250,11 +258,6 @@ class Md_audit_system extends CI_Model
             return 'Visilab';
         }
 
-        // Marketing / Sales / Medrep / CRO
-        if (preg_match('/\b(sales|marketing|medrep|representative|cro|customer relationship|content creator|digital marketing|desain|videografer)\b/', $normUser)) {
-            return 'Marketing';
-        }
-
         // SGM
         if (preg_match('/\b(sgm|sumpah gajah mada)\b/', $normUser)) {
             return 'SGM';
@@ -265,7 +268,7 @@ class Md_audit_system extends CI_Model
             return 'Manajemen';
         }
 
-        // 3. Jika divisi DB bukan IT bawaan salah pasang, gunakan divisi DB
+        // 6. Jika divisi DB bukan IT bawaan salah pasang, gunakan divisi DB
         if (!empty($userDivisi) && $normDiv !== 'it' && $normDiv !== '') {
             return $userDivisi;
         }
