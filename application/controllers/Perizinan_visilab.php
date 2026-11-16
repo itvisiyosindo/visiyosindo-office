@@ -81,6 +81,18 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
 
+        $action = $this->input->get('action');
+        if ($action === 'inspect_po_124gkj') {
+            $id = decrypt('124gkj');
+            $po = $id ? $this->db->get_where('po_masuk', ['id_po' => $id])->row() : null;
+            header('Content-Type: application/json');
+            echo json_encode([
+                'decrypted_id' => $id,
+                'po' => $po
+            ]);
+            return;
+        }
+
         $sql1 = "CREATE TABLE IF NOT EXISTS `visilab_perizinan_alat` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
             `nama_instansi` VARCHAR(255) NOT NULL,
