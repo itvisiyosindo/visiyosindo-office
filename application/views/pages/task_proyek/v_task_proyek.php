@@ -3246,6 +3246,13 @@ $namaBulanList = [
                                                             Asli <?= number_format($lb->skor_akhir_raw, 1) ?> &rarr; Cap <?= htmlspecialchars($lb->sp_label) ?>
                                                         </div>
                                                     <?php endif; ?>
+                                                    <?php if (!empty($lb->sla_penalty_pts) && (float)$lb->sla_penalty_pts > 0): ?>
+                                                        <div class="mt-1">
+                                                            <span class="badge badge-danger px-2 py-0" style="font-size: 9.5px; border-radius: 999px; cursor: help; background:#ef4444;" title="Penalti SLA Approval: Telat <?= (int)$lb->sla_total_late ?>x TTD dokumen (PO/SPH) > 1-2 hari kerja. Nilai dipotong -<?= number_format($lb->sla_penalty_pts, 1) ?> poin.">
+                                                                <i class="fas fa-exclamation-triangle mr-1"></i>SLA -<?= number_format($lb->sla_penalty_pts, 1) ?>
+                                                            </span>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 <?php else: ?>
                                                     <span class="text-muted small">-</span>
                                                 <?php endif; ?>
@@ -4096,7 +4103,7 @@ $namaBulanList = [
                 </div>
 
                 <!-- 5. Plafon SP & Grade -->
-                <div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
                     <div class="card-body p-3 p-md-4">
                         <h6 class="font-weight-bold text-dark mb-2" style="font-size: 15px;">
                             <i class="fas fa-shield-alt text-danger mr-1"></i> Plafon Surat Peringatan (SP Cap)
@@ -4109,6 +4116,31 @@ $namaBulanList = [
                             <span class="badge badge-warning px-3 py-2 text-dark" style="font-size: 12px;">SP 1: Maks 80%</span>
                             <span class="badge text-white px-3 py-2" style="background:#ea580c; font-size: 12px;">SP 2: Maks 60%</span>
                             <span class="badge badge-danger px-3 py-2" style="font-size: 12px;">SP 3: Maks 40%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Penalti SLA Respon Approval Dokumen (PO & SPH) -->
+                <div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center mb-2" style="gap: 8px;">
+                            <span class="badge badge-danger px-2 py-1" style="font-size: 11px;">SLA RESPON ATASAN</span>
+                            <h6 class="font-weight-bold text-dark mb-0" style="font-size: 15px;">
+                                <i class="fas fa-user-clock text-danger mr-1"></i> Penalti Keterlambatan Approval TTD (PO & SPH)
+                            </h6>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            Agar proses operasional dan pengadaan cepat, atasan / verifikator memiliki standar SLA respon dokumen:
+                        </p>
+                        <ul class="small text-muted pl-3 mb-2">
+                            <li><strong>Staf Biasa:</strong> Tidak memiliki tugas approval TTD &rarr; <span class="text-success font-weight-bold">Bebas & 100% Tidak Terdampak (0 penalti)</span>.</li>
+                            <li><strong>Approval Tepat Waktu (&le; 1 Hari Kerja / &le; 9 Jam Kerja Efektif):</strong> <span class="text-success font-weight-bold">Aman (0 penalti)</span>. Tidak ada poin cuma-cuma agar fair bagi staf.</li>
+                            <li><strong>Telat 1 Hari Kerja (&gt; 9 Jam Kerja Efektif s.d 18 Jam):</strong> Penalti <span class="text-danger font-weight-bold">-1.0 Poin</span> langsung pada Skor Akhir KPI per insiden.</li>
+                            <li><strong>Telat &ge; 2 Hari Kerja (&gt; 18 Jam Kerja Efektif) atau Dokumen Menggantung &ge; 2 Hari Kerja:</strong> Penalti <span class="text-danger font-weight-bold">-2.5 Poin</span> langsung pada Skor Akhir KPI per insiden.</li>
+                            <li><strong>Maksimal Penalti Bulanan:</strong> Dibatasi maksimal <strong>-10.0 Poin</strong>.</li>
+                        </ul>
+                        <div class="p-2 rounded bg-light border small text-muted">
+                            <i class="fas fa-info-circle text-primary mr-1"></i> Perhitungan waktu menggunakan <strong>Jam Kerja Efektif</strong> (Senin–Jumat 08:00–17:00 WIB, di luar hari libur nasional), sehingga dokumen yang masuk Jumat sore tidak akan terkena penalti saat Senin pagi.
                         </div>
                     </div>
                 </div>

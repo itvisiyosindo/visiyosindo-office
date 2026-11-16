@@ -303,6 +303,311 @@ class Md_kpi_leaderboard extends CI_Model
     }
 
     /**
+     * Hitung selisih jam kerja efektif antara 2 waktu (Senin-Jumat, 08:00 - 17:00 WIB, di luar hari libur).
+     * Jika di luar jam kerja, waktu disesuaikan ke jam kerja berikutnya yang valid.
+     */
+    public function countEffectiveWorkingHours($startDtStr, $endDtStr, array $holidaySet)
+    {
+        if (empty($startDtStr) || empty($endDtStr) || $endDtStr <= $startDtStr) {
+            return 0.0;
+        }
+
+        try {
+            $start = new DateTime($startDtStr);
+            $end   = new DateTime($endDtStr);
+        } catch (Exception $e) {
+            return 0.0;
+        }
+
+        if ($end <= $start) {
+            return 0.0;
+        }
+
+        // Hitung total detik kerja efektif
+        $totalWorkSec = 0;
+        $cur = clone $start;
+
+        while ($cur < $end) {
+            $dow = (int)$cur->format('N');
+            $ymd = $cur->format('Y-m-d');
+
+            // Skip weekend (Sabtu=6, Minggu=7) & hari libur
+            if ($dow >= 6 || isset($holidaySet[$ymd])) {
+                $cur->modify('+1 day');
+                $cur->setTime(8, 0, 0);
+                continue;
+            }
+
+            // Jam kerja hari ini: 08:00 s.d 17:00 (9 jam/hari kerja)
+            $dayStart = clone $cur;
+            $dayStart->setTime(8, 0, 0);
+            $dayEnd = clone $cur;
+            $dayEnd->setTime(17, 0, 0);
+
+            // Tentukan segmen kerja aktif hari ini
+            $actStart = ($cur > $dayStart) ? $cur : $dayStart;
+            $actEnd   = ($end < $dayEnd) ? $end : $dayEnd;
+
+            if ($actStart < $actEnd && $actStart < $dayEnd && $actEnd > $dayStart) {
+                $segStart = max($actStart->getTimestamp(), $dayStart->getTimestamp());
+                $segEnd   = min($actEnd->getTimestamp(), $dayEnd->getTimestamp());
+                if ($segEnd > $segStart) {
+                    $totalWorkSec += ($segEnd - $segStart);
+                }
+            }
+
+            // Geser ke awal hari berikutnya
+            $cur->modify('+1 day');
+            $cur->setTime(8, 0, 0);
+        }
+
+        return round($totalWorkSec / 3600, 2);
+    }
+
+    /**
+     * Hitung penalti SLA Approval TTD Dokumen (PO & SPH).
+     * Aturan:
+     * - Staf biasa tanpa tugas approval: BEBAS & TIDAK TERDAMPAK (0 penalti).
+     * - Approval tepat waktu (<= 1 hari kerja / <= 9 jam kerja efektif atau <= 24 jam real-time): 0 penalti (no bonus).
+     * - Telat 1 hari kerja (> 9 jam kerja efektif s.d 18 jam / > 24 jam s.d 48 jam): -1.0 poin per insiden.
+     * - Telat >= 2 hari kerja (> 18 jam kerja efektif / > 48 jam) atau dokumen menggantung belum di-approve >= 2 hari kerja: -2.5 poin per insiden.
+     * - Maksimal penalti akumulatif per bulan: -10.0 poin.
+     */
+    public function calculateApprovalSlaPenalties($periodStart, $periodEnd, array $holidaySet, array $accountMergeMap)
+    {
+        $penalties = [];
+        $nowStr = date('Y-m-d H:i:s');
+
+        // Helper untuk mencatat insiden keterlambatan
+        $recordPenalty = function ($userId, $docType, $docNo, $stageName, $hours, $statusApproval) use (&$penalties) {
+            $uid = (int)$userId;
+            if ($uid <= 0) return;
+
+            // Evaluasi durasi keterlambatan berdasarkan jam kerja efektif:
+            // 1 hari kerja efektif = 9 jam kerja.
+            // Toleransi aman <= 9.0 jam (1 hari kerja).
+            // Telat 1 hari: > 9.0 jam s/d 18.0 jam -> -1.0 poin
+            // Telat >= 2 hari: > 18.0 jam -> -2.5 poin
+            if ($hours <= 9.0) {
+                return; // Tepat waktu, 0 penalti
+            }
+
+            $pts = ($hours > 18.0) ? 2.5 : 1.0;
+            $tier = ($hours > 18.0) ? 'late_2d' : 'late_1d';
+
+            if (!isset($penalties[$uid])) {
+                $penalties[$uid] = [
+                    'penalty_pts' => 0.0,
+                    'late_count_1d' => 0,
+                    'late_count_2d' => 0,
+                    'total_late' => 0,
+                    'incidents' => []
+                ];
+            }
+
+            $penalties[$uid]['penalty_pts'] = min(10.0, $penalties[$uid]['penalty_pts'] + $pts);
+            if ($tier === 'late_2d') {
+                $penalties[$uid]['late_count_2d']++;
+            } else {
+                $penalties[$uid]['late_count_1d']++;
+            }
+            $penalties[$uid]['total_late']++;
+
+            $penalties[$uid]['incidents'][] = [
+                'doc_type' => $docType,
+                'doc_no'   => $docNo,
+                'stage'    => $stageName,
+                'hours'    => $hours,
+                'pts'      => $pts,
+                'status'   => $statusApproval
+            ];
+        };
+
+        // ---------------------------------------------------------
+        // 1. MODUL PO MASUK (po_masuk) - Tahap CRO, ACC, Pajak, GM
+        // ---------------------------------------------------------
+        if ($this->db->table_exists('po_masuk')) {
+            $poRows = $this->db->query("
+                SELECT id_po, nomor_po, nama_customer, created_at, tanggal_po,
+                       cro_status, cro_date, cro_user_id,
+                       acc_status, acc_date, acc_user_id,
+                       pajak_status, pajak_date, pajak_user_id,
+                       gm_status, gm_date, gm_user_id,
+                       status, deleted
+                FROM po_masuk
+                WHERE deleted = 0 
+                  AND (created_at >= '{$periodStart} 00:00:00' AND created_at <= '{$periodEnd} 23:59:59')
+            ")->result();
+
+            // Default user ID untuk tahap approval PO jika kolom user_id belum terisi (data lama)
+            // CRO: Syarifah Annisa (725), ACC: Dirangga (106), Pajak: Azhari (64), GM: Yolanda (33)
+            $defaultPoApprovers = [
+                'cro'   => 725,
+                'acc'   => 106,
+                'pajak' => 64,
+                'gm'    => 33
+            ];
+
+            foreach ($poRows as $po) {
+                $baseStart = (!empty($po->created_at) && $po->created_at !== '0000-00-00 00:00:00')
+                    ? $po->created_at
+                    : ($po->tanggal_po . ' 08:00:00');
+                $docNo = !empty($po->nomor_po) ? $po->nomor_po : ('PO #' . $po->id_po);
+
+                // --- Tahap 1: CRO ---
+                $croUid = !empty($po->cro_user_id) ? (int)$po->cro_user_id : $defaultPoApprovers['cro'];
+                if (isset($accountMergeMap[$croUid])) $croUid = (int)$accountMergeMap[$croUid];
+                
+                if (!empty($po->cro_date) && $po->cro_date !== '0000-00-00 00:00:00') {
+                    $wh = $this->countEffectiveWorkingHours($baseStart, $po->cro_date, $holidaySet);
+                    $recordPenalty($croUid, 'PO Masuk', $docNo, 'Verifikasi CRO', $wh, 'approved');
+                } elseif (empty($po->cro_status) || $po->cro_status === 'pending') {
+                    $wh = $this->countEffectiveWorkingHours($baseStart, $nowStr, $holidaySet);
+                    $recordPenalty($croUid, 'PO Masuk', $docNo, 'Verifikasi CRO', $wh, 'pending');
+                }
+
+                // --- Tahap 2: Accounting (hanya jika CRO sudah sesuai) ---
+                if ($po->cro_status === 'sesuai' && !empty($po->cro_date)) {
+                    $accUid = !empty($po->acc_user_id) ? (int)$po->acc_user_id : $defaultPoApprovers['acc'];
+                    if (isset($accountMergeMap[$accUid])) $accUid = (int)$accountMergeMap[$accUid];
+
+                    if (!empty($po->acc_date) && $po->acc_date !== '0000-00-00 00:00:00') {
+                        $wh = $this->countEffectiveWorkingHours($po->cro_date, $po->acc_date, $holidaySet);
+                        $recordPenalty($accUid, 'PO Masuk', $docNo, 'Verifikasi Accounting', $wh, 'approved');
+                    } elseif (empty($po->acc_status) || $po->acc_status === 'pending') {
+                        $wh = $this->countEffectiveWorkingHours($po->cro_date, $nowStr, $holidaySet);
+                        $recordPenalty($accUid, 'PO Masuk', $docNo, 'Verifikasi Accounting', $wh, 'pending');
+                    }
+                }
+
+                // --- Tahap 3: Pajak (hanya jika Accounting sudah sesuai) ---
+                if ($po->acc_status === 'sesuai' && !empty($po->acc_date)) {
+                    $pjkUid = !empty($po->pajak_user_id) ? (int)$po->pajak_user_id : $defaultPoApprovers['pajak'];
+                    if (isset($accountMergeMap[$pjkUid])) $pjkUid = (int)$accountMergeMap[$pjkUid];
+
+                    if (!empty($po->pajak_date) && $po->pajak_date !== '0000-00-00 00:00:00') {
+                        $wh = $this->countEffectiveWorkingHours($po->acc_date, $po->pajak_date, $holidaySet);
+                        $recordPenalty($pjkUid, 'PO Masuk', $docNo, 'Verifikasi Pajak', $wh, 'approved');
+                    } elseif (empty($po->pajak_status) || $po->pajak_status === 'pending') {
+                        $wh = $this->countEffectiveWorkingHours($po->acc_date, $nowStr, $holidaySet);
+                        $recordPenalty($pjkUid, 'PO Masuk', $docNo, 'Verifikasi Pajak', $wh, 'pending');
+                    }
+                }
+
+                // --- Tahap 4: General Manager (hanya jika Pajak sudah sesuai) ---
+                if ($po->pajak_status === 'sesuai' && !empty($po->pajak_date)) {
+                    $gmUid = !empty($po->gm_user_id) ? (int)$po->gm_user_id : $defaultPoApprovers['gm'];
+                    if (isset($accountMergeMap[$gmUid])) $gmUid = (int)$accountMergeMap[$gmUid];
+
+                    if (!empty($po->gm_date) && $po->gm_date !== '0000-00-00 00:00:00') {
+                        $wh = $this->countEffectiveWorkingHours($po->pajak_date, $po->gm_date, $holidaySet);
+                        $recordPenalty($gmUid, 'PO Masuk', $docNo, 'Approval GM', $wh, 'approved');
+                    } elseif (empty($po->gm_status) || $po->gm_status === 'pending') {
+                        $wh = $this->countEffectiveWorkingHours($po->pajak_date, $nowStr, $holidaySet);
+                        $recordPenalty($gmUid, 'PO Masuk', $docNo, 'Approval GM', $wh, 'pending');
+                    }
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 2. MODUL SPH PENAWARAN (sph_penawaran) - Tahap TTD GM (33)
+        // ---------------------------------------------------------
+        if ($this->db->table_exists('sph_penawaran')) {
+            $sphRows = $this->db->query("
+                SELECT id, nomor_surat, tanggal_surat, created_at, finalized_at, signed_at, signed_by, status
+                FROM sph_penawaran
+                WHERE status != 'cancelled'
+                  AND (created_at >= '{$periodStart} 00:00:00' AND created_at <= '{$periodEnd} 23:59:59')
+            ")->result();
+
+            foreach ($sphRows as $sph) {
+                // TTD SPH dilakukan oleh GM (Yolanda Pratiwi / 33 atau signed_by jika sudah ada)
+                $gmSphUid = !empty($sph->signed_by) ? (int)$sph->signed_by : 33;
+                if (isset($accountMergeMap[$gmSphUid])) $gmSphUid = (int)$accountMergeMap[$gmSphUid];
+
+                $docNo = !empty($sph->nomor_surat) ? $sph->nomor_surat : ('SPH #' . $sph->id);
+                $finalTime = !empty($sph->finalized_at) ? $sph->finalized_at : $sph->created_at;
+
+                // Hitung jika status SPH sudah final (menunggu ttd) atau signed
+                if ($sph->status === 'signed' && !empty($sph->signed_at)) {
+                    $wh = $this->countEffectiveWorkingHours($finalTime, $sph->signed_at, $holidaySet);
+                    $recordPenalty($gmSphUid, 'SPH Penawaran', $docNo, 'TTD & Persetujuan SPH', $wh, 'approved');
+                } elseif ($sph->status === 'final') {
+                    $wh = $this->countEffectiveWorkingHours($finalTime, $nowStr, $holidaySet);
+                    $recordPenalty($gmSphUid, 'SPH Penawaran', $docNo, 'TTD & Persetujuan SPH', $wh, 'pending');
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 3. MODUL PURCHASE ORDER (purchase_order) - TTD GM, PJT, ACC, CORP, DIR
+        // ---------------------------------------------------------
+        if ($this->db->table_exists('purchase_order')) {
+            $chkCol = @$this->db->query("SHOW COLUMNS FROM `purchase_order` LIKE 'ttd_gm_at'");
+            if ($chkCol && $chkCol->num_rows() > 0) {
+                $pOrderRows = $this->db->query("
+                    SELECT id, kode_po, tgl_Pengajuan, tanggal,
+                           ttd_gm, ttd_gm_at,
+                           ttd_1, ttd_1_at,
+                           ttd_2, ttd_2_at,
+                           ttd_3, ttd_3_at,
+                           ttd_4, ttd_4_at,
+                           status
+                    FROM purchase_order
+                    WHERE status != '5'
+                      AND ((tgl_Pengajuan >= '{$periodStart}' AND tgl_Pengajuan <= '{$periodEnd}')
+                           OR (tanggal >= '{$periodStart}' AND tanggal <= '{$periodEnd}'))
+                ")->result();
+
+                // Approver map PO internal: GM (33), PJT Fitri (769), ACC Dirangga (106/107), Corp Meilina (23), Dir Bob Ariyos (54)
+                foreach ($pOrderRows as $poRow) {
+                    $docNo = !empty($poRow->kode_po) ? $poRow->kode_po : ('PO Internal #' . $poRow->id);
+                    $baseStart = (!empty($poRow->tgl_Pengajuan) && $poRow->tgl_Pengajuan !== '0000-00-00')
+                        ? ($poRow->tgl_Pengajuan . ' 08:00:00')
+                        : ($poRow->tanggal . ' 08:00:00');
+
+                    // Stage GM (33)
+                    $gmUid = isset($accountMergeMap[33]) ? (int)$accountMergeMap[33] : 33;
+                    if ($poRow->ttd_gm == '1' && !empty($poRow->ttd_gm_at)) {
+                        $wh = $this->countEffectiveWorkingHours($baseStart, $poRow->ttd_gm_at, $holidaySet);
+                        $recordPenalty($gmUid, 'Purchase Order', $docNo, 'TTD General Manager', $wh, 'approved');
+                    } elseif ($poRow->ttd_gm == '0' || empty($poRow->ttd_gm)) {
+                        $wh = $this->countEffectiveWorkingHours($baseStart, $nowStr, $holidaySet);
+                        $recordPenalty($gmUid, 'Purchase Order', $docNo, 'TTD General Manager', $wh, 'pending');
+                    }
+
+                    // Stage PJT (769) jika GM sudah ttd
+                    if ($poRow->ttd_gm == '1' && !empty($poRow->ttd_gm_at)) {
+                        $pjtUid = isset($accountMergeMap[769]) ? (int)$accountMergeMap[769] : 769;
+                        if ($poRow->ttd_1 == '1' && !empty($poRow->ttd_1_at)) {
+                            $wh = $this->countEffectiveWorkingHours($poRow->ttd_gm_at, $poRow->ttd_1_at, $holidaySet);
+                            $recordPenalty($pjtUid, 'Purchase Order', $docNo, 'TTD PJT & Warehouse', $wh, 'approved');
+                        } elseif ($poRow->ttd_1 == '0' || empty($poRow->ttd_1)) {
+                            $wh = $this->countEffectiveWorkingHours($poRow->ttd_gm_at, $nowStr, $holidaySet);
+                            $recordPenalty($pjtUid, 'Purchase Order', $docNo, 'TTD PJT & Warehouse', $wh, 'pending');
+                        }
+                    }
+
+                    // Stage ACC Dirangga (106) jika PJT sudah ttd
+                    if ($poRow->ttd_1 == '1' && !empty($poRow->ttd_1_at)) {
+                        $accUid = isset($accountMergeMap[107]) ? (int)$accountMergeMap[107] : 106;
+                        if ($poRow->ttd_2 == '1' && !empty($poRow->ttd_2_at)) {
+                            $wh = $this->countEffectiveWorkingHours($poRow->ttd_1_at, $poRow->ttd_2_at, $holidaySet);
+                            $recordPenalty($accUid, 'Purchase Order', $docNo, 'TTD Head Accounting & Tax', $wh, 'approved');
+                        } elseif ($poRow->ttd_2 == '0' || empty($poRow->ttd_2)) {
+                            $wh = $this->countEffectiveWorkingHours($poRow->ttd_1_at, $nowStr, $holidaySet);
+                            $recordPenalty($accUid, 'Purchase Order', $docNo, 'TTD Head Accounting & Tax', $wh, 'pending');
+                        }
+                    }
+                }
+            }
+        }
+
+        return $penalties;
+    }
+
+    /**
      * Bangun Leaderboard KPI Lengkap untuk periode semester atau bulan tertentu.
      */
     public function buildLeaderboard($smtInt, $yInt, array $targetReceiverIds = [], $bulanInt = null)
@@ -365,6 +670,7 @@ class Md_kpi_leaderboard extends CI_Model
         $evalScoreMap       = $this->getEvaluasiSemesterScoreMap($smtInt, $yInt, $accountMergeMap);
         $evalExistsInPeriod = !empty($evalScoreMap);
         $spCapMap           = $this->getActiveSpCapMap($semStart, $semEnd, $spRefDate, $accountMergeMap);
+        $slaPenaltyMap      = $this->calculateApprovalSlaPenalties($semStart, $semEnd, $holidaySet, $accountMergeMap);
 
         $caseTsk = "t.id_penerima";
         $caseNp  = "id_pengguna";
@@ -702,14 +1008,25 @@ class Md_kpi_leaderboard extends CI_Model
                 $completenessTier = 0;
             }
 
+            // Ambil penalti SLA approval TTD dokumen (PO & SPH)
+            $slaInfo         = isset($slaPenaltyMap[$uid]) ? $slaPenaltyMap[$uid] : null;
+            $slaPenaltyPts   = $slaInfo ? (float)$slaInfo['penalty_pts'] : 0.0;
+            $slaLate1d       = $slaInfo ? (int)$slaInfo['late_count_1d'] : 0;
+            $slaLate2d       = $slaInfo ? (int)$slaInfo['late_count_2d'] : 0;
+            $slaTotalLate    = $slaInfo ? (int)$slaInfo['total_late'] : 0;
+            $slaIncidents    = $slaInfo ? $slaInfo['incidents'] : [];
+
             if ($skorMutu !== null) {
-                $skorAkhirRaw = round(($skorMutu * 0.85) + ($skorProd * 0.15), 1);
-                $skorAkhir    = min($skorAkhirRaw, (float)$spCap);
-                $isCappedSp   = ($skorAkhirRaw > (float)$spCap);
+                $skorAkhirFormula = round(($skorMutu * 0.85) + ($skorProd * 0.15), 1);
+                // Terapkan potongan penalti keterlambatan approval TTD (jika ada)
+                $skorAkhirRaw     = max(0.0, round($skorAkhirFormula - $slaPenaltyPts, 1));
+                $skorAkhir        = min($skorAkhirRaw, (float)$spCap);
+                $isCappedSp       = ($skorAkhirRaw > (float)$spCap);
             } else {
-                $skorAkhirRaw = null;
-                $skorAkhir    = null;
-                $isCappedSp   = false;
+                $skorAkhirFormula = null;
+                $skorAkhirRaw     = null;
+                $skorAkhir        = null;
+                $isCappedSp       = false;
             }
 
             $ratingAgregat = $skorAkhir !== null ? round(($skorAkhir / 100) * 5, 2) : 0;
@@ -765,6 +1082,12 @@ class Md_kpi_leaderboard extends CI_Model
             $lb->skor_mutu          = $skorMutu;
             $lb->skor_prod          = $skorProd;
             $lb->total_pencapaian   = (int)$lb->total_pencapaian;
+            $lb->skor_formula       = $skorAkhirFormula;
+            $lb->sla_penalty_pts    = $slaPenaltyPts;
+            $lb->sla_late_1d        = $slaLate1d;
+            $lb->sla_late_2d        = $slaLate2d;
+            $lb->sla_total_late     = $slaTotalLate;
+            $lb->sla_incidents      = $slaIncidents;
             $lb->skor_akhir_raw     = $skorAkhirRaw;
             $lb->skor_akhir         = $skorAkhir;
             $lb->is_capped_sp       = $isCappedSp;
