@@ -74,6 +74,46 @@ class Perizinan_visilab extends CI_Controller
         ]);
     }
 
+    public function delete_task_by_kode($secret = '')
+    {
+        if ($secret !== $this->cron_secret) {
+            show_404();
+            return;
+        }
+
+        $kode = $this->input->get('kode') ?: 'TSK/2026/10/003';
+        $action = $this->input->get('action');
+
+        $task = $this->db->get_where('task_proyek', ['kode_task' => $kode])->row();
+
+        if (!$task) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'msg' => "Task dengan kode {$kode} tidak ditemukan."]);
+            exit;
+        }
+
+        if ($action === 'execute') {
+            $this->db->where('id_task', $task->id_task)->update('task_proyek', ['is_deleted' => 1]);
+            $updated = $this->db->get_where('task_proyek', ['id_task' => $task->id_task])->row();
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'status' => 'success',
+                'msg' => "Task {$kode} berhasil dihapus (is_deleted = 1).",
+                'task' => $updated
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'preview',
+            'task' => $task,
+            'instruction' => 'Tambahkan &action=execute untuk menghapus task ini.'
+        ], JSON_PRETTY_PRINT);
+        exit;
+    }
+
     public function setup_db($secret = '')
     {
         if ($secret !== $this->cron_secret) {
