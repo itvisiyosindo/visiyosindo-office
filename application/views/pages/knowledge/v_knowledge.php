@@ -378,6 +378,19 @@
                                             <a href="<?= base_url('knowledge/show/kelola_kuis/' . $kuis->id_kuis) ?>" class="btn btn-sm btn-primary font-weight-bold" title="Kelola Soal & Rekap Peserta">
                                                 <i class="fas fa-cog"></i> Soal (<?= (int)$kuis->total_soal ?>)
                                             </a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary btn-edit-kuis"
+                                                data-id="<?= (int)$kuis->id_kuis ?>"
+                                                data-judul="<?= htmlspecialchars($kuis->judul_kuis, ENT_QUOTES) ?>"
+                                                data-bulan="<?= (int)$kuis->bulan ?>"
+                                                data-tahun="<?= (int)$kuis->tahun ?>"
+                                                data-durasi="<?= (int)$kuis->durasi_menit ?>"
+                                                data-status="<?= htmlspecialchars($kuis->status, ENT_QUOTES) ?>"
+                                                data-buka="<?= !empty($kuis->waktu_buka) ? date('Y-m-d\TH:i', strtotime($kuis->waktu_buka)) : '' ?>"
+                                                data-tutup="<?= !empty($kuis->waktu_tutup) ? date('Y-m-d\TH:i', strtotime($kuis->waktu_tutup)) : '' ?>"
+                                                data-deskripsi="<?= htmlspecialchars($kuis->deskripsi ?? '', ENT_QUOTES) ?>"
+                                                title="Edit Pengaturan & Jadwal Kuis">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
                                             <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-kuis" data-id="<?= (int)$kuis->id_kuis ?>" data-judul="<?= htmlspecialchars($kuis->judul_kuis) ?>" title="Hapus Kuis">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -838,9 +851,27 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#modalKuisBaru').modal('show');
     });
 
+    // Buka Modal Edit Kuis
+    $(document).on('click', '.btn-edit-kuis', function() {
+        var $btn = $(this);
+        $('#formKuisBaru')[0].reset();
+        $('#modal_id_kuis').val($btn.data('id'));
+        $('#modal_judul_kuis').val($btn.data('judul'));
+        $('#modal_bulan_kuis').val($btn.data('bulan'));
+        $('#modal_tahun_kuis').val($btn.data('tahun'));
+        $('#modal_durasi_kuis').val($btn.data('durasi'));
+        $('#modal_status_kuis').val($btn.data('status'));
+        $('#modal_waktu_buka').val($btn.data('buka'));
+        $('#modal_waktu_tutup').val($btn.data('tutup'));
+        $('#modal_deskripsi_kuis').val($btn.data('deskripsi'));
+        $('#labelModalKuis').text('Edit Pengaturan & Jadwal Kuis');
+        $('#modalKuisBaru').modal('show');
+    });
+
     // Simpan Kuis Baru / Edit
     $('#formKuisBaru').on('submit', function(e) {
         e.preventDefault();
+        var isEdit = !!$('#modal_id_kuis').val();
         var $btn = $('#btnSubmitKuis');
         var origHtml = $btn.html();
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
@@ -854,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 $btn.prop('disabled', false).html(origHtml);
                 if (res && res.status === 'success') {
                     alert(res.msg);
-                    if (res.data && res.data.id_kuis) {
+                    if (!isEdit && res.data && res.data.id_kuis) {
                         window.location.href = baseUrl + 'knowledge/show/kelola_kuis/' + res.data.id_kuis;
                     } else {
                         location.reload();

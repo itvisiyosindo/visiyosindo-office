@@ -538,9 +538,31 @@ class Md_knowledge extends CI_Model
         return $totalCleaned;
     }
 
+    /**
+     * Sinkronisasi otomatis status kuis:
+     * Jika status masih 'draft' namun memiliki jadwal waktu_buka yang sudah tiba
+     * (dan belum melewati waktu_tutup) serta sudah memiliki soal (> 0),
+     * otomatis aktifkan kuis agar dapat langsung dikerjakan sesuai jadwal.
+     */
+    public function syncJadwalKuisStatus()
+    {
+        $nowSql = date('Y-m-d H:i:s');
+        $this->db->query("
+            UPDATE pk_kuis k
+            SET k.status = 'aktif'
+            WHERE k.is_deleted = 0
+              AND k.status = 'draft'
+              AND k.waktu_buka IS NOT NULL
+              AND k.waktu_buka <= ?
+              AND (k.waktu_tutup IS NULL OR k.waktu_tutup >= ?)
+              AND (SELECT COUNT(*) FROM pk_soal s WHERE s.id_kuis = k.id_kuis) > 0
+        ", [$nowSql, $nowSql]);
+    }
+
     public function getKuisList($tahun = null, $bulan = null, $onlyActive = false)
     {
         $this->auto_migrate();
+        $this->syncJadwalKuisStatus();
         $this->db->select('k.*, p.nama AS pembuat, 
             (SELECT COUNT(*) FROM pk_soal s WHERE s.id_kuis = k.id_kuis) AS total_soal,
             (SELECT COUNT(*) FROM pk_peserta ps WHERE ps.id_kuis = k.id_kuis AND ps.status_pengerjaan = "selesai") AS total_selesai')
@@ -564,6 +586,7 @@ class Md_knowledge extends CI_Model
     public function getKuisById($id_kuis)
     {
         $this->auto_migrate();
+        $this->syncJadwalKuisStatus();
         return $this->db->select('k.*, p.nama AS pembuat,
             (SELECT COUNT(*) FROM pk_soal s WHERE s.id_kuis = k.id_kuis) AS total_soal,
             (SELECT COUNT(*) FROM pk_peserta ps WHERE ps.id_kuis = k.id_kuis AND ps.status_pengerjaan = "selesai") AS total_selesai')
