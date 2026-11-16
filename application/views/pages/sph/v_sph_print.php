@@ -491,15 +491,19 @@
 
     // Gunakan TTD berbeda untuk Visilab
     if (!empty($sph->is_visilab)) {
-        $ttd_signed = $img_path . "ttd_mega_cap.png";
-        $stempel = $img_path . "ttd_mega_cap.png";
+        // Jika ada ttd_mega_cap atau ttd_75
+        $ttd_file = file_exists(FCPATH . $img_path . "ttd_75.png") ? ($img_path . "ttd_75.png") : ($img_path . "ttd_mega_cap.png");
+        $stempel_base64 = img_to_base64($ttd_file);
     } else {
-        $ttd_signed = $img_path . "ttd_33.png";
-        $stempel = $img_path . "ttd_stample_gm.png";
+        // Prioritaskan ttd_33_cap.png (300KB) yang ringan dan sudah ada cap
+        if (file_exists(FCPATH . $img_path . "ttd_33_cap.png")) {
+            $stempel_base64 = img_to_base64($img_path . "ttd_33_cap.png");
+        } else {
+            $stempel_base64 = img_to_base64($img_path . "ttd_stample_gm.png");
+        }
     }
 
     $is_signed = ($sph->status == 'signed');
-    $ttd_notyet_exists = file_exists(FCPATH . $ttd_notyet);
     ?>
 
     <table class="ttd-section" style="width: 100%;">
@@ -513,9 +517,9 @@
         <tr>
             <td></td>
             <td style="text-align: center; height: 100px;">
-                <?php if ($is_signed): ?>
-                    <!-- TTD dengan stempel sudah digabung -->
-                    <img src="<?= FCPATH . $stempel ?>" alt="TTD" style="height: 100px;">
+                <?php if ($is_signed && !empty($stempel_base64)): ?>
+                    <!-- TTD dengan stempel sudah digabung (Base64) -->
+                    <img src="<?= $stempel_base64 ?>" alt="TTD" style="height: 100px;">
                 <?php else: ?>
                     <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
                         <span style="color: #999; font-style: italic; font-size: 11px;">(Belum ditandatangani)</span>

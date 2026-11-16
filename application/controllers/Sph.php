@@ -759,10 +759,13 @@ class Sph extends CI_Controller
      */
     private function createMpdfWithKop()
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
         // Pastikan tempDir writable untuk font cache mPDF
         $tempDir = APPPATH . 'cache/mpdf';
         if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
+            @mkdir($tempDir, 0755, true);
         }
 
         $mpdf = new Mpdf([
@@ -778,16 +781,19 @@ class Sph extends CI_Controller
             'tempDir' => $tempDir,
         ]);
 
+        $kopAtas = img_to_base64('assets/img/kop_baru.jpg');
+        $kopBawah = img_to_base64('assets/img/kop_surat_bawah.jpg');
+
         $headerHtml = '
         <div style="text-align:center;">
-            <img src="' . FCPATH . 'assets/img/kop_baru.jpg" style="width:100%;" />
+            <img src="' . $kopAtas . '" style="width:100%;" />
             <hr style="border:0; border-top:3px solid #1a237e; margin:3px 0;" />
             <hr style="border:0; border-top:3px solid #1a237e; margin:0;" />
         </div>';
 
         $footerHtml = '
         <div style="text-align:center;">
-            <img src="' . FCPATH . 'assets/img/kop_surat_bawah.jpg" style="width:100%;" />
+            <img src="' . $kopBawah . '" style="width:100%;" />
         </div>';
 
         $mpdf->SetHTMLHeader($headerHtml);
