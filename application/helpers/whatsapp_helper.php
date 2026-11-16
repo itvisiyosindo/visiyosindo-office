@@ -3524,7 +3524,276 @@ function waPoProgressGroup($data)
 		]);
 	}
 
+	// Kirim juga notifikasi personal WhatsApp ke PIC yang dibutuhkan TTD / Approval berikutnya
+	waPoSendApproverPersonal($data, $po);
+
 	return $res;
+}
+
+/**
+ * Kirim notifikasi WhatsApp personal langsung ke PIC yang bertugas melakukan TTD / Approval PO
+ * Alur bergiliran:
+ * 1. Baru diajukan / Revisi selesai -> CRO
+ * 2. CRO Sesuai -> Accounting (Mulia / Staff Accounting: 081378941122)
+ * 3. Accounting Sesuai -> Pajak (Staff Tax)
+ * 4. Pajak Sesuai -> General Manager (GM)
+ * 5. Revisi / Ditolak / Selesai Disetujui GM -> Notifikasi personal ke Sales / Pembuat PO
+ */
+function waPoSendApproverPersonal($data, $po = null)
+{
+	if (!ENABLE_WA_PO_NOTIF) {
+		return false;
+	}
+
+	$stage         = strtolower($data['stage'] ?? '');
+	$action_status = strtolower($data['action_status'] ?? '');
+	$action_by     = $data['action_by'] ?? '';
+
+	$no_po         = !empty($data['no_po']) ? $data['no_po'] : (!empty($po->no_po) ? $po->no_po : '-');
+	$kode_masuk    = !empty($data['kode_masuk']) ? $data['kode_masuk'] : (!empty($po->kode_masuk) ? $po->kode_masuk : '-');
+	$nama_customer = !empty($data['nama_customer']) ? $data['nama_customer'] : (!empty($po->nama_customer) ? $po->nama_customer : (!empty($po->master_nama_customer) ? $po->master_nama_customer : '-'));
+	$nama_sales    = !empty($data['nama_sales']) ? $data['nama_sales'] : (!empty($po->nama_sales) ? $po->nama_sales : (!empty($po->nama_pembuat) ? $po->nama_pembuat : '-'));
+	$link          = !empty($data['link']) ? $data['link'] : 'https://office.visiyosindo.id/po_system';
+
+	$raw_nominal   = $data['nominal_po'] ?? ($po->nominal_total_akhir ?? ($po->nominal_po ?? 0));
+	$nominal       = (is_numeric($raw_nominal) && $raw_nominal > 0) ? 'Rp ' . number_format($raw_nominal, 0, ',', '.') : (!empty($raw_nominal) ? $raw_nominal : '-');
+
+	$nextRole = '';
+	$targetUsers = [];
+
+	// 1. Jika PO Perlu Revisi atau Ditolak -> Kirim ke Sales / Pengaju
+	if ($action_status === 'revisi' || $action_status === 'ditolak') {
+		$nextRole = ($action_status === 'revisi') ? 'Revisi PO' : 'Penolakan PO';
+		$salesId  = !empty($po->id_sales) ? $po->id_sales : (!empty($po->created_by) ? $po->created_by : null);
+		if (!empty($salesId)) {
+			$uSales = _getPenggunaContactById($salesId);
+			if ($uSales && !empty($uSales['phone'])) {
+				$targetUsers[] = $uSales;
+			}
+		}
+	}
+	// 2. Tahap Baru / Pengajuan Awal -> Target: CRO
+	elseif ($stage === 'baru' || $action_status === 'baru') {
+		$nextRole = 'Kroscek CRO';
+		// CRO ID default 725 atau jabatan CRO
+		$targetUsers = _getPenggunaContactsByRole('cro', 725);
+	}
+	// 3. Tahap CRO Selesai -> Target: Accounting (Mulia / Staff Accounting)
+	elseif ($stage === 'cro' && $action_status === 'sesuai') {
+		$nextRole = 'Verifikasi Accounting';
+		// Nomor khusus Mulia Accounting: 081378941122
+		$targetUsers[] = [
+			'nama'  => 'Mulia (Staff Accounting)',
+			'phone' => '6281378941122',
+			'id'    => 777
+		];
+	}
+	// 4. Tahap Accounting Selesai -> Target: Pajak (Staff Tax / Azhari Pratama)
+	elseif ($stage === 'acc' && $action_status === 'sesuai') {
+		$nextRole = 'Verifikasi Pajak';
+		// Pajak ID default 64 atau jabatan Tax / Pajak
+		$targetUsers = _getPenggunaContactsByRole('pajak', 64);
+	}
+	// 5. Tahap Pajak Selesai -> Target: General Manager (GM / Yolanda Pratiwi)
+	elseif ($stage === 'pajak' && $action_status === 'sesuai') {
+		$nextRole = 'Approval General Manager (GM)';
+		// GM ID default 33 atau jabatan GM
+		$targetUsers = _getPenggunaContactsByRole('gm', 33);
+	}
+	// 6. Tahap GM Selesai Disetujui -> Kirim notifikasi personal ke Sales / Pengaju
+	elseif ($stage === 'gm' && $action_status === 'disetujui') {
+		$nextRole = 'PO Disetujui Penuh';
+		$salesId  = !empty($po->id_sales) ? $po->id_sales : (!empty($po->created_by) ? $po->created_by : null);
+		if (!empty($salesId)) {
+			$uSales = _getPenggunaContactById($salesId);
+			if ($uSales && !empty($uSales['phone'])) {
+				$targetUsers[] = $uSales;
+			}
+		}
+	}
+
+	if (empty($targetUsers)) {
+		return false;
+	}
+
+	// Kirim pesan ke masing-masing target
+	foreach ($targetUsers as $target) {
+		$phone = preg_replace('/[^0-9]/', '', (string)($target['phone'] ?? ''));
+		if (empty($phone)) {
+			continue;
+		}
+
+		$namaPenerima = $target['nama'] ?? 'Bapak/Ibu';
+
+		if ($action_status === 'revisi') {
+			$pesanPersonal = "*🔴 NOTIFIKASI REVISI PO CUSTOMER*\n\n" .
+				"Halo *" . $namaPenerima . "*,\n" .
+				"PO Customer berikut memerlukan *REVISI/PERBAIKAN* oleh Anda:\n\n" .
+				"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+				"📄 *No. PO*: " . $no_po . "\n" .
+				"🏢 *Customer*: " . $nama_customer . "\n" .
+				"👤 *Catatan Dari*: " . $action_by . "\n" .
+				"📝 *Catatan*: " . (!empty($data['acc_catatan']) ? $data['acc_catatan'] : (!empty($data['cro_catatan']) ? $data['cro_catatan'] : (!empty($data['pajak_catatan']) ? $data['pajak_catatan'] : '-'))) . "\n\n" .
+				"Silakan periksa dan perbaiki data PO melalui link berikut:\n" .
+				"🔗 " . $link . "\n\n" .
+				"_Sistem Office PT Visi Yosindo Medikal_";
+		} elseif ($action_status === 'ditolak') {
+			$pesanPersonal = "*🔴 NOTIFIKASI PENOLAKAN PO CUSTOMER*\n\n" .
+				"Halo *" . $namaPenerima . "*,\n" .
+				"Pengajuan PO Customer berikut telah *DITOLAK* oleh " . $action_by . ":\n\n" .
+				"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+				"📄 *No. PO*: " . $no_po . "\n" .
+				"🏢 *Customer*: " . $nama_customer . "\n\n" .
+				"🔗 Detail PO:\n" . $link . "\n\n" .
+				"_Sistem Office PT Visi Yosindo Medikal_";
+		} elseif ($stage === 'gm' && $action_status === 'disetujui') {
+			$pesanPersonal = "*🟢 NOTIFIKASI PO DISETUJUI GM (PO BISA DIPROSES)*\n\n" .
+				"Halo *" . $namaPenerima . "*,\n" .
+				"Kabar baik! PO Customer Anda telah *DISETUJUI PENUH OLEH GM* dan *BISA DIPROSES*:\n\n" .
+				"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+				"📄 *No. PO*: " . $no_po . "\n" .
+				"🏢 *Customer*: " . $nama_customer . "\n" .
+				"💰 *Total*: " . $nominal . "\n\n" .
+				"🔗 Cek status & dokumen PO:\n" . $link . "\n\n" .
+				"_Sistem Office PT Visi Yosindo Medikal_";
+		} else {
+			$pesanPersonal = "*📋 PERMOHONAN APPROVAL / TTD PO CUSTOMER*\n\n" .
+				"Halo *" . $namaPenerima . "*,\n" .
+				"Terdapat PO Customer yang *MENUNGGU TTD / VERIFIKASI ANDA* pada tahap *" . $nextRole . "*:\n\n" .
+				"📌 *Kode Masuk*: " . $kode_masuk . "\n" .
+				"📄 *No. PO*: " . $no_po . "\n" .
+				"🏢 *Customer*: " . $nama_customer . "\n" .
+				"👤 *Diajukan Oleh*: " . $nama_sales . "\n" .
+				"💰 *Nilai Total*: " . $nominal . "\n\n" .
+				"Mohon segera lakukan pemeriksaan dan verifikasi/TTD melalui link berikut:\n" .
+				"🔗 " . $link . "\n\n" .
+				"_Sistem Office PT Visi Yosindo Medikal_";
+		}
+
+		sendWa([
+			'penerima'     => $phone,
+			'pesan'        => $pesanPersonal,
+			'idPenerima'   => $target['id'] ?? null,
+			'namaPenerima' => $namaPenerima
+		]);
+	}
+
+	return true;
+}
+
+/**
+ * Helper internal untuk mengambil nomor HP dan nama PIC berdasarkan User ID
+ */
+function _getPenggunaContactById($userId)
+{
+	if (!function_exists('get_instance')) {
+		return null;
+	}
+	$ci = &get_instance();
+	if (!isset($ci->db)) {
+		return null;
+	}
+
+	$u = $ci->db->select('pengguna_id, nama, jabatan, no_hp, nohp')
+		->from('pengguna')
+		->where('pengguna_id', $userId)
+		->where('status', 1)
+		->limit(1)
+		->get()
+		->row();
+
+	if (!$u) {
+		return null;
+	}
+
+	$hp = !empty($u->no_hp) ? $u->no_hp : (!empty($u->nohp) ? $u->nohp : '');
+	$phone = preg_replace('/[^0-9]/', '', (string)$hp);
+	if (strpos($phone, '0') === 0) {
+		$phone = '62' . substr($phone, 1);
+	} elseif (strpos($phone, '8') === 0) {
+		$phone = '62' . $phone;
+	}
+
+	return [
+		'id'    => $u->pengguna_id,
+		'nama'  => $u->nama,
+		'phone' => $phone
+	];
+}
+
+/**
+ * Helper internal untuk mencari nomor HP PIC approver PO berdasarkan role (cro, pajak, gm)
+ */
+function _getPenggunaContactsByRole($role, $defaultUserId = null)
+{
+	$contacts = [];
+
+	if (!function_exists('get_instance')) {
+		return $contacts;
+	}
+	$ci = &get_instance();
+	if (!isset($ci->db)) {
+		return $contacts;
+	}
+
+	$ci->db->select('pengguna_id, nama, jabatan, no_hp, nohp')
+		->from('pengguna')
+		->where('status', 1);
+
+	if ($role === 'cro') {
+		$ci->db->group_start()
+			->where('pengguna_id', $defaultUserId ?: 725)
+			->or_like('jabatan', 'Customer Relationship', 'both')
+			->or_like('jabatan', 'CRO', 'both')
+		->group_end();
+		if ($defaultUserId) {
+			$ci->db->order_by("CASE WHEN pengguna_id = " . (int)$defaultUserId . " THEN 0 ELSE 1 END", 'ASC', false);
+		}
+	} elseif ($role === 'pajak') {
+		$ci->db->group_start()
+			->where('pengguna_id', $defaultUserId ?: 64)
+			->or_like('jabatan', 'Staff Tax', 'both')
+			->or_like('jabatan', 'Tax', 'both')
+			->or_like('jabatan', 'Pajak', 'both')
+		->group_end();
+		if ($defaultUserId) {
+			$ci->db->order_by("CASE WHEN pengguna_id = " . (int)$defaultUserId . " THEN 0 ELSE 1 END", 'ASC', false);
+		}
+	} elseif ($role === 'gm') {
+		$ci->db->group_start()
+			->where('pengguna_id', $defaultUserId ?: 33)
+			->or_like('jabatan', 'General Manager', 'both')
+			->or_like('jabatan', 'Direktur', 'both')
+		->group_end();
+		if ($defaultUserId) {
+			$ci->db->order_by("CASE WHEN pengguna_id = " . (int)$defaultUserId . " THEN 0 ELSE 1 END", 'ASC', false);
+		}
+	}
+
+	$rows = $ci->db->limit(3)->get()->result();
+
+	if (!empty($rows)) {
+		foreach ($rows as $r) {
+			$hp = !empty($r->no_hp) ? $r->no_hp : (!empty($r->nohp) ? $r->nohp : '');
+			$phone = preg_replace('/[^0-9]/', '', (string)$hp);
+			if (strpos($phone, '0') === 0) {
+				$phone = '62' . substr($phone, 1);
+			} elseif (strpos($phone, '8') === 0) {
+				$phone = '62' . $phone;
+			}
+			if (strlen($phone) >= 10) {
+				$contacts[] = [
+					'id'    => $r->pengguna_id,
+					'nama'  => $r->nama,
+					'phone' => $phone
+				];
+				// Ambil satu kontak prioritas utama
+				break;
+			}
+		}
+	}
+
+	return $contacts;
 }
 
 /**
@@ -3532,7 +3801,7 @@ function waPoProgressGroup($data)
  */
 function sendWa($dataSend)
 {
-	// 0. Alihkan seluruh notifikasi untuk Mulya / Mulia / Staff Accounting ke nomor: 62895629410710 (+62 895-6294-10710)
+	// 0. Alihkan seluruh notifikasi untuk Mulya / Mulia / Staff Accounting ke nomor: 6281378941122 (+62 813-7894-1122)
 	// Untuk karyawan lainnya, notifikasi selalu dikirim ke nomor HP pribadi mereka
 	if (!empty($dataSend['penerima'])) {
 		$cleanPenerima = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
@@ -3543,11 +3812,11 @@ function sendWa($dataSend)
 		}
 
 		if (in_array($cleanPenerima, ['6285668033598', '085668033598', '85668033598', '6281378941122', '081378941122', '81378941122', '62895629410710', '0895629410710', '895629410710'])) {
-			$dataSend['penerima'] = '62895629410710';
+			$dataSend['penerima'] = '6281378941122';
 		} elseif (isset($dataSend['idPenerima1']) && in_array($dataSend['idPenerima1'], ['777', 777, '714', 714])) {
-			$dataSend['penerima'] = '62895629410710';
+			$dataSend['penerima'] = '6281378941122';
 		} elseif (isset($dataSend['idPenerima2']) && in_array($dataSend['idPenerima2'], ['777', 777, '714', 714])) {
-			$dataSend['penerima'] = '62895629410710';
+			$dataSend['penerima'] = '6281378941122';
 		} elseif (function_exists('get_instance')) {
 			$ci = &get_instance();
 			if (isset($ci->db)) {
@@ -3572,7 +3841,7 @@ function sendWa($dataSend)
 					->row();
 
 				if (!empty($checkKantor)) {
-					$dataSend['penerima'] = '62895629410710';
+					$dataSend['penerima'] = '6281378941122';
 				}
 			}
 		}
