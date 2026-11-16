@@ -3057,6 +3057,7 @@ class Surat_part_two extends CI_Controller
       } else {
         $dt     = $this->md_surat_part_two->getBAbySet(sessPenggunaId());
       }
+      $cooldownMap = getWaResendCooldownMapFromRows('ba', $dt['data'], 'idGc', 3600);
       $start = $this->input->post('start');
       $data  = array();
       foreach ($dt['data'] as $row) {
@@ -3090,9 +3091,18 @@ class Surat_part_two extends CI_Controller
           $disetujui = $row->nama_disetujui;
         }
 
+        $cooldownLeft = isset($cooldownMap[(int)$row->idGc]) ? $cooldownMap[(int)$row->idGc] : 0;
+        $baTarget = $this->_getBaResendTarget($row);
+        $resendBtn = '';
+        if ($baTarget['can_resend']) {
+          $resendUrl = base_url('surat_part_two/resend_wa_ba/' . encrypt($row->idGc));
+          $resendBtn = buildWaResendButton($resendUrl, $baTarget['recipient'], $cooldownLeft);
+        }
+
         $li_btn   = '
             <div class="btn-group btn-group-sm" role="group">
                 <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-primary" title="Lihat Detail"><i class="fas fa-eye"></i></a>
+                ' . $resendBtn . '
                 ' . ($row->status == '17' ? '<a href="surat/show/edit/penawaran/' . $row->idGc . '" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-pencil-alt"></i></a>' : '') . '
                 ' . ($row->status == '17' ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteCuti"><i class="fas fa-trash"></i></button>' : '') . '
                 ' . (isAdmin() ? '<button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data (Admin)" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="fas fa-trash"></i></button>' : '') . '
@@ -3116,6 +3126,7 @@ class Surat_part_two extends CI_Controller
     } else if ($param == 'permintaan_ba') {
       //$dt    = $this->md_surat_list->getAllMygc(sessPenggunaId());
       $dt     = $this->md_surat_part_two->getBAbyID(sessPenggunaId());
+      $cooldownMap = getWaResendCooldownMapFromRows('ba', $dt['data'], 'idGc', 3600);
       $start = $this->input->post('start');
       $data  = array();
       foreach ($dt['data'] as $row) {
@@ -3153,8 +3164,18 @@ class Surat_part_two extends CI_Controller
           $disetujui = $row->nama_disetujui;
         }
 
+        $cooldownLeft = isset($cooldownMap[(int)$row->idGc]) ? $cooldownMap[(int)$row->idGc] : 0;
+        $baTarget = $this->_getBaResendTarget($row);
+        $resendBtn = '';
+        if ($baTarget['can_resend']) {
+          $resendUrl = base_url('surat_part_two/resend_wa_ba/' . encrypt($row->idGc));
+          $resendBtn = buildWaResendButton($resendUrl, $baTarget['recipient'], $cooldownLeft);
+        }
+
         $li_btn   = '
             <div class="btn-group" role="group" aria-label="First group">
+                <a href="surat_part_two/show/detail/ba/' . $row->idGc . '" class="btn btn-sm btn-primary" title="Lihat Detail"><i class="fas fa-eye"></i></a>
+                ' . $resendBtn . '
                 <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->idGc . '" data-object="surat_part_two/deleteBa"><i class="bx bx-trash"></i></button>
             </div>';
 
@@ -4627,6 +4648,193 @@ class Surat_part_two extends CI_Controller
 
     addLog('Resend Notif Cuti Tahunan', 'Mengirim ulang notifikasi WA pengajuan cuti ' . $kode . ' ke ' . $target['recipient']);
     $this->session->set_flashdata('success', 'Berhasil mengirim ulang notifikasi WA untuk Cuti ' . $kode . ' ke ' . $target['recipient'] . '.');
+    redirect($referer);
+  }
+
+  /**
+   * Tentukan penerima notifikasi approval berikutnya untuk Berita Acara.
+   */
+  private function _getBaResendTarget($ba)
+  {
+    $st = (string)($ba->status ?? '');
+    $statusDir = (int)($ba->status_dir ?? 0);
+
+    if ($st === '0') {
+      $recipient = !empty($ba->nama_diketahui) ? $ba->nama_diketahui : 'Pihak Mengetahui';
+      if ((int)($ba->id_diketahui ?? 0) === 58) {
+        $recipient = GA_USER_NAME;
+      }
+      return [
+        'can_resend' => true,
+        'recipient'  => $recipient,
+        'target_id'  => $ba->id_diketahui ?? null,
+        'stage'      => 0
+      ];
+    }
+
+    if ($st === '1') {
+      $recipient = !empty($ba->nama_disetujui) ? $ba->nama_disetujui : 'Pihak Menyetujui';
+      if ((int)($ba->id_disetujui ?? 0) === 58) {
+        $recipient = GA_USER_NAME;
+      }
+      return [
+        'can_resend' => true,
+        'recipient'  => $recipient,
+        'target_id'  => $ba->id_disetujui ?? null,
+        'stage'      => 1
+      ];
+    }
+
+    if ($st === '2' && $statusDir === 1) {
+      $idDir = !empty($ba->id_dir) ? (int)$ba->id_dir : (((int)($ba->idGc ?? $ba->id_ba ?? 0) === 728) ? 54 : null);
+      $recipient = !empty($ba->nama_dir) ? $ba->nama_dir : 'Director';
+      if ($idDir === 54 && (empty($ba->nama_dir) || stripos($ba->nama_dir, 'kantor pusat') !== false)) {
+        $recipient = 'Bob Ariyos (Director)';
+      }
+      return [
+        'can_resend' => true,
+        'recipient'  => $recipient,
+        'target_id'  => $idDir,
+        'stage'      => 2
+      ];
+    }
+
+    return [
+      'can_resend' => false,
+      'recipient'  => '',
+      'target_id'  => null,
+      'stage'      => -1
+    ];
+  }
+
+  /**
+   * Kirim ulang notifikasi WhatsApp approval Berita Acara.
+   */
+  public function resend_wa_ba($id_encrypted = '')
+  {
+    grantAccessFor('all');
+
+    $id = (int)decrypt($id_encrypted);
+    $referer = $this->input->server('HTTP_REFERER');
+    if (!$referer) {
+      $referer = 'surat_part_two/show/list/berita_acara';
+    }
+
+    if ($id <= 0) {
+      $this->session->set_flashdata('error', 'Data Berita Acara tidak valid.');
+      redirect($referer);
+      return;
+    }
+
+    $rows = $this->md_surat_part_two->getBeritaAcaraById($id);
+    if (empty($rows) || !isset($rows[0])) {
+      $this->session->set_flashdata('error', 'Data Berita Acara tidak ditemukan.');
+      redirect($referer);
+      return;
+    }
+
+    $ba = $rows[0];
+    $myId = (int)sessPenggunaId();
+    $isOwner = ((int)$ba->idPengaju === $myId);
+    $isApprover = ($myId === (int)$ba->id_diketahui || $myId === (int)$ba->id_disetujui || $myId === (int)$ba->id_dir || ($myId === 54 && (int)$id === 728));
+    $isPrivilege = (isAdmin() || isHrd() || isGa() || in_array($myId, [1, 23, 33, 54, 58, 69, 744, (int)GA_USER_ID], true));
+
+    if (!$isOwner && !$isApprover && !$isPrivilege) {
+      $this->session->set_flashdata('error', 'Anda tidak memiliki hak akses untuk mengirim ulang notifikasi surat ini.');
+      redirect($referer);
+      return;
+    }
+
+    $target = $this->_getBaResendTarget($ba);
+    if (!$target['can_resend']) {
+      $this->session->set_flashdata('error', 'Berita Acara ' . $ba->kode_ba . ' sudah selesai disetujui atau sudah ditolak.');
+      redirect($referer);
+      return;
+    }
+
+    $cooldown = claimWaResendCooldown('ba', $id, $myId, 3600);
+    if (!$cooldown['allowed']) {
+      $this->session->set_flashdata('error', formatWaCooldownMessage($cooldown['remaining']));
+      redirect($referer);
+      return;
+    }
+
+    $this->load->helper('whatsapp_helper');
+    $analisis = !empty($ba->analisis) ? $ba->analisis : $ba->kode_ba;
+    $detailLink = 'surat_part_two/show/detail/ba/' . $id;
+
+    if ($target['stage'] === 0) {
+      // Stage 0: Menunggu tanda tangan diketahui
+      $idPenerima = $target['target_id'];
+      $penerimaUser = !empty($idPenerima) ? $this->md_pengguna->getById($idPenerima) : null;
+      $noHp = (!empty($penerimaUser) && isset($penerimaUser[0]->no_hp)) ? $penerimaUser[0]->no_hp : '';
+
+      if (!empty($noHp)) {
+        waPengajuanBaru([
+          'noPenerima'       => $noHp,
+          'namaApprover'     => $target['recipient'],
+          'jenisPengajuan'   => 'Berita Acara (Kode: ' . $ba->kode_ba . ')',
+          'namaPemohon'      => $ba->pengaju,
+          'tanggalPengajuan' => date('d-m-Y', strtotime($ba->tanggal)),
+          'keterangan'       => 'Membutuhkan Tanda Tangan / Persetujuan Berita Acara (Kirim Ulang)',
+          'linkDetail'       => 'https://office.visiyosindo.id/' . $detailLink
+        ]);
+      } else {
+        // Fallback jika tidak ada no hp langsung di approver
+        $dataWa = [
+          'id'           => $id,
+          'idPenerima1'  => $idPenerima,
+          'idPenerima2'  => '',
+          'namaSurat'    => 'Berita Acara',
+          'penerima'     => $target['recipient'],
+          'pengaju'      => $ba->pengaju,
+          'kode'         => $ba->kode_ba,
+          'perihal'      => $analisis,
+          'link'         => $detailLink,
+          'ttd_sebelum1' => '',
+          'ttd_sebelum2' => '',
+          'ttd_sebelum3' => ''
+        ];
+        $this->notifWaAprov(1, 1, $dataWa);
+      }
+    } elseif ($target['stage'] === 1) {
+      // Stage 1: Menunggu tanda tangan disetujui
+      $dataWa = [
+        'id'           => $id,
+        'idPenerima1'  => $target['target_id'],
+        'idPenerima2'  => '',
+        'namaSurat'    => 'Berita Acara',
+        'penerima'     => $target['recipient'],
+        'pengaju'      => $ba->pengaju,
+        'kode'         => $ba->kode_ba,
+        'perihal'      => $analisis,
+        'link'         => $detailLink,
+        'ttd_sebelum1' => $ba->jabatan_diketahui,
+        'ttd_sebelum2' => '',
+        'ttd_sebelum3' => ''
+      ];
+      $this->notifWaAprov(1, 1, $dataWa);
+    } elseif ($target['stage'] === 2) {
+      // Stage 2: Menunggu persetujuan Director
+      $dataWa = [
+        'id'           => $id,
+        'idPenerima1'  => $target['target_id'],
+        'idPenerima2'  => '',
+        'namaSurat'    => 'Berita Acara',
+        'penerima'     => $target['recipient'],
+        'pengaju'      => $ba->pengaju,
+        'kode'         => $ba->kode_ba,
+        'perihal'      => $analisis,
+        'link'         => $detailLink,
+        'ttd_sebelum1' => $ba->jabatan_diketahui,
+        'ttd_sebelum2' => $ba->jabatan_disetujui,
+        'ttd_sebelum3' => ''
+      ];
+      $this->notifWaAprov(1, 3, $dataWa);
+    }
+
+    addLog('Resend Notif Berita Acara', 'Mengirim ulang notifikasi WA Berita Acara ' . $ba->kode_ba . ' ke ' . $target['recipient']);
+    $this->session->set_flashdata('success', 'Berhasil mengirim ulang notifikasi WA untuk Berita Acara ' . $ba->kode_ba . ' ke ' . $target['recipient'] . '.');
     redirect($referer);
   }
 }

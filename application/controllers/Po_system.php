@@ -836,6 +836,16 @@ class Po_system extends CI_Controller
         $cro_link_approval_po_doc = trim($this->input->post('cro_link_approval_po_doc'));
         $cro_catatan         = trim($this->input->post('cro_catatan'));
         $cro_status          = $this->input->post('cro_status');
+        $cro_alasan_terlambat = trim($this->input->post('cro_alasan_terlambat') ?? '');
+
+        // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        $cro_prev_time = $po->created_at ?? $po->tanggal_po;
+        $cro_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($cro_prev_time) : 0.0;
+        if ($cro_wait_hours > 2.0 && empty($cro_alasan_terlambat)) {
+            $this->session->set_flashdata('error', 'Waktu respon approval CRO telah melebihi batas 2 jam kerja (' . $cro_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
 
         $status_po_baru = $po->status;
         $status_proses_baru = $po->status_proses;
@@ -902,6 +912,7 @@ class Po_system extends CI_Controller
             'cro_link_pjb'             => $cro_link_pjb,
             'cro_link_approval_po_doc' => $cro_link_approval_po_doc,
             'cro_catatan'              => $cro_catatan,
+            'cro_alasan_terlambat'     => !empty($cro_alasan_terlambat) ? $cro_alasan_terlambat : null,
             'cro_status'               => $cro_status,
             'cro_user_id'              => sessPenggunaId(),
             'cro_date'                 => date('Y-m-d H:i:s'),
@@ -927,6 +938,7 @@ class Po_system extends CI_Controller
             $logMsg .= " (" . $ready_count . " Barang Ready, " . $indent_count . " Barang Inden)";
         }
         if (!empty($cro_catatan)) $logMsg .= " | Catatan: " . $cro_catatan;
+        if (!empty($cro_alasan_terlambat)) $logMsg .= " | Alasan Terlambat: " . $cro_alasan_terlambat;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
 
         // Notifikasi WA Progres Approval ke Grup Marketing (& Grup Gudang bila ada barang indent)
@@ -988,12 +1000,23 @@ class Po_system extends CI_Controller
         $acc_sistem_pembayaran = $this->input->post('acc_sistem_pembayaran');
         $acc_catatan           = trim($this->input->post('acc_catatan'));
         $acc_status            = $this->input->post('acc_status');
+        $acc_alasan_terlambat  = trim($this->input->post('acc_alasan_terlambat') ?? '');
+
+        // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        $acc_prev_time = $po->cro_date ?: ($po->created_at ?? $po->tanggal_po);
+        $acc_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($acc_prev_time) : 0.0;
+        if ($acc_wait_hours > 2.0 && empty($acc_alasan_terlambat)) {
+            $this->session->set_flashdata('error', 'Waktu respon approval Accounting telah melebihi batas 2 jam kerja (' . $acc_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
 
         $data_update = [
             'acc_cek_harga'         => $acc_cek_harga,
             'acc_sistem_harga'      => $acc_sistem_harga,
             'acc_sistem_pembayaran' => $acc_sistem_pembayaran,
             'acc_catatan'           => $acc_catatan,
+            'acc_alasan_terlambat'  => !empty($acc_alasan_terlambat) ? $acc_alasan_terlambat : null,
             'acc_status'            => $acc_status,
             'acc_user_id'           => sessPenggunaId(),
             'acc_date'              => date('Y-m-d H:i:s'),
@@ -1021,6 +1044,7 @@ class Po_system extends CI_Controller
 
         $logMsg = "Approval Accounting oleh " . $nama_user . " (" . strtoupper($acc_status) . ")";
         if (!empty($acc_catatan)) $logMsg .= " | Catatan: " . $acc_catatan;
+        if (!empty($acc_alasan_terlambat)) $logMsg .= " | Alasan Terlambat: " . $acc_alasan_terlambat;
         $this->md_po_system->addLog($id_po, $po->status, $data_update['status'] ?? $po->status, $logMsg, sessPenggunaId(), $nama_user);
 
         // Notifikasi WA Progres Approval ke Grup Marketing
@@ -1079,12 +1103,23 @@ class Po_system extends CI_Controller
         $pajak_link_approval_faktur= trim($this->input->post('pajak_link_approval_faktur'));
         $pajak_catatan             = trim($this->input->post('pajak_catatan'));
         $pajak_status              = $this->input->post('pajak_status');
+        $pajak_alasan_terlambat    = trim($this->input->post('pajak_alasan_terlambat') ?? '');
+
+        // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        $pajak_prev_time = $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po));
+        $pajak_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($pajak_prev_time) : 0.0;
+        if ($pajak_wait_hours > 2.0 && empty($pajak_alasan_terlambat)) {
+            $this->session->set_flashdata('error', 'Waktu respon approval Pajak telah melebihi batas 2 jam kerja (' . $pajak_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
 
         $data_update = [
             'pajak_cek_pajak'           => $pajak_cek_pajak,
             'pajak_sistem_perpajakan'   => $pajak_sistem_perpajakan,
             'pajak_link_approval_faktur'=> $pajak_link_approval_faktur,
             'pajak_catatan'             => $pajak_catatan,
+            'pajak_alasan_terlambat'    => !empty($pajak_alasan_terlambat) ? $pajak_alasan_terlambat : null,
             'pajak_status'              => $pajak_status,
             'pajak_user_id'             => sessPenggunaId(),
             'pajak_date'                => date('Y-m-d H:i:s'),
@@ -1108,6 +1143,7 @@ class Po_system extends CI_Controller
 
         $logMsg = "Approval Pajak oleh " . $nama_user . " (" . strtoupper($pajak_status) . ")";
         if (!empty($pajak_catatan)) $logMsg .= " | Catatan: " . $pajak_catatan;
+        if (!empty($pajak_alasan_terlambat)) $logMsg .= " | Alasan Terlambat: " . $pajak_alasan_terlambat;
         $this->md_po_system->addLog($id_po, $po->status, $data_update['status'] ?? $po->status, $logMsg, sessPenggunaId(), $nama_user);
 
         // Notifikasi WA Progres Approval ke Grup Marketing
@@ -1162,8 +1198,18 @@ class Po_system extends CI_Controller
             return;
         }
 
-        $gm_catatan = trim($this->input->post('gm_catatan'));
-        $gm_status  = $this->input->post('gm_status');
+        $gm_catatan          = trim($this->input->post('gm_catatan'));
+        $gm_status           = $this->input->post('gm_status');
+        $gm_alasan_terlambat = trim($this->input->post('gm_alasan_terlambat') ?? '');
+
+        // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        $gm_prev_time = $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)));
+        $gm_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($gm_prev_time) : 0.0;
+        if ($gm_wait_hours > 2.0 && empty($gm_alasan_terlambat)) {
+            $this->session->set_flashdata('error', 'Waktu respon persetujuan GM telah melebihi batas 2 jam kerja (' . $gm_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
 
         $sisa_inden = $this->md_po_system->countIndentItems($id_po);
         $status_proses_baru = ($po->cro_cek_stok === 'PROSES SEBAGIAN' && $sisa_inden > 0) ? 'PROSES SEBAGIAN' : 'SUDAH DI PROSES';
@@ -1175,19 +1221,21 @@ class Po_system extends CI_Controller
         }
 
         $data_update = [
-            'gm_catatan'    => $gm_catatan,
-            'gm_status'     => $gm_status,
-            'gm_user_id'    => sessPenggunaId(),
-            'gm_date'       => date('Y-m-d H:i:s'),
-            'status'        => $status_po_baru,
-            'status_proses' => $status_proses_baru,
-            'updated_at'    => date('Y-m-d H:i:s')
+            'gm_catatan'          => $gm_catatan,
+            'gm_alasan_terlambat' => !empty($gm_alasan_terlambat) ? $gm_alasan_terlambat : null,
+            'gm_status'           => $gm_status,
+            'gm_user_id'          => sessPenggunaId(),
+            'gm_date'             => date('Y-m-d H:i:s'),
+            'status'              => $status_po_baru,
+            'status_proses'       => $status_proses_baru,
+            'updated_at'          => date('Y-m-d H:i:s')
         ];
 
         $this->md_po_system->updatePo($id_po, $data_update);
 
         $logMsg = "Approval GM oleh " . $nama_user . " (" . strtoupper($gm_status) . ") - Status Proses: " . $status_proses_baru;
         if (!empty($gm_catatan)) $logMsg .= " | Catatan: " . $gm_catatan;
+        if (!empty($gm_alasan_terlambat)) $logMsg .= " | Alasan Terlambat: " . $gm_alasan_terlambat;
         $this->md_po_system->addLog($id_po, $po->status, $status_po_baru, $logMsg, sessPenggunaId(), $nama_user);
 
         // Notifikasi WA Progres Approval ke Grup Marketing & Grup Gudang

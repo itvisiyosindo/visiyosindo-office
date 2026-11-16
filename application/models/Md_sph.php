@@ -825,14 +825,23 @@ class Md_sph extends CI_Model
     /**
      * Tandatangani SPH
      */
-    public function signSph($id, $signedBy)
+    public function signSph($id, $signedBy, $alasanTerlambat = null)
     {
-        $this->db->where('id', $id);
-        return $this->db->update($this->table, [
-            'status' => 'signed',
+        if (!$this->db->field_exists('alasan_terlambat', $this->table)) {
+            @$this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `alasan_terlambat` TEXT NULL DEFAULT NULL AFTER `signed_at`");
+        }
+
+        $updateData = [
+            'status'    => 'signed',
             'signed_by' => $signedBy,
             'signed_at' => date('Y-m-d H:i:s')
-        ]);
+        ];
+        if (!empty($alasanTerlambat)) {
+            $updateData['alasan_terlambat'] = $alasanTerlambat;
+        }
+
+        $this->db->where('id', $id);
+        return $this->db->update($this->table, $updateData);
     }
 
     /**

@@ -31,6 +31,18 @@ class Md_po_system extends CI_Model
             if (!$this->db->field_exists('cicilan_dp_nominal', 'po_masuk')) {
                 @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `cicilan_dp_nominal` DECIMAL(18,2) DEFAULT 0.00 AFTER `cicilan_dp_persen`");
             }
+            if (!$this->db->field_exists('cro_alasan_terlambat', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `cro_alasan_terlambat` TEXT NULL DEFAULT NULL AFTER `cro_catatan`");
+            }
+            if (!$this->db->field_exists('acc_alasan_terlambat', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `acc_alasan_terlambat` TEXT NULL DEFAULT NULL AFTER `acc_catatan`");
+            }
+            if (!$this->db->field_exists('pajak_alasan_terlambat', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `pajak_alasan_terlambat` TEXT NULL DEFAULT NULL AFTER `pajak_catatan`");
+            }
+            if (!$this->db->field_exists('gm_alasan_terlambat', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `gm_alasan_terlambat` TEXT NULL DEFAULT NULL AFTER `gm_catatan`");
+            }
         }
     }
 

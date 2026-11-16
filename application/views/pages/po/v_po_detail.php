@@ -310,36 +310,40 @@
 
             $poTimelineStages = [
                 [
-                    'label'          => '1. Verifikasi CRO',
-                    'approver'       => !empty($po->nama_kroscek) ? $po->nama_kroscek : 'Syarifah Annisa (CRO)',
-                    'role'           => 'Customer Relationship Officer',
-                    'status'         => $croSt,
-                    'timestamp'      => $po->cro_date ?? null,
-                    'prev_timestamp' => $po->created_at ?? $po->tanggal_po
+                    'label'            => '1. Verifikasi CRO',
+                    'approver'         => !empty($po->nama_kroscek) ? $po->nama_kroscek : 'Syarifah Annisa (CRO)',
+                    'role'             => 'Customer Relationship Officer',
+                    'status'           => $croSt,
+                    'timestamp'        => $po->cro_date ?? null,
+                    'prev_timestamp'   => $po->created_at ?? $po->tanggal_po,
+                    'alasan_terlambat' => $po->cro_alasan_terlambat ?? null
                 ],
                 [
-                    'label'          => '2. Verifikasi Accounting',
-                    'approver'       => !empty($po->nama_acc) ? $po->nama_acc : 'Dirangga Madali / Mulia',
-                    'role'           => 'Accounting & Finance',
-                    'status'         => $accSt,
-                    'timestamp'      => $po->acc_date ?? null,
-                    'prev_timestamp' => $po->cro_date ?: ($po->created_at ?? $po->tanggal_po)
+                    'label'            => '2. Verifikasi Accounting',
+                    'approver'         => !empty($po->nama_acc) ? $po->nama_acc : 'Dirangga Madali / Mulia',
+                    'role'             => 'Accounting & Finance',
+                    'status'           => $accSt,
+                    'timestamp'        => $po->acc_date ?? null,
+                    'prev_timestamp'   => $po->cro_date ?: ($po->created_at ?? $po->tanggal_po),
+                    'alasan_terlambat' => $po->acc_alasan_terlambat ?? null
                 ],
                 [
-                    'label'          => '3. Verifikasi Pajak',
-                    'approver'       => !empty($po->nama_pajak) ? $po->nama_pajak : 'Azhari Pratama',
-                    'role'           => 'Tax Officer',
-                    'status'         => $pjkSt,
-                    'timestamp'      => $po->pajak_date ?? null,
-                    'prev_timestamp' => $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po))
+                    'label'            => '3. Verifikasi Pajak',
+                    'approver'         => !empty($po->nama_pajak) ? $po->nama_pajak : 'Azhari Pratama',
+                    'role'             => 'Tax Officer',
+                    'status'           => $pjkSt,
+                    'timestamp'        => $po->pajak_date ?? null,
+                    'prev_timestamp'   => $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)),
+                    'alasan_terlambat' => $po->pajak_alasan_terlambat ?? null
                 ],
                 [
-                    'label'          => '4. Approval GM',
-                    'approver'       => !empty($po->nama_gm) ? $po->nama_gm : 'Yolanda Pratiwi',
-                    'role'           => 'General Manager',
-                    'status'         => $gmSt,
-                    'timestamp'      => $po->gm_date ?? null,
-                    'prev_timestamp' => $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)))
+                    'label'            => '4. Approval GM',
+                    'approver'         => !empty($po->nama_gm) ? $po->nama_gm : 'Yolanda Pratiwi',
+                    'role'             => 'General Manager',
+                    'status'           => $gmSt,
+                    'timestamp'        => $po->gm_date ?? null,
+                    'prev_timestamp'   => $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po))),
+                    'alasan_terlambat' => $po->gm_alasan_terlambat ?? null
                 ],
             ];
             echo renderApprovalTimelineBar(
@@ -640,6 +644,11 @@
                                 <?php if (!empty($po->cro_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->cro_catatan) ?>"</div>
                                 <?php endif; ?>
+                                <?php if (!empty($po->cro_alasan_terlambat)): ?>
+                                    <div class="small mt-1 px-2 py-1 rounded" style="background:#fff1f2; border:1px solid #fecdd3; color:#9f1239;">
+                                        <i class="fas fa-exclamation-circle mr-1"></i><b>Alasan Terlambat:</b> <?= htmlspecialchars($po->cro_alasan_terlambat) ?>
+                                    </div>
+                                <?php endif; ?>
                                 <?php if (!empty($po->cro_date)): ?>
                                     <small class="text-muted d-block mt-2"><i class="fas fa-user-check mr-1"></i><?= htmlspecialchars($po->nama_kroscek ?? 'CRO') ?> (<?= date('d/m/y H:i', strtotime($po->cro_date)) ?>)</small>
                                 <?php endif; ?>
@@ -681,6 +690,11 @@
                                 <div><b>Syarat Faktur:</b> <?= $hasSyaratFaktur ? '<span class="badge badge-warning text-dark font-weight-bold"><i class="fas fa-exclamation-circle mr-1"></i>WAJIB FAKTUR</span>' : '<span class="text-muted">Bukan Syarat</span>' ?></div>
                                 <?php if (!empty($po->acc_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->acc_catatan) ?>"</div>
+                                <?php endif; ?>
+                                <?php if (!empty($po->acc_alasan_terlambat)): ?>
+                                    <div class="small mt-1 px-2 py-1 rounded" style="background:#fff1f2; border:1px solid #fecdd3; color:#9f1239;">
+                                        <i class="fas fa-exclamation-circle mr-1"></i><b>Alasan Terlambat:</b> <?= htmlspecialchars($po->acc_alasan_terlambat) ?>
+                                    </div>
                                 <?php endif; ?>
                                 <?php if (!empty($po->acc_date)): ?>
                                     <small class="text-muted d-block mt-2"><i class="fas fa-user-check mr-1"></i><?= htmlspecialchars($po->nama_acc ?? 'Accounting') ?> (<?= date('d/m/y H:i', strtotime($po->acc_date)) ?>)</small>
@@ -734,6 +748,11 @@
                                 <?php if (!empty($po->pajak_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->pajak_catatan) ?>"</div>
                                 <?php endif; ?>
+                                <?php if (!empty($po->pajak_alasan_terlambat)): ?>
+                                    <div class="small mt-1 px-2 py-1 rounded" style="background:#fff1f2; border:1px solid #fecdd3; color:#9f1239;">
+                                        <i class="fas fa-exclamation-circle mr-1"></i><b>Alasan Terlambat:</b> <?= htmlspecialchars($po->pajak_alasan_terlambat) ?>
+                                    </div>
+                                <?php endif; ?>
                                 <?php if (!empty($po->pajak_date)): ?>
                                     <small class="text-muted d-block mt-2"><i class="fas fa-user-check mr-1"></i><?= htmlspecialchars($po->nama_pajak ?? 'Pajak') ?> (<?= date('d/m/y H:i', strtotime($po->pajak_date)) ?>)</small>
                                 <?php endif; ?>
@@ -774,6 +793,11 @@
                                 <div><b>Persetujuan PO:</b> <?= ($po->gm_status === 'disetujui') ? '<span class="badge badge-success px-2 py-1">🟢 PO BISA DIPROSES</span>' : '-' ?></div>
                                 <?php if (!empty($po->gm_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->gm_catatan) ?>"</div>
+                                <?php endif; ?>
+                                <?php if (!empty($po->gm_alasan_terlambat)): ?>
+                                    <div class="small mt-1 px-2 py-1 rounded" style="background:#fff1f2; border:1px solid #fecdd3; color:#9f1239;">
+                                        <i class="fas fa-exclamation-circle mr-1"></i><b>Alasan Terlambat:</b> <?= htmlspecialchars($po->gm_alasan_terlambat) ?>
+                                    </div>
                                 <?php endif; ?>
                                 <?php if (!empty($po->gm_date)): ?>
                                     <small class="text-muted d-block mt-2"><i class="fas fa-user-check mr-1"></i><?= htmlspecialchars($po->nama_gm ?? 'GM') ?> (<?= date('d/m/y H:i', strtotime($po->gm_date)) ?>)</small>
@@ -1045,6 +1069,21 @@
                         <textarea name="cro_catatan" class="form-control" rows="2" placeholder="Catatan evaluasi CRO..."><?= htmlspecialchars($po->cro_catatan ?? '') ?></textarea>
                     </div>
 
+                    <?php
+                    $cro_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($po->created_at ?? $po->tanggal_po) : 0.0;
+                    $cro_is_late = ($cro_wait_h > 2.0);
+                    ?>
+                    <?php if ($cro_is_late): ?>
+                        <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon approval telah berjalan <u><?= $cro_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold text-danger">Alasan Keterlambatan Approval (>2 Jam Kerja) <span class="text-danger">*</span></label>
+                            <textarea name="cro_alasan_terlambat" class="form-control border-danger" rows="2" required placeholder="Contoh: Sedang visit instalasi alat di RS / konfirmasi fisik barang ke gudang..."><?= htmlspecialchars($po->cro_alasan_terlambat ?? '') ?></textarea>
+                            <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Alasan wajib diisi untuk transparansi SLA dan audit pimpinan.</small>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Approval CRO</label>
                         <select name="cro_status" id="cro_status" class="form-control" required>
@@ -1109,6 +1148,23 @@
                         <label class="font-weight-bold">Catatan Accounting</label>
                         <textarea name="acc_catatan" class="form-control" rows="2" placeholder="Catatan harga/termin..."><?= htmlspecialchars($po->acc_catatan ?? '') ?></textarea>
                     </div>
+
+                    <?php
+                    $acc_prev_t = $po->cro_date ?: ($po->created_at ?? $po->tanggal_po);
+                    $acc_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($acc_prev_t) : 0.0;
+                    $acc_is_late = ($acc_wait_h > 2.0);
+                    ?>
+                    <?php if ($acc_is_late): ?>
+                        <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon approval telah berjalan <u><?= $acc_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold text-danger">Alasan Keterlambatan Approval (>2 Jam Kerja) <span class="text-danger">*</span></label>
+                            <textarea name="acc_alasan_terlambat" class="form-control border-danger" rows="2" required placeholder="Contoh: Menunggu konfirmasi plafon kredit pelanggan dari bank..."><?= htmlspecialchars($po->acc_alasan_terlambat ?? '') ?></textarea>
+                            <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Alasan wajib diisi untuk transparansi SLA dan audit pimpinan.</small>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Accounting</label>
                         <select name="acc_status" class="form-control" required>
@@ -1169,6 +1225,23 @@
                         <label class="font-weight-bold">Catatan Pajak</label>
                         <textarea name="pajak_catatan" class="form-control" rows="2" placeholder="Catatan pajak..."><?= htmlspecialchars($po->pajak_catatan ?? '') ?></textarea>
                     </div>
+
+                    <?php
+                    $pjk_prev_t = $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po));
+                    $pjk_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($pjk_prev_t) : 0.0;
+                    $pjk_is_late = ($pjk_wait_h > 2.0);
+                    ?>
+                    <?php if ($pjk_is_late): ?>
+                        <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon approval telah berjalan <u><?= $pjk_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold text-danger">Alasan Keterlambatan Approval (>2 Jam Kerja) <span class="text-danger">*</span></label>
+                            <textarea name="pajak_alasan_terlambat" class="form-control border-danger" rows="2" required placeholder="Contoh: Sedang rekonsiliasi data faktur pajak keluaran e-faktur..."><?= htmlspecialchars($po->pajak_alasan_terlambat ?? '') ?></textarea>
+                            <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Alasan wajib diisi untuk transparansi SLA dan audit pimpinan.</small>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="form-group">
                         <label class="font-weight-bold">Keputusan Pajak</label>
                         <select name="pajak_status" class="form-control" required>
@@ -1212,6 +1285,22 @@
                         <label class="font-weight-bold">Catatan General Manager</label>
                         <textarea name="gm_catatan" class="form-control" rows="2" placeholder="Instruksi / catatan pelaksanaan..."><?= htmlspecialchars($po->gm_catatan ?? '') ?></textarea>
                     </div>
+
+                    <?php
+                    $gm_prev_t = $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)));
+                    $gm_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($gm_prev_t) : 0.0;
+                    $gm_is_late = ($gm_wait_h > 2.0);
+                    ?>
+                    <?php if ($gm_is_late): ?>
+                        <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon persetujuan GM telah berjalan <u><?= $gm_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold text-danger">Alasan Keterlambatan Approval (>2 Jam Kerja) <span class="text-danger">*</span></label>
+                            <textarea name="gm_alasan_terlambat" class="form-control border-danger" rows="2" required placeholder="Contoh: Sedang memimpin rapat evaluasi direksi / perjalanan dinas luar kota..."><?= htmlspecialchars($po->gm_alasan_terlambat ?? '') ?></textarea>
+                            <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Alasan wajib diisi untuk transparansi SLA dan audit pimpinan.</small>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>

@@ -16,12 +16,13 @@ if (function_exists('renderApprovalTimelineBar')) {
             'prev_timestamp' => $sph->created_at
         ],
         [
-            'label'          => '2. TTD & Persetujuan SPH',
-            'approver'       => !empty($sph->nama_ttd) ? $sph->nama_ttd : 'General Manager',
-            'role'           => !empty($sph->jabatan_ttd) ? $sph->jabatan_ttd : 'Pejabat Penandatangan',
-            'status'         => $isSigned ? 'approved' : (($sph->status === 'cancelled') ? 'rejected' : 'pending'),
-            'timestamp'      => $sph->signed_at ?? null,
-            'prev_timestamp' => $finalTime ?: $sph->created_at
+            'label'            => '2. TTD & Persetujuan SPH',
+            'approver'         => !empty($sph->nama_ttd) ? $sph->nama_ttd : 'General Manager',
+            'role'             => !empty($sph->jabatan_ttd) ? $sph->jabatan_ttd : 'Pejabat Penandatangan',
+            'status'           => $isSigned ? 'approved' : (($sph->status === 'cancelled') ? 'rejected' : 'pending'),
+            'timestamp'        => $sph->signed_at ?? null,
+            'prev_timestamp'   => $finalTime ?: $sph->created_at,
+            'alasan_terlambat' => $sph->alasan_terlambat ?? null
         ]
     ];
 
@@ -337,6 +338,11 @@ if (function_exists('renderApprovalTimelineBar')) {
                             <i class="fas fa-circle text-success mr-2"></i>
                             <strong>Ditandatangani</strong><br>
                             <small class="text-muted"><?= date('d/m/Y H:i', strtotime($sph->signed_at)) ?></small>
+                            <?php if (!empty($sph->alasan_terlambat)): ?>
+                                <div class="small mt-1 px-2 py-1 rounded" style="background:#fff1f2; border:1px solid #fecdd3; color:#9f1239;">
+                                    <i class="fas fa-exclamation-circle mr-1"></i><b>Alasan Terlambat:</b> <?= htmlspecialchars($sph->alasan_terlambat) ?>
+                                </div>
+                            <?php endif; ?>
                         </li>
                     <?php endif; ?>
                 </ul>
@@ -480,55 +486,104 @@ if (function_exists('renderApprovalTimelineBar')) {
             });
         });
 
-        // Sign
-        $('#btnSign').on('click', function() {
+        // Sign SPH (Maksimal 2 jam kerja, >2 jam wajib input alasan keterlambatan)
+        <?php
+        $sphWaitStart = !empty($sph->finalized_at) ? $sph->finalized_at : ($sph->created_at ?? date('Y-m-d H:i:s'));
+        $sphWaitHours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($sphWaitStart) : 0.0;
+        $sphIsLate = ($sphWaitHours > 2.0);
+        ?>
+        var sphIsLate = <?= $sphIsLate ? 'true' : 'false' ?>;
+        var sphWaitHours = <?= json_encode((string)$sphWaitHours) ?>;
+
+        function submitSignSph(alasanTerlambat) {
+            $.ajax({
+                url: '<?= base_url('sph/sign') ?>',
+                type: 'POST',
+                data: {
+                    id: '<?= encrypt($sph->id) ?>',
+                    alasan_terlambat: alasanTerlambat || ''
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status == 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else if (response.status == 'late_reason_required') {
+                        promptLateReasonSph(response.wait_hours || sphWaitHours);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Terjadi kesalahan saat memproses permintaan.'
+                    });
+                }
+            });
+        }
+
+        function promptLateReasonSph(waitHours) {
             Swal.fire({
-                title: 'Tandatangani SPH?',
-                text: 'Setelah ditandatangani, SPH tidak dapat diubah lagi.',
+                title: 'Alasan Keterlambatan Wajib Diisi',
+                html: '<div class="text-left small mb-3">' +
+                      '<p class="mb-1 text-danger font-weight-bold"><i class="fas fa-exclamation-triangle mr-1"></i> Waktu approval telah berjalan <u>' + waitHours + ' jam kerja</u> (SLA maksimal 2 jam).</p>' +
+                      '<p class="mb-0 text-muted">Anda tetap dapat menandatangani dokumen ini, namun wajib menginput alasan kenapa terjadi keterlambatan approval untuk transparansi dan evaluasi kerja:</p>' +
+                      '</div>',
+                input: 'textarea',
+                inputPlaceholder: 'Tuliskan alasan keterlambatan approval di sini (contoh: Sedang dinas luar / rapat direksi)...',
+                inputAttributes: {
+                    'aria-label': 'Alasan keterlambatan'
+                },
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Tandatangani',
-                cancelButtonText: 'Batal'
+                confirmButtonText: 'Kirim & Tandatangani',
+                cancelButtonText: 'Batal',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'Alasan keterlambatan tidak boleh kosong!';
+                    }
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.ajax({
-                        url: '<?= base_url('sph/sign') ?>',
-                        type: 'POST',
-                        data: {
-                            id: '<?= encrypt($sph->id) ?>'
-                        },
-                        dataType: 'json',
-                        success: function(response) {
-                            if (response.status == 'success') {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil!',
-                                    text: response.message,
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Gagal!',
-                                    text: response.message
-                                });
-                            }
-                        },
-                        error: function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: 'Terjadi kesalahan saat memproses permintaan.'
-                            });
-                        }
-                    });
+                    submitSignSph(result.value);
                 }
             });
+        }
+
+        $('#btnSign').on('click', function() {
+            if (sphIsLate) {
+                promptLateReasonSph(sphWaitHours);
+            } else {
+                Swal.fire({
+                    title: 'Tandatangani SPH?',
+                    text: 'Setelah ditandatangani, SPH tidak dapat diubah lagi.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Tandatangani',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        submitSignSph('');
+                    }
+                });
+            }
         });
     });
 </script>

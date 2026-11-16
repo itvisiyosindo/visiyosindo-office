@@ -732,7 +732,20 @@ class Sph extends CI_Controller
             return;
         }
 
-        $this->md_sph->signSph($id, sessPenggunaId());
+        $alasanTerlambat = trim($this->input->post('alasan_terlambat') ?? '');
+        $waitStart = !empty($sph->finalized_at) ? $sph->finalized_at : ($sph->created_at ?? date('Y-m-d H:i:s'));
+        $waitHours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($waitStart) : 0.0;
+
+        if ($waitHours > 2.0 && empty($alasanTerlambat)) {
+            echo json_encode([
+                'status'     => 'late_reason_required',
+                'wait_hours' => $waitHours,
+                'message'    => 'Waktu approval telah melebihi batas 2 jam kerja (' . $waitHours . ' jam). Masukkan alasan keterlambatan!'
+            ]);
+            return;
+        }
+
+        $this->md_sph->signSph($id, sessPenggunaId(), $alasanTerlambat);
 
         echo json_encode(['status' => 'success', 'message' => 'SPH telah ditandatangani']);
     }

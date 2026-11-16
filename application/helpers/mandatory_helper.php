@@ -1099,6 +1099,103 @@ if (!function_exists('formatApprovalDurationInfo')) {
 	}
 }
 
+if (!function_exists('getApprovalWaitWorkingHours')) {
+	/**
+	 * Menghitung waktu tunggu jam kerja efektif (Senin - Jumat, 08:00 - 17:00 WIB, exclude weekend & libur absensi).
+	 * Digunakan untuk validasi SLA approval (maksimal 2 jam kerja).
+	 * 
+	 * @param string $startDt Waktu mulai antrian approval
+	 * @param string|null $endDt Waktu eksekusi approval (null = waktu saat ini)
+	 * @return float Jam kerja efektif (misal 2.50 jam)
+	 */
+	function getApprovalWaitWorkingHours($startDt, $endDt = null)
+	{
+		if (empty($startDt) || strpos((string)$startDt, '0000-00-00') !== false) {
+			return 0.0;
+		}
+
+		$startStr = trim((string)$startDt);
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $startStr)) {
+			$startStr .= ' 08:00:00';
+		}
+
+		$endStr = !empty($endDt) ? trim((string)$endDt) : date('Y-m-d H:i:s');
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $endStr)) {
+			$endStr .= ' 17:00:00';
+		}
+
+		if ($endStr <= $startStr) {
+			return 0.0;
+		}
+
+		try {
+			$start = new DateTime($startStr);
+			$end   = new DateTime($endStr);
+		} catch (Exception $e) {
+			return 0.0;
+		}
+
+		if ($end <= $start) {
+			return 0.0;
+		}
+
+		// Ambil daftar hari libur dari database jika CI instance tersedia
+		static $holidaysCache = null;
+		if ($holidaysCache === null) {
+			$holidaysCache = [];
+			if (function_exists('get_instance')) {
+				$ci = &get_instance();
+				if (isset($ci->db)) {
+					$hRows = $ci->db->select('tanggal')->from('hari_libur')->get()->result();
+					if (!empty($hRows)) {
+						foreach ($hRows as $hr) {
+							if (!empty($hr->tanggal)) {
+								$holidaysCache[$hr->tanggal] = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		$totalWorkSec = 0;
+		$cur = clone $start;
+
+		while ($cur < $end) {
+			$dow = (int)$cur->format('N');
+			$ymd = $cur->format('Y-m-d');
+
+			// Weekend (Sabtu / Minggu) atau Libur Nasional
+			if ($dow >= 6 || isset($holidaysCache[$ymd])) {
+				$cur->modify('+1 day');
+				$cur->setTime(8, 0, 0);
+				continue;
+			}
+
+			$dayStart = clone $cur;
+			$dayStart->setTime(8, 0, 0);
+			$dayEnd   = clone $cur;
+			$dayEnd->setTime(17, 0, 0);
+
+			$actStart = ($cur > $dayStart) ? $cur : $dayStart;
+			$actEnd   = ($end < $dayEnd) ? $end : $dayEnd;
+
+			if ($actStart < $actEnd && $actStart < $dayEnd && $actEnd > $dayStart) {
+				$segStart = max($actStart->getTimestamp(), $dayStart->getTimestamp());
+				$segEnd   = min($actEnd->getTimestamp(), $dayEnd->getTimestamp());
+				if ($segEnd > $segStart) {
+					$totalWorkSec += ($segEnd - $segStart);
+				}
+			}
+
+			$cur->modify('+1 day');
+			$cur->setTime(8, 0, 0);
+		}
+
+		return round($totalWorkSec / 3600, 2);
+	}
+}
+
 if (!function_exists('renderApprovalTimelineBar')) {
 	/**
 	 * Render komponen visual Timeline & Tracking Bar Waktu Approval (otomatis hilang saat Print/Cetak).
@@ -1361,6 +1458,11 @@ if (!function_exists('renderApprovalTimelineBar')) {
 				if (!empty($dur['valid'])) {
 					$html .= '<div class="att-dur-badge" style="background:' . $dur['badge_bg'] . '; color:' . $dur['badge_text'] . '; border:1px solid ' . $dur['badge_bdr'] . ';">'
 						. '<i class="fas ' . $dur['icon'] . '"></i> Respon: ' . htmlspecialchars($dur['text']) . ' (' . $dur['label_tier'] . ')'
+						. '</div>';
+				}
+				if (!empty($st['alasan_terlambat'])) {
+					$html .= '<div class="att-late-reason" style="margin-top:6px; font-size:11px; background:#fff1f2; border:1px solid #fecdd3; border-radius:6px; padding:4px 8px; color:#9f1239; line-height:1.35;">'
+						. '<i class="fas fa-comment-dots mr-1"></i><strong>Alasan Terlambat:</strong> ' . htmlspecialchars($st['alasan_terlambat'])
 						. '</div>';
 				}
 			} elseif (in_array($stCode, ['approved', 'rejected', 'revisi'], true)) {
