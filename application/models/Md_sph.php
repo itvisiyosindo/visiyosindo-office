@@ -245,6 +245,8 @@ class Md_sph extends CI_Model
      */
     public function getById($id)
     {
+        $this->_ensureSphCustomPaymentSchemaAndData($id);
+
         $this->db->select('sp.*, p.nama as created_by_nama');
         $this->db->from($this->table . ' sp');
         $this->db->join('pengguna p', 'sp.created_by = p.pengguna_id', 'left');
@@ -259,6 +261,94 @@ class Md_sph extends CI_Model
         }
 
         return $sph;
+    }
+
+    /**
+     * Pastikan kolom pembayaran_custom tersedia & terapkan penyesuaian data SPH jd1172 secara idempoten
+     */
+    private function _ensureSphCustomPaymentSchemaAndData($id)
+    {
+        static $checked = false;
+        $origDebug = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+
+        if (!$checked) {
+            $checked = true;
+            @$this->db->query("ALTER TABLE `{$this->table}` MODIFY COLUMN `sistem_pembayaran` VARCHAR(100) DEFAULT 'cash'");
+            $chkCol = @$this->db->query("SHOW COLUMNS FROM `{$this->table}` LIKE 'pembayaran_custom'");
+            if ($chkCol && $chkCol->num_rows() === 0) {
+                @$this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `pembayaran_custom` VARCHAR(255) DEFAULT NULL AFTER `sistem_pembayaran`");
+            }
+        }
+
+        $targetId = function_exists('decrypt') ? (int)decrypt('jd1172') : 0;
+        if ($targetId > 0 && (int)$id === $targetId) {
+            $sphRow = @$this->db->get_where($this->table, ['id' => $targetId])->row();
+            if ($sphRow) {
+                // 1. Update Sistem Pembayaran ke DP 50% + Pelunasan Setelah Instalasi 50% jika masih cash
+                if ($sphRow->sistem_pembayaran === 'cash') {
+                    @$this->db->where('id', $targetId)->update($this->table, [
+                        'sistem_pembayaran' => 'custom',
+                        'pembayaran_custom' => 'DP 50% + Pelunasan Setelah Instalasi 50%'
+                    ]);
+                }
+
+                // 2. Tambahkan item ke-8: Sparepart Alerio Smart 1600 : Battery (1 Pcs, Rp 11.433.000) jika belum ada
+                $existsItem = @$this->db->where('sph_id', $targetId)
+                    ->like('deskripsi', 'Sparepart Alerio Smart 1600 : Battery')
+                    ->count_all_results($this->table_items);
+
+                if ((int)$existsItem === 0) {
+                    $existingItems = @$this->db->where('sph_id', $targetId)
+                        ->order_by('urutan', 'ASC')
+                        ->get($this->table_items)
+                        ->result();
+
+                    $lastItem = !empty($existingItems) ? end($existingItems) : null;
+                    $nextUrutan = $lastItem ? ((int)$lastItem->urutan + 1) : 8;
+                    $hiddenFields = ($lastItem && !empty($lastItem->hidden_fields)) ? $lastItem->hidden_fields : '[]';
+                    $jenisHarga = ($lastItem && !empty($lastItem->jenis_harga)) ? $lastItem->jenis_harga : 'regular';
+
+                    @$this->db->insert($this->table_items, [
+                        'sph_id'           => $targetId,
+                        'urutan'           => $nextUrutan,
+                        'pricelist_id'     => null,
+                        'deskripsi'        => 'Sparepart Alerio Smart 1600 : Battery',
+                        'jenis_harga'      => $jenisHarga,
+                        'harga_pricelist'  => 11433000,
+                        'tipe_diskon'      => 'none',
+                        'diskon_persen'    => 0,
+                        'diskon_nominal'   => 0,
+                        'tampilkan_diskon' => 0,
+                        'harga_penawaran'  => 11433000,
+                        'qty'              => 1,
+                        'subtotal'         => 11433000,
+                        'hide_on_print'    => 0,
+                        'hidden_fields'    => $hiddenFields
+                    ]);
+                    $newItemId = $this->db->insert_id();
+
+                    // Jika item sebelumnya punya dynamic_values (misal Satuan = Pcs), salin untuk item baru
+                    if ($lastItem && $newItemId) {
+                        $lastDynVals = @$this->db->get_where($this->table_dynamic_vals, ['sph_item_id' => $lastItem->id])->result();
+                        if (!empty($lastDynVals)) {
+                            foreach ($lastDynVals as $dv) {
+                                @$this->db->insert($this->table_dynamic_vals, [
+                                    'sph_item_id'   => $newItemId,
+                                    'sph_column_id' => $dv->sph_column_id,
+                                    'nilai'         => $dv->nilai,
+                                    'hide_on_print' => $dv->hide_on_print
+                                ]);
+                            }
+                        }
+                    }
+
+                    $this->updateTotalHarga($targetId);
+                }
+            }
+        }
+
+        $this->db->db_debug = $origDebug;
     }
 
     /**

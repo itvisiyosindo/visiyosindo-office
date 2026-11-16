@@ -827,7 +827,23 @@ $sph = isset($sph) ? $sph : null;
                                         <?= ($hasData && $sph->sistem_pembayaran == 'cicilan') ? 'checked' : '' ?>>
                                     <i class="fas fa-calendar-alt mr-1"></i> Cicilan
                                 </label>
+                                <label class="btn btn-outline-primary flex-fill <?= ($hasData && $sph->sistem_pembayaran == 'custom') ? 'active' : '' ?>">
+                                    <input type="radio" name="sistem_pembayaran" id="sistem_custom" value="custom"
+                                        <?= ($hasData && $sph->sistem_pembayaran == 'custom') ? 'checked' : '' ?>>
+                                    <i class="fas fa-sliders-h mr-1"></i> DP / Custom
+                                </label>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Payment Section -->
+                    <div class="custom-payment-section p-3 rounded" id="customPaymentSection" style="background: #f3e5f5; border: 1px dashed #9c27b0; display: none;">
+                        <h6 class="text-primary font-weight-bold mb-2"><i class="fas fa-sliders-h mr-1"></i> Teks Sistem Pembayaran</h6>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold small">Rincian Pembayaran (Tampil setelah kata "Pembayaran ")</label>
+                            <input type="text" class="form-control" name="pembayaran_custom" id="pembayaran_custom"
+                                value="<?= htmlspecialchars(($hasData && !empty($sph->pembayaran_custom)) ? $sph->pembayaran_custom : 'DP 50% + Pelunasan Setelah Instalasi 50%') ?>"
+                                placeholder="Contoh: DP 50% + Pelunasan Setelah Instalasi 50%">
                         </div>
                     </div>
 
@@ -1302,13 +1318,15 @@ $sph = isset($sph) ? $sph : null;
 
             function toggleSistemPembayaran() {
                 var sistem = $('input[name="sistem_pembayaran"]:checked').val();
-                $('.tempo-section, .cicilan-section').hide();
+                $('.tempo-section, .cicilan-section, .custom-payment-section').hide();
 
                 if (sistem == 'tempo') {
                     $('.tempo-section').slideDown(300);
                 } else if (sistem == 'cicilan') {
                     $('.cicilan-section').slideDown(300);
                     hitungCicilan();
+                } else if (sistem == 'custom') {
+                    $('.custom-payment-section').slideDown(300);
                 }
             }
 

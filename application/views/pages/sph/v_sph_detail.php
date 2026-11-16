@@ -172,6 +172,8 @@
                         <li>Sisa Cicilan: <?= $sph->cicilan_bulan ?> bulan</li>
                         <li>Per Bulan: <strong>Rp <?= number_format($sph->cicilan_per_bulan, 0, ',', '.') ?></strong></li>
                     </ul>
+                <?php elseif ($sph->sistem_pembayaran == 'custom'): ?>
+                    <p class="mb-0">Pembayaran <strong><?= htmlspecialchars($sph->pembayaran_custom ?: 'DP 50% + Pelunasan Setelah Instalasi 50%') ?></strong></p>
                 <?php endif; ?>
             </div>
         </div>
@@ -215,13 +217,15 @@
                         <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar
                     </a>
 
-                    <?php if ($sph->status == 'draft'): ?>
+                    <?php if ($sph->status == 'draft' || $sph->status == 'signed'): ?>
                         <a href="<?= base_url('sph/edit/' . encrypt($sph->id)) ?>" class="btn btn-warning btn-block mb-2">
                             <i class="fas fa-edit mr-1"></i> Edit SPH
                         </a>
-                        <button type="button" class="btn btn-info btn-block mb-2" id="btnFinalize">
-                            <i class="fas fa-check mr-1"></i> Finalisasi
-                        </button>
+                        <?php if ($sph->status == 'draft'): ?>
+                            <button type="button" class="btn btn-info btn-block mb-2" id="btnFinalize">
+                                <i class="fas fa-check mr-1"></i> Finalisasi
+                            </button>
+                        <?php endif; ?>
                     <?php elseif ($sph->status == 'final'): ?>
                         <button type="button" class="btn btn-warning btn-block mb-2" id="btnRevertEdit">
                             <i class="fas fa-edit mr-1"></i> Edit SPH (Revisi)

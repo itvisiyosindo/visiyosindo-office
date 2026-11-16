@@ -81,8 +81,8 @@ class Sph extends CI_Controller
             $actions = '<div class="btn-group">';
             $actions .= '<a href="' . base_url('sph/detail/' . $id) . '" class="btn btn-sm btn-info" title="Lihat"><i class="fas fa-eye"></i></a>';
 
-            // Hanya bisa edit jika belum signed
-            if ($row->status != 'signed' && $row->status != 'cancelled') {
+            // Bisa edit selama belum cancelled
+            if ($row->status != 'cancelled') {
                 $actions .= '<a href="' . base_url('sph/edit/' . $id) . '" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>';
             }
 
@@ -216,6 +216,7 @@ class Sph extends CI_Controller
                 'nama_penerima' => $namaPenerima,
                 'alamat_penerima' => $alamatPenerima,
                 'sistem_pembayaran' => $this->input->post('sistem_pembayaran'),
+                'pembayaran_custom' => $this->input->post('pembayaran_custom') ?: null,
                 'tempo_hari' => $this->input->post('tempo_hari') ?: null,
                 'dp_persen' => $this->input->post('dp_persen') ?: null,
                 'dp_nominal' => $this->input->post('dp_nominal') ?: null,
@@ -441,8 +442,8 @@ class Sph extends CI_Controller
         }
 
         // Cek apakah bisa diedit
-        if ($sph->status == 'signed') {
-            $this->session->set_flashdata('error', 'SPH yang sudah ditandatangani tidak dapat diedit');
+        if ($sph->status == 'cancelled') {
+            $this->session->set_flashdata('error', 'SPH yang dibatalkan tidak dapat diedit');
             redirect('sph/detail/' . encrypt($id));
         }
 
@@ -506,7 +507,7 @@ class Sph extends CI_Controller
         $id = decrypt($this->input->post('id'));
         $sph = $this->md_sph->getById($id);
 
-        if (!$sph || $sph->status == 'signed') {
+        if (!$sph || $sph->status == 'cancelled') {
             echo json_encode(['status' => 'error', 'message' => 'SPH tidak dapat diupdate']);
             return;
         }
@@ -541,6 +542,7 @@ class Sph extends CI_Controller
                 'nama_penerima' => $namaPenerima,
                 'alamat_penerima' => $alamatPenerima,
                 'sistem_pembayaran' => $this->input->post('sistem_pembayaran'),
+                'pembayaran_custom' => $this->input->post('pembayaran_custom') ?: null,
                 'tempo_hari' => $this->input->post('tempo_hari') ?: null,
                 'dp_persen' => $this->input->post('dp_persen') ?: null,
                 'dp_nominal' => $this->input->post('dp_nominal') ?: null,

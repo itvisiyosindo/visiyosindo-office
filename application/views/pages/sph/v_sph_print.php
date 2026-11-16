@@ -434,7 +434,13 @@
             <?php elseif ($sph->sistem_pembayaran == 'cicilan'): ?>
                 Sistem Pembayaran <strong>DP <?= intval($sph->dp_persen) ?>%</strong> Sisa Cicil <strong><?= $sph->cicilan_bulan ?>x</strong>
             <?php elseif ($sph->sistem_pembayaran == 'custom'): ?>
-                <?= $sph->pembayaran_custom ?? 'Sesuai kesepakatan' ?>
+                <?php
+                $customPay = trim((string)($sph->pembayaran_custom ?? 'DP 50% + Pelunasan Setelah Instalasi 50%'));
+                if (stripos($customPay, 'pembayaran ') === 0) {
+                    $customPay = trim(substr($customPay, 11));
+                }
+                ?>
+                Pembayaran <strong><?= htmlspecialchars($customPay) ?></strong>
             <?php endif; ?>
         </div>
     </div>

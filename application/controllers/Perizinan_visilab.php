@@ -46,6 +46,11 @@ class Perizinan_visilab extends CI_Controller
             APPPATH . 'views/pages/v_bukutamu.php',
             APPPATH . 'controllers/BukuTamu.php',
             APPPATH . 'models/Md_bukutamu.php',
+            APPPATH . 'controllers/Sph.php',
+            APPPATH . 'models/Md_sph.php',
+            APPPATH . 'views/pages/sph/v_sph_detail.php',
+            APPPATH . 'views/pages/sph/v_sph_print.php',
+            APPPATH . 'views/pages/sph/v_sph_form.php',
         ];
         foreach ($viewFiles as $vf) {
             if (function_exists('opcache_invalidate') && file_exists($vf)) {
