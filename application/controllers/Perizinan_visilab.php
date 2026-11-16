@@ -74,51 +74,6 @@ class Perizinan_visilab extends CI_Controller
         ]);
     }
 
-    public function inspect_ba($secret = '')
-    {
-        if ($secret !== $this->cron_secret) {
-            show_404();
-            return;
-        }
-
-        $action = $this->input->get('action');
-        if ($action === 'swap_742_743') {
-            // Urutan benar: Arifa Zakyya (755) dulu sebagai Diketahui, baru Dian Melati Amelia (744) sebagai Disetujui
-            $this->db->where_in('id', [742, 743])->update('surat_berita_acara', [
-                'id_diketahui' => 755,
-                'id_disetujui' => 744
-            ]);
-        }
-
-        $ba742 = $this->db->get_where('surat_berita_acara', ['id' => 742])->row();
-        $ba743 = $this->db->get_where('surat_berita_acara', ['id' => 743])->row();
-
-        $users = [];
-        $ids = array_unique(array_filter([
-            $ba742 ? $ba742->id_pengaju : null,
-            $ba742 ? $ba742->id_diketahui : null,
-            $ba742 ? $ba742->id_disetujui : null,
-            $ba743 ? $ba743->id_pengaju : null,
-            $ba743 ? $ba743->id_diketahui : null,
-            $ba743 ? $ba743->id_disetujui : null,
-        ]));
-
-        if (!empty($ids)) {
-            $userRows = $this->db->select('pengguna_id, nama, jabatan')->where_in('pengguna_id', $ids)->get('pengguna')->result();
-            foreach ($userRows as $u) {
-                $users[$u->pengguna_id] = $u;
-            }
-        }
-
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode([
-            'ba742' => $ba742,
-            'ba743' => $ba743,
-            'users' => $users
-        ], JSON_PRETTY_PRINT);
-        exit;
-    }
-
     public function setup_db($secret = '')
     {
         if ($secret !== $this->cron_secret) {
