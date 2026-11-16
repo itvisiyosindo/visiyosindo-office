@@ -27,6 +27,41 @@ class Perizinan_visilab extends CI_Controller
     /**
      * Endpoint langsung Setup & Inisialisasi Database
      */
+    public function debug_detail($secret = '', $param2 = '')
+    {
+        if ($secret !== $this->cron_secret) {
+            show_404();
+            return;
+        }
+
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+
+        $idDecrypted = decrypt($param2);
+        $res = [
+            'php_version' => PHP_VERSION,
+            'param2' => $param2,
+            'id_decrypted' => $idDecrypted,
+        ];
+
+        try {
+            $targetPenggunaId = (int)$idDecrypted;
+            $res['user_row'] = $this->md_pengguna->getByWhere(['p.pengguna_id' => $targetPenggunaId]);
+            $this->load->model('md_kpi_leaderboard');
+            $res['kpi_summary'] = $this->md_kpi_leaderboard->getUserLeaderboardSummary($targetPenggunaId);
+        } catch (Throwable $t) {
+            $res['error'] = [
+                'message' => $t->getMessage(),
+                'file' => $t->getFile(),
+                'line' => $t->getLine(),
+                'trace' => $t->getTraceAsString()
+            ];
+        }
+
+        echo json_encode($res, JSON_PRETTY_PRINT);
+    }
+
     public function pull_code($secret = '')
     {
         if ($secret !== $this->cron_secret) {
