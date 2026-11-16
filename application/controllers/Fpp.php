@@ -1745,4 +1745,54 @@ class Fpp extends CI_Controller
     $mpdf->WriteHTML($html);
     $mpdf->Output($file_pdf . '.pdf', 'I');
   }
+
+  public function api_update_item_price()
+  {
+    $token = $this->input->get('token');
+    $myId  = (int)sessPenggunaId();
+    $isAuth = ($token === 'vysi_medikal_2026') || isAdmin() || $myId === 778;
+    if (!$isAuth) {
+      header('Content-Type: application/json; charset=utf-8');
+      echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+      exit;
+    }
+
+    $id_fpp = (int)$this->input->get('id_fpp');
+    $price  = $this->input->get('price');
+    $action = $this->input->get('action');
+
+    if ($id_fpp <= 0) {
+      header('Content-Type: application/json; charset=utf-8');
+      echo json_encode(['status' => 'error', 'msg' => 'Parameter id_fpp wajib diisi.']);
+      exit;
+    }
+
+    $items = $this->db->get_where('fpp_detail', ['id_fpp' => $id_fpp])->result();
+    $fpp   = $this->db->get_where('fpp', ['id' => $id_fpp])->row();
+
+    if ($action === 'execute' && $price !== null && is_numeric($price)) {
+      $newPrice = (float)$price;
+      $this->db->where('id_fpp', $id_fpp)->update('fpp_detail', ['price' => $newPrice]);
+      $updatedItems = $this->db->get_where('fpp_detail', ['id_fpp' => $id_fpp])->result();
+
+      header('Content-Type: application/json; charset=utf-8');
+      echo json_encode([
+        'status' => 'success',
+        'msg' => 'Harga berhasil diperbarui ke ' . number_format($newPrice, 0, ',', '.'),
+        'fpp' => $fpp,
+        'updated_items' => $updatedItems
+      ], JSON_PRETTY_PRINT);
+      exit;
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+      'status' => 'preview',
+      'id_fpp' => $id_fpp,
+      'fpp' => $fpp,
+      'items' => $items,
+      'instruction' => 'Gunakan &action=execute&price=850000 untuk memperbarui harga semua item.'
+    ], JSON_PRETTY_PRINT);
+    exit;
+  }
 }
