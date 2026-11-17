@@ -237,7 +237,7 @@ class Md_after_sales extends CI_Model
      */
     public function getById($id)
     {
-        $this->db->select('ass.*, u.nama as nama_pembuat, t.nama as teknisi_nama_lengkap, t.telepon as no_wa_teknisi');
+        $this->db->select('ass.*, u.nama as nama_pembuat, t.nama as teknisi_nama_lengkap, t.no_hp as no_wa_teknisi');
         $this->db->from("{$this->table} ass");
         $this->db->join('pengguna u', 'u.pengguna_id = ass.created_by', 'left');
         $this->db->join('pengguna t', 't.pengguna_id = ass.id_teknisi', 'left');
@@ -375,7 +375,7 @@ class Md_after_sales extends CI_Model
      */
     public function getTeknisiList()
     {
-        return $this->db->select('pengguna_id, nama, jabatan, telepon')
+        return $this->db->select('pengguna_id, nama, jabatan, no_hp')
             ->where('status', 1)
             ->where('is_active', 1)
             ->where('id_divisi', 7) // Divisi Teknisi

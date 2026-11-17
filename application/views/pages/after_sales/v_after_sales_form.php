@@ -126,7 +126,7 @@
                                         <?php if (!empty($teknisi_list)) {
                                             foreach ($teknisi_list as $tek) { ?>
                                                 <option value="<?= $tek->pengguna_id ?>">
-                                                    <?= htmlspecialchars($tek->nama) ?> <?= !empty($tek->telepon) ? '(' . htmlspecialchars($tek->telepon) . ')' : '' ?>
+                                                    <?= htmlspecialchars($tek->nama) ?> <?= !empty($tek->no_hp) ? '(' . htmlspecialchars($tek->no_hp) . ')' : '' ?>
                                                 </option>
                                         <?php }
                                         } ?>
