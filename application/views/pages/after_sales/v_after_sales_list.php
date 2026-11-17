@@ -99,7 +99,7 @@
                         <option value="">-- Semua Teknisi --</option>
                         <?php if (!empty($teknisi_list)) {
                             foreach ($teknisi_list as $tek) { ?>
-                                <option value="<?= $tek->id_pengguna ?>" <?= ($filter['id_teknisi'] ?? '') == $tek->id_pengguna ? 'selected' : '' ?>>
+                                <option value="<?= $tek->pengguna_id ?>" <?= ($filter['id_teknisi'] ?? '') == $tek->pengguna_id ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($tek->nama) ?>
                                 </option>
                         <?php }

@@ -125,7 +125,7 @@
                                         <option value="">-- Pilih Teknisi Penanggung Jawab --</option>
                                         <?php if (!empty($teknisi_list)) {
                                             foreach ($teknisi_list as $tek) { ?>
-                                                <option value="<?= $tek->id_pengguna ?>">
+                                                <option value="<?= $tek->pengguna_id ?>">
                                                     <?= htmlspecialchars($tek->nama) ?> <?= !empty($tek->telepon) ? '(' . htmlspecialchars($tek->telepon) . ')' : '' ?>
                                                 </option>
                                         <?php }

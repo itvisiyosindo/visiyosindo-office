@@ -120,7 +120,7 @@ class After_sales extends CI_Controller
         // Ambil nama teknisi jika dipilih
         $namaTeknisi = null;
         if (!empty($idTeknisi)) {
-            $t = $this->db->get_where('pengguna', ['id_pengguna' => $idTeknisi])->row();
+            $t = $this->db->get_where('pengguna', ['pengguna_id' => $idTeknisi])->row();
             if ($t) {
                 $namaTeknisi = $t->nama;
             }
@@ -272,7 +272,7 @@ class After_sales extends CI_Controller
 
         if (!empty($idTeknisi)) {
             $updateData['id_teknisi'] = $idTeknisi;
-            $t = $this->db->get_where('pengguna', ['id_pengguna' => $idTeknisi])->row();
+            $t = $this->db->get_where('pengguna', ['pengguna_id' => $idTeknisi])->row();
             if ($t) {
                 $updateData['nama_teknisi'] = $t->nama;
             }

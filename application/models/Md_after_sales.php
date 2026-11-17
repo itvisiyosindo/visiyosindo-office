@@ -199,8 +199,8 @@ class Md_after_sales extends CI_Model
     {
         $this->db->select('ass.*, u.nama as nama_pembuat, t.nama as teknisi_nama_lengkap');
         $this->db->from("{$this->table} ass");
-        $this->db->join('pengguna u', 'u.id_pengguna = ass.created_by', 'left');
-        $this->db->join('pengguna t', 't.id_pengguna = ass.id_teknisi', 'left');
+        $this->db->join('pengguna u', 'u.pengguna_id = ass.created_by', 'left');
+        $this->db->join('pengguna t', 't.pengguna_id = ass.id_teknisi', 'left');
         $this->db->where('ass.status_data', 1);
 
         if (!empty($filter['status'])) {
@@ -239,8 +239,8 @@ class Md_after_sales extends CI_Model
     {
         $this->db->select('ass.*, u.nama as nama_pembuat, t.nama as teknisi_nama_lengkap, t.telepon as no_wa_teknisi');
         $this->db->from("{$this->table} ass");
-        $this->db->join('pengguna u', 'u.id_pengguna = ass.created_by', 'left');
-        $this->db->join('pengguna t', 't.id_pengguna = ass.id_teknisi', 'left');
+        $this->db->join('pengguna u', 'u.pengguna_id = ass.created_by', 'left');
+        $this->db->join('pengguna t', 't.pengguna_id = ass.id_teknisi', 'left');
         $this->db->where('ass.id', $id);
         $this->db->where('ass.status_data', 1);
         $ass = $this->db->get()->row();
@@ -375,8 +375,9 @@ class Md_after_sales extends CI_Model
      */
     public function getTeknisiList()
     {
-        return $this->db->select('id_pengguna, nama, jabatan, telepon')
-            ->where('status_hapus', 0)
+        return $this->db->select('pengguna_id, nama, jabatan, telepon')
+            ->where('status', 1)
+            ->where('is_active', 1)
             ->where('id_divisi', 7) // Divisi Teknisi
             ->order_by('nama', 'ASC')
             ->get('pengguna')
