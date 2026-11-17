@@ -302,8 +302,8 @@ class Md_after_sales extends CI_Model
             'status_lama'    => null,
             'status_baru'    => $data['status'] ?? 'menunggu_kroscek',
             'keterangan'     => 'Tiket after sales service baru berhasil dibuat.',
-            'user_id'        => $data['created_by'] ?? sessPenggunaId(),
-            'user_nama'      => sessNamaPengguna(),
+            'user_id'        => $data['created_by'] ?? (function_exists('sessPenggunaId') ? sessPenggunaId() : 1),
+            'user_nama'      => function_exists('sessNamaPengguna') ? (sessNamaPengguna() ?: 'Administrator') : 'Administrator',
             'created_at'     => date('Y-m-d H:i:s')
         ]);
 
