@@ -59,7 +59,12 @@ class Perizinan_visilab extends CI_Controller
             APPPATH . 'views/pages/surat_new/v_detail_po.php',
             APPPATH . 'models/Md_purchase_order.php',
             APPPATH . 'views/pages/purchase_order/v_detail_po.php',
+            APPPATH . 'views/pages/laporan/v_lap_detail_rev2.php',
+            APPPATH . 'views/pages/laporan/v_my_detail_nilai_rev2.php',
+            APPPATH . 'controllers/Laporan.php',
+            APPPATH . 'models/Md_laporan.php',
         ];
+        $targetLapView = APPPATH . 'views/pages/laporan/v_lap_detail_rev2.php';
         foreach ($viewFiles as $vf) {
             if (function_exists('opcache_invalidate') && file_exists($vf)) {
                 @opcache_invalidate($vf, true);
@@ -70,7 +75,7 @@ class Perizinan_visilab extends CI_Controller
             'cmd'           => $cmd,
             'output'        => $out,
             'opcache_reset' => $opcacheReset,
-            'view_mtime'    => file_exists($viewFile) ? date('Y-m-d H:i:s', filemtime($viewFile)) : 'missing'
+            'lap_view_mtime'=> file_exists($targetLapView) ? date('Y-m-d H:i:s', filemtime($targetLapView)) : 'missing'
         ]);
     }
 
