@@ -481,7 +481,7 @@ $sph = isset($sph) ? $sph : null;
                                                     <td class="text-right" id="tarif_ons">-</td>
                                                     <td class="text-right font-weight-bold" id="total_ons">-</td>
                                                     <td class="text-center">
-                                                        <button type="button" class="btn btn-xs btn-outline-info btn-salin-ket" data-layanan="ONS" title="Tambahkan ke Catatan SPH">
+                                                        <button type="button" class="btn btn-xs btn-outline-info btn-salin-ket" id="btnSalinOns" data-layanan="ONS" title="Tambahkan ke Catatan SPH">
                                                             <i class="fas fa-plus"></i> Ke Keterangan
                                                         </button>
                                                     </td>
@@ -492,7 +492,7 @@ $sph = isset($sph) ? $sph : null;
                                                     <td class="text-right" id="tarif_reguler">-</td>
                                                     <td class="text-right font-weight-bold" id="total_reguler">-</td>
                                                     <td class="text-center">
-                                                        <button type="button" class="btn btn-xs btn-outline-primary btn-salin-ket" data-layanan="Reguler" title="Tambahkan ke Catatan SPH">
+                                                        <button type="button" class="btn btn-xs btn-outline-primary btn-salin-ket" id="btnSalinReguler" data-layanan="Reguler" title="Tambahkan ke Catatan SPH">
                                                             <i class="fas fa-plus"></i> Ke Keterangan
                                                         </button>
                                                     </td>
@@ -500,8 +500,11 @@ $sph = isset($sph) ? $sph : null;
                                             </tbody>
                                         </table>
                                     </div>
-                                    <small class="text-muted font-italic">
-                                        * Estimasi acuan standar ekspedisi rekanan VYM (JNE/TIKI/SiCepat). Klik <strong>"Ke Keterangan"</strong> untuk otomatis mencantumkan syarat pengiriman di surat SPH.
+                                    <small class="text-muted font-italic d-block mb-1">
+                                        * Estimasi ONS (Next Day) hanya berlaku untuk kota besar yang memiliki akses kargo udara langsung dan diproses sebelum pukul 11.00 WIB.
+                                    </small>
+                                    <small class="text-muted font-italic d-block">
+                                        * Klik <strong>"Ke Keterangan"</strong> untuk otomatis mencantumkan rincian estimasi ini pada surat SPH.
                                     </small>
                                 </div>
                             </div>
@@ -2193,45 +2196,45 @@ $sph = isset($sph) ? $sph : null;
             var tarifMatriks = {
                 // ASAL: PEKANBARU
                 'pekanbaru': {
-                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { tarif: 15000, est: '1 Hari' }, reg: { tarif: 8000, est: '1 - 2 Hari' } },
-                    'jabodetabek': { label: 'Jabodetabek', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '2 - 3 Hari Kerja' } },
-                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 3 Hari Kerja' } },
-                    'jawa_timur': { label: 'Jawa Timur', ons: { tarif: 34000, est: '1 Hari Kerja' }, reg: { tarif: 22000, est: '2 - 4 Hari Kerja' } },
-                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 18000, est: '2 - 3 Hari Kerja' } },
-                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '2 - 3 Hari Kerja' } },
-                    'sumatera_kab': { label: 'Sumatera (Kabupaten)', ons: { tarif: 36000, est: '1 - 2 Hari' }, reg: { tarif: 22000, est: '3 - 5 Hari Kerja' } },
-                    'kalimantan': { label: 'Kalimantan', ons: { tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '3 - 5 Hari Kerja' } },
-                    'sulawesi': { label: 'Sulawesi', ons: { tarif: 55000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 38000, est: '3 - 5 Hari Kerja' } },
-                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { tarif: 52000, est: '1 - 2 Hari' }, reg: { tarif: 36000, est: '3 - 5 Hari Kerja' } },
-                    'indonesia_timur': { label: 'Maluku & Papua', ons: { tarif: 85000, est: '2 - 3 Hari' }, reg: { tarif: 55000, est: '5 - 8 Hari Kerja' } }
+                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { avail: true, tarif: 15000, est: '1 Hari Kerja' }, reg: { tarif: 8000, est: '1 - 2 Hari Kerja' } },
+                    'jabodetabek': { label: 'Jabodetabek', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '3 - 4 Hari Kerja' } },
+                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { avail: true, tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '3 - 4 Hari Kerja' } },
+                    'jawa_timur': { label: 'Jawa Timur (Surabaya dsb)', ons: { avail: true, tarif: 34000, est: '1 Hari Kerja' }, reg: { tarif: 22000, est: '3 - 4 Hari Kerja' } },
+                    'jawa_barat': { label: 'Jawa Barat & Banten (Bandung dsb)', ons: { avail: true, tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 18000, est: '3 - 4 Hari Kerja' } },
+                    'sumatera_kota': { label: 'Sumatera (Kota Besar: Medan, Padang, Batam)', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '2 - 3 Hari Kerja' } },
+                    'sumatera_kab': { label: 'Sumatera (Kabupaten / Non-Bandara)', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 22000, est: '4 - 6 Hari Kerja' } },
+                    'kalimantan': { label: 'Kalimantan', ons: { avail: true, tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '4 - 6 Hari Kerja' } },
+                    'sulawesi': { label: 'Sulawesi', ons: { avail: true, tarif: 55000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 38000, est: '4 - 6 Hari Kerja' } },
+                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { avail: true, tarif: 52000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 36000, est: '4 - 6 Hari Kerja' } },
+                    'indonesia_timur': { label: 'Maluku & Papua', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 55000, est: '5 - 8 Hari Kerja' } }
                 },
                 // ASAL: JAKARTA
                 'jakarta': {
-                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '2 - 3 Hari' } },
-                    'jabodetabek': { label: 'Jabodetabek (Lokal)', ons: { tarif: 14000, est: '1 Hari' }, reg: { tarif: 9000, est: '1 - 2 Hari' } },
-                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { tarif: 22000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '1 - 2 Hari' } },
-                    'jawa_timur': { label: 'Jawa Timur', ons: { tarif: 24000, est: '1 Hari Kerja' }, reg: { tarif: 14000, est: '2 - 3 Hari' } },
-                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari' } },
-                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '2 - 3 Hari' } },
-                    'sumatera_kab': { label: 'Sumatera (Kabupaten)', ons: { tarif: 35000, est: '1 - 2 Hari' }, reg: { tarif: 22000, est: '3 - 5 Hari' } },
-                    'kalimantan': { label: 'Kalimantan', ons: { tarif: 42000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 30000, est: '2 - 4 Hari' } },
-                    'sulawesi': { label: 'Sulawesi', ons: { tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 34000, est: '3 - 5 Hari' } },
-                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { tarif: 38000, est: '1 Hari Kerja' }, reg: { tarif: 24000, est: '2 - 3 Hari' } },
-                    'indonesia_timur': { label: 'Maluku & Papua', ons: { tarif: 75000, est: '2 - 3 Hari' }, reg: { tarif: 48000, est: '4 - 7 Hari' } }
+                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '3 - 4 Hari Kerja' } },
+                    'jabodetabek': { label: 'Jabodetabek (Lokal)', ons: { avail: true, tarif: 14000, est: '1 Hari Kerja' }, reg: { tarif: 9000, est: '1 - 2 Hari Kerja' } },
+                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { avail: true, tarif: 22000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '2 - 3 Hari Kerja' } },
+                    'jawa_timur': { label: 'Jawa Timur', ons: { avail: true, tarif: 24000, est: '1 Hari Kerja' }, reg: { tarif: 14000, est: '2 - 3 Hari Kerja' } },
+                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { avail: true, tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari Kerja' } },
+                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '3 - 4 Hari Kerja' } },
+                    'sumatera_kab': { label: 'Sumatera (Kabupaten / Non-Bandara)', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 22000, est: '4 - 6 Hari Kerja' } },
+                    'kalimantan': { label: 'Kalimantan', ons: { avail: true, tarif: 42000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 30000, est: '3 - 5 Hari Kerja' } },
+                    'sulawesi': { label: 'Sulawesi', ons: { avail: true, tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 34000, est: '3 - 5 Hari Kerja' } },
+                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { avail: true, tarif: 38000, est: '1 Hari Kerja' }, reg: { tarif: 24000, est: '3 - 4 Hari Kerja' } },
+                    'indonesia_timur': { label: 'Maluku & Papua', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 48000, est: '5 - 8 Hari Kerja' } }
                 },
                 // ASAL: JOGJA (YOGYAKARTA)
                 'jogja': {
-                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 4 Hari' } },
-                    'jabodetabek': { label: 'Jabodetabek', ons: { tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 12000, est: '1 - 2 Hari' } },
-                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah (Lokal)', ons: { tarif: 12000, est: '1 Hari' }, reg: { tarif: 7000, est: '1 Hari' } },
-                    'jawa_timur': { label: 'Jawa Timur', ons: { tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari' } },
-                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '1 - 2 Hari' } },
-                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 4 Hari' } },
-                    'sumatera_kab': { label: 'Sumatera (Kabupaten)', ons: { tarif: 40000, est: '2 Hari Kerja' }, reg: { tarif: 26000, est: '3 - 5 Hari' } },
-                    'kalimantan': { label: 'Kalimantan', ons: { tarif: 44000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 32000, est: '3 - 5 Hari' } },
-                    'sulawesi': { label: 'Sulawesi', ons: { tarif: 50000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '3 - 5 Hari' } },
-                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 3 Hari' } },
-                    'indonesia_timur': { label: 'Maluku & Papua', ons: { tarif: 80000, est: '2 - 3 Hari' }, reg: { tarif: 52000, est: '5 - 7 Hari' } }
+                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { avail: true, tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '3 - 4 Hari Kerja' } },
+                    'jabodetabek': { label: 'Jabodetabek', ons: { avail: true, tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 12000, est: '2 - 3 Hari Kerja' } },
+                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah (Lokal)', ons: { avail: true, tarif: 12000, est: '1 Hari Kerja' }, reg: { tarif: 7000, est: '1 Hari Kerja' } },
+                    'jawa_timur': { label: 'Jawa Timur', ons: { avail: true, tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari Kerja' } },
+                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { avail: true, tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '2 - 3 Hari Kerja' } },
+                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { avail: true, tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '3 - 5 Hari Kerja' } },
+                    'sumatera_kab': { label: 'Sumatera (Kabupaten / Non-Bandara)', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 26000, est: '4 - 6 Hari Kerja' } },
+                    'kalimantan': { label: 'Kalimantan', ons: { avail: true, tarif: 44000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 32000, est: '3 - 5 Hari Kerja' } },
+                    'sulawesi': { label: 'Sulawesi', ons: { avail: true, tarif: 50000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '3 - 5 Hari Kerja' } },
+                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { avail: true, tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 4 Hari Kerja' } },
+                    'indonesia_timur': { label: 'Maluku & Papua', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 52000, est: '5 - 8 Hari Kerja' } }
                 }
             };
 
@@ -2256,16 +2259,27 @@ $sph = isset($sph) ? $sph : null;
                 var data = tarifAsal[zona];
                 if (!data) return;
 
-                var totalOns = data.ons.tarif * Math.ceil(berat);
                 var totalReg = data.reg.tarif * Math.ceil(berat);
-
-                $('#est_hari_ons').text(data.ons.est);
-                $('#tarif_ons').text(formatRupiah(data.ons.tarif) + '/Kg');
-                $('#total_ons').text(formatRupiah(totalOns));
-
                 $('#est_hari_reguler').text(data.reg.est);
                 $('#tarif_reguler').text(formatRupiah(data.reg.tarif) + '/Kg');
                 $('#total_reguler').text(formatRupiah(totalReg));
+                $('#btnSalinReguler').prop('disabled', false);
+
+                var totalOns = 0;
+                if (data.ons.avail) {
+                    totalOns = data.ons.tarif * Math.ceil(berat);
+                    $('#est_hari_ons').html('<span class="text-success"><i class="fas fa-check-circle mr-1"></i>' + data.ons.est + '</span>');
+                    $('#tarif_ons').text(formatRupiah(data.ons.tarif) + '/Kg');
+                    $('#total_ons').text(formatRupiah(totalOns));
+                    $('#btnSalinOns').prop('disabled', false).show();
+                    $('#row_ons').removeClass('table-secondary').addClass('table-info');
+                } else {
+                    $('#est_hari_ons').html('<span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Tidak Tersedia</span>');
+                    $('#tarif_ons').text('-');
+                    $('#total_ons').text('-');
+                    $('#btnSalinOns').prop('disabled', true).hide();
+                    $('#row_ons').removeClass('table-info').addClass('table-secondary');
+                }
 
                 $('#hasilEstimasiBox').slideDown();
 
@@ -2273,7 +2287,7 @@ $sph = isset($sph) ? $sph : null;
                     asal: labelKantor[asal],
                     wilayah: data.label,
                     berat: Math.ceil(berat),
-                    ons: { est: data.ons.est, tarif: totalOns },
+                    ons: { avail: data.ons.avail, est: data.ons.est, tarif: totalOns },
                     reg: { est: data.reg.est, tarif: totalReg }
                 };
             });
@@ -2291,7 +2305,11 @@ $sph = isset($sph) ? $sph : null;
                 var teksKet = '';
 
                 if (jenis === 'ONS') {
-                    teksKet = 'Estimasi pengiriman via ONS (Over Night Service) dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.ons.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.ons.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg).';
+                    if (!currentEstimasi.ons.avail) {
+                        toastr.error('Layanan ONS tidak tersedia untuk wilayah tujuan ini.', 'Tidak Tersedia');
+                        return;
+                    }
+                    teksKet = 'Estimasi pengiriman via ONS (Over Night Service) dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.ons.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.ons.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg, cut-off pkl 11.00 WIB).';
                 } else {
                     teksKet = 'Estimasi pengiriman via Reguler dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.reg.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.reg.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg).';
                 }
