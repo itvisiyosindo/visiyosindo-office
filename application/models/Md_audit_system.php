@@ -137,7 +137,7 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Memastikan kolom link_drive tersedia di tabel audit_keuangan_records
+     * Memastikan kolom jenis_surat & id_surat tersedia di tabel audit_keuangan_records
      */
     private function ensureAuditKeuanganColumns()
     {
@@ -145,8 +145,17 @@ class Md_audit_system extends CI_Model
             $orig = $this->db->db_debug;
             $this->db->db_debug = FALSE;
             $fields = @$this->db->list_fields('audit_keuangan_records');
-            if (is_array($fields) && !in_array('link_drive', $fields)) {
-                @$this->db->query("ALTER TABLE audit_keuangan_records ADD COLUMN link_drive TEXT NULL AFTER kelengkapan_invoice;");
+            if (is_array($fields)) {
+                if (!in_array('link_drive', $fields)) {
+                    @$this->db->query("ALTER TABLE audit_keuangan_records ADD COLUMN link_drive TEXT NULL AFTER kelengkapan_invoice;");
+                }
+                if (!in_array('jenis_surat', $fields)) {
+                    @$this->db->query("ALTER TABLE audit_keuangan_records ADD COLUMN jenis_surat VARCHAR(20) DEFAULT 'pbok' AFTER id;");
+                }
+                if (!in_array('id_surat', $fields)) {
+                    @$this->db->query("ALTER TABLE audit_keuangan_records ADD COLUMN id_surat INT NULL AFTER jenis_surat;");
+                    @$this->db->query("UPDATE audit_keuangan_records SET id_surat = id_pbok WHERE id_surat IS NULL;");
+                }
             }
             $this->db->db_debug = $orig;
         }
@@ -1706,25 +1715,31 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Ambil data Audit Keuangan (PBOK yang diajukan beserta invoice & lampirannya)
+     * Ambil data Audit Keuangan (PBOK dan PPA yang diajukan beserta invoice & lampirannya)
      */
-    public function getAuditKeuanganData($year = null, $bulan = null, $status = null, $search = null)
+    public function getAuditKeuanganData($year = null, $bulan = null, $status = null, $search = null, $jenisFilter = 'all')
     {
         $records = [];
         $totalNominal = 0;
+        $totalDokumen = 0;
         $totalPbok = 0;
+        $totalPpa = 0;
         $withInvoice = 0;
         $withoutInvoice = 0;
 
         // Ambil audit verifikasi keuangan dari DB / JSON
         $keuanganAuditMap = $this->loadAuditKeuanganRecords();
 
-        if ($this->hasTable('surat_pbok')) {
+        $loadPbok = ($jenisFilter === 'all' || $jenisFilter === 'pbok');
+        $loadPpa  = ($jenisFilter === 'all' || $jenisFilter === 'ppa');
+
+        // 1. DATA SURAT PBOK
+        if ($loadPbok && $this->hasTable('surat_pbok')) {
             $orig_debug = $this->db->db_debug;
             $this->db->db_debug = FALSE;
 
             $this->db->select('
-                pbok.id_pbok as idPbok,
+                pbok.id_pbok as idSurat,
                 pbok.kode_pbok as kode,
                 pbok.tgl_pengajuan,
                 pbok.bank,
@@ -1767,9 +1782,9 @@ class Md_audit_system extends CI_Model
             $query = @$this->db->get();
             if ($query && $query->num_rows() > 0) {
                 $pbokList = $query->result_array();
-                $idList = array_column($pbokList, 'idPbok');
+                $idList = array_column($pbokList, 'idSurat');
 
-                // Ambil seluruh detail item PBOK yang ada
+                // Ambil detail item PBOK
                 $detailsByPbok = [];
                 if (!empty($idList) && $this->hasTable('surat_pbok_detail')) {
                     $this->db->select('id, id_pbok, kode_detail, keterangan, estimasi, qty, total, catatan, mata_uang')
@@ -1785,8 +1800,8 @@ class Md_audit_system extends CI_Model
                 }
 
                 foreach ($pbokList as $pbok) {
-                    $idPbok = (int)$pbok['idPbok'];
-                    $items = isset($detailsByPbok[$idPbok]) ? $detailsByPbok[$idPbok] : [];
+                    $idSurat = (int)$pbok['idSurat'];
+                    $items = isset($detailsByPbok[$idSurat]) ? $detailsByPbok[$idSurat] : [];
 
                     $pbokTotal = 0;
                     $itemNames = [];
@@ -1798,13 +1813,8 @@ class Md_audit_system extends CI_Model
                     }
 
                     $hasLampiran = !empty($pbok['lampiran']);
-                    if ($hasLampiran) {
-                        $withInvoice++;
-                    } else {
-                        $withoutInvoice++;
-                    }
-
-                    $auditInfo = isset($keuanganAuditMap[$idPbok]) ? $keuanganAuditMap[$idPbok] : [];
+                    $auditKey = 'pbok_' . $idSurat;
+                    $auditInfo = isset($keuanganAuditMap[$auditKey]) ? $keuanganAuditMap[$auditKey] : (isset($keuanganAuditMap[$idSurat]) ? $keuanganAuditMap[$idSurat] : []);
                     $statusAudit = isset($auditInfo['status_audit']) ? $auditInfo['status_audit'] : ($hasLampiran ? 'Lampiran Tersedia' : 'Belum Ada Lampiran');
                     $catatanAudit = isset($auditInfo['catatan_audit']) ? $auditInfo['catatan_audit'] : '';
                     $kelengkapanInvoice = isset($auditInfo['kelengkapan_invoice']) ? $auditInfo['kelengkapan_invoice'] : ($hasLampiran ? 'Lengkap' : 'Tidak Ada File');
@@ -1816,11 +1826,23 @@ class Md_audit_system extends CI_Model
                         }
                     }
 
+                    if ($hasLampiran) {
+                        $withInvoice++;
+                    } else {
+                        $withoutInvoice++;
+                    }
+
                     $totalNominal += $pbokTotal;
                     $totalPbok++;
+                    $totalDokumen++;
 
                     $records[] = [
-                        'id_pbok'              => $idPbok,
+                        'jenis'                => 'pbok',
+                        'jenis_label'          => 'PBOK',
+                        'jenis_badge'          => 'badge-primary',
+                        'id_surat'             => $idSurat,
+                        'id_pbok'              => $idSurat,
+                        'kode_surat'           => $pbok['kode'],
                         'kode_pbok'            => $pbok['kode'],
                         'tgl_pengajuan'        => $pbok['tgl_pengajuan'],
                         'pengguna'             => $pbok['pengguna'],
@@ -1835,24 +1857,171 @@ class Md_audit_system extends CI_Model
                         'total_nominal'        => $pbokTotal,
                         'items'                => $items,
                         'ringkasan_barang'     => implode(', ', $itemNames),
-                        'aju_ttd1'             => $pbok['aju_ttd1'],
-                        'aju_ttd2'             => $pbok['aju_ttd2'],
-                        'aju_ttd3'             => $pbok['aju_ttd3'],
                         'stat_persetujuan'     => $pbok['stat_persetujuan'],
                         'status_audit'         => $statusAudit,
                         'kelengkapan_invoice'  => $kelengkapanInvoice,
                         'catatan_audit'        => $catatanAudit,
                         'link_drive'           => $linkDrive,
                         'audited_by_name'      => isset($auditInfo['audited_by_name']) ? $auditInfo['audited_by_name'] : '',
-                        'updated_at'           => isset($auditInfo['updated_at']) ? $auditInfo['updated_at'] : ''
+                        'updated_at'           => isset($auditInfo['updated_at']) ? $auditInfo['updated_at'] : '',
+                        'detail_url'           => base_url('surat/show/detail_surat/pbok/' . $idSurat . '/1')
                     ];
                 }
             }
             $this->db->db_debug = $orig_debug;
         }
 
+        // 2. DATA SURAT PPA
+        if ($loadPpa && $this->hasTable('surat_ppa')) {
+            $orig_debug = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+
+            $this->db->select('
+                ppa.id_ppa as idSurat,
+                ppa.kode_ppa as kode,
+                ppa.tgl_pengajuan,
+                ppa.bank,
+                ppa.rekening,
+                ppa.ats_nama,
+                ppa.kota_aju,
+                ppa.alamat,
+                ppa.pengajuan_ttd_1 as aju_ttd1,
+                ppa.ttd_2 as aju_ttd2,
+                ppa.ttd_3 as aju_ttd3,
+                ppa.lampiran,
+                p.pengguna_id,
+                p.nama as pengguna,
+                p.jabatan as jabatan,
+                d.nama as divisi,
+                s.status as stat_persetujuan
+            ')
+            ->from('surat_ppa ppa')
+            ->join('surat_list s', 's.id_srt = ppa.id_ppa AND s.id_kat_surat = 7', 'left')
+            ->join('pengguna p', 'ppa.id_pengguna = p.pengguna_id', 'left')
+            ->join('divisi d', 'p.id_divisi = d.id_divisi', 'left')
+            ->order_by('ppa.id_ppa', 'DESC');
+
+            if ($year) {
+                $this->db->where('YEAR(ppa.tgl_pengajuan)', (int)$year);
+            }
+            if ($bulan) {
+                $this->db->where('MONTH(ppa.tgl_pengajuan)', (int)$bulan);
+            }
+            if ($search) {
+                $this->db->group_start()
+                    ->like('ppa.kode_ppa', $search)
+                    ->or_like('p.nama', $search)
+                    ->or_like('p.jabatan', $search)
+                    ->or_like('ppa.ats_nama', $search)
+                    ->group_end();
+            }
+
+            $queryPpa = @$this->db->get();
+            if ($queryPpa && $queryPpa->num_rows() > 0) {
+                $ppaList = $queryPpa->result_array();
+                $idListPpa = array_column($ppaList, 'idSurat');
+
+                // Ambil detail item PPA
+                $detailsByPpa = [];
+                if (!empty($idListPpa) && $this->hasTable('surat_ppa_detail')) {
+                    $this->db->select('id, id_ppa, keterangan, estimasi, qty, total')
+                        ->from('surat_ppa_detail')
+                        ->where_in('id_ppa', $idListPpa)
+                        ->order_by('id', 'ASC');
+                    $detailQueryPpa = @$this->db->get();
+                    if ($detailQueryPpa && $detailQueryPpa->num_rows() > 0) {
+                        foreach ($detailQueryPpa->result_array() as $det) {
+                            $detailsByPpa[$det['id_ppa']][] = $det;
+                        }
+                    }
+                }
+
+                foreach ($ppaList as $ppa) {
+                    $idSurat = (int)$ppa['idSurat'];
+                    $items = isset($detailsByPpa[$idSurat]) ? $detailsByPpa[$idSurat] : [];
+
+                    $ppaTotal = 0;
+                    $itemNames = [];
+                    foreach ($items as $it) {
+                        $ppaTotal += (float)$it['total'];
+                        if (!empty($it['keterangan'])) {
+                            $itemNames[] = $it['keterangan'] . ' (' . $it['qty'] . 'x)';
+                        }
+                    }
+
+                    $hasLampiran = !empty($ppa['lampiran']);
+                    $auditKey = 'ppa_' . $idSurat;
+                    $auditInfo = isset($keuanganAuditMap[$auditKey]) ? $keuanganAuditMap[$auditKey] : [];
+                    $statusAudit = isset($auditInfo['status_audit']) ? $auditInfo['status_audit'] : ($hasLampiran ? 'Lampiran Tersedia' : 'Belum Ada Lampiran');
+                    $catatanAudit = isset($auditInfo['catatan_audit']) ? $auditInfo['catatan_audit'] : '';
+                    $kelengkapanInvoice = isset($auditInfo['kelengkapan_invoice']) ? $auditInfo['kelengkapan_invoice'] : ($hasLampiran ? 'Lengkap' : 'Tidak Ada File');
+                    $linkDrive = isset($auditInfo['link_drive']) ? $auditInfo['link_drive'] : '';
+
+                    if ($status && $status !== 'all') {
+                        if (strcasecmp($statusAudit, $status) !== 0) {
+                            continue;
+                        }
+                    }
+
+                    if ($hasLampiran) {
+                        $withInvoice++;
+                    } else {
+                        $withoutInvoice++;
+                    }
+
+                    $totalNominal += $ppaTotal;
+                    $totalPpa++;
+                    $totalDokumen++;
+
+                    $records[] = [
+                        'jenis'                => 'ppa',
+                        'jenis_label'          => 'PPA',
+                        'jenis_badge'          => 'badge-success',
+                        'id_surat'             => $idSurat,
+                        'id_pbok'              => $idSurat, // kompatibilitas
+                        'kode_surat'           => $ppa['kode'],
+                        'kode_pbok'            => $ppa['kode'],
+                        'tgl_pengajuan'        => $ppa['tgl_pengajuan'],
+                        'pengguna'             => $ppa['pengguna'],
+                        'jabatan'              => $ppa['jabatan'],
+                        'divisi'               => $ppa['divisi'] ?: 'General',
+                        'bank'                 => $ppa['bank'],
+                        'rekening'             => $ppa['rekening'],
+                        'ats_nama'             => $ppa['ats_nama'],
+                        'alamat'               => $ppa['alamat'],
+                        'lampiran'             => $ppa['lampiran'],
+                        'has_lampiran'         => $hasLampiran,
+                        'total_nominal'        => $ppaTotal,
+                        'items'                => $items,
+                        'ringkasan_barang'     => implode(', ', $itemNames),
+                        'stat_persetujuan'     => $ppa['stat_persetujuan'],
+                        'status_audit'         => $statusAudit,
+                        'kelengkapan_invoice'  => $kelengkapanInvoice,
+                        'catatan_audit'        => $catatanAudit,
+                        'link_drive'           => $linkDrive,
+                        'audited_by_name'      => isset($auditInfo['audited_by_name']) ? $auditInfo['audited_by_name'] : '',
+                        'updated_at'           => isset($auditInfo['updated_at']) ? $auditInfo['updated_at'] : '',
+                        'detail_url'           => base_url('surat/show/detail_surat/ppa/' . $idSurat . '/1')
+                    ];
+                }
+            }
+            $this->db->db_debug = $orig_debug;
+        }
+
+        // Urutkan gabungan berdasarkan tanggal pengajuan DESC
+        usort($records, function ($a, $b) {
+            $tA = !empty($a['tgl_pengajuan']) ? strtotime($a['tgl_pengajuan']) : 0;
+            $tB = !empty($b['tgl_pengajuan']) ? strtotime($b['tgl_pengajuan']) : 0;
+            if ($tA === $tB) {
+                return $b['id_surat'] <=> $a['id_surat'];
+            }
+            return $tB <=> $tA;
+        });
+
         return [
+            'total_dokumen'    => $totalDokumen,
             'total_pbok'       => $totalPbok,
+            'total_ppa'        => $totalPpa,
             'total_nominal'    => $totalNominal,
             'with_invoice'     => $withInvoice,
             'without_invoice'  => $withoutInvoice,
@@ -1869,7 +2038,10 @@ class Md_audit_system extends CI_Model
             $q = @$this->db->get('audit_keuangan_records');
             if ($q && $q->num_rows() > 0) {
                 foreach ($q->result_array() as $r) {
-                    $records[(int)$r['id_pbok']] = $r;
+                    $j = !empty($r['jenis_surat']) ? strtolower($r['jenis_surat']) : 'pbok';
+                    $sid = !empty($r['id_surat']) ? (int)$r['id_surat'] : (int)$r['id_pbok'];
+                    $records[$j . '_' . $sid] = $r;
+                    $records[$sid] = $r; // fallback
                 }
             }
             $this->db->db_debug = $orig;
@@ -1878,9 +2050,9 @@ class Md_audit_system extends CI_Model
         if (file_exists($this->keuanganFilePath)) {
             $fileData = json_decode(file_get_contents($this->keuanganFilePath), true);
             if (is_array($fileData)) {
-                foreach ($fileData as $idPbok => $r) {
-                    if (!isset($records[(int)$idPbok])) {
-                        $records[(int)$idPbok] = $r;
+                foreach ($fileData as $key => $r) {
+                    if (!isset($records[$key])) {
+                        $records[$key] = $r;
                     }
                 }
             }
@@ -1890,11 +2062,16 @@ class Md_audit_system extends CI_Model
     }
 
     /**
-     * Simpan verifikasi Audit Keuangan PBOK
+     * Simpan verifikasi Audit Keuangan PBOK / PPA
      */
-    public function saveAuditKeuanganItem($idPbok, $payload)
+    public function saveAuditKeuanganItem($idSurat, $payload, $jenisSurat = 'pbok')
     {
-        $idPbok = (int)$idPbok;
+        $idSurat = (int)$idSurat;
+        $jenisSurat = strtolower(trim($jenisSurat ?: 'pbok'));
+        if (!in_array($jenisSurat, ['pbok', 'ppa'])) {
+            $jenisSurat = 'pbok';
+        }
+
         $now = date('Y-m-d H:i:s');
         $userId = sessPenggunaId();
         $userName = sessNama();
@@ -1905,7 +2082,9 @@ class Md_audit_system extends CI_Model
         $linkDrive = isset($payload['link_drive']) ? trim($payload['link_drive']) : '';
 
         $record = [
-            'id_pbok'              => $idPbok,
+            'id_pbok'              => $idSurat,
+            'id_surat'             => $idSurat,
+            'jenis_surat'          => $jenisSurat,
             'status_audit'         => $statusAudit,
             'kelengkapan_invoice'  => $kelengkapanInvoice,
             'catatan_audit'        => $catatanAudit,
@@ -1920,7 +2099,7 @@ class Md_audit_system extends CI_Model
             $this->ensureAuditKeuanganColumns();
             $orig = $this->db->db_debug;
             $this->db->db_debug = FALSE;
-            $exist = @$this->db->get_where('audit_keuangan_records', ['id_pbok' => $idPbok])->row();
+            $exist = @$this->db->get_where('audit_keuangan_records', ['jenis_surat' => $jenisSurat, 'id_surat' => $idSurat])->row();
             if ($exist) {
                 @$this->db->where('id', $exist->id)->update('audit_keuangan_records', $record);
             } else {
@@ -1934,7 +2113,9 @@ class Md_audit_system extends CI_Model
         if (file_exists($this->keuanganFilePath)) {
             $fileData = json_decode(file_get_contents($this->keuanganFilePath), true) ?: [];
         }
-        $fileData[$idPbok] = $record;
+        $compositeKey = $jenisSurat . '_' . $idSurat;
+        $fileData[$compositeKey] = $record;
+        $fileData[$idSurat] = $record;
         @file_put_contents($this->keuanganFilePath, json_encode($fileData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         return true;

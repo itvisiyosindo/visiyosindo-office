@@ -78,18 +78,21 @@
 		<div class="row mb-3">
 			<div class="col-md-3 col-sm-6 mb-2">
 				<div class="stat-card-keuangan" style="border-left: 4px solid #10b981;">
-					<div class="text-muted small font-weight-bold text-uppercase">Total Pengajuan PBOK</div>
-					<div class="h3 font-weight-bold text-success mb-0 mt-1"><?= $summary['total_pbok'] ?></div>
-					<div class="small text-muted mt-1"><i class="fas fa-file-invoice"></i> PBOK Terdata</div>
+					<div class="text-muted small font-weight-bold text-uppercase">Total Pengajuan Keuangan</div>
+					<div class="h3 font-weight-bold text-success mb-0 mt-1"><?= $summary['total_dokumen'] ?? $summary['total_pbok'] ?></div>
+					<div class="small text-muted mt-1">
+						<span class="badge badge-primary px-1 mr-1"><?= $summary['total_pbok'] ?? 0 ?> PBOK</span>
+						<span class="badge badge-success px-1"><?= $summary['total_ppa'] ?? 0 ?> PPA</span>
+					</div>
 				</div>
 			</div>
 			<div class="col-md-3 col-sm-6 mb-2">
 				<div class="stat-card-keuangan" style="border-left: 4px solid #3b82f6;">
-					<div class="text-muted small font-weight-bold text-uppercase">Total Nominal Belanja PBOK</div>
+					<div class="text-muted small font-weight-bold text-uppercase">Total Nominal Belanja</div>
 					<div class="h4 font-weight-bold text-primary mb-0 mt-1">
 						Rp <?= number_format($summary['total_nominal'], 0, ',', '.') ?>
 					</div>
-					<div class="small text-muted mt-1"><i class="fas fa-coins"></i> Akumulasi Biaya Diajukan</div>
+					<div class="small text-muted mt-1"><i class="fas fa-coins"></i> Akumulasi PBOK + PPA</div>
 				</div>
 			</div>
 			<div class="col-md-3 col-sm-6 mb-2">
@@ -112,6 +115,15 @@
 		<div class="filter-card">
 			<form method="GET" action="<?= base_url('audit/keuangan') ?>" id="formFilterKeuangan">
 				<div class="row align-items-end">
+					<div class="col-md-2 col-sm-6 mb-2">
+						<label class="font-weight-bold small text-muted"><i class="fas fa-file-invoice"></i> Jenis Pengajuan</label>
+						<select name="jenis" class="form-control form-control-sm font-weight-bold" onchange="document.getElementById('formFilterKeuangan').submit();">
+							<option value="all" <?= ($selected_jenis == 'all' || empty($selected_jenis)) ? 'selected' : '' ?>>Semua (PBOK &amp; PPA)</option>
+							<option value="pbok" <?= $selected_jenis == 'pbok' ? 'selected' : '' ?>>Hanya PBOK</option>
+							<option value="ppa" <?= $selected_jenis == 'ppa' ? 'selected' : '' ?>>Hanya PPA</option>
+						</select>
+					</div>
+
 					<div class="col-md-2 col-sm-6 mb-2">
 						<label class="font-weight-bold small text-muted"><i class="far fa-calendar-alt"></i> Tahun</label>
 						<select name="tahun" class="form-control form-control-sm font-weight-bold" onchange="document.getElementById('formFilterKeuangan').submit();">
@@ -139,7 +151,7 @@
 						</select>
 					</div>
 
-					<div class="col-md-3 col-sm-6 mb-2">
+					<div class="col-md-2 col-sm-6 mb-2">
 						<label class="font-weight-bold small text-muted"><i class="fas fa-tasks"></i> Status Verifikasi Audit</label>
 						<select name="status" class="form-control form-control-sm" onchange="document.getElementById('formFilterKeuangan').submit();">
 							<option value="all">-- Semua Status Audit --</option>
@@ -151,9 +163,9 @@
 						</select>
 					</div>
 
-					<div class="col-md-3 col-sm-6 mb-2">
-						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari No PBOK / Pengaju</label>
-						<input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="No PBOK, pengaju, rekening...">
+					<div class="col-md-2 col-sm-6 mb-2">
+						<label class="font-weight-bold small text-muted"><i class="fas fa-search"></i> Cari No Surat / Pengaju</label>
+						<input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" class="form-control form-control-sm" placeholder="No surat, pengaju...">
 					</div>
 
 					<div class="col-md-2 col-sm-6 mb-2 text-right">
@@ -170,15 +182,18 @@
 
 		<!-- Table Card -->
 		<div class="card border-0 shadow-sm" style="border-radius: 10px;">
-			<div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+			<div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
 				<h5 class="mb-0 font-weight-bold text-dark">
-					<i class="fas fa-receipt text-success mr-1"></i> Data Audit Belanja PBOK & Lampiran Invoice
+					<i class="fas fa-receipt text-success mr-1"></i> Data Audit Belanja PBOK &amp; PPA (Lampiran Invoice)
 				</h5>
-				<div class="d-flex align-items-center" style="gap: 8px;">
-					<a href="<?= base_url('surat/show/list_pbok') ?>" target="_blank" class="btn btn-sm btn-outline-primary">
-						<i class="fas fa-external-link-alt mr-1"></i> Buka Master Surat PBOK
+				<div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+					<a href="<?= base_url('surat/show/list_pbok') ?>" target="_blank" class="btn btn-xs btn-outline-primary">
+						<i class="fas fa-external-link-alt mr-1"></i> Master PBOK
 					</a>
-					<button type="button" class="btn btn-sm btn-secondary" onclick="window.print();">
+					<a href="<?= base_url('surat/show/list_ppa') ?>" target="_blank" class="btn btn-xs btn-outline-success">
+						<i class="fas fa-external-link-alt mr-1"></i> Master PPA
+					</a>
+					<button type="button" class="btn btn-xs btn-secondary" onclick="window.print();">
 						<i class="fas fa-print mr-1"></i> Cetak
 					</button>
 				</div>
@@ -189,14 +204,15 @@
 						<thead>
 							<tr>
 								<th style="width: 40px;">No</th>
-								<th style="width: 170px;">No. Kode PBOK</th>
-								<th style="width: 110px;">Tanggal Aju</th>
+								<th style="width: 90px;">Jenis</th>
+								<th style="width: 170px;">No. Kode Surat</th>
+								<th style="width: 105px;">Tanggal Aju</th>
 								<th style="width: 150px;">Pengaju / Divisi</th>
 								<th style="width: 220px;">Rincian Barang / Kebutuhan</th>
 								<th style="width: 130px;">Total Nominal</th>
 								<th style="width: 160px;">Rekening Pembayaran</th>
 								<th style="width: 170px;">
-									<i class="fas fa-file-invoice text-success"></i> Invoice & Lampiran
+									<i class="fas fa-file-invoice text-success"></i> Invoice &amp; Lampiran
 								</th>
 								<th style="width: 140px;">Status Audit Keuangan</th>
 								<th style="width: 80px;">Aksi</th>
@@ -205,19 +221,27 @@
 						<tbody>
 							<?php if (empty($pbok_list)): ?>
 								<tr>
-									<td colspan="10" class="text-center py-5 text-muted">
+									<td colspan="11" class="text-center py-5 text-muted">
 										<i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-										Tidak ada data PBOK yang sesuai filter saat ini.
+										Tidak ada data PBOK / PPA yang sesuai filter saat ini.
 									</td>
 								</tr>
 							<?php else: ?>
-								<?php $no = 1; foreach ($pbok_list as $row): ?>
-									<tr id="row-pbok-<?= $row['id_pbok'] ?>">
+								<?php $no = 1; foreach ($pbok_list as $row): 
+									$jns = !empty($row['jenis']) ? strtolower($row['jenis']) : 'pbok';
+									$rowKey = $jns . '-' . $row['id_surat'];
+								?>
+									<tr id="row-surat-<?= $rowKey ?>">
 										<td class="text-center font-weight-bold text-muted"><?= $no++ ?></td>
+										<td class="text-center">
+											<span class="badge <?= $row['jenis_badge'] ?? 'badge-primary' ?> px-2 py-1 font-weight-bold">
+												<?= htmlspecialchars($row['jenis_label'] ?? strtoupper($jns)) ?>
+											</span>
+										</td>
 										<td>
-											<span class="font-weight-bold text-dark d-block"><?= htmlspecialchars($row['kode_pbok']) ?></span>
-											<a href="<?= base_url('surat/show/detail_surat/pbok/' . $row['id_pbok'] . '/1') ?>" target="_blank" class="small text-primary">
-												<i class="fas fa-external-link-alt"></i> Detail Surat PBOK
+											<span class="font-weight-bold text-dark d-block"><?= htmlspecialchars($row['kode_surat']) ?></span>
+											<a href="<?= $row['detail_url'] ?>" target="_blank" class="small text-primary">
+												<i class="fas fa-external-link-alt"></i> Detail Surat <?= htmlspecialchars($row['jenis_label'] ?? strtoupper($jns)) ?>
 											</a>
 										</td>
 										<td class="small text-muted text-center">
@@ -259,7 +283,7 @@
 											<div>A.N: <strong><?= htmlspecialchars($row['ats_nama'] ?: '-') ?></strong></div>
 										</td>
 										<!-- Invoice / Lampiran Kolom -->
-										<td class="text-center" id="cell-invoice-<?= $row['id_pbok'] ?>">
+										<td class="text-center" id="cell-invoice-<?= $rowKey ?>">
 											<?php if ($row['has_lampiran']): ?>
 												<a href="<?= htmlspecialchars($row['lampiran']) ?>" target="_blank" class="badge-invoice-ada mb-1" title="Buka berkas invoice atau bukti lampiran">
 													<i class="fas fa-paperclip"></i>
@@ -278,7 +302,7 @@
 												</div>
 											<?php endif; ?>
 
-											<div class="mt-1" id="wrap-drive-<?= $row['id_pbok'] ?>" style="<?= empty($row['link_drive']) ? 'display: none;' : '' ?>">
+											<div class="mt-1" id="wrap-drive-<?= $rowKey ?>" style="<?= empty($row['link_drive']) ? 'display: none;' : '' ?>">
 												<?php if (!empty($row['link_drive'])): ?>
 													<a href="<?= htmlspecialchars($row['link_drive']) ?>" target="_blank" class="badge badge-success px-2 py-1 text-white btn-drive-audit" style="font-size: 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" title="Buka bukti valid hasil audit (Google Drive)">
 														<i class="fab fa-google-drive"></i> Bukti Valid Audit
@@ -287,7 +311,7 @@
 											</div>
 										</td>
 										<!-- Status Audit Keuangan -->
-										<td class="text-center" id="cell-status-pbok-<?= $row['id_pbok'] ?>">
+										<td class="text-center" id="cell-status-surat-<?= $rowKey ?>">
 											<?php
 											$statusClass = 'badge-secondary';
 											if ($row['status_audit'] === 'Sesuai & Valid') {
@@ -310,7 +334,7 @@
 											<?php endif; ?>
 										</td>
 										<td class="text-center">
-											<button type="button" class="btn btn-xs btn-outline-success" title="Verifikasi Audit Keuangan & Invoice" onclick='openModalKeuangan(<?= json_encode($row) ?>)'>
+											<button type="button" class="btn btn-xs btn-outline-success font-weight-bold" title="Verifikasi Audit Keuangan &amp; Invoice" onclick='openModalKeuangan(<?= json_encode($row) ?>)'>
 												<i class="fas fa-check-square"></i> Verifikasi
 											</button>
 										</td>
@@ -325,13 +349,13 @@
 	</div>
 </div>
 
-<!-- Modal Detail Item PBOK -->
+<!-- Modal Detail Item PBOK / PPA -->
 <div class="modal fade" id="modalPbokItems" tabindex="-1" role="dialog" aria-hidden="true">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
 			<div class="modal-header bg-dark text-white">
 				<h5 class="modal-title font-weight-bold">
-					<i class="fas fa-list-check text-primary mr-1"></i> Rincian Item Barang PBOK: <span id="detailPbokKode"></span>
+					<i class="fas fa-list-check text-primary mr-1"></i> Rincian Item: <span id="detailPbokKode"></span>
 				</h5>
 				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
@@ -368,20 +392,25 @@
 		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
 			<div class="modal-header bg-dark text-white">
 				<h5 class="modal-title font-weight-bold" id="modalAuditKeuanganLabel">
-					<i class="fas fa-shield-alt text-success mr-1"></i> Verifikasi Audit PBOK & Invoice
+					<i class="fas fa-shield-alt text-success mr-1"></i> Verifikasi Audit Pengajuan &amp; Invoice
 				</h5>
 				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 			<form id="formSaveKeuangan" onsubmit="saveKeuanganData(event);">
+				<input type="hidden" name="id_surat" id="keuanganIdSurat">
 				<input type="hidden" name="id_pbok" id="keuanganIdPbok">
+				<input type="hidden" name="jenis_surat" id="keuanganJenisSurat" value="pbok">
 
 				<div class="modal-body p-4" style="background-color: #f8fafc;">
-					<!-- Ringkasan PBOK -->
+					<!-- Ringkasan PBOK / PPA -->
 					<div class="card p-3 mb-3 border bg-white">
 						<div class="d-flex justify-content-between align-items-center mb-1">
-							<span class="font-weight-bold text-dark" id="modalKeuanganKode">PBOK Code</span>
+							<span class="font-weight-bold text-dark">
+								<span class="badge badge-primary px-2 py-1 mr-1" id="modalKeuanganBadgeJenis">PBOK</span>
+								<span id="modalKeuanganKode">PBOK Code</span>
+							</span>
 							<span class="badge badge-success px-2 py-1 font-weight-bold" id="modalKeuanganNominal">Rp 0</span>
 						</div>
 						<div class="small text-muted">
@@ -438,7 +467,7 @@
 					<!-- Catatan Auditor -->
 					<div class="form-group mb-0">
 						<label class="font-weight-bold small text-dark">Catatan Auditor / Tim Finance</label>
-						<textarea name="catatan_audit" id="keuanganInputCatatan" class="form-control" rows="3" placeholder="Catatan hasil pemeriksaan invoice dan pengeluaran PBOK..."></textarea>
+						<textarea name="catatan_audit" id="keuanganInputCatatan" class="form-control" rows="3" placeholder="Catatan hasil pemeriksaan invoice dan pengeluaran PBOK/PPA..."></textarea>
 					</div>
 				</div>
 
@@ -457,7 +486,8 @@
 
 <script>
 	function showPbokItems(row) {
-		document.getElementById('detailPbokKode').textContent = row.kode_pbok;
+		const kode = row.kode_surat || row.kode_pbok;
+		document.getElementById('detailPbokKode').textContent = (row.jenis_label ? '[' + row.jenis_label + '] ' : '') + kode;
 		const tbody = document.getElementById('pbokDetailTbody');
 		tbody.innerHTML = '';
 
@@ -505,8 +535,21 @@
 
 	function openModalKeuangan(row) {
 		currentKeuanganRow = row;
-		document.getElementById('keuanganIdPbok').value = row.id_pbok;
-		document.getElementById('modalKeuanganKode').textContent = row.kode_pbok;
+		const idSurat = row.id_surat || row.id_pbok;
+		const jns = (row.jenis || 'pbok').toLowerCase();
+		const kode = row.kode_surat || row.kode_pbok;
+
+		document.getElementById('keuanganIdSurat').value = idSurat;
+		document.getElementById('keuanganIdPbok').value = idSurat;
+		document.getElementById('keuanganJenisSurat').value = jns;
+
+		const badgeJns = document.getElementById('modalKeuanganBadgeJenis');
+		if (badgeJns) {
+			badgeJns.textContent = row.jenis_label || jns.toUpperCase();
+			badgeJns.className = 'badge ' + (row.jenis_badge || 'badge-primary') + ' px-2 py-1 mr-1';
+		}
+
+		document.getElementById('modalKeuanganKode').textContent = kode;
 		document.getElementById('modalKeuanganNominal').textContent = 'Rp ' + Number(row.total_nominal || 0).toLocaleString('id-ID');
 		document.getElementById('modalKeuanganPengaju').textContent = row.pengguna;
 		document.getElementById('modalKeuanganJabatan').textContent = row.jabatan || 'Staff';
@@ -519,7 +562,7 @@
 				</a>
 			`;
 		} else {
-			lampiranPreview.innerHTML = '<span class="text-danger small"><i class="fas fa-times-circle"></i> Tidak ada lampiran terunggah pada PBOK ini.</span>';
+			lampiranPreview.innerHTML = '<span class="text-danger small"><i class="fas fa-times-circle"></i> Tidak ada lampiran terunggah pada pengajuan ini.</span>';
 		}
 
 		document.getElementById('keuanganSelectStatus').value = row.status_audit || 'Sesuai & Valid';
@@ -552,12 +595,15 @@
 			btn.innerHTML = '<i class="fas fa-save mr-1"></i> Simpan Verifikasi Keuangan';
 
 			if (data.status === 'success') {
-				const idPbok = formData.get('id_pbok');
+				const idSurat = formData.get('id_surat') || formData.get('id_pbok');
+				const jenisSurat = (formData.get('jenis_surat') || 'pbok').toLowerCase();
+				const rowKey = jenisSurat + '-' + idSurat;
+
 				const statusVal = formData.get('status_audit');
 				const catatanVal = formData.get('catatan_audit');
 				const linkDriveVal = (formData.get('link_drive') || '').trim();
 
-				if (currentKeuanganRow && String(currentKeuanganRow.id_pbok) === String(idPbok)) {
+				if (currentKeuanganRow) {
 					currentKeuanganRow.status_audit = statusVal;
 					currentKeuanganRow.catatan_audit = catatanVal;
 					currentKeuanganRow.link_drive = linkDriveVal;
@@ -565,7 +611,7 @@
 				}
 
 				// Update Status DOM
-				const statusCell = document.getElementById('cell-status-pbok-' + idPbok);
+				const statusCell = document.getElementById('cell-status-surat-' + rowKey) || document.getElementById('cell-status-pbok-' + idSurat);
 				if (statusCell) {
 					let sClass = 'badge-secondary';
 					if (statusVal === 'Sesuai & Valid') sClass = 'badge-success';
@@ -581,7 +627,7 @@
 				}
 
 				// Update Drive Link DOM di kolom Invoice & Lampiran
-				const wrapDrive = document.getElementById('wrap-drive-' + idPbok);
+				const wrapDrive = document.getElementById('wrap-drive-' + rowKey) || document.getElementById('wrap-drive-' + idSurat);
 				if (wrapDrive) {
 					if (linkDriveVal) {
 						wrapDrive.style.display = 'block';

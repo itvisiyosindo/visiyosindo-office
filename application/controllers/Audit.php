@@ -152,16 +152,18 @@ class Audit extends CI_Controller
         $bulan  = $this->input->get('bulan', TRUE);
         $status = $this->input->get('status', TRUE);
         $search = $this->input->get('q', TRUE);
+        $jenis  = $this->input->get('jenis', TRUE) ?: 'all';
 
-        $keuanganData = $this->md_audit_system->getAuditKeuanganData($year, $bulan, $status, $search);
+        $keuanganData = $this->md_audit_system->getAuditKeuanganData($year, $bulan, $status, $search, $jenis);
 
         $page_data['switch']        = 'kepegawaian';
         $page_data['page_name']     = 'audit/v_audit_keuangan';
-        $page_data['page_title']    = 'Audit Keuangan & PBOK';
-        $page_data['page_desc']     = 'Audit Belanja Pengajuan Biaya Operasional Kantor (PBOK) & Lampiran Invoice';
+        $page_data['page_title']    = 'Audit Keuangan: PBOK & PPA';
+        $page_data['page_desc']     = 'Audit Belanja Operasional Kantor (PBOK) & Pengajuan Pembayaran Anggaran (PPA) beserta Lampiran Invoice';
         $page_data['selected_year'] = $year;
         $page_data['selected_bulan'] = $bulan;
         $page_data['selected_status'] = $status;
+        $page_data['selected_jenis'] = $jenis;
         $page_data['search_query']  = $search;
         $page_data['summary']       = $keuanganData;
         $page_data['pbok_list']     = $keuanganData['data'];
@@ -202,15 +204,17 @@ class Audit extends CI_Controller
     }
 
     /**
-     * AJAX Simpan Audit Keuangan (verifikasi PBOK & Invoice)
+     * AJAX Simpan Audit Keuangan (verifikasi PBOK / PPA & Invoice)
      */
     public function save_keuangan()
     {
         grantAccessFor('all');
 
-        $idPbok = (int)$this->input->post('id_pbok');
-        if (empty($idPbok)) {
-            echo json_encode(['status' => 'error', 'message' => 'ID PBOK tidak valid']);
+        $idSurat = (int)($this->input->post('id_surat') ?: $this->input->post('id_pbok'));
+        $jenisSurat = $this->input->post('jenis_surat', TRUE) ?: 'pbok';
+
+        if (empty($idSurat)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID dokumen pengajuan tidak valid']);
             return;
         }
 
@@ -221,9 +225,9 @@ class Audit extends CI_Controller
             'link_drive'          => $this->input->post('link_drive', TRUE)
         ];
 
-        $ok = $this->md_audit_system->saveAuditKeuanganItem($idPbok, $payload);
+        $ok = $this->md_audit_system->saveAuditKeuanganItem($idSurat, $payload, $jenisSurat);
         if ($ok) {
-            echo json_encode(['status' => 'success', 'message' => 'Verifikasi audit PBOK & invoice berhasil disimpan']);
+            echo json_encode(['status' => 'success', 'message' => 'Verifikasi audit pengajuan belanja & invoice berhasil disimpan']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan verifikasi']);
         }
