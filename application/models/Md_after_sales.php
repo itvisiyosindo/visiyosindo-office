@@ -147,14 +147,43 @@ class Md_after_sales extends CI_Model
         $bulan = date('n', strtotime($tanggal));
         $bulanRomawi = $this->bulanToRomawi($bulan);
 
+        // Strategi 1: Ambil MAX nomor_urut
         $this->db->select_max('nomor_urut');
         $this->db->where('YEAR(tgl_masuk)', $tahun);
         $res = $this->db->get($this->table)->row();
+        $nomorFromCol = ($res && $res->nomor_urut > 0) ? (int)$res->nomor_urut : 0;
 
-        $nextNum = ($res && $res->nomor_urut) ? ((int)$res->nomor_urut + 1) : 1;
+        // Strategi 2: Fallback parse nomor terbesar dari nomor_tiket yang ada
+        $this->db->select('nomor_tiket');
+        $this->db->where('YEAR(tgl_masuk)', $tahun);
+        $this->db->like('nomor_tiket', '/ASS/VYM/');
+        $existingRows = $this->db->get($this->table)->result();
+
+        $nomorFromParse = 0;
+        if (!empty($existingRows)) {
+            foreach ($existingRows as $row) {
+                $parts = explode('/', $row->nomor_tiket);
+                if (!empty($parts[0])) {
+                    $val = (int)ltrim($parts[0], '0');
+                    if ($val > $nomorFromParse) {
+                        $nomorFromParse = $val;
+                    }
+                }
+            }
+        }
+
+        $lastNomor = max($nomorFromCol, $nomorFromParse);
+        $nextNum = $lastNomor + 1;
         $nomorFormatted = sprintf("%03d", $nextNum);
 
         $nomorTiket = "{$nomorFormatted}/ASS/VYM/{$bulanRomawi}/{$tahun}";
+
+        // Cek jika kebetulan nomorTiket ini sudah ada, lakukan increment berulang sampai unik
+        while ($this->db->where('nomor_tiket', $nomorTiket)->count_all_results($this->table) > 0) {
+            $nextNum++;
+            $nomorFormatted = sprintf("%03d", $nextNum);
+            $nomorTiket = "{$nomorFormatted}/ASS/VYM/{$bulanRomawi}/{$tahun}";
+        }
 
         return [
             'nomor_urut'  => $nextNum,

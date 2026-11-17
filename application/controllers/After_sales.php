@@ -126,15 +126,10 @@ class After_sales extends CI_Controller
             }
         }
 
-        // Generate nomor tiket jika kosong
-        if (empty($nomorTiket)) {
-            $nomorData = $this->md_after_sales->generateNomorTiket($tglMasuk);
-            $nomorTiket = $nomorData['nomor_tiket'];
-            $nomorUrut = $nomorData['nomor_urut'];
-        } else {
-            $nomorData = $this->md_after_sales->generateNomorTiket($tglMasuk);
-            $nomorUrut = $nomorData['nomor_urut'];
-        }
+        // Generate nomor tiket otomatis yang selalu fresh dan unik
+        $nomorData = $this->md_after_sales->generateNomorTiket($tglMasuk);
+        $nomorTiket = $nomorData['nomor_tiket'];
+        $nomorUrut = $nomorData['nomor_urut'];
 
         // Parsing item sparepart / jasa
         $itemJenis = $this->input->post('item_jenis') ?: [];
