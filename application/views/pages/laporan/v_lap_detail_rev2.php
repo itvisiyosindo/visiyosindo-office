@@ -277,11 +277,15 @@ if (!function_exists('lap_limit_text')) {
       background-color: #fef2f2 !important;
       color: #b91c1c !important;
       box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+      background-image: none !important;
   }
   .score-input.is-valid {
       border-color: #10b981 !important;
-      background-color: #f0fdf4 !important;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15) !important;
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      box-shadow: none !important;
+      background-image: none !important;
+      padding-right: 6px !important;
   }
 
   /* Page wrapper: keep every section inside the content area so wide tables scroll horizontally */
@@ -823,12 +827,30 @@ if (!function_exists('lap_limit_text')) {
                                         if ($show_point_score) { 
                                                 $nilai_b = isset($nilai_point_map[$row->point]) ? $nilai_point_map[$row->point]->nilai_b : '';
                                         ?>
-                                                <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;"><?= htmlspecialchars($nilai_b) ?></span>
+                                                <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;" data-point-b="<?= $row->point ?>"><?= htmlspecialchars($nilai_b) ?></span>
                                         <?php 
                                         } 
                                         ?>
                                     </td>
-                                    <td style="text-align:center"></td>
+                                    <td style="text-align:center">
+                                        <?php 
+                                        if ($show_point_score) { 
+                                            $val_a = (isset($nilai_point_map[$row->point]->nilai_a) && is_numeric($nilai_point_map[$row->point]->nilai_a)) ? (float)$nilai_point_map[$row->point]->nilai_a : null;
+                                            $val_b = (isset($nilai_point_map[$row->point]->nilai_b) && is_numeric($nilai_point_map[$row->point]->nilai_b)) ? (float)$nilai_point_map[$row->point]->nilai_b : null;
+                                            $row_tot_disp = '-';
+                                            if ($val_a !== null && $val_b !== null) {
+                                                $row_tot_disp = number_format(($val_a + $val_b) / 2, 2);
+                                            } elseif ($val_a !== null) {
+                                                $row_tot_disp = number_format($val_a, 2);
+                                            } elseif ($val_b !== null) {
+                                                $row_tot_disp = number_format($val_b, 2);
+                                            }
+                                        ?>
+                                            <span class="font-weight-bold row-total-score" style="font-size: 12.5px; color: #10b981;" data-point-total="<?= $row->point ?>"><?= $row_tot_disp ?></span>
+                                        <?php 
+                                        } 
+                                        ?>
+                                    </td>
                                 </tr>
                                 <?php 
                                 $firstRow = false;
@@ -1631,11 +1653,34 @@ if (!function_exists('lap_limit_text')) {
 					var sumLapA = 0, countLapA = 0;
 					$('input[name^="nilaia["]').each(function() {
 						var raw = $(this).val();
+						var pt = $(this).data('point');
+						var vA = null;
 						if (typeof raw !== 'undefined' && raw !== null && raw.toString().trim() !== '') {
 							var v = parseFloat(raw);
 							if (!isNaN(v) && v >= 60 && v <= 100) {
 								sumLapA += v;
 								countLapA++;
+								vA = v;
+							}
+						}
+						// Update per-row Total Nilai realtime
+						if (pt) {
+							var $txtB = $('[data-point-b="' + pt + '"]');
+							var vB = null;
+							if ($txtB.length && $txtB.text().trim() !== '' && !isNaN(parseFloat($txtB.text().trim()))) {
+								vB = parseFloat($txtB.text().trim());
+							}
+							var $totEl = $('[data-point-total="' + pt + '"]');
+							if ($totEl.length) {
+								if (vA !== null && vB !== null) {
+									$totEl.text(((vA + vB) / 2).toFixed(2));
+								} else if (vA !== null) {
+									$totEl.text(vA.toFixed(2));
+								} else if (vB !== null) {
+									$totEl.text(vB.toFixed(2));
+								} else {
+									$totEl.text('-');
+								}
 							}
 						}
 					});
