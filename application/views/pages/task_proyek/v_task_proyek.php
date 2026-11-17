@@ -3691,10 +3691,10 @@ $namaBulanList = [
                     </div>
                 </div>
 
-                <!-- PANEL 1: CHECKLIST & UPDATE PROGRES (DIISI OLEH PELAKSANA / KARYAWAN PENERIMA TASK) -->
+                <!-- PANEL 1: CHECKLIST & UPDATE PROGRES (DIISI OLEH PELAKSANA, PEMBERI TUGAS, ATAU HRD/ADMIN) -->
                 <div id="panelBawahanProgres" class="card mb-3 border-primary">
                     <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center flex-wrap">
-                        <strong class="text-primary"><i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Saya & Update Progres</strong>
+                        <strong class="text-primary" id="panelChecklistTitle"><i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Saya & Update Progres</strong>
                         <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold" id="btnAddBawahanChecklist">
                             <i class="fas fa-plus mr-1"></i> Tambah Item Checklist
                         </button>
@@ -4847,11 +4847,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sub_bukti_selesai').val(t.bukti_selesai || '');
 
                 var isPenerima = (parseInt(t.id_penerima, 10) === myId);
-                var canEditChecklist = isPenerima && stInt < 4 && stInt !== 2 && stInt !== 5 && stInt !== 6;
+                var isGiver = (parseInt(t.id_pemberi, 10) === myId);
+                var isHrdOrAdmin = (res.is_hrd_admin === true || res.is_admin_reviewer === true);
+                var canEditChecklist = (isPenerima || isGiver || isHrdOrAdmin) && stInt < 4 && stInt !== 5 && stInt !== 6;
 
-                // Render Checklist untuk Penerima Task (Bisa tambah, edit, hapus & centang)
+                // Render Checklist untuk Penerima Task / Atasan / Admin (Bisa tambah, edit, hapus & centang)
                 var chkHtml = '';
                 if (canEditChecklist) {
+                    if (isPenerima) {
+                        $('#panelChecklistTitle').html('<i class="fas fa-tasks mr-1"></i> Checklist Langkah Kerja Saya & Update Progres');
+                    } else if (isGiver) {
+                        $('#panelChecklistTitle').html('<i class="fas fa-tasks mr-1"></i> Kelola Checklist Task (Pemberi Tugas)');
+                    } else {
+                        $('#panelChecklistTitle').html('<i class="fas fa-tasks mr-1"></i> Kelola Checklist Task (Administrator / HRD)');
+                    }
                     if (t.checklist && t.checklist.length > 0) {
                         for (var i = 0; i < t.checklist.length; i++) {
                             var item = t.checklist[i];
@@ -4888,10 +4897,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Tampilkan / sembunyikan panel sesuai status & role
-                // Form Update Progres & Submit Selesai HANYA untuk Karyawan Penerima Tugas (Pelaksana) jika belum disubmit / belum tuntas
                 if (canEditChecklist) {
                     $('#panelBawahanProgres').show();
-                    $('#panelBawahanSubmit').show();
+                    // Form Submit Selesai 100% hanya untuk penerima tugas (pelaksana)
+                    if (isPenerima && stInt !== 2) {
+                        $('#panelBawahanSubmit').show();
+                    } else {
+                        $('#panelBawahanSubmit').hide();
+                    }
                     $('#panelSudahDisubmitInfo').hide();
                 } else {
                     $('#panelBawahanProgres').hide();
