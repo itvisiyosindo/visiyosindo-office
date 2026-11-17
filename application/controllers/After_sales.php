@@ -205,7 +205,7 @@ class After_sales extends CI_Controller
                 if (function_exists('waAfterSalesBaru')) {
                     waAfterSalesBaru($insertData, $items);
                 }
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 log_message('error', 'Gagal kirim WA After Sales: ' . $e->getMessage());
             }
 
@@ -280,9 +280,6 @@ class After_sales extends CI_Controller
             if ($t) {
                 $updateData['nama_teknisi'] = $t->nama;
             }
-        } else {
-            $updateData['id_teknisi'] = null;
-            $updateData['nama_teknisi'] = null;
         }
 
         if ($statusBaru === 'proses') {
@@ -313,7 +310,7 @@ class After_sales extends CI_Controller
             if (function_exists('waAfterSalesUpdateStatus') && $updatedTicket) {
                 waAfterSalesUpdateStatus($updatedTicket, $statusBaru, $catatan);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             log_message('error', 'Gagal kirim WA Update Status After Sales: ' . $e->getMessage());
         }
 
