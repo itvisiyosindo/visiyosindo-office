@@ -1442,11 +1442,16 @@ if (!function_exists('lap_limit_text')) {
 			return false;
 		}
 
-		// 1. Scan via native querySelectorAll untuk kehandalan mutlak
+		// 1. Scan seluruh input yang ada di halaman (baik form laporan mingguan, pencapaian arsip, maupun penilaian umum)
 		var allInputs = document.querySelectorAll('input');
 		allInputs.forEach(function(inp) {
 			var nm = inp.name || '';
-			if (isTargetField(nm, selectedMode)) {
+			// Cek apakah target field cocok, atau input bertipe number dengan class score-input jika mode adm/both
+			var match = isTargetField(nm, selectedMode);
+			if (!match && (selectedMode === 'adm' || selectedMode === 'both') && inp.classList.contains('score-input') && nm.indexOf('catatan') === -1) {
+				match = true;
+			}
+			if (match) {
 				inp.value = nilaiFinal;
 				inp.classList.remove('is-invalid');
 				inp.classList.add('is-valid');
@@ -1454,10 +1459,10 @@ if (!function_exists('lap_limit_text')) {
 			}
 		});
 
-		// 2. Trigger event change & input agar script kalkulasi real-time jalan
+		// 2. Trigger event input dan change pada jQuery dan DOM native
 		if ($) {
-			$('input').filter(function() {
-				return isTargetField(this.name, selectedMode);
+			$('input.score-input, input[name^="nilaia["], input[name^="nilaipa["], input[name^="nilaib["], input[name^="nilaipb["], input[name^="nilaia"], input[name^="nilaib"]').filter(function() {
+				return isTargetField(this.name, selectedMode) || $(this).hasClass('score-input');
 			}).trigger('input').trigger('change');
 
 			if (typeof window.recalculateAllScoresAdm === 'function') {
