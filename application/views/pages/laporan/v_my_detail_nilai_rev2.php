@@ -318,10 +318,10 @@ if (!function_exists('lap_limit_text')) {
 						<input type="number" min="60" max="100" step="1" id="bulk-nilai-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 					</div>
 					<div class="col-md-3 col-sm-12 mb-2 mb-md-0">
-						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
+						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
 					</div>
 					<div class="col-md-5 col-sm-12">
-						<small class="text-muted">Khusus Penilai &amp; Administrator. Mengisi seluruh field nilai B lalu langsung menyimpan ke database.</small>
+						<small class="text-muted">Mengisi seluruh field nilai B di form secara instan. Klik tombol <strong>Simpan</strong> untuk menyimpan.</small>
 					</div>
 				</form>
 			</div>
@@ -984,86 +984,27 @@ if (!function_exists('lap_limit_text')) {
 			? nilaiBulk.toString()
 			: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 
-		var points = [];
+		var countPoints = 0;
 		if ($) {
 			$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
 				$(this).val(nilaiFinal);
-				var ptAttr = $(this).attr('data-point');
-				if (ptAttr) {
-					points.push(ptAttr);
-				}
+				$(this).removeClass('is-invalid').addClass('is-valid');
+				countPoints++;
 			});
 		}
-
-		var submitBtn = document.getElementById('btn-bulk-nilai-submit');
-		if (submitBtn) submitBtn.disabled = true;
 
 		if (typeof Swal !== 'undefined') {
 			Swal.fire({
-				html: '<h4>Menyimpan bulk nilai ke database...</h4>',
-				icon: 'info',
-				allowOutsideClick: false,
-				showConfirmButton: false
+				icon: 'success',
+				title: 'Nilai Berhasil Diterapkan!',
+				text: 'Nilai ' + nilaiFinal + ' berhasil dimasukkan ke seluruh kolom inputan (' + countPoints + ' field). Silakan review dan klik tombol "Simpan Penilaian" untuk menyimpan.',
+				timer: 2000,
+				showConfirmButton: true,
+				confirmButtonColor: '#2563eb'
 			});
+		} else {
+			alert('Nilai ' + nilaiFinal + ' berhasil dimasukkan ke seluruh kolom inputan!');
 		}
-
-		var postData = {
-			mode: 'penilai',
-			pengguna_id: '<?= (int)$data_job->pengguna_id ?>',
-			wednesday: '<?= htmlspecialchars($wednesday, ENT_QUOTES) ?>',
-			nilai_bulk: nilaiFinal,
-			points: points
-		};
-		for (var i = 1; i <= 5; i++) {
-			var catEl = document.querySelector('input[name="catatanb' + i + '"]');
-			if (catEl) {
-				postData['catatanb' + i] = catEl.value;
-			}
-		}
-		if (typeof token !== 'undefined' && token) {
-			postData.csrf_token = token;
-		}
-
-		$.ajax({
-			url: '<?= base_url('laporan/inputBulkNilai') ?>',
-			type: 'POST',
-			data: postData,
-			dataType: 'JSON'
-		}).done(function(resp) {
-			if (submitBtn) submitBtn.disabled = false;
-			if (resp && resp.status === 'error') {
-				if (typeof Swal !== 'undefined') {
-					Swal.fire('Gagal menyimpan', resp.msg || 'Terjadi kesalahan saat menyimpan.', 'error');
-				} else {
-					alert(resp.msg || 'Terjadi kesalahan saat menyimpan.');
-				}
-				return;
-			}
-			if (typeof Swal !== 'undefined') {
-				Swal.fire({
-					icon: 'success',
-					title: 'Berhasil',
-					text: (resp && resp.msg) ? resp.msg : 'Bulk action berhasil disimpan otomatis ke database.',
-					timer: 1300,
-					showConfirmButton: false
-				}).then(function() {
-					window.location.reload();
-				});
-			} else {
-				window.location.reload();
-			}
-		}).fail(function(xhr) {
-			if (submitBtn) submitBtn.disabled = false;
-			var msg = 'Gagal menyimpan data.';
-			if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
-				msg = xhr.responseJSON.msg;
-			}
-			if (typeof Swal !== 'undefined') {
-				Swal.fire('Gagal menyimpan', msg, 'error');
-			} else {
-				alert(msg);
-			}
-		});
 
 		return false;
 	};

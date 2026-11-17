@@ -502,10 +502,10 @@ if (!function_exists('lap_limit_text')) {
 								</select>
 							</div>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
-								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
+								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
 							</div>
 							<div class="col-lg-3 col-md-12 col-sm-12 mt-1 mt-lg-0">
-								<small class="text-muted">Mengisi nilai laporan mingguan &amp; penilaian umum lalu menyimpan otomatis ke database.</small>
+								<small class="text-muted">Mengisi seluruh kolom nilai di form secara instan. Klik tombol <strong>Simpan</strong> pada masing-masing bagian untuk menyimpan.</small>
 							</div>
 						</form>
 					</div>
@@ -1429,17 +1429,14 @@ if (!function_exists('lap_limit_text')) {
 		var modeEl = document.getElementById('bulk-nilai-adm-mode');
 		var selectedMode = modeEl && modeEl.value ? modeEl.value : 'adm';
 
-		var points = [];
+		var pointsCount = 0;
 		if ($) {
 			// Update input nilai A jika mode adm atau both
 			if (selectedMode === 'adm' || selectedMode === 'both') {
 				$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
 					$(this).val(nilaiFinal);
 					$(this).removeClass('is-invalid').addClass('is-valid');
-					var ptAttr = $(this).attr('data-point');
-					if (ptAttr && points.indexOf(ptAttr) === -1) {
-						points.push(ptAttr);
-					}
+					pointsCount++;
 				});
 			}
 			// Update input nilai B jika mode penilai atau both
@@ -1447,93 +1444,26 @@ if (!function_exists('lap_limit_text')) {
 				$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
 					$(this).val(nilaiFinal);
 					$(this).removeClass('is-invalid').addClass('is-valid');
-					var ptAttr = $(this).attr('data-point');
-					if (ptAttr && points.indexOf(ptAttr) === -1) {
-						points.push(ptAttr);
-					}
+					pointsCount++;
 				});
 			}
-			// Kumpulkan seluruh data-point dari tabel jika belum terisi
-			$('[data-point]').each(function() {
-				var ptAttr = $(this).attr('data-point');
-				if (ptAttr && points.indexOf(ptAttr) === -1) {
-					points.push(ptAttr);
-				}
-			});
 			if (typeof window.recalculateAllScoresAdm === 'function') {
 				window.recalculateAllScoresAdm();
 			}
 		}
 
-		var submitBtn = document.getElementById('btn-bulk-nilai-adm-submit');
-		if (submitBtn) submitBtn.disabled = true;
-
 		if (typeof Swal !== 'undefined') {
 			Swal.fire({
-				html: '<h4>Menyimpan bulk nilai ke database...</h4>',
-				icon: 'info',
-				allowOutsideClick: false,
-				showConfirmButton: false
+				icon: 'success',
+				title: 'Nilai Berhasil Diterapkan!',
+				text: 'Nilai ' + nilaiFinal + ' berhasil dimasukkan ke seluruh kolom inputan (' + pointsCount + ' field). Silakan review dan klik tombol "Simpan Penilaian" untuk menyimpan.',
+				timer: 2000,
+				showConfirmButton: true,
+				confirmButtonColor: '#2563eb'
 			});
+		} else {
+			alert('Nilai ' + nilaiFinal + ' berhasil dimasukkan ke seluruh kolom inputan!');
 		}
-
-		var postData = {
-			mode: selectedMode,
-			pengguna_id: '<?= (int)$data_job->pengguna_id ?>',
-			wednesday: '<?= htmlspecialchars($wednesday, ENT_QUOTES) ?>',
-			nilai_bulk: nilaiFinal,
-			points: points
-		};
-		for (var i = 1; i <= 5; i++) {
-			var catEl = document.querySelector('input[name="catatana' + i + '"]');
-			if (catEl) {
-				postData['catatana' + i] = catEl.value;
-			}
-		}
-		if (typeof token !== 'undefined' && token) {
-			postData.csrf_token = token;
-		}
-
-		$.ajax({
-			url: '<?= base_url('laporan/inputBulkNilai') ?>',
-			type: 'POST',
-			data: postData,
-			dataType: 'JSON'
-		}).done(function(resp) {
-			if (submitBtn) submitBtn.disabled = false;
-			if (resp && resp.status === 'error') {
-				if (typeof Swal !== 'undefined') {
-					Swal.fire('Gagal menyimpan', resp.msg || 'Terjadi kesalahan saat menyimpan.', 'error');
-				} else {
-					alert(resp.msg || 'Terjadi kesalahan saat menyimpan.');
-				}
-				return;
-			}
-			if (typeof Swal !== 'undefined') {
-				Swal.fire({
-					icon: 'success',
-					title: 'Berhasil',
-					text: (resp && resp.msg) ? resp.msg : 'Bulk action nilai HRD berhasil disimpan otomatis ke database.',
-					timer: 1300,
-					showConfirmButton: false
-				}).then(function() {
-					window.location.reload();
-				});
-			} else {
-				window.location.reload();
-			}
-		}).fail(function(xhr) {
-			if (submitBtn) submitBtn.disabled = false;
-			var msg = 'Gagal menyimpan data.';
-			if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
-				msg = xhr.responseJSON.msg;
-			}
-			if (typeof Swal !== 'undefined') {
-				Swal.fire('Gagal menyimpan', msg, 'error');
-			} else {
-				alert(msg);
-			}
-		});
 
 		return false;
 	};
