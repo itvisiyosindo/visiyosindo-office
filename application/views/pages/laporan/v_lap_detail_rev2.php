@@ -1430,23 +1430,36 @@ if (!function_exists('lap_limit_text')) {
 		var selectedMode = modeEl && modeEl.value ? modeEl.value : 'adm';
 
 		var pointsCount = 0;
+
+		// Fungsi pencocokan nama field yang 100% aman dan tahan banting
+		function isTargetField(name, mode) {
+			if (!name) return false;
+			var isA = name.startsWith('nilaia[') || name.startsWith('nilaipa[') || /^nilaia[1-5]$/.test(name);
+			var isB = name.startsWith('nilaib[') || name.startsWith('nilaipb[') || /^nilaib[1-5]$/.test(name);
+			if (mode === 'adm') return isA;
+			if (mode === 'penilai') return isB;
+			if (mode === 'both') return isA || isB;
+			return false;
+		}
+
+		// 1. Scan via native querySelectorAll untuk kehandalan mutlak
+		var allInputs = document.querySelectorAll('input');
+		allInputs.forEach(function(inp) {
+			var nm = inp.name || '';
+			if (isTargetField(nm, selectedMode)) {
+				inp.value = nilaiFinal;
+				inp.classList.remove('is-invalid');
+				inp.classList.add('is-valid');
+				pointsCount++;
+			}
+		});
+
+		// 2. Trigger event change & input agar script kalkulasi real-time jalan
 		if ($) {
-			// Update input nilai A jika mode adm atau both
-			if (selectedMode === 'adm' || selectedMode === 'both') {
-				$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
-					$(this).val(nilaiFinal);
-					$(this).removeClass('is-invalid').addClass('is-valid');
-					pointsCount++;
-				});
-			}
-			// Update input nilai B jika mode penilai atau both
-			if (selectedMode === 'penilai' || selectedMode === 'both') {
-				$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
-					$(this).val(nilaiFinal);
-					$(this).removeClass('is-invalid').addClass('is-valid');
-					pointsCount++;
-				});
-			}
+			$('input').filter(function() {
+				return isTargetField(this.name, selectedMode);
+			}).trigger('input').trigger('change');
+
 			if (typeof window.recalculateAllScoresAdm === 'function') {
 				window.recalculateAllScoresAdm();
 			}

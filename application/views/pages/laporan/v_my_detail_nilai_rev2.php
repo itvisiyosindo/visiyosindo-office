@@ -985,12 +985,27 @@ if (!function_exists('lap_limit_text')) {
 			: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 
 		var countPoints = 0;
-		if ($) {
-			$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
-				$(this).val(nilaiFinal);
-				$(this).removeClass('is-invalid').addClass('is-valid');
+
+		function isTargetFieldB(name) {
+			if (!name) return false;
+			return name.startsWith('nilaib[') || name.startsWith('nilaipb[') || /^nilaib[1-5]$/.test(name);
+		}
+
+		var allInputs = document.querySelectorAll('input');
+		allInputs.forEach(function(inp) {
+			var nm = inp.name || '';
+			if (isTargetFieldB(nm)) {
+				inp.value = nilaiFinal;
+				inp.classList.remove('is-invalid');
+				inp.classList.add('is-valid');
 				countPoints++;
-			});
+			}
+		});
+
+		if ($) {
+			$('input').filter(function() {
+				return isTargetFieldB(this.name);
+			}).trigger('input').trigger('change');
 		}
 
 		if (typeof Swal !== 'undefined') {
