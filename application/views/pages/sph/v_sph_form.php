@@ -412,67 +412,50 @@ $sph = isset($sph) ? $sph : null;
                             style="background-color: #e9ecef;"><?= $hasData ? $sph->alamat_penerima : '' ?></textarea>
                     </div>
 
-                    <!-- Cek Estimasi Pengiriman Mandiri Marketing (Direct Link Ekspedisi Resmi) -->
+                    <!-- Cek Estimasi Pengiriman Mandiri Marketing (Website Pembanding Semua Ekspedisi) -->
                     <div class="card mb-3" style="border: 1px solid #4e73df; background: #fdfefe; border-radius: 8px; box-shadow: 0 2px 6px rgba(78,115,223,0.08);">
                         <div class="card-header py-2 px-3 bg-light d-flex justify-content-between align-items-center" style="cursor: pointer;" data-toggle="collapse" data-target="#boxCekOngkir" aria-expanded="true">
                             <span class="font-weight-bold text-primary" style="font-size: 13px;">
-                                <i class="fas fa-shipping-fast mr-1"></i> Cek Estimasi Ongkir & Waktu Kirim (Web Resmi)
+                                <i class="fas fa-shipping-fast mr-1"></i> Cek Estimasi Pengiriman (Pembanding Ekspedisi)
                             </span>
                             <span class="badge badge-primary"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div id="boxCekOngkir" class="collapse show">
                             <div class="card-body p-3">
-                                <p class="small text-muted mb-2">
-                                    <i class="fas fa-info-circle text-info mr-1"></i>
-                                    Pilih ekspedisi di bawah untuk mengecek tarif & estimasi hari (ONS/Reguler) secara real-time dan akurat hingga ke tingkat kecamatan:
-                                </p>
-
-                                <!-- Tombol Link Langsung ke Website Ekspedisi -->
-                                <div class="d-flex flex-wrap mb-3" style="gap: 8px;">
-                                    <a href="https://www.jtcargo.id/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success font-weight-bold">
-                                        <i class="fas fa-truck-loading mr-1"></i> J&T Cargo
+                                <!-- Tombol Utama ke Web Pembanding Ongkir Lengkap -->
+                                <div class="mb-3">
+                                    <a href="https://berdu.id/cek-ongkir" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block py-2 font-weight-bold" style="border-radius: 6px; box-shadow: 0 3px 6px rgba(78,115,223,0.25);">
+                                        <i class="fas fa-external-link-alt mr-2"></i> Buka Web Pembanding Ongkir (Berdu.id)
                                     </a>
-                                    <a href="https://tiki.id/id/beranda" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary font-weight-bold">
-                                        <i class="fas fa-paper-plane mr-1"></i> TIKI (ONS / Reg)
-                                    </a>
-                                    <a href="https://www.jne.co.id/id/tracking/tarif" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-danger font-weight-bold">
-                                        <i class="fas fa-box mr-1"></i> JNE (YES / Reg)
-                                    </a>
-                                    <a href="https://berdu.id/cek-ongkir" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary font-weight-bold" title="Cek semua ekspedisi sekaligus">
-                                        <i class="fas fa-search-dollar mr-1"></i> Pembanding (Semua Ekspedisi)
-                                    </a>
+                                    <small class="text-muted mt-1 d-block" style="font-size: 11.5px;">
+                                        <i class="fas fa-info-circle text-info mr-1"></i>
+                                        Situs ini otomatis menampilkan perbandingan tarif & lama hari (ONS, Reguler, Kargo) untuk <strong>JNE, TIKI, J&T, SiCepat, Pos, dll</strong> dalam satu layar.
+                                    </small>
                                 </div>
 
-                                <!-- Form Input Hasil Cek untuk Disematkan ke SPH -->
-                                <div class="p-2 rounded bg-light" style="border: 1px dashed #ced4da;">
+                                <!-- Form Cepat Salin Hasil ke Catatan SPH -->
+                                <div class="p-2 rounded bg-light" style="border: 1px dashed #b0bed9;">
                                     <label class="small font-weight-bold text-dark mb-1">
-                                        <i class="fas fa-edit text-primary mr-1"></i> Masukkan Hasil Cek ke Catatan SPH:
+                                        <i class="fas fa-edit text-primary mr-1"></i> Masukkan Hasil Pilihan ke Catatan SPH:
                                     </label>
                                     <div class="row">
-                                        <div class="col-md-3 col-6 mb-1">
-                                            <select class="form-control form-control-sm" id="input_ekspedisi_nama">
-                                                <option value="J&T Cargo">J&T Cargo</option>
-                                                <option value="TIKI ONS">TIKI ONS (1 Hari)</option>
-                                                <option value="TIKI Reguler">TIKI Reguler</option>
-                                                <option value="JNE YES">JNE YES (1 Hari)</option>
-                                                <option value="JNE Reguler">JNE Reguler</option>
-                                                <option value="Ekspedisi Lainnya">Ekspedisi Lainnya</option>
-                                            </select>
+                                        <div class="col-md-4 col-12 mb-1">
+                                            <input type="text" class="form-control form-control-sm" id="input_ekspedisi_nama" placeholder="Ekspedisi & Layanan (mis: TIKI ONS / JNE Reguler)">
                                         </div>
                                         <div class="col-md-3 col-6 mb-1">
                                             <input type="text" class="form-control form-control-sm" id="input_est_hari" placeholder="Est: 1-2 Hari Kerja">
                                         </div>
-                                        <div class="col-md-4 col-8 mb-1">
+                                        <div class="col-md-3 col-6 mb-1">
                                             <input type="text" class="form-control form-control-sm" id="input_est_ongkir" placeholder="Est. Biaya: Rp 50.000">
                                         </div>
-                                        <div class="col-md-2 col-4 mb-1">
+                                        <div class="col-md-2 col-12 mb-1">
                                             <button type="button" class="btn btn-sm btn-success btn-block" id="btnSalinHasilManual">
                                                 <i class="fas fa-plus mr-1"></i> Salin
                                             </button>
                                         </div>
                                     </div>
                                     <small class="text-muted font-italic" style="font-size: 11px;">
-                                        * Isi estimasi hari & biaya yang didapat dari web ekspedisi, lalu klik <strong>"Salin"</strong> untuk langsung memasukkannya ke Catatan SPH.
+                                        * Ketik nama ekspedisi, estimasi hari, dan biaya yang dipilih dari web, lalu klik <strong>"Salin"</strong> agar langsung tercantum di penawaran SPH.
                                     </small>
                                 </div>
                             </div>
