@@ -423,23 +423,33 @@ $sph = isset($sph) ? $sph : null;
                         <div id="boxCekOngkir" class="collapse show">
                             <div class="card-body p-3">
                                 <div class="row">
-                                    <div class="col-md-7 col-12 mb-2">
-                                        <label class="small font-weight-bold mb-1">Wilayah / Kota Tujuan Pelanggan:</label>
-                                        <select class="form-control form-control-sm" id="calc_wilayah_tujuan">
-                                            <option value="">-- Pilih Wilayah / Kota Tujuan --</option>
-                                            <option value="lokal_riau">Riau / Pekanbaru & Sekitarnya (Lokal)</option>
-                                            <option value="sumatera_kota">Sumatera (Kota Besar: Medan, Padang, Palembang, Batam)</option>
-                                            <option value="sumatera_kab">Sumatera (Kabupaten / Daerah Lainnya)</option>
-                                            <option value="jabodetabek">Jabodetabek</option>
-                                            <option value="jawa_kota">Pulau Jawa (Kota Besar: Bandung, Semarang, Surabaya, Solo, Jogja)</option>
-                                            <option value="jawa_kab">Pulau Jawa (Kabupaten / Daerah Lainnya)</option>
-                                            <option value="kalimantan_kota">Kalimantan (Kota Besar: Balikpapan, Pontianak, Banjarmasin)</option>
-                                            <option value="sulawesi_kota">Sulawesi (Kota Besar: Makassar, Manado)</option>
-                                            <option value="indonesia_timur">Bali, NTB, NTT, Maluku, Papua</option>
+                                    <div class="col-md-4 col-12 mb-2">
+                                        <label class="small font-weight-bold mb-1"><i class="fas fa-building text-primary mr-1"></i> Asal Kantor Kirim:</label>
+                                        <select class="form-control form-control-sm" id="calc_asal_kantor">
+                                            <option value="pekanbaru" selected>Kantor Pekanbaru</option>
+                                            <option value="jakarta">Kantor Jakarta</option>
+                                            <option value="jogja">Kantor Jogja (Yogyakarta)</option>
                                         </select>
                                     </div>
                                     <div class="col-md-5 col-12 mb-2">
-                                        <label class="small font-weight-bold mb-1">Est. Berat (Kg):</label>
+                                        <label class="small font-weight-bold mb-1"><i class="fas fa-map-marker-alt text-danger mr-1"></i> Wilayah / Kota Tujuan Pelanggan:</label>
+                                        <select class="form-control form-control-sm" id="calc_wilayah_tujuan">
+                                            <option value="">-- Pilih Wilayah / Kota Tujuan --</option>
+                                            <option value="lokal_riau">Riau / Pekanbaru & Sekitarnya</option>
+                                            <option value="jabodetabek">Jabodetabek</option>
+                                            <option value="jogja_solo_jateng">DIY & Jawa Tengah (Jogja, Solo, Semarang)</option>
+                                            <option value="jawa_timur">Jawa Timur (Surabaya, Malang, Sidoarjo)</option>
+                                            <option value="jawa_barat">Jawa Barat & Banten (Bandung, dsb)</option>
+                                            <option value="sumatera_kota">Sumatera (Kota Besar: Medan, Padang, Batam, Palembang)</option>
+                                            <option value="sumatera_kab">Sumatera (Kabupaten / Daerah Lainnya)</option>
+                                            <option value="kalimantan">Kalimantan</option>
+                                            <option value="sulawesi">Sulawesi</option>
+                                            <option value="bali_nusa">Bali, NTB, NTT</option>
+                                            <option value="indonesia_timur">Maluku & Papua</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 col-12 mb-2">
+                                        <label class="small font-weight-bold mb-1"><i class="fas fa-weight-hanging text-muted mr-1"></i> Est. Berat (Kg):</label>
                                         <div class="input-group input-group-sm">
                                             <input type="number" class="form-control" id="calc_berat" value="1" min="1" step="0.5">
                                             <div class="input-group-append">
@@ -1491,19 +1501,23 @@ $sph = isset($sph) ? $sph : null;
                         $('#calc_wilayah_tujuan').val('lokal_riau');
                     } else if (teksAlamat.indexOf('jakarta') !== -1 || teksAlamat.indexOf('bogor') !== -1 || teksAlamat.indexOf('depok') !== -1 || teksAlamat.indexOf('tangerang') !== -1 || teksAlamat.indexOf('bekasi') !== -1) {
                         $('#calc_wilayah_tujuan').val('jabodetabek');
-                    } else if (teksAlamat.indexOf('bandung') !== -1 || teksAlamat.indexOf('semarang') !== -1 || teksAlamat.indexOf('surabaya') !== -1 || teksAlamat.indexOf('solo') !== -1 || teksAlamat.indexOf('jogja') !== -1 || teksAlamat.indexOf('yogyakarta') !== -1) {
-                        $('#calc_wilayah_tujuan').val('jawa_kota');
-                    } else if (teksAlamat.indexOf('jawa') !== -1 || teksAlamat.indexOf('banten') !== -1) {
-                        $('#calc_wilayah_tujuan').val('jawa_kab');
+                    } else if (teksAlamat.indexOf('jogja') !== -1 || teksAlamat.indexOf('yogyakarta') !== -1 || teksAlamat.indexOf('solo') !== -1 || teksAlamat.indexOf('semarang') !== -1 || teksAlamat.indexOf('jawa tengah') !== -1 || teksAlamat.indexOf('jateng') !== -1) {
+                        $('#calc_wilayah_tujuan').val('jogja_solo_jateng');
+                    } else if (teksAlamat.indexOf('surabaya') !== -1 || teksAlamat.indexOf('malang') !== -1 || teksAlamat.indexOf('sidoarjo') !== -1 || teksAlamat.indexOf('jawa timur') !== -1 || teksAlamat.indexOf('jatim') !== -1) {
+                        $('#calc_wilayah_tujuan').val('jawa_timur');
+                    } else if (teksAlamat.indexOf('bandung') !== -1 || teksAlamat.indexOf('jawa barat') !== -1 || teksAlamat.indexOf('jabar') !== -1 || teksAlamat.indexOf('banten') !== -1 || teksAlamat.indexOf('serang') !== -1) {
+                        $('#calc_wilayah_tujuan').val('jawa_barat');
                     } else if (teksAlamat.indexOf('medan') !== -1 || teksAlamat.indexOf('padang') !== -1 || teksAlamat.indexOf('palembang') !== -1 || teksAlamat.indexOf('batam') !== -1) {
                         $('#calc_wilayah_tujuan').val('sumatera_kota');
                     } else if (teksAlamat.indexOf('sumatera') !== -1 || teksAlamat.indexOf('lampung') !== -1 || teksAlamat.indexOf('jambi') !== -1 || teksAlamat.indexOf('bengkulu') !== -1 || teksAlamat.indexOf('aceh') !== -1) {
                         $('#calc_wilayah_tujuan').val('sumatera_kab');
-                    } else if (teksAlamat.indexOf('balikpapan') !== -1 || teksAlamat.indexOf('pontianak') !== -1 || teksAlamat.indexOf('banjarmasin') !== -1 || teksAlamat.indexOf('samarinda') !== -1) {
-                        $('#calc_wilayah_tujuan').val('kalimantan_kota');
-                    } else if (teksAlamat.indexOf('makassar') !== -1 || teksAlamat.indexOf('manado') !== -1) {
-                        $('#calc_wilayah_tujuan').val('sulawesi_kota');
-                    } else if (teksAlamat.indexOf('bali') !== -1 || teksAlamat.indexOf('papua') !== -1 || teksAlamat.indexOf('maluku') !== -1 || teksAlamat.indexOf('ntt') !== -1 || teksAlamat.indexOf('ntb') !== -1) {
+                    } else if (teksAlamat.indexOf('kalimantan') !== -1 || teksAlamat.indexOf('balikpapan') !== -1 || teksAlamat.indexOf('pontianak') !== -1 || teksAlamat.indexOf('banjarmasin') !== -1 || teksAlamat.indexOf('samarinda') !== -1) {
+                        $('#calc_wilayah_tujuan').val('kalimantan');
+                    } else if (teksAlamat.indexOf('sulawesi') !== -1 || teksAlamat.indexOf('makassar') !== -1 || teksAlamat.indexOf('manado') !== -1) {
+                        $('#calc_wilayah_tujuan').val('sulawesi');
+                    } else if (teksAlamat.indexOf('bali') !== -1 || teksAlamat.indexOf('denpasar') !== -1 || teksAlamat.indexOf('lombok') !== -1 || teksAlamat.indexOf('ntb') !== -1 || teksAlamat.indexOf('ntt') !== -1) {
+                        $('#calc_wilayah_tujuan').val('bali_nusa');
+                    } else if (teksAlamat.indexOf('papua') !== -1 || teksAlamat.indexOf('maluku') !== -1 || teksAlamat.indexOf('ambon') !== -1 || teksAlamat.indexOf('jayapura') !== -1) {
                         $('#calc_wilayah_tujuan').val('indonesia_timur');
                     }
                     if ($('#calc_wilayah_tujuan').val()) {
@@ -2168,53 +2182,56 @@ $sph = isset($sph) ? $sph : null;
             <?php endif; ?>
 
             // ==========================================
-            // LOGIKA KALKULATOR PENGIRIMAN (ONS & REGULER)
+            // LOGIKA KALKULATOR PENGIRIMAN MULTI-ASAL KANTOR (ONS & REGULER)
             // ==========================================
-            var tarifWilayah = {
-                'lokal_riau': {
-                    label: 'Riau / Pekanbaru & Sekitarnya',
-                    ons: { tarif: 15000, est: '1 Hari' },
-                    reg: { tarif: 8000, est: '1 - 2 Hari' }
+            var labelKantor = {
+                'pekanbaru': 'Kantor Pekanbaru',
+                'jakarta': 'Kantor Jakarta',
+                'jogja': 'Kantor Jogja'
+            };
+
+            var tarifMatriks = {
+                // ASAL: PEKANBARU
+                'pekanbaru': {
+                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { tarif: 15000, est: '1 Hari' }, reg: { tarif: 8000, est: '1 - 2 Hari' } },
+                    'jabodetabek': { label: 'Jabodetabek', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '2 - 3 Hari Kerja' } },
+                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 3 Hari Kerja' } },
+                    'jawa_timur': { label: 'Jawa Timur', ons: { tarif: 34000, est: '1 Hari Kerja' }, reg: { tarif: 22000, est: '2 - 4 Hari Kerja' } },
+                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 18000, est: '2 - 3 Hari Kerja' } },
+                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '2 - 3 Hari Kerja' } },
+                    'sumatera_kab': { label: 'Sumatera (Kabupaten)', ons: { tarif: 36000, est: '1 - 2 Hari' }, reg: { tarif: 22000, est: '3 - 5 Hari Kerja' } },
+                    'kalimantan': { label: 'Kalimantan', ons: { tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '3 - 5 Hari Kerja' } },
+                    'sulawesi': { label: 'Sulawesi', ons: { tarif: 55000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 38000, est: '3 - 5 Hari Kerja' } },
+                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { tarif: 52000, est: '1 - 2 Hari' }, reg: { tarif: 36000, est: '3 - 5 Hari Kerja' } },
+                    'indonesia_timur': { label: 'Maluku & Papua', ons: { tarif: 85000, est: '2 - 3 Hari' }, reg: { tarif: 55000, est: '5 - 8 Hari Kerja' } }
                 },
-                'sumatera_kota': {
-                    label: 'Sumatera (Kota Besar)',
-                    ons: { tarif: 28000, est: '1 Hari Kerja' },
-                    reg: { tarif: 18000, est: '2 - 3 Hari Kerja' }
+                // ASAL: JAKARTA
+                'jakarta': {
+                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '2 - 3 Hari' } },
+                    'jabodetabek': { label: 'Jabodetabek (Lokal)', ons: { tarif: 14000, est: '1 Hari' }, reg: { tarif: 9000, est: '1 - 2 Hari' } },
+                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { tarif: 22000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '1 - 2 Hari' } },
+                    'jawa_timur': { label: 'Jawa Timur', ons: { tarif: 24000, est: '1 Hari Kerja' }, reg: { tarif: 14000, est: '2 - 3 Hari' } },
+                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari' } },
+                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '2 - 3 Hari' } },
+                    'sumatera_kab': { label: 'Sumatera (Kabupaten)', ons: { tarif: 35000, est: '1 - 2 Hari' }, reg: { tarif: 22000, est: '3 - 5 Hari' } },
+                    'kalimantan': { label: 'Kalimantan', ons: { tarif: 42000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 30000, est: '2 - 4 Hari' } },
+                    'sulawesi': { label: 'Sulawesi', ons: { tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 34000, est: '3 - 5 Hari' } },
+                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { tarif: 38000, est: '1 Hari Kerja' }, reg: { tarif: 24000, est: '2 - 3 Hari' } },
+                    'indonesia_timur': { label: 'Maluku & Papua', ons: { tarif: 75000, est: '2 - 3 Hari' }, reg: { tarif: 48000, est: '4 - 7 Hari' } }
                 },
-                'sumatera_kab': {
-                    label: 'Sumatera (Kabupaten / Daerah Lainnya)',
-                    ons: { tarif: 38000, est: '1 - 2 Hari' },
-                    reg: { tarif: 24000, est: '3 - 5 Hari Kerja' }
-                },
-                'jabodetabek': {
-                    label: 'Jabodetabek',
-                    ons: { tarif: 26000, est: '1 Hari Kerja' },
-                    reg: { tarif: 15000, est: '2 - 3 Hari Kerja' }
-                },
-                'jawa_kota': {
-                    label: 'Pulau Jawa (Kota Besar)',
-                    ons: { tarif: 32000, est: '1 Hari Kerja' },
-                    reg: { tarif: 20000, est: '2 - 3 Hari Kerja' }
-                },
-                'jawa_kab': {
-                    label: 'Pulau Jawa (Kabupaten)',
-                    ons: { tarif: 42000, est: '1 - 2 Hari' },
-                    reg: { tarif: 26000, est: '3 - 5 Hari Kerja' }
-                },
-                'kalimantan_kota': {
-                    label: 'Kalimantan (Kota Besar)',
-                    ons: { tarif: 48000, est: '1 - 2 Hari Kerja' },
-                    reg: { tarif: 35000, est: '3 - 5 Hari Kerja' }
-                },
-                'sulawesi_kota': {
-                    label: 'Sulawesi (Kota Besar)',
-                    ons: { tarif: 55000, est: '1 - 2 Hari Kerja' },
-                    reg: { tarif: 38000, est: '3 - 5 Hari Kerja' }
-                },
-                'indonesia_timur': {
-                    label: 'Indonesia Timur (Bali, NTB, NTT, Maluku, Papua)',
-                    ons: { tarif: 75000, est: '2 - 3 Hari Kerja' },
-                    reg: { tarif: 50000, est: '4 - 7 Hari Kerja' }
+                // ASAL: JOGJA (YOGYAKARTA)
+                'jogja': {
+                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 4 Hari' } },
+                    'jabodetabek': { label: 'Jabodetabek', ons: { tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 12000, est: '1 - 2 Hari' } },
+                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah (Lokal)', ons: { tarif: 12000, est: '1 Hari' }, reg: { tarif: 7000, est: '1 Hari' } },
+                    'jawa_timur': { label: 'Jawa Timur', ons: { tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari' } },
+                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '1 - 2 Hari' } },
+                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 4 Hari' } },
+                    'sumatera_kab': { label: 'Sumatera (Kabupaten)', ons: { tarif: 40000, est: '2 Hari Kerja' }, reg: { tarif: 26000, est: '3 - 5 Hari' } },
+                    'kalimantan': { label: 'Kalimantan', ons: { tarif: 44000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 32000, est: '3 - 5 Hari' } },
+                    'sulawesi': { label: 'Sulawesi', ons: { tarif: 50000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '3 - 5 Hari' } },
+                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 3 Hari' } },
+                    'indonesia_timur': { label: 'Maluku & Papua', ons: { tarif: 80000, est: '2 - 3 Hari' }, reg: { tarif: 52000, est: '5 - 7 Hari' } }
                 }
             };
 
@@ -2225,16 +2242,20 @@ $sph = isset($sph) ? $sph : null;
             var currentEstimasi = null;
 
             $('#btnHitungOngkir').on('click', function() {
+                var asal = $('#calc_asal_kantor').val() || 'pekanbaru';
                 var zona = $('#calc_wilayah_tujuan').val();
                 var berat = parseFloat($('#calc_berat').val()) || 1;
                 if (berat <= 0) berat = 1;
 
-                if (!zona || !tarifWilayah[zona]) {
+                if (!zona) {
                     toastr.warning('Silakan pilih Wilayah / Kota Tujuan terlebih dahulu.', 'Pilih Wilayah');
                     return;
                 }
 
-                var data = tarifWilayah[zona];
+                var tarifAsal = tarifMatriks[asal] || tarifMatriks['pekanbaru'];
+                var data = tarifAsal[zona];
+                if (!data) return;
+
                 var totalOns = data.ons.tarif * Math.ceil(berat);
                 var totalReg = data.reg.tarif * Math.ceil(berat);
 
@@ -2249,6 +2270,7 @@ $sph = isset($sph) ? $sph : null;
                 $('#hasilEstimasiBox').slideDown();
 
                 currentEstimasi = {
+                    asal: labelKantor[asal],
                     wilayah: data.label,
                     berat: Math.ceil(berat),
                     ons: { est: data.ons.est, tarif: totalOns },
@@ -2256,8 +2278,8 @@ $sph = isset($sph) ? $sph : null;
                 };
             });
 
-            $('#calc_wilayah_tujuan').on('change', function() {
-                if ($(this).val()) {
+            $('#calc_asal_kantor, #calc_wilayah_tujuan').on('change', function() {
+                if ($('#calc_wilayah_tujuan').val()) {
                     $('#btnHitungOngkir').trigger('click');
                 }
             });
@@ -2269,9 +2291,9 @@ $sph = isset($sph) ? $sph : null;
                 var teksKet = '';
 
                 if (jenis === 'ONS') {
-                    teksKet = 'Estimasi pengiriman via ONS (Over Night Service): ' + currentEstimasi.ons.est + ' (Est. Ongkir ' + formatRupiah(currentEstimasi.ons.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg ke ' + currentEstimasi.wilayah + ').';
+                    teksKet = 'Estimasi pengiriman via ONS (Over Night Service) dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.ons.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.ons.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg).';
                 } else {
-                    teksKet = 'Estimasi pengiriman via Reguler: ' + currentEstimasi.reg.est + ' (Est. Ongkir ' + formatRupiah(currentEstimasi.reg.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg ke ' + currentEstimasi.wilayah + ').';
+                    teksKet = 'Estimasi pengiriman via Reguler dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.reg.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.reg.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg).';
                 }
 
                 // Tambahkan langsung ke Keterangan Tambahan SPH
@@ -2283,7 +2305,7 @@ $sph = isset($sph) ? $sph : null;
                     '</div>';
 
                 $('#keteranganCustomContainer').append(htmlCustom);
-                toastr.success('Keterangan estimasi pengiriman ' + jenis + ' berhasil dimasukkan ke Catatan SPH!', 'Berhasil Ditambahkan');
+                toastr.success('Keterangan estimasi pengiriman ' + jenis + ' dari ' + currentEstimasi.asal + ' berhasil ditambahkan ke Catatan SPH!', 'Berhasil Ditambahkan');
                 
                 // Scroll halus ke bagian Keterangan
                 $('html, body').animate({
