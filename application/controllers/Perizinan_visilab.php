@@ -179,6 +179,68 @@ class Perizinan_visilab extends CI_Controller
             @mkdir($ktaDir, 0755, true);
         }
 
+        // Seed dummy After Sales Service jika belum ada data
+        $dummyAss = null;
+        if ($this->db->table_exists('after_sales_service')) {
+            $cAss = $this->db->query("SELECT COUNT(*) as c FROM after_sales_service WHERE status_data = 1")->row();
+            if ($cAss && (int)$cAss->c == 0) {
+                $this->load->model('md_after_sales');
+                $nomorData = $this->md_after_sales->generateNomorTiket(date('Y-m-d'));
+                
+                // Ambil 1 pelanggan dan 1 teknisi jika ada
+                $firstPel = $this->db->select('id_pelanggan, identitas_pelanggan, alamat, kontak, cpname')->where('status', 1)->limit(1)->get('pelanggan')->row();
+                $firstTek = $this->db->select('pengguna_id, nama')->where('status', 1)->where('id_divisi', 7)->limit(1)->get('pengguna')->row();
+
+                $dummyData = [
+                    'nomor_tiket'       => $nomorData['nomor_tiket'],
+                    'nomor_urut'        => $nomorData['nomor_urut'],
+                    'id_pelanggan'      => $firstPel ? $firstPel->id_pelanggan : null,
+                    'nama_pelanggan'    => $firstPel ? $firstPel->identitas_pelanggan : 'RSUD Arifin Achmad Provinsi Riau',
+                    'alamat_pelanggan'  => $firstPel ? ($firstPel->alamat ?: 'Jl. Diponegoro No. 2, Kota Pekanbaru') : 'Jl. Diponegoro No. 2, Kota Pekanbaru',
+                    'pic_nama'          => $firstPel ? ($firstPel->cpname ?: 'dr. Budi Setiawan, Sp.Rad') : 'dr. Budi Setiawan, Sp.Rad',
+                    'pic_kontak'        => $firstPel ? ($firstPel->kontak ?: '081268112233') : '081268112233',
+                    'jenis_layanan'     => 'Perbaikan / Troubleshooting',
+                    'nama_alat'         => 'Mobile X-Ray Digital EcoRay 400',
+                    'merk_tipe'         => 'EcoRay UltraGen 400mA',
+                    'nomor_seri'        => 'SN-ER400-2024-089',
+                    'keluhan'           => 'Indikator display error code E-04 saat exposure, tombol handswitch macet dan perlu kalibrasi ulang mA.',
+                    'tgl_masuk'         => date('Y-m-d'),
+                    'id_teknisi'        => $firstTek ? $firstTek->pengguna_id : null,
+                    'nama_teknisi'      => $firstTek ? $firstTek->nama : 'Roki Sabtu Perdana',
+                    'status'            => 'proses',
+                    'status_pembayaran' => 'berbayar',
+                    'biaya_sparepart'   => 1850000.00,
+                    'biaya_jasa'        => 750000.00,
+                    'biaya_total'       => 2600000.00,
+                    'tindakan_perbaikan'=> 'Penggantian kabel handswitch fleksibel baru, pembersihan konektor generator utama, serta uji exposure radiasi pada 50kV/10mAs (hasil normal).',
+                    'status_data'       => 1,
+                    'created_by'        => 1,
+                    'created_at'        => date('Y-m-d H:i:s')
+                ];
+
+                $dummyItems = [
+                    [
+                        'jenis'        => 'sparepart',
+                        'deskripsi'    => 'Handswitch Double Stage Cable Original EcoRay',
+                        'qty'          => 1,
+                        'satuan'       => 'Pcs',
+                        'harga_satuan' => 1850000.00,
+                        'subtotal'     => 1850000.00
+                    ],
+                    [
+                        'jenis'        => 'jasa',
+                        'deskripsi'    => 'Jasa Instalasi & Pengujian Output Radiasi (Troubleshooting)',
+                        'qty'          => 1,
+                        'satuan'       => 'Paket',
+                        'harga_satuan' => 750000.00,
+                        'subtotal'     => 750000.00
+                    ]
+                ];
+
+                $dummyAss = $this->md_after_sales->insert($dummyData, $dummyItems);
+            }
+        }
+
         $allData = $this->md_perizinan_visilab->get_all([]);
         $allStats = $this->md_perizinan_visilab->get_summary_stats();
 
@@ -191,6 +253,7 @@ class Perizinan_visilab extends CI_Controller
             'err1'             => $err1,
             'create_history'   => $q2,
             'err2'             => $err2,
+            'dummy_ass_id'     => $dummyAss,
             'total_rows_db'    => count($allData),
             'stats'            => $allStats,
             'first_row'        => !empty($allData) ? $allData[0]->nama_instansi : null
