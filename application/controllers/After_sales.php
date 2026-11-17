@@ -250,73 +250,79 @@ class After_sales extends CI_Controller
     {
         grantAccessFor('all');
 
-        $encryptedId = $this->input->post('id_tiket');
-        $idRaw = (int)$this->input->post('id_raw');
-        $id = !empty($idRaw) ? $idRaw : (int)decrypt($encryptedId);
-        $statusBaru = $this->input->post('status');
-        $catatan = trim($this->input->post('catatan'));
-        $idTeknisi = $this->input->post('id_teknisi');
-        $tindakan = trim($this->input->post('tindakan_perbaikan'));
-
-        $ticket = $this->md_after_sales->getById($id);
-        if (!$ticket) {
-            $this->session->set_flashdata('error', 'Tiket tidak ditemukan.');
-            redirect('after_sales');
-            return;
-        }
-
-        $updateData = [
-            'status'     => $statusBaru,
-            'updated_by' => sessPenggunaId(),
-            'updated_at' => date('Y-m-d H:i:s')
-        ];
-
-        if (!empty($tindakan)) {
-            $updateData['tindakan_perbaikan'] = $tindakan;
-        }
-
-        if (!empty($idTeknisi)) {
-            $updateData['id_teknisi'] = $idTeknisi;
-            $t = $this->db->get_where('pengguna', ['pengguna_id' => $idTeknisi])->row();
-            if ($t) {
-                $updateData['nama_teknisi'] = $t->nama;
-            }
-        }
-
-        if ($statusBaru === 'proses') {
-            $updateData['tgl_pengerjaan'] = date('Y-m-d H:i:s');
-            if (empty($ticket->tgl_kroscek)) {
-                $updateData['tgl_kroscek'] = date('Y-m-d H:i:s');
-            }
-        } elseif ($statusBaru === 'selesai') {
-            $updateData['tgl_selesai'] = date('Y-m-d H:i:s');
-        }
-
-        $this->md_after_sales->update($id, $updateData);
-
-        // Catat di log
-        $this->md_after_sales->insertLog([
-            'after_sales_id' => $id,
-            'status_lama'    => $ticket->status,
-            'status_baru'    => $statusBaru,
-            'keterangan'     => !empty($catatan) ? $catatan : "Status tiket diubah menjadi " . strtoupper(str_replace('_', ' ', $statusBaru)),
-            'user_id'        => sessPenggunaId(),
-            'user_nama'      => sessNamaPengguna(),
-            'created_at'     => date('Y-m-d H:i:s')
-        ]);
-
-        // Trigger Notifikasi WhatsApp Update Status ke Grup Teknisi
         try {
-            $updatedTicket = $this->md_after_sales->getById($id);
-            if (function_exists('waAfterSalesUpdateStatus') && $updatedTicket) {
-                waAfterSalesUpdateStatus($updatedTicket, $statusBaru, $catatan);
-            }
-        } catch (\Throwable $e) {
-            log_message('error', 'Gagal kirim WA Update Status After Sales: ' . $e->getMessage());
-        }
+            $idRaw = (int)$this->input->post('id_raw');
+            $encryptedId = $this->input->post('id_tiket');
+            $id = !empty($idRaw) ? $idRaw : (!empty($encryptedId) ? (int)decrypt($encryptedId) : 0);
+            $statusBaru = $this->input->post('status');
+            $catatan = trim($this->input->post('catatan'));
+            $idTeknisi = $this->input->post('id_teknisi');
+            $tindakan = trim($this->input->post('tindakan_perbaikan'));
 
-        $this->session->set_flashdata('success', 'Status tiket berhasil diperbarui.');
-        redirect('after_sales/detail/' . $encryptedId);
+            $ticket = $this->md_after_sales->getById($id);
+            if (!$ticket) {
+                $this->session->set_flashdata('error', 'Tiket tidak ditemukan.');
+                redirect('after_sales');
+                return;
+            }
+
+            $updateData = [
+                'status'     => $statusBaru,
+                'updated_by' => function_exists('sessPenggunaId') ? sessPenggunaId() : 1,
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+
+            if (!empty($tindakan)) {
+                $updateData['tindakan_perbaikan'] = $tindakan;
+            }
+
+            if (!empty($idTeknisi)) {
+                $updateData['id_teknisi'] = $idTeknisi;
+                $t = $this->db->get_where('pengguna', ['pengguna_id' => $idTeknisi])->row();
+                if ($t) {
+                    $updateData['nama_teknisi'] = $t->nama;
+                }
+            }
+
+            if ($statusBaru === 'proses') {
+                $updateData['tgl_pengerjaan'] = date('Y-m-d H:i:s');
+                if (empty($ticket->tgl_kroscek)) {
+                    $updateData['tgl_kroscek'] = date('Y-m-d H:i:s');
+                }
+            } elseif ($statusBaru === 'selesai') {
+                $updateData['tgl_selesai'] = date('Y-m-d H:i:s');
+            }
+
+            $this->md_after_sales->update($id, $updateData);
+
+            // Catat di log
+            $this->md_after_sales->insertLog([
+                'after_sales_id' => $id,
+                'status_lama'    => $ticket->status,
+                'status_baru'    => $statusBaru,
+                'keterangan'     => !empty($catatan) ? $catatan : "Status tiket diubah menjadi " . strtoupper(str_replace('_', ' ', $statusBaru)),
+                'user_id'        => function_exists('sessPenggunaId') ? sessPenggunaId() : 1,
+                'user_nama'      => function_exists('sessNamaPengguna') ? (sessNamaPengguna() ?: 'Administrator') : 'Administrator',
+                'created_at'     => date('Y-m-d H:i:s')
+            ]);
+
+            // Trigger Notifikasi WhatsApp Update Status ke Grup Teknisi
+            try {
+                $updatedTicket = $this->md_after_sales->getById($id);
+                if (function_exists('waAfterSalesUpdateStatus') && $updatedTicket) {
+                    waAfterSalesUpdateStatus($updatedTicket, $statusBaru, $catatan);
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'Gagal kirim WA Update Status After Sales: ' . $e->getMessage());
+            }
+
+            $this->session->set_flashdata('success', 'Status tiket berhasil diperbarui.');
+            $targetUrl = !empty($encryptedId) ? 'after_sales/detail/' . $encryptedId : 'after_sales/detail/' . encrypt($id);
+            redirect($targetUrl);
+        } catch (\Throwable $t) {
+            $this->session->set_flashdata('error', 'Gagal memperbarui status: ' . $t->getMessage());
+            redirect('after_sales');
+        }
     }
 
     /**
