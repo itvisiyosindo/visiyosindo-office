@@ -489,18 +489,15 @@
     $img_path = "uploads/file_karyawan/ttd/";
     $ttd_notyet = "uploads/ttd/ttd-notyet.png";
 
-    // Gunakan TTD berbeda untuk Visilab
+    // Gunakan TTD + Cap stempel resmi
     if (!empty($sph->is_visilab)) {
-        // Jika ada ttd_mega_cap atau ttd_75
+        // Jika Visilab: ttd_75 / ttd_mega_cap
         $ttd_file = file_exists(FCPATH . $img_path . "ttd_75.png") ? ($img_path . "ttd_75.png") : ($img_path . "ttd_mega_cap.png");
         $stempel_base64 = img_to_base64($ttd_file);
     } else {
-        // Prioritaskan ttd_33_cap.png (300KB) yang ringan dan sudah ada cap
-        if (file_exists(FCPATH . $img_path . "ttd_33_cap.png")) {
-            $stempel_base64 = img_to_base64($img_path . "ttd_33_cap.png");
-        } else {
-            $stempel_base64 = img_to_base64($img_path . "ttd_stample_gm.png");
-        }
+        // Non-Visilab: TTD GM lengkap dengan cap stempel PT. Visi Yosindo Medikal
+        $stempel_file = $img_path . "ttd_stample_gm.png";
+        $stempel_base64 = img_to_base64($stempel_file);
     }
 
     $is_signed = ($sph->status == 'signed');
