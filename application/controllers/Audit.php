@@ -122,6 +122,13 @@ class Audit extends CI_Controller
         $page_data['current_user_id']       = sessPenggunaId();
         $page_data['user_jabatan']          = $user_jabatan;
 
+        // Ambil detail breakdown kepatuhan laporan mingguan jika pegawai dipilih
+        $laporanComplianceDetail = null;
+        if (!empty($selectedPegawai)) {
+            $laporanComplianceDetail = $this->md_audit_system->getLaporanMingguanCompliance($year, $selectedPegawai['pengguna_id']);
+        }
+        $page_data['laporan_compliance_detail'] = $laporanComplianceDetail;
+
         $this->load->view('index', $page_data);
     }
 
@@ -263,6 +270,34 @@ class Audit extends CI_Controller
     }
 
     /**
+     * AJAX Get Breakdown Kepatuhan Laporan Mingguan Pegawai (Modal View)
+     */
+    public function get_laporan_breakdown()
+    {
+        grantAccessFor('all');
+
+        $year       = (int)($this->input->get('tahun') ?: 2026);
+        $pegawai_id = (int)$this->input->get('pegawai_id');
+
+        if ($pegawai_id <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Pegawai tidak valid.']);
+            return;
+        }
+
+        $detail = $this->md_audit_system->getLaporanMingguanCompliance($year, $pegawai_id);
+        $peg = @$this->db->select('nama, jabatan')->where('pengguna_id', $pegawai_id)->get('pengguna')->row();
+
+        echo json_encode([
+            'status' => 'success',
+            'pegawai' => [
+                'nama'    => $peg ? $peg->nama : 'Pegawai',
+                'jabatan' => $peg ? $peg->jabatan : '-'
+            ],
+            'data' => $detail
+        ]);
+    }
+
+    /**
      * Export Hasil Audit Kinerja ke Format Excel (.xlsx) Resmi
      */
     public function export_excel()
@@ -307,7 +342,14 @@ class Audit extends CI_Controller
         // Header Dokumen
         $sheetTitle = !empty($selectedPegawai) ? ('AUDIT KINERJA - ' . strtoupper($selectedPegawai['nama'])) : 'AUDIT KINERJA KARYAWAN - PT VISI YOSINDO MEDIKAL';
         $sheet->setCellValue('A1', $sheetTitle);
-        $subTitle = 'Tahun Periode: ' . $year . (!empty($selectedPegawai) ? (' | Posisi: ' . $selectedPegawai['posisi'] . ' (' . $selectedPegawai['divisi'] . ')') : '') . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s');
+        $complianceStr = '';
+        if (!empty($selectedPegawai)) {
+            $comp = $this->md_audit_system->getLaporanMingguanCompliance($year, $selectedPegawai['pengguna_id']);
+            if ($comp) {
+                $complianceStr = ' | Kepatuhan Laporan: ' . $comp['compliance_score'] . '% (' . $comp['count_tepat_waktu'] . ' Tepat, ' . $comp['count_telat'] . ' Telat, ' . $comp['count_tidak_isi'] . ' Kosong)';
+            }
+        }
+        $subTitle = 'Tahun Periode: ' . $year . (!empty($selectedPegawai) ? (' | Posisi: ' . $selectedPegawai['posisi'] . ' (' . $selectedPegawai['divisi'] . ')') : '') . $complianceStr . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s');
         $sheet->setCellValue('A2', $subTitle);
         $sheet->mergeCells('A1:J1');
         $sheet->mergeCells('A2:J2');

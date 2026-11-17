@@ -1451,6 +1451,9 @@ class Md_audit_system extends CI_Model
         // Ambil catatan audit kinerja pada tahun tersebut
         $auditRecords = $this->loadAuditKinerjaRecords($year);
 
+        // Ambil data kepatuhan laporan mingguan seluruh pegawai sekaligus (bulk cache) untuk efisiensi
+        $allCompliance = $this->getBulkLaporanMingguanCompliance($year);
+
         // Ambil pegawai aktif non-sistem
         $query = @$this->db->select('pg.pengguna_id, pg.nama, pg.jabatan, pg.email, d.nama as nama_divisi')
             ->from('pengguna pg')
@@ -1527,7 +1530,8 @@ class Md_audit_system extends CI_Model
                     'pending_audit'       => $pendingCount,
                     'status_audit_label'  => $statusAuditLabel,
                     'status_audit_badge'  => $statusAuditBadge,
-                    'status_audit_code'   => $statusAuditCode
+                    'status_audit_code'   => $statusAuditCode,
+                    'laporan_compliance'  => isset($allCompliance[(int)$row['pengguna_id']]) ? $allCompliance[(int)$row['pengguna_id']] : $this->getEmptyComplianceData($year)
                 ];
             }
         }
@@ -1934,5 +1938,400 @@ class Md_audit_system extends CI_Model
         @file_put_contents($this->keuanganFilePath, json_encode($fileData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         return true;
+    }
+
+    /**
+     * Cache internal daftar hari libur nasional untuk tahun yang dicek
+     */
+    private $holidaySetCache = [];
+
+    public function getHolidaysForYear($year)
+    {
+        $year = (int)$year;
+        if (isset($this->holidaySetCache[$year])) {
+            return $this->holidaySetCache[$year];
+        }
+
+        $holidaySet = [];
+        if ($this->hasTable('absensi_config_libur')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $rows = @$this->db->query("SELECT tgl FROM absensi_config_libur WHERE tgl >= ? AND tgl <= ?", ["{$year}-01-01", "{$year}-12-31"])->result();
+            if ($rows) {
+                foreach ($rows as $r) {
+                    if (!empty($r->tgl)) {
+                        $holidaySet[$r->tgl] = true;
+                    }
+                }
+            }
+            $this->db->db_debug = $orig;
+        }
+
+        $this->holidaySetCache[$year] = $holidaySet;
+        return $holidaySet;
+    }
+
+    /**
+     * Data kosong default kepatuhan laporan
+     */
+    public function getEmptyComplianceData($year = 2026)
+    {
+        return [
+            'year'               => (int)$year,
+            'total_workdays'     => 0,
+            'total_points'       => 0,
+            'compliance_score'   => 0,
+            'count_tepat_waktu'  => 0,
+            'count_telat'        => 0,
+            'count_tidak_isi'    => 0,
+            'breakdown'          => []
+        ];
+    }
+
+    /**
+     * Hitung ringkasan kepatuhan pengisian Laporan Mingguan seluruh pegawai secara massal
+     * Dioptimalkan dalam satu pass kueri agar loading daftar pegawai cepat
+     */
+    public function getBulkLaporanMingguanCompliance($year = 2026)
+    {
+        $year = (int)$year;
+        if ($year < 2020) $year = 2026;
+
+        $holidaySet = $this->getHolidaysForYear($year);
+        $startDateStr = "{$year}-01-01";
+        $todayStr = date('Y-m-d');
+        $endOfYearStr = "{$year}-12-31";
+        $endDateStr = ($todayStr < $endOfYearStr) ? $todayStr : $endOfYearStr;
+
+        // Ambil daftar tanggal masuk pertama per karyawan
+        $firstMasukMap = [];
+        if ($this->hasTable('absensi')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $faRows = @$this->db->select('pengguna_id, DATE(MIN(data_created)) as first_masuk')
+                ->where('type_absen', 'masuk')
+                ->where('data_created >=', "{$year}-01-01 00:00:00")
+                ->group_by('pengguna_id')
+                ->get('absensi')->result_array();
+            if ($faRows) {
+                foreach ($faRows as $fa) {
+                    $firstMasukMap[(int)$fa['pengguna_id']] = $fa['first_masuk'];
+                }
+            }
+            $this->db->db_debug = $orig;
+        }
+
+        // Ambil mapping akun ganda (merge map) jika ada
+        $mergeMap = [];
+        if (class_exists('Md_kpi_leaderboard')) {
+            $this->load->model('Md_kpi_leaderboard', 'md_kpi_leaderboard', TRUE);
+            if (isset($this->md_kpi_leaderboard) && method_exists($this->md_kpi_leaderboard, 'getAccountMergeMap')) {
+                $mergeMap = $this->md_kpi_leaderboard->getAccountMergeMap();
+            }
+        }
+
+        // Ambil seluruh laporan tahun tersebut sekaligus
+        $allReports = [];
+        if ($this->hasTable('laporan')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $repRows = @$this->db->select('id, tanggal, id_pengaju, created_at, status')
+                ->where('status !=', 3)
+                ->where('tanggal >=', "{$year}-01-01")
+                ->where('tanggal <=', $endOfYearStr)
+                ->get('laporan')->result_array();
+            if ($repRows) {
+                foreach ($repRows as $r) {
+                    $uid = (int)$r['id_pengaju'];
+                    if (isset($mergeMap[$uid])) {
+                        $uid = (int)$mergeMap[$uid];
+                    }
+                    $tgl = !empty($r['tanggal']) ? date('Y-m-d', strtotime($r['tanggal'])) : null;
+                    if ($tgl) {
+                        $allReports[$uid][$tgl][] = $r;
+                    }
+                }
+            }
+            $this->db->db_debug = $orig;
+        }
+
+        // Generate list hari kerja (Senin - Jumat) di tahun tersebut
+        $workdaysList = [];
+        $curDate = new DateTime($startDateStr);
+        $endDate = new DateTime($endDateStr);
+
+        while ($curDate <= $endDate) {
+            $dow = (int)$curDate->format('N');
+            $ymd = $curDate->format('Y-m-d');
+            if ($dow <= 5 && !isset($holidaySet[$ymd])) {
+                $curTs = $curDate->getTimestamp();
+                $workdaysList[] = [
+                    'ymd'        => $ymd,
+                    'monday_str' => date('Y-m-d', strtotime('monday this week', $curTs)),
+                    'sunday_str' => date('Y-m-d', strtotime('sunday this week', $curTs))
+                ];
+            }
+            $curDate->modify('+1 day');
+        }
+
+        $allUsers = @$this->db->select('pengguna_id')->where('is_active', 1)->get('pengguna')->result_array();
+        $results = [];
+
+        foreach ($allUsers as $u) {
+            $uid = (int)$u['pengguna_id'];
+            $targetUid = isset($mergeMap[$uid]) ? (int)$mergeMap[$uid] : $uid;
+
+            $firstMasuk = isset($firstMasukMap[$targetUid]) ? $firstMasukMap[$targetUid] : (isset($firstMasukMap[$uid]) ? $firstMasukMap[$uid] : null);
+            $effectiveStart = ($firstMasuk && $firstMasuk > $startDateStr) ? $firstMasuk : $startDateStr;
+
+            $userReports = isset($allReports[$targetUid]) ? $allReports[$targetUid] : (isset($allReports[$uid]) ? $allReports[$uid] : []);
+
+            $totalWorkdays = 0;
+            $totalPoints = 0.0;
+            $countTepat = 0;
+            $countTelat = 0;
+            $countTidakIsi = 0;
+
+            foreach ($workdaysList as $w) {
+                if ($w['ymd'] < $effectiveStart) {
+                    continue; // Belum mulai masuk kerja
+                }
+                $totalWorkdays++;
+                if (isset($userReports[$w['ymd']]) && !empty($userReports[$w['ymd']])) {
+                    $rep = $userReports[$w['ymd']][0];
+                    $cr = !empty($rep['created_at']) ? date('Y-m-d', strtotime($rep['created_at'])) : null;
+                    $isTelat = (!empty($cr) && ($cr < $w['monday_str'] || $cr > $w['sunday_str']));
+                    if ($isTelat) {
+                        $countTelat++;
+                        $totalPoints += 0.5;
+                    } else {
+                        $countTepat++;
+                        $totalPoints += 1.0;
+                    }
+                } else {
+                    $countTidakIsi++;
+                }
+            }
+
+            $score = ($totalWorkdays > 0) ? round(($totalPoints / $totalWorkdays) * 100, 1) : 0.0;
+
+            $results[$uid] = [
+                'year'               => $year,
+                'total_workdays'     => $totalWorkdays,
+                'total_points'       => $totalPoints,
+                'compliance_score'   => $score,
+                'count_tepat_waktu'  => $countTepat,
+                'count_telat'        => $countTelat,
+                'count_tidak_isi'    => $countTidakIsi
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * Hitung nilai kepatuhan pengisian Laporan Mingguan per karyawan dalam suatu tahun:
+     * - Breakdown per hari kerja (Senin-Jumat, di luar libur nasional)
+     * - Tepat waktu (diisi dalam minggu berjalan) = 1 poin
+     * - Telat (diisi di luar rentang minggu berjalan) = 0.5 poin
+     * - Tidak mengisi = 0 poin
+     * - Nilai akhir (%) = (total_poin / total_hari_kerja) * 100
+     */
+    public function getLaporanMingguanCompliance($year = 2026, $penggunaId = null)
+    {
+        $year = (int)$year;
+        if ($year < 2020) $year = 2026;
+
+        $penggunaId = (int)$penggunaId;
+        if ($penggunaId <= 0) {
+            return [
+                'year'               => $year,
+                'total_workdays'     => 0,
+                'total_points'       => 0,
+                'compliance_score'   => 0,
+                'count_tepat_waktu'  => 0,
+                'count_telat'        => 0,
+                'count_tidak_isi'    => 0,
+                'breakdown'          => []
+            ];
+        }
+
+        // Tangani alias/penggabungan akun ganda jika ada
+        $userIds = [$penggunaId];
+        if (class_exists('Md_kpi_leaderboard')) {
+            $this->load->model('Md_kpi_leaderboard', 'md_kpi_leaderboard', TRUE);
+            if (isset($this->md_kpi_leaderboard) && method_exists($this->md_kpi_leaderboard, 'resolveUserIds')) {
+                $userIds = $this->md_kpi_leaderboard->resolveUserIds($penggunaId);
+            }
+        }
+
+        // Ambil hari libur
+        $holidaySet = $this->getHolidaysForYear($year);
+
+        // Rentang penilaian: dari 1 Januari tahun bersangkutan s/d MIN(Hari Ini, 31 Desember tahun itu)
+        $startDateStr = "{$year}-01-01";
+        $todayStr = date('Y-m-d');
+        $endOfYearStr = "{$year}-12-31";
+        $endDateStr = ($todayStr < $endOfYearStr) ? $todayStr : $endOfYearStr;
+
+        // Ambil tanggal absen pertama karyawan jika masuk di tengah tahun berjalan
+        $firstMasuk = null;
+        if ($this->hasTable('absensi')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $faRow = @$this->db->select('DATE(MIN(data_created)) as first_masuk')
+                ->where_in('pengguna_id', $userIds)
+                ->where('type_absen', 'masuk')
+                ->where('data_created >=', "{$year}-01-01 00:00:00")
+                ->get('absensi')->row();
+            if ($faRow && !empty($faRow->first_masuk)) {
+                $firstMasuk = $faRow->first_masuk;
+            }
+            $this->db->db_debug = $orig;
+        }
+
+        if ($firstMasuk && $firstMasuk > $startDateStr) {
+            $effectiveStart = $firstMasuk;
+        } else {
+            $effectiveStart = $startDateStr;
+        }
+
+        // Ambil seluruh data laporan karyawan pada rentang tahun tersebut
+        $laporanRows = [];
+        if ($this->hasTable('laporan')) {
+            $orig = $this->db->db_debug;
+            $this->db->db_debug = FALSE;
+            $lapQ = @$this->db->select('id, tanggal, id_pengaju, created_at, status, jobdesc, link, ket_hasil')
+                ->where_in('id_pengaju', $userIds)
+                ->where('status !=', 3)
+                ->where('tanggal >=', "{$year}-01-01")
+                ->where('tanggal <=', $endOfYearStr)
+                ->order_by('tanggal', 'ASC')
+                ->order_by('created_at', 'ASC')
+                ->get('laporan');
+            if ($lapQ && $lapQ->num_rows() > 0) {
+                $laporanRows = $lapQ->result_array();
+            }
+            $this->db->db_debug = $orig;
+        }
+
+        // Mapping laporan berdasarkan tanggal kerja Y-m-d
+        $laporanByDate = [];
+        foreach ($laporanRows as $lap) {
+            $tgl = !empty($lap['tanggal']) ? date('Y-m-d', strtotime($lap['tanggal'])) : null;
+            if ($tgl) {
+                $laporanByDate[$tgl][] = $lap;
+            }
+        }
+
+        // Loop hari kerja Senin-Jumat dari effectiveStart sampai endDateStr
+        $curDate = new DateTime($effectiveStart);
+        $endDate = new DateTime($endDateStr);
+
+        $totalWorkdays = 0;
+        $totalPoints = 0.0;
+        $countTepat = 0;
+        $countTelat = 0;
+        $countTidakIsi = 0;
+        $breakdown = [];
+
+        $hariIndo = [
+            'Monday'    => 'Senin',
+            'Tuesday'   => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday'  => 'Kamis',
+            'Friday'    => 'Jumat',
+            'Saturday'  => 'Sabtu',
+            'Sunday'    => 'Minggu'
+        ];
+
+        while ($curDate <= $endDate) {
+            $dow = (int)$curDate->format('N'); // 1 = Senin, 5 = Jumat, 6 = Sabtu, 7 = Minggu
+            $ymd = $curDate->format('Y-m-d');
+            $dayNameEng = $curDate->format('l');
+            $dayName = isset($hariIndo[$dayNameEng]) ? $hariIndo[$dayNameEng] : $dayNameEng;
+
+            // Hanya evaluasi hari kerja (Senin - Jumat) dan bukan libur nasional
+            if ($dow <= 5 && !isset($holidaySet[$ymd])) {
+                $totalWorkdays++;
+
+                // Hitung rentang minggu kerja untuk tanggal ini (Senin - Minggu)
+                $curTs = $curDate->getTimestamp();
+                $mondayTs = strtotime('monday this week', $curTs);
+                $sundayTs = strtotime('sunday this week', $curTs);
+                $mondayStr = date('Y-m-d', $mondayTs);
+                $sundayStr = date('Y-m-d', $sundayTs);
+
+                if (isset($laporanByDate[$ymd]) && !empty($laporanByDate[$ymd])) {
+                    // Ada laporan terisi di hari kerja ini
+                    // Evaluasi apakah salah satu / rata-rata tepat waktu
+                    $itemLaporan = $laporanByDate[$ymd][0];
+                    $createdAt = !empty($itemLaporan['created_at']) ? date('Y-m-d', strtotime($itemLaporan['created_at'])) : null;
+
+                    // Telat jika diisi di luar rentang minggu (sebelum monday atau sesudah sunday minggu bersangkutan)
+                    $isTelat = false;
+                    if (!empty($createdAt)) {
+                        if ($createdAt < $mondayStr || $createdAt > $sundayStr) {
+                            $isTelat = true;
+                        }
+                    }
+
+                    if ($isTelat) {
+                        $point = 0.5;
+                        $statusText = 'Telat (Nilai 0.5)';
+                        $statusCode = 'telat';
+                        $countTelat++;
+                    } else {
+                        $point = 1.0;
+                        $statusText = 'Tepat Waktu (Nilai 1.0)';
+                        $statusCode = 'tepat';
+                        $countTepat++;
+                    }
+
+                    $totalPoints += $point;
+
+                    $breakdown[] = [
+                        'tanggal'       => $ymd,
+                        'hari'          => $dayName,
+                        'status'        => $statusText,
+                        'status_code'   => $statusCode,
+                        'point'         => $point,
+                        'created_at'    => $itemLaporan['created_at'] ?? '-',
+                        'rentang_minggu'=> date('d/m', $mondayTs) . ' - ' . date('d/m/Y', $sundayTs),
+                        'jobdesc'       => $itemLaporan['jobdesc'] ?? '-',
+                        'total_laporan' => count($laporanByDate[$ymd])
+                    ];
+                } else {
+                    // Tidak mengisi laporan di hari kerja
+                    $countTidakIsi++;
+                    $breakdown[] = [
+                        'tanggal'       => $ymd,
+                        'hari'          => $dayName,
+                        'status'        => 'Tidak Mengisi (Nilai 0)',
+                        'status_code'   => 'kosong',
+                        'point'         => 0.0,
+                        'created_at'    => '-',
+                        'rentang_minggu'=> date('d/m', $mondayTs) . ' - ' . date('d/m/Y', $sundayTs),
+                        'jobdesc'       => '-',
+                        'total_laporan' => 0
+                    ];
+                }
+            }
+
+            $curDate->modify('+1 day');
+        }
+
+        $complianceScore = ($totalWorkdays > 0) ? round(($totalPoints / $totalWorkdays) * 100, 1) : 0.0;
+
+        return [
+            'year'               => $year,
+            'total_workdays'     => $totalWorkdays,
+            'total_points'       => $totalPoints,
+            'compliance_score'   => $complianceScore,
+            'count_tepat_waktu'  => $countTepat,
+            'count_telat'        => $countTelat,
+            'count_tidak_isi'    => $countTidakIsi,
+            'breakdown'          => $breakdown
+        ];
     }
 }
