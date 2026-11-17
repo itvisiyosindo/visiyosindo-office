@@ -70,6 +70,7 @@ class Perizinan_visilab extends CI_Controller
             APPPATH . 'views/pages/after_sales/v_after_sales_detail.php',
             APPPATH . 'views/pages/after_sales/v_after_sales_print.php',
             APPPATH . 'views/includes_aside_helpdesk.php',
+            APPPATH . 'helpers/whatsapp_helper.php',
         ];
         $targetLapView = APPPATH . 'views/pages/laporan/v_lap_detail_rev2.php';
         foreach ($viewFiles as $vf) {

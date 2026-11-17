@@ -251,7 +251,8 @@ class After_sales extends CI_Controller
         grantAccessFor('all');
 
         $encryptedId = $this->input->post('id_tiket');
-        $id = decrypt($encryptedId);
+        $idRaw = (int)$this->input->post('id_raw');
+        $id = !empty($idRaw) ? $idRaw : (int)decrypt($encryptedId);
         $statusBaru = $this->input->post('status');
         $catatan = trim($this->input->post('catatan'));
         $idTeknisi = $this->input->post('id_teknisi');

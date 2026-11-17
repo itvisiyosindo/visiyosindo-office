@@ -283,6 +283,7 @@ if ($ticket->status == 'menunggu_kroscek') {
             </div>
             <div class="card-body">
                 <form action="<?= base_url('after_sales/update_status') ?>" method="POST">
+                    <input type="hidden" name="id_raw" value="<?= $ticket->id ?>">
                     <input type="hidden" name="id_tiket" value="<?= $encrypted_id ?>">
 
                     <div class="form-group">
