@@ -57,12 +57,12 @@
                                         <option value="">-- Ketik Nama RS / Klinik / Pelanggan --</option>
                                         <?php if (!empty($pelanggan_list)) {
                                             foreach ($pelanggan_list as $pel) { ?>
-                                                <option value="<?= $pel->id ?>" 
-                                                        data-nama="<?= htmlspecialchars($pel->nama_pelanggan) ?>" 
-                                                        data-alamat="<?= htmlspecialchars($pel->alamat) ?>" 
-                                                        data-pic="<?= htmlspecialchars($pel->kontak) ?>" 
-                                                        data-telp="<?= htmlspecialchars($pel->no_telp) ?>">
-                                                    <?= htmlspecialchars($pel->nama_pelanggan) ?>
+                                                <option value="<?= $pel->id_pelanggan ?>" 
+                                                        data-nama="<?= htmlspecialchars($pel->identitas_pelanggan) ?>" 
+                                                        data-alamat="<?= htmlspecialchars($pel->alamat ?? '') ?>" 
+                                                        data-pic="<?= htmlspecialchars($pel->cpname ?? '') ?>" 
+                                                        data-telp="<?= htmlspecialchars($pel->kontak ?? '') ?>">
+                                                    <?= htmlspecialchars($pel->identitas_pelanggan) ?>
                                                 </option>
                                         <?php }
                                         } ?>

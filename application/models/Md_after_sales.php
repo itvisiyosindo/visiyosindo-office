@@ -363,9 +363,9 @@ class Md_after_sales extends CI_Model
      */
     public function getPelangganList()
     {
-        return $this->db->select('id, identitas_pelanggan, nama_pelanggan, alamat, kontak, no_telp')
-            ->where('status_hapus', 0)
-            ->order_by('nama_pelanggan', 'ASC')
+        return $this->db->select('id_pelanggan, identitas_pelanggan, alamat, kontak, cpname, email')
+            ->where('status', 1)
+            ->order_by('identitas_pelanggan', 'ASC')
             ->get('pelanggan')
             ->result();
     }
