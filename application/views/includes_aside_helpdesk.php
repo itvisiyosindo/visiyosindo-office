@@ -924,6 +924,26 @@
 						</ul>
 					</li>
 
+					<!-- Menu After Sales Service -->
+					<li class="nav-parent <?= ($this->uri->segment(1) == 'after_sales') ? 'nav-active nav-expanded' : ''; ?>">
+						<a class="nav-link" href="#">
+							<i class="fas fa-tools" aria-hidden="true"></i>
+							<span>After Sales Service</span>
+						</a>
+						<ul class="nav nav-children">
+							<li class="<?= (in_array($page_name, ['after_sales/v_after_sales_list']) || ($this->uri->segment(1) == 'after_sales' && empty($this->uri->segment(2)))) ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('after_sales?from=helpdesk') ?>">
+									Daftar Servis / Tiket
+								</a>
+							</li>
+							<li class="<?= (in_array($page_name, ['after_sales/v_after_sales_form']) && $this->uri->segment(2) == 'tambah') ? 'nav-active' : '' ?>">
+								<a class="nav-link" href="<?= base_url('after_sales/tambah?from=helpdesk') ?>">
+									Input Tiket Baru
+								</a>
+							</li>
+						</ul>
+					</li>
+
 					<?php /* Config Notifikasi PO (Ditunda - Dibahas Nanti)
 					if (isAdmin()) { ?>
 						<li class="<?= ($this->uri->segment(1) == 'po_system' && $this->uri->segment(2) == 'notif_config') ? 'nav-active' : '' ?>">

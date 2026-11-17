@@ -411,6 +411,92 @@ $sph = isset($sph) ? $sph : null;
                         <textarea class="form-control" name="alamat_penerima" id="alamat_penerima" rows="3" readonly
                             style="background-color: #e9ecef;"><?= $hasData ? $sph->alamat_penerima : '' ?></textarea>
                     </div>
+
+                    <!-- Kalkulator Cek Estimasi Pengiriman (Self-Service Marketing) -->
+                    <div class="card mb-2" style="border: 1px dashed #4e73df; background: #f8faff; border-radius: 8px;">
+                        <div class="card-header py-2 px-3 bg-light d-flex justify-content-between align-items-center" style="cursor: pointer;" data-toggle="collapse" data-target="#boxCekOngkir" aria-expanded="true">
+                            <span class="font-weight-bold text-primary" style="font-size: 13px;">
+                                <i class="fas fa-shipping-fast mr-1"></i> Cek Estimasi Pengiriman (ONS & Reguler)
+                            </span>
+                            <span class="badge badge-primary"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div id="boxCekOngkir" class="collapse show">
+                            <div class="card-body p-3">
+                                <div class="row">
+                                    <div class="col-md-7 col-12 mb-2">
+                                        <label class="small font-weight-bold mb-1">Wilayah / Kota Tujuan Pelanggan:</label>
+                                        <select class="form-control form-control-sm" id="calc_wilayah_tujuan">
+                                            <option value="">-- Pilih Wilayah / Kota Tujuan --</option>
+                                            <option value="lokal_riau">Riau / Pekanbaru & Sekitarnya (Lokal)</option>
+                                            <option value="sumatera_kota">Sumatera (Kota Besar: Medan, Padang, Palembang, Batam)</option>
+                                            <option value="sumatera_kab">Sumatera (Kabupaten / Daerah Lainnya)</option>
+                                            <option value="jabodetabek">Jabodetabek</option>
+                                            <option value="jawa_kota">Pulau Jawa (Kota Besar: Bandung, Semarang, Surabaya, Solo, Jogja)</option>
+                                            <option value="jawa_kab">Pulau Jawa (Kabupaten / Daerah Lainnya)</option>
+                                            <option value="kalimantan_kota">Kalimantan (Kota Besar: Balikpapan, Pontianak, Banjarmasin)</option>
+                                            <option value="sulawesi_kota">Sulawesi (Kota Besar: Makassar, Manado)</option>
+                                            <option value="indonesia_timur">Bali, NTB, NTT, Maluku, Papua</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5 col-12 mb-2">
+                                        <label class="small font-weight-bold mb-1">Est. Berat (Kg):</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" id="calc_berat" value="1" min="1" step="0.5">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button" id="btnHitungOngkir">
+                                                    <i class="fas fa-search mr-1"></i> Cek
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hasil Estimasi -->
+                                <div id="hasilEstimasiBox" class="mt-2" style="display: none;">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered bg-white mb-2" style="font-size: 12px;">
+                                            <thead class="thead-light">
+                                                <tr class="text-center">
+                                                    <th>Layanan</th>
+                                                    <th>Estimasi Sampai</th>
+                                                    <th>Perkiraan Tarif / Kg</th>
+                                                    <th>Total Est. Biaya</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr id="row_ons" class="table-info">
+                                                    <td><strong><i class="fas fa-bolt text-warning mr-1"></i> ONS (Over Night)</strong></td>
+                                                    <td class="text-center font-weight-bold text-success" id="est_hari_ons">1 Hari Kerja</td>
+                                                    <td class="text-right" id="tarif_ons">-</td>
+                                                    <td class="text-right font-weight-bold" id="total_ons">-</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-xs btn-outline-info btn-salin-ket" data-layanan="ONS" title="Tambahkan ke Catatan SPH">
+                                                            <i class="fas fa-plus"></i> Ke Keterangan
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr id="row_reguler">
+                                                    <td><strong><i class="fas fa-truck text-primary mr-1"></i> REGULER</strong></td>
+                                                    <td class="text-center font-weight-bold text-primary" id="est_hari_reguler">2 - 3 Hari Kerja</td>
+                                                    <td class="text-right" id="tarif_reguler">-</td>
+                                                    <td class="text-right font-weight-bold" id="total_reguler">-</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-xs btn-outline-primary btn-salin-ket" data-layanan="Reguler" title="Tambahkan ke Catatan SPH">
+                                                            <i class="fas fa-plus"></i> Ke Keterangan
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <small class="text-muted font-italic">
+                                        * Estimasi acuan standar ekspedisi rekanan VYM (JNE/TIKI/SiCepat). Klik <strong>"Ke Keterangan"</strong> untuk otomatis mencantumkan syarat pengiriman di surat SPH.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1398,6 +1484,31 @@ $sph = isset($sph) ? $sph : null;
                     if (data.kota) alamat += (alamat ? ', ' : '') + data.kota;
                     if (data.provinsi) alamat += (alamat ? ', ' : '') + data.provinsi;
                     $('#alamat_penerima').val(alamat);
+
+                    // Otomatis deteksi wilayah tujuan untuk kalkulator pengiriman
+                    var teksAlamat = (alamat + ' ' + (data.kota || '') + ' ' + (data.provinsi || '')).toLowerCase();
+                    if (teksAlamat.indexOf('pekanbaru') !== -1 || teksAlamat.indexOf('riau') !== -1 || teksAlamat.indexOf('kampar') !== -1 || teksAlamat.indexOf('siak') !== -1) {
+                        $('#calc_wilayah_tujuan').val('lokal_riau');
+                    } else if (teksAlamat.indexOf('jakarta') !== -1 || teksAlamat.indexOf('bogor') !== -1 || teksAlamat.indexOf('depok') !== -1 || teksAlamat.indexOf('tangerang') !== -1 || teksAlamat.indexOf('bekasi') !== -1) {
+                        $('#calc_wilayah_tujuan').val('jabodetabek');
+                    } else if (teksAlamat.indexOf('bandung') !== -1 || teksAlamat.indexOf('semarang') !== -1 || teksAlamat.indexOf('surabaya') !== -1 || teksAlamat.indexOf('solo') !== -1 || teksAlamat.indexOf('jogja') !== -1 || teksAlamat.indexOf('yogyakarta') !== -1) {
+                        $('#calc_wilayah_tujuan').val('jawa_kota');
+                    } else if (teksAlamat.indexOf('jawa') !== -1 || teksAlamat.indexOf('banten') !== -1) {
+                        $('#calc_wilayah_tujuan').val('jawa_kab');
+                    } else if (teksAlamat.indexOf('medan') !== -1 || teksAlamat.indexOf('padang') !== -1 || teksAlamat.indexOf('palembang') !== -1 || teksAlamat.indexOf('batam') !== -1) {
+                        $('#calc_wilayah_tujuan').val('sumatera_kota');
+                    } else if (teksAlamat.indexOf('sumatera') !== -1 || teksAlamat.indexOf('lampung') !== -1 || teksAlamat.indexOf('jambi') !== -1 || teksAlamat.indexOf('bengkulu') !== -1 || teksAlamat.indexOf('aceh') !== -1) {
+                        $('#calc_wilayah_tujuan').val('sumatera_kab');
+                    } else if (teksAlamat.indexOf('balikpapan') !== -1 || teksAlamat.indexOf('pontianak') !== -1 || teksAlamat.indexOf('banjarmasin') !== -1 || teksAlamat.indexOf('samarinda') !== -1) {
+                        $('#calc_wilayah_tujuan').val('kalimantan_kota');
+                    } else if (teksAlamat.indexOf('makassar') !== -1 || teksAlamat.indexOf('manado') !== -1) {
+                        $('#calc_wilayah_tujuan').val('sulawesi_kota');
+                    } else if (teksAlamat.indexOf('bali') !== -1 || teksAlamat.indexOf('papua') !== -1 || teksAlamat.indexOf('maluku') !== -1 || teksAlamat.indexOf('ntt') !== -1 || teksAlamat.indexOf('ntb') !== -1) {
+                        $('#calc_wilayah_tujuan').val('indonesia_timur');
+                    }
+                    if ($('#calc_wilayah_tujuan').val()) {
+                        $('#btnHitungOngkir').trigger('click');
+                    }
                 });
             }
 
@@ -2055,6 +2166,130 @@ $sph = isset($sph) ? $sph : null;
             <?php if (!$isEdit || $isDuplicate): ?>
                 getNextNomorSurat();
             <?php endif; ?>
+
+            // ==========================================
+            // LOGIKA KALKULATOR PENGIRIMAN (ONS & REGULER)
+            // ==========================================
+            var tarifWilayah = {
+                'lokal_riau': {
+                    label: 'Riau / Pekanbaru & Sekitarnya',
+                    ons: { tarif: 15000, est: '1 Hari' },
+                    reg: { tarif: 8000, est: '1 - 2 Hari' }
+                },
+                'sumatera_kota': {
+                    label: 'Sumatera (Kota Besar)',
+                    ons: { tarif: 28000, est: '1 Hari Kerja' },
+                    reg: { tarif: 18000, est: '2 - 3 Hari Kerja' }
+                },
+                'sumatera_kab': {
+                    label: 'Sumatera (Kabupaten / Daerah Lainnya)',
+                    ons: { tarif: 38000, est: '1 - 2 Hari' },
+                    reg: { tarif: 24000, est: '3 - 5 Hari Kerja' }
+                },
+                'jabodetabek': {
+                    label: 'Jabodetabek',
+                    ons: { tarif: 26000, est: '1 Hari Kerja' },
+                    reg: { tarif: 15000, est: '2 - 3 Hari Kerja' }
+                },
+                'jawa_kota': {
+                    label: 'Pulau Jawa (Kota Besar)',
+                    ons: { tarif: 32000, est: '1 Hari Kerja' },
+                    reg: { tarif: 20000, est: '2 - 3 Hari Kerja' }
+                },
+                'jawa_kab': {
+                    label: 'Pulau Jawa (Kabupaten)',
+                    ons: { tarif: 42000, est: '1 - 2 Hari' },
+                    reg: { tarif: 26000, est: '3 - 5 Hari Kerja' }
+                },
+                'kalimantan_kota': {
+                    label: 'Kalimantan (Kota Besar)',
+                    ons: { tarif: 48000, est: '1 - 2 Hari Kerja' },
+                    reg: { tarif: 35000, est: '3 - 5 Hari Kerja' }
+                },
+                'sulawesi_kota': {
+                    label: 'Sulawesi (Kota Besar)',
+                    ons: { tarif: 55000, est: '1 - 2 Hari Kerja' },
+                    reg: { tarif: 38000, est: '3 - 5 Hari Kerja' }
+                },
+                'indonesia_timur': {
+                    label: 'Indonesia Timur (Bali, NTB, NTT, Maluku, Papua)',
+                    ons: { tarif: 75000, est: '2 - 3 Hari Kerja' },
+                    reg: { tarif: 50000, est: '4 - 7 Hari Kerja' }
+                }
+            };
+
+            function formatRupiah(num) {
+                return 'Rp ' + Number(num).toLocaleString('id-ID');
+            }
+
+            var currentEstimasi = null;
+
+            $('#btnHitungOngkir').on('click', function() {
+                var zona = $('#calc_wilayah_tujuan').val();
+                var berat = parseFloat($('#calc_berat').val()) || 1;
+                if (berat <= 0) berat = 1;
+
+                if (!zona || !tarifWilayah[zona]) {
+                    toastr.warning('Silakan pilih Wilayah / Kota Tujuan terlebih dahulu.', 'Pilih Wilayah');
+                    return;
+                }
+
+                var data = tarifWilayah[zona];
+                var totalOns = data.ons.tarif * Math.ceil(berat);
+                var totalReg = data.reg.tarif * Math.ceil(berat);
+
+                $('#est_hari_ons').text(data.ons.est);
+                $('#tarif_ons').text(formatRupiah(data.ons.tarif) + '/Kg');
+                $('#total_ons').text(formatRupiah(totalOns));
+
+                $('#est_hari_reguler').text(data.reg.est);
+                $('#tarif_reguler').text(formatRupiah(data.reg.tarif) + '/Kg');
+                $('#total_reguler').text(formatRupiah(totalReg));
+
+                $('#hasilEstimasiBox').slideDown();
+
+                currentEstimasi = {
+                    wilayah: data.label,
+                    berat: Math.ceil(berat),
+                    ons: { est: data.ons.est, tarif: totalOns },
+                    reg: { est: data.reg.est, tarif: totalReg }
+                };
+            });
+
+            $('#calc_wilayah_tujuan').on('change', function() {
+                if ($(this).val()) {
+                    $('#btnHitungOngkir').trigger('click');
+                }
+            });
+
+            // Tombol Salin ke Catatan/Keterangan SPH
+            $(document).on('click', '.btn-salin-ket', function() {
+                if (!currentEstimasi) return;
+                var jenis = $(this).data('layanan'); // ONS atau Reguler
+                var teksKet = '';
+
+                if (jenis === 'ONS') {
+                    teksKet = 'Estimasi pengiriman via ONS (Over Night Service): ' + currentEstimasi.ons.est + ' (Est. Ongkir ' + formatRupiah(currentEstimasi.ons.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg ke ' + currentEstimasi.wilayah + ').';
+                } else {
+                    teksKet = 'Estimasi pengiriman via Reguler: ' + currentEstimasi.reg.est + ' (Est. Ongkir ' + formatRupiah(currentEstimasi.reg.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg ke ' + currentEstimasi.wilayah + ').';
+                }
+
+                // Tambahkan langsung ke Keterangan Tambahan SPH
+                var htmlCustom = '<div class="input-group mb-2 keterangan-custom-row">' +
+                    '<input type="text" class="form-control" name="keterangan_custom[]" value="' + teksKet.replace(/"/g, '&quot;') + '">' +
+                    '<div class="input-group-append">' +
+                    '<button type="button" class="btn btn-danger btn-remove-keterangan"><i class="fas fa-times"></i></button>' +
+                    '</div>' +
+                    '</div>';
+
+                $('#keteranganCustomContainer').append(htmlCustom);
+                toastr.success('Keterangan estimasi pengiriman ' + jenis + ' berhasil dimasukkan ke Catatan SPH!', 'Berhasil Ditambahkan');
+                
+                // Scroll halus ke bagian Keterangan
+                $('html, body').animate({
+                    scrollTop: $("#keteranganCustomContainer").offset().top - 200
+                }, 400);
+            });
 
             // Tampilkan toast saat page load
             <?php if (!$isEdit || $isDuplicate): ?>
