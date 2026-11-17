@@ -452,11 +452,18 @@ if (!function_exists('lap_limit_text')) {
 								<td>
 									<?php 
 									$show_point_score = false;
-									if ($firstRow && !isset($point_score_rendered[$row->point]) && isset($point_has_lap[$row->point])) {
-										if ($row->nilai_isi == 1) {
-											$show_point_score = true;
-										} elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
-											$show_point_score = true;
+									if ($firstRow && !isset($point_score_rendered[$row->point])) {
+										if (isset($point_has_lap[$row->point])) {
+											if ($row->nilai_isi == 1) {
+												$show_point_score = true;
+											} elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
+												$show_point_score = true;
+											}
+										} else {
+											// Fallback jika tidak ada laporan pada poin ini dalam minggu berjalan:
+											if ($row->nilai_isi == 1 || !isset($point_has_nilai_isi_1[$row->point])) {
+												$show_point_score = true;
+											}
 										}
 										if ($show_point_score) {
 											$point_score_rendered[$row->point] = true;

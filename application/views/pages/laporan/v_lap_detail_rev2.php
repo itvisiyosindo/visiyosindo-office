@@ -493,7 +493,6 @@ if (!function_exists('lap_limit_text')) {
 								<label for="bulk-nilai-adm-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai (HRD / Admin)</strong></label>
 								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 							</div>
-							<?php if ($is_admin_user): ?>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
 								<label for="bulk-nilai-adm-mode" class="mb-1" style="font-size: 12.5px;"><strong>Target Kolom Nilai</strong></label>
 								<select id="bulk-nilai-adm-mode" class="form-control form-control-sm" style="border-radius: 6px;">
@@ -502,12 +501,11 @@ if (!function_exists('lap_limit_text')) {
 									<option value="both">Nilai A &amp; Nilai B Sekaligus</option>
 								</select>
 							</div>
-							<?php endif; ?>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
 								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;">Terapkan &amp; Simpan Otomatis</button>
 							</div>
 							<div class="col-lg-3 col-md-12 col-sm-12 mt-1 mt-lg-0">
-								<small class="text-muted">Khusus HRD &amp; Administrator. Mengisi semua nilai laporan mingguan &amp; penilaian umum lalu menyimpan otomatis.</small>
+								<small class="text-muted">Mengisi nilai laporan mingguan &amp; penilaian umum lalu menyimpan otomatis ke database.</small>
 							</div>
 						</form>
 					</div>
@@ -684,11 +682,19 @@ if (!function_exists('lap_limit_text')) {
                                     <td style="min-width: 180px; max-width: 260px;"><?= !empty($row->id_lap) ? $row->keterangan : '' ?></td>
                                     <?php
                                         $show_point_score = false;
-                                        if ($firstRow && !isset($point_score_rendered[$row->point]) && isset($point_has_lap[$row->point])) {
-                                            if ($row->nilai_isi == 1) {
-                                                $show_point_score = true;
-                                            } elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
-                                                $show_point_score = true;
+                                        if ($firstRow && !isset($point_score_rendered[$row->point])) {
+                                            if (isset($point_has_lap[$row->point])) {
+                                                if ($row->nilai_isi == 1) {
+                                                    $show_point_score = true;
+                                                } elseif (!isset($point_has_nilai_isi_1[$row->point]) && isset($point_fallback_row_id[$row->point]) && $point_fallback_row_id[$row->point] == $row->id) {
+                                                    $show_point_score = true;
+                                                }
+                                            } else {
+                                                // Fallback jika tidak ada laporan pada poin ini dalam minggu berjalan:
+                                                // Tampilkan input penilaian pada baris pertama agar HRD / Penilai tetap dapat memberikan nilai jobdesk
+                                                if ($row->nilai_isi == 1 || !isset($point_has_nilai_isi_1[$row->point])) {
+                                                    $show_point_score = true;
+                                                }
                                             }
                                             if ($show_point_score) {
                                                 $point_score_rendered[$row->point] = true;
@@ -1420,13 +1426,37 @@ if (!function_exists('lap_limit_text')) {
 			? nilaiBulk.toString()
 			: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 
+		var modeEl = document.getElementById('bulk-nilai-adm-mode');
+		var selectedMode = modeEl && modeEl.value ? modeEl.value : 'adm';
+
 		var points = [];
 		if ($) {
-			$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
-				$(this).val(nilaiFinal);
-				$(this).removeClass('is-invalid').addClass('is-valid');
+			// Update input nilai A jika mode adm atau both
+			if (selectedMode === 'adm' || selectedMode === 'both') {
+				$('input[name^="nilaia["], input[name^="nilaipa["], input[name="nilaia1"], input[name="nilaia2"], input[name="nilaia3"], input[name="nilaia4"], input[name="nilaia5"]').each(function() {
+					$(this).val(nilaiFinal);
+					$(this).removeClass('is-invalid').addClass('is-valid');
+					var ptAttr = $(this).attr('data-point');
+					if (ptAttr && points.indexOf(ptAttr) === -1) {
+						points.push(ptAttr);
+					}
+				});
+			}
+			// Update input nilai B jika mode penilai atau both
+			if (selectedMode === 'penilai' || selectedMode === 'both') {
+				$('input[name^="nilaib["], input[name^="nilaipb["], input[name="nilaib1"], input[name="nilaib2"], input[name="nilaib3"], input[name="nilaib4"], input[name="nilaib5"]').each(function() {
+					$(this).val(nilaiFinal);
+					$(this).removeClass('is-invalid').addClass('is-valid');
+					var ptAttr = $(this).attr('data-point');
+					if (ptAttr && points.indexOf(ptAttr) === -1) {
+						points.push(ptAttr);
+					}
+				});
+			}
+			// Kumpulkan seluruh data-point dari tabel jika belum terisi
+			$('[data-point]').each(function() {
 				var ptAttr = $(this).attr('data-point');
-				if (ptAttr) {
+				if (ptAttr && points.indexOf(ptAttr) === -1) {
 					points.push(ptAttr);
 				}
 			});
@@ -1440,15 +1470,12 @@ if (!function_exists('lap_limit_text')) {
 
 		if (typeof Swal !== 'undefined') {
 			Swal.fire({
-				html: '<h4>Menyimpan bulk nilai HRD ke database...</h4>',
+				html: '<h4>Menyimpan bulk nilai ke database...</h4>',
 				icon: 'info',
 				allowOutsideClick: false,
 				showConfirmButton: false
 			});
 		}
-
-		var modeEl = document.getElementById('bulk-nilai-adm-mode');
-		var selectedMode = modeEl && modeEl.value ? modeEl.value : 'adm';
 
 		var postData = {
 			mode: selectedMode,

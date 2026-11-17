@@ -852,6 +852,37 @@ class Md_laporan extends CI_Model
         }
     }
 
+    public function saveOrUpdateNilaiPenilaiBatch($pengguna_id, $date, $items)
+    {
+        if (empty($items)) return;
+
+        list($mon, $sun) = $this->_weekBoundsFromDate($date);
+        $this->db->where('id_pengguna', $pengguna_id);
+        $this->db->where('date >=', $mon);
+        $this->db->where('date <=', $sun);
+        $existing = $this->db->get('nilai_point')->result();
+        $existing_points = [];
+        foreach ($existing as $row) {
+            $existing_points[$row->point][] = $row->id;
+        }
+
+        foreach ($items as $point => $nilai_b) {
+            if ($nilai_b === '' || $nilai_b === null) continue;
+            if (!empty($existing_points[$point])) {
+                $this->db->where_in('id', $existing_points[$point]);
+                $this->db->update('nilai_point', ['nilai_b' => $nilai_b]);
+            } else {
+                $this->db->insert('nilai_point', [
+                    'point'       => $point,
+                    'nilai_b'     => $nilai_b,
+                    'id_pengguna' => $pengguna_id,
+                    'date'        => $date
+                ]);
+                $existing_points[$point] = [$this->db->insert_id()];
+            }
+        }
+    }
+
     public function saveOrUpdateNilai($data)
     {
         list($mon, $sun) = $this->_weekBoundsFromDate($data['date'] ?? null);

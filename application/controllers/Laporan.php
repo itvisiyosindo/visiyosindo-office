@@ -1743,7 +1743,7 @@ class Laporan extends CI_Controller
             }
         }
 
-        // Ambil juga langsung dari database agar point yang belum ter-render atau jobdesk baru tetap tersimpan
+        // Ambil data laporan mingguan rev2 / rev1 / per minggu
         $detailRows = $this->md_laporan->getLaporanMingguanRev2($monday, $friday, $pengguna_id);
         if (empty($detailRows)) {
             $detailRows = $this->md_laporan->getLaporanMingguanRev1($monday, $friday, $pengguna_id);
@@ -1752,27 +1752,31 @@ class Laporan extends CI_Controller
             $detailRows = $this->md_laporan->getLaporanPerMinggu($monday, $friday, $pengguna_id);
         }
 
-        $pointsWithLap = [];
-        $pointsNilaiIsi1 = [];
         if (!empty($detailRows)) {
             foreach ($detailRows as $r) {
                 $pt = isset($r->point) ? trim((string)$r->point) : '';
-                if ($pt === '') continue;
-                if (!empty($r->id_lap) && $r->jenis !== 'TIDAK ADA PEKERJAAN DI MINGGU INI') {
-                    $pointsWithLap[$pt] = true;
-                }
-                if ((int)($r->nilai_isi ?? 0) === 1) {
-                    $pointsNilaiIsi1[$pt] = true;
+                if ($pt !== '') {
+                    $pointsToGrade[$pt] = $nilaiStr;
                 }
             }
         }
 
-        foreach ($pointsWithLap as $pt => $_) {
-            $pointsToGrade[$pt] = $nilaiStr;
-        }
-        if (empty($pointsToGrade) && !empty($pointsNilaiIsi1)) {
-            foreach ($pointsNilaiIsi1 as $pt => $_) {
-                $pointsToGrade[$pt] = $nilaiStr;
+        // Ambil seluruh master point jobdesk aktif karyawan tersebut dari jobdesc_detail
+        // agar seluruh item poin yang sah selalu mendapat penilaian meskipun belum ada laporan
+        $activeJobPoints = $this->db->select('DISTINCT(point) as point')
+            ->from('jobdesc_detail')
+            ->where('idPengguna', $pengguna_id)
+            ->where('status', 1)
+            ->where('point IS NOT NULL')
+            ->where('point !=', '')
+            ->get()
+            ->result();
+        if (!empty($activeJobPoints)) {
+            foreach ($activeJobPoints as $ajp) {
+                $pt = trim((string)$ajp->point);
+                if ($pt !== '') {
+                    $pointsToGrade[$pt] = $nilaiStr;
+                }
             }
         }
 
@@ -1784,14 +1788,7 @@ class Laporan extends CI_Controller
             $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $pointsToGrade);
         }
         if ($doPenilai && !empty($pointsToGrade)) {
-            foreach ($pointsToGrade as $pt => $valB) {
-                $this->md_laporan->saveOrUpdateNilai([
-                    'point'       => $pt,
-                    'nilai_b'     => $valB,
-                    'id_pengguna' => $pengguna_id,
-                    'date'        => $wednesday
-                ]);
-            }
+            $this->md_laporan->saveOrUpdateNilaiPenilaiBatch($pengguna_id, $wednesday, $pointsToGrade);
         }
 
         // 2. Simpan Nilai Pencapaian Arsip (jika ada di minggu tersebut)
