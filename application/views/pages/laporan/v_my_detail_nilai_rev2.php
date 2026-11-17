@@ -312,13 +312,13 @@ if (!function_exists('lap_limit_text')) {
 		<?php if ($is_bulk_nilai_allowed) { ?>
 		<div class="card mb-4" style="border-left: 4px solid #0ea5e9; border: 1px solid #e2e8f0; border-left-width: 4px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
 			<div class="card-body p-3">
-				<form id="bulk-nilai-form" class="row align-items-end" onsubmit="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event); return false;">
+				<form id="bulk-nilai-form" class="row align-items-end" onsubmit="runBulkNilaiPenilaiDirect(event); return false;">
 					<div class="col-md-4 col-sm-12 mb-2 mb-md-0">
 						<label for="bulk-nilai-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai (Penilai / Admin)</strong></label>
 						<input type="number" min="60" max="100" step="1" id="bulk-nilai-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
 					</div>
 					<div class="col-md-3 col-sm-12 mb-2 mb-md-0">
-						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="if(window.runBulkNilaiPenilai) return window.runBulkNilaiPenilai(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
+						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="runBulkNilaiPenilaiDirect(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
 					</div>
 					<div class="col-md-5 col-sm-12">
 						<small class="text-muted">Mengisi seluruh field nilai B di form secara instan. Klik tombol <strong>Simpan</strong> untuk menyimpan.</small>
@@ -326,6 +326,93 @@ if (!function_exists('lap_limit_text')) {
 				</form>
 			</div>
 		</div>
+		<script>
+		function runBulkNilaiPenilaiDirect(e) {
+			if (e && typeof e.preventDefault === 'function') {
+				e.preventDefault();
+			}
+			var inputEl = document.getElementById('bulk-nilai-input');
+			var nilaiInput = inputEl ? inputEl.value.trim() : '';
+			var nilaiBulk = parseFloat(nilaiInput);
+
+			if (nilaiInput === '' || isNaN(nilaiBulk)) {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire('Nilai tidak valid', 'Masukkan nilai antara 60 sampai 100.', 'warning');
+				} else {
+					alert('Masukkan nilai antara 60 sampai 100.');
+				}
+				return false;
+			}
+
+			if (nilaiBulk < 60 || nilaiBulk > 100) {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire('Nilai di luar rentang', 'Nilai yang diperbolehkan adalah 60 sampai 100.', 'warning');
+				} else {
+					alert('Nilai yang diperbolehkan adalah 60 sampai 100.');
+				}
+				return false;
+			}
+
+			var nilaiFinal = (Math.floor(nilaiBulk) === nilaiBulk)
+				? nilaiBulk.toString()
+				: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+
+			var pointsCount = 0;
+
+			function isTargetField(name) {
+				if (!name) return false;
+				return name.indexOf('nilaib') !== -1 || name.indexOf('nilaipb') !== -1;
+			}
+
+			var allInputs = document.querySelectorAll('input');
+			for (var i = 0; i < allInputs.length; i++) {
+				var inp = allInputs[i];
+				var type = (inp.type || '').toLowerCase();
+				if (type === 'hidden' || type === 'checkbox' || type === 'radio' || type === 'button' || type === 'submit') {
+					continue;
+				}
+				var nm = inp.name || '';
+				if (nm.indexOf('catatan') !== -1 || inp.id === 'bulk-nilai-input') {
+					continue;
+				}
+
+				if (isTargetField(nm)) {
+					inp.value = nilaiFinal;
+					inp.classList.remove('is-invalid');
+					inp.classList.add('is-valid');
+					try {
+						inp.dispatchEvent(new Event('input', { bubbles: true }));
+						inp.dispatchEvent(new Event('change', { bubbles: true }));
+					} catch (err) {}
+					pointsCount++;
+				}
+			}
+
+			if (window.jQuery) {
+				var $ = window.jQuery;
+				$('input[name*="nilaib"], input[name*="nilaipb"]').not('#bulk-nilai-input').not('[name*="catatan"]').val(nilaiFinal).trigger('input').trigger('change');
+				if (typeof window.recalculateAllScoresPenilai === 'function') {
+					window.recalculateAllScoresPenilai();
+				}
+			}
+
+			if (typeof Swal !== 'undefined') {
+				Swal.fire({
+					icon: 'success',
+					title: 'Nilai Berhasil Diterapkan!',
+					text: 'Nilai ' + nilaiFinal + ' berhasil dimasukkan ke ' + pointsCount + ' kolom inputan. Silakan review dan klik tombol "Simpan" untuk menyimpan.',
+					timer: 2500,
+					showConfirmButton: true,
+					confirmButtonColor: '#2563eb'
+				});
+			} else {
+				alert('Nilai ' + nilaiFinal + ' berhasil dimasukkan ke ' + pointsCount + ' kolom inputan!');
+			}
+
+			return false;
+		}
+		window.runBulkNilaiPenilai = runBulkNilaiPenilaiDirect;
+		</script>
 		<?php } ?>
 
 		<!-- 3. TABEL 1: LAPORAN MINGGUAN -->

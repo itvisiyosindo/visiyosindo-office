@@ -488,7 +488,7 @@ if (!function_exists('lap_limit_text')) {
 				<?php if ($is_bulk_nilai_hrd_allowed) { ?>
 				<div class="card laporan-card mb-4" style="border-left: 4px solid #0ea5e9;">
 					<div class="card-body p-3">
-						<form id="bulk-nilai-adm-form" class="row align-items-end" onsubmit="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event); return false;">
+						<form id="bulk-nilai-adm-form" class="row align-items-end" onsubmit="runBulkNilaiAdmDirect(event); return false;">
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
 								<label for="bulk-nilai-adm-input" class="mb-1" style="font-size: 12.5px;"><strong><i class="fas fa-bolt text-info mr-1"></i> Bulk Action Nilai (HRD / Admin)</strong></label>
 								<input type="number" min="60" max="100" step="1" id="bulk-nilai-adm-input" class="form-control form-control-sm" placeholder="Contoh: 95" style="border-radius: 6px;">
@@ -502,7 +502,7 @@ if (!function_exists('lap_limit_text')) {
 								</select>
 							</div>
 							<div class="col-lg-3 col-md-4 col-sm-12 mb-2 mb-md-0">
-								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="if(window.runBulkNilaiAdm) return window.runBulkNilaiAdm(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
+								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="runBulkNilaiAdmDirect(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
 							</div>
 							<div class="col-lg-3 col-md-12 col-sm-12 mt-1 mt-lg-0">
 								<small class="text-muted">Mengisi seluruh kolom nilai di form secara instan. Klik tombol <strong>Simpan</strong> pada masing-masing bagian untuk menyimpan.</small>
@@ -510,6 +510,113 @@ if (!function_exists('lap_limit_text')) {
 						</form>
 					</div>
 				</div>
+				<script>
+				function runBulkNilaiAdmDirect(e) {
+					if (e && typeof e.preventDefault === 'function') {
+						e.preventDefault();
+					}
+					var inputEl = document.getElementById('bulk-nilai-adm-input');
+					var nilaiInput = inputEl ? inputEl.value.trim() : '';
+					var nilaiBulk = parseFloat(nilaiInput);
+
+					if (nilaiInput === '' || isNaN(nilaiBulk)) {
+						if (typeof Swal !== 'undefined') {
+							Swal.fire('Nilai tidak valid', 'Masukkan nilai antara 60 sampai 100.', 'warning');
+						} else {
+							alert('Masukkan nilai antara 60 sampai 100.');
+						}
+						return false;
+					}
+
+					if (nilaiBulk < 60 || nilaiBulk > 100) {
+						if (typeof Swal !== 'undefined') {
+							Swal.fire('Nilai di luar rentang', 'Nilai yang diperbolehkan adalah 60 sampai 100.', 'warning');
+						} else {
+							alert('Nilai yang diperbolehkan adalah 60 sampai 100.');
+						}
+						return false;
+					}
+
+					var nilaiFinal = (Math.floor(nilaiBulk) === nilaiBulk)
+						? nilaiBulk.toString()
+						: nilaiBulk.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+
+					var modeEl = document.getElementById('bulk-nilai-adm-mode');
+					var selectedMode = modeEl && modeEl.value ? modeEl.value : 'adm';
+
+					var pointsCount = 0;
+
+					function isTargetField(name, mode) {
+						if (!name) return false;
+						var isA = name.indexOf('nilaia') !== -1 || name.indexOf('nilaipa') !== -1;
+						var isB = name.indexOf('nilaib') !== -1 || name.indexOf('nilaipb') !== -1;
+						if (mode === 'adm') return isA;
+						if (mode === 'penilai') return isB;
+						if (mode === 'both') return isA || isB;
+						return false;
+					}
+
+					// 1. Scan semua elemen input
+					var allInputs = document.querySelectorAll('input');
+					for (var i = 0; i < allInputs.length; i++) {
+						var inp = allInputs[i];
+						var type = (inp.type || '').toLowerCase();
+						if (type === 'hidden' || type === 'checkbox' || type === 'radio' || type === 'button' || type === 'submit') {
+							continue;
+						}
+						var nm = inp.name || '';
+						if (nm.indexOf('catatan') !== -1 || inp.id === 'bulk-nilai-adm-input') {
+							continue;
+						}
+
+						var match = isTargetField(nm, selectedMode);
+						// Fallback: Jika mode adm/both dan elemen memiliki class score-input
+						if (!match && (selectedMode === 'adm' || selectedMode === 'both') && inp.classList.contains('score-input')) {
+							match = true;
+						}
+
+						if (match) {
+							inp.value = nilaiFinal;
+							inp.classList.remove('is-invalid');
+							inp.classList.add('is-valid');
+							// Dispatch native input & change events
+							try {
+								inp.dispatchEvent(new Event('input', { bubbles: true }));
+								inp.dispatchEvent(new Event('change', { bubbles: true }));
+							} catch (err) {}
+							pointsCount++;
+						}
+					}
+
+					// 2. Trigger jQuery trigger jika jQuery tersedia
+					if (window.jQuery) {
+						var $ = window.jQuery;
+						$('input.score-input, input[name*="nilaia"], input[name*="nilaib"], input[name*="nilaipa"], input[name*="nilaipb"]').not('#bulk-nilai-adm-input').not('[name*="catatan"]').filter(function() {
+							return isTargetField(this.name, selectedMode) || $(this).hasClass('score-input');
+						}).val(nilaiFinal).trigger('input').trigger('change');
+
+						if (typeof window.recalculateAllScoresAdm === 'function') {
+							window.recalculateAllScoresAdm();
+						}
+					}
+
+					if (typeof Swal !== 'undefined') {
+						Swal.fire({
+							icon: 'success',
+							title: 'Nilai Berhasil Diterapkan!',
+							text: 'Nilai ' + nilaiFinal + ' berhasil dimasukkan ke ' + pointsCount + ' kolom inputan. Silakan review dan klik tombol "Simpan" untuk menyimpan.',
+							timer: 2500,
+							showConfirmButton: true,
+							confirmButtonColor: '#2563eb'
+						});
+					} else {
+						alert('Nilai ' + nilaiFinal + ' berhasil dimasukkan ke ' + pointsCount + ' kolom inputan!');
+					}
+
+					return false;
+				}
+				window.runBulkNilaiAdm = runBulkNilaiAdmDirect;
+				</script>
 				<?php } ?>
 
     <?= form_open('laporan/inputNilaiLaporanAdm', array('id' => 'main-form', 'autocomplete' => 'off')); ?>
