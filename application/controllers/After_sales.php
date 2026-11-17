@@ -200,6 +200,15 @@ class After_sales extends CI_Controller
         $insertedId = $this->md_after_sales->insert($insertData, $items);
 
         if ($insertedId) {
+            // Trigger Notifikasi WhatsApp Otomatis ke Grup Teknisi & Teknisi terkait
+            try {
+                if (function_exists('waAfterSalesBaru')) {
+                    waAfterSalesBaru($insertData, $items);
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Gagal kirim WA After Sales: ' . $e->getMessage());
+            }
+
             $this->session->set_flashdata('success', 'Tiket After Sales berhasil didaftarkan: ' . $nomorTiket);
             redirect('after_sales/detail/' . encrypt($insertedId));
         } else {
@@ -271,6 +280,9 @@ class After_sales extends CI_Controller
             if ($t) {
                 $updateData['nama_teknisi'] = $t->nama;
             }
+        } else {
+            $updateData['id_teknisi'] = null;
+            $updateData['nama_teknisi'] = null;
         }
 
         if ($statusBaru === 'proses') {
@@ -294,6 +306,16 @@ class After_sales extends CI_Controller
             'user_nama'      => sessNamaPengguna(),
             'created_at'     => date('Y-m-d H:i:s')
         ]);
+
+        // Trigger Notifikasi WhatsApp Update Status ke Grup Teknisi
+        try {
+            $updatedTicket = $this->md_after_sales->getById($id);
+            if (function_exists('waAfterSalesUpdateStatus') && $updatedTicket) {
+                waAfterSalesUpdateStatus($updatedTicket, $statusBaru, $catatan);
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Gagal kirim WA Update Status After Sales: ' . $e->getMessage());
+        }
 
         $this->session->set_flashdata('success', 'Status tiket berhasil diperbarui.');
         redirect('after_sales/detail/' . $encryptedId);

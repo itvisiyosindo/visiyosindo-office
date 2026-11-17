@@ -5444,3 +5444,97 @@ if (!function_exists('buildWaResendButton')) {
 // ==============================================================================
 // END OF KEPEGAWAIAN & HRD TEMPLATES
 // ==============================================================================
+
+
+// ==============================================================================
+// NOTIFIKASI AFTER SALES SERVICE (LAYANAN PURNA JUAL)
+// ==============================================================================
+if (!function_exists('waAfterSalesBaru')) {
+	function waAfterSalesBaru($ticket, $items = [])
+	{
+		$teknisiNama = !empty($ticket['nama_teknisi']) ? $ticket['nama_teknisi'] : '- Belum Ditugaskan -';
+		$alamat = !empty($ticket['alamat_pelanggan']) ? $ticket['alamat_pelanggan'] : '-';
+		$pic = !empty($ticket['pic_nama']) ? $ticket['pic_nama'] : '-';
+		$kontak = !empty($ticket['pic_kontak']) ? $ticket['pic_kontak'] : '-';
+		$alat = !empty($ticket['nama_alat']) ? $ticket['nama_alat'] : '-';
+		$merk = !empty($ticket['merk_tipe']) ? $ticket['merk_tipe'] : '-';
+		$sn = !empty($ticket['nomor_seri']) ? $ticket['nomor_seri'] : '-';
+		$keluhan = !empty($ticket['keluhan']) ? $ticket['keluhan'] : '-';
+		$skema = strtoupper($ticket['status_pembayaran'] ?? 'BERBAYAR');
+
+		$pesan = "*NOTIFIKASI TIKET AFTER SALES SERVICE BARU*" . "\n\n" .
+			"Telah didaftarkan tiket layanan purna jual / servis baru:" . "\n" .
+			"• *No. Tiket*     : " . $ticket['nomor_tiket'] . "\n" .
+			"• *Layanan*       : " . $ticket['jenis_layanan'] . " (" . $skema . ")\n" .
+			"• *Pelanggan*     : *" . $ticket['nama_pelanggan'] . "*\n" .
+			"• *Alamat*        : " . $alamat . "\n" .
+			"• *PIC / Kontak*  : " . $pic . " (" . $kontak . ")\n\n" .
+			"• *Unit Alat*     : *" . $alat . "*\n" .
+			"• *Merk / Tipe*   : " . $merk . "\n" .
+			"• *No. Seri (SN)* : " . $sn . "\n" .
+			"• *Keluhan*       : _\"" . $keluhan . "\"_\n\n" .
+			"• *Teknisi*       : *" . $teknisiNama . "*\n\n" .
+			"Mohon untuk segera dikroscek dan ditindaklanjuti.\n" .
+			"Detail Tiket: https://office.visiyosindo.id/after_sales";
+
+		// 1. Kirim ke Grup Teknisi Medikal
+		sendWaGroup([
+			'penerima' => 'TEKNISI MEDIKAL PT. VYM',
+			'pesan'    => $pesan
+		]);
+
+		// 2. Jika ada teknisi spesifik yang ditugaskan & memiliki no_hp, kirim notifikasi personal
+		if (!empty($ticket['id_teknisi'])) {
+			$CI = &get_instance();
+			$tek = $CI->db->select('no_hp, nama')->where('pengguna_id', $ticket['id_teknisi'])->get('pengguna')->row();
+			if ($tek && !empty($tek->no_hp)) {
+				sendWaGroup([
+					'penerima' => $tek->no_hp,
+					'pesan'    => "*PENUGASAN TIKET AFTER SALES SERVICE*\n\nHalo " . $tek->nama . ",\nAnda ditugaskan pada tiket servis berikut:\n• *No. Tiket*: " . $ticket['nomor_tiket'] . "\n• *Instansi*: " . $ticket['nama_pelanggan'] . "\n• *Alat*: " . $alat . " (" . $sn . ")\n• *Keluhan*: _\"" . $keluhan . "\"_\n\nSilakan buka https://office.visiyosindo.id/after_sales"
+				]);
+			}
+		}
+
+		return true;
+	}
+}
+
+if (!function_exists('waAfterSalesUpdateStatus')) {
+	function waAfterSalesUpdateStatus($ticket, $statusBaru, $catatan = '')
+	{
+		$statusLabel = strtoupper(str_replace('_', ' ', $statusBaru));
+		$teknisiNama = !empty($ticket->teknisi_nama_lengkap) ? $ticket->teknisi_nama_lengkap : (!empty($ticket->nama_teknisi) ? $ticket->nama_teknisi : '-');
+		$alat = !empty($ticket->nama_alat) ? $ticket->nama_alat : '-';
+		$tindakan = !empty($ticket->tindakan_perbaikan) ? $ticket->tindakan_perbaikan : '-';
+
+		$pesan = "*UPDATE STATUS AFTER SALES SERVICE*" . "\n\n" .
+			"• *No. Tiket*     : *" . $ticket->nomor_tiket . "*\n" .
+			"• *Status Baru*   : *" . $statusLabel . "*\n" .
+			"• *Pelanggan*     : " . $ticket->nama_pelanggan . "\n" .
+			"• *Unit Alat*     : " . $alat . "\n" .
+			"• *Teknisi*       : " . $teknisiNama . "\n";
+
+		if ($statusBaru === 'selesai') {
+			$pesan .= "• *Biaya Total*   : *Rp " . number_format($ticket->biaya_total, 0, ',', '.') . "*\n" .
+				"• *Hasil/Solusi*  : _\"" . $tindakan . "\"_\n\n" .
+				"Alat telah dinyatakan *SELESAI*. Lembar Kerja / Berita Acara Servis dapat diunduh di sistem.";
+		} else {
+			if (!empty($catatan)) {
+				$pesan .= "• *Catatan*       : _\"" . $catatan . "\"_\n";
+			}
+			if (!empty($tindakan)) {
+				$pesan .= "• *Tindakan*      : _\"" . $tindakan . "\"_\n";
+			}
+		}
+
+		$pesan .= "\nDetail Tiket: https://office.visiyosindo.id/after_sales";
+
+		// Kirim ke Grup Teknisi Medikal
+		sendWaGroup([
+			'penerima' => 'TEKNISI MEDIKAL PT. VYM',
+			'pesan'    => $pesan
+		]);
+
+		return true;
+	}
+}
