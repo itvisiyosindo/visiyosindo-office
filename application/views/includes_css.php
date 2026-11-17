@@ -79,6 +79,46 @@
         opacity: 0.95;
     }
 
+    html.modern .logo .brand-wrapper {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    html.modern .logo .brand-logo-box {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.35), inset 0 0 8px rgba(255, 255, 255, 0.15);
+        flex-shrink: 0;
+        padding: 5px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html.modern .logo:hover .brand-logo-box {
+        transform: scale(1.08) rotate(3deg);
+        border-color: #38bdf8;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25);
+    }
+
+    html.modern .logo .brand-logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    html.modern .logo .brand-text-box {
+        display: flex;
+        flex-direction: column;
+    }
+
     html.modern .logo b.brand-title {
         display: flex !important;
         flex-direction: column !important;
@@ -89,19 +129,26 @@
 
     html.modern .logo .brand-system {
         font-size: 14.5px !important;
-        color: #ffffff !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px;
+        background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 70%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        line-height: 1.15;
     }
 
     html.modern .logo .brand-company {
-        font-size: 10px !important;
-        color: #0ea5e9 !important;
-        /* Premium corporate cyan */
-        font-weight: 600 !important;
+        font-size: 9.5px !important;
+        color: #38bdf8 !important;
+        /* Vibrant cyan */
+        font-weight: 700 !important;
         text-transform: uppercase;
-        letter-spacing: 0.2px;
-        margin-top: 1px;
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+        line-height: 1.1;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
 
     @media only screen and (min-width: 768px) {

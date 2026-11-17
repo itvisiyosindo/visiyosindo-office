@@ -3,7 +3,14 @@
 <header class="header">
     <div class="logo-container">
         <a href="<?= base_url() ?>" class="logo">
-            <?= $this->config->item('apps_logo_text') ?>
+            <div class="brand-wrapper">
+                <div class="brand-logo-box">
+                    <img src="<?= base_url('assets/img/favicon.png') ?>" alt="Logo" class="brand-logo-img">
+                </div>
+                <div class="brand-text-box">
+                    <?= $this->config->item('apps_logo_text') ?>
+                </div>
+            </div>
         </a>
         <div class="d-md-none toggle-sidebar-left" data-toggle-class="sidebar-left-opened" data-target="html" data-fire-event="sidebar-left-opened">
             <i class="fas fa-bars" aria-label="Toggle sidebar"></i>
