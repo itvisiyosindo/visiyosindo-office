@@ -5,6 +5,19 @@ if (!defined("BASEPATH")) {
 
 class Md_forwarder extends CI_Model
 {
+    private function _ensureSchema()
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+
+        if ($this->db->table_exists('approval_forwarder')) {
+            if (!$this->db->field_exists('alasan_penolakan', 'approval_forwarder')) {
+                @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `alasan_penolakan` TEXT NULL DEFAULT NULL AFTER `ttd_2`");
+            }
+        }
+    }
+
     function add($data)
     {
         $this->db->insert("forwarder", $data);
@@ -142,6 +155,7 @@ class Md_forwarder extends CI_Model
 
     function updateForwarder($id, $data)
     {
+        $this->_ensureSchema();
         $this->db->where("id", $id);
         $this->db->update("approval_forwarder", $data);
     }
@@ -153,6 +167,7 @@ class Md_forwarder extends CI_Model
 
     function getAppByID($id)
     {
+        $this->_ensureSchema();
         $this->db
             ->select(
                 '
@@ -170,6 +185,7 @@ class Md_forwarder extends CI_Model
                 f.kurs,
                 f.ttd_1,
                 f.ttd_2,
+                f.alasan_penolakan,
                 f.link_final,
                 f.created_at,
                 f.id_pengguna,

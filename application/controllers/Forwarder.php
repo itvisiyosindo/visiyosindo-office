@@ -1315,10 +1315,18 @@ class Forwarder extends CI_Controller
     {
         grantAccessFor("all");
 
+        $id_sp = $this->input->post("id");
+        $alasan = trim((string)$this->input->post("alasan", true));
+
+        if (empty($alasan)) {
+            ajaxReturnDie("error", "Alasan penolakan wajib diisi!");
+            return;
+        }
+
         if ($param1 == "ttd_1") {
-            $id_sp = $this->input->post("id");
             $data["status"] = 4;
             $data["ttd_1"] = 2;
+            $data["alasan_penolakan"] = $alasan;
             $this->md_forwarder->updateForwarder($id_sp, $data);
 
             //send notif wa
@@ -1327,18 +1335,19 @@ class Forwarder extends CI_Controller
                 "id" => $id_sp,
                 "idPenolak" => "23",
                 "namaPenolak" => "Meilina Safitri",
+                "alasan" => $alasan,
             ];
             $this->notifWaRejectBa($dataWa);
             /** LOG */
             addLog(
                 "Approval Forwarder",
-                "Permintaan Approval Forwarder Ditolak"
+                "Permintaan Approval Forwarder Ditolak (Alasan: " . $alasan . ")"
             );
-            ajaxReturnDie("success", "Data Berhasil Ditambahkan", true);
+            ajaxReturnDie("success", "Pengajuan Approval Forwarder berhasil ditolak", true);
         } elseif ($param1 == "ttd_2") {
-            $id_sp = $this->input->post("id");
             $data["status"] = 5;
             $data["ttd_2"] = 2;
+            $data["alasan_penolakan"] = $alasan;
             $this->md_forwarder->updateForwarder($id_sp, $data);
 
             //send notif wa
@@ -1347,14 +1356,15 @@ class Forwarder extends CI_Controller
                 "id" => $id_sp,
                 "idPenolak" => "54",
                 "namaPenolak" => "Bob Ariyos",
+                "alasan" => $alasan,
             ];
             $this->notifWaRejectBa($dataWa);
             /** LOG */
             addLog(
                 "Approval Forwarder",
-                "Permintaan Approval Forwarder Ditolak"
+                "Permintaan Approval Forwarder Ditolak (Alasan: " . $alasan . ")"
             );
-            ajaxReturnDie("success", "Data Berhasil Ditambahkan", true);
+            ajaxReturnDie("success", "Pengajuan Approval Forwarder berhasil ditolak", true);
         }
     }
 
@@ -1363,7 +1373,6 @@ class Forwarder extends CI_Controller
         $ambilDataPengaju = $this->md_forwarder->getAppByID($detail["id"]);
         $namaPengaju = $ambilDataPengaju[0]->pengaju;
         $kode = $ambilDataPengaju[0]->kode;
-        $perihal = $ambilDataPengaju[0]->nama;
         $idpengaju = $ambilDataPengaju[0]->id_pengguna;
 
         //ambil nomor
@@ -1372,14 +1381,14 @@ class Forwarder extends CI_Controller
         $dataPenolak = $this->md_pengguna->getById($detail["idPenolak"]);
         $nopePenolak = $dataPenolak[0]->no_hp;
 
-        $perihal = "";
+        $perihal = !empty($detail["alasan"]) ? ("%0A*Alasan Ditolak :* " . $detail["alasan"]) : "";
 
         //send notif wa
         $dataWa = [
             "namaSurat" => $detail["namaSurat"],
             "noPenerima" => $nope,
             "kodeSurat" => $kode,
-            "perihal" => urlencode($perihal),
+            "perihal" => $perihal,
             "namaPengaju" => $namaPengaju,
             "namaPenolak" => $detail["namaPenolak"],
             "noPenolak" => $nopePenolak,

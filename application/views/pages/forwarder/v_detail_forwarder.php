@@ -558,6 +558,14 @@
 			</table>
 		</div>
 
+		<?php if (!empty($data_aprv[0]->alasan_penolakan) && ($data_aprv[0]->ttd_1 == '2' || $data_aprv[0]->ttd_2 == '2' || $data_aprv[0]->status == '4' || $data_aprv[0]->status == '5')): ?>
+			<div class="alert alert-danger mt-3" style="border-left: 5px solid #dc3545; background-color: #fff5f5; color: #721c24;">
+				<h5 style="margin-top: 0; font-weight: bold;"><i class="fas fa-exclamation-triangle mr-2"></i> Pengajuan Approval Forwarder Ditolak</h5>
+				<p class="mb-1"><strong>Alasan Penolakan:</strong></p>
+				<p class="mb-0" style="font-size: 14px; white-space: pre-wrap;"><?= htmlspecialchars($data_aprv[0]->alasan_penolakan) ?></p>
+			</div>
+		<?php endif; ?>
+
 		<br><br>
 		<div role="document">
 			<?php if (
@@ -641,10 +649,22 @@
 
 			Swal.fire({
 				title: 'Tolak Permintaan Approval Forwarder?',
-				icon: 'question',
+				text: 'Alasan penolakan wajib diisi untuk transparansi dan evaluasi.',
+				icon: 'warning',
+				input: 'textarea',
+				inputPlaceholder: 'Tuliskan alasan penolakan di sini...',
+				inputAttributes: {
+					'aria-label': 'Alasan penolakan'
+				},
 				showCancelButton: true,
-				confirmButtonText: 'Ya',
-				cancelButtonText: 'Tidak'
+				confirmButtonText: 'Tolak',
+				cancelButtonText: 'Batal',
+				confirmButtonColor: '#d33',
+				inputValidator: function(value) {
+					if (!value || !value.trim()) {
+						return 'Alasan penolakan wajib diisi!';
+					}
+				}
 			}).then(function(result) {
 				if (result.value) {
 					$.ajax({
@@ -653,15 +673,14 @@
 						dataType: 'JSON',
 						data: {
 							id: id,
+							alasan: result.value.trim(),
 							csrf_token: token
 						},
 						success: function(resp) {
 							handleResponse(resp)
 						}
 					})
-
 				}
-
 			})
 		})
 	})

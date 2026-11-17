@@ -496,10 +496,22 @@
 			
             Swal.fire({
 				title: 'Tolak Permintaan Approval Forwarder?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Ya',
-                cancelButtonText: 'Tidak'
+				text: 'Alasan penolakan wajib diisi untuk transparansi dan evaluasi.',
+				icon: 'warning',
+				input: 'textarea',
+				inputPlaceholder: 'Tuliskan alasan penolakan di sini...',
+				inputAttributes: {
+					'aria-label': 'Alasan penolakan'
+				},
+				showCancelButton: true,
+				confirmButtonText: 'Tolak',
+				cancelButtonText: 'Batal',
+				confirmButtonColor: '#d33',
+				inputValidator: function(value) {
+					if (!value || !value.trim()) {
+						return 'Alasan penolakan wajib diisi!';
+					}
+				}
             }).then(function(result) {
                 if (result.value) {
                     $.ajax({
@@ -508,6 +520,7 @@
                         dataType: 'JSON',
                         data: {
                             id : id,
+                            alasan : result.value.trim(),
 							csrf_token: token
                         },
                         success: function(resp) {
