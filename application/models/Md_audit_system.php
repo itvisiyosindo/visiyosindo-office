@@ -1972,6 +1972,120 @@ class Md_audit_system extends CI_Model
     }
 
     /**
+     * Ambil data Cuti, Sakit, dan Izin resmi karyawan untuk tahun tertentu
+     * Sumber:
+     * 1. Tabel absensi (type_absen IN ('izin','cuti','sakit') OR status_absen IN ('izin','cuti','sakit'))
+     * 2. Tabel surat_cuti_tahunan (status IN (1,2,3))
+     * 3. Tabel surat_izin_jam_kerja (status NOT IN (4,5) OR status IS NULL)
+     *
+     * @return array [ (int)pengguna_id => [ 'YYYY-MM-DD' => 'Cuti' | 'Sakit' | 'Izin' ] ]
+     */
+    public function getIzinCutiSakitMapForYear($year = 2026, array $userIds = [], array $accountMergeMap = [])
+    {
+        $year = (int)$year;
+        if ($year < 2020) $year = 2026;
+
+        $startDateStr = "{$year}-01-01";
+        $endDateStr = "{$year}-12-31";
+        $leaveMap = [];
+
+        $orig = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
+
+        // 1. Dari tabel absensi
+        if ($this->hasTable('absensi')) {
+            $this->db->select("pengguna_id, DATE(data_created) as tgl,
+                CASE 
+                    WHEN status_absen = 'sakit' OR type_absen = 'sakit' THEN 'Sakit'
+                    WHEN status_absen = 'cuti' OR type_absen = 'cuti' THEN 'Cuti'
+                    WHEN status_absen = 'izin' OR (type_absen = 'izin' AND (status_absen IS NULL OR status_absen = '' OR status_absen = 'izin')) THEN 'Izin'
+                    ELSE 'Izin'
+                END as kategori", FALSE);
+            $this->db->from('absensi');
+            $this->db->where('data_created >=', $startDateStr . ' 00:00:00');
+            $this->db->where('data_created <=', $endDateStr . ' 23:59:59');
+            $this->db->where("(type_absen IN ('izin', 'cuti', 'sakit') OR status_absen IN ('izin', 'cuti', 'sakit'))", NULL, FALSE);
+            if (!empty($userIds)) {
+                $this->db->where_in('pengguna_id', $userIds);
+            }
+            $qAbs = @$this->db->get();
+            if ($qAbs && $qAbs->num_rows() > 0) {
+                foreach ($qAbs->result_array() as $r) {
+                    $uid = (int)$r['pengguna_id'];
+                    if (isset($accountMergeMap[$uid])) {
+                        $uid = (int)$accountMergeMap[$uid];
+                    }
+                    if (!empty($r['tgl']) && !empty($r['kategori'])) {
+                        $leaveMap[$uid][$r['tgl']] = $r['kategori'];
+                    }
+                }
+            }
+        }
+
+        // 2. Dari tabel surat_cuti_tahunan
+        if ($this->hasTable('surat_cuti_tahunan')) {
+            $this->db->select('id_pengaju, tgl_awal, tgl_akhir');
+            $this->db->from('surat_cuti_tahunan');
+            $this->db->where_in('status', [1, 2, 3]);
+            $this->db->where('tgl_awal <=', $endDateStr);
+            $this->db->where('tgl_akhir >=', $startDateStr);
+            if (!empty($userIds)) {
+                $this->db->where_in('id_pengaju', $userIds);
+            }
+            $qCuti = @$this->db->get();
+            if ($qCuti && $qCuti->num_rows() > 0) {
+                foreach ($qCuti->result_array() as $r) {
+                    $uid = (int)$r['id_pengaju'];
+                    if (isset($accountMergeMap[$uid])) {
+                        $uid = (int)$accountMergeMap[$uid];
+                    }
+                    $c = max($startDateStr, $r['tgl_awal']);
+                    $e = min($endDateStr, $r['tgl_akhir']);
+                    while (strtotime($c) <= strtotime($e)) {
+                        $leaveMap[$uid][$c] = 'Cuti';
+                        $c = date('Y-m-d', strtotime('+1 day', strtotime($c)));
+                    }
+                }
+            }
+        }
+
+        // 3. Dari tabel surat_izin_jam_kerja
+        if ($this->hasTable('surat_izin_jam_kerja')) {
+            $this->db->select('id_pengaju, jenis_izin, tanggal, tgl_awal, tgl_akhir');
+            $this->db->from('surat_izin_jam_kerja');
+            $this->db->where("(status NOT IN (4, 5) OR status IS NULL)", NULL, FALSE);
+            $this->db->where("((tanggal >= '{$startDateStr}' AND tanggal <= '{$endDateStr}') OR (tgl_awal <= '{$endDateStr}' AND tgl_akhir >= '{$startDateStr}'))", NULL, FALSE);
+            if (!empty($userIds)) {
+                $this->db->where_in('id_pengaju', $userIds);
+            }
+            $qIzin = @$this->db->get();
+            if ($qIzin && $qIzin->num_rows() > 0) {
+                foreach ($qIzin->result_array() as $r) {
+                    $uid = (int)$r['id_pengaju'];
+                    if (isset($accountMergeMap[$uid])) {
+                        $uid = (int)$accountMergeMap[$uid];
+                    }
+                    $kat = (stripos($r['jenis_izin'] ?? '', 'sakit') !== FALSE) ? 'Sakit' : ((stripos($r['jenis_izin'] ?? '', 'cuti') !== FALSE) ? 'Cuti' : 'Izin');
+                    if (!empty($r['tanggal']) && $r['tanggal'] >= $startDateStr && $r['tanggal'] <= $endDateStr) {
+                        $leaveMap[$uid][$r['tanggal']] = $kat;
+                    }
+                    if (!empty($r['tgl_awal']) && !empty($r['tgl_akhir'])) {
+                        $c = max($startDateStr, $r['tgl_awal']);
+                        $e = min($endDateStr, $r['tgl_akhir']);
+                        while (strtotime($c) <= strtotime($e)) {
+                            $leaveMap[$uid][$c] = $kat;
+                            $c = date('Y-m-d', strtotime('+1 day', strtotime($c)));
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->db->db_debug = $orig;
+        return $leaveMap;
+    }
+
+    /**
      * Data kosong default kepatuhan laporan
      */
     public function getEmptyComplianceData($year = 2026)
@@ -1979,11 +2093,13 @@ class Md_audit_system extends CI_Model
         return [
             'year'               => (int)$year,
             'total_workdays'     => 0,
+            'effective_workdays' => 0,
             'total_points'       => 0,
             'compliance_score'   => 0,
             'count_tepat_waktu'  => 0,
             'count_telat'        => 0,
             'count_tidak_isi'    => 0,
+            'count_izin_cuti'    => 0,
             'breakdown'          => []
         ];
     }
@@ -2003,6 +2119,18 @@ class Md_audit_system extends CI_Model
         $endOfYearStr = "{$year}-12-31";
         $endDateStr = ($todayStr < $endOfYearStr) ? $todayStr : $endOfYearStr;
 
+        // Ambil mapping akun ganda (merge map) jika ada
+        $mergeMap = [];
+        if (class_exists('Md_kpi_leaderboard')) {
+            $this->load->model('Md_kpi_leaderboard', 'md_kpi_leaderboard', TRUE);
+            if (isset($this->md_kpi_leaderboard) && method_exists($this->md_kpi_leaderboard, 'getAccountMergeMap')) {
+                $mergeMap = $this->md_kpi_leaderboard->getAccountMergeMap();
+            }
+        }
+
+        // Ambil data izin/cuti/sakit seluruh karyawan di tahun ini
+        $allLeaveMap = $this->getIzinCutiSakitMapForYear($year, [], $mergeMap);
+
         // Ambil daftar tanggal masuk pertama per karyawan
         $firstMasukMap = [];
         if ($this->hasTable('absensi')) {
@@ -2019,15 +2147,6 @@ class Md_audit_system extends CI_Model
                 }
             }
             $this->db->db_debug = $orig;
-        }
-
-        // Ambil mapping akun ganda (merge map) jika ada
-        $mergeMap = [];
-        if (class_exists('Md_kpi_leaderboard')) {
-            $this->load->model('Md_kpi_leaderboard', 'md_kpi_leaderboard', TRUE);
-            if (isset($this->md_kpi_leaderboard) && method_exists($this->md_kpi_leaderboard, 'getAccountMergeMap')) {
-                $mergeMap = $this->md_kpi_leaderboard->getAccountMergeMap();
-            }
         }
 
         // Ambil seluruh laporan tahun tersebut sekaligus
@@ -2085,19 +2204,27 @@ class Md_audit_system extends CI_Model
             $effectiveStart = ($firstMasuk && $firstMasuk > $startDateStr) ? $firstMasuk : $startDateStr;
 
             $userReports = isset($allReports[$targetUid]) ? $allReports[$targetUid] : (isset($allReports[$uid]) ? $allReports[$uid] : []);
+            $userLeaves = isset($allLeaveMap[$targetUid]) ? $allLeaveMap[$targetUid] : (isset($allLeaveMap[$uid]) ? $allLeaveMap[$uid] : []);
 
             $totalWorkdays = 0;
+            $effectiveWorkdays = 0; // Hari kerja di luar cuti/izin/sakit
             $totalPoints = 0.0;
             $countTepat = 0;
             $countTelat = 0;
             $countTidakIsi = 0;
+            $countIzinCuti = 0;
 
             foreach ($workdaysList as $w) {
                 if ($w['ymd'] < $effectiveStart) {
                     continue; // Belum mulai masuk kerja
                 }
                 $totalWorkdays++;
-                if (isset($userReports[$w['ymd']]) && !empty($userReports[$w['ymd']])) {
+
+                $hasReport = isset($userReports[$w['ymd']]) && !empty($userReports[$w['ymd']]);
+                $hasLeave = isset($userLeaves[$w['ymd']]);
+
+                if ($hasReport) {
+                    $effectiveWorkdays++;
                     $rep = $userReports[$w['ymd']][0];
                     $cr = !empty($rep['created_at']) ? date('Y-m-d', strtotime($rep['created_at'])) : null;
                     $isTelat = (!empty($cr) && ($cr < $w['monday_str'] || $cr > $w['sunday_str']));
@@ -2108,21 +2235,28 @@ class Md_audit_system extends CI_Model
                         $countTepat++;
                         $totalPoints += 1.0;
                     }
+                } elseif ($hasLeave) {
+                    // OPSI 1: Karyawan sah cuti/sakit/izin dan laporan kosong -> DILEWATI (tidak mengurangi nilai)
+                    $countIzinCuti++;
                 } else {
+                    // Hari kerja aktif tapi tidak mengisi laporan
+                    $effectiveWorkdays++;
                     $countTidakIsi++;
                 }
             }
 
-            $score = ($totalWorkdays > 0) ? round(($totalPoints / $totalWorkdays) * 100, 1) : 0.0;
+            $score = ($effectiveWorkdays > 0) ? round(($totalPoints / $effectiveWorkdays) * 100, 1) : 0.0;
 
             $results[$uid] = [
                 'year'               => $year,
                 'total_workdays'     => $totalWorkdays,
+                'effective_workdays' => $effectiveWorkdays,
                 'total_points'       => $totalPoints,
                 'compliance_score'   => $score,
                 'count_tepat_waktu'  => $countTepat,
                 'count_telat'        => $countTelat,
-                'count_tidak_isi'    => $countTidakIsi
+                'count_tidak_isi'    => $countTidakIsi,
+                'count_izin_cuti'    => $countIzinCuti
             ];
         }
 
@@ -2132,10 +2266,11 @@ class Md_audit_system extends CI_Model
     /**
      * Hitung nilai kepatuhan pengisian Laporan Mingguan per karyawan dalam suatu tahun:
      * - Breakdown per hari kerja (Senin-Jumat, di luar libur nasional)
+     * - Cuti / Sakit / Izin resmi saat laporan kosong -> OPSI 1: Dilewati / Tidak Mengurangi Nilai
      * - Tepat waktu (diisi dalam minggu berjalan) = 1 poin
      * - Telat (diisi di luar rentang minggu berjalan) = 0.5 poin
-     * - Tidak mengisi = 0 poin
-     * - Nilai akhir (%) = (total_poin / total_hari_kerja) * 100
+     * - Tidak mengisi (hari kerja aktif tanpa izin) = 0 poin
+     * - Nilai akhir (%) = (total_poin / effective_workdays) * 100
      */
     public function getLaporanMingguanCompliance($year = 2026, $penggunaId = null)
     {
@@ -2144,29 +2279,35 @@ class Md_audit_system extends CI_Model
 
         $penggunaId = (int)$penggunaId;
         if ($penggunaId <= 0) {
-            return [
-                'year'               => $year,
-                'total_workdays'     => 0,
-                'total_points'       => 0,
-                'compliance_score'   => 0,
-                'count_tepat_waktu'  => 0,
-                'count_telat'        => 0,
-                'count_tidak_isi'    => 0,
-                'breakdown'          => []
-            ];
+            return $this->getEmptyComplianceData($year);
         }
 
         // Tangani alias/penggabungan akun ganda jika ada
         $userIds = [$penggunaId];
+        $accountMergeMap = [];
         if (class_exists('Md_kpi_leaderboard')) {
             $this->load->model('Md_kpi_leaderboard', 'md_kpi_leaderboard', TRUE);
             if (isset($this->md_kpi_leaderboard) && method_exists($this->md_kpi_leaderboard, 'resolveUserIds')) {
                 $userIds = $this->md_kpi_leaderboard->resolveUserIds($penggunaId);
             }
+            if (isset($this->md_kpi_leaderboard) && method_exists($this->md_kpi_leaderboard, 'getAccountMergeMap')) {
+                $accountMergeMap = $this->md_kpi_leaderboard->getAccountMergeMap();
+            }
         }
 
         // Ambil hari libur
         $holidaySet = $this->getHolidaysForYear($year);
+
+        // Ambil data izin/cuti/sakit karyawan
+        $userLeaveMapRaw = $this->getIzinCutiSakitMapForYear($year, $userIds, $accountMergeMap);
+        $userLeaves = [];
+        foreach ($userIds as $uid) {
+            if (isset($userLeaveMapRaw[$uid])) {
+                foreach ($userLeaveMapRaw[$uid] as $t => $kat) {
+                    $userLeaves[$t] = $kat;
+                }
+            }
+        }
 
         // Rentang penilaian: dari 1 Januari tahun bersangkutan s/d MIN(Hari Ini, 31 Desember tahun itu)
         $startDateStr = "{$year}-01-01";
@@ -2229,10 +2370,12 @@ class Md_audit_system extends CI_Model
         $endDate = new DateTime($endDateStr);
 
         $totalWorkdays = 0;
+        $effectiveWorkdays = 0;
         $totalPoints = 0.0;
         $countTepat = 0;
         $countTelat = 0;
         $countTidakIsi = 0;
+        $countIzinCuti = 0;
         $breakdown = [];
 
         $hariIndo = [
@@ -2262,9 +2405,11 @@ class Md_audit_system extends CI_Model
                 $mondayStr = date('Y-m-d', $mondayTs);
                 $sundayStr = date('Y-m-d', $sundayTs);
 
-                if (isset($laporanByDate[$ymd]) && !empty($laporanByDate[$ymd])) {
-                    // Ada laporan terisi di hari kerja ini
-                    // Evaluasi apakah salah satu / rata-rata tepat waktu
+                $hasReport = isset($laporanByDate[$ymd]) && !empty($laporanByDate[$ymd]);
+                $leaveKategori = isset($userLeaves[$ymd]) ? $userLeaves[$ymd] : null;
+
+                if ($hasReport) {
+                    $effectiveWorkdays++;
                     $itemLaporan = $laporanByDate[$ymd][0];
                     $createdAt = !empty($itemLaporan['created_at']) ? date('Y-m-d', strtotime($itemLaporan['created_at'])) : null;
 
@@ -2301,18 +2446,33 @@ class Md_audit_system extends CI_Model
                         'jobdesc'       => $itemLaporan['jobdesc'] ?? '-',
                         'total_laporan' => count($laporanByDate[$ymd])
                     ];
+                } elseif (!empty($leaveKategori)) {
+                    // OPSI 1: Karyawan Cuti, Sakit, atau Izin resmi saat laporan kosong -> Dilewati / Dikecualikan
+                    $countIzinCuti++;
+                    $breakdown[] = [
+                        'tanggal'       => $ymd,
+                        'hari'          => $dayName,
+                        'status'        => "{$leaveKategori} Resmi (Dilewati)",
+                        'status_code'   => 'izin_cuti',
+                        'point'         => '-',
+                        'created_at'    => '-',
+                        'rentang_minggu'=> date('d/m', $mondayTs) . ' - ' . date('d/m/Y', $sundayTs),
+                        'jobdesc'       => "Izin sah tercatat di absensi / pengajuan ({$leaveKategori}) - Beban kerja dilewati",
+                        'total_laporan' => 0
+                    ];
                 } else {
-                    // Tidak mengisi laporan di hari kerja
+                    // Tidak mengisi laporan di hari kerja aktif
+                    $effectiveWorkdays++;
                     $countTidakIsi++;
                     $breakdown[] = [
                         'tanggal'       => $ymd,
                         'hari'          => $dayName,
-                        'status'        => 'Tidak Mengisi (Nilai 0)',
+                        'status'        => 'Laporan Kosong (Nilai 0)',
                         'status_code'   => 'kosong',
                         'point'         => 0.0,
                         'created_at'    => '-',
                         'rentang_minggu'=> date('d/m', $mondayTs) . ' - ' . date('d/m/Y', $sundayTs),
-                        'jobdesc'       => '-',
+                        'jobdesc'       => 'Hari kerja aktif tetapi tidak ada laporan yang disubmit',
                         'total_laporan' => 0
                     ];
                 }
@@ -2321,16 +2481,18 @@ class Md_audit_system extends CI_Model
             $curDate->modify('+1 day');
         }
 
-        $complianceScore = ($totalWorkdays > 0) ? round(($totalPoints / $totalWorkdays) * 100, 1) : 0.0;
+        $complianceScore = ($effectiveWorkdays > 0) ? round(($totalPoints / $effectiveWorkdays) * 100, 1) : 0.0;
 
         return [
             'year'               => $year,
             'total_workdays'     => $totalWorkdays,
+            'effective_workdays' => $effectiveWorkdays,
             'total_points'       => $totalPoints,
             'compliance_score'   => $complianceScore,
             'count_tepat_waktu'  => $countTepat,
             'count_telat'        => $countTelat,
             'count_tidak_isi'    => $countTidakIsi,
+            'count_izin_cuti'    => $countIzinCuti,
             'breakdown'          => $breakdown
         ];
     }
