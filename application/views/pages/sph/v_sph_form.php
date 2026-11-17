@@ -412,99 +412,67 @@ $sph = isset($sph) ? $sph : null;
                             style="background-color: #e9ecef;"><?= $hasData ? $sph->alamat_penerima : '' ?></textarea>
                     </div>
 
-                    <!-- Kalkulator Cek Estimasi Pengiriman (Self-Service Marketing) -->
-                    <div class="card mb-2" style="border: 1px dashed #4e73df; background: #f8faff; border-radius: 8px;">
+                    <!-- Cek Estimasi Pengiriman Mandiri Marketing (Direct Link Ekspedisi Resmi) -->
+                    <div class="card mb-3" style="border: 1px solid #4e73df; background: #fdfefe; border-radius: 8px; box-shadow: 0 2px 6px rgba(78,115,223,0.08);">
                         <div class="card-header py-2 px-3 bg-light d-flex justify-content-between align-items-center" style="cursor: pointer;" data-toggle="collapse" data-target="#boxCekOngkir" aria-expanded="true">
                             <span class="font-weight-bold text-primary" style="font-size: 13px;">
-                                <i class="fas fa-shipping-fast mr-1"></i> Cek Estimasi Pengiriman (ONS & Reguler)
+                                <i class="fas fa-shipping-fast mr-1"></i> Cek Estimasi Ongkir & Waktu Kirim (Web Resmi)
                             </span>
                             <span class="badge badge-primary"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div id="boxCekOngkir" class="collapse show">
                             <div class="card-body p-3">
-                                <div class="row">
-                                    <div class="col-md-4 col-12 mb-2">
-                                        <label class="small font-weight-bold mb-1"><i class="fas fa-building text-primary mr-1"></i> Asal Kantor Kirim:</label>
-                                        <select class="form-control form-control-sm" id="calc_asal_kantor">
-                                            <option value="pekanbaru" selected>Kantor Pekanbaru</option>
-                                            <option value="jakarta">Kantor Jakarta</option>
-                                            <option value="jogja">Kantor Jogja (Yogyakarta)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-5 col-12 mb-2">
-                                        <label class="small font-weight-bold mb-1"><i class="fas fa-map-marker-alt text-danger mr-1"></i> Wilayah / Kota Tujuan Pelanggan:</label>
-                                        <select class="form-control form-control-sm" id="calc_wilayah_tujuan">
-                                            <option value="">-- Pilih Wilayah / Kota Tujuan --</option>
-                                            <option value="lokal_riau">Riau / Pekanbaru & Sekitarnya</option>
-                                            <option value="jabodetabek">Jabodetabek</option>
-                                            <option value="jogja_solo_jateng">DIY & Jawa Tengah (Jogja, Solo, Semarang)</option>
-                                            <option value="jawa_timur">Jawa Timur (Surabaya, Malang, Sidoarjo)</option>
-                                            <option value="jawa_barat">Jawa Barat & Banten (Bandung, dsb)</option>
-                                            <option value="sumatera_kota">Sumatera (Kota Besar: Medan, Padang, Batam, Palembang)</option>
-                                            <option value="sumatera_kab">Sumatera (Kabupaten / Daerah Lainnya)</option>
-                                            <option value="kalimantan">Kalimantan</option>
-                                            <option value="sulawesi">Sulawesi</option>
-                                            <option value="bali_nusa">Bali, NTB, NTT</option>
-                                            <option value="indonesia_timur">Maluku & Papua</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3 col-12 mb-2">
-                                        <label class="small font-weight-bold mb-1"><i class="fas fa-weight-hanging text-muted mr-1"></i> Est. Berat (Kg):</label>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control" id="calc_berat" value="1" min="1" step="0.5">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-primary" type="button" id="btnHitungOngkir">
-                                                    <i class="fas fa-search mr-1"></i> Cek
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <p class="small text-muted mb-2">
+                                    <i class="fas fa-info-circle text-info mr-1"></i>
+                                    Pilih ekspedisi di bawah untuk mengecek tarif & estimasi hari (ONS/Reguler) secara real-time dan akurat hingga ke tingkat kecamatan:
+                                </p>
+
+                                <!-- Tombol Link Langsung ke Website Ekspedisi -->
+                                <div class="d-flex flex-wrap mb-3" style="gap: 8px;">
+                                    <a href="https://www.jtcargo.id/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success font-weight-bold">
+                                        <i class="fas fa-truck-loading mr-1"></i> J&T Cargo
+                                    </a>
+                                    <a href="https://tiki.id/id/beranda" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary font-weight-bold">
+                                        <i class="fas fa-paper-plane mr-1"></i> TIKI (ONS / Reg)
+                                    </a>
+                                    <a href="https://www.jne.co.id/id/tracking/tarif" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-danger font-weight-bold">
+                                        <i class="fas fa-box mr-1"></i> JNE (YES / Reg)
+                                    </a>
+                                    <a href="https://berdu.id/cek-ongkir" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary font-weight-bold" title="Cek semua ekspedisi sekaligus">
+                                        <i class="fas fa-search-dollar mr-1"></i> Pembanding (Semua Ekspedisi)
+                                    </a>
                                 </div>
 
-                                <!-- Hasil Estimasi -->
-                                <div id="hasilEstimasiBox" class="mt-2" style="display: none;">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered bg-white mb-2" style="font-size: 12px;">
-                                            <thead class="thead-light">
-                                                <tr class="text-center">
-                                                    <th>Layanan</th>
-                                                    <th>Estimasi Sampai</th>
-                                                    <th>Perkiraan Tarif / Kg</th>
-                                                    <th>Total Est. Biaya</th>
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr id="row_ons" class="table-info">
-                                                    <td><strong><i class="fas fa-bolt text-warning mr-1"></i> ONS (Over Night)</strong></td>
-                                                    <td class="text-center font-weight-bold text-success" id="est_hari_ons">1 Hari Kerja</td>
-                                                    <td class="text-right" id="tarif_ons">-</td>
-                                                    <td class="text-right font-weight-bold" id="total_ons">-</td>
-                                                    <td class="text-center">
-                                                        <button type="button" class="btn btn-xs btn-outline-info btn-salin-ket" id="btnSalinOns" data-layanan="ONS" title="Tambahkan ke Catatan SPH">
-                                                            <i class="fas fa-plus"></i> Ke Keterangan
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                <tr id="row_reguler">
-                                                    <td><strong><i class="fas fa-truck text-primary mr-1"></i> REGULER</strong></td>
-                                                    <td class="text-center font-weight-bold text-primary" id="est_hari_reguler">2 - 3 Hari Kerja</td>
-                                                    <td class="text-right" id="tarif_reguler">-</td>
-                                                    <td class="text-right font-weight-bold" id="total_reguler">-</td>
-                                                    <td class="text-center">
-                                                        <button type="button" class="btn btn-xs btn-outline-primary btn-salin-ket" id="btnSalinReguler" data-layanan="Reguler" title="Tambahkan ke Catatan SPH">
-                                                            <i class="fas fa-plus"></i> Ke Keterangan
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                <!-- Form Input Hasil Cek untuk Disematkan ke SPH -->
+                                <div class="p-2 rounded bg-light" style="border: 1px dashed #ced4da;">
+                                    <label class="small font-weight-bold text-dark mb-1">
+                                        <i class="fas fa-edit text-primary mr-1"></i> Masukkan Hasil Cek ke Catatan SPH:
+                                    </label>
+                                    <div class="row">
+                                        <div class="col-md-3 col-6 mb-1">
+                                            <select class="form-control form-control-sm" id="input_ekspedisi_nama">
+                                                <option value="J&T Cargo">J&T Cargo</option>
+                                                <option value="TIKI ONS">TIKI ONS (1 Hari)</option>
+                                                <option value="TIKI Reguler">TIKI Reguler</option>
+                                                <option value="JNE YES">JNE YES (1 Hari)</option>
+                                                <option value="JNE Reguler">JNE Reguler</option>
+                                                <option value="Ekspedisi Lainnya">Ekspedisi Lainnya</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 col-6 mb-1">
+                                            <input type="text" class="form-control form-control-sm" id="input_est_hari" placeholder="Est: 1-2 Hari Kerja">
+                                        </div>
+                                        <div class="col-md-4 col-8 mb-1">
+                                            <input type="text" class="form-control form-control-sm" id="input_est_ongkir" placeholder="Est. Biaya: Rp 50.000">
+                                        </div>
+                                        <div class="col-md-2 col-4 mb-1">
+                                            <button type="button" class="btn btn-sm btn-success btn-block" id="btnSalinHasilManual">
+                                                <i class="fas fa-plus mr-1"></i> Salin
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted font-italic d-block mb-1">
-                                        * Estimasi ONS (Next Day) hanya berlaku untuk kota besar yang memiliki akses kargo udara langsung dan diproses sebelum pukul 11.00 WIB.
-                                    </small>
-                                    <small class="text-muted font-italic d-block">
-                                        * Klik <strong>"Ke Keterangan"</strong> untuk otomatis mencantumkan rincian estimasi ini pada surat SPH.
+                                    <small class="text-muted font-italic" style="font-size: 11px;">
+                                        * Isi estimasi hari & biaya yang didapat dari web ekspedisi, lalu klik <strong>"Salin"</strong> untuk langsung memasukkannya ke Catatan SPH.
                                     </small>
                                 </div>
                             </div>
@@ -2185,134 +2153,23 @@ $sph = isset($sph) ? $sph : null;
             <?php endif; ?>
 
             // ==========================================
-            // LOGIKA KALKULATOR PENGIRIMAN MULTI-ASAL KANTOR (ONS & REGULER)
+            // LOGIKA SALIN HASIL CEK EKSPEDISI RESMI KE CATATAN SPH
             // ==========================================
-            var labelKantor = {
-                'pekanbaru': 'Kantor Pekanbaru',
-                'jakarta': 'Kantor Jakarta',
-                'jogja': 'Kantor Jogja'
-            };
+            $('#btnSalinHasilManual').on('click', function() {
+                var ekspedisi = $('#input_ekspedisi_nama').val();
+                var estHari = $('#input_est_hari').val().trim();
+                var estOngkir = $('#input_est_ongkir').val().trim();
 
-            var tarifMatriks = {
-                // ASAL: PEKANBARU
-                'pekanbaru': {
-                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { avail: true, tarif: 15000, est: '1 Hari Kerja' }, reg: { tarif: 8000, est: '1 - 2 Hari Kerja' } },
-                    'jabodetabek': { label: 'Jabodetabek', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '3 - 4 Hari Kerja' } },
-                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { avail: true, tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '3 - 4 Hari Kerja' } },
-                    'jawa_timur': { label: 'Jawa Timur (Surabaya dsb)', ons: { avail: true, tarif: 34000, est: '1 Hari Kerja' }, reg: { tarif: 22000, est: '3 - 4 Hari Kerja' } },
-                    'jawa_barat': { label: 'Jawa Barat & Banten (Bandung dsb)', ons: { avail: true, tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 18000, est: '3 - 4 Hari Kerja' } },
-                    'sumatera_kota': { label: 'Sumatera (Kota Besar: Medan, Padang, Batam)', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '2 - 3 Hari Kerja' } },
-                    'sumatera_kab': { label: 'Sumatera (Kabupaten / Non-Bandara)', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 22000, est: '4 - 6 Hari Kerja' } },
-                    'kalimantan': { label: 'Kalimantan', ons: { avail: true, tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '4 - 6 Hari Kerja' } },
-                    'sulawesi': { label: 'Sulawesi', ons: { avail: true, tarif: 55000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 38000, est: '4 - 6 Hari Kerja' } },
-                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { avail: true, tarif: 52000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 36000, est: '4 - 6 Hari Kerja' } },
-                    'indonesia_timur': { label: 'Maluku & Papua', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 55000, est: '5 - 8 Hari Kerja' } }
-                },
-                // ASAL: JAKARTA
-                'jakarta': {
-                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 15000, est: '3 - 4 Hari Kerja' } },
-                    'jabodetabek': { label: 'Jabodetabek (Lokal)', ons: { avail: true, tarif: 14000, est: '1 Hari Kerja' }, reg: { tarif: 9000, est: '1 - 2 Hari Kerja' } },
-                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah', ons: { avail: true, tarif: 22000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '2 - 3 Hari Kerja' } },
-                    'jawa_timur': { label: 'Jawa Timur', ons: { avail: true, tarif: 24000, est: '1 Hari Kerja' }, reg: { tarif: 14000, est: '2 - 3 Hari Kerja' } },
-                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { avail: true, tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari Kerja' } },
-                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { avail: true, tarif: 26000, est: '1 Hari Kerja' }, reg: { tarif: 16000, est: '3 - 4 Hari Kerja' } },
-                    'sumatera_kab': { label: 'Sumatera (Kabupaten / Non-Bandara)', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 22000, est: '4 - 6 Hari Kerja' } },
-                    'kalimantan': { label: 'Kalimantan', ons: { avail: true, tarif: 42000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 30000, est: '3 - 5 Hari Kerja' } },
-                    'sulawesi': { label: 'Sulawesi', ons: { avail: true, tarif: 48000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 34000, est: '3 - 5 Hari Kerja' } },
-                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { avail: true, tarif: 38000, est: '1 Hari Kerja' }, reg: { tarif: 24000, est: '3 - 4 Hari Kerja' } },
-                    'indonesia_timur': { label: 'Maluku & Papua', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 48000, est: '5 - 8 Hari Kerja' } }
-                },
-                // ASAL: JOGJA (YOGYAKARTA)
-                'jogja': {
-                    'lokal_riau': { label: 'Riau / Pekanbaru & Sekitarnya', ons: { avail: true, tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '3 - 4 Hari Kerja' } },
-                    'jabodetabek': { label: 'Jabodetabek', ons: { avail: true, tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 12000, est: '2 - 3 Hari Kerja' } },
-                    'jogja_solo_jateng': { label: 'DIY & Jawa Tengah (Lokal)', ons: { avail: true, tarif: 12000, est: '1 Hari Kerja' }, reg: { tarif: 7000, est: '1 Hari Kerja' } },
-                    'jawa_timur': { label: 'Jawa Timur', ons: { avail: true, tarif: 18000, est: '1 Hari Kerja' }, reg: { tarif: 11000, est: '1 - 2 Hari Kerja' } },
-                    'jawa_barat': { label: 'Jawa Barat & Banten', ons: { avail: true, tarif: 20000, est: '1 Hari Kerja' }, reg: { tarif: 13000, est: '2 - 3 Hari Kerja' } },
-                    'sumatera_kota': { label: 'Sumatera (Kota Besar)', ons: { avail: true, tarif: 30000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '3 - 5 Hari Kerja' } },
-                    'sumatera_kab': { label: 'Sumatera (Kabupaten / Non-Bandara)', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 26000, est: '4 - 6 Hari Kerja' } },
-                    'kalimantan': { label: 'Kalimantan', ons: { avail: true, tarif: 44000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 32000, est: '3 - 5 Hari Kerja' } },
-                    'sulawesi': { label: 'Sulawesi', ons: { avail: true, tarif: 50000, est: '1 - 2 Hari Kerja' }, reg: { tarif: 35000, est: '3 - 5 Hari Kerja' } },
-                    'bali_nusa': { label: 'Bali & Nusa Tenggara', ons: { avail: true, tarif: 32000, est: '1 Hari Kerja' }, reg: { tarif: 20000, est: '2 - 4 Hari Kerja' } },
-                    'indonesia_timur': { label: 'Maluku & Papua', ons: { avail: false, tarif: 0, est: 'Tidak Tersedia' }, reg: { tarif: 52000, est: '5 - 8 Hari Kerja' } }
-                }
-            };
-
-            function formatRupiah(num) {
-                return 'Rp ' + Number(num).toLocaleString('id-ID');
-            }
-
-            var currentEstimasi = null;
-
-            $('#btnHitungOngkir').on('click', function() {
-                var asal = $('#calc_asal_kantor').val() || 'pekanbaru';
-                var zona = $('#calc_wilayah_tujuan').val();
-                var berat = parseFloat($('#calc_berat').val()) || 1;
-                if (berat <= 0) berat = 1;
-
-                if (!zona) {
-                    toastr.warning('Silakan pilih Wilayah / Kota Tujuan terlebih dahulu.', 'Pilih Wilayah');
+                if (!estHari && !estOngkir) {
+                    toastr.warning('Silakan isi estimasi hari atau perkiraan biaya terlebih dahulu.', 'Data Kosong');
                     return;
                 }
 
-                var tarifAsal = tarifMatriks[asal] || tarifMatriks['pekanbaru'];
-                var data = tarifAsal[zona];
-                if (!data) return;
+                var rincian = [];
+                if (estHari) rincian.push('Estimasi Waktu: ' + estHari);
+                if (estOngkir) rincian.push('Estimasi Ongkir: ' + estOngkir);
 
-                var totalReg = data.reg.tarif * Math.ceil(berat);
-                $('#est_hari_reguler').text(data.reg.est);
-                $('#tarif_reguler').text(formatRupiah(data.reg.tarif) + '/Kg');
-                $('#total_reguler').text(formatRupiah(totalReg));
-                $('#btnSalinReguler').prop('disabled', false);
-
-                var totalOns = 0;
-                if (data.ons.avail) {
-                    totalOns = data.ons.tarif * Math.ceil(berat);
-                    $('#est_hari_ons').html('<span class="text-success"><i class="fas fa-check-circle mr-1"></i>' + data.ons.est + '</span>');
-                    $('#tarif_ons').text(formatRupiah(data.ons.tarif) + '/Kg');
-                    $('#total_ons').text(formatRupiah(totalOns));
-                    $('#btnSalinOns').prop('disabled', false).show();
-                    $('#row_ons').removeClass('table-secondary').addClass('table-info');
-                } else {
-                    $('#est_hari_ons').html('<span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Tidak Tersedia</span>');
-                    $('#tarif_ons').text('-');
-                    $('#total_ons').text('-');
-                    $('#btnSalinOns').prop('disabled', true).hide();
-                    $('#row_ons').removeClass('table-info').addClass('table-secondary');
-                }
-
-                $('#hasilEstimasiBox').slideDown();
-
-                currentEstimasi = {
-                    asal: labelKantor[asal],
-                    wilayah: data.label,
-                    berat: Math.ceil(berat),
-                    ons: { avail: data.ons.avail, est: data.ons.est, tarif: totalOns },
-                    reg: { est: data.reg.est, tarif: totalReg }
-                };
-            });
-
-            $('#calc_asal_kantor, #calc_wilayah_tujuan').on('change', function() {
-                if ($('#calc_wilayah_tujuan').val()) {
-                    $('#btnHitungOngkir').trigger('click');
-                }
-            });
-
-            // Tombol Salin ke Catatan/Keterangan SPH
-            $(document).on('click', '.btn-salin-ket', function() {
-                if (!currentEstimasi) return;
-                var jenis = $(this).data('layanan'); // ONS atau Reguler
-                var teksKet = '';
-
-                if (jenis === 'ONS') {
-                    if (!currentEstimasi.ons.avail) {
-                        toastr.error('Layanan ONS tidak tersedia untuk wilayah tujuan ini.', 'Tidak Tersedia');
-                        return;
-                    }
-                    teksKet = 'Estimasi pengiriman via ONS (Over Night Service) dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.ons.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.ons.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg, cut-off pkl 11.00 WIB).';
-                } else {
-                    teksKet = 'Estimasi pengiriman via Reguler dari ' + currentEstimasi.asal + ' ke ' + currentEstimasi.wilayah + ': ' + currentEstimasi.reg.est + ' (Est. Biaya ' + formatRupiah(currentEstimasi.reg.tarif) + ' untuk ' + currentEstimasi.berat + ' Kg).';
-                }
+                var teksKet = 'Pengiriman via ' + ekspedisi + ' (' + rincian.join(', ') + ').';
 
                 // Tambahkan langsung ke Keterangan Tambahan SPH
                 var htmlCustom = '<div class="input-group mb-2 keterangan-custom-row">' +
@@ -2323,8 +2180,12 @@ $sph = isset($sph) ? $sph : null;
                     '</div>';
 
                 $('#keteranganCustomContainer').append(htmlCustom);
-                toastr.success('Keterangan estimasi pengiriman ' + jenis + ' dari ' + currentEstimasi.asal + ' berhasil ditambahkan ke Catatan SPH!', 'Berhasil Ditambahkan');
-                
+                toastr.success('Estimasi pengiriman ' + ekspedisi + ' berhasil dimasukkan ke Catatan SPH!', 'Berhasil Disalin');
+
+                // Reset field
+                $('#input_est_hari').val('');
+                $('#input_est_ongkir').val('');
+
                 // Scroll halus ke bagian Keterangan
                 $('html, body').animate({
                     scrollTop: $("#keteranganCustomContainer").offset().top - 200
