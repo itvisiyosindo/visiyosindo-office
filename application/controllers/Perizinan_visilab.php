@@ -81,6 +81,41 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
 
+        $action = $this->input->get('action');
+        if ($action === 'inspect_tsk_139') {
+            $task = $this->db->get_where('task_proyek', ['kode_task' => 'TSK/2026/11/139'])->row();
+            if (!$task) {
+                $task = $this->db->like('kode_task', '139')->get('task_proyek')->row();
+            }
+            header('Content-Type: application/json');
+            echo json_encode(['task' => $task]);
+            return;
+        }
+        if ($action === 'set_tsk_139_progress') {
+            $task = $this->db->get_where('task_proyek', ['kode_task' => 'TSK/2026/11/139'])->row();
+            if ($task) {
+                $progres = (int)$this->input->get('progres');
+                if ($progres < 0) $progres = 0;
+                if ($progres >= 100) $progres = 95; // tetap sedang dikerjakan
+                $this->db->where('id_task', $task->id_task)->update('task_proyek', [
+                    'status_task' => 1, // Sedang Dikerjakan
+                    'progres'     => ($progres > 0 ? $progres : 90),
+                    'tgl_submit'  => null,
+                    'tgl_dinilai' => null,
+                    'rating_bintang' => null
+                ]);
+                $this->db->insert('task_proyek_log', [
+                    'id_task'     => $task->id_task,
+                    'id_pengguna' => $task->id_penerima,
+                    'aksi'        => 'Sedang Dikerjakan',
+                    'catatan'     => 'Status dikembalikan ke Sedang Dikerjakan (belum disubmit ke atasan).'
+                ]);
+            }
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'task' => $task]);
+            return;
+        }
+
 
 
         $sql1 = "CREATE TABLE IF NOT EXISTS `visilab_perizinan_alat` (
