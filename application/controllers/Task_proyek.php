@@ -1078,10 +1078,12 @@ class Task_proyek extends CI_Controller
             ajaxReturnDie('error', 'Task ini sudah selesai dinilai oleh Atasan dan tidak dapat diubah lagi.', FALSE);
             return;
         }
-        if ($progres >= 100) {
-            $progres   = 100;
-            $newStatus = 2; // Menunggu Penilaian
-        } elseif ($newStatus === 0 || $newStatus === 3 || $newStatus === 2) {
+
+        // Catatan: Walaupun semua checklist tercentang (progres 100%), task TETAP dalam status "Sedang Dikerjakan" (status 1)
+        // dan TIDAK otomatis terkirim/berubah status ke "Menunggu Penilaian" (status 2).
+        // Pelaksana dapat terus menambah/mengubah checklist. Pengiriman ke atasan HANYA terjadi jika pelaksana
+        // menekan tombol resmi pada Panel "Laporkan Pekerjaan Selesai (100%) ke Atasan" (submit_selesai).
+        if ($newStatus === 0 || $newStatus === 3 || $newStatus === 2) {
             $newStatus = 1; // Sedang Dikerjakan
             if ($progres === 0 && empty($checklist)) $progres = 10;
         }
@@ -1091,21 +1093,18 @@ class Task_proyek extends CI_Controller
             'status_task'    => $newStatus,
             'checklist_json' => !empty($checklist) ? json_encode($checklist, JSON_UNESCAPED_UNICODE) : null
         ];
-        if ($newStatus === 2 && empty($task->tgl_submit)) {
-            $updTask['tgl_submit'] = date('Y-m-d H:i:s');
-        }
         $this->db->where('id_task', $id_task)->update('task_proyek', $updTask);
 
         $checklistInfo = !empty($checklist) ? ' [Checklist: ' . $doneCount . '/' . count($checklist) . ' selesai]' : '';
         $this->db->insert('task_proyek_log', [
             'id_task'     => $id_task,
             'id_pengguna' => $myId,
-            'aksi'        => ($newStatus === 2 ? 'Submit Selesai - Menunggu Penilaian (100%)' : 'Update Progres (' . $progres . '%)'),
+            'aksi'        => 'Update Progres (' . $progres . '%)',
             'catatan'     => ($catatan !== '' ? $catatan : 'Memperbarui progres pengerjaan menjadi ' . $progres . '%.') . $checklistInfo
         ]);
 
-        $msgOut = ($newStatus === 2)
-            ? 'Progres 100% selesai! Status task kini Menunggu Penilaian Atasan.'
+        $msgOut = ($progres >= 100)
+            ? 'Semua checklist selesai (' . $progres . '%). Status task tetap Sedang Dikerjakan. Jika pekerjaan sudah tuntas, kirim hasil pekerjaan melalui form "Laporkan Pekerjaan Selesai" di bawah.'
             : 'Checklist & progres pengerjaan berhasil diperbarui (' . $progres . '%)!';
         ajaxReturnDie('success', $msgOut, TRUE);
     }
