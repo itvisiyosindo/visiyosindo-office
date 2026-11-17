@@ -94,6 +94,53 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
 
+        // Test diagnose update_status simulation
+        if ($this->input->get('test_update_status')) {
+            $this->load->model('md_after_sales');
+            $row = $this->db->get('after_sales_service')->row();
+            if (!$row) {
+                echo json_encode(['error' => 'No after_sales_service row found']);
+                return;
+            }
+            try {
+                $id = $row->id;
+                $updateData = [
+                    'status'     => 'proses',
+                    'updated_by' => 1,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                $this->md_after_sales->update($id, $updateData);
+                $this->md_after_sales->insertLog([
+                    'after_sales_id' => $id,
+                    'status_lama'    => $row->status,
+                    'status_baru'    => 'proses',
+                    'keterangan'     => 'Test update via diagnostics',
+                    'user_id'        => 1,
+                    'user_nama'      => 'Admin Test',
+                    'created_at'     => date('Y-m-d H:i:s')
+                ]);
+                $upTicket = $this->md_after_sales->getById($id);
+                $waRes = null;
+                if (function_exists('waAfterSalesUpdateStatus') && $upTicket) {
+                    $waRes = waAfterSalesUpdateStatus($upTicket, 'proses', 'Diagnosa test');
+                }
+                echo json_encode([
+                    'status' => 'success',
+                    'ticket_id' => $id,
+                    'wa_result' => $waRes
+                ]);
+            } catch (\Throwable $t) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $t->getMessage(),
+                    'file' => $t->getFile(),
+                    'line' => $t->getLine(),
+                    'trace' => $t->getTraceAsString()
+                ]);
+            }
+            return;
+        }
+
 
 
         $sql1 = "CREATE TABLE IF NOT EXISTS `visilab_perizinan_alat` (
