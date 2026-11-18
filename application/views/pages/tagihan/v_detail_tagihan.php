@@ -520,7 +520,7 @@ if ($status_now == 5 || $status_now == 99) $can_approve = false;
               <div class="mb-2">
                 <span class="text-label text-success">Gudang Tujuan</span>
                 <h5 class="font-weight-bold text-dark mt-1"><?= $detail->nama_gudang_tujuan ?? '-' ?></h5>
-                <p class="text-muted text-dark small mb-0"><i class="fas fa-map-pin mr-1"></i> <?= $detail->alamat_gudang_tujuan ?? $detail->alamat_penerima ?></p>
+                <p class="text-muted text-dark small mb-0"><i class="fas fa-map-pin mr-1"></i> <?= (isset($detail->alamat_tujuan_custom) && $detail->alamat_tujuan_custom !== '') ? html_escape($detail->alamat_tujuan_custom) : ($detail->alamat_gudang_tujuan ?? $detail->alamat_penerima) ?></p>
               </div>
             <?php elseif ($tracking_type == 'serah_terima_barang'): ?>
               <!-- SERAH TERIMA BARANG -->

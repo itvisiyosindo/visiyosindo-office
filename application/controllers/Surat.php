@@ -10031,6 +10031,14 @@ class Surat extends CI_Controller
 						'required' => false,
 						'options' => ['' => '(Ikut alamat master gudang)', '-' => '-'],
 						'options_query' => "SELECT alamat_gudang AS value, CONCAT(nama_gudang, ' — ', alamat_gudang) AS label FROM gudang WHERE alamat_gudang IS NOT NULL AND TRIM(alamat_gudang) NOT IN ('', '-') ORDER BY nama_gudang"
+					],
+					// Override alamat gudang tujuan di halaman detail tagihan (kosong = ikut master gudang)
+					'alamat_tujuan_custom' => [
+						'label' => 'Alamat Gudang Tujuan',
+						'type' => 'select',
+						'required' => false,
+						'options' => ['' => '(Ikut alamat master gudang)', '-' => '-'],
+						'options_query' => "SELECT alamat_gudang AS value, CONCAT(nama_gudang, ' — ', alamat_gudang) AS label FROM gudang WHERE alamat_gudang IS NOT NULL AND TRIM(alamat_gudang) NOT IN ('', '-') ORDER BY nama_gudang"
 					]
 				]
 			],
