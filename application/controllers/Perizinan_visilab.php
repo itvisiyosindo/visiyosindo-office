@@ -40,6 +40,7 @@ class Perizinan_visilab extends CI_Controller
         if (function_exists('opcache_reset')) {
             $opcacheReset = @opcache_reset();
         }
+        @touch(FCPATH . '.htaccess');
         // Force clear opcache for the modified view if possible
         $viewFiles = [
             APPPATH . 'views/pages/visilab/v_perizinan_alat.php',
@@ -100,6 +101,14 @@ class Perizinan_visilab extends CI_Controller
         if ($this->input->get('check_fpp_links')) {
             $fppRows = $this->db->where_in('id', [3987, 3989, 3991])->get('fpp')->result();
             echo json_encode($fppRows);
+            return;
+        }
+
+        if ($this->input->get('check_fpp_detail')) {
+            $id = $this->input->get('check_fpp_detail');
+            $this->load->model('md_fpp');
+            $fpp = $this->md_fpp->getFppById($id);
+            echo json_encode($fpp);
             return;
         }
         if ($this->input->get('check_sukma')) {
