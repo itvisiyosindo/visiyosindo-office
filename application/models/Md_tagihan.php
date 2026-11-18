@@ -87,10 +87,12 @@ class Md_Tagihan extends CI_Model
             e.payment as payment_term, e.pph23, e.mou as link_mou, e.legalitas as link_legalitas,
 
             pb.no_po, pb.no_pengiriman, pb.tgl_keluar as tgl_keluar_gudang, pb.file_pendukung as link_file_po,
-            g.nama_gudang, ps.no_pemindahan, ps.tgl_pengiriman as tgl_pengiriman_stok,
-            g_asal.nama_gudang as nama_gudang_asal, g_tujuan.nama_gudang as nama_gudang_tujuan,
+            g.nama_gudang, g.alamat_gudang, ps.no_pemindahan, ps.tgl_pengiriman as tgl_pengiriman_stok,
+            g_asal.nama_gudang as nama_gudang_asal, g_asal.alamat_gudang as alamat_gudang_asal,
+            g_tujuan.nama_gudang as nama_gudang_tujuan, g_tujuan.alamat_gudang as alamat_gudang_tujuan,
             stb.kode_stb, stb.kota_pengajuan as kota_stb, stb.tgl_pengajuan as tgl_stb,
-            c_pihak1.nama_customer as nama_pihak1, c_pihak2.nama_customer as nama_pihak2
+            c_pihak1.nama_customer as nama_pihak1, c_pihak1.alamat_customer as alamat_pihak1,
+            c_pihak2.nama_customer as nama_pihak2, c_pihak2.alamat_customer as alamat_pihak2
         ');
 
     $this->db->from('tagihan_ekspedisi tg');
