@@ -515,7 +515,11 @@ if ($status_now == 5 || $status_now == 99) $can_approve = false;
               <div class="mb-1">
                 <span class="text-label text-warning">Gudang Asal</span>
                 <h5 class="font-weight-bold text-dark mt-1"><?= $detail->nama_gudang_asal ?? $detail->nama_gudang ?></h5>
-                <p class="text-muted text-dark small mb-0"><i class="fas fa-map-pin mr-1"></i> <?= $detail->alamat_gudang_asal ?? '-' ?></p>
+                <p class="text-muted text-dark small mb-0"><i class="fas fa-map-pin mr-1"></i> <?= ($detail->alamat_asal_custom ?? null) !== null ? html_escape($detail->alamat_asal_custom) : ($detail->alamat_gudang_asal ?? '-') ?>
+                  <?php if (!empty($is_admin)): ?>
+                    <a href="javascript:void(0)" id="btn-edit-alamat-asal" class="ml-1 text-primary" title="Edit alamat gudang asal (Admin)"><i class="fas fa-edit"></i></a>
+                  <?php endif; ?>
+                </p>
               </div>
               <div class="mb-2">
                 <span class="text-label text-success">Gudang Tujuan</span>
@@ -1106,6 +1110,32 @@ if ($status_now == 5 || $status_now == 99) $can_approve = false;
           Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
           btn.prop('disabled', false).html(originalText);
         }
+      });
+    });
+
+    // Edit alamat gudang asal (Admin only)
+    $('#btn-edit-alamat-asal').on('click', function() {
+      Swal.fire({
+        title: 'Edit Alamat Gudang Asal',
+        input: 'textarea',
+        inputValue: <?= json_encode($detail->alamat_asal_custom ?? ($detail->alamat_gudang_asal ?? '')) ?>,
+        inputPlaceholder: 'Kosongkan untuk memakai alamat master gudang',
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+        cancelButtonText: 'Batal'
+      }).then((r) => {
+        if (!r.isConfirmed) return;
+        $.post('<?= base_url("tagihan/update_alamat_asal") ?>', {
+          id_tagihan: '<?= $detail->id_tagihan ?>',
+          alamat_asal_custom: r.value
+        }, function(res) {
+          if (res.status == 'success') {
+            Swal.fire({ title: 'Berhasil', text: res.message, icon: 'success', showConfirmButton: false, timer: 1200 })
+              .then(() => location.reload());
+          } else {
+            Swal.fire('Gagal', res.message, 'error');
+          }
+        }, 'json').fail(() => Swal.fire('Error', 'Terjadi kesalahan server.', 'error'));
       });
     });
   });

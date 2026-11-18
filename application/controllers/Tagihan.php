@@ -678,6 +678,31 @@ class Tagihan extends CI_Controller
   }
 
   // =========================================================================
+  /**
+   * Update Alamat Gudang Asal (tampilan tagihan) - Khusus Administrator
+   * Kosongkan untuk kembali memakai alamat dari master gudang
+   */
+  public function update_alamat_asal()
+  {
+    if ($this->session->userdata('role') != 'Administrator') {
+      ajaxReturnDie('error', 'Akses ditolak.');
+    }
+
+    $id_tagihan = $this->input->post('id_tagihan');
+    $alamat     = trim((string) $this->input->post('alamat_asal_custom'));
+
+    if (!$id_tagihan) {
+      ajaxReturnDie('error', 'ID Tagihan tidak valid.');
+    }
+
+    $this->md_tagihan->update($id_tagihan, [
+      'alamat_asal_custom' => $alamat === '' ? null : $alamat,
+      'updated_at'         => date('Y-m-d H:i:s')
+    ]);
+
+    ajaxReturnDie('success', 'Alamat gudang asal berhasil diupdate.');
+  }
+
   // LOGIC APPROVAL (DINAMIS & ADMIN BYPASS)
   // =========================================================================
   public function process_approval()
