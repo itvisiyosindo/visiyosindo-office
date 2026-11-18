@@ -332,14 +332,14 @@ class Perizinan_visilab extends CI_Controller
             $ba735Updated = true;
         }
 
-        // Update link lampiran SPH FPP 3989 & 3991
+        // Kembalikan link lampiran SPH FPP 3989 & 3991 ke semula
         $fppUpdated = false;
         if ($this->db->table_exists('fpp')) {
             $this->db->where('id', 3989)->update('fpp', [
-                'link_sph' => 'https://drive.google.com/file/d/1Kj_hweLGCiylAC8dwsT5BlDTnF8a5y_0/view?usp=drive_link'
+                'link_sph' => 'https://drive.google.com/file/d/18ao7LRvgscd4-OvMIwe72oTqjCjgaEXT/view?usp=sharing'
             ]);
             $this->db->where('id', 3991)->update('fpp', [
-                'link_sph' => 'https://drive.google.com/file/d/1GoHxWN6zDsEnx-yjCPOWucieXtAgmQhi/view?usp=drive_link'
+                'link_sph' => 'https://drive.google.com/file/d/1JLy1DHDX5Kt0nv_cPNSHX1gA1VvKheS9/view?usp=sharing'
             ]);
             $fppUpdated = true;
         }
