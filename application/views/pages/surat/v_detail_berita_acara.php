@@ -349,10 +349,53 @@
 						<td style="text-align:center; vertical-align:top;"><i><?= $jabatan_dir_display ?></i></td>
 					</tr>
 							  <?php } else if($data_ba[0]->status_dir==1){
-
+							  if (!empty($data_ba[0]->id_diketahui2)) {
 						?>
-
-					
+					<tr style="height: 18px;">
+						<td style="text-align:center; width:18%;">Diajukan Oleh,</td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:18%;">Diketahui Oleh,</td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:18%;">Diketahui Oleh,</td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:18%;">Disetujui Oleh,</td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:20%;">Disetujui Oleh,</td>
+					</tr>
+					<tr style="height:60px;">
+						<td style="text-align:center;"><?php echo '<img src="'.$ttdaju.'" height="70">'; ?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo '<img src="'.$ttd1.'" height="70">'; ?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo '<img src="'.$ttd_diketahui2.'" height="70">'; ?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo '<img src="'.$ttd2.'" height="70">'; ?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo '<img src="'.$ttd3.'" height="70">'; ?></td>
+					</tr>
+					<tr>
+						<td style="text-align:center;"><?= $nmpengaju ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center;"><?= $Namadiketahui ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center;"><?= $data_ba[0]->nama_diketahui2 ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center;"><?= $Namadisetujui ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center;"><?= $nama_dir_display ?><hr></hr></td>
+					</tr>
+					<tr>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_diketahui ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_diketahui2 ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_disetujui ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $jabatan_dir_display ?></i></td>
+					</tr>
+						<?php } else { ?>
 					<tr style="height: 18px;">
 						<td style="text-align:center; width:17%;" >Diajukan Oleh,</td>
 						<td style="text-align:center; width:10%;" ></td>
@@ -391,7 +434,7 @@
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; vertical-align:top;"><i><?= $jabatan_dir_display ?></i></td>
 					</tr>
-
+						<?php } ?>
 				<?php }else{ ?>
 					<?php if($data_ba[0]->id_diketahui==1){ ?>
 							<tr style="height: 18px;">
