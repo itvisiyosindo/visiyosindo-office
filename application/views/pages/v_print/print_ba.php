@@ -278,6 +278,13 @@
 								$ttd4 = img_to_base64($img_path."ttd_not.png");
 							}
 
+							$ttd_diketahui2 = img_to_base64($img_path."ttd_notyet2.png");
+							if(!empty($data_ba[0]->ttd_diketahui2) && $data_ba[0]->ttd_diketahui2 == '1'){
+								$ttd_diketahui2 = img_to_base64($img_path."ttd_".$data_ba[0]->id_diketahui2.".png");
+							}else if(!empty($data_ba[0]->ttd_diketahui2) && $data_ba[0]->ttd_diketahui2 == '2'){
+								$ttd_diketahui2 = img_to_base64($img_path."ttd_not.png");
+							}
+
 							$is_ba_728 = ((int)$data_ba[0]->id_ba === 728);
 							$has_extra_bob_col = ($is_ba_728 && (int)$data_ba[0]->id_dir !== 54);
 							$nama_dir_display = $data_ba[0]->nama_dir;
@@ -428,9 +435,53 @@
                         <td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
                     </tr>
                             <?php } else if($data_ba[0]->status_dir==1){
+							if (!empty($data_ba[0]->id_diketahui2)) {
 						?>
-
-
+                    <tr style="height: 18px;">
+						<td style="text-align:center; width:18%;"><font color="#000000">Diajukan Oleh,</font></td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:18%;"><font color="#000000">Diketahui Oleh,</font></td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:18%;"><font color="#000000">Diketahui Oleh,</font></td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:18%;"><font color="#000000">Disetujui Oleh,</font></td>
+						<td style="text-align:center; width:2%;"></td>
+						<td style="text-align:center; width:20%;"><font color="#000000">Disetujui Oleh,</font></td>
+					</tr>
+					<tr style="height:60px;">
+						<td style="text-align:center;"><?php echo'<img src="'.$ttdaju.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd1.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd_diketahui2.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd2.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd3.'" height="70">';?></td>
+					</tr>
+					<tr>
+						<td style="text-align:center;"><font color="#000000"><?= $nmpengaju ?><hr></hr></font></td>
+						<td></td>
+						<td style="text-align:center;"><font color="#000000"><?= $diketahui ?><hr></hr></font></td>
+						<td></td>
+						<td style="text-align:center;"><font color="#000000"><?= $data_ba[0]->nama_diketahui2 ?><hr></hr></font></td>
+						<td></td>
+						<td style="text-align:center;"><font color="#000000"><?= $disetujui ?><hr></hr></font></td>
+						<td></td>
+						<td style="text-align:center;"><font color="#000000"><?= $nama_dir_display ?><hr></hr></font></td>
+					</tr>
+					<tr>
+						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan ?></i></font></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_diketahui ?></i></font></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_diketahui2 ?></i></font></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $data_ba[0]->jabatan_disetujui ?></i></font></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
+					</tr>
+						<?php } else { ?>
                     <tr style="height: 18px;">
 						<td style="text-align:center; width:3%;"></td>
 						<td style="text-align:center; width:20%;"><font color="#000000">Diajukan Oleh,</font></td>
@@ -471,6 +522,7 @@
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; vertical-align:top;"><font color="#000000"><i><?= $jabatan_dir_display ?></i></font></td>
 					</tr>
+						<?php } ?>
 
                     <?php }else{ ?>
                         

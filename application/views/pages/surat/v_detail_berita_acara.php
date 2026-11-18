@@ -63,15 +63,18 @@
             <h2><font color='#000000' face='Times New Roman'>No : <?= $data_ba[0]->kode_ba ?> <br></font></h2>
         </div>
 		<?php
-			$diketahui = $data_ba[0]->id_diketahui;
-			$disetujui = $data_ba[0]->id_disetujui;
-			$id_dir = $data_ba[0]->id_dir;
-			$is_ba_728 = ((int)$data_ba[0]->id_ba === 728);
+			$diketahui  = $data_ba[0]->id_diketahui;
+			$diketahui2 = $data_ba[0]->id_diketahui2;
+			$disetujui  = $data_ba[0]->id_disetujui;
+			$id_dir     = $data_ba[0]->id_dir;
+			$is_ba_728  = ((int)$data_ba[0]->id_ba === 728);
 			$has_extra_bob_col = ($is_ba_728 && (int)$id_dir !== 54);
 
 		    $ttd = "ttd_diketahui";
 				if((sessPenggunaId() == $diketahui)){
 					$ttd = 'ttd_diketahui';
+				}else if(!empty($diketahui2) && (sessPenggunaId() == $diketahui2)){
+					$ttd = 'ttd_diketahui2';
 				}else if((sessPenggunaId() == $disetujui)){
 					$ttd = 'ttd_disetujui';
 				}else if((sessPenggunaId() == $id_dir)){
@@ -81,6 +84,8 @@
 				}else if(sessPenggunaId() == '1'){
 					if($data_ba[0]->ttd_diketahui != '1' && (int)$diketahui !== 1){
 						$ttd = 'ttd_diketahui';
+					}else if(!empty($diketahui2) && ($data_ba[0]->ttd_diketahui2 ?? 0) != '1'){
+						$ttd = 'ttd_diketahui2';
 					}else if($data_ba[0]->ttd_disetujui != '1'){
 						$ttd = 'ttd_disetujui';
 					}else if($data_ba[0]->status_dir == 1 && $data_ba[0]->ttd_dir != '1'){
@@ -548,7 +553,7 @@
 			<?= form_close(); ?>
 			<br><br>
 		<div width="100%">
-            <?php if (sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == $diketahui || sessPenggunaId() == $disetujui || sessPenggunaId() == $id_dir) { ?>
+            <?php if (sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == $diketahui || (!empty($diketahui2) && sessPenggunaId() == $diketahui2) || sessPenggunaId() == $disetujui || sessPenggunaId() == $id_dir) { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-times"></i> Tolak </button>				
             <?php } ?>

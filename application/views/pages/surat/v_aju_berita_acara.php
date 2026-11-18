@@ -113,9 +113,11 @@
 
 					
 					<tr style="height: 18px;">
-						<td style="text-align:center; width:25.5%;" >Diajukan Oleh,</td>
-						<td style="text-align:center; width:35.5%;" >Diketahui Oleh,</td>
-						<td style="text-align:center; width:25.5%;" >Disetujui Oleh,</td>
+						<td style="text-align:center; width:20%;" >Diajukan Oleh,</td>
+						<td style="text-align:center; width:20%;" >Diketahui Oleh 1,</td>
+						<td style="text-align:center; width:20%;" >Diketahui Oleh 2,</td>
+						<td style="text-align:center; width:20%;" >Disetujui Oleh,</td>
+						<td style="text-align:center; width:20%;" colspan="2">Disetujui Director,</td>
 					</tr>
 					<tr style="height:60px;">
 						<?php
@@ -126,43 +128,45 @@
 						<td style="text-align:center;"> <?php echo'<img src="'.$ttdaju.'" height="70">';?> </td>
 						<td style="text-align:center;"></td>
 						<td style="text-align:center;"></td>
+						<td style="text-align:center;"></td>
+						<td style="text-align:center;" colspan="2"></td>
 					</tr>
 					<tr>
 						<td style="text-align:center; "><?= !empty($pengguna[0]->short_name) ? $pengguna[0]->short_name : $pengguna[0]->nama ?><hr></hr></td>
 						<td style="text-align:center; ">
-						
-                        		<select name="id_diketahui" id="id_diketahui" style="background-color: transparent; border: none;">
-                                    <option value="">Pilih Nama yang Mengetahui</option>
-                                    <?php
-                                    //$nama = $this->db->get('pengguna')->where('pengguna.status=1')->result();
-                                    foreach ($list_nama as $row) {
-                                    ?>
-                                    <option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
-                                    <?php } ?>
-                                </select>
-                        	
+							<select name="id_diketahui" id="id_diketahui" style="background-color: transparent; border: none; width: 95%;">
+								<option value="">Pilih Diketahui 1</option>
+								<?php foreach ($list_nama as $row) { ?>
+								<option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
+								<?php } ?>
+							</select>
 						</td>
 						<td style="text-align:center; ">
-							<select name="id_disetujui" id="id_disetujui" style="background-color: transparent; border: none;">
-                                    <option value="">Pilih Nama yang Menyetujui</option>
-                                    <?php
-                                    //$nama = $this->db->get('pengguna')->where('pengguna.status=1')->result();
-                                    foreach ($list_nama as $row) {
-                                    ?>
-                                    <option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
-                                    <?php } ?>
-                                </select>
+							<select name="id_diketahui2" id="id_diketahui2" style="background-color: transparent; border: none; width: 95%;">
+								<option value="">Pilih Diketahui 2 (Opsional)</option>
+								<?php foreach ($list_nama as $row) { ?>
+								<option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
+								<?php } ?>
+							</select>
 						</td>
-						<td>
-               <input  type="checkbox" id="direktor" name="direktor" value="1">
-            </td>
-            <td style="text-align:center; ">
-							<select name="id_dir" id="id_dir" style="background-color: transparent; border: none;">
-                  <option value="">Pilih Nama yang Menyetujui</option>
-									<option value="54">Bob Ariyos</option>
-									<option value="23">Meilina Safitri</option>
-									<option value="33">Yolanda Pratiwi</option>
-              </select>
+						<td style="text-align:center; ">
+							<select name="id_disetujui" id="id_disetujui" style="background-color: transparent; border: none; width: 95%;">
+								<option value="">Pilih Menyetujui</option>
+								<?php foreach ($list_nama as $row) { ?>
+								<option value="<?= $row->pengguna_id ?>"><?= $row->nama ?></option>
+								<?php } ?>
+							</select>
+						</td>
+						<td style="width: 25px; text-align: right;">
+							<input type="checkbox" id="direktor" name="direktor" value="1">
+						</td>
+						<td style="text-align:center; ">
+							<select name="id_dir" id="id_dir" style="background-color: transparent; border: none; width: 95%;">
+								<option value="">Pilih Director</option>
+								<option value="54">Bob Ariyos</option>
+								<option value="23">Meilina Safitri</option>
+								<option value="33">Yolanda Pratiwi</option>
+							</select>
 						</td>
 					</tr>
 					<tr>
@@ -170,7 +174,7 @@
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:left; ">Harap Centang & Pilih Nama Jika Persetujuan Sampai Director</td>
+						<td colspan="2" style="text-align:center; font-size:12px; color:#555;"><i>Centang jika persetujuan sampai Director</i></td>
 					</tr>
 
 					</tr>

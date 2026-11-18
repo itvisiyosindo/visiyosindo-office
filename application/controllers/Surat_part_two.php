@@ -739,9 +739,10 @@ class Surat_part_two extends CI_Controller
       $data = [];
       $data['kode_ba']      = $kodeFpp;
 
-      $id_diketahui = $this->input->post('id_diketahui', TRUE);
-      $id_disetujui = $this->input->post('id_disetujui', TRUE);
-      $id_dir       = $this->input->post('id_dir', TRUE);
+      $id_diketahui  = $this->input->post('id_diketahui', TRUE);
+      $id_diketahui2 = $this->input->post('id_diketahui2', TRUE);
+      $id_disetujui  = $this->input->post('id_disetujui', TRUE);
+      $id_dir        = $this->input->post('id_dir', TRUE);
 
       $data['id_pengaju']      = (int)$id_pengaju;
       $data['tanggal']         = $tgl_db;
@@ -749,6 +750,7 @@ class Surat_part_two extends CI_Controller
       $data['hasil']           = $hasil;
       $data['penanganan']      = $penanganan;
       $data['id_diketahui']    = (!empty($id_diketahui) && is_numeric($id_diketahui)) ? (int)$id_diketahui : null;
+      $data['id_diketahui2']   = (!empty($id_diketahui2) && is_numeric($id_diketahui2)) ? (int)$id_diketahui2 : null;
       $data['id_disetujui']    = (!empty($id_disetujui) && is_numeric($id_disetujui)) ? (int)$id_disetujui : null;
       $data['status_dir']      = ($this->input->post('direktor', TRUE) == 1) ? 1 : 0;
       $data['id_dir']          = ($data['status_dir'] == 1 && !empty($id_dir) && is_numeric($id_dir)) ? (int)$id_dir : null;
@@ -1388,25 +1390,33 @@ class Surat_part_two extends CI_Controller
       if ($param2 == "ttd_diketahui") {
 
         $id_sp = $this->input->post('id');
-        $data['status'] = 1;
+        $ambilDataPengaju   = $this->md_surat_part_two->getBeritaAcaraById($id_sp);
+
         $data['ttd_diketahui'] = 1;
+        // Jika ada id_diketahui2, status tetap 1 (proses approval diketahui berikutnya)
+        $data['status'] = 1;
         $this->md_surat_part_two->updateBeritaAcara($id_sp, $data);
 
-        $ambilDataPengaju   = $this->md_surat_part_two->getBeritaAcaraById($id_sp);
-        $id_disetujui        = $ambilDataPengaju[0]->id_disetujui;
+        $id_diketahui2      = $ambilDataPengaju[0]->id_diketahui2;
+        $id_disetujui       = $ambilDataPengaju[0]->id_disetujui;
+        $nama_diketahui2    = $ambilDataPengaju[0]->nama_diketahui2;
         $nama_disetujui     = $ambilDataPengaju[0]->nama_disetujui;
         $kdBa               = $ambilDataPengaju[0]->kode_ba;
         $pengaju            = $ambilDataPengaju[0]->pengaju;
         $jabatan            = $ambilDataPengaju[0]->jabatan_diketahui;
         $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
 
+        // Jika ada diketahui2 dan belum ttd, kirim ke diketahui2; jika tidak, lanjut ke disetujui
+        $targetPenerima = (!empty($id_diketahui2) && $ambilDataPengaju[0]->ttd_diketahui2 != 1) ? $id_diketahui2 : $id_disetujui;
+        $namaPenerima   = (!empty($id_diketahui2) && $ambilDataPengaju[0]->ttd_diketahui2 != 1) ? $nama_diketahui2 : $nama_disetujui;
+
         //send notif wa
         $dataWa = [
           'id'             => $id_sp,
-          'idPenerima1'   => $id_disetujui,
+          'idPenerima1'   => $targetPenerima,
           'idPenerima2'   => '',
           'namaSurat'     => 'Berita Acara',
-          'penerima'       => $nama_disetujui,
+          'penerima'       => $namaPenerima,
           'pengaju'       => $pengaju,
           'kode'           => $kdBa,
           'perihal'        => $analisis,
@@ -1419,6 +1429,41 @@ class Surat_part_two extends CI_Controller
         $this->notifWaAprov(1, 1, $dataWa);
 
         addLog('Pengajuan Berita Acara Disetujui', 'Permintaan Berita Acara Disetujui ' . $jabatan);
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+      } elseif ($param2 == "ttd_diketahui2") {
+
+        $id_sp = $this->input->post('id');
+        $data['status'] = 1;
+        $data['ttd_diketahui2'] = 1;
+        $this->md_surat_part_two->updateBeritaAcara($id_sp, $data);
+
+        $ambilDataPengaju   = $this->md_surat_part_two->getBeritaAcaraById($id_sp);
+        $id_disetujui       = $ambilDataPengaju[0]->id_disetujui;
+        $nama_disetujui     = $ambilDataPengaju[0]->nama_disetujui;
+        $kdBa               = $ambilDataPengaju[0]->kode_ba;
+        $pengaju            = $ambilDataPengaju[0]->pengaju;
+        $jabatan            = $ambilDataPengaju[0]->jabatan_diketahui;
+        $jabatan2           = $ambilDataPengaju[0]->jabatan_diketahui2;
+        $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
+
+        $dataWa = [
+          'id'             => $id_sp,
+          'idPenerima1'   => $id_disetujui,
+          'idPenerima2'   => '',
+          'namaSurat'     => 'Berita Acara',
+          'penerima'       => $nama_disetujui,
+          'pengaju'       => $pengaju,
+          'kode'           => $kdBa,
+          'perihal'        => $analisis,
+          'link'           => 'surat_part_two/show/detail/ba/' . $id_sp,
+          'ttd_sebelum1'   => $jabatan,
+          'ttd_sebelum2'   => $jabatan2,
+          'ttd_sebelum3'   => ''
+        ];
+
+        $this->notifWaAprov(1, 1, $dataWa);
+
+        addLog('Pengajuan Berita Acara Disetujui', 'Permintaan Berita Acara Disetujui ' . $jabatan2);
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
       } elseif ($param2 == "ttd_disetujui") {
 
@@ -2203,6 +2248,26 @@ class Surat_part_two extends CI_Controller
         ];
         $this->notifWaRejectBa($dataWa);
         /** LOG */
+        addLog('Pengajuan Berita Acara Ditolak', 'Permintaan Berita Acara Ditolak');
+        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+      } elseif ($param2 == "ttd_diketahui2") {
+
+        $id_sp = $this->input->post('id');
+        $data['status'] = 6;
+        $data['ttd_diketahui2'] = 2;
+        $this->md_surat_part_two->updateBeritaAcara($id_sp, $data);
+
+        $ambilDataPengaju   = $this->md_surat_part_two->getBeritaAcaraById($id_sp);
+        $id_diketahui2      = $ambilDataPengaju[0]->id_diketahui2;
+        $nama_diketahui2    = $ambilDataPengaju[0]->nama_diketahui2;
+
+        $dataWa = [
+          'namaSurat'     => 'Berita Acara',
+          'id'            => $id_sp,
+          'idPenolak'     => $id_diketahui2,
+          'namaPenolak'   => $nama_diketahui2
+        ];
+        $this->notifWaRejectBa($dataWa);
         addLog('Pengajuan Berita Acara Ditolak', 'Permintaan Berita Acara Ditolak');
         ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
       } elseif ($param2 == "ttd_disetujui") {
