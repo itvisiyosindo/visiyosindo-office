@@ -90,7 +90,7 @@
 							<span>Dokumen Umum</span>
 						</a>
 					</li>
-					<li class="nav-parent <?= in_array($page_name, ["v_dok_product", "v_bhn_presentasi", "v_brosur", "v_manual_book", "v_e_suket"])
+					<li class="nav-parent <?= in_array($page_name, ["v_dok_product", "dokumen/v_dok_product", "v_bhn_presentasi", "v_brosur", "v_manual_book", "v_e_suket"])
 												? "nav-active nav-expanded"
 												: "" ?>">
 						<a class="nav-link" href="#">

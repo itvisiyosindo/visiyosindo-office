@@ -219,7 +219,7 @@
 						<h3 style="font-size: 26px; font-weight: 800; color: #0284c7; margin: 4px 0 2px 0;">
 							<?= isset($total_dokumen_product) ? number_format($total_dokumen_product, 0, ',', '.') : 0 ?>
 						</h3>
-						<span style="font-size: 11.5px; color: #0284c7; font-weight: 600;"><i class="fas fa-certificate mr-1"></i> Brosur & Izin Edar AKL</span>
+						<span style="font-size: 11.5px; color: #0284c7; font-weight: 600;"><i class="fas fa-certificate mr-1"></i> Brosur & Izin Edar AKL / AKD</span>
 					</div>
 					<div class="dok-kpi-icon-box" style="background: #f0f9ff; color: #0284c7;">
 						<i class="fas fa-file-invoice"></i>

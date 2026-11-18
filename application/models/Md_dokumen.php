@@ -116,7 +116,61 @@ class Md_dokumen extends CI_Model {
     
     function getKategoriProductAktif() 
     {
-        return $this->db->get('masterdokumenproduct')->result();
+        $categories = $this->db->get('masterdokumenproduct')->result();
+
+        $has_akd = false;
+        if (!empty($categories)) {
+            foreach ($categories as $cat) {
+                if (isset($cat->keterangan) && strtoupper(trim((string)$cat->keterangan)) === 'AKD') {
+                    $has_akd = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$has_akd) {
+            try {
+                $this->db->insert('masterdokumenproduct', array(
+                    'keterangan' => 'AKD',
+                    'created_by' => 1
+                ));
+                $categories = $this->db->get('masterdokumenproduct')->result();
+            } catch (Exception $e) {
+                // Ignore if insert fails (e.g. read-only replica)
+            } catch (Throwable $t) {
+                // Ignore if insert fails
+            }
+        }
+
+        // Urutkan agar AKD berada tepat setelah AKL jika keduanya ada
+        if (!empty($categories)) {
+            $ordered = array();
+            $akd_item = null;
+            foreach ($categories as $cat) {
+                if (isset($cat->keterangan) && strtoupper(trim((string)$cat->keterangan)) === 'AKD') {
+                    $akd_item = $cat;
+                    break;
+                }
+            }
+
+            if ($akd_item) {
+                foreach ($categories as $cat) {
+                    if (isset($cat->keterangan) && strtoupper(trim((string)$cat->keterangan)) === 'AKD') {
+                        continue;
+                    }
+                    $ordered[] = $cat;
+                    if (isset($cat->keterangan) && strtoupper(trim((string)$cat->keterangan)) === 'AKL') {
+                        $ordered[] = $akd_item;
+                    }
+                }
+                if (!in_array($akd_item, $ordered, true)) {
+                    $ordered[] = $akd_item;
+                }
+                return $ordered;
+            }
+        }
+
+        return $categories;
     }
 
     function getKategoriVisilabAktif() 

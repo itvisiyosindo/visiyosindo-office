@@ -737,7 +737,7 @@ class Dokumen extends CI_Controller
             $link_download = '<a href="' . $row->file . '"><i class="fas fa-download"></i> Download</a>';
             $masa_berlaku = '';
             $kategori_produk = strtoupper(trim((string) $row->kategori));
-            $tampilkan_masa_berlaku = in_array($kategori_produk, ['LOA', 'AKL', 'ISO'], true);
+            $tampilkan_masa_berlaku = in_array($kategori_produk, ['LOA', 'AKL', 'AKD', 'ISO'], true);
 
             if ($tampilkan_masa_berlaku) {
                 $tgl_mulai = strtotime((string) $row->tgl_mulai);
