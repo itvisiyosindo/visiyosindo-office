@@ -98,7 +98,7 @@ class Perizinan_visilab extends CI_Controller
 
         // Test diagnose update_status simulation
         if ($this->input->get('check_fpp_links')) {
-            $fppRows = $this->db->where_in('id', [3989, 3991])->get('fpp')->result();
+            $fppRows = $this->db->where_in('id', [3987, 3989, 3991])->get('fpp')->result();
             echo json_encode($fppRows);
             return;
         }
@@ -332,14 +332,14 @@ class Perizinan_visilab extends CI_Controller
             $ba735Updated = true;
         }
 
-        // Kembalikan link lampiran SPH FPP 3989 & 3991 ke semula
+        // Update link lampiran SPH FPP 3989 & 3987
         $fppUpdated = false;
         if ($this->db->table_exists('fpp')) {
             $this->db->where('id', 3989)->update('fpp', [
-                'link_sph' => 'https://drive.google.com/file/d/18ao7LRvgscd4-OvMIwe72oTqjCjgaEXT/view?usp=sharing'
+                'link_sph' => 'https://drive.google.com/file/d/1GoHxWN6zDsEnx-yjCPOWucieXtAgmQhi/view?usp=drive_link'
             ]);
-            $this->db->where('id', 3991)->update('fpp', [
-                'link_sph' => 'https://drive.google.com/file/d/1JLy1DHDX5Kt0nv_cPNSHX1gA1VvKheS9/view?usp=sharing'
+            $this->db->where('id', 3987)->update('fpp', [
+                'link_sph' => 'https://drive.google.com/file/d/1Kj_hweLGCiylAC8dwsT5BlDTnF8a5y_0/view?usp=drive_link'
             ]);
             $fppUpdated = true;
         }
