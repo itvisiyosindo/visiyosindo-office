@@ -95,6 +95,27 @@ class Perizinan_visilab extends CI_Controller
         }
 
         // Test diagnose update_status simulation
+        if ($this->input->get('check_sukma')) {
+            $user = $this->db->like('nama', 'Sukma')->get('pengguna')->row();
+            $configs = $this->db->get('absensi_config')->result();
+            $today = date('Y-m-d');
+            $absensiToday = [];
+            $absensiIzinToday = [];
+            if ($user) {
+                $absensiToday = $this->db->where('pengguna_id', $user->pengguna_id)->like('data_created', $today)->get('absensi')->result();
+                $absensiIzinToday = $this->db->where('pengguna_id', $user->pengguna_id)->where('type_absen', 'izin')->like('data_created', $today)->get('absensi')->result();
+            }
+            echo json_encode([
+                'server_time'       => date('Y-m-d H:i:s'),
+                'server_timezone'   => date_default_timezone_get(),
+                'user'              => $user,
+                'configs'           => $configs,
+                'absensi_today'     => $absensiToday,
+                'absensi_izin_today'=> $absensiIzinToday,
+            ]);
+            return;
+        }
+
         if ($this->input->get('test_update_status')) {
             $this->load->model('md_after_sales');
             $row = $this->db->get('after_sales_service')->row();
