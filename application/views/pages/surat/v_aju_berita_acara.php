@@ -220,6 +220,7 @@
             var hasil         = $('#hasil').val();
             var penanganan    = $('#penanganan').val();
             var id_diketahui  = $('#id_diketahui').val();
+            var id_diketahui2 = $('#id_diketahui2').val();
             var id_disetujui  = $('#id_disetujui').val();
             var id_dir        = $('#id_dir').val();
             var lampiran      = $('#lampiran').val();
@@ -262,6 +263,7 @@
                         penanganan_b64 : b64EncodeUnicode(penanganan),
                         lampiran_b64   : b64EncodeUnicode(lampiran),
                         id_diketahui   : id_diketahui,
+                        id_diketahui2  : id_diketahui2,
                         id_disetujui   : id_disetujui,
                         id_dir         : id_dir,
                         direktor       : direktor,
