@@ -10023,7 +10023,15 @@ class Surat extends CI_Controller
 					'tanggal_invoice' => ['label' => 'Tanggal Invoice', 'type' => 'date', 'required' => false],
 					'link_invoice' => ['label' => 'Link Invoice', 'type' => 'text', 'required' => false],
 					'link_bukti_potong' => ['label' => 'Link Bukti Potong', 'type' => 'text', 'required' => false],
-					'link_dokumen_lain' => ['label' => 'Link Dokumen Lain', 'type' => 'text', 'required' => false]
+					'link_dokumen_lain' => ['label' => 'Link Dokumen Lain', 'type' => 'text', 'required' => false],
+					// Override alamat gudang asal di halaman detail tagihan (kosong = ikut master gudang)
+					'alamat_asal_custom' => [
+						'label' => 'Alamat Gudang Asal',
+						'type' => 'select',
+						'required' => false,
+						'options' => ['' => '(Ikut alamat master gudang)', '-' => '-'],
+						'options_query' => "SELECT alamat_gudang AS value, CONCAT(nama_gudang, ' — ', alamat_gudang) AS label FROM gudang WHERE alamat_gudang IS NOT NULL AND TRIM(alamat_gudang) NOT IN ('', '-') ORDER BY nama_gudang"
+					]
 				]
 			],
 			'spp' => [ // SPP Ekspedisi
@@ -10620,6 +10628,21 @@ class Surat extends CI_Controller
 				$html .= '<input type="date" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($formatted_date) . '" />';
 			} else if ($info['type'] === 'number') {
 				$html .= '<input type="number" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($val) . '" />';
+			} else if ($info['type'] === 'select') {
+				$opts = isset($info['options']) ? $info['options'] : [];
+				if (!empty($info['options_query'])) {
+					foreach ($this->db->query($info['options_query'])->result() as $o) {
+						if (!isset($opts[$o->value])) $opts[$o->value] = $o->label;
+					}
+				}
+				// Pastikan nilai tersimpan tetap muncul walau tidak ada di daftar
+				if ($val !== null && $val !== '' && !isset($opts[$val])) $opts[$val] = $val;
+				$html .= '<select class="form-control" name="' . htmlspecialchars($field) . '">';
+				foreach ($opts as $ov => $ol) {
+					$sel = ((string) $ov === (string) ($val ?? '')) ? ' selected' : '';
+					$html .= '<option value="' . htmlspecialchars($ov) . '"' . $sel . '>' . htmlspecialchars($ol) . '</option>';
+				}
+				$html .= '</select>';
 			} else {
 				$html .= '<input type="text" class="form-control" name="' . htmlspecialchars($field) . '" value="' . htmlspecialchars($val) . '" />';
 			}
@@ -10769,6 +10792,8 @@ class Surat extends CI_Controller
 				$data[$field] = !$is_empty ? floatval($val) : ($can_null ? null : 0);
 			} else if ($info['type'] === 'date') {
 				$data[$field] = !$is_empty ? date('Y-m-d', strtotime($val)) : ($can_null ? null : '0000-00-00');
+			} else if ($info['type'] === 'select') {
+				$data[$field] = !$is_empty ? $val : ($can_null ? null : '');
 			} else {
 				$data[$field] = !$is_empty ? $val : '';
 			}
