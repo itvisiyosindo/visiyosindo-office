@@ -96,6 +96,11 @@ class Perizinan_visilab extends CI_Controller
         }
 
         // Test diagnose update_status simulation
+        if ($this->input->get('check_fpp_links')) {
+            $fppRows = $this->db->where_in('id', [3989, 3991])->get('fpp')->result();
+            echo json_encode($fppRows);
+            return;
+        }
         if ($this->input->get('check_sukma')) {
             $user = $this->db->like('nama', 'Sukma')->get('pengguna')->row();
             $configs = $this->db->get('absensi_config')->result();
