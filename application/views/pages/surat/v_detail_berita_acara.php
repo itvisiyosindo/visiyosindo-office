@@ -200,6 +200,13 @@
 								$ttd4 = $img_path."ttd_not.png";
 							}
 
+							$ttd_diketahui2 = $img_path."ttd_notyet2.png";
+							if(!empty($data_ba[0]->ttd_diketahui2) && $data_ba[0]->ttd_diketahui2 == '1'){
+								$ttd_diketahui2 = $img_path."ttd_".$data_ba[0]->id_diketahui2.".png";
+							}else if(!empty($data_ba[0]->ttd_diketahui2) && $data_ba[0]->ttd_diketahui2 == '2'){
+								$ttd_diketahui2 = $img_path."ttd_not.png";
+							}
+
 							$nama_dir_display = $data_ba[0]->nama_dir;
 							if ((int)$data_ba[0]->id_dir === 54 && (empty($nama_dir_display) || stripos($nama_dir_display, 'kantor pusat') !== false)) {
 								$nama_dir_display = 'Bob Ariyos';
@@ -418,6 +425,44 @@
 						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_disetujui ?></i></td>
 					</tr>
 						<?php }else{ ?>
+							<?php if(!empty($data_ba[0]->id_diketahui2)){ ?>
+						<tr style="height: 18px;">
+						<td style="text-align:center; width:16%;" >Diajukan Oleh,</td>
+						<td style="text-align:center; width:3%;"></td>
+						<td style="text-align:center; width:19%;" >Diketahui Oleh,</td>
+						<td style="text-align:center; width:3%;"></td>
+						<td style="text-align:center; width:19%;" >Diketahui Oleh,</td>
+						<td style="text-align:center; width:3%;"></td>
+						<td style="text-align:center; width:19%;" >Disetujui Oleh,</td>
+					</tr>
+					<tr style="height:60px;">
+						<td style="text-align:center;"><?php echo'<img src="'.$ttdaju.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd1.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd_diketahui2.'" height="70">';?></td>
+						<td></td>
+						<td style="text-align:center;"><?php echo'<img src="'.$ttd2.'" height="70">';?></td>
+					</tr>
+					<tr>
+						<td style="text-align:center; "><?= $nmpengaju ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center; "><?= $Namadiketahui ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center; "><?= $data_ba[0]->nama_diketahui2 ?><hr></hr></td>
+						<td></td>
+						<td style="text-align:center; "><?= $Namadisetujui ?><hr></hr></td>
+					</tr>
+					<tr>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_diketahui ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_diketahui2 ?></i></td>
+						<td></td>
+						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_disetujui ?></i></td>
+					</tr>
+							<?php }else{ ?>
 								<tr style="height: 18px;">
 						<td style="text-align:center; width:20%;" >Diajukan Oleh,</td>
 						<td style="text-align:center; width:17%;" ></td>
@@ -448,6 +493,7 @@
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; vertical-align:top;"><i><?= $data_ba[0]->jabatan_disetujui ?></i></td>
 					</tr>
+							<?php } ?>
 							<?php } ?>
 					
 				<?php } ?>

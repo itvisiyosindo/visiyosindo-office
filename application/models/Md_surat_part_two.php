@@ -551,6 +551,8 @@ class Md_surat_part_two extends CI_Model
 					f.tanggal,
 					f.id_pengaju as idPengaju,
 					f.id_diketahui,
+					f.id_diketahui2,
+					f.ttd_diketahui2,
 					f.id_disetujui,
 					f.lampiran,
 					f.status,
@@ -566,6 +568,8 @@ class Md_surat_part_two extends CI_Model
 					p2.nama as nama_diketahui,
 					p2.short_name as nama_ttd_diketahui,
 					p2.jabatan as jabatan_diketahui,
+					p5.nama as nama_diketahui2,
+					p5.jabatan as jabatan_diketahui2,
 					p3.nama as nama_disetujui,
 					p3.short_name as nama_ttd_disetujui,
 					p3.jabatan as jabatan_disetujui,
@@ -577,6 +581,7 @@ class Md_surat_part_two extends CI_Model
 			->join('pengguna p2', 'f.id_diketahui=p2.pengguna_id')
 			->join('pengguna p3', 'f.id_disetujui=p3.pengguna_id')
 			->join('pengguna p4', 'f.id_dir=p4.pengguna_id', 'left')
+			->join('pengguna p5', 'f.id_diketahui2=p5.pengguna_id', 'left')
 			->where('f.id', $id);
 		$res = $this->db->get()->result();
 
