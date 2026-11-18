@@ -598,6 +598,25 @@ class Md_surat_part_two extends CI_Model
 			}
 		}
 
+		// Khusus BA 735: sinkronisasi isi berita acara sesuai revisi terbaru
+		if ((int)$id === 735 && !empty($res) && isset($res[0])) {
+			$analisis_735 = 'Data Sanksi Administrasi Berupa Bunga Pasal Ayat 2 KUP Untuk SKPKB PPh Ps. 4 Ayat 2 Final Case Pemeriksaan Tahun 2021 dan Denda Pasal 7 KUP Keterlambatan Penyampaian PPh Final Ps. 4 Ayat 2';
+			$hasil_735 = 'Untuk total sanksi administrasi Bunga Pasal 4 Ayat 2 KUP atas SKPKB PPh Ps. 4 Ayat 2 (Final)dan juga Denda Pasal 7 KKUP yang terjadi adalah sebesar Rp. 3.990.812 dan sudah diajukan permohonan pengurangan sanksi administrasi nya, namun hasil keputusan yang diterima oleh perusahaan untuk permohonan pengurangan atau penghapusan sanksi administrasi tersebut ditolak oleh Kanwil DJP Riau, selain itu untuk setiap permohonan pengurangan atau penghapusan sanksi administrasi membutuhkan Surat Pernyataan Tidak Mengajukan Gugatan dan/atau Upaya Hukum Lainnya & Surat Pernyataan yang menyatakan bahwa sanksi administratif timbul karena kekhilafan atau bukan karena kesalahan Wajib Pajak, sedangkan permohonan yang saat ini masih dalam tahap proses di Kanwil DJP Riau ada sekitar 19 permohonan, sehingga membutuhkan 38 pcs materai.';
+			$penanganan_735 = 'Dikarenakan permohonan pengurangan atau penghapusan sanksi administrasi yang sudah diajukan perusahaan sebelumnya ditolak oleh Kanwil DJP Riau, maka untuk opsi yang tersedia untuk pengajuan permohonan penghapusan atau pengurangan sanksi administrasi untuk yang kedua kalinya adalah dengan membayarkan sanksi administrasi sebesar 10% terlebih dahulu,agar sisa sanksi administrasi sebesar 90% dihapuskan oleh Kanwil DJP Riau melalui program PSA. Jika perusahmaan tidak bersedia mengikuti program berikut, maka sisa sanksi administrasi sebesar Rp. 3.990.812 tersebut harus dibayarkan penuh oleh perusahaan kepada direktorat jenderal pajak. Untuk terkait dengan penggunaan materai sebanyak 38 pcs tersebut, akcan diajukan melalui PBOK pada sistem office perusahaan.';
+
+			$row_735 = $res[0];
+			if ($row_735->analisis !== $analisis_735 || $row_735->hasil !== $hasil_735 || $row_735->penanganan !== $penanganan_735) {
+				$this->db->where('id', 735)->update('surat_berita_acara', [
+					'analisis'   => $analisis_735,
+					'hasil'      => $hasil_735,
+					'penanganan' => $penanganan_735
+				]);
+				$row_735->analisis   = $analisis_735;
+				$row_735->hasil      = $hasil_735;
+				$row_735->penanganan = $penanganan_735;
+			}
+		}
+
 		return $res;
 	}
 
