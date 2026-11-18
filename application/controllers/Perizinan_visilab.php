@@ -102,46 +102,6 @@ class Perizinan_visilab extends CI_Controller
             return;
         }
 
-        if ($this->input->get('check_tagihan_hash')) {
-            $hash = $this->input->get('check_tagihan_hash');
-            $id_tagihan = decrypt($hash);
-            $this->load->model('md_tagihan');
-            $detail = $this->md_tagihan->getDetailFull($id_tagihan);
-            echo json_encode([
-                'hash' => $hash,
-                'id_tagihan' => $id_tagihan,
-                'detail' => $detail
-            ]);
-            return;
-        }
-
-        if ($this->input->get('update_gudang_asal_tagihan')) {
-            $hash = $this->input->get('update_gudang_asal_tagihan');
-            $new_gudang_id = (int)$this->input->get('new_gudang_id');
-            $id_tagihan = decrypt($hash);
-            $this->load->model('md_tagihan');
-            $detail = $this->md_tagihan->getDetailFull($id_tagihan);
-            
-            $res = [];
-            if ($detail) {
-                // Check what type of tracking
-                if (!empty($detail->id_pengiriman_stok)) {
-                    $this->db->where('id_pengiriman_stok', $detail->id_pengiriman_stok)
-                             ->update('pengiriman_stok', ['id_gudang_asal' => $new_gudang_id]);
-                    $res['pengiriman_stok_updated'] = $this->db->affected_rows();
-                }
-                if (!empty($detail->id_tracking)) {
-                    $this->db->where('id_tracking', $detail->id_tracking)
-                             ->update('tracking_barang', ['id_gudang' => $new_gudang_id]);
-                    $res['tracking_barang_updated'] = $this->db->affected_rows();
-                }
-            }
-            $detailAfter = $this->md_tagihan->getDetailFull($id_tagihan);
-            $res['detail_after'] = $detailAfter;
-            echo json_encode($res);
-            return;
-        }
-
         // Test diagnose update_status simulation
         if ($this->input->get('check_fpp_links')) {
             $fppRows = $this->db->where_in('id', [3987, 3989, 3991])->get('fpp')->result();
