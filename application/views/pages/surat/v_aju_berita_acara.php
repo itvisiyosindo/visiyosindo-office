@@ -153,11 +153,26 @@
                                     <?php } ?>
                                 </select>
 						</td>
+						<td>
+               <input  type="checkbox" id="direktor" name="direktor" value="1">
+            </td>
+            <td style="text-align:center; ">
+							<select name="id_dir" id="id_dir" style="background-color: transparent; border: none;">
+                  <option value="">Pilih Nama yang Menyetujui</option>
+									<option value="54">Bob Ariyos</option>
+									<option value="23">Meilina Safitri</option>
+									<option value="33">Yolanda Pratiwi</option>
+              </select>
+						</td>
 					</tr>
 					<tr>
 						<td style="text-align:center; vertical-align:top;"><i><?= $pengguna[0]->jabatan ?></i></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; "></td>
+						<td style="text-align:center; "></td>
+						<td style="text-align:left; ">Harap Centang & Pilih Nama Jika Persetujuan Sampai Director</td>
+					</tr>
+
 					</tr>
 				</tbody>
 				
