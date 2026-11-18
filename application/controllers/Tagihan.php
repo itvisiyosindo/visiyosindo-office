@@ -1320,6 +1320,36 @@ class Tagihan extends CI_Controller
   }
 
   /**
+   * Update Keterangan Dokumen Kirim dari Detail Tagihan
+   */
+  public function update_keterangan_kirim()
+  {
+    grantAccessFor('all');
+
+    $id_kirim_enc = $this->input->post('id_kirim');
+    $id_kirim = decrypt($id_kirim_enc);
+    $keterangan = trim($this->input->post('keterangan'));
+
+    if (empty($id_kirim)) {
+      echo json_encode(['status' => false, 'message' => 'ID Kirim Dokumen tidak valid!']);
+      return;
+    }
+
+    $this->db->where('id', $id_kirim)->update('kirim_dokumen', [
+      'keterangan' => $keterangan
+    ]);
+
+    addLog('Tagihan Ekspedisi', 'Update keterangan dokumen kirim #' . $id_kirim . ': ' . substr($keterangan, 0, 50));
+
+    echo json_encode([
+      'status'          => true,
+      'message'         => 'Keterangan dokumen berhasil disimpan!',
+      'keterangan'      => $keterangan,
+      'keterangan_html' => !empty($keterangan) ? nl2br(htmlspecialchars($keterangan)) : '<span class="text-muted font-italic">- Belum ada keterangan dokumen (klik Edit untuk mengisi) -</span>'
+    ]);
+  }
+
+  /**
    * Upload Bukti Pembayaran per Tagihan (Hanya untuk User ID 1 atau 106)
    */
   public function upload_bukti_bayar_tagihan()

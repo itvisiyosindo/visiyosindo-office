@@ -24,6 +24,7 @@ class Md_Tagihan extends CI_Model
           MAX(kd.ekspedisi) as ekspedisi_kirim,
           MAX(kd.no_resi) as no_resi_kirim,
           MAX(kd.tgl_sampai) as tgl_sampai_kirim,
+          MAX(kd.keterangan) as keterangan_kirim,
           MAX(e_kirim.nama_ekspedisi) as nama_ekspedisi_kirim
       ');
     $this->db->from('tagihan_ekspedisi tg');

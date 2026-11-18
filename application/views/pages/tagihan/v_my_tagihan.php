@@ -167,6 +167,11 @@
                           <i class="fas fa-receipt mr-1"></i><?= $no_resi_display ?>
                         </span>
                       </div>
+                      <?php if ($is_kirim_dokumen && !empty($row->keterangan_kirim)): ?>
+                        <div class="text-dark small mt-1 font-weight-bold" title="Keterangan Dokumen yang Dikirimkan">
+                          <i class="fas fa-file-alt text-warning mr-1"></i><?= htmlspecialchars($row->keterangan_kirim) ?>
+                        </div>
+                      <?php endif; ?>
                       <?php if ($tgl_sampai_display): ?>
                         <div class="text-muted text-small mt-1 d-flex flex-column" style="gap: 2px;">
                           <span class="badge badge-info font-weight-normal">

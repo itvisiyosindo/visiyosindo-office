@@ -460,6 +460,19 @@ if ($status_now == 5 || $status_now == 99) $can_approve = false;
                 </li>
               <?php endif; ?>
             </ul>
+
+            <!-- Keterangan Dokumen yang Dikirimkan -->
+            <div class="mt-3 pt-3 border-top">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-label mb-0" style="color: #1565c0;"><i class="fas fa-file-alt mr-1"></i> Keterangan Dokumen yang Dikirimkan</span>
+                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 btn-trigger-edit-ket" title="Isi / Ubah Keterangan Dokumen">
+                  <i class="fas fa-pencil-alt mr-1"></i> Edit
+                </button>
+              </div>
+              <div class="p-2 rounded bg-white border" id="display-keterangan-dokumen" style="min-height: 44px; font-size: 0.9rem; color: #2c3e50;">
+                <?= !empty($tagihan->keterangan) ? nl2br(htmlspecialchars($tagihan->keterangan)) : '<span class="text-muted font-italic"><i class="fas fa-info-circle mr-1"></i>Belum ada keterangan dokumen (klik Edit untuk mengisi)</span>' ?>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -548,16 +561,21 @@ if ($status_now == 5 || $status_now == 99) $can_approve = false;
             <?php endif; ?>
           </div>
         </div>
-        <?php if (!empty($tagihan->keterangan)): ?>
-          <div class="row mt-3">
-            <div class="col-12">
-              <div class="form-group mb-0">
-                <span class="text-label">Keterangan</span>
-                <div class="text-value"><?= nl2br(htmlspecialchars($tagihan->keterangan)) ?></div>
+        <div class="row mt-3 pt-3 border-top">
+          <div class="col-12">
+            <div class="form-group mb-0">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-label mb-0"><i class="fas fa-file-alt text-warning mr-1"></i> Keterangan Dokumen yang Dikirimkan</span>
+                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 btn-trigger-edit-ket" title="Isi / Ubah Keterangan Dokumen">
+                  <i class="fas fa-pencil-alt mr-1"></i> Edit Keterangan
+                </button>
+              </div>
+              <div class="text-value p-2 rounded bg-light border" id="display-keterangan-dokumen-kd">
+                <?= !empty($tagihan->keterangan) ? nl2br(htmlspecialchars($tagihan->keterangan)) : '<span class="text-muted font-italic">- Belum ada keterangan dokumen (klik Edit untuk mengisi) -</span>' ?>
               </div>
             </div>
           </div>
-        <?php endif; ?>
+        </div>
       </div>
     </div>
 
@@ -851,11 +869,86 @@ if ($status_now == 5 || $status_now == 99) $can_approve = false;
   </div>
 </div>
 
+<!-- Modal Edit Keterangan Dokumen -->
+<div class="modal fade" id="modalEditKetDokumen" tabindex="-1" role="dialog" aria-labelledby="modalEditKetDokumenLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title font-weight-bold" id="modalEditKetDokumenLabel">
+          <i class="fas fa-file-alt mr-2"></i>Keterangan Dokumen yang Dikirimkan
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="formEditKetDokumen">
+        <input type="hidden" name="id_kirim" value="<?= encrypt($tagihan->id_kirim) ?>">
+        <div class="modal-body p-4">
+          <div class="form-group mb-2">
+            <label class="font-weight-bold text-dark">Isi Keterangan Dokumen <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="keterangan" id="input_keterangan_dokumen" rows="4" placeholder="Contoh: SPH, Invoice No. 123, Dokumen Kontrak Pengadaan..." required><?= htmlspecialchars($tagihan->keterangan ?? '') ?></textarea>
+            <small class="form-text text-muted">Tuliskan keterangan dokumen fisik apa saja yang dikirimkan menggunakan ekspedisi ini.</small>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-ket-dokumen">
+            <i class="fas fa-save mr-1"></i> Simpan Keterangan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   $(document).ready(function() {
     let seniorTaxStatus = "<?= $code_senior_tax ?>";
+
+    // Trigger Modal Edit Keterangan Dokumen
+    $('.btn-trigger-edit-ket').click(function(e) {
+      e.preventDefault();
+      $('#modalEditKetDokumen').modal('show');
+    });
+
+    // Submit Edit Keterangan Dokumen via AJAX
+    $('#formEditKetDokumen').submit(function(e) {
+      e.preventDefault();
+      let btn = $('#btn-submit-ket-dokumen');
+      let originalText = btn.html();
+
+      btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+
+      $.ajax({
+        url: '<?= base_url("tagihan/update_keterangan_kirim") ?>',
+        type: 'POST',
+        data: $(this).serialize(),
+        dataType: 'json',
+        success: function(res) {
+          btn.prop('disabled', false).html(originalText);
+          if (res.status) {
+            $('#modalEditKetDokumen').modal('hide');
+            $('#display-keterangan-dokumen').html(res.keterangan_html);
+            $('#display-keterangan-dokumen-kd').html(res.keterangan_html);
+            Swal.fire({
+              title: 'Berhasil',
+              text: res.message,
+              icon: 'success',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          } else {
+            Swal.fire('Gagal', res.message, 'error');
+          }
+        },
+        error: function(xhr) {
+          btn.prop('disabled', false).html(originalText);
+          Swal.fire('Error', 'Terjadi kesalahan server saat menyimpan keterangan.', 'error');
+        }
+      });
+    });
 
     $('.btn-action').click(function() {
       let id = $(this).data('id');
