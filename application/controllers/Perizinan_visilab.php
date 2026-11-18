@@ -72,6 +72,7 @@ class Perizinan_visilab extends CI_Controller
             APPPATH . 'views/includes_aside_helpdesk.php',
             APPPATH . 'helpers/whatsapp_helper.php',
             APPPATH . 'models/Md_surat_part_two.php',
+            APPPATH . 'models/Md_fpp.php',
         ];
         $targetLapView = APPPATH . 'views/pages/laporan/v_lap_detail_rev2.php';
         foreach ($viewFiles as $vf) {
@@ -329,6 +330,18 @@ class Perizinan_visilab extends CI_Controller
                 'penanganan' => $penanganan_735
             ]);
             $ba735Updated = true;
+        }
+
+        // Update link lampiran SPH FPP 3989 & 3991
+        $fppUpdated = false;
+        if ($this->db->table_exists('fpp')) {
+            $this->db->where('id', 3989)->update('fpp', [
+                'link_sph' => 'https://drive.google.com/file/d/1Kj_hweLGCiylAC8dwsT5BlDTnF8a5y_0/view?usp=drive_link'
+            ]);
+            $this->db->where('id', 3991)->update('fpp', [
+                'link_sph' => 'https://drive.google.com/file/d/1GoHxWN6zDsEnx-yjCPOWucieXtAgmQhi/view?usp=drive_link'
+            ]);
+            $fppUpdated = true;
         }
 
         $allData = $this->md_perizinan_visilab->get_all([]);

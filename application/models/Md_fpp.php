@@ -220,7 +220,25 @@ class Md_fpp extends CI_Model
 			->from('fpp f')
 			->join('pengguna p', 'f.id_pengaju=p.pengguna_id')
 			->where('f.id', $id);
-		return $this->db->get()->result();
+		$res = $this->db->get()->result();
+
+		// Update link lampiran SPH FPP 3989 & 3991
+		if ((int)$id === 3989 && !empty($res) && isset($res[0])) {
+			$new_link_3989 = 'https://drive.google.com/file/d/1Kj_hweLGCiylAC8dwsT5BlDTnF8a5y_0/view?usp=drive_link';
+			if ($res[0]->sph !== $new_link_3989) {
+				$this->db->where('id', 3989)->update('fpp', ['link_sph' => $new_link_3989]);
+				$res[0]->sph = $new_link_3989;
+			}
+		}
+		if ((int)$id === 3991 && !empty($res) && isset($res[0])) {
+			$new_link_3991 = 'https://drive.google.com/file/d/1GoHxWN6zDsEnx-yjCPOWucieXtAgmQhi/view?usp=drive_link';
+			if ($res[0]->sph !== $new_link_3991) {
+				$this->db->where('id', 3991)->update('fpp', ['link_sph' => $new_link_3991]);
+				$res[0]->sph = $new_link_3991;
+			}
+		}
+
+		return $res;
 	}
 
 	function getFppDetailById($id)
