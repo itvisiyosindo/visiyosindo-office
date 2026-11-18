@@ -1564,8 +1564,8 @@ class Surat_part_two extends CI_Controller
         $jabatanSetu        = $ambilDataPengaju[0]->jabatan_disetujui;
         $analisis           = !empty($ambilDataPengaju[0]->analisis) ? $ambilDataPengaju[0]->analisis : $kdBa;
 
-        // Khusus BA 728 jika id_dir bukan 54 (misal Meilina Safitri di id_dir), kirim notif lanjut ke Bob Ariyos (54)
-        if ((int)$id_sp === 728 && (int)$ambilDataPengaju[0]->id_dir !== 54) {
+        // Khusus BA 728 & 755 jika id_dir bukan 54 (misal Meilina Safitri di id_dir), kirim notif lanjut ke Bob Ariyos (54)
+        if (in_array((int)$id_sp, [728, 755]) && (int)$ambilDataPengaju[0]->id_dir !== 54) {
           $dataWaDir2 = [
             'id'             => $id_sp,
             'idPenerima1'    => 54,

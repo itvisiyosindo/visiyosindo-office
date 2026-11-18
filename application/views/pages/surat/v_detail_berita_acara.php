@@ -67,7 +67,7 @@
 			$diketahui2 = $data_ba[0]->id_diketahui2;
 			$disetujui  = $data_ba[0]->id_disetujui;
 			$id_dir     = $data_ba[0]->id_dir;
-			$is_ba_728  = ((int)$data_ba[0]->id_ba === 728);
+			$is_ba_728  = in_array((int)$data_ba[0]->id_ba, [728, 755]);
 			$has_extra_bob_col = ($is_ba_728 && (int)$id_dir !== 54);
 
 		    $ttd = "ttd_diketahui";
@@ -615,7 +615,7 @@
 			$btn.prop('disabled', true);
 			$.ajax({
 				method: 'POST',
-				url: 'surat_part_two/kirim_notif_bob/728',
+				url: 'surat_part_two/kirim_notif_bob/' + $('#id').val(),
 				dataType: 'JSON',
 				data: {
 					id: $('#id').val(),

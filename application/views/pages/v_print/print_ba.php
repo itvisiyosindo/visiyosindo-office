@@ -285,7 +285,7 @@
 								$ttd_diketahui2 = img_to_base64($img_path."ttd_not.png");
 							}
 
-							$is_ba_728 = ((int)$data_ba[0]->id_ba === 728);
+							$is_ba_728 = in_array((int)$data_ba[0]->id_ba, [728, 755]);
 							$has_extra_bob_col = ($is_ba_728 && (int)$data_ba[0]->id_dir !== 54);
 							$nama_dir_display = $data_ba[0]->nama_dir;
 							if ((int)$data_ba[0]->id_dir === 54 && (empty($nama_dir_display) || stripos($nama_dir_display, 'kantor pusat') !== false)) {
