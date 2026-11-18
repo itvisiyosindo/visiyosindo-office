@@ -156,11 +156,26 @@ class Md_evaluasi extends CI_Model
 
 	public function getJobdescByPengguna($id_pengguna)
 	{
-		$this->db->select('id'); // Hanya ambil ID jobdesc
-		$this->db->from('jobdesc_detail');
-		$this->db->where('idPengguna', $id_pengguna);
-		//$this->db->where('nilai', 1); // Hanya ambil yang memiliki nilai 1
-		return $this->db->get()->result();
+		$this->db->select('jd.id'); // Hanya ambil ID jobdesc_detail
+		$this->db->from('jobdesc_detail jd');
+		$this->db->join('jobdesc j', 'jd.id_jobdesc = j.id');
+		$this->db->where('jd.idPengguna', $id_pengguna);
+		$this->db->where('j.status', 1);
+		$this->db->order_by('jd.id', 'ASC');
+		$res = $this->db->get()->result();
+
+		// Fallback jika tidak ada yang status=1, ambil jobdesc paling baru
+		if (empty($res)) {
+			$this->db->select('jd.id');
+			$this->db->from('jobdesc_detail jd');
+			$this->db->join('jobdesc j', 'jd.id_jobdesc = j.id');
+			$this->db->where('jd.idPengguna', $id_pengguna);
+			$this->db->order_by('j.id', 'DESC');
+			$this->db->order_by('jd.id', 'ASC');
+			$res = $this->db->get()->result();
+		}
+
+		return $res;
 	}
 
 	function getDetailBywhereID($where)
