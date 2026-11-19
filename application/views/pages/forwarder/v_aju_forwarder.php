@@ -193,7 +193,7 @@ $dataDetail = $detail_aprv;
 			<?php 
 			$can_edit = (isAdmin() || sessPenggunaId() == 1 || sessPenggunaId() == 54 || (isset($data_aprv[0]->id_pengguna) && $data_aprv[0]->id_pengguna == sessPenggunaId()));
 			if ($can_edit): ?>
-				<button type="button" class="btn btn-sm btn-primary btn-edit-shipment mr-1" data-id="<?= encrypt($data_aprv[0]->idGc) ?>" style="margin-right: 6px;">
+				<button type="button" class="btn btn-sm btn-primary btn-edit-shipment mr-1" data-toggle="modal" data-target="#modal-edit-shipment" data-id="<?= encrypt($data_aprv[0]->idGc) ?>" style="margin-right: 6px;">
 					<i class="fas fa-pencil-alt"></i> Edit Detail Pengajuan
 				</button>
 			<?php endif; ?>
@@ -1685,12 +1685,9 @@ $dataDetail = $detail_aprv;
 
 			return false;
 		})
-	})
-
-	
 		$(document).on('click', '.btn-edit-shipment', function(e) {
 			e.preventDefault();
-			$('#modal-edit-shipment').modal('show');
+			$('#modal-edit-shipment').modal();
 		});
 
 		$('#form-edit-shipment').on('submit', function(e) {
@@ -1699,11 +1696,11 @@ $dataDetail = $detail_aprv;
 			$btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
 
 			var formData = new FormData(this);
-			formData.append('csrf_token', token);
+			formData.append('csrf_token', (typeof token !== 'undefined' ? token : ''));
 
 			$.ajax({
 				method: 'POST',
-				url: $(this).attr('action'),
+				url: '<?= base_url("forwarder/updateForwarder") ?>',
 				dataType: 'JSON',
 				data: formData,
 				processData: false,
@@ -1739,6 +1736,7 @@ $dataDetail = $detail_aprv;
 				}
 			});
 		});
+	})
 
 	function goBack() {
 		window.history.back();

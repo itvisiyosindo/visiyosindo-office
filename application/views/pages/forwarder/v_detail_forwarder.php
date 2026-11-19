@@ -600,7 +600,7 @@
 						<?php 
 			$can_edit = (isAdmin() || sessPenggunaId() == 1 || sessPenggunaId() == 54 || (isset($data_aprv[0]->id_pengguna) && $data_aprv[0]->id_pengguna == sessPenggunaId()));
 			if ($can_edit): ?>
-				<button type="button" class="btn btn-primary btn-edit-shipment float-left font-weight-bold" style="margin-left:12px;">
+				<button type="button" class="btn btn-primary btn-edit-shipment float-left font-weight-bold" data-toggle="modal" data-target="#modal-edit-shipment" style="margin-left:12px;">
 					<i class="fas fa-pencil-alt mr-1"></i> Edit Data Pengajuan
 				</button>
 			<?php endif; ?>
@@ -773,12 +773,9 @@
 				}
 			})
 		})
-	})
-
-	
 		$(document).on('click', '.btn-edit-shipment', function(e) {
 			e.preventDefault();
-			$('#modal-edit-shipment').modal('show');
+			$('#modal-edit-shipment').modal();
 		});
 
 		$('#form-edit-shipment').on('submit', function(e) {
@@ -787,11 +784,11 @@
 			$btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
 
 			var formData = new FormData(this);
-			formData.append('csrf_token', token);
+			formData.append('csrf_token', (typeof token !== 'undefined' ? token : ''));
 
 			$.ajax({
 				method: 'POST',
-				url: $(this).attr('action'),
+				url: '<?= base_url("forwarder/updateForwarder") ?>',
 				dataType: 'JSON',
 				data: formData,
 				processData: false,
@@ -827,6 +824,7 @@
 				}
 			});
 		});
+	})
 
 	function goBack() {
 		window.history.back();
