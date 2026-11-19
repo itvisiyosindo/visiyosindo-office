@@ -1,8 +1,8 @@
 <section class="panel">
     <header class="panel-heading">
         <div class="panel-actions">
-            <button class="btn btn-primary" onclick="showModal('Member Visi Academy/add')">Tambah Member</button>
-            <button class="btn btn-success" onclick="showModal('Member Visi Academy/addDeal')">Input Deal</button>
+            <button class="btn btn-primary" id="btn-add-member">Tambah Member</button>
+            <button class="btn btn-success" id="btn-add-deal">Input Deal</button>
         </div>
         <h2 class="panel-title">Data Member Visi Academy</h2>
     </header>
@@ -61,3 +61,62 @@
         </table>
     </div>
 </section>
+
+<!-- Modal Tambah Member -->
+<div id="modal-member" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Member</h5>
+            </div>
+            <?= form_open('Member_visiacademy/add', ['id' => 'form-member']); ?>
+            <div class="modal-body">
+                <div class="form-group"><label>Kode</label><input type="text" name="kode_member" class="form-control" required></div>
+                <div class="form-group"><label>Nama</label><input type="text" name="nama_member" class="form-control" required></div>
+                <div class="form-group"><label>No Telp</label><input type="text" name="no_telp" class="form-control"></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email" class="form-control"></div>
+                <div class="form-group"><label>Institusi</label><input type="text" name="institusi_asal" class="form-control"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+            <?= form_close(); ?>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input Deal -->
+<div id="modal-deal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Input Deal</h5>
+            </div>
+            <?= form_open('Member_visiacademy/addDeal', ['id' => 'form-deal']); ?>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Member</label>
+                    <select name="id_member" class="form-control" required>
+                        <?php foreach($members as $m): ?>
+                            <option value="<?= $m['id_member'] ?>"><?= $m['nama_member'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group"><label>Produk</label><input type="text" name="nama_produk" class="form-control" required></div>
+                <div class="form-group"><label>Estimasi Nilai</label><input type="number" name="estimasi_nilai" class="form-control" required></div>
+                <div class="form-group"><label>Persen Komisi (%)</label><input type="number" name="persen_komisi" class="form-control" required></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-success">Simpan</button>
+            </div>
+            <?= form_close(); ?>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#btn-add-member').click(function(){ $('#modal-member').modal('show'); });
+    $('#btn-add-deal').click(function(){ $('#modal-deal').modal('show'); });
+</script>
