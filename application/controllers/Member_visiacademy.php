@@ -13,7 +13,8 @@ class Member_visiacademy extends CI_Controller
     public function index()
     {
         grantAccessFor('all');
-        $page_data['page_name']  = 'v_member_visiacademy';
+        $page_data['switch']     = 'home'; // Set default switch ke 'home'
+        $page_data['page_name']  = 'member_visiacademy/v_member_visiacademy'; // Perbaiki path view
         $page_data['page_title'] = 'Member Visi Academy';
         $page_data['members']    = $this->Md_member_visiacademy->getAllMember();
         $page_data['deals']      = $this->Md_member_visiacademy->getAllDeals();
