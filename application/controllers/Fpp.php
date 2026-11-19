@@ -1778,4 +1778,155 @@ class Fpp extends CI_Controller
     $mpdf->WriteHTML($html);
     $mpdf->Output($file_pdf . '.pdf', 'I');
   }
+
+  public function export_excel_fpp($id)
+  {
+    grantAccessFor('all');
+
+    $data_fpp = $this->md_fpp->getFppById($id);
+    if (empty($data_fpp)) {
+      show_404();
+      return;
+    }
+
+    $fpp = $data_fpp[0];
+    $detail_fpp = $this->md_fpp->getFppDetailById($id);
+
+    $spreadsheet = new Spreadsheet;
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle("Form Permintaan Penawaran");
+
+    // Title / Header Form
+    $sheet->setCellValue('A1', 'FORM PERMINTAAN PENAWARAN');
+    $sheet->setCellValue('A2', 'No : ' . $fpp->kode_fpp);
+    $sheet->mergeCells('A1:I1');
+    $sheet->mergeCells('A2:I2');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+    $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+    $sheet->getStyle('A1:A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+    // Info Section
+    $info = [
+      ['Dengan ini saya mengajukan permintaan penawaran :', ''],
+      ['Nama', ': ' . $fpp->pengaju],
+      ['Jabatan', ': ' . $fpp->jabatan],
+      ['Customer Name', ': ' . $fpp->csName],
+      ['Alamat', ': ' . $fpp->alamat],
+      ['Tanggal', ': ' . (!empty($fpp->tanggal) ? date('d-m-Y', strtotime($fpp->tanggal)) : '')],
+      ['Contact Person Name', ': ' . $fpp->cpName],
+      ['No CP', ': ' . $fpp->noCp],
+      ['Term Of Payment', ': ' . $fpp->paYment],
+      ['Tipe Cicilan', ': ' . $fpp->cicilan],
+      ['Ongkos Kirim', ': ' . $fpp->ongkir],
+      ['Pajak', ': ' . $fpp->pajak],
+      ['Notes', ': ' . $fpp->noTes],
+    ];
+
+    $rowInfo = 4;
+    foreach ($info as $idx => $inf) {
+      if ($idx === 0) {
+        $sheet->setCellValue('A' . $rowInfo, $inf[0]);
+        $sheet->mergeCells('A' . $rowInfo . ':D' . $rowInfo);
+        $sheet->getStyle('A' . $rowInfo)->getFont()->setBold(true);
+      } else {
+        $sheet->setCellValue('A' . $rowInfo, $inf[0]);
+        $sheet->setCellValue('B' . $rowInfo, $inf[1]);
+        $sheet->mergeCells('B' . $rowInfo . ':I' . $rowInfo);
+        $sheet->getStyle('A' . $rowInfo)->getFont()->setBold(true);
+      }
+      $rowInfo++;
+    }
+
+    // Tabel Barang
+    $tableStartRow = $rowInfo + 1;
+    $sheet->setCellValue('A' . $tableStartRow, 'NO');
+    $sheet->setCellValue('B' . $tableStartRow, 'DESCRIPTION');
+    $sheet->setCellValue('C' . $tableStartRow, 'QTY');
+    $sheet->setCellValue('D' . $tableStartRow, 'UNIT PRICE (IDR)');
+    $sheet->setCellValue('E' . $tableStartRow, 'DISC');
+    $sheet->setCellValue('F' . $tableStartRow, 'KOMISI USER');
+    $sheet->setCellValue('G' . $tableStartRow, 'NAMA USER');
+    $sheet->setCellValue('H' . $tableStartRow, 'KOMISI PIHAK KE-3');
+    $sheet->setCellValue('I' . $tableStartRow, 'NAMA PIHAK KE-3');
+
+    $headerStyle = [
+      'font' => ['bold' => true],
+      'fill' => [
+        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+        'startColor' => ['argb' => 'FFB7D5AC']
+      ],
+      'alignment' => [
+        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+      ],
+      'borders' => [
+        'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+      ]
+    ];
+    $sheet->getStyle('A' . $tableStartRow . ':I' . $tableStartRow)->applyFromArray($headerStyle);
+    $sheet->getRowDimension($tableStartRow)->setRowHeight(25);
+
+    $itemRow = $tableStartRow + 1;
+    $no = 1;
+
+    $rowStyle = [
+      'alignment' => [
+        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+      ],
+      'borders' => [
+        'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+      ]
+    ];
+
+    foreach ($detail_fpp as $row) {
+      $sheet->setCellValue('A' . $itemRow, $no);
+      $sheet->setCellValue('B' . $itemRow, $row->des);
+      $sheet->setCellValue('C' . $itemRow, $row->Qty);
+
+      if ($row->pri !== '' && $row->pri !== null && is_numeric($row->pri)) {
+        $sheet->setCellValue('D' . $itemRow, (float)$row->pri);
+        $sheet->getStyle('D' . $itemRow)->getNumberFormat()->setFormatCode('"Rp. "#,##0",-"');
+      } else {
+        $sheet->setCellValue('D' . $itemRow, $row->pri);
+      }
+
+      $sheet->setCellValue('E' . $itemRow, $row->dis);
+      $sheet->setCellValue('F' . $itemRow, $row->kom);
+      $sheet->setCellValue('G' . $itemRow, $row->usr);
+      $sheet->setCellValue('H' . $itemRow, $row->komtiga);
+      $sheet->setCellValue('I' . $itemRow, $row->nmtiga);
+
+      $sheet->getStyle('A' . $itemRow . ':I' . $itemRow)->applyFromArray($rowStyle);
+      $sheet->getStyle('A' . $itemRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+      $sheet->getStyle('C' . $itemRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+      $sheet->getStyle('D' . $itemRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+      $sheet->getStyle('E' . $itemRow . ':I' . $itemRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+      $itemRow++;
+      $no++;
+    }
+
+    // Set Column Widths
+    $sheet->getColumnDimension('A')->setWidth(6);
+    $sheet->getColumnDimension('B')->setWidth(50);
+    $sheet->getColumnDimension('C')->setWidth(10);
+    $sheet->getColumnDimension('D')->setWidth(25);
+    $sheet->getColumnDimension('E')->setWidth(15);
+    $sheet->getColumnDimension('F')->setWidth(15);
+    $sheet->getColumnDimension('G')->setWidth(20);
+    $sheet->getColumnDimension('H')->setWidth(18);
+    $sheet->getColumnDimension('I')->setWidth(20);
+
+    // Page setup
+    $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+
+    ob_end_clean();
+    $cleanKode = preg_replace('/[^a-zA-Z0-9_-]/', '_', $fpp->kode_fpp);
+    $filename = "Form Permintaan Penawaran - " . $cleanKode . ".xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+  }
 }

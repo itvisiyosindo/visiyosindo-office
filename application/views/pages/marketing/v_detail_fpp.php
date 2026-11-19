@@ -419,6 +419,7 @@
 				<?php } ?>
 			<?php } ?>
 			<a href="fpp/print_page/fpp/<?= $data_fpp[0]->idFpp ?>" class="btn btn-warning float-right" style="margin-left:12px; margin-top:12px;"> <i class="fas fa-print"></i> Cetak </a>
+			<a href="fpp/export_excel_fpp/<?= $data_fpp[0]->idFpp ?>" class="btn btn-success float-right" style="margin-left:12px; margin-top:12px;" target="_blank"> <i class="fas fa-file-excel"></i> Cetak Excel </a>
 			<button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form float-right" style="margin-top:12px;" data-dismiss="modal">Kembali</button>
 
 			<?php if ($data_fpp[0]->sph != "") { ?>
