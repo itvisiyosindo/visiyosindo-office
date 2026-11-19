@@ -1,8 +1,8 @@
 <section class="panel">
     <header class="panel-heading">
         <div class="panel-actions">
-            <button class="btn btn-primary" id="btn-add-member">Tambah Member</button>
-            <button class="btn btn-success" id="btn-add-deal">Input Deal</button>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#modal-member">Tambah Member</button>
+            <button class="btn btn-success" data-toggle="modal" data-target="#modal-deal">Input Deal</button>
         </div>
         <h2 class="panel-title">Data Member Visi Academy</h2>
     </header>
@@ -117,6 +117,4 @@
 </div>
 
 <script>
-    $('#btn-add-member').click(function(){ $('#modal-member').modal('show'); });
-    $('#btn-add-deal').click(function(){ $('#modal-deal').modal('show'); });
 </script>
