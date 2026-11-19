@@ -40,6 +40,13 @@
 						</a>
 					</li>
 
+					<li class="<?= $page_name == 'v_member_visiacademy' ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('Member_visiacademy') ?>">
+							<i class="fas fa-users" aria-hidden="true"></i>
+							<span>Member Visi Academy</span>
+						</a>
+					</li>
+
 					<li class="<?= $page_name == 'v_pengguna_detail' ? 'nav-active' : '' ?>">
 						<a class="nav-link" href="<?= base_url('pengguna/show/detail_pengguna/' . encrypt(sessPenggunaId())) ?>">
 							<i class="fas fa-user " aria-hidden="true"></i>

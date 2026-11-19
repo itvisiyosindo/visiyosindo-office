@@ -855,7 +855,8 @@ if (!function_exists('normalizeDummyTaskProyekData')) {
 			}
 		}
 
-		// Pastikan task yang sudah disubmit atau progresnya sudah 100% berstatus Menunggu Penilaian (status_task = 2), bukan Sedang Dikerjakan (1)
+		// Promote ke Menunggu Penilaian hanya jika sudah benar-benar submit (ada bukti_selesai)
+		// shortcut: tidak handle edge case bukti_selesai berisi spasi saja, cukup untuk sekarang
 		@$CI->db->query("
 			UPDATE task_proyek
 			SET status_task = 2,
@@ -863,6 +864,7 @@ if (!function_exists('normalizeDummyTaskProyekData')) {
 			    tgl_submit = COALESCE(tgl_submit, updated_at, NOW())
 			WHERE is_deleted = 0
 			  AND status_task IN (0, 1)
+			  AND bukti_selesai IS NOT NULL AND TRIM(bukti_selesai) != ''
 			  AND (progres >= 100 OR tgl_submit IS NOT NULL OR (catatan_bawahan IS NOT NULL AND TRIM(catatan_bawahan) != ''))
 		");
 
