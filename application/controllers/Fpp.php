@@ -1614,11 +1614,11 @@ class Fpp extends CI_Controller
       ]
     ];
 
-    $sheet->setCellValue('A1', "LAPORAN DATA MARKETING " . strtoupper($this->input->get('namamarketing'))); // Set kolom A1 dengan tulisan "DATA SISWA"
-    $sheet->mergeCells('A1:L1'); // Set Merge Cell pada kolom A1 sampai E1
-    $sheet->getStyle('A1')->getFont()->setBold(true); // Set bold kolom A1
+    $sheet->setCellValue('A1', "LAPORAN DATA MARKETING " . strtoupper($this->input->get('namamarketing')));
+    $sheet->mergeCells('A1:U1');
+    $sheet->getStyle('A1')->getFont()->setBold(true);
 
-    // Buat header tabel nya pada baris ke 3
+    // Header tabel pada baris ke 4
     $sheet->setCellValue('A4', 'No');
     $sheet->setCellValue('B4', 'No FPP');
     $sheet->setCellValue('C4', 'Nama Marketing');
@@ -1628,64 +1628,124 @@ class Fpp extends CI_Controller
     $sheet->setCellValue('G4', 'Contact Person');
     $sheet->setCellValue('H4', 'No CP');
     $sheet->setCellValue('I4', 'Payment');
-    $sheet->setCellValue('J4', 'Notes');
-    $sheet->setCellValue('K4', 'No SPH');
-    $sheet->setCellValue('L4', 'Link SPH');
-    $sheet->setCellValue('M4', 'Link Approval');
+    $sheet->setCellValue('J4', 'Description');
+    $sheet->setCellValue('K4', 'Qty');
+    $sheet->setCellValue('L4', 'Unit Price (IDR)');
+    $sheet->setCellValue('M4', 'Disc');
+    $sheet->setCellValue('N4', 'Komisi User');
+    $sheet->setCellValue('O4', 'Nama User');
+    $sheet->setCellValue('P4', 'Komisi Pihak Ke-3');
+    $sheet->setCellValue('Q4', 'Nama Pihak Ke-3');
+    $sheet->setCellValue('R4', 'Notes');
+    $sheet->setCellValue('S4', 'No SPH');
+    $sheet->setCellValue('T4', 'Link SPH');
+    $sheet->setCellValue('U4', 'Link Approval');
 
-    // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-    $sheet->getStyle('A4')->applyFromArray($style_col);
-    $sheet->getStyle('B4')->applyFromArray($style_col);
-    $sheet->getStyle('C4')->applyFromArray($style_col);
-    $sheet->getStyle('D4')->applyFromArray($style_col);
-    $sheet->getStyle('E4')->applyFromArray($style_col);
-    $sheet->getStyle('F4')->applyFromArray($style_col);
-    $sheet->getStyle('G4')->applyFromArray($style_col);
-    $sheet->getStyle('H4')->applyFromArray($style_col);
-    $sheet->getStyle('I4')->applyFromArray($style_col);
-    $sheet->getStyle('J4')->applyFromArray($style_col);
-    $sheet->getStyle('K4')->applyFromArray($style_col);
-    $sheet->getStyle('L4')->applyFromArray($style_col);
-    $sheet->getStyle('M4')->applyFromArray($style_col);
+    // Apply style header
+    $sheet->getStyle('A4:U4')->applyFromArray($style_col);
 
     $kolom = 5;
     $nomor = 1;
+    $mergeCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'R', 'S', 'T', 'U'];
 
     foreach ($data as $marketing) {
+      $items = $this->md_fpp->getFppDetailById($marketing->id);
+      if (empty($items)) {
+        $items = [
+          (object)[
+            'des'     => '',
+            'Qty'     => '',
+            'pri'     => '',
+            'dis'     => '',
+            'kom'     => '',
+            'usr'     => '',
+            'komtiga' => '',
+            'nmtiga'  => ''
+          ]
+        ];
+      }
+
+      $itemCount = count($items);
+      $startRow  = $kolom;
+      $endRow    = $startRow + $itemCount - 1;
 
       $spreadsheet->setActiveSheetIndex(0)
-        ->setCellValue('A' . $kolom, $nomor)
-        ->setCellValue('B' . $kolom, $marketing->kode_fpp)
-        ->setCellValue('C' . $kolom, $marketing->namamarketing)
-        ->setCellValue('D' . $kolom, $marketing->csname)
-        ->setCellValue('E' . $kolom, $marketing->alamat)
-        ->setCellValue('F' . $kolom, date('j F Y', strtotime($marketing->tgl)))
-        ->setCellValue('G' . $kolom, $marketing->cpname)
-        ->setCellValue('H' . $kolom, $marketing->nocp)
-        ->setCellValue('I' . $kolom, $marketing->payment)
-        ->setCellValue('J' . $kolom, $marketing->notes)
-        ->setCellValue('K' . $kolom, $marketing->no_sph)
-        ->setCellValue('L' . $kolom, $marketing->link_sph)
-        ->setCellValue('M' . $kolom, $marketing->link_approval);
+        ->setCellValue('A' . $startRow, $nomor)
+        ->setCellValue('B' . $startRow, $marketing->kode_fpp)
+        ->setCellValue('C' . $startRow, $marketing->namamarketing)
+        ->setCellValue('D' . $startRow, $marketing->csname)
+        ->setCellValue('E' . $startRow, $marketing->alamat)
+        ->setCellValue('F' . $startRow, !empty($marketing->tgl) ? date('j F Y', strtotime($marketing->tgl)) : '')
+        ->setCellValue('G' . $startRow, $marketing->cpname)
+        ->setCellValue('H' . $startRow, $marketing->nocp)
+        ->setCellValue('I' . $startRow, $marketing->payment)
+        ->setCellValue('R' . $startRow, $marketing->notes)
+        ->setCellValue('S' . $startRow, $marketing->no_sph)
+        ->setCellValue('T' . $startRow, $marketing->link_sph)
+        ->setCellValue('U' . $startRow, $marketing->link_approval);
 
-      $kolom++;
+      foreach ($items as $idx => $item) {
+        $curRow = $startRow + $idx;
+
+        $sheet->setCellValue('J' . $curRow, $item->des);
+        $sheet->setCellValue('K' . $curRow, $item->Qty);
+
+        if ($item->pri !== '' && $item->pri !== null && is_numeric($item->pri)) {
+          $sheet->setCellValue('L' . $curRow, (float)$item->pri);
+          $sheet->getStyle('L' . $curRow)->getNumberFormat()->setFormatCode('#,##0');
+        } else {
+          $sheet->setCellValue('L' . $curRow, $item->pri);
+        }
+
+        $sheet->setCellValue('M' . $curRow, $item->dis);
+        $sheet->setCellValue('N' . $curRow, $item->kom);
+        $sheet->setCellValue('O' . $curRow, $item->usr);
+        $sheet->setCellValue('P' . $curRow, $item->komtiga);
+        $sheet->setCellValue('Q' . $curRow, $item->nmtiga);
+      }
+
+      // Merge kolom utama jika item lebih dari 1
+      if ($endRow > $startRow) {
+        foreach ($mergeCols as $colLetter) {
+          $sheet->mergeCells($colLetter . $startRow . ':' . $colLetter . $endRow);
+        }
+      }
+
+      $kolom = $endRow + 1;
       $nomor++;
     }
 
+    if ($kolom > 5) {
+      $sheet->getStyle('A5:U' . ($kolom - 1))->applyFromArray($style_row);
+      $sheet->getStyle('A5:A' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+      $sheet->getStyle('F5:F' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+      $sheet->getStyle('K5:K' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+      $sheet->getStyle('L5:L' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+      $sheet->getStyle('M5:Q' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    }
+
     // Set width kolom
-    $sheet->getColumnDimension('A')->setWidth(5); // Set width kolom A
-    $sheet->getColumnDimension('B')->setWidth(35); // Set width kolom B
-    $sheet->getColumnDimension('C')->setWidth(50); // Set width kolom B
-    $sheet->getColumnDimension('D')->setWidth(65); // Set width kolom B
-    $sheet->getColumnDimension('E')->setWidth(75); // Set width kolom C
-    $sheet->getColumnDimension('F')->setWidth(25); // Set width kolom D
-    $sheet->getColumnDimension('G')->setWidth(45); // Set width kolom E
-    $sheet->getColumnDimension('H')->setWidth(25); // Set width kolom F
-    $sheet->getColumnDimension('I')->setWidth(25); // Set width kolom G
-    $sheet->getColumnDimension('J')->setWidth(55); // Set width kolom H
-    $sheet->getColumnDimension('K')->setWidth(35); // Set width kolom B
-    $sheet->getColumnDimension('L')->setWidth(90); // Set width kolom I
-    $sheet->getColumnDimension('M')->setWidth(90); // Set width kolom J
+    $sheet->getColumnDimension('A')->setWidth(6);
+    $sheet->getColumnDimension('B')->setWidth(30);
+    $sheet->getColumnDimension('C')->setWidth(25);
+    $sheet->getColumnDimension('D')->setWidth(35);
+    $sheet->getColumnDimension('E')->setWidth(40);
+    $sheet->getColumnDimension('F')->setWidth(20);
+    $sheet->getColumnDimension('G')->setWidth(25);
+    $sheet->getColumnDimension('H')->setWidth(20);
+    $sheet->getColumnDimension('I')->setWidth(25);
+    $sheet->getColumnDimension('J')->setWidth(45);
+    $sheet->getColumnDimension('K')->setWidth(10);
+    $sheet->getColumnDimension('L')->setWidth(20);
+    $sheet->getColumnDimension('M')->setWidth(15);
+    $sheet->getColumnDimension('N')->setWidth(15);
+    $sheet->getColumnDimension('O')->setWidth(20);
+    $sheet->getColumnDimension('P')->setWidth(18);
+    $sheet->getColumnDimension('Q')->setWidth(20);
+    $sheet->getColumnDimension('R')->setWidth(40);
+    $sheet->getColumnDimension('S')->setWidth(25);
+    $sheet->getColumnDimension('T')->setWidth(30);
+    $sheet->getColumnDimension('U')->setWidth(30);
 
     // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
     $sheet->getDefaultRowDimension()->setRowHeight(-1);
