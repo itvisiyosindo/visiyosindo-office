@@ -74,6 +74,8 @@
                     if ($cpname==1) :   echo "<th style='width:5%'>Contact Person</th>"; endif;
                     if ($nocp==1) : echo "<th style='width:6%'>No CP</th>"; endif;
                     if ($payment==1) : echo "<th style='width:5.5%'>Term of Payment</th>"; endif;
+                    if ($nama_barang==1) : echo "<th style='width:8%'>Nama Barang</th>"; endif;
+                    if ($harga_ditawarkan==1) : echo "<th style='width:7%'>Harga Ditawarkan</th>"; endif;
                     if ($notes==1) : echo "<th style='width:6%'>Notes</th>"; endif;
                     if ($no_sph==1) : echo "<th style='width:6%'>No SPH</th>"; endif;
                     if ($link_sph==1) : echo "<th style='width:6%'>Link SPH</th>"; endif;
@@ -85,20 +87,32 @@
 				$x=0;
 				foreach ($data as $row) {
 					$x = $x+1;
-			        echo "<tr>";
-    			        echo "<td>".$x."</td>";
-                        if ($kode_fpp==1) : echo "<td>".$row->kode_fpp."</td>"; endif;
-                        if ($csname==1) : echo "<td>".$row->csname."</td>"; endif;
-                        if ($alamat==1) : echo "<td>".$row->alamat."</td>"; endif;
-    			        if ($tgl==1) :echo "<td>".$row->tgl."</td>"; endif;
-    			        if ($cpname==1) :echo "<td>".$row->cpname."</td>"; endif;
-        			    if ($nocp==1) :echo "<td>".$row->nocp."</td>"; endif;   
-        			    if ($payment==1) :echo "<td>".$row->payment."</td>"; endif;
-    			        if ($notes==1) :echo "<td>".str_replace("()","", $row->notes)."</td>"; endif;
-    			        if ($no_sph==1) :echo "<td>".$row->no_sph."</td>"; endif;
-    			        if ($link_sph==1) :echo "<td>".$row->link_sph."</td>"; endif;
-    			        if ($link_approval==1) :echo "<td>".$row->link_approval."</td>"; endif;
-				    echo "</tr>";
+					$items = isset($data_items[$x-1]) ? $data_items[$x-1] : [(object)['des' => '', 'pri' => '']];
+					$itemCount = count($items);
+					foreach ($items as $idx => $item) {
+						echo "<tr>";
+						if ($idx === 0) {
+							$spanAttr = $itemCount > 1 ? " rowspan='$itemCount'" : '';
+							echo "<td$spanAttr style='text-align:center;vertical-align:middle'>".$x."</td>";
+							if ($kode_fpp==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->kode_fpp."</td>"; endif;
+							if ($csname==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->csname."</td>"; endif;
+							if ($alamat==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->alamat."</td>"; endif;
+							if ($tgl==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->tgl."</td>"; endif;
+							if ($cpname==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->cpname."</td>"; endif;
+							if ($nocp==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->nocp."</td>"; endif;
+							if ($payment==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->payment."</td>"; endif;
+						}
+						if ($nama_barang==1) : echo "<td>".($item->des ?? '')."</td>"; endif;
+						if ($harga_ditawarkan==1) : echo "<td style='text-align:right'>".(!empty($item->pri) && is_numeric($item->pri) ? number_format((float)$item->pri, 0, ',', '.') : ($item->pri ?? ''))."</td>"; endif;
+						if ($idx === 0) {
+							$spanAttr = $itemCount > 1 ? " rowspan='$itemCount'" : '';
+							if ($notes==1) : echo "<td$spanAttr style='vertical-align:middle'>".str_replace("()","", $row->notes)."</td>"; endif;
+							if ($no_sph==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->no_sph."</td>"; endif;
+							if ($link_sph==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->link_sph."</td>"; endif;
+							if ($link_approval==1) : echo "<td$spanAttr style='vertical-align:middle'>".$row->link_approval."</td>"; endif;
+						}
+						echo "</tr>";
+					}
 				}
 			?>		
         </tbody>

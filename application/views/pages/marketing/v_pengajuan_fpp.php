@@ -143,6 +143,16 @@
 						<div style="flex: 30%;padding: 1px;">
 						</div>
 					</div>
+					<div class="form-group" style="display: flex;">
+						<div style="flex: 30%;padding: 1px;">
+							<input type="checkbox" id="nama_barang" name="nama_barang" checked>&nbsp;&nbsp;Nama Barang
+						</div>
+						<div style="flex: 30%;padding: 1px;">
+							<input type="checkbox" id="harga_ditawarkan" name="harga_ditawarkan" checked>&nbsp;&nbsp;Harga yang Ditawarkan
+						</div>
+						<div style="flex: 30%;padding: 1px;">
+						</div>
+					</div>
 
 				</div>
 			</div>
@@ -217,8 +227,10 @@
 			no_sph = $("#no_sph:checkbox").is(":checked") ? 1 : 0;
 			link_sph = $("#link_sph:checkbox").is(":checked") ? 1 : 0;
 			link_approval = $("#link_approval:checkbox").is(":checked") ? 1 : 0;
+			nama_barang = $("#nama_barang:checkbox").is(":checked") ? 1 : 0;
+			harga_ditawarkan = $("#harga_ditawarkan:checkbox").is(":checked") ? 1 : 0;
 			namamarketing = $("#namamarketing option:selected").text();
-			window.open("<?php echo base_url(); ?>fpp/printlaporan/search?tglawal=" + encodeURIComponent(tglawal) + "&tglakhir=" + encodeURIComponent(tglakhir) + "&idmarketing=" + encodeURIComponent(idmarketing) + "&namamarketing=" + encodeURIComponent(namamarketing) + "&csname=" + csname + "&kode_fpp=" + kode_fpp + "&alamat=" + alamat + "&tgl=" + tgl + "&cpname=" + cpname + "&nocp=" + nocp + "&payment=" + payment + "&notes=" + notes + "&no_sph=" + no_sph + "&link_sph=" + link_sph + "&link_approval=" + link_approval, "_blank");
+			window.open("<?php echo base_url(); ?>fpp/printlaporan/search?tglawal=" + encodeURIComponent(tglawal) + "&tglakhir=" + encodeURIComponent(tglakhir) + "&idmarketing=" + encodeURIComponent(idmarketing) + "&namamarketing=" + encodeURIComponent(namamarketing) + "&csname=" + csname + "&kode_fpp=" + kode_fpp + "&alamat=" + alamat + "&tgl=" + tgl + "&cpname=" + cpname + "&nocp=" + nocp + "&payment=" + payment + "&notes=" + notes + "&no_sph=" + no_sph + "&link_sph=" + link_sph + "&link_approval=" + link_approval + "&nama_barang=" + nama_barang + "&harga_ditawarkan=" + harga_ditawarkan, "_blank");
 			$('#main-modal-marketing').modal('hide')
 			//}
 		});
@@ -247,8 +259,10 @@
 			no_sph = $("#no_sph:checkbox").is(":checked") ? 1 : 0;
 			link_sph = $("#link_sph:checkbox").is(":checked") ? 1 : 0;
 			link_approval = $("#link_approval:checkbox").is(":checked") ? 1 : 0;
+			nama_barang = $("#nama_barang:checkbox").is(":checked") ? 1 : 0;
+			harga_ditawarkan = $("#harga_ditawarkan:checkbox").is(":checked") ? 1 : 0;
 			namamarketing = $("#namamarketing option:selected").text();
-			window.open("<?php echo base_url(); ?>fpp/exportLaporan/search?tglawal=" + encodeURIComponent(tglawal) + "&tglakhir=" + encodeURIComponent(tglakhir) + "&idmarketing=" + encodeURIComponent(idmarketing) + "&namamarketing=" + encodeURIComponent(namamarketing) + "&csname=" + csname + "&kode_fpp=" + kode_fpp + "&alamat=" + alamat + "&tgl=" + tgl + "&cpname=" + cpname + "&nocp=" + nocp + "&payment=" + payment + "&notes=" + notes + "&no_sph=" + no_sph + "&link_sph=" + link_sph + "&link_approval=" + link_approval, "_blank");
+			window.open("<?php echo base_url(); ?>fpp/exportLaporan/search?tglawal=" + encodeURIComponent(tglawal) + "&tglakhir=" + encodeURIComponent(tglakhir) + "&idmarketing=" + encodeURIComponent(idmarketing) + "&namamarketing=" + encodeURIComponent(namamarketing) + "&csname=" + csname + "&kode_fpp=" + kode_fpp + "&alamat=" + alamat + "&tgl=" + tgl + "&cpname=" + cpname + "&nocp=" + nocp + "&payment=" + payment + "&notes=" + notes + "&no_sph=" + no_sph + "&link_sph=" + link_sph + "&link_approval=" + link_approval + "&nama_barang=" + nama_barang + "&harga_ditawarkan=" + harga_ditawarkan, "_blank");
 			$('#main-modal-marketing').modal('hide')
 			//}
 		});

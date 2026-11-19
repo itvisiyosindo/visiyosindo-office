@@ -1580,6 +1580,9 @@ class Fpp extends CI_Controller
 
     $data = $this->md_fpp->getAllLaporanFPPByPenggunaID($this->input->get('idmarketing'), $this->input->get('tglawal'), $this->input->get('tglakhir'));
 
+    $show_nama_barang     = $this->input->get('nama_barang')     !== '0';
+    $show_harga_ditawarkan = $this->input->get('harga_ditawarkan') !== '0';
+
 
 
     $spreadsheet = new Spreadsheet;
@@ -1700,7 +1703,17 @@ class Fpp extends CI_Controller
       $sheet->getStyle('A5:O' . ($kolom - 1))->applyFromArray($style_row);
       $sheet->getStyle('A5:A' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
       $sheet->getStyle('F5:F' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-      $sheet->getStyle('K5:K' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+      if ($show_harga_ditawarkan) {
+        $sheet->getStyle('K5:K' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+      }
+    }
+
+    // Sembunyikan kolom J dan/atau K jika tidak dicentang
+    if (!$show_nama_barang) {
+      $sheet->getColumnDimension('J')->setVisible(false);
+    }
+    if (!$show_harga_ditawarkan) {
+      $sheet->getColumnDimension('K')->setVisible(false);
     }
 
     // Set width kolom
@@ -1748,7 +1761,11 @@ class Fpp extends CI_Controller
     $dt = [
       'title_pdf'  => 'Laporan Permintaan Penawaran' . ' ' . $this->input->get('namamarketing'),
       'periode'  =>  $this->input->get('tglawal') . ' s.d ' . $this->input->get('tglakhir'),
-      'data'  => $this->md_fpp->getAllLaporanFPPByPenggunaID($this->input->get('idmarketing'), $this->input->get('tglawal'), $this->input->get('tglakhir')),
+      'data'  => ($rawData = $this->md_fpp->getAllLaporanFPPByPenggunaID($this->input->get('idmarketing'), $this->input->get('tglawal'), $this->input->get('tglakhir'))),
+      'data_items' => array_map(function($row) {
+        $items = $this->md_fpp->getFppDetailById($row->id);
+        return empty($items) ? [(object)['des' => '', 'pri' => '']] : $items;
+      }, $rawData),
       'csname' =>  $this->input->get('csname'),
       'kode_fpp' =>  $this->input->get('kode_fpp'),
       'alamat' =>  $this->input->get('alamat'),
@@ -1760,6 +1777,8 @@ class Fpp extends CI_Controller
       'no_sph' =>  $this->input->get('no_sph'),
       'link_sph' =>  $this->input->get('link_sph'),
       'link_approval' =>  $this->input->get('link_approval'),
+      'nama_barang' =>  $this->input->get('nama_barang'),
+      'harga_ditawarkan' =>  $this->input->get('harga_ditawarkan'),
     ];
 
     //load mpdf dan membuat page size 
