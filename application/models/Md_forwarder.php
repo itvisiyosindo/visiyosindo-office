@@ -15,6 +15,12 @@ class Md_forwarder extends CI_Model
             if (!$this->db->field_exists('alasan_penolakan', 'approval_forwarder')) {
                 @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `alasan_penolakan` TEXT NULL DEFAULT NULL AFTER `ttd_2`");
             }
+            if (!$this->db->field_exists('hs_code', 'approval_forwarder')) {
+                @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `hs_code` VARCHAR(255) NULL DEFAULT NULL AFTER `pod`");
+            }
+            if (!$this->db->field_exists('keterangan', 'approval_forwarder')) {
+                @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `keterangan` TEXT NULL DEFAULT NULL AFTER `berat_dimensi`");
+            }
         }
     }
 
@@ -74,7 +80,9 @@ class Md_forwarder extends CI_Model
                 f.sistem_pengiriman,
                 f.pol,
                 f.pod,
+                f.hs_code,
                 f.berat_dimensi,
+                f.keterangan,
                 f.mata_nilai_inv,
                 f.nilai_inv,
                 f.tanggal,
@@ -104,7 +112,9 @@ class Md_forwarder extends CI_Model
                 f.sistem_pengiriman,
                 f.pol,
                 f.pod,
+                f.hs_code,
                 f.berat_dimensi,
+                f.keterangan,
                 f.nilai_inv,
                 f.mata_nilai_inv,
                 f.kurs,
@@ -178,7 +188,9 @@ class Md_forwarder extends CI_Model
                 f.sistem_pengiriman,
                 f.pol,
                 f.pod,
+                f.hs_code,
                 f.berat_dimensi,
+                f.keterangan,
                 f.nilai_inv,
                 f.mata_nilai_inv,
                 f.tanggal,

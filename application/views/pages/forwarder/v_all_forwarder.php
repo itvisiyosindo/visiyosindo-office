@@ -84,6 +84,10 @@
 							<input type="text" class="form-control" id="pod" name="pod" required>
 					</div>
 					<div class="form-group">
+							<label for="hs_code" class="form-control-label">HS Code :</label>
+							<input type="text" class="form-control" id="hs_code" name="hs_code" placeholder="Contoh: 9022.14.00">
+					</div>
+					<div class="form-group">
 							<label for="berat_dimensi" class="form-control-label">Berat dan Dimensi :</label>
 							<textarea type="text" class="form-control" id="berat_dimensi" name="berat_dimensi" cols="10" rows="3"></textarea>
 					</div>
@@ -105,6 +109,10 @@
 					<div class="form-group">
 						<label for="kurs" id="label_kurs" class="form-control-label">Kurs Dollar AS (USD) ke Rupiah (IDR) :</label>
 						<input type="number" class="form-control" id="kurs" name="kurs" required>
+					</div>
+					<div class="form-group">
+						<label for="keterangan" class="form-control-label">Keterangan :</label>
+						<textarea class="form-control" id="keterangan" name="keterangan" cols="10" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
 					</div>
 					
 
@@ -191,7 +199,9 @@
 					$('#main-modal #sistem_pengiriman').val(data[0].sistem_pengiriman)
 					$('#main-modal #pol').val(data[0].pol)
 					$('#main-modal #pod').val(data[0].pod)
+					$('#main-modal #hs_code').val(data[0].hs_code || '')
 					$('#main-modal #berat_dimensi').val(data[0].berat_dimensi)
+					$('#main-modal #keterangan').val(data[0].keterangan || '')
 					$('#main-modal #nilai_inv').val(data[0].nilai_inv)
 					var curr = data[0].mata_nilai_inv || 'USD';
 					$('#main-modal #uang_nilai_inv').val(curr).trigger('change');

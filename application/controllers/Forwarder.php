@@ -571,7 +571,9 @@ class Forwarder extends CI_Controller
         );
         $data["pol"] = $this->input->post("pol", true);
         $data["pod"] = $this->input->post("pod", true);
+        $data["hs_code"] = $this->input->post("hs_code", true);
         $data["berat_dimensi"] = $this->input->post("berat_dimensi", true);
+        $data["keterangan"] = $this->input->post("keterangan", true);
         $data["mata_nilai_inv"] =
             $this->input->post("uang_nilai_inv", true) ?: "USD";
         $data["nilai_inv"] = $this->input->post("nilai_inv", true);
@@ -603,6 +605,22 @@ class Forwarder extends CI_Controller
     {
         grantAccessFor("all");
         $id = decrypt($this->input->post("id_pelanggan"));
+        if (empty($id)) {
+            ajaxReturnDie("error", "ID Pengajuan tidak valid", false);
+        }
+
+        $existing = $this->md_forwarder->getByIdForwarder($id);
+        if (empty($existing)) {
+            ajaxReturnDie("error", "Data tidak ditemukan", false);
+        }
+
+        $myId = sessPenggunaId();
+        $isAdmin = (isAdmin() || $myId == 1 || $myId == 54);
+        $isPengaju = ($existing[0]->id_pengguna == $myId);
+        if (!$isAdmin && !$isPengaju) {
+            ajaxReturnDie("error", "Akses ditolak: Fitur edit hanya dapat dilakukan oleh pengaju surat atau admin.", false);
+        }
+
         $data["nama"] = $this->input->post("nama", true);
         $data["sistem_pengiriman"] = $this->input->post(
             "sistem_pengiriman",
@@ -610,19 +628,51 @@ class Forwarder extends CI_Controller
         );
         $data["pol"] = $this->input->post("pol", true);
         $data["pod"] = $this->input->post("pod", true);
+        $data["hs_code"] = $this->input->post("hs_code", true);
         $data["berat_dimensi"] = $this->input->post("berat_dimensi", true);
-        $data["mata_nilai_inv"] = $this->input->post("uang_nilai_inv", true);
+        $data["mata_nilai_inv"] = $this->input->post("uang_nilai_inv", true) ?: "USD";
         $data["nilai_inv"] = $this->input->post("nilai_inv", true);
         $data["kurs"] = $this->input->post("kurs", true);
+        $data["keterangan"] = $this->input->post("keterangan", true);
+
+        // Reset approval jika surat sudah pernah diajukan (status >= 1)
+        $prevStatus = (int)$existing[0]->status;
+        $statusReset = false;
+        if ($prevStatus >= 1) {
+            $data["status"] = 1; // Kembali ke status Baru Diajukan
+            $data["ttd_1"] = 0;  // Reset tanda tangan verifikator (Meilina Safitri)
+            $data["ttd_2"] = 0;  // Reset tanda tangan approver (Bob Ariyos)
+            $data["alasan_penolakan"] = null; // Bersihkan jika ada alasan penolakan
+            $statusReset = true;
+        }
 
         $this->md_forwarder->updateForwarder($id, $data);
 
         /** LOG */
         addLog(
             "Approval Forwarder",
-            'Memperbarui data Forwarder "' . $id . '"'
+            'Memperbarui data Forwarder "' . $existing[0]->kode . '"' . ($statusReset ? ' (Approval direset kembali dari awal)' : '')
         );
-        ajaxReturnDie("success", "Data berhasil diperbarui", "reload_table");
+
+        if ($statusReset) {
+            try {
+                $urlNotif = "https://office.visiyosindo.id/forwarder/show/detail_data/$id";
+                $dataWa = [
+                    "idPenerima1" => 23,
+                    "idPenerima2" => "",
+                    "namaSurat"   => "Approval Forwarder (Pembaruan)",
+                    "urlNotif"    => $urlNotif,
+                    "penerima"    => "Meilina Safitri",
+                    "perihal"     => "Data pengajuan telah diperbarui dan memerlukan persetujuan ulang",
+                    "kode"        => $existing[0]->kode,
+                ];
+                $this->notifWaAddSuratLink(1, $dataWa);
+            } catch (\Throwable $e) {}
+
+            ajaxReturnDie("success", "Data berhasil diperbarui. Karena data diubah, proses approval telah direset kembali dari awal.", true);
+        }
+
+        ajaxReturnDie("success", "Data berhasil diperbarui", true);
     }
 
     public function addDetailForwarder()
@@ -885,6 +935,16 @@ class Forwarder extends CI_Controller
 
         if (empty($id_app)) {
             error_log("WARNING UpdateDetailForwarder: id_app kosong untuk id detail: " . $id);
+        } else {
+            $existingApp = $this->md_forwarder->getAppByID($id_app);
+            if (!empty($existingApp)) {
+                $myId = sessPenggunaId();
+                $isAdmin = (isAdmin() || $myId == 1 || $myId == 54);
+                $isPengaju = ($existingApp[0]->id_pengguna == $myId);
+                if (!$isAdmin && !$isPengaju) {
+                    ajaxReturnDie("error", "Akses ditolak: Fitur edit hanya dapat dilakukan oleh pengaju surat atau admin.", false);
+                }
+            }
         }
 
         // Data statis/non-harga
@@ -1121,7 +1181,20 @@ class Forwarder extends CI_Controller
             ajaxReturnDie("success", "Data ditemukan, tetapi tidak ada perubahan nilai", true);
         }
 
-        ajaxReturnDie("success", "Berhasil Diperbarui", true);
+        // Reset approval jika pengajuan sudah diajukan
+        if (!empty($id_app)) {
+            $existingApp = $this->md_forwarder->getAppByID($id_app);
+            if (!empty($existingApp) && (int)$existingApp[0]->status >= 1) {
+                $this->md_forwarder->updateForwarder($id_app, [
+                    'status' => 1,
+                    'ttd_1' => 0,
+                    'ttd_2' => 0,
+                    'alasan_penolakan' => null
+                ]);
+            }
+        }
+
+        ajaxReturnDie("success", "Berhasil Diperbarui. Approval direset kembali dari awal.", true);
     }
 
     public function deleteDetail($id)

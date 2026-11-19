@@ -162,6 +162,10 @@
 				<td>Port of Discharge (POD) </td>
 				<td>:&nbsp;&nbsp; <?= $data_aprv[0]->pod ?></td>
 			</tr>
+			<tr>
+				<td>HS Code </td>
+				<td>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->hs_code) ? htmlspecialchars($data_aprv[0]->hs_code) : '-' ?></td>
+			</tr>
 			<?php
 			$lines = explode("\n", $data_aprv[0]->berat_dimensi);
 			$formatted = "";
@@ -188,6 +192,10 @@
 			<tr>
 				<td>Kurs 1 <?= !empty($data_aprv[0]->mata_nilai_inv) ? $data_aprv[0]->mata_nilai_inv : 'USD' ?> </td>
 				<td>:&nbsp;&nbsp; <?= $kurs ?></td>
+			</tr>
+			<tr>
+				<td style="vertical-align: top;">Keterangan</td>
+				<td>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->keterangan) ? nl2br(htmlspecialchars($data_aprv[0]->keterangan)) : '-' ?></td>
 			</tr>
 
 
@@ -589,7 +597,14 @@
 			<a href="forwarder/print_page/detail/<?= $data_aprv[0]
 														->idGc ?>" class="btn btn-warning float-right" style="margin-left:12px;"> <i class="fas fa-print"></i> Cetak </a>
 			<button type="button" onclick="goBack()" class="btn btn-secondary btn-clear-form float-left">Kembali</button>
-			<?php if (isAdmin()): ?>
+						<?php 
+			$can_edit = (isAdmin() || sessPenggunaId() == 1 || sessPenggunaId() == 54 || (isset($data_aprv[0]->id_pengguna) && $data_aprv[0]->id_pengguna == sessPenggunaId()));
+			if ($can_edit): ?>
+				<button type="button" class="btn btn-primary btn-edit-shipment float-left font-weight-bold" style="margin-left:12px;">
+					<i class="fas fa-pencil-alt mr-1"></i> Edit Data Pengajuan
+				</button>
+			<?php endif; ?>
+<?php if (isAdmin()): ?>
 				<button type="button" onclick="openAdminEditModal('forwarder', '<?= encrypt($data_aprv[0]->idGc) ?>')" class="btn btn-warning float-left font-weight-bold text-dark" style="margin-left:12px;">
 					<i class="fas fa-user-shield mr-1"></i> Edit Data (Admin)
 				</button>
@@ -608,6 +623,81 @@
 
 
 
+
+
+<div id="modal-edit-shipment" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary text-light">
+				<h5 class="modal-title font-weight-bold text-white"><i class="fas fa-edit mr-2"></i> Edit Data Pengajuan Forwarder</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+			<?= form_open('forwarder/updateForwarder', array('id' => 'form-edit-shipment', 'autocomplete' => 'off')); ?>
+			<div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+				<div class="alert alert-warning" style="font-size: 13px;">
+					<i class="fas fa-info-circle mr-1"></i> <strong>Perhatian:</strong> Jika pengajuan ini sudah diajukan sebelumnya, perubahan data akan <strong>me-reset status persetujuan (approval) kembali dari awal</strong>.
+				</div>
+
+				<input type="hidden" id="edit_shipment_id" name="id_pelanggan" value="<?= encrypt($data_aprv[0]->idGc) ?>">
+
+				<div class="form-group">
+					<label for="edit_nama" class="form-control-label font-weight-bold">Nama Shipment <span class="text-danger">*</span> :</label>
+					<input type="text" class="form-control" id="edit_nama" name="nama" value="<?= htmlspecialchars($data_aprv[0]->nama) ?>" required>
+				</div>
+				<div class="form-group">
+					<label for="edit_sistem_pengiriman" class="form-control-label font-weight-bold">Sistem Pengiriman <span class="text-danger">*</span> :</label>
+					<input type="text" class="form-control" id="edit_sistem_pengiriman" name="sistem_pengiriman" value="<?= htmlspecialchars($data_aprv[0]->sistem_pengiriman) ?>" placeholder="Contoh: via Udara / via Laut" required>
+				</div>
+				<div class="form-group row">
+					<div class="col-md-6">
+						<label for="edit_pol" class="form-control-label font-weight-bold">Port of Loading (POL) <span class="text-danger">*</span> :</label>
+						<input type="text" class="form-control" id="edit_pol" name="pol" value="<?= htmlspecialchars($data_aprv[0]->pol) ?>" required>
+					</div>
+					<div class="col-md-6">
+						<label for="edit_pod" class="form-control-label font-weight-bold">Port of Discharge (POD) <span class="text-danger">*</span> :</label>
+						<input type="text" class="form-control" id="edit_pod" name="pod" value="<?= htmlspecialchars($data_aprv[0]->pod) ?>" required>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="edit_hs_code" class="form-control-label font-weight-bold">HS Code :</label>
+					<input type="text" class="form-control" id="edit_hs_code" name="hs_code" value="<?= htmlspecialchars(!empty($data_aprv[0]->hs_code) ? $data_aprv[0]->hs_code : '') ?>" placeholder="Masukkan nomor HS Code">
+				</div>
+				<div class="form-group">
+					<label for="edit_berat_dimensi" class="form-control-label font-weight-bold">Berat dan Dimensi Barang :</label>
+					<textarea class="form-control" id="edit_berat_dimensi" name="berat_dimensi" rows="3"><?= htmlspecialchars($data_aprv[0]->berat_dimensi) ?></textarea>
+				</div>
+				<div class="form-group row">
+					<div class="col-md-4">
+						<label for="edit_uang_nilai_inv" class="form-control-label font-weight-bold">Mata Uang :</label>
+						<select class="form-control" id="edit_uang_nilai_inv" name="uang_nilai_inv" required>
+							<option value="USD" <?= ($data_aprv[0]->mata_nilai_inv == 'USD' || empty($data_aprv[0]->mata_nilai_inv)) ? 'selected' : '' ?>>USD</option>
+							<option value="EUR" <?= ($data_aprv[0]->mata_nilai_inv == 'EUR') ? 'selected' : '' ?>>EUR</option>
+							<option value="IDR" <?= ($data_aprv[0]->mata_nilai_inv == 'IDR') ? 'selected' : '' ?>>IDR</option>
+						</select>
+					</div>
+					<div class="col-md-8">
+						<label for="edit_nilai_inv" class="form-control-label font-weight-bold">Nilai Invoice Shipment :</label>
+						<input type="number" step="any" class="form-control" id="edit_nilai_inv" name="nilai_inv" value="<?= htmlspecialchars($data_aprv[0]->nilai_inv) ?>">
+						<small class="text-muted">Gunakan titik (.) untuk desimal.</small>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="edit_kurs" id="label_edit_kurs" class="form-control-label font-weight-bold">Kurs ke Rupiah (IDR) <span class="text-danger">*</span> :</label>
+					<input type="number" class="form-control" id="edit_kurs" name="kurs" value="<?= htmlspecialchars($data_aprv[0]->kurs) ?>" required>
+				</div>
+				<div class="form-group">
+					<label for="edit_keterangan" class="form-control-label font-weight-bold">Keterangan :</label>
+					<textarea class="form-control" id="edit_keterangan" name="keterangan" rows="3" placeholder="Masukkan keterangan tambahan..."><?= htmlspecialchars(!empty($data_aprv[0]->keterangan) ? $data_aprv[0]->keterangan : '') ?></textarea>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+				<button type="submit" class="btn btn-primary btn-save-shipment"><i class="fas fa-save mr-1"></i> Simpan Perubahan</button>
+			</div>
+			<?= form_close(); ?>
+		</div>
+	</div>
+</div>
 
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
@@ -684,6 +774,59 @@
 			})
 		})
 	})
+
+	
+		$(document).on('click', '.btn-edit-shipment', function(e) {
+			e.preventDefault();
+			$('#modal-edit-shipment').modal('show');
+		});
+
+		$('#form-edit-shipment').on('submit', function(e) {
+			e.preventDefault();
+			var $btn = $(this).find('.btn-save-shipment');
+			$btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
+
+			var formData = new FormData(this);
+			formData.append('csrf_token', token);
+
+			$.ajax({
+				method: 'POST',
+				url: $(this).attr('action'),
+				dataType: 'JSON',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function(resp) {
+					$btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan Perubahan');
+					if (resp.status == 'success' || resp.status == true) {
+						Swal.fire({
+							title: 'Berhasil!',
+							text: resp.message || 'Data pengajuan berhasil diperbarui.',
+							icon: 'success',
+							confirmButtonText: 'OK'
+						}).then(function() {
+							window.location.reload();
+						});
+					} else {
+						Swal.fire({
+							title: 'Perhatian',
+							text: resp.message || 'Gagal memperbarui data pengajuan.',
+							icon: 'warning',
+							confirmButtonText: 'OK'
+						});
+					}
+				},
+				error: function(xhr, status, error) {
+					$btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan Perubahan');
+					Swal.fire({
+						title: 'Error',
+						text: 'Terjadi kesalahan sistem atau koneksi: ' + (error || status),
+						icon: 'error',
+						confirmButtonText: 'OK'
+					});
+				}
+			});
+		});
 
 	function goBack() {
 		window.history.back();

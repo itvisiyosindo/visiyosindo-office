@@ -250,6 +250,14 @@
 								<font color='#000000'>:&nbsp;&nbsp; <?= $data_aprv[0]->pod ?>
 							</td>
 						</tr>
+						<tr>
+							<td>
+								<font color='#000000'>HS Code
+							</td>
+							<td>
+								<font color='#000000'>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->hs_code) ? htmlspecialchars($data_aprv[0]->hs_code) : '-' ?>
+							</td>
+						</tr>
 						<?php
 						$lines = explode("\n", $data_aprv[0]->berat_dimensi);
 						$formatted = '';
@@ -280,10 +288,18 @@
 						</tr>
 						<tr>
 							<td>
-								<font color='#000000'>Kurs 1 USD
+								<font color='#000000'>Kurs 1 <?= !empty($data_aprv[0]->mata_nilai_inv) ? $data_aprv[0]->mata_nilai_inv : 'USD' ?>
 							</td>
 							<td>
 								<font color='#000000'>:&nbsp;&nbsp; <?= $kurs ?>
+							</td>
+						</tr>
+						<tr>
+							<td style="vertical-align: top;">
+								<font color='#000000'>Keterangan
+							</td>
+							<td>
+								<font color='#000000'>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->keterangan) ? nl2br(htmlspecialchars($data_aprv[0]->keterangan)) : '-' ?>
 							</td>
 						</tr>
 
