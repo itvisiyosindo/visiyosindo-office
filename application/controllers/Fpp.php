@@ -1615,7 +1615,7 @@ class Fpp extends CI_Controller
     ];
 
     $sheet->setCellValue('A1', "LAPORAN DATA MARKETING " . strtoupper($this->input->get('namamarketing')));
-    $sheet->mergeCells('A1:U1');
+    $sheet->mergeCells('A1:O1');
     $sheet->getStyle('A1')->getFont()->setBold(true);
 
     // Header tabel pada baris ke 4
@@ -1628,39 +1628,27 @@ class Fpp extends CI_Controller
     $sheet->setCellValue('G4', 'Contact Person');
     $sheet->setCellValue('H4', 'No CP');
     $sheet->setCellValue('I4', 'Payment');
-    $sheet->setCellValue('J4', 'Description');
-    $sheet->setCellValue('K4', 'Qty');
-    $sheet->setCellValue('L4', 'Unit Price (IDR)');
-    $sheet->setCellValue('M4', 'Disc');
-    $sheet->setCellValue('N4', 'Komisi User');
-    $sheet->setCellValue('O4', 'Nama User');
-    $sheet->setCellValue('P4', 'Komisi Pihak Ke-3');
-    $sheet->setCellValue('Q4', 'Nama Pihak Ke-3');
-    $sheet->setCellValue('R4', 'Notes');
-    $sheet->setCellValue('S4', 'No SPH');
-    $sheet->setCellValue('T4', 'Link SPH');
-    $sheet->setCellValue('U4', 'Link Approval');
+    $sheet->setCellValue('J4', 'Nama Barang');
+    $sheet->setCellValue('K4', 'Harga yang Ditawarkan');
+    $sheet->setCellValue('L4', 'Notes');
+    $sheet->setCellValue('M4', 'No SPH');
+    $sheet->setCellValue('N4', 'Link SPH');
+    $sheet->setCellValue('O4', 'Link Approval');
 
     // Apply style header
-    $sheet->getStyle('A4:U4')->applyFromArray($style_col);
+    $sheet->getStyle('A4:O4')->applyFromArray($style_col);
 
     $kolom = 5;
     $nomor = 1;
-    $mergeCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'R', 'S', 'T', 'U'];
+    $mergeCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'L', 'M', 'N', 'O'];
 
     foreach ($data as $marketing) {
       $items = $this->md_fpp->getFppDetailById($marketing->id);
       if (empty($items)) {
         $items = [
           (object)[
-            'des'     => '',
-            'Qty'     => '',
-            'pri'     => '',
-            'dis'     => '',
-            'kom'     => '',
-            'usr'     => '',
-            'komtiga' => '',
-            'nmtiga'  => ''
+            'des' => '',
+            'pri' => ''
           ]
         ];
       }
@@ -1679,29 +1667,22 @@ class Fpp extends CI_Controller
         ->setCellValue('G' . $startRow, $marketing->cpname)
         ->setCellValue('H' . $startRow, $marketing->nocp)
         ->setCellValue('I' . $startRow, $marketing->payment)
-        ->setCellValue('R' . $startRow, $marketing->notes)
-        ->setCellValue('S' . $startRow, $marketing->no_sph)
-        ->setCellValue('T' . $startRow, $marketing->link_sph)
-        ->setCellValue('U' . $startRow, $marketing->link_approval);
+        ->setCellValue('L' . $startRow, $marketing->notes)
+        ->setCellValue('M' . $startRow, $marketing->no_sph)
+        ->setCellValue('N' . $startRow, $marketing->link_sph)
+        ->setCellValue('O' . $startRow, $marketing->link_approval);
 
       foreach ($items as $idx => $item) {
         $curRow = $startRow + $idx;
 
         $sheet->setCellValue('J' . $curRow, $item->des);
-        $sheet->setCellValue('K' . $curRow, $item->Qty);
 
         if ($item->pri !== '' && $item->pri !== null && is_numeric($item->pri)) {
-          $sheet->setCellValue('L' . $curRow, (float)$item->pri);
-          $sheet->getStyle('L' . $curRow)->getNumberFormat()->setFormatCode('#,##0');
+          $sheet->setCellValue('K' . $curRow, (float)$item->pri);
+          $sheet->getStyle('K' . $curRow)->getNumberFormat()->setFormatCode('#,##0');
         } else {
-          $sheet->setCellValue('L' . $curRow, $item->pri);
+          $sheet->setCellValue('K' . $curRow, $item->pri);
         }
-
-        $sheet->setCellValue('M' . $curRow, $item->dis);
-        $sheet->setCellValue('N' . $curRow, $item->kom);
-        $sheet->setCellValue('O' . $curRow, $item->usr);
-        $sheet->setCellValue('P' . $curRow, $item->komtiga);
-        $sheet->setCellValue('Q' . $curRow, $item->nmtiga);
       }
 
       // Merge kolom utama jika item lebih dari 1
@@ -1716,12 +1697,10 @@ class Fpp extends CI_Controller
     }
 
     if ($kolom > 5) {
-      $sheet->getStyle('A5:U' . ($kolom - 1))->applyFromArray($style_row);
+      $sheet->getStyle('A5:O' . ($kolom - 1))->applyFromArray($style_row);
       $sheet->getStyle('A5:A' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
       $sheet->getStyle('F5:F' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-      $sheet->getStyle('K5:K' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-      $sheet->getStyle('L5:L' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-      $sheet->getStyle('M5:Q' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+      $sheet->getStyle('K5:K' . ($kolom - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
     }
 
     // Set width kolom
@@ -1735,17 +1714,11 @@ class Fpp extends CI_Controller
     $sheet->getColumnDimension('H')->setWidth(20);
     $sheet->getColumnDimension('I')->setWidth(25);
     $sheet->getColumnDimension('J')->setWidth(45);
-    $sheet->getColumnDimension('K')->setWidth(10);
-    $sheet->getColumnDimension('L')->setWidth(20);
-    $sheet->getColumnDimension('M')->setWidth(15);
-    $sheet->getColumnDimension('N')->setWidth(15);
-    $sheet->getColumnDimension('O')->setWidth(20);
-    $sheet->getColumnDimension('P')->setWidth(18);
-    $sheet->getColumnDimension('Q')->setWidth(20);
-    $sheet->getColumnDimension('R')->setWidth(40);
-    $sheet->getColumnDimension('S')->setWidth(25);
-    $sheet->getColumnDimension('T')->setWidth(30);
-    $sheet->getColumnDimension('U')->setWidth(30);
+    $sheet->getColumnDimension('K')->setWidth(22);
+    $sheet->getColumnDimension('L')->setWidth(40);
+    $sheet->getColumnDimension('M')->setWidth(25);
+    $sheet->getColumnDimension('N')->setWidth(30);
+    $sheet->getColumnDimension('O')->setWidth(30);
 
     // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
     $sheet->getDefaultRowDimension()->setRowHeight(-1);
