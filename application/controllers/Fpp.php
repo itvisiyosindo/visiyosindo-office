@@ -1580,8 +1580,19 @@ class Fpp extends CI_Controller
 
     $data = $this->md_fpp->getAllLaporanFPPByPenggunaID($this->input->get('idmarketing'), $this->input->get('tglawal'), $this->input->get('tglakhir'));
 
+    $show_kode_fpp        = $this->input->get('kode_fpp')        !== '0';
+    $show_csname          = $this->input->get('csname')          !== '0';
+    $show_alamat          = $this->input->get('alamat')          !== '0';
+    $show_tgl             = $this->input->get('tgl')             !== '0';
+    $show_cpname          = $this->input->get('cpname')          !== '0';
+    $show_nocp            = $this->input->get('nocp')            !== '0';
+    $show_payment         = $this->input->get('payment')         !== '0';
     $show_nama_barang     = $this->input->get('nama_barang')     !== '0';
     $show_harga_ditawarkan = $this->input->get('harga_ditawarkan') !== '0';
+    $show_notes           = $this->input->get('notes')           !== '0';
+    $show_no_sph          = $this->input->get('no_sph')          !== '0';
+    $show_link_sph        = $this->input->get('link_sph')        !== '0';
+    $show_link_approval   = $this->input->get('link_approval')   !== '0';
 
 
 
@@ -1708,13 +1719,20 @@ class Fpp extends CI_Controller
       }
     }
 
-    // Sembunyikan kolom J dan/atau K jika tidak dicentang
-    if (!$show_nama_barang) {
-      $sheet->getColumnDimension('J')->setVisible(false);
-    }
-    if (!$show_harga_ditawarkan) {
-      $sheet->getColumnDimension('K')->setVisible(false);
-    }
+    // Sembunyikan kolom yang tidak dicentang
+    if (!$show_kode_fpp)        $sheet->getColumnDimension('B')->setVisible(false);
+    if (!$show_csname)          $sheet->getColumnDimension('D')->setVisible(false);
+    if (!$show_alamat)          $sheet->getColumnDimension('E')->setVisible(false);
+    if (!$show_tgl)             $sheet->getColumnDimension('F')->setVisible(false);
+    if (!$show_cpname)          $sheet->getColumnDimension('G')->setVisible(false);
+    if (!$show_nocp)            $sheet->getColumnDimension('H')->setVisible(false);
+    if (!$show_payment)         $sheet->getColumnDimension('I')->setVisible(false);
+    if (!$show_nama_barang)     $sheet->getColumnDimension('J')->setVisible(false);
+    if (!$show_harga_ditawarkan) $sheet->getColumnDimension('K')->setVisible(false);
+    if (!$show_notes)           $sheet->getColumnDimension('L')->setVisible(false);
+    if (!$show_no_sph)          $sheet->getColumnDimension('M')->setVisible(false);
+    if (!$show_link_sph)        $sheet->getColumnDimension('N')->setVisible(false);
+    if (!$show_link_approval)   $sheet->getColumnDimension('O')->setVisible(false);
 
     // Set width kolom
     $sheet->getColumnDimension('A')->setWidth(6);
