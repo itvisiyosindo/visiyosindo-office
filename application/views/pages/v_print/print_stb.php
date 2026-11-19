@@ -366,7 +366,7 @@
                         	</tr>
                         	<tr>
                         		<td></td>
-                        		<td colspan="5" style="text-align:right"><br><br><br></td>
+                        		<td colspan="5" style="text-align:right"><br></td>
                         	</tr>
                      
 
@@ -395,7 +395,7 @@
 							$img_path 	= "uploads/file_karyawan/ttd/";
 							$ttdaju		= $img_path."ttd_".$data_po[0]->idPengaju.".png";
 							
-							if ($data_po[0]->id_pihak1 == 325){
+							if ($data_po[0]->id_pihak1 == 325 || $data_po[0]->id_customer != 325){
 						?>
 
 					<tr style="height: 18px;">
