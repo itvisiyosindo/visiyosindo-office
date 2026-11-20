@@ -253,31 +253,24 @@
 							}
 						}
 
-						// Hitung rata-rata hanya jika ada datanya
-						$rataA = $countA > 0 ? $rataA / (6*$countA)*100 : 0;
-						$rataB = $countB > 0 ? $rataB / (6*$countB)*100 : 0;
-						$rataC = $countC > 0 ? $rataC / (6*$countC)*100 : 0;
-						$rataD = $countD > 0 ? $rataD / (6*$countD)*100 : 0;
-						$rataE = $countE > 0 ? $rataE / (6*$countE)*100 : 0;
-						$rataF = $countF > 0 ? $rataF / (6*$countF)*100 : 0;
+						// Hitung rata-rata (Total Nilai / Jumlah Item)
+						$rataA = $countA > 0 ? $rataA / $countA : 0;
+						$rataB = $countB > 0 ? $rataB / $countB : 0;
+						$rataC = $countC > 0 ? $rataC / $countC : 0;
+						$rataD = $countD > 0 ? $rataD / $countD : 0;
+						$rataE = $countE > 0 ? $rataE / $countE : 0;
+						$rataF = $countF > 0 ? $rataF / $countF : 0;
 
 						// Hitung rata-rata keseluruhan hanya dari nilai-nilai yang punya data
-						//$sumRata = 0;
-						//$countAll = 0;
-
-					
-						//$rataAll = ($rataA+$rataB+$rataC+$rataD+$rataE+$rataF)/6;
-						//$countAll > 0 ? $sumRata / $countAll : 0;
-
 						$sumRata = 0;
 						$countAll = 0;
-
-						if ($rataA > 0) { $sumRata += $rataA; $countAll++; }
-						if ($rataB > 0) { $sumRata += $rataB; $countAll++; }
-						if ($rataC > 0) { $sumRata += $rataC; $countAll++; }
-						if ($rataD > 0) { $sumRata += $rataD; $countAll++; }
-						if ($rataE > 0) { $sumRata += $rataE; $countAll++; }
-						if ($rataF > 0) { $sumRata += $rataF; $countAll++; }
+						$rates = [$rataA, $rataB, $rataC, $rataD, $rataE, $rataF];
+						foreach ($rates as $rate) {
+							if ($rate > 0) {
+								$sumRata += $rate;
+								$countAll++;
+							}
+						}
 
 						$rataAll = ($countAll > 0) ? $sumRata / $countAll : 0;
 
