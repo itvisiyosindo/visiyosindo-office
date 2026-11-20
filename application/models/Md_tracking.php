@@ -1369,8 +1369,294 @@ class Md_tracking extends CI_Model
         return $this->db->where('status', 1)->order_by('nama', 'ASC')->get('forwarder')->result();
     }
 
+    /**
+     * Sinkronisasi Otomatis Tracking Import dari:
+     * - Tahap 1: purchase_order & purchase_order_detail (Pengajuan PO Supplier)
+     * - Tahap 2: approval_forwarder & approval_forwarder_detail (Approval Forwarder Luar Negeri)
+     * - Tahap 9: penerimaan_barang (Penerimaan Barang di Gudang Pusat / Jakarta / Jogja)
+     */
+    public function syncAutomaticImportFromExistingData()
+    {
+        if (!$this->db->table_exists('purchase_order') || !$this->db->table_exists('tracking_import')) {
+            return;
+        }
+
+        $stage_defs = $this->getImportStageDefinitions();
+
+        // Ambil semua Pengajuan PO Supplier yang sudah memiliki No PO atau sudah disetujui (status IN 4,7,8,9)
+        $sqlPo = "SELECT 
+                    po.id as id_po,
+                    po.kode_po,
+                    po.no_po,
+                    po.tgl_pengajuan,
+                    po.created_at,
+                    po.ttd_4_at,
+                    po.status,
+                    po.ket_adm,
+                    po.lampiran_adm,
+                    po.id_pengaju,
+                    (SELECT pod.supplier FROM purchase_order_detail pod WHERE pod.id_po = po.id AND pod.supplier IS NOT NULL AND pod.supplier != '' LIMIT 1) as supplier,
+                    (SELECT GROUP_CONCAT(CONCAT(pod.nama_barang, ' (', COALESCE(NULLIF(pod.rencana_po,''), NULLIF(pod.kebutuhan_po,''), '1'), ')') SEPARATOR ', ') FROM purchase_order_detail pod WHERE pod.id_po = po.id) as items_summary
+                  FROM purchase_order po
+                  WHERE po.status IN (4, 7, 8, 9)
+                    AND po.id >= 200
+                  ORDER BY po.id ASC";
+        $poList = $this->db->query($sqlPo)->result();
+        if (empty($poList)) {
+            return;
+        }
+
+        // Map existing tracking_import by id_po_supplier
+        $existingRows = $this->db->get('tracking_import')->result();
+        $byPoId = [];
+        foreach ($existingRows as $er) {
+            if (!empty($er->id_po_supplier)) {
+                $byPoId[(int)$er->id_po_supplier] = $er;
+            }
+        }
+
+        // Ambil data Approval Forwarder Luar Negeri untuk pencocokan otomatis Tahap 2
+        $appForwarders = [];
+        if ($this->db->table_exists('approval_forwarder')) {
+            $sqlAf = "SELECT af.*,
+                        (SELECT afd.id_forwarder FROM approval_forwarder_detail afd WHERE afd.id_app = af.id ORDER BY afd.dipilih DESC, afd.id ASC LIMIT 1) as id_forwarder_chose,
+                        (SELECT f.nama FROM approval_forwarder_detail afd JOIN forwarder f ON afd.id_forwarder = f.id WHERE afd.id_app = af.id ORDER BY afd.dipilih DESC, afd.id ASC LIMIT 1) as nama_forwarder_chose
+                      FROM approval_forwarder af
+                      ORDER BY af.id DESC";
+            $appForwarders = $this->db->query($sqlAf)->result();
+        }
+
+        // Ambil data Penerimaan Barang yang punya no_po untuk pencocokan otomatis Tahap 9
+        $penerimaanList = [];
+        if ($this->db->table_exists('penerimaan_barang')) {
+            $sqlPb = "SELECT pb.id_penerimaan_barang, pb.no_terima, pb.no_po, pb.tgl_masuk, pb.data_created, g.nama_gudang
+                      FROM penerimaan_barang pb
+                      LEFT JOIN gudang g ON pb.id_gudang = g.id_gudang
+                      WHERE pb.no_po IS NOT NULL AND pb.no_po != '' AND pb.no_po != '-'
+                      ORDER BY pb.id_penerimaan_barang DESC
+                      LIMIT 300";
+            $penerimaanList = $this->db->query($sqlPb)->result();
+        }
+
+        // Filter hanya supplier / PO yang relevan (mengabaikan pembelian lokal via uang kas / shopee / koperasi lokal bila bukan forwarder)
+        $localSkipKeywords = ['uang kas', 'shopee', 'tokopedia', 'nuklindolab', 'sumpah gajah mada', 'uno medical', 'alisha jaya', 'inti cakra'];
+
+        foreach ($poList as $po) {
+            $supplierName = trim((string)($po->supplier ?: ''));
+            $noPoRaw      = trim(strip_tags((string)($po->no_po ?: $po->kode_po)));
+            if ($supplierName === '' && empty($po->items_summary)) {
+                continue;
+            }
+
+            // Cek apakah ada kecocokan di Approval Forwarder Luar Negeri
+            $matchedAf = null;
+            $noPoDigits = '';
+            if (preg_match('/\b(0\d{2})\b/', $noPoRaw, $mNum)) {
+                $noPoDigits = $mNum[1]; // misal 041, 044, 052, 058, 063
+            }
+
+            foreach ($appForwarders as $af) {
+                $afTitle = strtolower((string)$af->nama . ' ' . (string)$af->keterangan);
+                if ($noPoDigits !== '' && strpos($afTitle, strtolower($noPoDigits)) !== false) {
+                    $matchedAf = $af;
+                    break;
+                }
+                if ($supplierName !== '' && strlen($supplierName) >= 4) {
+                    $firstWord = strtolower( strtok($supplierName, ' ') );
+                    if (strlen($firstWord) >= 3 && !in_array($firstWord, ['pt', 'pt.', 'cv', 'cv.', 'lain-lain']) && strpos($afTitle, $firstWord) !== false) {
+                        $matchedAf = $af;
+                        break;
+                    }
+                }
+            }
+
+            // Skip supplier lokal murni kecuali punya dokumen Approval Forwarder Luar Negeri
+            $supLower = strtolower($supplierName . ' ' . $noPoRaw);
+            $isLocal = false;
+            foreach ($localSkipKeywords as $kw) {
+                if (strpos($supLower, $kw) !== false) {
+                    $isLocal = true;
+                    break;
+                }
+            }
+            if (($isLocal || preg_match('/^(pt\.?\s|cv\.?\s|lain-lain|fujifilm indonesia)/i', $supplierName)) && !$matchedAf) {
+                continue;
+            }
+
+            // Tentukan Waktu Tahap 1 (PO Manufacture)
+            $waktu1 = !empty($po->ttd_4_at) && strpos($po->ttd_4_at, '0000-00-00') === false
+                ? $po->ttd_4_at
+                : (!empty($po->created_at) && strpos($po->created_at, '0000-00-00') === false
+                    ? $po->created_at
+                    : (!empty($po->tgl_pengajuan) ? date('Y-m-d H:i:s', strtotime($po->tgl_pengajuan)) : date('Y-m-d H:i:s')));
+
+            // Cek apakah ada kecocokan di Penerimaan Barang Gudang (Tahap 9) yang tanggal masuknya >= tanggal PO
+            $matchedPb = null;
+            $poDateOnly = date('Y-m-d', strtotime($waktu1));
+            foreach ($penerimaanList as $pb) {
+                $pbPo = trim((string)$pb->no_po);
+                if ($pbPo === '') continue;
+                $pbDate = !empty($pb->tgl_masuk) ? $pb->tgl_masuk : (!empty($pb->data_created) ? date('Y-m-d', strtotime($pb->data_created)) : '');
+                if ($pbDate !== '' && strtotime($pbDate) < (strtotime($poDateOnly) - 86400 * 7)) {
+                    continue; // Abaikan penerimaan barang tahun/bulan lama yang kebetulan nomor urut PO-nya sama
+                }
+                if (strcasecmp($pbPo, $noPoRaw) === 0) {
+                    $matchedPb = $pb;
+                    break;
+                }
+                if ($noPoDigits !== '' && preg_match('/\b' . preg_quote($noPoDigits, '/') . '\b/', $pbPo)) {
+                    $matchedPb = $pb;
+                    break;
+                }
+            }
+
+            // Tentukan Waktu Tahap 2 & Info Forwarder dari Approval Forwarder
+            $waktu2 = null;
+            $moda   = 'Sea Freight (Kapal)';
+            $idFw   = null;
+            $namaFw = null;
+            $pol    = null;
+            $pod    = null;
+
+            if ($matchedAf) {
+                $waktu2 = !empty($matchedAf->created_at) ? $matchedAf->created_at : (!empty($matchedAf->tanggal) ? $matchedAf->tanggal . ' 09:00:00' : $waktu1);
+                if (strtotime($waktu2) < strtotime($waktu1)) {
+                    $waktu1 = $waktu2;
+                }
+                $idFw   = $matchedAf->id_forwarder_chose ?: null;
+                $namaFw = $matchedAf->nama_forwarder_chose ?: null;
+                $pol    = $matchedAf->pol ?: null;
+                $pod    = $matchedAf->pod ?: null;
+                if (stripos((string)$matchedAf->sistem_pengiriman, 'udara') !== false || stripos((string)$matchedAf->sistem_pengiriman, 'air') !== false) {
+                    $moda = 'Air Freight (Pesawat)';
+                }
+            }
+
+            // Tentukan Waktu Tahap 9 & Gudang Tujuan dari Penerimaan Barang / Status PO
+            $waktu9 = null;
+            $gudangTujuan = 'Gudang Pusat';
+            $ketPenerimaan = null;
+
+            if ($matchedPb) {
+                $waktu9 = !empty($matchedPb->data_created) && strpos($matchedPb->data_created, '0000-00-00') === false
+                    ? $matchedPb->data_created
+                    : (!empty($matchedPb->tgl_masuk) ? $matchedPb->tgl_masuk . ' 15:00:00' : null);
+                $nmGdg = strtolower((string)$matchedPb->nama_gudang);
+                if (strpos($nmGdg, 'jakarta') !== false) {
+                    $gudangTujuan = 'Gudang Jakarta';
+                } elseif (strpos($nmGdg, 'yogya') !== false || strpos($nmGdg, 'jogja') !== false) {
+                    $gudangTujuan = 'Gudang Jogja';
+                } else {
+                    $gudangTujuan = 'Gudang Pusat';
+                }
+                $ketPenerimaan = 'Diterima otomatis dari Penerimaan Barang No: ' . $matchedPb->no_terima . ' (' . $matchedPb->nama_gudang . ')';
+            } elseif ((int)$po->status == 8) {
+                // Status 8 di purchase_order = Barang Diterima Seluruh oleh Admin Warehouse
+                $waktu9 = !empty($po->ttd_4_at) ? date('Y-m-d H:i:s', strtotime($po->ttd_4_at) + 86400) : $waktu1;
+                $ketPenerimaan = 'Status PO Supplier: Barang Diterima Seluruh di Gudang';
+            }
+
+            if (!isset($byPoId[(int)$po->id_po])) {
+                // INSERT OTOMATIS BARU
+                $curStage = 1;
+                if ($waktu2) $curStage = 2;
+                if ($waktu9) $curStage = 9;
+
+                $kodeImport = $this->generateKodeImport();
+                $ins = [
+                    'kode_import'              => $kodeImport,
+                    'id_po_supplier'           => (int)$po->id_po,
+                    'no_po_manufacture'        => $noPoRaw ?: $po->kode_po,
+                    'nama_manufacture'         => $supplierName ?: 'Manufacture Import',
+                    'negara_asal'              => $pol,
+                    'daftar_unit'              => $po->items_summary ?: '-',
+                    'moda_transportasi'        => $moda,
+                    'id_forwarder'             => $idFw,
+                    'nama_forwarder'           => $namaFw,
+                    'pelabuhan_asal'           => $pol,
+                    'pelabuhan_tujuan'         => $pod,
+                    'nama_gudang_tujuan'       => $gudangTujuan,
+                    'bukti_terima_gudang'      => !empty($po->lampiran_adm) ? strip_tags($po->lampiran_adm) : null,
+                    'waktu_1_po_manufacture'   => $waktu1,
+                    'waktu_2_order_forwarder'  => $waktu2,
+                    'waktu_9_sampai_gudang'    => $waktu9,
+                    'current_stage'            => $curStage,
+                    'keterangan'               => $ketPenerimaan ?: (!empty($po->ket_adm) ? strip_tags($po->ket_adm) : ('Tersinkronisasi otomatis dari PO Supplier ' . $po->kode_po)),
+                    'created_by'               => $po->id_pengaju ?: 1,
+                    'created_at'               => $waktu1,
+                    'updated_at'               => date('Y-m-d H:i:s'),
+                    'stat'                     => 1
+                ];
+
+                $this->db->insert('tracking_import', $ins);
+                $newId = $this->db->insert_id();
+
+                if ($newId) {
+                    $this->db->insert('tracking_import_log', [
+                        'id_import'       => $newId,
+                        'stage'           => 1,
+                        'stage_label'     => $stage_defs[1]['label'],
+                        'waktu_milestone' => $waktu1,
+                        'catatan'         => 'Otomatis ditarik dari Pengajuan PO Supplier: ' . $po->kode_po . ' (No PO: ' . ($noPoRaw ?: '-') . ')',
+                        'id_pengguna'     => $po->id_pengaju ?: 1,
+                        'created_at'      => $waktu1
+                    ]);
+
+                    if ($waktu2 && $matchedAf) {
+                        $this->db->insert('tracking_import_log', [
+                            'id_import'       => $newId,
+                            'stage'           => 2,
+                            'stage_label'     => $stage_defs[2]['label'],
+                            'waktu_milestone' => $waktu2,
+                            'catatan'         => 'Otomatis terhubung dengan Approval Forwarder: ' . $matchedAf->kode . ' (' . ($namaFw ?: $matchedAf->nama) . ')',
+                            'id_pengguna'     => $matchedAf->id_pengguna ?: 1,
+                            'created_at'      => $waktu2
+                        ]);
+                    }
+
+                    if ($waktu9) {
+                        $this->db->insert('tracking_import_log', [
+                            'id_import'       => $newId,
+                            'stage'           => 9,
+                            'stage_label'     => $stage_defs[9]['label'],
+                            'waktu_milestone' => $waktu9,
+                            'catatan'         => $ketPenerimaan,
+                            'id_pengguna'     => $po->id_pengaju ?: 1,
+                            'created_at'      => $waktu9
+                        ]);
+                    }
+                }
+            } else {
+                // UPDATE OTOMATIS JIKA ADA DATA BARU DARI APPROVAL FORWARDER ATAU PENERIMAAN BARANG
+                $ex = $byPoId[(int)$po->id_po];
+                $upd = [];
+
+                if (empty($ex->waktu_2_order_forwarder) && $waktu2) {
+                    $upd['waktu_2_order_forwarder'] = $waktu2;
+                    if (empty($ex->nama_forwarder) && $namaFw) $upd['nama_forwarder'] = $namaFw;
+                    if (empty($ex->pelabuhan_asal) && $pol) $upd['pelabuhan_asal'] = $pol;
+                    if (empty($ex->pelabuhan_tujuan) && $pod) $upd['pelabuhan_tujuan'] = $pod;
+                    if ((int)$ex->current_stage < 2) $upd['current_stage'] = 2;
+                }
+
+                if (empty($ex->waktu_9_sampai_gudang) && $waktu9) {
+                    $upd['waktu_9_sampai_gudang'] = $waktu9;
+                    $upd['nama_gudang_tujuan']    = $gudangTujuan;
+                    $upd['current_stage']         = 9;
+                }
+
+                if (!empty($upd)) {
+                    $upd['updated_at'] = date('Y-m-d H:i:s');
+                    $this->db->where('id_import', $ex->id_import)->update('tracking_import', $upd);
+                }
+            }
+        }
+    }
+
     public function getAllTrackingImport($filter_gudang = null, $filter_stage = null)
     {
+        $this->syncAutomaticImportFromExistingData();
+
         $this->db->select('ti.*, u.nama as nama_pembuat');
         $this->db->from('tracking_import ti');
         $this->db->join('pengguna u', 'ti.created_by = u.pengguna_id', 'left');

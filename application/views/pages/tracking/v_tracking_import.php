@@ -149,18 +149,24 @@ foreach ($import_list as $r) {
     </header>
 
     <div class="card-body">
-        <!-- Alur 9 Tahapan Info Banner -->
-        <div class="mb-3 p-2 rounded" style="background:#f8fafc; border:1px solid #cbd5e1; font-size:0.78rem; color:#334155;">
-            <strong><i class="fas fa-route text-primary mr-1"></i> Alur 9 Tahapan Tracking Import:</strong>
-            <span class="badge badge-light border">1. PO ke Manufacture</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">2. Order Forwarder</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">3. Unit Loading Kapal</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">4. Perjalanan Kapal</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">5. Sampai Seaport/Airport</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">6. Pembayaran Pajak</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">7. Keluar Gudang Port</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">8. Hand-over Ekspedisi Domestik</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-            <span class="badge badge-light border">9. Sampai Gudang Pusat / Jakarta / Jogja</span>
+        <!-- Info Otomatisasi & Alur 9 Tahapan Banner -->
+        <div class="mb-3 p-2 rounded" style="background:#eff6ff; border:1px solid #bfdbfe; font-size:0.79rem; color:#1e3a8a;">
+            <div>
+                <strong><i class="fas fa-sync-alt text-primary mr-1"></i> Terintegrasi Otomatis dengan Modul Lain:</strong>
+                Data <strong>Tahap 1 (PO Manufacture)</strong> otomatis ditarik dari <em>Pengajuan PO Supplier</em>, <strong>Tahap 2 (Order Forwarder)</strong> otomatis terhubung dengan <em>Approval Forwarder Luar Negeri</em>, dan <strong>Tahap 9 (Sampai Gudang Pusat/Jakarta/Jogja)</strong> otomatis terupdate saat barang diinput di <em>Penerimaan Barang Gudang</em>. Untuk tahapan transit di luar sistem (Loading Kapal, Pajak PIB, Keluar Port, Resi Domestik) tinggal klik tombol <strong>Detail (<i class="fas fa-eye"></i>)</strong> untuk update progresnya.
+            </div>
+            <div class="mt-1 pt-1" style="border-top:1px dashed #93c5fd; color:#334155;">
+                <strong><i class="fas fa-route text-primary mr-1"></i> 9 Tahap:</strong>
+                <span class="badge badge-light border">1. PO Manufacture (Otomatis)</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">2. Order Forwarder (Otomatis)</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">3. Loading Kapal</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">4. Perjalanan Kapal</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">5. Sampai Seaport/Airport</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">6. Pembayaran Pajak</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">7. Keluar Gudang Port</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">8. Hand-over Domestik</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
+                <span class="badge badge-light border">9. Sampai Gudang Pusat/JKT/Jogja (Otomatis)</span>
+            </div>
         </div>
 
         <div class="table-responsive">
