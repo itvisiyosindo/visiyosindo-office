@@ -4248,9 +4248,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Inisialisasi DataTables
     if ($.fn.DataTable) {
-        $('#datatable_tugas_saya').DataTable({ pageLength: 10, order: [], autoWidth: false });
-        $('#datatable_tugas_atasan').DataTable({ pageLength: 10, order: [], autoWidth: false });
-        $('#datatable_leaderboard').DataTable({ pageLength: 15, order: [], autoWidth: false });
+        $('#datatable_tugas_saya').DataTable({
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+            order: [],
+            autoWidth: false
+        });
+        $('#datatable_tugas_atasan').DataTable({
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+            order: [],
+            autoWidth: false
+        });
+        $('#datatable_leaderboard').DataTable({
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+            order: [],
+            autoWidth: false
+        });
         setupTableHorizontalUX('#datatable_tugas_saya');
         setupTableHorizontalUX('#datatable_tugas_atasan');
         setupTableHorizontalUX('#datatable_leaderboard');
@@ -4648,7 +4663,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 $btn.prop('disabled', false).html(origHtml);
                 if (res && res.status === 'success') {
                     $('#modalBuatTask').modal('hide');
-                    var nextUrl = baseUrl + 'task_proyek?tab=atasan<?= $switch === "kepegawaian" ? "&nav=kepegawaian" : "" ?>';
+                    var selVal = $('#select_penerima_task').val();
+                    var isOnlySelf = (Array.isArray(selVal) && selVal.length === 1 && parseInt(selVal[0], 10) === parseInt('<?= (int)$myId ?>', 10));
+                    var targetTab = isOnlySelf ? 'saya' : 'atasan';
+                    var nextUrl = baseUrl + 'task_proyek?tab=' + targetTab + '<?= $switch === "kepegawaian" ? "&nav=kepegawaian" : "" ?>';
                     if (window.swal) {
                         swal('Berhasil!', res.msg, 'success').then(function() { window.location.href = nextUrl; });
                     } else {
@@ -5480,8 +5498,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if ($.fn.dataTable && $('#datatable_semua_task').length) {
         var dtSemua = $('#datatable_semua_task').DataTable({
             language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' },
-            order: [[0, 'asc']],
+            order: [],
             pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
             autoWidth: false,
             initComplete: function() {
                 setupTableHorizontalUX('#datatable_semua_task');

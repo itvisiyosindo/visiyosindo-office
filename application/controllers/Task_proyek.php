@@ -273,8 +273,7 @@ class Task_proyek extends CI_Controller
 
         $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
         $this->db->where('t.created_at <=', $semEnd . ' 23:59:59');
-        $tugas_saya = $this->db->order_by('FIELD(t.status_task, 5, 3, 0, 1, 2, 4, 6)', '', FALSE)
-            ->order_by('t.id_task', 'DESC')
+        $tugas_saya = $this->db->order_by('t.id_task', 'DESC')
             ->get()
             ->result();
 
@@ -289,16 +288,19 @@ class Task_proyek extends CI_Controller
             ->join('pengguna p_acc', 'p_acc.pengguna_id = t.acc_hrd_by', 'left')
             ->where('t.is_deleted', 0);
 
-        if (count($myGiverIds) === 1) {
-            $this->db->where('t.id_pemberi', $myGiverIds[0]);
+        if ($viewMode === 'all') {
+            // Mode semua penugasan perusahaan
         } else {
-            $this->db->where_in('t.id_pemberi', $myGiverIds);
+            if (count($myGiverIds) === 1) {
+                $this->db->where('t.id_pemberi', $myGiverIds[0]);
+            } else {
+                $this->db->where_in('t.id_pemberi', $myGiverIds);
+            }
         }
 
         $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
         $this->db->where('t.created_at <=', $semEnd . ' 23:59:59');
-        $tugas_atasan = $this->db->order_by('FIELD(t.status_task, 5, 2, 1, 3, 0, 4, 6)', '', FALSE)
-            ->order_by('t.id_task', 'DESC')
+        $tugas_atasan = $this->db->order_by('t.id_task', 'DESC')
             ->get()
             ->result();
 
@@ -314,8 +316,7 @@ class Task_proyek extends CI_Controller
 
         $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
         $this->db->where('t.created_at <=', $semEnd . ' 23:59:59');
-        $semua_task = $this->db->order_by('FIELD(t.status_task, 5, 2, 1, 3, 0, 4, 6)', '', FALSE)
-            ->order_by('t.id_task', 'DESC')
+        $semua_task = $this->db->order_by('t.id_task', 'DESC')
             ->get()
             ->result();
 
