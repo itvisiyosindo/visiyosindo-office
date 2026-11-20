@@ -855,18 +855,8 @@ if (!function_exists('normalizeDummyTaskProyekData')) {
 			}
 		}
 
-		// Promote ke Menunggu Penilaian hanya jika sudah benar-benar submit (ada bukti_selesai)
-		// shortcut: tidak handle edge case bukti_selesai berisi spasi saja, cukup untuk sekarang
-		@$CI->db->query("
-			UPDATE task_proyek
-			SET status_task = 2,
-			    progres = 100,
-			    tgl_submit = COALESCE(tgl_submit, updated_at, NOW())
-			WHERE is_deleted = 0
-			  AND status_task IN (0, 1)
-			  AND bukti_selesai IS NOT NULL AND TRIM(bukti_selesai) != ''
-			  AND (progres >= 100 OR tgl_submit IS NOT NULL OR (catatan_bawahan IS NOT NULL AND TRIM(catatan_bawahan) != ''))
-		");
+		// Status task hanya berubah ke Menunggu Penilaian (status_task = 2) jika pelaksana secara eksplisit
+		// menekan tombol 'Kirim Hasil Pekerjaan & Minta Rating' (submit_selesai), bukan otomatis di background helper.
 
 		// Sinkronkan juga catatan log di task_proyek_log jika masih tertulis kalimat dummy
 		if ($CI->db->table_exists('task_proyek_log')) {

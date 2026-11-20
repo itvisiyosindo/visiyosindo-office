@@ -2418,7 +2418,7 @@ $namaBulanList = [
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td class="tp-col-status"><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
+                                        <td class="tp-col-status"><?= renderStatusTaskBadge($row->status_task) ?></td>
                                         <td class="tp-col-rating">
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
@@ -2579,7 +2579,7 @@ $namaBulanList = [
                                             </div>
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
-                                        <td class="tp-col-status"><?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?></td>
+                                        <td class="tp-col-status"><?= renderStatusTaskBadge($row->status_task) ?></td>
                                         <td class="tp-col-rating">
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
@@ -2605,7 +2605,7 @@ $namaBulanList = [
                                         <td class="tp-col-aksi text-center">
                                             <div class="tp-action-stack">
                                             <?php
-                                            $effStatusAtasan = ((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : (int)$row->status_task;
+                                            $effStatusAtasan = (int)$row->status_task;
                                             $alreadyRated = ($effStatusAtasan === 4 && !empty($row->rating_bintang));
                                             ?>
                                             <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
@@ -2785,7 +2785,7 @@ $namaBulanList = [
                                             <div class="text-center small font-weight-bold"><?= (int)$row->progres ?>%</div>
                                         </td>
                                         <td class="tp-col-status">
-                                            <?= renderStatusTaskBadge(((int)$row->status_task === 1 && ((int)$row->progres >= 100 || !empty($row->tgl_submit))) ? 2 : $row->status_task) ?>
+                                            <?= renderStatusTaskBadge($row->status_task) ?>
                                             <?php if (!empty($row->nama_acc_hrd) && (int)$row->status_task !== 5): ?>
                                                 <div class="tp-person-meta mt-1"><i class="fas fa-check-double text-success mr-1"></i> ACC HRD: <?= htmlspecialchars($row->nama_acc_hrd) ?></div>
                                             <?php endif; ?>
