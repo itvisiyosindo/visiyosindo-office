@@ -121,6 +121,10 @@ class Member_visiacademy extends CI_Controller
 
         $inserted = $this->Md_member_visiacademy->addDeal($data);
         if ($inserted) {
+            $newId = $this->db->insert_id();
+            if ($data['status_deal'] === 'Deal' && $newId) {
+                $this->_notifDiranggaDeal($newId);
+            }
             ajaxReturnDie('success', 'Deal kebutuhan produk berhasil disimpan', true);
         } else {
             ajaxReturnDie('error', 'Gagal menyimpan data deal ke database.');
@@ -138,7 +142,14 @@ class Member_visiacademy extends CI_Controller
             ajaxReturnDie('error', 'Data tidak valid.');
         }
 
+        $oldDeal = $this->Md_member_visiacademy->getDealById($id_deal);
         $this->Md_member_visiacademy->updateDealStatus($id_deal, $status);
+
+        // Notifikasi otomatis ke Pak Dirangga saat status berubah menjadi DEAL
+        if ($status === 'Deal' && ($oldDeal['status_deal'] ?? '') !== 'Deal') {
+            $this->_notifDiranggaDeal($id_deal);
+        }
+
         ajaxReturnDie('success', 'Status deal berhasil diubah menjadi ' . $status, true);
     }
 
@@ -225,5 +236,81 @@ class Member_visiacademy extends CI_Controller
 
         $this->Md_member_visiacademy->deleteDeal($id);
         ajaxReturnDie('success', 'Data deal berhasil dihapus.', true);
+    }
+
+    /**
+     * Kirim notifikasi WhatsApp otomatis ke Pak Dirangga (Head of Accounting and Tax)
+     * saat ada referral alkes yang berhasil DEAL dan komisi siap diproses.
+     */
+    private function _notifDiranggaDeal($id_deal)
+    {
+        try {
+            $deal = $this->Md_member_visiacademy->getDealById($id_deal);
+            if (!$deal) {
+                return false;
+            }
+
+            // Cari nomor WhatsApp Pak Dirangga (pengguna_id: 106)
+            $dirangga = $this->db->select('nama, no_hp, nohp')
+                                 ->from('pengguna')
+                                 ->group_start()
+                                     ->where('pengguna_id', 106)
+                                     ->or_like('nama', 'Dirangga', 'both')
+                                 ->group_end()
+                                 ->where('status', 1)
+                                 ->limit(1)
+                                 ->get()
+                                 ->row_array();
+
+            $penerima = '081275085794';
+            if ($dirangga) {
+                if (!empty($dirangga['no_hp'])) {
+                    $penerima = $dirangga['no_hp'];
+                } elseif (!empty($dirangga['nohp'])) {
+                    $penerima = $dirangga['nohp'];
+                }
+            }
+
+            $namaMember = $deal['nama_member'] ?: '-';
+            $kodeMember = $deal['kode_member'] ?: '-';
+            $institusi  = $deal['institusi_asal'] ?: '-';
+            $produk     = $deal['nama_produk'] ?: '-';
+            $nilaiDeal  = 'Rp ' . number_format($deal['estimasi_nilai'], 0, ',', '.');
+            $persen     = $deal['persen_komisi'] . '%';
+            $komisi     = 'Rp ' . number_format($deal['nominal_komisi'], 0, ',', '.');
+            $bank       = $deal['nama_bank'] ?: 'Belum diisi';
+            $noRek      = $deal['no_rekening'] ?: 'Belum diisi';
+            $anRek      = $deal['atas_nama_rekening'] ?: $namaMember;
+            $catatan    = !empty($deal['catatan']) ? $deal['catatan'] : '-';
+
+            $pesan = "*Notifikasi Deal Baru - Member Visi Academy* 🤝%0A%0A"
+                   . "Halo Pak Dirangga,%0A"
+                   . "Terdapat transaksi pengadaan alkes dari program Referral Member Visi Academy yang telah berstatus *DEAL* dan siap diproses komisi pencairannya oleh Finance:%0A%0A"
+                   . "📋 *Detail Transaksi:*%0A"
+                   . "• *ID Deal:* #DL-" . str_pad($deal['id_deal'], 4, '0', STR_PAD_LEFT) . "%0A"
+                   . "• *Produk Alkes:* " . $produk . "%0A"
+                   . "• *Nilai Transaksi:* " . $nilaiDeal . "%0A"
+                   . "• *Komisi Member (" . $persen . "):* *" . $komisi . "*%0A"
+                   . "• *Catatan:* " . $catatan . "%0A%0A"
+                   . "👤 *Data Penerima (Member):*%0A"
+                   . "• *Nama:* " . $namaMember . " (" . $kodeMember . ")%0A"
+                   . "• *Instansi:* " . $institusi . "%0A"
+                   . "• *Bank:* " . $bank . "%0A"
+                   . "• *No. Rekening:* *" . $noRek . "*%0A"
+                   . "• *Atas Nama:* " . $anRek . "%0A%0A"
+                   . "Silakan periksa detail rekening dan konfirmasi transfer komisi pada sistem ERP Office:%0A"
+                   . "https://office.visiyosindo.id/member_visiacademy";
+
+            sendWa([
+                'devId'    => hostWa('3'),
+                'penerima' => $penerima,
+                'pesan'    => $pesan,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            log_message('error', 'Gagal kirim notif WA Dirangga: ' . $e->getMessage());
+            return false;
+        }
     }
 }
