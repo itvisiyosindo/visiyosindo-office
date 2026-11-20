@@ -270,6 +270,26 @@ foreach ($import_list as $r) {
                                     <span>Tahap <?= $curStage ?>/9</span>
                                     <strong><?= $m['progress_pct'] ?>%</strong>
                                 </div>
+                                <?php if ($curStage < 9):
+                                    $nextSt = $curStage + 1;
+                                    $nextLabel = $stage_defs[$nextSt]['short'] ?? ('Tahap ' . $nextSt);
+                                ?>
+                                    <button type="button"
+                                        class="btn btn-xs btn-outline-primary btn-block mt-1 font-weight-bold btn-quick-next-stage"
+                                        style="font-size:0.74rem; padding:3px 6px;"
+                                        data-id="<?= $id_enc ?>"
+                                        data-stage="<?= $nextSt ?>"
+                                        data-label="<?= htmlspecialchars($stage_defs[$nextSt]['label']) ?>"
+                                        title="Klik 1x untuk langsung lanjut ke <?= htmlspecialchars($stage_defs[$nextSt]['label']) ?>">
+                                        <i class="fas fa-forward mr-1"></i> Lanjut: <?= $nextSt ?>. <?= htmlspecialchars($nextLabel) ?>
+                                    </button>
+                                <?php else: ?>
+                                    <div class="mt-1 text-center">
+                                        <span class="badge badge-success btn-block py-1" style="font-size:0.73rem;">
+                                            <i class="fas fa-check-double mr-1"></i> Lengkap 9/9 Tahap
+                                        </span>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <div class="small" style="line-height:1.45;">
@@ -532,6 +552,39 @@ foreach ($import_list as $r) {
                 error: function() {
                     alert('Terjadi kesalahan server.');
                     btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan Tracking Import');
+                }
+            });
+        });
+
+        // 1-Klik Lanjut Tahap Berikutnya langsung dari tabel depan
+        $(document).on('click', '.btn-quick-next-stage', function() {
+            var btn = $(this);
+            var idEnc = btn.data('id');
+            var nextStage = btn.data('stage');
+            var nextLabel = btn.data('label');
+
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Memproses...');
+
+            $.ajax({
+                url: '<?= base_url('tracking/update_import_stage') ?>',
+                type: 'POST',
+                data: {
+                    id_import: idEnc,
+                    stage: nextStage,
+                    catatan_log: 'Update cepat 1-klik ke tahapan: ' + nextLabel
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(res.msg || 'Gagal memperbarui tahapan.');
+                        btn.prop('disabled', false).html('<i class="fas fa-forward mr-1"></i> Lanjut Tahap ' + nextStage);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan server.');
+                    btn.prop('disabled', false).html('<i class="fas fa-forward mr-1"></i> Lanjut Tahap ' + nextStage);
                 }
             });
         });

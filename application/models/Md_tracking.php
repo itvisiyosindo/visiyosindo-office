@@ -1510,8 +1510,10 @@ class Md_tracking extends CI_Model
                 }
             }
 
-            // Tentukan Waktu Tahap 2 & Info Forwarder dari Approval Forwarder
+            // Tentukan Waktu Tahap 2, 3, 4 & Info Forwarder dari Approval Forwarder
             $waktu2 = null;
+            $waktu3 = null;
+            $waktu4 = null;
             $moda   = 'Sea Freight (Kapal)';
             $idFw   = null;
             $namaFw = null;
@@ -1529,6 +1531,11 @@ class Md_tracking extends CI_Model
                 $pod    = $matchedAf->pod ?: null;
                 if (stripos((string)$matchedAf->sistem_pengiriman, 'udara') !== false || stripos((string)$matchedAf->sistem_pengiriman, 'air') !== false) {
                     $moda = 'Air Freight (Pesawat)';
+                }
+                // Jika Approval Forwarder sudah Disetujui Direktur (status IN 3, 4), otomatis aktifkan Tahap 3 & 4
+                if (in_array((int)$matchedAf->status, [3, 4])) {
+                    $waktu3 = date('Y-m-d H:i:s', strtotime($waktu2) + 86400);
+                    $waktu4 = date('Y-m-d H:i:s', strtotime($waktu2) + 86400 * 2);
                 }
             }
 
@@ -1556,10 +1563,36 @@ class Md_tracking extends CI_Model
                 $ketPenerimaan = 'Status PO Supplier: Barang Diterima Seluruh di Gudang';
             }
 
+            // Fungsi bantu interpolasi waktu tahapan tengah (2..8) bila Tahap 9 sudah selesai agar timeline tidak bolong
+            $buildInterpolatedMiddleTimes = function ($t1, $t9, $existingObj = null) use ($stage_defs) {
+                $ts1 = strtotime($t1);
+                $ts9 = max($ts1 + 3600, strtotime($t9));
+                $span = $ts9 - $ts1;
+                $ratios = [
+                    2 => 0.10, // Order Forwarder
+                    3 => 0.25, // Loading Kapal
+                    4 => 0.35, // Perjalanan Kapal
+                    5 => 0.65, // Sampai Seaport/Airport
+                    6 => 0.75, // Pembayaran Pajak
+                    7 => 0.85, // Keluar Gudang Port
+                    8 => 0.92, // Hand-over Domestik
+                ];
+                $res = [];
+                foreach ($ratios as $st => $ratio) {
+                    $fld = $stage_defs[$st]['field'];
+                    $curVal = $existingObj ? ($existingObj->$fld ?? null) : null;
+                    if (empty($curVal) || strpos((string)$curVal, '0000-00-00') !== false) {
+                        $res[$fld] = date('Y-m-d H:i:s', (int)round($ts1 + ($span * $ratio)));
+                    }
+                }
+                return $res;
+            };
+
             if (!isset($byPoId[(int)$po->id_po])) {
                 // INSERT OTOMATIS BARU
                 $curStage = 1;
                 if ($waktu2) $curStage = 2;
+                if ($waktu4) $curStage = 4;
                 if ($waktu9) $curStage = 9;
 
                 $kodeImport = $this->generateKodeImport();
@@ -1579,6 +1612,8 @@ class Md_tracking extends CI_Model
                     'bukti_terima_gudang'      => !empty($po->lampiran_adm) ? strip_tags($po->lampiran_adm) : null,
                     'waktu_1_po_manufacture'   => $waktu1,
                     'waktu_2_order_forwarder'  => $waktu2,
+                    'waktu_3_loading_kapal'    => $waktu3,
+                    'waktu_4_perjalanan_kapal' => $waktu4,
                     'waktu_9_sampai_gudang'    => $waktu9,
                     'current_stage'            => $curStage,
                     'keterangan'               => $ketPenerimaan ?: (!empty($po->ket_adm) ? strip_tags($po->ket_adm) : ('Tersinkronisasi otomatis dari PO Supplier ' . $po->kode_po)),
@@ -1587,6 +1622,13 @@ class Md_tracking extends CI_Model
                     'updated_at'               => date('Y-m-d H:i:s'),
                     'stat'                     => 1
                 ];
+
+                if ($waktu9) {
+                    $mid = $buildInterpolatedMiddleTimes($waktu1, $waktu9, (object)$ins);
+                    foreach ($mid as $k => $v) {
+                        $ins[$k] = $v;
+                    }
+                }
 
                 $this->db->insert('tracking_import', $ins);
                 $newId = $this->db->insert_id();
@@ -1639,10 +1681,29 @@ class Md_tracking extends CI_Model
                     if ((int)$ex->current_stage < 2) $upd['current_stage'] = 2;
                 }
 
-                if (empty($ex->waktu_9_sampai_gudang) && $waktu9) {
-                    $upd['waktu_9_sampai_gudang'] = $waktu9;
-                    $upd['nama_gudang_tujuan']    = $gudangTujuan;
-                    $upd['current_stage']         = 9;
+                if (empty($ex->waktu_3_loading_kapal) && $waktu3) {
+                    $upd['waktu_3_loading_kapal'] = $waktu3;
+                    if ((int)$ex->current_stage < 3) $upd['current_stage'] = 3;
+                }
+                if (empty($ex->waktu_4_perjalanan_kapal) && $waktu4) {
+                    $upd['waktu_4_perjalanan_kapal'] = $waktu4;
+                    if ((int)$ex->current_stage < 4) $upd['current_stage'] = 4;
+                }
+
+                $finalWaktu9 = !empty($ex->waktu_9_sampai_gudang) ? $ex->waktu_9_sampai_gudang : $waktu9;
+                if ($finalWaktu9) {
+                    if (empty($ex->waktu_9_sampai_gudang)) {
+                        $upd['waktu_9_sampai_gudang'] = $finalWaktu9;
+                        $upd['nama_gudang_tujuan']    = $gudangTujuan;
+                    }
+                    if ((int)$ex->current_stage < 9) {
+                        $upd['current_stage'] = 9;
+                    }
+                    // Lengkapi otomatis tahapan 2..8 yang masih kosong jika barang sudah sampai gudang (Tahap 9)
+                    $mid = $buildInterpolatedMiddleTimes($ex->waktu_1_po_manufacture ?: $waktu1, $finalWaktu9, $ex);
+                    foreach ($mid as $k => $v) {
+                        $upd[$k] = $v;
+                    }
                 }
 
                 if (!empty($upd)) {
