@@ -2585,4 +2585,410 @@ class Tracking extends CI_Controller
             echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan ke database.']);
         }
     }
+
+    // =========================================================================
+    // SISTEM TRACKING IMPORT (9 TAHAP: PO MANUFACTURE -> GUDANG PUSAT/JKT/JOGJA)
+    // =========================================================================
+
+    public function tracking_import()
+    {
+        grantAccessFor('all');
+
+        $filter_gudang = $this->input->get('gudang', TRUE);
+        $filter_stage  = $this->input->get('stage', TRUE);
+
+        $import_list = $this->md_tracking->getAllTrackingImport($filter_gudang, $filter_stage);
+        $metrics_map = [];
+        foreach ($import_list as $row) {
+            $metrics_map[$row->id_import] = $this->md_tracking->resolveImportMetrics($row);
+        }
+
+        $page_data['switch']           = $this->id_navbar();
+        $page_data['import_list']      = $import_list;
+        $page_data['metrics_map']      = $metrics_map;
+        $page_data['stage_defs']       = $this->md_tracking->getImportStageDefinitions();
+        $page_data['list_po_supplier'] = $this->md_tracking->getAllPoSupplierForImport();
+        $page_data['list_forwarder']   = $this->md_tracking->getAllForwarderMaster();
+        $page_data['list_eks']         = $this->md_tracking->getAllEkspedisi();
+        $page_data['list_gudang']      = $this->md_tracking->getAllGudang();
+        $page_data['filter_gudang']    = $filter_gudang;
+        $page_data['filter_stage']     = $filter_stage;
+        $page_data['page_name']        = 'tracking/v_tracking_import';
+        $page_data['page_title']       = 'Sistem Tracking Import';
+        $page_data['page_desc']        = 'Tracking Import: PO Manufacture → Forwarder → Kapal → Port → Pajak → Ekspedisi Domestik → Gudang VYM';
+
+        $this->load->view('index', $page_data);
+    }
+
+    public function add_import()
+    {
+        grantAccessFor('all');
+
+        $no_po_manufacture = trim((string)$this->input->post('no_po_manufacture', TRUE));
+        $nama_manufacture  = trim((string)$this->input->post('nama_manufacture', TRUE));
+        $daftar_unit       = trim((string)$this->input->post('daftar_unit', TRUE));
+
+        if ($no_po_manufacture === '' || $nama_manufacture === '' || $daftar_unit === '') {
+            ajaxReturnDie('error', 'No. PO Manufacture, Nama Manufacture, dan Daftar Unit wajib diisi!', FALSE);
+            return;
+        }
+
+        $id_forwarder   = $this->input->post('id_forwarder', TRUE) ?: null;
+        $nama_forwarder = trim((string)$this->input->post('nama_forwarder', TRUE));
+        if (!empty($id_forwarder) && $nama_forwarder === '') {
+            $fw = $this->db->get_where('forwarder', ['id' => $id_forwarder])->row();
+            if ($fw) {
+                $nama_forwarder = $fw->nama;
+            }
+        }
+
+        $id_ekspedisi_domestik   = $this->input->post('id_ekspedisi_domestik', TRUE) ?: null;
+        $nama_ekspedisi_domestik = trim((string)$this->input->post('nama_ekspedisi_domestik', TRUE));
+        if (!empty($id_ekspedisi_domestik) && $nama_ekspedisi_domestik === '') {
+            $eks = $this->md_ekspedisi->getById($id_ekspedisi_domestik);
+            if (!empty($eks)) {
+                $nama_ekspedisi_domestik = $eks[0]->nama_ekspedisi;
+            }
+        }
+
+        $current_stage = (int)($this->input->post('current_stage', TRUE) ?: 1);
+        if ($current_stage < 1 || $current_stage > 9) {
+            $current_stage = 1;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $tgl_po_input = $this->input->post('waktu_1_po_manufacture', TRUE);
+        $waktu_po = !empty($tgl_po_input) ? date('Y-m-d H:i:s', strtotime($tgl_po_input)) : $now;
+
+        $kode_import = $this->md_tracking->generateKodeImport();
+        $stage_defs  = $this->md_tracking->getImportStageDefinitions();
+
+        $data = [
+            'kode_import'                => $kode_import,
+            'id_po_supplier'             => $this->input->post('id_po_supplier', TRUE) ?: null,
+            'no_po_manufacture'          => $no_po_manufacture,
+            'nama_manufacture'           => $nama_manufacture,
+            'negara_asal'                => $this->input->post('negara_asal', TRUE) ?: null,
+            'daftar_unit'                => $daftar_unit,
+            'moda_transportasi'          => $this->input->post('moda_transportasi', TRUE) ?: 'Sea Freight (Kapal)',
+            'id_forwarder'               => $id_forwarder,
+            'nama_forwarder'             => $nama_forwarder ?: null,
+            'no_bl_awb'                  => $this->input->post('no_bl_awb', TRUE) ?: null,
+            'nama_kapal_flight'          => $this->input->post('nama_kapal_flight', TRUE) ?: null,
+            'pelabuhan_asal'             => $this->input->post('pelabuhan_asal', TRUE) ?: null,
+            'pelabuhan_tujuan'           => $this->input->post('pelabuhan_tujuan', TRUE) ?: null,
+            'id_ekspedisi_domestik'      => $id_ekspedisi_domestik,
+            'nama_ekspedisi_domestik'    => $nama_ekspedisi_domestik ?: null,
+            'no_resi_domestik'           => $this->input->post('no_resi_domestik', TRUE) ?: null,
+            'nama_gudang_tujuan'         => $this->input->post('nama_gudang_tujuan', TRUE) ?: 'Gudang Pusat',
+            'tgl_estimasi_sampai_port'   => $this->input->post('tgl_estimasi_sampai_port', TRUE) ?: null,
+            'tgl_estimasi_sampai_gudang' => $this->input->post('tgl_estimasi_sampai_gudang', TRUE) ?: null,
+            'waktu_1_po_manufacture'     => $waktu_po,
+            'current_stage'              => $current_stage,
+            'keterangan'                 => $this->input->post('keterangan', TRUE) ?: null,
+            'created_by'                 => sessPenggunaId(),
+            'created_at'                 => $now,
+            'updated_at'                 => $now,
+            'stat'                       => 1
+        ];
+
+        // Jika stage awal langsung > 1, isi otomatis timestamp tahapan sebelumnya
+        for ($s = 2; $s <= $current_stage; $s++) {
+            $field = $stage_defs[$s]['field'];
+            $data[$field] = $now;
+        }
+
+        $this->db->trans_begin();
+        $this->db->insert('tracking_import', $data);
+        $id_import = $this->db->insert_id();
+
+        $this->db->insert('tracking_import_log', [
+            'id_import'       => $id_import,
+            'stage'           => 1,
+            'stage_label'     => $stage_defs[1]['label'],
+            'waktu_milestone' => $waktu_po,
+            'catatan'         => 'Data Tracking Import dibuat (PO Manufacture: ' . $no_po_manufacture . ' - ' . $nama_manufacture . ')',
+            'id_pengguna'     => sessPenggunaId(),
+            'created_at'      => $now
+        ]);
+
+        if ($current_stage > 1) {
+            $this->db->insert('tracking_import_log', [
+                'id_import'       => $id_import,
+                'stage'           => $current_stage,
+                'stage_label'     => $stage_defs[$current_stage]['label'],
+                'waktu_milestone' => $now,
+                'catatan'         => $data['keterangan'] ?: ('Tahapan awal diset pada: ' . $stage_defs[$current_stage]['label']),
+                'id_pengguna'     => sessPenggunaId(),
+                'created_at'      => $now
+            ]);
+        }
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            ajaxReturnDie('error', 'Gagal menyimpan data Tracking Import!', FALSE);
+            return;
+        }
+
+        $this->db->trans_commit();
+        addlog('Tracking Import', 'Menambahkan Tracking Import ' . $kode_import . ' (' . $no_po_manufacture . ')');
+        ajaxReturnDie('success', 'Data Tracking Import (' . $kode_import . ') berhasil ditambahkan!', TRUE);
+    }
+
+    public function detail_import($param1 = null)
+    {
+        grantAccessFor('all');
+
+        if (empty($param1)) {
+            redirect('tracking/tracking_import');
+            return;
+        }
+
+        $id_import = decrypt($param1);
+        $import_row = $this->md_tracking->getTrackingImportById($id_import);
+        if (!$import_row) {
+            $this->session->set_flashdata('error_message', 'Data Tracking Import tidak ditemukan.');
+            redirect('tracking/tracking_import');
+            return;
+        }
+
+        $page_data['switch']         = $this->id_navbar();
+        $page_data['import_row']     = $import_row;
+        $page_data['metrics']        = $this->md_tracking->resolveImportMetrics($import_row);
+        $page_data['logs']           = $this->md_tracking->getTrackingImportLogs($id_import);
+        $page_data['stage_defs']     = $this->md_tracking->getImportStageDefinitions();
+        $page_data['list_forwarder'] = $this->md_tracking->getAllForwarderMaster();
+        $page_data['list_eks']       = $this->md_tracking->getAllEkspedisi();
+        $page_data['page_name']      = 'tracking/v_detail_tracking_import';
+        $page_data['page_title']     = 'Detail Tracking Import - ' . $import_row->kode_import;
+        $page_data['page_desc']      = 'Monitoring 9 Tahapan Import, Pembayaran Pajak PIB & Kecepatan Proses';
+
+        $this->load->view('index', $page_data);
+    }
+
+    public function update_import_stage()
+    {
+        grantAccessFor('all');
+
+        $id_import_enc = $this->input->post('id_import', TRUE);
+        $id_import     = decrypt($id_import_enc);
+        $row           = $this->md_tracking->getTrackingImportById($id_import);
+
+        if (!$row) {
+            ajaxReturnDie('error', 'Data Tracking Import tidak ditemukan!', FALSE);
+            return;
+        }
+
+        $stage = (int)$this->input->post('stage', TRUE);
+        $stage_defs = $this->md_tracking->getImportStageDefinitions();
+        if (!isset($stage_defs[$stage])) {
+            ajaxReturnDie('error', 'Tahapan import tidak valid!', FALSE);
+            return;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $update = [
+            'current_stage' => max((int)$row->current_stage, $stage),
+            'updated_at'    => $now
+        ];
+
+        // Catat otomatis waktu tahapan jika belum terisi (atau tahapan yang sedang diupdate)
+        $target_field = $stage_defs[$stage]['field'];
+        if (empty($row->$target_field) || strpos((string)$row->$target_field, '0000-00-00') !== false) {
+            $update[$target_field] = $now;
+        }
+        // Pastikan tahapan sebelumnya yang terlewati ikut tercatat waktunya agar SLA timeline tidak bolong
+        for ($s = 1; $s < $stage; $s++) {
+            $f = $stage_defs[$s]['field'];
+            if (empty($row->$f) && empty($update[$f])) {
+                $update[$f] = $now;
+            }
+        }
+
+        // Update field informasi logistik/pajak/domestik bila dikirimkan dari form
+        $optional_fields = [
+            'no_po_manufacture', 'nama_manufacture', 'negara_asal', 'daftar_unit',
+            'moda_transportasi', 'nama_forwarder', 'no_bl_awb', 'nama_kapal_flight',
+            'pelabuhan_asal', 'pelabuhan_tujuan', 'no_pib', 'bukti_bayar_pajak',
+            'nama_ekspedisi_domestik', 'no_resi_domestik', 'nama_gudang_tujuan',
+            'pic_penerima_gudang', 'bukti_terima_gudang',
+            'tgl_estimasi_sampai_port', 'tgl_estimasi_sampai_gudang', 'keterangan'
+        ];
+
+        foreach ($optional_fields as $fld) {
+            $val = $this->input->post($fld, TRUE);
+            if ($val !== null && trim((string)$val) !== '') {
+                $update[$fld] = trim((string)$val);
+            }
+        }
+
+        $nominal_pajak = $this->input->post('nominal_pajak_import', TRUE);
+        if ($nominal_pajak !== null && trim((string)$nominal_pajak) !== '') {
+            $clean_nominal = preg_replace('/[^0-9.]/', '', str_replace(',', '', (string)$nominal_pajak));
+            $update['nominal_pajak_import'] = (float)$clean_nominal;
+        }
+
+        $id_forwarder = $this->input->post('id_forwarder', TRUE);
+        if (!empty($id_forwarder)) {
+            $update['id_forwarder'] = (int)$id_forwarder;
+            if (empty($update['nama_forwarder'])) {
+                $fw = $this->db->get_where('forwarder', ['id' => $id_forwarder])->row();
+                if ($fw) $update['nama_forwarder'] = $fw->nama;
+            }
+        }
+
+        $id_eks_dom = $this->input->post('id_ekspedisi_domestik', TRUE);
+        if (!empty($id_eks_dom)) {
+            $update['id_ekspedisi_domestik'] = (int)$id_eks_dom;
+            if (empty($update['nama_ekspedisi_domestik'])) {
+                $eks = $this->md_ekspedisi->getById($id_eks_dom);
+                if (!empty($eks)) $update['nama_ekspedisi_domestik'] = $eks[0]->nama_ekspedisi;
+            }
+        }
+
+        $catatan    = trim((string)$this->input->post('catatan_log', TRUE));
+        $bukti_link = trim((string)$this->input->post('bukti_link', TRUE));
+
+        if ($stage == 6 && empty($bukti_link) && !empty($update['bukti_bayar_pajak'])) {
+            $bukti_link = $update['bukti_bayar_pajak'];
+        }
+        if ($stage == 9 && empty($bukti_link) && !empty($update['bukti_terima_gudang'])) {
+            $bukti_link = $update['bukti_terima_gudang'];
+        }
+
+        $this->db->trans_begin();
+        $this->db->where('id_import', $id_import)->update('tracking_import', $update);
+
+        $this->db->insert('tracking_import_log', [
+            'id_import'       => $id_import,
+            'stage'           => $stage,
+            'stage_label'     => $stage_defs[$stage]['label'],
+            'waktu_milestone' => $now,
+            'catatan'         => $catatan !== '' ? $catatan : ('Update tahapan ke: ' . $stage_defs[$stage]['label']),
+            'bukti_link'      => $bukti_link !== '' ? $bukti_link : null,
+            'id_pengguna'     => sessPenggunaId(),
+            'created_at'      => $now
+        ]);
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            ajaxReturnDie('error', 'Gagal memperbarui tahapan Tracking Import!', FALSE);
+            return;
+        }
+
+        $this->db->trans_commit();
+        addlog('Tracking Import', 'Update tahapan ' . $row->kode_import . ' -> ' . $stage_defs[$stage]['label']);
+        ajaxReturnDie('success', 'Tahapan "' . $stage_defs[$stage]['label'] . '" berhasil disimpan!', TRUE);
+    }
+
+    public function delete_import($param1 = null)
+    {
+        grantAccessFor('all');
+
+        $id_import = decrypt($param1);
+        if (empty($id_import)) {
+            ajaxReturnDie('error', 'ID Tracking Import tidak valid!', FALSE);
+            return;
+        }
+
+        $this->db->where('id_import', $id_import)->update('tracking_import', ['stat' => 0]);
+        addlog('Tracking Import', 'Menghapus data Tracking Import ID: ' . $id_import);
+        ajaxReturnDie('success', 'Data Tracking Import berhasil dihapus', TRUE);
+    }
+
+    public function export_import()
+    {
+        grantAccessFor('all');
+
+        $filter_gudang = $this->input->get('gudang', TRUE);
+        $filter_stage  = $this->input->get('stage', TRUE);
+        $rows          = $this->md_tracking->getAllTrackingImport($filter_gudang, $filter_stage);
+        $stage_defs    = $this->md_tracking->getImportStageDefinitions();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Tracking Import');
+
+        $headers = [
+            'A' => 'No',
+            'B' => 'Kode Import',
+            'C' => 'No. PO Manufacture',
+            'D' => 'Manufacture & Negara Asal',
+            'E' => 'Daftar Unit / Barang',
+            'F' => 'Moda & Forwarder',
+            'G' => 'No. B/L / AWB & Kapal/Flight',
+            'H' => 'No. PIB & Pajak Impor (Rp)',
+            'I' => 'Ekspedisi Domestik & No. Resi',
+            'J' => 'Gudang Tujuan & PIC Penerima',
+            'K' => 'Tahapan Saat Ini',
+            'L' => '1. Waktu PO Manufacture',
+            'M' => '2. Waktu Order Forwarder',
+            'N' => '3. Waktu Loading Kapal',
+            'O' => '4. Waktu Perjalanan Kapal',
+            'P' => '5. Waktu Sampai Seaport/Airport',
+            'Q' => '6. Waktu Pembayaran Pajak',
+            'R' => '7. Waktu Keluar Gudang Port',
+            'S' => '8. Waktu Hand-over Domestik',
+            'T' => '9. Waktu Sampai Gudang VYM',
+            'U' => 'Durasi Origin (PO -> Loading)',
+            'V' => 'Durasi Freight (Loading -> Port)',
+            'W' => 'Durasi Pajak & Clearance (Port -> Keluar Port)',
+            'X' => 'Durasi Domestik (Keluar Port -> Gudang)',
+            'Y' => 'Total Lead Time Import',
+            'Z' => 'Ketepatan Estimasi Gudang'
+        ];
+
+        foreach ($headers as $col => $text) {
+            $sheet->setCellValue($col . '1', $text);
+        }
+        $sheet->getStyle('A1:Z1')->getFont()->setBold(true);
+
+        $r = 2;
+        $no = 1;
+        foreach ($rows as $item) {
+            $m = $this->md_tracking->resolveImportMetrics($item);
+            $curStageLabel = $stage_defs[$item->current_stage]['label'] ?? ('Tahap ' . $item->current_stage);
+
+            $sheet->setCellValue('A' . $r, $no++);
+            $sheet->setCellValue('B' . $r, $item->kode_import);
+            $sheet->setCellValue('C' . $r, $item->no_po_manufacture);
+            $sheet->setCellValue('D' . $r, $item->nama_manufacture . ($item->negara_asal ? ' (' . $item->negara_asal . ')' : ''));
+            $sheet->setCellValue('E' . $r, $item->daftar_unit);
+            $sheet->setCellValue('F' . $r, ($item->moda_transportasi ?: '-') . ' / ' . ($item->nama_forwarder ?: '-'));
+            $sheet->setCellValue('G' . $r, ($item->no_bl_awb ?: '-') . ' / ' . ($item->nama_kapal_flight ?: '-'));
+            $sheet->setCellValue('H' . $r, ($item->no_pib ?: '-') . ' / Rp ' . number_format((float)$item->nominal_pajak_import, 0, ',', '.'));
+            $sheet->setCellValue('I' . $r, ($item->nama_ekspedisi_domestik ?: '-') . ' / ' . ($item->no_resi_domestik ?: '-'));
+            $sheet->setCellValue('J' . $r, ($item->nama_gudang_tujuan ?: '-') . ($item->pic_penerima_gudang ? ' (' . $item->pic_penerima_gudang . ')' : ''));
+            $sheet->setCellValue('K' . $r, $curStageLabel);
+            $sheet->setCellValue('L' . $r, $m['times'][1] ?: '-');
+            $sheet->setCellValue('M' . $r, $m['times'][2] ?: '-');
+            $sheet->setCellValue('N' . $r, $m['times'][3] ?: '-');
+            $sheet->setCellValue('O' . $r, $m['times'][4] ?: '-');
+            $sheet->setCellValue('P' . $r, $m['times'][5] ?: '-');
+            $sheet->setCellValue('Q' . $r, $m['times'][6] ?: '-');
+            $sheet->setCellValue('R' . $r, $m['times'][7] ?: '-');
+            $sheet->setCellValue('S' . $r, $m['times'][8] ?: '-');
+            $sheet->setCellValue('T' . $r, $m['times'][9] ?: '-');
+            $sheet->setCellValue('U' . $r, $m['dur_origin']['valid'] ? $m['dur_origin']['text'] : '-');
+            $sheet->setCellValue('V' . $r, $m['dur_freight']['valid'] ? $m['dur_freight']['text'] : '-');
+            $sheet->setCellValue('W' . $r, $m['dur_customs']['valid'] ? $m['dur_customs']['text'] : '-');
+            $sheet->setCellValue('X' . $r, $m['dur_domestik']['valid'] ? $m['dur_domestik']['text'] : '-');
+            $sheet->setCellValue('Y' . $r, $m['dur_total']['valid'] ? $m['dur_total']['text'] : '-');
+            $sheet->setCellValue('Z' . $r, $m['ketepatan']['label']);
+            $r++;
+        }
+
+        foreach (range('A', 'Z') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'Tracking_Import_' . date('Ymd_His') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
 }

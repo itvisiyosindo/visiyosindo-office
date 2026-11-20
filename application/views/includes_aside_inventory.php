@@ -352,7 +352,7 @@
 
 
           <li
-            class="nav-parent <?= in_array($page_name, ['v_ekspedisi', 'tracking/v_tracking', 'tracking/v_tracking_dokumen', 'tracking/v_tracking_dokumen_new', 'tracking/v_tracking_dokumen_manage', 'tracking/v_detail_tracking']) ? 'nav-active nav-expanded' : ''; ?>">
+            class="nav-parent <?= in_array($page_name, ['v_ekspedisi', 'tracking/v_tracking', 'tracking/v_tracking_import', 'tracking/v_detail_tracking_import', 'tracking/v_tracking_dokumen', 'tracking/v_tracking_dokumen_new', 'tracking/v_tracking_dokumen_manage', 'tracking/v_detail_tracking']) ? 'nav-active nav-expanded' : ''; ?>">
             <a class="nav-link" href="#">
               <i class="fas fa-shipping-fast" aria-hidden="true"></i>
               <span>Tracking Barang & Dokumen</span>
@@ -364,9 +364,15 @@
                 </a>
               </li>
               <li
-                class="<?= $page_name == 'tracking/v_tracking' ? 'nav-active' : '' ?>">
+                class="<?= in_array($page_name, ['tracking/v_tracking', 'tracking/v_detail_tracking']) ? 'nav-active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('tracking') ?>">
                   Data Tracking Barang
+                </a>
+              </li>
+              <li
+                class="<?= in_array($page_name, ['tracking/v_tracking_import', 'tracking/v_detail_tracking_import']) ? 'nav-active' : '' ?>">
+                <a class="nav-link" href="<?= base_url('tracking/tracking_import') ?>">
+                  Sistem Tracking Import
                 </a>
               </li>
               <li

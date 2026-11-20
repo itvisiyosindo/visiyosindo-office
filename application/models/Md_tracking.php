@@ -35,6 +35,69 @@ class Md_tracking extends CI_Model
                 @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_loading_handover` DATETIME NULL DEFAULT NULL AFTER `waktu_packaging`");
             }
         }
+
+        if (!$this->db->table_exists('tracking_import')) {
+            @$this->db->query("CREATE TABLE IF NOT EXISTS `tracking_import` (
+                `id_import` INT(11) NOT NULL AUTO_INCREMENT,
+                `kode_import` VARCHAR(50) NOT NULL,
+                `id_po_supplier` INT(11) NULL DEFAULT NULL,
+                `no_po_manufacture` VARCHAR(100) NOT NULL,
+                `nama_manufacture` VARCHAR(255) NOT NULL,
+                `negara_asal` VARCHAR(100) NULL DEFAULT NULL,
+                `daftar_unit` TEXT NOT NULL,
+                `moda_transportasi` VARCHAR(50) DEFAULT 'Sea Freight (Kapal)',
+                `id_forwarder` INT(11) NULL DEFAULT NULL,
+                `nama_forwarder` VARCHAR(200) NULL DEFAULT NULL,
+                `no_bl_awb` VARCHAR(100) NULL DEFAULT NULL,
+                `nama_kapal_flight` VARCHAR(150) NULL DEFAULT NULL,
+                `pelabuhan_asal` VARCHAR(150) NULL DEFAULT NULL,
+                `pelabuhan_tujuan` VARCHAR(150) NULL DEFAULT NULL,
+                `no_pib` VARCHAR(100) NULL DEFAULT NULL,
+                `nominal_pajak_import` DECIMAL(18,2) DEFAULT 0.00,
+                `bukti_bayar_pajak` TEXT NULL DEFAULT NULL,
+                `id_ekspedisi_domestik` INT(11) NULL DEFAULT NULL,
+                `nama_ekspedisi_domestik` VARCHAR(200) NULL DEFAULT NULL,
+                `no_resi_domestik` VARCHAR(100) NULL DEFAULT NULL,
+                `id_gudang_tujuan` INT(11) NULL DEFAULT NULL,
+                `nama_gudang_tujuan` VARCHAR(150) DEFAULT 'Gudang Pusat',
+                `pic_penerima_gudang` VARCHAR(150) NULL DEFAULT NULL,
+                `bukti_terima_gudang` TEXT NULL DEFAULT NULL,
+                `tgl_estimasi_sampai_port` DATE NULL DEFAULT NULL,
+                `tgl_estimasi_sampai_gudang` DATE NULL DEFAULT NULL,
+                `waktu_1_po_manufacture` DATETIME NULL DEFAULT NULL,
+                `waktu_2_order_forwarder` DATETIME NULL DEFAULT NULL,
+                `waktu_3_loading_kapal` DATETIME NULL DEFAULT NULL,
+                `waktu_4_perjalanan_kapal` DATETIME NULL DEFAULT NULL,
+                `waktu_5_sampai_port` DATETIME NULL DEFAULT NULL,
+                `waktu_6_bayar_pajak` DATETIME NULL DEFAULT NULL,
+                `waktu_7_keluar_port` DATETIME NULL DEFAULT NULL,
+                `waktu_8_handover_domestik` DATETIME NULL DEFAULT NULL,
+                `waktu_9_sampai_gudang` DATETIME NULL DEFAULT NULL,
+                `current_stage` INT(11) DEFAULT 1,
+                `keterangan` TEXT NULL DEFAULT NULL,
+                `created_by` INT(11) NULL DEFAULT NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME NULL DEFAULT NULL,
+                `stat` TINYINT(1) DEFAULT 1,
+                PRIMARY KEY (`id_import`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+
+        if (!$this->db->table_exists('tracking_import_log')) {
+            @$this->db->query("CREATE TABLE IF NOT EXISTS `tracking_import_log` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `id_import` INT(11) NOT NULL,
+                `stage` INT(11) NOT NULL,
+                `stage_label` VARCHAR(150) NOT NULL,
+                `waktu_milestone` DATETIME NOT NULL,
+                `catatan` TEXT NULL DEFAULT NULL,
+                `bukti_link` TEXT NULL DEFAULT NULL,
+                `id_pengguna` INT(11) NULL DEFAULT NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `idx_id_import` (`id_import`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
     }
 
     function add($data)
@@ -1195,5 +1258,263 @@ class Md_tracking extends CI_Model
         }
 
         return $this->db->affected_rows() > 0;
+    }
+
+    // =========================================================================
+    // SISTEM TRACKING IMPORT (9 TAHAP: PO MANUFACTURE -> GUDANG PUSAT/JKT/JOGJA)
+    // =========================================================================
+
+    public function getImportStageDefinitions()
+    {
+        return [
+            1 => [
+                'field' => 'waktu_1_po_manufacture',
+                'label' => '1. PO ke Manufacture',
+                'role'  => 'Purchasing / Pengadaan Import',
+                'short' => 'PO Manufacture'
+            ],
+            2 => [
+                'field' => 'waktu_2_order_forwarder',
+                'label' => '2. Order Ekspedisi / Forwarder',
+                'role'  => 'Booking Space & AWB / B/L',
+                'short' => 'Order Forwarder'
+            ],
+            3 => [
+                'field' => 'waktu_3_loading_kapal',
+                'label' => '3. Unit Loading Kapal / Pesawat',
+                'role'  => 'Port of Loading (Origin)',
+                'short' => 'Loading Kapal'
+            ],
+            4 => [
+                'field' => 'waktu_4_perjalanan_kapal',
+                'label' => '4. Perjalanan Kapal / Pesawat',
+                'role'  => 'In Transit Internasional',
+                'short' => 'Perjalanan Kapal'
+            ],
+            5 => [
+                'field' => 'waktu_5_sampai_port',
+                'label' => '5. Sampai Seaport / Airport',
+                'role'  => 'Port of Discharge (Indonesia)',
+                'short' => 'Sampai Seaport/Airport'
+            ],
+            6 => [
+                'field' => 'waktu_6_bayar_pajak',
+                'label' => '6. Pembayaran Pajak & Bea Cukai',
+                'role'  => 'PIB, Bea Masuk, PPN & PPh Impor',
+                'short' => 'Pembayaran Pajak'
+            ],
+            7 => [
+                'field' => 'waktu_7_keluar_port',
+                'label' => '7. Keluar Gudang Seaport / Airport',
+                'role'  => 'SPPB / Custom Clearance Release',
+                'short' => 'Keluar Seaport/Airport'
+            ],
+            8 => [
+                'field' => 'waktu_8_handover_domestik',
+                'label' => '8. Hand-over Ekspedisi Domestik / Lokal',
+                'role'  => 'Pengiriman Lokal ke Gudang VYM',
+                'short' => 'Hand-over Domestik'
+            ],
+            9 => [
+                'field' => 'waktu_9_sampai_gudang',
+                'label' => '9. Sampai Gudang Pusat / Jakarta / Jogja',
+                'role'  => 'Penerimaan & QC Warehouse VYM',
+                'short' => 'Sampai Gudang VYM'
+            ]
+        ];
+    }
+
+    public function generateKodeImport()
+    {
+        $prefix = 'IMP-' . date('Ym') . '-';
+        $this->db->select('kode_import');
+        $this->db->like('kode_import', $prefix, 'after');
+        $this->db->order_by('id_import', 'DESC');
+        $this->db->limit(1);
+        $last = $this->db->get('tracking_import')->row();
+
+        if ($last && !empty($last->kode_import)) {
+            $parts = explode('-', $last->kode_import);
+            $num = (int)end($parts) + 1;
+        } else {
+            $num = 1;
+        }
+        return $prefix . sprintf('%03d', $num);
+    }
+
+    public function getAllPoSupplierForImport()
+    {
+        if (!$this->db->table_exists('purchase_order')) {
+            return [];
+        }
+        $sql = "SELECT 
+                    po.id as id_po,
+                    po.kode_po,
+                    po.no_po,
+                    po.tgl_pengajuan,
+                    (SELECT pod.supplier FROM purchase_order_detail pod WHERE pod.id_po = po.id AND pod.supplier IS NOT NULL AND pod.supplier != '' LIMIT 1) as supplier,
+                    (SELECT GROUP_CONCAT(CONCAT(pod.nama_barang, ' (', COALESCE(pod.rencana_po, pod.kebutuhan_po, '1'), ')') SEPARATOR ', ') FROM purchase_order_detail pod WHERE pod.id_po = po.id) as items_summary
+                FROM purchase_order po
+                WHERE po.status != 5
+                ORDER BY po.id DESC
+                LIMIT 150";
+        return $this->db->query($sql)->result();
+    }
+
+    public function getAllForwarderMaster()
+    {
+        if (!$this->db->table_exists('forwarder')) {
+            return [];
+        }
+        return $this->db->where('status', 1)->order_by('nama', 'ASC')->get('forwarder')->result();
+    }
+
+    public function getAllTrackingImport($filter_gudang = null, $filter_stage = null)
+    {
+        $this->db->select('ti.*, u.nama as nama_pembuat');
+        $this->db->from('tracking_import ti');
+        $this->db->join('pengguna u', 'ti.created_by = u.pengguna_id', 'left');
+        $this->db->where('ti.stat', 1);
+
+        if (!empty($filter_gudang)) {
+            $this->db->where('ti.nama_gudang_tujuan', $filter_gudang);
+        }
+        if (!empty($filter_stage)) {
+            $this->db->where('ti.current_stage', (int)$filter_stage);
+        }
+
+        $this->db->order_by('ti.id_import', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    public function getTrackingImportById($id_import)
+    {
+        $this->db->select('ti.*, u.nama as nama_pembuat');
+        $this->db->from('tracking_import ti');
+        $this->db->join('pengguna u', 'ti.created_by = u.pengguna_id', 'left');
+        $this->db->where('ti.id_import', $id_import);
+        $this->db->where('ti.stat', 1);
+        return $this->db->get()->row();
+    }
+
+    public function getTrackingImportLogs($id_import)
+    {
+        $this->db->select('l.*, p.nama as nama_pengguna');
+        $this->db->from('tracking_import_log l');
+        $this->db->join('pengguna p', 'l.id_pengguna = p.pengguna_id', 'left');
+        $this->db->where('l.id_import', $id_import);
+        $this->db->order_by('l.waktu_milestone', 'DESC');
+        $this->db->order_by('l.id', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    public function resolveImportMetrics($row)
+    {
+        $defs = $this->getImportStageDefinitions();
+        $cleanDt = function ($dt) {
+            if (empty($dt)) return null;
+            $s = trim((string)$dt);
+            if ($s === '' || strpos($s, '0000-00-00') !== false) return null;
+            return $s;
+        };
+
+        $calcDur = function ($start, $end) {
+            if (function_exists('formatApprovalDurationInfo')) {
+                return formatApprovalDurationInfo($start, $end, false);
+            }
+            return ['valid' => false, 'text' => '-', 'tier' => 'none', 'label_tier' => ''];
+        };
+
+        $times = [];
+        foreach ($defs as $num => $d) {
+            $field = $d['field'];
+            $times[$num] = $cleanDt($row->$field ?? null);
+        }
+
+        $stepDurations = [];
+        $prevTime = $times[1];
+        for ($i = 2; $i <= 9; $i++) {
+            $curTime = $times[$i];
+            $stepDurations[$i] = ($prevTime && $curTime) ? $calcDur($prevTime, $curTime) : $calcDur(null, null);
+            if ($curTime) {
+                $prevTime = $curTime;
+            }
+        }
+
+        // Ringkasan 4 Segmen Utama Import
+        // 1. Produksi & Origin (PO Manufacture -> Loading Kapal)
+        $durOrigin   = ($times[1] && $times[3]) ? $calcDur($times[1], $times[3]) : $calcDur(null, null);
+        // 2. Freight Transit (Loading Kapal -> Sampai Seaport/Airport)
+        $durFreight  = ($times[3] && $times[5]) ? $calcDur($times[3], $times[5]) : $calcDur(null, null);
+        // 3. Pajak & Customs Clearance (Sampai Seaport/Airport -> Keluar Gudang Seaport/Airport)
+        $durCustoms  = ($times[5] && $times[7]) ? $calcDur($times[5], $times[7]) : $calcDur(null, null);
+        // 4. Domestik ke Gudang VYM (Keluar Seaport/Airport -> Sampai Gudang Pusat/JKT/Jogja)
+        $durDomestik = ($times[7] && $times[9]) ? $calcDur($times[7], $times[9]) : $calcDur(null, null);
+        // 5. Total End-to-End Import (PO Manufacture -> Sampai Gudang VYM)
+        $durTotal    = ($times[1] && $times[9]) ? $calcDur($times[1], $times[9]) : $calcDur(null, null);
+
+        // Ketepatan Pengiriman Import (Estimasi Sampai Gudang vs Aktual Sampai Gudang)
+        $estGudang = $cleanDt($row->tgl_estimasi_sampai_gudang ?? null);
+        $actGudang = $times[9] ? date('Y-m-d', strtotime($times[9])) : null;
+
+        $ketepatan = [
+            'label'      => 'Estimasi Belum Diisi',
+            'badge_bg'   => '#f1f5f9',
+            'badge_text' => '#64748b',
+            'badge_bdr'  => '#cbd5e1',
+            'icon'       => 'fa-clock'
+        ];
+
+        if ($estGudang) {
+            if ($actGudang) {
+                $diffDays = (int)floor((strtotime($actGudang) - strtotime($estGudang)) / 86400);
+                if ($diffDays <= 0) {
+                    $ketepatan['label']      = ($diffDays < 0) ? ('Tepat Waktu (' . abs($diffDays) . ' Hr Lebih Cepat)') : 'Tepat Waktu (On-Time)';
+                    $ketepatan['badge_bg']   = '#dcfce7';
+                    $ketepatan['badge_text'] = '#166534';
+                    $ketepatan['badge_bdr']  = '#86efac';
+                    $ketepatan['icon']       = 'fa-check-circle';
+                } else {
+                    $ketepatan['label']      = 'Terlambat ' . $diffDays . ' Hari';
+                    $ketepatan['badge_bg']   = '#fee2e2';
+                    $ketepatan['badge_text'] = '#991b1b';
+                    $ketepatan['badge_bdr']  = '#fca5a5';
+                    $ketepatan['icon']       = 'fa-exclamation-triangle';
+                }
+            } else {
+                $diffDays = (int)floor((strtotime(date('Y-m-d')) - strtotime($estGudang)) / 86400);
+                if ($diffDays > 0) {
+                    $ketepatan['label']      = 'Melewati Estimasi ' . $diffDays . ' Hari';
+                    $ketepatan['badge_bg']   = '#fef3c7';
+                    $ketepatan['badge_text'] = '#92400e';
+                    $ketepatan['badge_bdr']  = '#fcd34d';
+                    $ketepatan['icon']       = 'fa-exclamation-circle';
+                } else {
+                    $ketepatan['label']      = 'Dalam Jadwal (H-' . abs($diffDays) . ')';
+                    $ketepatan['badge_bg']   = '#e0f2fe';
+                    $ketepatan['badge_text'] = '#0369a1';
+                    $ketepatan['badge_bdr']  = '#bae6fd';
+                    $ketepatan['icon']       = 'fa-ship';
+                }
+            }
+        }
+
+        $completedCount = 0;
+        foreach ($times as $t) {
+            if (!empty($t)) $completedCount++;
+        }
+
+        return [
+            'times'          => $times,
+            'step_durations' => $stepDurations,
+            'dur_origin'     => $durOrigin,
+            'dur_freight'    => $durFreight,
+            'dur_customs'    => $durCustoms,
+            'dur_domestik'   => $durDomestik,
+            'dur_total'      => $durTotal,
+            'ketepatan'      => $ketepatan,
+            'completed_cnt'  => $completedCount,
+            'progress_pct'   => (int)round(($completedCount / 9) * 100)
+        ];
     }
 }
