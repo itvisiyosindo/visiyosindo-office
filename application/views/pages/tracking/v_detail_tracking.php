@@ -86,17 +86,25 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
                     'prev_timestamp' => $sla['waktu_cetak_sj']
                 ],
                 [
-                    'label'          => '3. Loading / Hand-over Ekspedisi',
-                    'approver'       => !empty($trRow->no_resi) ? ('Resi: ' . $trRow->no_resi) : (!empty($trRow->nama_ekspedisi) ? $trRow->nama_ekspedisi : 'Serah Terima Kurir'),
-                    'role'           => 'Kecepatan Order Ekspedisi ➔ Loading/Hand-over',
-                    'status'         => !empty($sla['waktu_loading']) ? 'approved' : (!empty($sla['waktu_order_eks']) ? 'pending' : 'waiting_prev'),
-                    'timestamp'      => $sla['waktu_loading'],
+                    'label'          => '3. Packaging Barang',
+                    'approver'       => 'Tim Packaging & QC Gudang',
+                    'role'           => 'Kecepatan Order Ekspedisi ➔ Packaging',
+                    'status'         => !empty($sla['waktu_packaging']) ? 'approved' : (!empty($sla['waktu_order_eks']) ? 'pending' : 'waiting_prev'),
+                    'timestamp'      => $sla['waktu_packaging'],
                     'prev_timestamp' => $sla['waktu_order_eks'] ?: $sla['waktu_cetak_sj']
+                ],
+                [
+                    'label'          => '4. Loading / Hand-over Ekspedisi',
+                    'approver'       => !empty($trRow->no_resi) ? ('Resi: ' . $trRow->no_resi) : (!empty($trRow->nama_ekspedisi) ? $trRow->nama_ekspedisi : 'Serah Terima Kurir'),
+                    'role'           => 'Kecepatan Packaging ➔ Loading/Hand-over',
+                    'status'         => !empty($sla['waktu_loading']) ? 'approved' : (!empty($sla['waktu_packaging']) ? 'pending' : 'waiting_prev'),
+                    'timestamp'      => $sla['waktu_loading'],
+                    'prev_timestamp' => $sla['waktu_packaging'] ?: ($sla['waktu_order_eks'] ?: $sla['waktu_cetak_sj'])
                 ]
             ];
 
             echo renderApprovalTimelineBar(
-                'Tracking Kecepatan Warehouse (PO Diterima CRO ➔ Cetak SJ ➔ Order Ekspedisi ➔ Loading / Hand-over)',
+                'Tracking Kecepatan Warehouse (PO Diterima CRO ➔ Cetak SJ ➔ Order Ekspedisi ➔ Packaging ➔ Loading / Hand-over)',
                 $whStages,
                 $sla['waktu_po_cro'] ?: $sla['waktu_cetak_sj'],
                 !empty($sla['no_po']) ? ('PO Diterima dari CRO (' . $sla['no_po'] . ')') : 'PO Diterima dari CRO / Dokumen Awal'
@@ -104,58 +112,114 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
         }
         ?>
 
-        <!-- RINGKASAN NILAI KECEPATAN WAREHOUSE (CETAK SJ -> ORDER EKSPEDISI & LOADING/HAND-OVER) -->
+        <!-- RINGKASAN NILAI KECEPATAN PROSES, KETEPATAN PENGIRIMAN & SOP WAREHOUSE -->
         <div class="mb-4 p-3 rounded shadow-sm" style="background: #f8fafc; border: 1px solid #cbd5e1;">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
                 <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">
-                    <i class="fas fa-tachometer-alt text-primary mr-1"></i> Nilai Kecepatan Proses Warehouse (Standar Indikator SLA)
+                    <i class="fas fa-tachometer-alt text-primary mr-1"></i> Nilai Kecepatan Proses, Ketepatan Pengiriman & Kepatuhan SOP Warehouse
                 </div>
+                <?php $sop = $sla['sop']; ?>
+                <span class="badge px-2 py-1" style="background:<?= $sop['badge_bg'] ?>; color:<?= $sop['badge_text'] ?>; border:1px solid <?= $sop['badge_bdr'] ?>; font-size:0.8rem;">
+                    <i class="fas fa-clipboard-check mr-1"></i><?= htmlspecialchars($sop['label']) ?>
+                </span>
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-2 mb-md-0">
+                <div class="col-md-3 mb-2">
                     <div class="p-2 rounded bg-white border h-100">
                         <div class="small text-muted font-weight-bold">1. Cetak SJ ➔ Order Ekspedisi</div>
                         <?php $d1 = $sla['dur_sj_to_order']; ?>
                         <?php if (!empty($d1['valid'])): ?>
                             <div class="mt-1">
-                                <span class="badge px-2 py-1" style="background:<?= $d1['badge_bg'] ?>; color:<?= $d1['badge_text'] ?>; border:1px solid <?= $d1['badge_bdr'] ?>; font-size:0.85rem;">
+                                <span class="badge px-2 py-1" style="background:<?= $d1['badge_bg'] ?>; color:<?= $d1['badge_text'] ?>; border:1px solid <?= $d1['badge_bdr'] ?>; font-size:0.82rem;">
                                     <i class="fas <?= $d1['icon'] ?> mr-1"></i><?= htmlspecialchars($d1['text']) ?> (<?= $d1['label_tier'] ?>)
                                 </span>
                             </div>
                         <?php else: ?>
-                            <div class="mt-1 text-muted small"><i>Menunggu waktu Cetak SJ / Order Ekspedisi</i></div>
+                            <div class="mt-1 text-muted small"><i>Menunggu Order Ekspedisi</i></div>
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="col-md-4 mb-2 mb-md-0">
+                <div class="col-md-3 mb-2">
                     <div class="p-2 rounded bg-white border h-100">
-                        <div class="small text-muted font-weight-bold">2. Order Ekspedisi ➔ Loading / Hand-over</div>
-                        <?php $d2 = $sla['dur_order_to_load']; ?>
+                        <div class="small text-muted font-weight-bold">2. Order Ekspedisi ➔ Packaging</div>
+                        <?php $dPack = $sla['dur_order_to_pack']; ?>
+                        <?php if (!empty($dPack['valid'])): ?>
+                            <div class="mt-1">
+                                <span class="badge px-2 py-1" style="background:<?= $dPack['badge_bg'] ?>; color:<?= $dPack['badge_text'] ?>; border:1px solid <?= $dPack['badge_bdr'] ?>; font-size:0.82rem;">
+                                    <i class="fas <?= $dPack['icon'] ?> mr-1"></i><?= htmlspecialchars($dPack['text']) ?> (<?= $dPack['label_tier'] ?>)
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <div class="mt-1 text-muted small"><i>Menunggu Packaging</i></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted font-weight-bold">3. Packaging ➔ Loading / Hand-over</div>
+                        <?php $d2 = $sla['dur_pack_to_load']; ?>
                         <?php if (!empty($d2['valid'])): ?>
                             <div class="mt-1">
-                                <span class="badge px-2 py-1" style="background:<?= $d2['badge_bg'] ?>; color:<?= $d2['badge_text'] ?>; border:1px solid <?= $d2['badge_bdr'] ?>; font-size:0.85rem;">
+                                <span class="badge px-2 py-1" style="background:<?= $d2['badge_bg'] ?>; color:<?= $d2['badge_text'] ?>; border:1px solid <?= $d2['badge_bdr'] ?>; font-size:0.82rem;">
                                     <i class="fas <?= $d2['icon'] ?> mr-1"></i><?= htmlspecialchars($d2['text']) ?> (<?= $d2['label_tier'] ?>)
                                 </span>
                             </div>
                         <?php else: ?>
-                            <div class="mt-1 text-muted small"><i>Menunggu Loading / Hand-over ke Ekspedisi</i></div>
+                            <div class="mt-1 text-muted small"><i>Menunggu Loading / Hand-over</i></div>
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3 mb-2">
                     <div class="p-2 rounded bg-white border h-100">
-                        <div class="small text-muted font-weight-bold">3. Total Cetak SJ ➔ Loading / Hand-over</div>
+                        <div class="small text-muted font-weight-bold">4. Total Cetak SJ ➔ Loading</div>
                         <?php $d3 = $sla['dur_sj_to_load']; ?>
                         <?php if (!empty($d3['valid'])): ?>
                             <div class="mt-1">
-                                <span class="badge px-2 py-1" style="background:<?= $d3['badge_bg'] ?>; color:<?= $d3['badge_text'] ?>; border:1px solid <?= $d3['badge_bdr'] ?>; font-size:0.85rem;">
+                                <span class="badge px-2 py-1" style="background:<?= $d3['badge_bg'] ?>; color:<?= $d3['badge_text'] ?>; border:1px solid <?= $d3['badge_bdr'] ?>; font-size:0.82rem;">
                                     <i class="fas <?= $d3['icon'] ?> mr-1"></i><?= htmlspecialchars($d3['text']) ?> (<?= $d3['label_tier'] ?>)
                                 </span>
                             </div>
                         <?php else: ?>
-                            <div class="mt-1 text-muted small"><i>Belum selesai Loading / Hand-over</i></div>
+                            <div class="mt-1 text-muted small"><i>Belum selesai Loading</i></div>
                         <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Baris Ketepatan Pengiriman & Checklist SOP Warehouse -->
+            <div class="row mt-1 pt-2 border-top">
+                <div class="col-md-5 mb-2 mb-md-0">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted font-weight-bold mb-1"><i class="fas fa-shipping-fast text-primary mr-1"></i>Ketepatan Pengiriman (Estimasi vs Aktual Diterima)</div>
+                        <?php $ktp = $sla['ketepatan']; ?>
+                        <div>
+                            <span class="badge px-2 py-1" style="background:<?= $ktp['badge_bg'] ?>; color:<?= $ktp['badge_text'] ?>; border:1px solid <?= $ktp['badge_bdr'] ?>; font-size:0.83rem;">
+                                <i class="fas <?= $ktp['icon'] ?> mr-1"></i><?= htmlspecialchars($ktp['label']) ?>
+                            </span>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            Target Estimasi: <b><?= !empty($ktp['tgl_estimasi']) ? date('d-M-Y', strtotime($ktp['tgl_estimasi'])) : '-' ?></b>
+                            | Aktual Tiba: <b><?= !empty($ktp['tgl_diterima']) ? date('d-M-Y', strtotime($ktp['tgl_diterima'])) : 'Belum Diterima' ?></b>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted font-weight-bold mb-1"><i class="fas fa-tasks text-primary mr-1"></i>Checklist Kepatuhan SOP Warehouse</div>
+                        <div class="d-flex flex-wrap" style="gap: 6px;">
+                            <?php foreach ($sop['checks'] as $chk): ?>
+                                <?php if ($chk['done']): ?>
+                                    <span class="badge px-2 py-1" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:0.76rem;">
+                                        <i class="fas fa-check-circle text-success mr-1"></i><?= htmlspecialchars($chk['label']) ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge px-2 py-1" style="background:#f8fafc; color:#64748b; border:1px dashed #cbd5e1; font-size:0.76rem;">
+                                        <i class="far fa-circle text-muted mr-1"></i><?= htmlspecialchars($chk['label']) ?>
+                                    </span>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,9 +313,11 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
         </div>
 
         <?php if ($data_status[0]->id_status == 1) {
-            $status = "Proses Kirim";
+            $status = "Proses Kirim / Order Ekspedisi";
+        } else if ($data_status[0]->id_status == 7) {
+            $status = "Packaging Barang";
         } else if ($data_status[0]->id_status == 2) {
-            $status = "Manifest Berangkat";
+            $status = "Manifest Berangkat / Loading Hand-over";
         } else if ($data_status[0]->id_status == 3) {
             $status = "Proses Sortir";
         } else if ($data_status[0]->id_status == 4) {
@@ -370,8 +436,9 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
                     <label for="status" class="form-control-label">Update Status <span class="text-danger">*</span> :</label>
                     <select class="form-control" id="status" name="status" required onchange="toggleFormStatus()">
                         <option value="">- Pilih Status -</option>
-                        <option value="1">Proses Kirim</option>
-                        <option value="2">Manifest Berangkat</option>
+                        <option value="1">Proses Kirim / Order Ekspedisi</option>
+                        <option value="7">Packaging Barang</option>
+                        <option value="2">Manifest Berangkat / Loading Hand-over</option>
                         <option value="3">Proses Sortir</option>
                         <option value="6">Menunggu Konfirmasi</option>
                         <option value="4">Pengantaran Kurir</option>
@@ -443,9 +510,11 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
                         // echo $diff->d . ' Hari, ';                         <span><i class="fa fa-clock-o mr-1"></i>21 March, 2019</span>
 
                         if ($each->id_status == 1) {
-                            $status = "Proses Kirim";
+                            $status = "Proses Kirim / Order Ekspedisi";
+                        } else if ($each->id_status == 7) {
+                            $status = "Packaging Barang";
                         } else if ($each->id_status == 2) {
-                            $status = "Manifest Berangkat";
+                            $status = "Manifest Berangkat / Loading Hand-over";
                         } else if ($each->id_status == 6) {
                             $status = "Menunggu Konfirmasi";
                         } else if ($each->id_status == 3) {

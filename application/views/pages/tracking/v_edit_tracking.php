@@ -171,27 +171,33 @@ if ($is_pengiriman_stok) {
                         <div class="col-12 mb-2">
                             <strong class="text-primary"><i class="fas fa-stopwatch mr-1"></i>Waktu Tahapan & Kecepatan Warehouse (SLA)</strong>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label class="small font-weight-bold">1. Waktu PO Diterima CRO</label>
                                 <input type="datetime-local" class="form-control" name="waktu_po_cro" value="<?= !empty($slaEdit['waktu_po_cro']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_po_cro'])) : '' ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label class="small font-weight-bold">2. Waktu Cetak SJ</label>
                                 <input type="datetime-local" class="form-control" name="waktu_cetak_sj" value="<?= !empty($slaEdit['waktu_cetak_sj']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_cetak_sj'])) : '' ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label class="small font-weight-bold">3. Waktu Order Ekspedisi</label>
                                 <input type="datetime-local" class="form-control" name="waktu_order_ekspedisi" value="<?= !empty($slaEdit['waktu_order_eks']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_order_eks'])) : '' ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
-                                <label class="small font-weight-bold">4. Waktu Loading / Hand-over</label>
+                                <label class="small font-weight-bold">4. Waktu Packaging Barang</label>
+                                <input type="datetime-local" class="form-control" name="waktu_packaging" value="<?= !empty($slaEdit['waktu_packaging']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_packaging'])) : '' ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">5. Waktu Loading / Hand-over</label>
                                 <input type="datetime-local" class="form-control" name="waktu_loading_handover" value="<?= !empty($slaEdit['waktu_loading']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_loading'])) : '' ?>">
                             </div>
                         </div>
@@ -214,8 +220,9 @@ if ($is_pengiriman_stok) {
                                 <?php
                                 // Gunakan list_status dari controller jika ada, fallback ke array lokal
                                 $status_labels = isset($list_status) ? $list_status : [
-                                    1 => 'Proses Kirim',
-                                    2 => 'Manifest Berangkat',
+                                    1 => 'Proses Kirim / Order Ekspedisi',
+                                    7 => 'Packaging Barang',
+                                    2 => 'Manifest Berangkat / Loading Hand-over',
                                     3 => 'Proses Sortir',
                                     4 => 'Pengantaran Kurir',
                                     5 => 'Diterima',
@@ -224,6 +231,7 @@ if ($is_pengiriman_stok) {
 
                                 $status_classes = [
                                     1 => 'secondary',
+                                    7 => 'info',
                                     2 => 'primary',
                                     3 => 'info',
                                     4 => 'warning',
@@ -282,8 +290,9 @@ if ($is_pengiriman_stok) {
                             <label>Tambah Status Baru</label>
                             <select class="form-control" name="new_status" id="new_status" onchange="togglePanelDiterima()">
                                 <option value="">- Pilih Status -</option>
-                                <option value="1">1 - Proses Kirim</option>
-                                <option value="2">2 - Manifest Berangkat</option>
+                                <option value="1">1 - Proses Kirim / Order Ekspedisi</option>
+                                <option value="7">7 - Packaging Barang</option>
+                                <option value="2">2 - Manifest Berangkat / Loading Hand-over</option>
                                 <option value="3">3 - Proses Sortir</option>
                                 <option value="4">4 - Pengantaran Kurir</option>
                                 <option value="5">5 - Diterima</option>

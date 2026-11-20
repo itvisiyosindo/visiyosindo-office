@@ -28,8 +28,11 @@ class Md_tracking extends CI_Model
             if (!$this->db->field_exists('waktu_order_ekspedisi', 'tracking_barang')) {
                 @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_order_ekspedisi` DATETIME NULL DEFAULT NULL AFTER `waktu_cetak_sj`");
             }
+            if (!$this->db->field_exists('waktu_packaging', 'tracking_barang')) {
+                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_packaging` DATETIME NULL DEFAULT NULL AFTER `waktu_order_ekspedisi`");
+            }
             if (!$this->db->field_exists('waktu_loading_handover', 'tracking_barang')) {
-                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_loading_handover` DATETIME NULL DEFAULT NULL AFTER `waktu_order_ekspedisi`");
+                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_loading_handover` DATETIME NULL DEFAULT NULL AFTER `waktu_packaging`");
             }
         }
     }
@@ -197,10 +200,12 @@ class Md_tracking extends CI_Model
             t.waktu_po_cro,
             t.waktu_cetak_sj,
             t.waktu_order_ekspedisi,
+            t.waktu_packaging,
             t.waktu_loading_handover,
             t.created_at,
             t.no_sj,
             t.no_resi,
+            t.link_resi,
             t.stat,
             g.nama_gudang,
             c.nama_customer,
@@ -218,8 +223,14 @@ class Md_tracking extends CI_Model
             (SELECT pm.cro_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date,
             (SELECT pm.gm_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_gm_date,
             (SELECT pm.created_at FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_created_at,
+            (SELECT pm.doc_gudang_packing_list FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_doc_packing_list,
             (SELECT MIN(ts1.created_at) FROM tracking_status ts1 WHERE ts1.id_tracking = t.id_tracking AND ts1.id_status >= 1) as status1_time,
+            (SELECT MIN(ts7.created_at) FROM tracking_status ts7 WHERE ts7.id_tracking = t.id_tracking AND ts7.id_status = 7) as status_packaging_time,
             (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time,
+            (SELECT ts5.tgl_penerima FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as tgl_penerima_aktual,
+            (SELECT ts5.nama_penerima FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as nama_penerima_aktual,
+            (SELECT ts5.bukti_penerima FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as bukti_penerima_aktual,
+            (SELECT ts5.created_at FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as status5_time,
             CASE 
                 WHEN t.tracking_type = "pengiriman_stok" THEN 
                     (SELECT GROUP_CONCAT(DISTINCT b.nama_barang SEPARATOR ", ")
@@ -462,6 +473,7 @@ class Md_tracking extends CI_Model
             t.waktu_po_cro,
             t.waktu_cetak_sj,
             t.waktu_order_ekspedisi,
+            t.waktu_packaging,
             t.waktu_loading_handover,
             t.created_at,
             t.biaya,
@@ -506,8 +518,15 @@ class Md_tracking extends CI_Model
             (SELECT pm.cro_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date,
             (SELECT pm.gm_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_gm_date,
             (SELECT pm.created_at FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_created_at,
+            (SELECT pm.doc_gudang_packing_list FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_doc_packing_list,
             (SELECT MIN(ts1.created_at) FROM tracking_status ts1 WHERE ts1.id_tracking = t.id_tracking AND ts1.id_status >= 1) as status1_time,
-            (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time
+            (SELECT MIN(ts7.created_at) FROM tracking_status ts7 WHERE ts7.id_tracking = t.id_tracking AND ts7.id_status = 7) as status_packaging_time,
+            (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time,
+            (SELECT ts5.tgl_penerima FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as tgl_penerima_aktual,
+            (SELECT ts5.nama_penerima FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as nama_penerima_aktual,
+            (SELECT ts5.bukti_penerima FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as bukti_penerima_aktual,
+            (SELECT ts5.created_at FROM tracking_status ts5 WHERE ts5.id_tracking = t.id_tracking AND ts5.id_status = 5 ORDER BY ts5.created_at DESC LIMIT 1) as status5_time,
+            (SELECT ts_last.id_status FROM tracking_status ts_last WHERE ts_last.id_tracking = t.id_tracking ORDER BY ts_last.created_at DESC LIMIT 1) as id_status
         ')
             ->from('tracking_barang t')
             ->join('gudang g', 't.id_gudang=g.id_gudang', 'LEFT')
@@ -709,11 +728,13 @@ class Md_tracking extends CI_Model
                 t.waktu_po_cro,
                 t.waktu_cetak_sj,
                 t.waktu_order_ekspedisi,
+                t.waktu_packaging,
                 t.waktu_loading_handover,
                 t.biaya,
                 t.pic_penerima,
                 t.no_sj,
                 t.no_resi,
+                t.link_resi,
                 t.keterangan,
                 t.stat,
                 t.created_at AS createdAt,
@@ -726,7 +747,9 @@ class Md_tracking extends CI_Model
                 (SELECT pm.cro_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date,
                 (SELECT pm.gm_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_gm_date,
                 (SELECT pm.created_at FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_created_at,
+                (SELECT pm.doc_gudang_packing_list FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_doc_packing_list,
                 (SELECT MIN(ts1.created_at) FROM tracking_status ts1 WHERE ts1.id_tracking = t.id_tracking AND ts1.id_status >= 1) as status1_time,
+                (SELECT MIN(ts7.created_at) FROM tracking_status ts7 WHERE ts7.id_tracking = t.id_tracking AND ts7.id_status = 7) as status_packaging_time,
                 (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time,
                 ts.id_tracking,
                 ts.id_status,
@@ -791,6 +814,15 @@ class Md_tracking extends CI_Model
             }
         }
 
+        // 3b. Waktu Packaging (antara Order Ekspedisi dan Loading / Hand-over)
+        $waktuPackaging = $cleanDt($row->waktu_packaging ?? null);
+        if (!$waktuPackaging) {
+            $waktuPackaging = $cleanDt($row->status_packaging_time ?? null);
+            if (!$waktuPackaging && $waktuLoading) {
+                $waktuPackaging = $waktuOrderEks ?: $waktuLoading;
+            }
+        }
+
         // Hitung kecepatan menggunakan standar indikator formatApprovalDurationInfo
         $calcDur = function ($start, $end) {
             if (function_exists('formatApprovalDurationInfo')) {
@@ -801,19 +833,147 @@ class Md_tracking extends CI_Model
 
         $durPoToSj        = ($waktuPoCro && $waktuCetakSj) ? $calcDur($waktuPoCro, $waktuCetakSj) : $calcDur(null, null);
         $durSjToOrder     = ($waktuCetakSj && $waktuOrderEks) ? $calcDur($waktuCetakSj, $waktuOrderEks) : $calcDur(null, null);
+        $durOrderToPack   = ($waktuOrderEks && $waktuPackaging) ? $calcDur($waktuOrderEks, $waktuPackaging) : $calcDur(null, null);
+        $durPackToLoad    = ($waktuPackaging && $waktuLoading) ? $calcDur($waktuPackaging, $waktuLoading) : $calcDur(null, null);
         $durOrderToLoad   = ($waktuOrderEks && $waktuLoading) ? $calcDur($waktuOrderEks, $waktuLoading) : $calcDur(null, null);
         $durSjToLoadTotal = ($waktuCetakSj && $waktuLoading) ? $calcDur($waktuCetakSj, $waktuLoading) : $calcDur(null, null);
+
+        // --- Ketepatan Pengiriman (On-Time Delivery: Estimasi Sampai vs Tanggal Diterima) ---
+        $tglEstimasi = $cleanDt($row->tgl_sampai ?? null);
+        $tglDiterima = $cleanDt($row->tgl_penerima_aktual ?? ($row->tgl_penerima ?? null));
+        $curStatus   = (int)($row->id_status ?? 0);
+        if ($curStatus === 5 && !$tglDiterima) {
+            $st5Time = $cleanDt($row->status5_time ?? ($row->statusCreatedAt ?? null));
+            if ($st5Time) {
+                $tglDiterima = date('Y-m-d', strtotime($st5Time));
+            }
+        }
+
+        $ketepatan = [
+            'status'       => 'in_progress',
+            'label'        => 'Dalam Pengiriman',
+            'selisih_hari' => 0,
+            'badge_bg'     => '#eff6ff',
+            'badge_text'   => '#1d4ed8',
+            'badge_bdr'    => '#bfdbfe',
+            'icon'         => 'fa-shipping-fast',
+            'tgl_estimasi' => $tglEstimasi ? date('Y-m-d', strtotime($tglEstimasi)) : null,
+            'tgl_diterima' => $tglDiterima ? date('Y-m-d', strtotime($tglDiterima)) : null
+        ];
+
+        if (!empty($ketepatan['tgl_estimasi'])) {
+            $tsEst = strtotime($ketepatan['tgl_estimasi'] . ' 23:59:59');
+            if ($curStatus === 5 && !empty($ketepatan['tgl_diterima'])) {
+                $tsAct = strtotime($ketepatan['tgl_diterima'] . ' 00:00:00');
+                $diffDays = (int)floor(($tsAct - strtotime($ketepatan['tgl_estimasi'] . ' 00:00:00')) / 86400);
+                $ketepatan['selisih_hari'] = $diffDays;
+                if ($diffDays <= 0) {
+                    $ketepatan['status']     = 'on_time';
+                    $ketepatan['label']      = ($diffDays < 0) ? ('Tepat Waktu (' . abs($diffDays) . ' Hr Lebih Cepat)') : 'Tepat Waktu (On-Time)';
+                    $ketepatan['badge_bg']   = '#dcfce7';
+                    $ketepatan['badge_text'] = '#166534';
+                    $ketepatan['badge_bdr']  = '#86efac';
+                    $ketepatan['icon']       = 'fa-check-circle';
+                } else {
+                    $ketepatan['status']     = 'late';
+                    $ketepatan['label']      = 'Terlambat ' . $diffDays . ' Hari';
+                    $ketepatan['badge_bg']   = '#fee2e2';
+                    $ketepatan['badge_text'] = '#991b1b';
+                    $ketepatan['badge_bdr']  = '#fca5a5';
+                    $ketepatan['icon']       = 'fa-exclamation-triangle';
+                }
+            } else {
+                $todayTs = strtotime(date('Y-m-d') . ' 00:00:00');
+                $estDayTs = strtotime($ketepatan['tgl_estimasi'] . ' 00:00:00');
+                $diffDays = (int)floor(($todayTs - $estDayTs) / 86400);
+                $ketepatan['selisih_hari'] = $diffDays;
+                if ($diffDays > 0) {
+                    $ketepatan['status']     = 'overdue';
+                    $ketepatan['label']      = 'Melewati Estimasi ' . $diffDays . ' Hari';
+                    $ketepatan['badge_bg']   = '#fef3c7';
+                    $ketepatan['badge_text'] = '#92400e';
+                    $ketepatan['badge_bdr']  = '#fcd34d';
+                    $ketepatan['icon']       = 'fa-clock';
+                } else {
+                    $sisa = abs($diffDays);
+                    $ketepatan['status']     = 'on_schedule';
+                    $ketepatan['label']      = ($sisa === 0) ? 'Jadwal Tiba Hari Ini' : ('Dalam Jadwal (H-' . $sisa . ')');
+                    $ketepatan['badge_bg']   = '#e0f2fe';
+                    $ketepatan['badge_text'] = '#0369a1';
+                    $ketepatan['badge_bdr']  = '#bae6fd';
+                    $ketepatan['icon']       = 'fa-truck-moving';
+                }
+            }
+        } else {
+            $ketepatan['label']      = 'Estimasi Belum Diisi';
+            $ketepatan['badge_bg']   = '#f1f5f9';
+            $ketepatan['badge_text'] = '#64748b';
+            $ketepatan['badge_bdr']  = '#cbd5e1';
+            $ketepatan['icon']       = 'fa-minus-circle';
+        }
+
+        // --- Kepatuhan SOP Warehouse ---
+        $hasResi = (!empty($row->no_resi) && trim((string)$row->no_resi) !== '-') || (!empty($row->link_resi) && trim((string)$row->link_resi) !== '-');
+        $isDirectDelivery = in_array(trim((string)($row->nama_ekspedisi ?? '')), ['Diantarkan Langsung', 'Dijemput Langsung'], true);
+        $hasPod  = ($curStatus === 5) && (!empty($row->nama_penerima_aktual ?? ($row->nama_penerima ?? null)) || !empty($row->bukti_penerima_aktual ?? ($row->bukti_penerima ?? null)));
+
+        $sopChecks = [
+            ['label' => 'PO CRO / Dokumen Sumber', 'done' => !empty($waktuPoCro) || !empty($waktuCetakSj)],
+            ['label' => 'Cetak SJ / Dokumen Keluar', 'done' => !empty($waktuCetakSj)],
+            ['label' => 'Order Ekspedisi', 'done' => !empty($waktuOrderEks) && !empty($row->nama_ekspedisi)],
+            ['label' => 'Packaging & QC Barang', 'done' => !empty($waktuPackaging)],
+            ['label' => 'Loading / Hand-over & Resi', 'done' => !empty($waktuLoading) && ($hasResi || $isDirectDelivery)],
+            ['label' => 'Bukti Serah Terima (POD)', 'done' => $hasPod]
+        ];
+
+        $sopDoneCount  = 0;
+        foreach ($sopChecks as $sc) {
+            if ($sc['done']) $sopDoneCount++;
+        }
+        $sopTotalCount = count($sopChecks);
+        $sopPercent    = (int)round(($sopDoneCount / $sopTotalCount) * 100);
+
+        if ($sopDoneCount === $sopTotalCount) {
+            $sopLabel = 'SOP Lengkap (100%)';
+            $sopBg    = '#dcfce7';
+            $sopText  = '#166534';
+            $sopBdr   = '#86efac';
+        } elseif ($sopDoneCount >= 4) {
+            $sopLabel = 'SOP Berjalan (' . $sopDoneCount . '/' . $sopTotalCount . ')';
+            $sopBg    = '#e0f2fe';
+            $sopText  = '#0369a1';
+            $sopBdr   = '#bae6fd';
+        } else {
+            $sopLabel = 'SOP Belum Lengkap (' . $sopDoneCount . '/' . $sopTotalCount . ')';
+            $sopBg    = '#fef3c7';
+            $sopText  = '#92400e';
+            $sopBdr   = '#fcd34d';
+        }
 
         return [
             'no_po'              => !empty($row->pb_no_po) ? $row->pb_no_po : null,
             'waktu_po_cro'       => $waktuPoCro,
             'waktu_cetak_sj'     => $waktuCetakSj,
             'waktu_order_eks'    => $waktuOrderEks,
+            'waktu_packaging'    => $waktuPackaging,
             'waktu_loading'      => $waktuLoading,
             'dur_po_to_sj'       => $durPoToSj,
             'dur_sj_to_order'    => $durSjToOrder,
+            'dur_order_to_pack'  => $durOrderToPack,
+            'dur_pack_to_load'   => $durPackToLoad,
             'dur_order_to_load'  => $durOrderToLoad,
-            'dur_sj_to_load'     => $durSjToLoadTotal
+            'dur_sj_to_load'     => $durSjToLoadTotal,
+            'ketepatan'          => $ketepatan,
+            'sop'                => [
+                'checks'     => $sopChecks,
+                'done_count' => $sopDoneCount,
+                'total'      => $sopTotalCount,
+                'percent'    => $sopPercent,
+                'label'      => $sopLabel,
+                'badge_bg'   => $sopBg,
+                'badge_text' => $sopText,
+                'badge_bdr'  => $sopBdr
+            ]
         ];
     }
 

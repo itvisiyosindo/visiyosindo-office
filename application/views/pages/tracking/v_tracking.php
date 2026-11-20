@@ -222,8 +222,8 @@
 							<th class="text-center">Nama Barang</th>
 							<th class="text-center">Alamat Penerima</th>
 							<th class="text-center">Nama Ekspedisi</th>
-							<th class="text-center">Kecepatan Warehouse (SLA)</th>
-							<th class="text-center">Estimasi Penerimaan</th>
+							<th class="text-center">Kecepatan Proses & SOP Warehouse</th>
+							<th class="text-center">Estimasi & Ketepatan Pengiriman</th>
 							<th class="text-center">Status</th>
 							<th class="text-center">Aksi</th>
 						</tr>
@@ -326,7 +326,7 @@
 
 					<div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #cbd5e1;">
 						<div class="font-weight-bold text-primary mb-2" style="font-size: 0.85rem;">
-							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan)
+							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan & SOP)
 						</div>
 						<div class="row">
 							<div class="col-md-6 form-group mb-2">
@@ -339,14 +339,19 @@
 								<input type="datetime-local" id="waktu_cetak_sj" name="waktu_cetak_sj" class="form-control form-control-sm">
 								<small class="text-muted">Otomatis dari waktu pembuatan SJ</small>
 							</div>
-							<div class="col-md-6 form-group mb-1">
+							<div class="col-md-4 form-group mb-1">
 								<label class="small font-weight-bold mb-1">3. Waktu Order Ekspedisi <span class="text-danger">*</span></label>
 								<input type="datetime-local" id="waktu_order_ekspedisi" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
 							</div>
-							<div class="col-md-6 form-group mb-1">
-								<label class="small font-weight-bold mb-1">4. Waktu Loading / Hand-over ke Ekspedisi</label>
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">4. Waktu Packaging Barang</label>
+								<input type="datetime-local" id="waktu_packaging" name="waktu_packaging" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
+								<small class="text-muted">Jam selesai packing & QC</small>
+							</div>
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">5. Waktu Loading / Hand-over</label>
 								<input type="datetime-local" id="waktu_loading_handover" name="waktu_loading_handover" class="form-control form-control-sm">
-								<small class="text-muted">Isi saat barang naik armada / serah terima kurir</small>
+								<small class="text-muted">Saat naik armada / kurir</small>
 							</div>
 						</div>
 					</div>
@@ -381,8 +386,9 @@
 						<label>Status <span class="text-danger">*</span></label>
 						<select id="status" name="status" class="form-control" required onchange="toggleFormStatus()">
 							<option value="">- Pilih Status -</option>
-							<option value="1">Proses Kirim</option>
-							<option value="2">Manifest Berangkat</option>
+							<option value="1">Proses Kirim / Order Ekspedisi</option>
+							<option value="7">Packaging Barang</option>
+							<option value="2">Manifest Berangkat / Loading Hand-over</option>
 							<option value="3">Proses Sortir</option>
 							<option value="6">Menunggu Konfirmasi</option>
 							<option value="4">Pengantaran Kurir</option>
@@ -518,19 +524,23 @@
 
 					<div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #cbd5e1;">
 						<div class="font-weight-bold text-primary mb-2" style="font-size: 0.85rem;">
-							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan)
+							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan & SOP)
 						</div>
 						<div class="row">
-							<div class="col-md-4 form-group mb-1">
+							<div class="col-md-6 form-group mb-2">
 								<label class="small font-weight-bold mb-1">1. Waktu Cetak TTB</label>
 								<input type="datetime-local" id="waktu_cetak_sj_ps" name="waktu_cetak_sj" class="form-control form-control-sm">
 							</div>
-							<div class="col-md-4 form-group mb-1">
+							<div class="col-md-6 form-group mb-2">
 								<label class="small font-weight-bold mb-1">2. Waktu Order Ekspedisi <span class="text-danger">*</span></label>
 								<input type="datetime-local" id="waktu_order_ekspedisi_ps" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
 							</div>
-							<div class="col-md-4 form-group mb-1">
-								<label class="small font-weight-bold mb-1">3. Waktu Loading / Hand-over</label>
+							<div class="col-md-6 form-group mb-1">
+								<label class="small font-weight-bold mb-1">3. Waktu Packaging Barang</label>
+								<input type="datetime-local" id="waktu_packaging_ps" name="waktu_packaging" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
+							</div>
+							<div class="col-md-6 form-group mb-1">
+								<label class="small font-weight-bold mb-1">4. Waktu Loading / Hand-over</label>
 								<input type="datetime-local" id="waktu_loading_handover_ps" name="waktu_loading_handover" class="form-control form-control-sm">
 							</div>
 						</div>
@@ -566,8 +576,9 @@
 						<label>Status <span class="text-danger">*</span></label>
 						<select id="status_ps" name="status" class="form-control" required onchange="toggleFormStatusPS()">
 							<option value="">- Pilih Status -</option>
-							<option value="1">Proses Kirim</option>
-							<option value="2">Manifest Berangkat</option>
+							<option value="1">Proses Kirim / Order Ekspedisi</option>
+							<option value="7">Packaging Barang</option>
+							<option value="2">Manifest Berangkat / Loading Hand-over</option>
 							<option value="3">Proses Sortir</option>
 							<option value="6">Menunggu Konfirmasi</option>
 							<option value="4">Pengantaran Kurir</option>
@@ -705,19 +716,23 @@
 
 					<div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #cbd5e1;">
 						<div class="font-weight-bold text-primary mb-2" style="font-size: 0.85rem;">
-							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan)
+							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan & SOP)
 						</div>
 						<div class="row">
-							<div class="col-md-4 form-group mb-1">
+							<div class="col-md-6 form-group mb-2">
 								<label class="small font-weight-bold mb-1">1. Waktu Cetak STTB</label>
 								<input type="datetime-local" id="waktu_cetak_sj_stb" name="waktu_cetak_sj" class="form-control form-control-sm">
 							</div>
-							<div class="col-md-4 form-group mb-1">
+							<div class="col-md-6 form-group mb-2">
 								<label class="small font-weight-bold mb-1">2. Waktu Order Ekspedisi <span class="text-danger">*</span></label>
 								<input type="datetime-local" id="waktu_order_ekspedisi_stb" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
 							</div>
-							<div class="col-md-4 form-group mb-1">
-								<label class="small font-weight-bold mb-1">3. Waktu Loading / Hand-over</label>
+							<div class="col-md-6 form-group mb-1">
+								<label class="small font-weight-bold mb-1">3. Waktu Packaging Barang</label>
+								<input type="datetime-local" id="waktu_packaging_stb" name="waktu_packaging" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
+							</div>
+							<div class="col-md-6 form-group mb-1">
+								<label class="small font-weight-bold mb-1">4. Waktu Loading / Hand-over</label>
 								<input type="datetime-local" id="waktu_loading_handover_stb" name="waktu_loading_handover" class="form-control form-control-sm">
 							</div>
 						</div>
@@ -753,8 +768,9 @@
 						<label>Status <span class="text-danger">*</span></label>
 						<select id="status_stb" name="status" class="form-control" required onchange="toggleFormStatusSTB()">
 							<option value="">- Pilih Status -</option>
-							<option value="1">Proses Kirim</option>
-							<option value="2">Manifest Berangkat</option>
+							<option value="1">Proses Kirim / Order Ekspedisi</option>
+							<option value="7">Packaging Barang</option>
+							<option value="2">Manifest Berangkat / Loading Hand-over</option>
 							<option value="3">Proses Sortir</option>
 							<option value="6">Menunggu Konfirmasi</option>
 							<option value="4">Pengantaran Kurir</option>

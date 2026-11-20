@@ -312,6 +312,7 @@ class Tracking extends CI_Controller
         $waktu_po_cro          = $parseDtInput($this->input->post('waktu_po_cro', TRUE));
         $waktu_cetak_sj        = $parseDtInput($this->input->post('waktu_cetak_sj', TRUE));
         $waktu_order_ekspedisi = $parseDtInput($this->input->post('waktu_order_ekspedisi', TRUE));
+        $waktu_packaging       = $parseDtInput($this->input->post('waktu_packaging', TRUE));
         $waktu_loading         = $parseDtInput($this->input->post('waktu_loading_handover', TRUE));
 
         // Auto-resolve dari dokumen sumber jika kosong
@@ -355,6 +356,9 @@ class Tracking extends CI_Controller
         if (!$waktu_order_ekspedisi) {
             $waktu_order_ekspedisi = date('Y-m-d H:i:s');
         }
+        if (!$waktu_packaging && in_array($statusInput, [7, 2, 3, 4, 5], true)) {
+            $waktu_packaging = date('Y-m-d H:i:s');
+        }
         if (!$waktu_loading && in_array($statusInput, [2, 3, 4, 5], true)) {
             $waktu_loading = date('Y-m-d H:i:s');
         }
@@ -362,6 +366,7 @@ class Tracking extends CI_Controller
         $data['waktu_po_cro']           = $waktu_po_cro;
         $data['waktu_cetak_sj']         = $waktu_cetak_sj;
         $data['waktu_order_ekspedisi']  = $waktu_order_ekspedisi;
+        $data['waktu_packaging']        = $waktu_packaging;
         $data['waktu_loading_handover'] = $waktu_loading;
 
         $this->md_tracking->add($data);
@@ -399,9 +404,11 @@ class Tracking extends CI_Controller
 
 
         if ($status == 1) {
-            $statusTracking = 'Proses Kirim';
+            $statusTracking = 'Proses Kirim / Order Ekspedisi';
+        } else if ($status == 7) {
+            $statusTracking = 'Packaging Barang';
         } else if ($status == 2) {
-            $statusTracking = 'Manifest Berangkat';
+            $statusTracking = 'Manifest Berangkat / Loading Hand-over';
         } else if ($status == 3) {
             $statusTracking = 'Proses Sortir';
         } else if ($status == 4) {
@@ -860,8 +867,9 @@ class Tracking extends CI_Controller
 
         // Define list status untuk dropdown dan label
         $list_status = [
-            1 => 'Proses Kirim',
-            2 => 'Manifest Berangkat',
+            1 => 'Proses Kirim / Order Ekspedisi',
+            7 => 'Packaging Barang',
+            2 => 'Manifest Berangkat / Loading Hand-over',
             3 => 'Proses Sortir',
             4 => 'Pengantaran Kurir',
             5 => 'Diterima',
@@ -1009,6 +1017,9 @@ class Tracking extends CI_Controller
         }
         if ($this->input->post('waktu_order_ekspedisi') !== null) {
             $data_update['waktu_order_ekspedisi'] = $parseDtInput($this->input->post('waktu_order_ekspedisi', TRUE));
+        }
+        if ($this->input->post('waktu_packaging') !== null) {
+            $data_update['waktu_packaging'] = $parseDtInput($this->input->post('waktu_packaging', TRUE));
         }
         if ($this->input->post('waktu_loading_handover') !== null) {
             $data_update['waktu_loading_handover'] = $parseDtInput($this->input->post('waktu_loading_handover', TRUE));
@@ -1257,6 +1268,9 @@ class Tracking extends CI_Controller
             if (empty($trCur->waktu_order_ekspedisi) && (int)$status >= 1) {
                 $whUpdate['waktu_order_ekspedisi'] = date('Y-m-d H:i:s');
             }
+            if (empty($trCur->waktu_packaging) && in_array((int)$status, [7, 2, 3, 4, 5], true)) {
+                $whUpdate['waktu_packaging'] = date('Y-m-d H:i:s');
+            }
             if (empty($trCur->waktu_loading_handover) && in_array((int)$status, [2, 3, 4, 5], true)) {
                 $whUpdate['waktu_loading_handover'] = date('Y-m-d H:i:s');
             }
@@ -1274,9 +1288,11 @@ class Tracking extends CI_Controller
 
 
         if ($status == 1) {
-            $statusTracking = 'Proses Kirim';
+            $statusTracking = 'Proses Kirim / Order Ekspedisi';
+        } else if ($status == 7) {
+            $statusTracking = 'Packaging Barang';
         } else if ($status == 2) {
-            $statusTracking = 'Manifest Berangkat';
+            $statusTracking = 'Manifest Berangkat / Loading Hand-over';
         } else if ($status == 3) {
             $statusTracking = 'Proses Sortir';
         } else if ($status == 4) {
@@ -1514,9 +1530,11 @@ class Tracking extends CI_Controller
 
 
         if ($status == 1) {
-            $statusTracking = 'Proses Kirim';
+            $statusTracking = 'Proses Kirim / Order Ekspedisi';
+        } else if ($status == 7) {
+            $statusTracking = 'Packaging Barang';
         } else if ($status == 2) {
-            $statusTracking = 'Manifest Berangkat';
+            $statusTracking = 'Manifest Berangkat / Loading Hand-over';
         } else if ($status == 3) {
             $statusTracking = 'Proses Sortir';
         } else if ($status == 4) {
@@ -1596,6 +1614,9 @@ class Tracking extends CI_Controller
             if (empty($trCur->waktu_order_ekspedisi) && (int)$status >= 1) {
                 $whUpdate['waktu_order_ekspedisi'] = date('Y-m-d H:i:s');
             }
+            if (empty($trCur->waktu_packaging) && in_array((int)$status, [7, 2, 3, 4, 5], true)) {
+                $whUpdate['waktu_packaging'] = date('Y-m-d H:i:s');
+            }
             if (empty($trCur->waktu_loading_handover) && in_array((int)$status, [2, 3, 4, 5], true)) {
                 $whUpdate['waktu_loading_handover'] = date('Y-m-d H:i:s');
             }
@@ -1608,9 +1629,11 @@ class Tracking extends CI_Controller
 
 
         if ($status == 1) {
-            $statusTracking = 'Proses Kirim';
+            $statusTracking = 'Proses Kirim / Order Ekspedisi';
+        } else if ($status == 7) {
+            $statusTracking = 'Packaging Barang';
         } else if ($status == 2) {
-            $statusTracking = 'Manifest Berangkat';
+            $statusTracking = 'Manifest Berangkat / Loading Hand-over';
         } else if ($status == 3) {
             $statusTracking = 'Proses Sortir';
         } else if ($status == 4) {
@@ -1697,11 +1720,13 @@ class Tracking extends CI_Controller
             // --- Logic Status Badge ---
             $stat = '<span class="badge badge-secondary">Unknown</span>'; // Default
             if ($row->id_status == "1") {
-                $stat = '<span class="badge badge-ecommerce badge-info">Proses Kirim</span>';
+                $stat = '<span class="badge badge-ecommerce badge-info">Proses Kirim / Order Eks</span>';
+            } else if ($row->id_status == "7") {
+                $stat = '<span class="badge badge-ecommerce badge-primary">Packaging Barang</span>';
             } else if ($row->id_status == "2") {
-                $stat = '<span class="badge badge-ecommerce badge-success">Manifest Berangkat</span>';
+                $stat = '<span class="badge badge-ecommerce badge-success">Manifest Berangkat / Hand-over</span>';
             } else if ($row->id_status == "6") {
-                $stat = '<span class="badge badge-ecommerce badge-success">Menunggu Konfirmasi</span>';
+                $stat = '<span class="badge badge-ecommerce badge-warning">Menunggu Konfirmasi</span>';
             } else if ($row->id_status == "3") {
                 $stat = '<span class="badge badge-ecommerce badge-success">Proses Sortir</span>';
             } else if ($row->id_status == "4") {
@@ -1741,7 +1766,7 @@ class Tracking extends CI_Controller
                 $type_badge = '<span class="badge badge-primary badge-sm">Pengiriman</span>';
             }
 
-            // --- Kalkulasi Kecepatan Warehouse (PO CRO -> Cetak SJ -> Order Ekspedisi -> Loading/Hand-over) ---
+            // --- Kalkulasi Kecepatan Warehouse (PO CRO -> Cetak SJ -> Order Ekspedisi -> Packaging -> Loading/Hand-over) ---
             $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($row);
             $poInfoHtml = '';
             if (!empty($sla['no_po'])) {
@@ -1762,11 +1787,25 @@ class Tracking extends CI_Controller
                     . '</div>';
             };
 
-            $kecepatanHtml = '<div class="text-left" style="min-width: 195px;">'
-                . $makeSlaBadge('SJ ➔ Order Eks', $sla['dur_sj_to_order'])
-                . $makeSlaBadge('Order ➔ Loading', $sla['dur_order_to_load'])
-                . $makeSlaBadge('Total SJ ➔ Load', $sla['dur_sj_to_load'])
+            $sopInfo = $sla['sop'];
+            $sopBadgeHtml = '<div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mt-1" style="background:' . $sopInfo['badge_bg'] . '; color:' . $sopInfo['badge_text'] . '; border:1px solid ' . $sopInfo['badge_bdr'] . '; font-size:10.5px; line-height:1.25;">'
+                . '<span class="font-weight-bold mr-2"><i class="fas fa-clipboard-check mr-1"></i>SOP Gudang:</span>'
+                . '<span class="font-weight-bold text-nowrap">' . htmlspecialchars($sopInfo['label']) . '</span>'
                 . '</div>';
+
+            $kecepatanHtml = '<div class="text-left" style="min-width: 215px;">'
+                . $makeSlaBadge('1. SJ ➔ Order Eks', $sla['dur_sj_to_order'])
+                . $makeSlaBadge('2. Order ➔ Pack', $sla['dur_order_to_pack'])
+                . $makeSlaBadge('3. Pack ➔ Loading', $sla['dur_pack_to_load'])
+                . $makeSlaBadge('Total SJ ➔ Load', $sla['dur_sj_to_load'])
+                . $sopBadgeHtml
+                . '</div>';
+
+            $ktp = $sla['ketepatan'];
+            $estDateStr = (!empty($row->tgl_sampai) && strpos($row->tgl_sampai, '0000') === false) ? date('d-M-Y', strtotime($row->tgl_sampai)) : '-';
+            $actDateHtml = !empty($ktp['tgl_diterima']) ? '<div class="small text-muted mt-1">Tiba: <b>' . date('d-M-Y', strtotime($ktp['tgl_diterima'])) . '</b></div>' : '';
+            $ketepatanBadge = '<div class="mt-1"><span class="badge px-2 py-1" style="background:' . $ktp['badge_bg'] . '; color:' . $ktp['badge_text'] . '; border:1px solid ' . $ktp['badge_bdr'] . '; font-size:10.5px;"><i class="fas ' . $ktp['icon'] . ' mr-1"></i>' . htmlspecialchars($ktp['label']) . '</span></div>';
+            $estimasiKetepatanHtml = '<div><strong>Est: ' . $estDateStr . '</strong>' . $actDateHtml . $ketepatanBadge . '</div>';
 
             $th = array();
             $th[] = ++$start . '.';                               // Index 0
@@ -1776,8 +1815,8 @@ class Tracking extends CI_Controller
             $th[] = $detail_barang;                               // Index 4
             $th[] = $row->alamat_penerima;                        // Index 5
             $th[] = $row->nama_ekspedisi;                         // Index 6
-            $th[] = $kecepatanHtml;                               // Index 7 - Kecepatan Warehouse (SLA)
-            $th[] = !empty($row->tgl_sampai) && strpos($row->tgl_sampai, '0000') === false ? date('d-M-Y', strtotime($row->tgl_sampai)) : '-';   // Index 8
+            $th[] = $kecepatanHtml;                               // Index 7 - Kecepatan Warehouse & SOP
+            $th[] = $estimasiKetepatanHtml;                       // Index 8 - Estimasi & Ketepatan Pengiriman
             $th[] = $stat;                                        // Index 9
             $th[] = $li_btn;                                      // Index 10 (Kolom Aksi)
 
@@ -1916,13 +1955,18 @@ class Tracking extends CI_Controller
         $sheet->setCellValue('T4', 'Waktu PO Diterima CRO');
         $sheet->setCellValue('U4', 'Waktu Cetak SJ');
         $sheet->setCellValue('V4', 'Waktu Order Ekspedisi');
-        $sheet->setCellValue('W4', 'Waktu Loading / Hand-over');
-        $sheet->setCellValue('X4', 'Kecepatan Cetak SJ -> Order Ekspedisi');
-        $sheet->setCellValue('Y4', 'Kecepatan Order Ekspedisi -> Loading/Hand-over');
-        $sheet->setCellValue('Z4', 'Total Kecepatan Cetak SJ -> Loading/Hand-over');
+        $sheet->setCellValue('W4', 'Waktu Packaging');
+        $sheet->setCellValue('X4', 'Waktu Loading / Hand-over');
+        $sheet->setCellValue('Y4', 'Kecepatan Cetak SJ -> Order Ekspedisi');
+        $sheet->setCellValue('Z4', 'Kecepatan Order Ekspedisi -> Packaging');
+        $sheet->setCellValue('AA4', 'Kecepatan Packaging -> Loading/Hand-over');
+        $sheet->setCellValue('AB4', 'Total Kecepatan Cetak SJ -> Loading/Hand-over');
+        $sheet->setCellValue('AC4', 'Ketepatan Pengiriman');
+        $sheet->setCellValue('AD4', 'Kepatuhan SOP Warehouse');
 
         // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        foreach (range('A', 'Z') as $colLtr) {
+        $headerCols = array_merge(range('A', 'Z'), ['AA', 'AB', 'AC', 'AD']);
+        foreach ($headerCols as $colLtr) {
             $sheet->getStyle($colLtr . '4')->applyFromArray($style_col);
         }
 
@@ -1933,9 +1977,11 @@ class Tracking extends CI_Controller
         foreach ($data as $marketing) {
 
             if ($marketing->id_status == 1) {
-                $status = "Proses Kirim";
+                $status = "Proses Kirim / Order Ekspedisi";
+            } else if ($marketing->id_status == 7) {
+                $status = "Packaging Barang";
             } else if ($marketing->id_status == 2) {
-                $status = "Manifest Berangkat";
+                $status = "Manifest Berangkat / Loading Hand-over";
             } else if ($marketing->id_status == 3) {
                 $status = "Proses Sortir";
             } else if ($marketing->id_status == 4) {
@@ -1956,7 +2002,8 @@ class Tracking extends CI_Controller
 
             $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($marketing);
             $durSjOrderStr = !empty($sla['dur_sj_to_order']['valid']) ? $sla['dur_sj_to_order']['text'] . ' (' . $sla['dur_sj_to_order']['label_tier'] . ')' : '-';
-            $durOrderLoadStr = !empty($sla['dur_order_to_load']['valid']) ? $sla['dur_order_to_load']['text'] . ' (' . $sla['dur_order_to_load']['label_tier'] . ')' : '-';
+            $durOrderPackStr = !empty($sla['dur_order_to_pack']['valid']) ? $sla['dur_order_to_pack']['text'] . ' (' . $sla['dur_order_to_pack']['label_tier'] . ')' : '-';
+            $durPackLoadStr = !empty($sla['dur_pack_to_load']['valid']) ? $sla['dur_pack_to_load']['text'] . ' (' . $sla['dur_pack_to_load']['label_tier'] . ')' : '-';
             $durSjLoadStr = !empty($sla['dur_sj_to_load']['valid']) ? $sla['dur_sj_to_load']['text'] . ' (' . $sla['dur_sj_to_load']['label_tier'] . ')' : '-';
 
             $spreadsheet->setActiveSheetIndex(0)
@@ -1982,10 +2029,14 @@ class Tracking extends CI_Controller
                 ->setCellValue('T' . $kolom, $sla['waktu_po_cro'] ?: '-')
                 ->setCellValue('U' . $kolom, $sla['waktu_cetak_sj'] ?: '-')
                 ->setCellValue('V' . $kolom, $sla['waktu_order_eks'] ?: '-')
-                ->setCellValue('W' . $kolom, $sla['waktu_loading'] ?: '-')
-                ->setCellValue('X' . $kolom, $durSjOrderStr)
-                ->setCellValue('Y' . $kolom, $durOrderLoadStr)
-                ->setCellValue('Z' . $kolom, $durSjLoadStr);
+                ->setCellValue('W' . $kolom, $sla['waktu_packaging'] ?: '-')
+                ->setCellValue('X' . $kolom, $sla['waktu_loading'] ?: '-')
+                ->setCellValue('Y' . $kolom, $durSjOrderStr)
+                ->setCellValue('Z' . $kolom, $durOrderPackStr)
+                ->setCellValue('AA' . $kolom, $durPackLoadStr)
+                ->setCellValue('AB' . $kolom, $durSjLoadStr)
+                ->setCellValue('AC' . $kolom, $sla['ketepatan']['label'] ?? '-')
+                ->setCellValue('AD' . $kolom, $sla['sop']['label'] ?? '-');
 
 
 
