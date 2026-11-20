@@ -61,7 +61,142 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
                 </div>
             <?php endif; ?>
         </div>
-        <br><br>
+        <br>
+
+        <?php
+        $trRow = $data_tracking[0];
+        $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($trRow);
+        $canEditSla = (sessPenggunaId() == 1 || sessPenggunaId() == 15 || sessPenggunaId() == 85 || sessPenggunaId() == 7 || sessPenggunaId() == 73 || sessPenggunaId() == 749 || sessPenggunaId() == 763 || sessPenggunaId() == 769);
+
+        if (function_exists('renderApprovalTimelineBar')) {
+            $whStages = [
+                [
+                    'label'          => '1. Cetak SJ / Dokumen',
+                    'approver'       => !empty($trRow->no_sj) ? $trRow->no_sj : 'Surat Jalan',
+                    'role'           => 'Admin Inventory / Warehouse',
+                    'status'         => !empty($sla['waktu_cetak_sj']) ? 'approved' : 'pending',
+                    'timestamp'      => $sla['waktu_cetak_sj'],
+                    'prev_timestamp' => $sla['waktu_po_cro'] ?: $sla['waktu_cetak_sj']
+                ],
+                [
+                    'label'          => '2. Order Ekspedisi',
+                    'approver'       => !empty($trRow->nama_ekspedisi) ? $trRow->nama_ekspedisi : 'Tim Ekspedisi',
+                    'role'           => 'Kecepatan Cetak SJ ➔ Order Ekspedisi',
+                    'status'         => !empty($sla['waktu_order_eks']) ? 'approved' : (!empty($sla['waktu_cetak_sj']) ? 'pending' : 'waiting_prev'),
+                    'timestamp'      => $sla['waktu_order_eks'],
+                    'prev_timestamp' => $sla['waktu_cetak_sj']
+                ],
+                [
+                    'label'          => '3. Loading / Hand-over Ekspedisi',
+                    'approver'       => !empty($trRow->no_resi) ? ('Resi: ' . $trRow->no_resi) : (!empty($trRow->nama_ekspedisi) ? $trRow->nama_ekspedisi : 'Serah Terima Kurir'),
+                    'role'           => 'Kecepatan Order Ekspedisi ➔ Loading/Hand-over',
+                    'status'         => !empty($sla['waktu_loading']) ? 'approved' : (!empty($sla['waktu_order_eks']) ? 'pending' : 'waiting_prev'),
+                    'timestamp'      => $sla['waktu_loading'],
+                    'prev_timestamp' => $sla['waktu_order_eks'] ?: $sla['waktu_cetak_sj']
+                ]
+            ];
+
+            echo renderApprovalTimelineBar(
+                'Tracking Kecepatan Warehouse (PO Diterima CRO ➔ Cetak SJ ➔ Order Ekspedisi ➔ Loading / Hand-over)',
+                $whStages,
+                $sla['waktu_po_cro'] ?: $sla['waktu_cetak_sj'],
+                !empty($sla['no_po']) ? ('PO Diterima dari CRO (' . $sla['no_po'] . ')') : 'PO Diterima dari CRO / Dokumen Awal'
+            );
+        }
+        ?>
+
+        <!-- RINGKASAN NILAI KECEPATAN WAREHOUSE (CETAK SJ -> ORDER EKSPEDISI & LOADING/HAND-OVER) -->
+        <div class="mb-4 p-3 rounded shadow-sm" style="background: #f8fafc; border: 1px solid #cbd5e1;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">
+                    <i class="fas fa-tachometer-alt text-primary mr-1"></i> Nilai Kecepatan Proses Warehouse (Standar Indikator SLA)
+                </div>
+                <?php if ($canEditSla): ?>
+                    <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold" onclick="document.getElementById('boxEditWarehouseSla').style.display = (document.getElementById('boxEditWarehouseSla').style.display === 'none' ? 'block' : 'none');">
+                        <i class="fas fa-clock mr-1"></i> Update Waktu Tahapan Warehouse
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted font-weight-bold">1. Cetak SJ ➔ Order Ekspedisi</div>
+                        <?php $d1 = $sla['dur_sj_to_order']; ?>
+                        <?php if (!empty($d1['valid'])): ?>
+                            <div class="mt-1">
+                                <span class="badge px-2 py-1" style="background:<?= $d1['badge_bg'] ?>; color:<?= $d1['badge_text'] ?>; border:1px solid <?= $d1['badge_bdr'] ?>; font-size:0.85rem;">
+                                    <i class="fas <?= $d1['icon'] ?> mr-1"></i><?= htmlspecialchars($d1['text']) ?> (<?= $d1['label_tier'] ?>)
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <div class="mt-1 text-muted small"><i>Menunggu waktu Cetak SJ / Order Ekspedisi</i></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted font-weight-bold">2. Order Ekspedisi ➔ Loading / Hand-over</div>
+                        <?php $d2 = $sla['dur_order_to_load']; ?>
+                        <?php if (!empty($d2['valid'])): ?>
+                            <div class="mt-1">
+                                <span class="badge px-2 py-1" style="background:<?= $d2['badge_bg'] ?>; color:<?= $d2['badge_text'] ?>; border:1px solid <?= $d2['badge_bdr'] ?>; font-size:0.85rem;">
+                                    <i class="fas <?= $d2['icon'] ?> mr-1"></i><?= htmlspecialchars($d2['text']) ?> (<?= $d2['label_tier'] ?>)
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <div class="mt-1 text-muted small"><i>Menunggu Loading / Hand-over ke Ekspedisi</i></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted font-weight-bold">3. Total Cetak SJ ➔ Loading / Hand-over</div>
+                        <?php $d3 = $sla['dur_sj_to_load']; ?>
+                        <?php if (!empty($d3['valid'])): ?>
+                            <div class="mt-1">
+                                <span class="badge px-2 py-1" style="background:<?= $d3['badge_bg'] ?>; color:<?= $d3['badge_text'] ?>; border:1px solid <?= $d3['badge_bdr'] ?>; font-size:0.85rem;">
+                                    <i class="fas <?= $d3['icon'] ?> mr-1"></i><?= htmlspecialchars($d3['text']) ?> (<?= $d3['label_tier'] ?>)
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <div class="mt-1 text-muted small"><i>Belum selesai Loading / Hand-over</i></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <?php if ($canEditSla): ?>
+                <div id="boxEditWarehouseSla" class="mt-3 pt-3 border-top" style="display: none;">
+                    <form id="formWarehouseSla" onsubmit="return saveWarehouseSla(event);">
+                        <input type="hidden" name="id_tracking" value="<?= $id_tracking_enc ?>">
+                        <div class="row">
+                            <div class="col-md-6 form-group mb-2">
+                                <label class="small font-weight-bold mb-1">1. Waktu PO Diterima dari CRO</label>
+                                <input type="datetime-local" name="waktu_po_cro" class="form-control form-control-sm" value="<?= !empty($sla['waktu_po_cro']) ? date('Y-m-d\TH:i', strtotime($sla['waktu_po_cro'])) : '' ?>">
+                            </div>
+                            <div class="col-md-6 form-group mb-2">
+                                <label class="small font-weight-bold mb-1">2. Waktu Cetak SJ</label>
+                                <input type="datetime-local" name="waktu_cetak_sj" class="form-control form-control-sm" value="<?= !empty($sla['waktu_cetak_sj']) ? date('Y-m-d\TH:i', strtotime($sla['waktu_cetak_sj'])) : '' ?>">
+                            </div>
+                            <div class="col-md-6 form-group mb-2">
+                                <label class="small font-weight-bold mb-1">3. Waktu Order Ekspedisi</label>
+                                <input type="datetime-local" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= !empty($sla['waktu_order_eks']) ? date('Y-m-d\TH:i', strtotime($sla['waktu_order_eks'])) : '' ?>">
+                            </div>
+                            <div class="col-md-6 form-group mb-2">
+                                <label class="small font-weight-bold mb-1">4. Waktu Loading / Hand-over ke Ekspedisi</label>
+                                <input type="datetime-local" name="waktu_loading_handover" class="form-control form-control-sm" value="<?= !empty($sla['waktu_loading']) ? date('Y-m-d\TH:i', strtotime($sla['waktu_loading'])) : '' ?>">
+                            </div>
+                        </div>
+                        <div class="text-right mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary font-weight-bold">
+                                <i class="fas fa-save mr-1"></i> Simpan Waktu Kecepatan Warehouse
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            <?php endif; ?>
+        </div>
 
         <div class="row mb-3">
             <div class="col-md-6">
@@ -503,5 +638,46 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
 
     function goBack() {
         window.history.back();
+    }
+
+    function saveWarehouseSla(e) {
+        e.preventDefault();
+        var form = document.getElementById('formWarehouseSla');
+        if (!form) return false;
+
+        var formData = $(form).serialize();
+        if (typeof token !== 'undefined') {
+            formData += '&csrf_token=' + encodeURIComponent(token);
+        }
+
+        $.ajax({
+            url: '<?= base_url('tracking/update_warehouse_sla') ?>',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(res) {
+                if (res && res.status === 'success') {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Berhasil', res.message, 'success').then(function() {
+                            location.reload();
+                        });
+                    } else {
+                        alert(res.message);
+                        location.reload();
+                    }
+                } else {
+                    var msg = (res && res.message) ? res.message : 'Gagal menyimpan waktu kecepatan warehouse';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Error', msg, 'error');
+                    } else {
+                        alert(msg);
+                    }
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat menyimpan data');
+            }
+        });
+        return false;
     }
 </script>

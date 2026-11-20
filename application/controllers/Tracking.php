@@ -302,6 +302,68 @@ class Tracking extends CI_Controller
         $data['link_resi']             = $this->input->post('link_resi');
         $data['keterangan']            = $this->input->post('keterangan');
 
+        // --- Waktu Tracking Kecepatan Warehouse (SLA) ---
+        $parseDtInput = function ($val) {
+            if (empty($val)) return null;
+            $ts = strtotime(str_replace('T', ' ', trim($val)));
+            return ($ts && $ts > 0) ? date('Y-m-d H:i:s', $ts) : null;
+        };
+
+        $waktu_po_cro          = $parseDtInput($this->input->post('waktu_po_cro', TRUE));
+        $waktu_cetak_sj        = $parseDtInput($this->input->post('waktu_cetak_sj', TRUE));
+        $waktu_order_ekspedisi = $parseDtInput($this->input->post('waktu_order_ekspedisi', TRUE));
+        $waktu_loading         = $parseDtInput($this->input->post('waktu_loading_handover', TRUE));
+
+        // Auto-resolve dari dokumen sumber jika kosong
+        if (!empty($data['id_pengeluaran_barang'])) {
+            $pbRow = $this->db->select('no_po, data_created, tgl_keluar')
+                ->from('pengeluaran_barang')
+                ->where('id_pengeluaran_barang', $data['id_pengeluaran_barang'])
+                ->get()->row();
+            if ($pbRow) {
+                if (!$waktu_cetak_sj && !empty($pbRow->data_created)) {
+                    $waktu_cetak_sj = $pbRow->data_created;
+                }
+                if (!$waktu_po_cro && !empty($pbRow->no_po) && $this->db->table_exists('po_masuk')) {
+                    $poRow = $this->db->select('cro_date, gm_date, created_at')
+                        ->from('po_masuk')
+                        ->where('no_po', $pbRow->no_po)
+                        ->where('deleted', 0)
+                        ->order_by('id_po', 'DESC')
+                        ->limit(1)
+                        ->get()->row();
+                    if ($poRow) {
+                        $waktu_po_cro = $poRow->cro_date ?: ($poRow->gm_date ?: $poRow->created_at);
+                    }
+                }
+            }
+        } elseif (!empty($data['id_pengiriman_stok'])) {
+            $psRow = $this->db->select('data_created')->from('pengiriman_stok')->where('id_pengiriman_stok', $data['id_pengiriman_stok'])->get()->row();
+            if ($psRow && !$waktu_cetak_sj && !empty($psRow->data_created)) {
+                $waktu_cetak_sj = $psRow->data_created;
+            }
+        } elseif (!empty($data['id_serah_terima_barang'])) {
+            $stbRow = $this->db->select('created_at')->from('surat_stb')->where('id_stb', $data['id_serah_terima_barang'])->get()->row();
+            if ($stbRow && !$waktu_cetak_sj && !empty($stbRow->created_at)) {
+                $waktu_cetak_sj = $stbRow->created_at;
+            }
+        }
+
+        $statusInput = (int)$this->input->post('status', TRUE);
+        if ($statusInput == 0) $statusInput = 1;
+
+        if (!$waktu_order_ekspedisi) {
+            $waktu_order_ekspedisi = date('Y-m-d H:i:s');
+        }
+        if (!$waktu_loading && in_array($statusInput, [2, 3, 4, 5], true)) {
+            $waktu_loading = date('Y-m-d H:i:s');
+        }
+
+        $data['waktu_po_cro']           = $waktu_po_cro;
+        $data['waktu_cetak_sj']         = $waktu_cetak_sj;
+        $data['waktu_order_ekspedisi']  = $waktu_order_ekspedisi;
+        $data['waktu_loading_handover'] = $waktu_loading;
+
         $this->md_tracking->add($data);
 
         //Menambahkan ke Status
@@ -933,6 +995,25 @@ class Tracking extends CI_Controller
             'keterangan'     => $this->input->post('keterangan', TRUE)
         ];
 
+        $parseDtInput = function ($val) {
+            if (empty($val)) return null;
+            $ts = strtotime(str_replace('T', ' ', trim($val)));
+            return ($ts && $ts > 0) ? date('Y-m-d H:i:s', $ts) : null;
+        };
+
+        if ($this->input->post('waktu_po_cro') !== null) {
+            $data_update['waktu_po_cro'] = $parseDtInput($this->input->post('waktu_po_cro', TRUE));
+        }
+        if ($this->input->post('waktu_cetak_sj') !== null) {
+            $data_update['waktu_cetak_sj'] = $parseDtInput($this->input->post('waktu_cetak_sj', TRUE));
+        }
+        if ($this->input->post('waktu_order_ekspedisi') !== null) {
+            $data_update['waktu_order_ekspedisi'] = $parseDtInput($this->input->post('waktu_order_ekspedisi', TRUE));
+        }
+        if ($this->input->post('waktu_loading_handover') !== null) {
+            $data_update['waktu_loading_handover'] = $parseDtInput($this->input->post('waktu_loading_handover', TRUE));
+        }
+
         // Ambil nama ekspedisi
         $ekspedisi = $this->md_ekspedisi->getById($data_update['id_ekspedisi']);
         if (!empty($ekspedisi)) {
@@ -1168,8 +1249,21 @@ class Tracking extends CI_Controller
         checkEmptyForm($dataDetailGc);
         $this->md_tracking->addStatus($dataDetailGc);
 
-
+        // Auto-set waktu_order_ekspedisi / waktu_loading_handover saat status diupdate oleh Warehouse
         $ambilDataTracking     = $this->md_tracking->getById($dataDetailGc['id_tracking']);
+        if (!empty($ambilDataTracking[0])) {
+            $trCur = $ambilDataTracking[0];
+            $whUpdate = [];
+            if (empty($trCur->waktu_order_ekspedisi) && (int)$status >= 1) {
+                $whUpdate['waktu_order_ekspedisi'] = date('Y-m-d H:i:s');
+            }
+            if (empty($trCur->waktu_loading_handover) && in_array((int)$status, [2, 3, 4, 5], true)) {
+                $whUpdate['waktu_loading_handover'] = date('Y-m-d H:i:s');
+            }
+            if (!empty($whUpdate)) {
+                $this->md_tracking->update(['id_tracking' => $dataDetailGc['id_tracking']], $whUpdate);
+            }
+        }
         $idCustomer            = $ambilDataTracking[0]->id_customer;
         $noSj                = $ambilDataTracking[0]->no_sj;
         $alamatTujuan        = $ambilDataTracking[0]->alamat_penerima;
@@ -1311,6 +1405,40 @@ class Tracking extends CI_Controller
 
         addLog('Tracking Barang', 'Update Status Tracking No :' . $noSj);
         ajaxReturnDie('success', 'Status berhasil diperbaharui', TRUE);
+    }
+
+    /**
+     * Update Waktu Milestone Kecepatan Warehouse (PO CRO -> Cetak SJ -> Order Ekspedisi -> Loading / Hand-over)
+     */
+    public function update_warehouse_sla()
+    {
+        grantAccessFor('all');
+
+        $id_tracking_enc = $this->input->post('id_tracking', TRUE);
+        $id_tracking     = !empty($id_tracking_enc) ? decrypt($id_tracking_enc) : null;
+
+        if (empty($id_tracking)) {
+            ajaxReturnDie('error', 'ID Tracking tidak valid!', FALSE);
+            return;
+        }
+
+        $parseDt = function ($val) {
+            if (empty($val)) return null;
+            $ts = strtotime(str_replace('T', ' ', trim($val)));
+            return ($ts && $ts > 0) ? date('Y-m-d H:i:s', $ts) : null;
+        };
+
+        $data_update = [
+            'waktu_po_cro'           => $parseDt($this->input->post('waktu_po_cro', TRUE)),
+            'waktu_cetak_sj'         => $parseDt($this->input->post('waktu_cetak_sj', TRUE)),
+            'waktu_order_ekspedisi'  => $parseDt($this->input->post('waktu_order_ekspedisi', TRUE)),
+            'waktu_loading_handover' => $parseDt($this->input->post('waktu_loading_handover', TRUE))
+        ];
+
+        $this->md_tracking->update(['id_tracking' => $id_tracking], $data_update);
+
+        addlog('Tracking Warehouse SLA', 'Update Waktu Kecepatan Warehouse ID Tracking: ' . $id_tracking);
+        ajaxReturnDie('success', 'Waktu Tracking & Kecepatan Warehouse berhasil disimpan!', TRUE);
     }
 
     public function addOLD()
@@ -1460,8 +1588,21 @@ class Tracking extends CI_Controller
         checkEmptyForm($dataDetailGc);
         $this->md_tracking->addStatus($dataDetailGc);
 
-
+        // Auto-set waktu_order_ekspedisi / waktu_loading_handover saat status diupdate oleh Warehouse
         $ambilDataTracking     = $this->md_tracking->getById($dataDetailGc['id_tracking']);
+        if (!empty($ambilDataTracking[0])) {
+            $trCur = $ambilDataTracking[0];
+            $whUpdate = [];
+            if (empty($trCur->waktu_order_ekspedisi) && (int)$status >= 1) {
+                $whUpdate['waktu_order_ekspedisi'] = date('Y-m-d H:i:s');
+            }
+            if (empty($trCur->waktu_loading_handover) && in_array((int)$status, [2, 3, 4, 5], true)) {
+                $whUpdate['waktu_loading_handover'] = date('Y-m-d H:i:s');
+            }
+            if (!empty($whUpdate)) {
+                $this->md_tracking->update(['id_tracking' => $dataDetailGc['id_tracking']], $whUpdate);
+            }
+        }
         $idCustomer            = $ambilDataTracking[0]->id_customer;
         $noSj                = $ambilDataTracking[0]->no_sj;
 
@@ -1600,30 +1741,58 @@ class Tracking extends CI_Controller
                 $type_badge = '<span class="badge badge-primary badge-sm">Pengiriman</span>';
             }
 
+            // --- Kalkulasi Kecepatan Warehouse (PO CRO -> Cetak SJ -> Order Ekspedisi -> Loading/Hand-over) ---
+            $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($row);
+            $poInfoHtml = '';
+            if (!empty($sla['no_po'])) {
+                $poTimeStr = !empty($sla['waktu_po_cro']) ? date('d/m/y H:i', strtotime($sla['waktu_po_cro'])) : 'Manual';
+                $poInfoHtml = '<div class="mt-1"><span class="badge badge-light border text-dark" style="font-size:10.5px;"><i class="fas fa-file-signature text-primary mr-1"></i>PO: ' . htmlspecialchars($sla['no_po']) . ' <span class="text-muted">(' . $poTimeStr . ')</span></span></div>';
+            }
+
+            $makeSlaBadge = function ($label, $dur) {
+                if (!empty($dur['valid'])) {
+                    return '<div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1" style="background:' . $dur['badge_bg'] . '; color:' . $dur['badge_text'] . '; border:1px solid ' . $dur['badge_bdr'] . '; font-size:10.5px; line-height:1.25;">'
+                        . '<span class="font-weight-bold mr-2">' . $label . ':</span>'
+                        . '<span class="font-weight-bold text-nowrap"><i class="fas ' . $dur['icon'] . ' mr-1"></i>' . htmlspecialchars($dur['text']) . ' (' . $dur['label_tier'] . ')</span>'
+                        . '</div>';
+                }
+                return '<div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1" style="background:#f8fafc; color:#94a3b8; border:1px dashed #cbd5e1; font-size:10.5px; line-height:1.25;">'
+                    . '<span>' . $label . ':</span>'
+                    . '<span>Menunggu</span>'
+                    . '</div>';
+            };
+
+            $kecepatanHtml = '<div class="text-left" style="min-width: 195px;">'
+                . $makeSlaBadge('SJ ➔ Order Eks', $sla['dur_sj_to_order'])
+                . $makeSlaBadge('Order ➔ Loading', $sla['dur_order_to_load'])
+                . $makeSlaBadge('Total SJ ➔ Load', $sla['dur_sj_to_load'])
+                . '</div>';
+
             $th = array();
             $th[] = ++$start . '.';                               // Index 0
-            $th[] = $SJ . ' ' . $type_badge;                      // Index 1
+            $th[] = $SJ . ' ' . $type_badge . $poInfoHtml;        // Index 1
             $th[] = $row->nama_gudang;                            // Index 2
             $th[] = $nama_penerima;                               // Index 3
             $th[] = $detail_barang;                               // Index 4
             $th[] = $row->alamat_penerima;                        // Index 5
             $th[] = $row->nama_ekspedisi;                         // Index 6
-            $th[] = date('d-M-Y', strtotime($row->tgl_sampai));   // Index 7
-            $th[] = $stat;                                        // Index 8
-            $th[] = $li_btn;                                      // Index 9 (Kolom Aksi)
+            $th[] = $kecepatanHtml;                               // Index 7 - Kecepatan Warehouse (SLA)
+            $th[] = !empty($row->tgl_sampai) && strpos($row->tgl_sampai, '0000') === false ? date('d-M-Y', strtotime($row->tgl_sampai)) : '-';   // Index 8
+            $th[] = $stat;                                        // Index 9
+            $th[] = $li_btn;                                      // Index 10 (Kolom Aksi)
 
             // --- DATA HIDDEN ---
-            $th[] = $row->id_status;                              // Index 10
-            $th[] = $id;                                          // Index 11
+            $th[] = $row->id_status;                              // Index 11
+            $th[] = $id;                                          // Index 12
 
             // PERBAIKAN: Gunakan isset agar tidak error jika property tidak ada
-            $th[] = isset($row->id_tagihan) ? $row->id_tagihan : null; // Index 12
+            $th[] = isset($row->id_tagihan) ? $row->id_tagihan : null; // Index 13
 
-            $th[] = isset($row->status_approval) ? $row->status_approval : -1; // Index 13
+            $th[] = isset($row->status_approval) ? $row->status_approval : -1; // Index 14
 
-            $th[] = $tracking_type;                               // Index 14 - tracking type
+            $th[] = $tracking_type;                               // Index 15 - tracking type
 
-            $th[] = isset($row->no_resi) ? $row->no_resi : '-';  // Index 15 - no_resi
+            $th[] = isset($row->no_resi) ? $row->no_resi : '-';  // Index 16 - no_resi
 
             $data[] = $th;
         }
@@ -1743,26 +1912,19 @@ class Tracking extends CI_Controller
         $sheet->setCellValue('P4', 'Tanggal Penerimaan');
         $sheet->setCellValue('Q4', 'Bukti Penerimaan');
         $sheet->setCellValue('R4', 'Created at');
+        $sheet->setCellValue('S4', 'No PO');
+        $sheet->setCellValue('T4', 'Waktu PO Diterima CRO');
+        $sheet->setCellValue('U4', 'Waktu Cetak SJ');
+        $sheet->setCellValue('V4', 'Waktu Order Ekspedisi');
+        $sheet->setCellValue('W4', 'Waktu Loading / Hand-over');
+        $sheet->setCellValue('X4', 'Kecepatan Cetak SJ -> Order Ekspedisi');
+        $sheet->setCellValue('Y4', 'Kecepatan Order Ekspedisi -> Loading/Hand-over');
+        $sheet->setCellValue('Z4', 'Total Kecepatan Cetak SJ -> Loading/Hand-over');
 
         // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A4')->applyFromArray($style_col);
-        $sheet->getStyle('B4')->applyFromArray($style_col);
-        $sheet->getStyle('C4')->applyFromArray($style_col);
-        $sheet->getStyle('D4')->applyFromArray($style_col);
-        $sheet->getStyle('E4')->applyFromArray($style_col);
-        $sheet->getStyle('F4')->applyFromArray($style_col);
-        $sheet->getStyle('G4')->applyFromArray($style_col);
-        $sheet->getStyle('H4')->applyFromArray($style_col);
-        $sheet->getStyle('I4')->applyFromArray($style_col);
-        $sheet->getStyle('J4')->applyFromArray($style_col);
-        $sheet->getStyle('K4')->applyFromArray($style_col);
-        $sheet->getStyle('L4')->applyFromArray($style_col);
-        $sheet->getStyle('M4')->applyFromArray($style_col);
-        $sheet->getStyle('N4')->applyFromArray($style_col);
-        $sheet->getStyle('O4')->applyFromArray($style_col);
-        $sheet->getStyle('P4')->applyFromArray($style_col);
-        $sheet->getStyle('Q4')->applyFromArray($style_col);
-        $sheet->getStyle('R4')->applyFromArray($style_col);
+        foreach (range('A', 'Z') as $colLtr) {
+            $sheet->getStyle($colLtr . '4')->applyFromArray($style_col);
+        }
 
 
         $kolom = 5;
@@ -1782,6 +1944,8 @@ class Tracking extends CI_Controller
                 $status = "Diterima";
             } else if ($marketing->id_status == 6) {
                 $status = "Menunggu Konfirmasi";
+            } else {
+                $status = "-";
             }
 
             if ($marketing->tgl_penerima != '') {
@@ -1789,6 +1953,11 @@ class Tracking extends CI_Controller
             } else {
                 $tglPenerima = "";
             }
+
+            $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($marketing);
+            $durSjOrderStr = !empty($sla['dur_sj_to_order']['valid']) ? $sla['dur_sj_to_order']['text'] . ' (' . $sla['dur_sj_to_order']['label_tier'] . ')' : '-';
+            $durOrderLoadStr = !empty($sla['dur_order_to_load']['valid']) ? $sla['dur_order_to_load']['text'] . ' (' . $sla['dur_order_to_load']['label_tier'] . ')' : '-';
+            $durSjLoadStr = !empty($sla['dur_sj_to_load']['valid']) ? $sla['dur_sj_to_load']['text'] . ' (' . $sla['dur_sj_to_load']['label_tier'] . ')' : '-';
 
             $spreadsheet->setActiveSheetIndex(0)
                 ->setCellValue('A' . $kolom, $nomor)
@@ -1808,7 +1977,15 @@ class Tracking extends CI_Controller
                 ->setCellValue('O' . $kolom, $marketing->nama_penerima)
                 ->setCellValue('P' . $kolom, $tglPenerima)
                 ->setCellValue('Q' . $kolom, $marketing->bukti_penerima)
-                ->setCellValue('R' . $kolom, $marketing->createdAt);
+                ->setCellValue('R' . $kolom, $marketing->createdAt)
+                ->setCellValue('S' . $kolom, $sla['no_po'] ?: '-')
+                ->setCellValue('T' . $kolom, $sla['waktu_po_cro'] ?: '-')
+                ->setCellValue('U' . $kolom, $sla['waktu_cetak_sj'] ?: '-')
+                ->setCellValue('V' . $kolom, $sla['waktu_order_eks'] ?: '-')
+                ->setCellValue('W' . $kolom, $sla['waktu_loading'] ?: '-')
+                ->setCellValue('X' . $kolom, $durSjOrderStr)
+                ->setCellValue('Y' . $kolom, $durOrderLoadStr)
+                ->setCellValue('Z' . $kolom, $durSjLoadStr);
 
 
 

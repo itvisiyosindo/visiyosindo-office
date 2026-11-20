@@ -4,6 +4,35 @@ if (!defined('BASEPATH'))
 
 class Md_tracking extends CI_Model
 {
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ensureWarehouseSchema();
+    }
+
+    public function ensureWarehouseSchema()
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        if ($this->db->table_exists('tracking_barang')) {
+            if (!$this->db->field_exists('waktu_po_cro', 'tracking_barang')) {
+                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_po_cro` DATETIME NULL DEFAULT NULL AFTER `tgl_sampai`");
+            }
+            if (!$this->db->field_exists('waktu_cetak_sj', 'tracking_barang')) {
+                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_cetak_sj` DATETIME NULL DEFAULT NULL AFTER `waktu_po_cro`");
+            }
+            if (!$this->db->field_exists('waktu_order_ekspedisi', 'tracking_barang')) {
+                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_order_ekspedisi` DATETIME NULL DEFAULT NULL AFTER `waktu_cetak_sj`");
+            }
+            if (!$this->db->field_exists('waktu_loading_handover', 'tracking_barang')) {
+                @$this->db->query("ALTER TABLE `tracking_barang` ADD COLUMN `waktu_loading_handover` DATETIME NULL DEFAULT NULL AFTER `waktu_order_ekspedisi`");
+            }
+        }
+    }
 
     function add($data)
     {
@@ -163,8 +192,15 @@ class Md_tracking extends CI_Model
             t.id_serah_terima_barang,
             t.id_kirim_dokumen,
             t.tracking_type,
+            t.tgl_pengiriman,
             t.tgl_sampai,
+            t.waktu_po_cro,
+            t.waktu_cetak_sj,
+            t.waktu_order_ekspedisi,
+            t.waktu_loading_handover,
+            t.created_at,
             t.no_sj,
+            t.no_resi,
             t.stat,
             g.nama_gudang,
             c.nama_customer,
@@ -175,6 +211,15 @@ class Md_tracking extends CI_Model
             kd.nama_customer as nama_customer_kirim,
             te.id_tagihan,
             te.status_approval,
+            pb.no_po as pb_no_po,
+            pb.data_created as pb_created_at,
+            ps.data_created as ps_created_at,
+            stb.created_at as stb_created_at,
+            (SELECT pm.cro_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date,
+            (SELECT pm.gm_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_gm_date,
+            (SELECT pm.created_at FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_created_at,
+            (SELECT MIN(ts1.created_at) FROM tracking_status ts1 WHERE ts1.id_tracking = t.id_tracking AND ts1.id_status >= 1) as status1_time,
+            (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time,
             CASE 
                 WHEN t.tracking_type = "pengiriman_stok" THEN 
                     (SELECT GROUP_CONCAT(DISTINCT b.nama_barang SEPARATOR ", ")
@@ -203,6 +248,7 @@ class Md_tracking extends CI_Model
         $this->db->from('tracking_barang t');
         $this->db->join('gudang g', 't.id_gudang=g.id_gudang', 'LEFT');
         $this->db->join('customer c', 't.id_customer=c.id_customer', 'LEFT');
+        $this->db->join('pengeluaran_barang pb', 't.id_pengeluaran_barang=pb.id_pengeluaran_barang', 'LEFT');
         $this->db->join('pengiriman_stok ps', 't.id_pengiriman_stok=ps.id_pengiriman_stok', 'LEFT');
         $this->db->join('gudang g2', 'ps.id_gudang_tujuan=g2.id_gudang', 'LEFT');
         $this->db->join('surat_stb stb', 't.id_serah_terima_barang=stb.id_stb', 'LEFT');
@@ -349,7 +395,8 @@ class Md_tracking extends CI_Model
                     pb.status,
                     pb.data_created,
                     pb.from_invoice,
-                    pb.perusahaan
+                    pb.perusahaan,
+                    (SELECT COALESCE(pm.cro_date, pm.gm_date, pm.created_at) FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date
                 FROM pengeluaran_barang pb
                 LEFT JOIN customer c ON pb.id_customer = c.id_customer
                 LEFT JOIN ekspedisi e ON pb.id_ekspedisi = e.id_ekspedisi
@@ -412,6 +459,11 @@ class Md_tracking extends CI_Model
             t.nama_ekspedisi,
             t.tgl_pengiriman,
             t.tgl_sampai,
+            t.waktu_po_cro,
+            t.waktu_cetak_sj,
+            t.waktu_order_ekspedisi,
+            t.waktu_loading_handover,
+            t.created_at,
             t.biaya,
             t.pic_penerima,
             t.no_sj,
@@ -426,12 +478,16 @@ class Md_tracking extends CI_Model
             t.tracking_type,
             g.nama_gudang,
             c.nama_customer,
+            pb.no_po as pb_no_po,
+            pb.data_created as pb_created_at,
             ps.id_gudang_tujuan,
+            ps.data_created as ps_created_at,
             g2.nama_gudang as gudang_tujuan,
             g2.alamat_gudang as alamat_gudang_tujuan,
             stb.kode_stb,
             stb.kota_pengajuan,
             stb.tgl_pengajuan as tgl_pengajuan_stb,
+            stb.created_at as stb_created_at,
             c_stb_pihak1.nama_customer as nama_pihak1_stb,
             c_stb_pihak1.alamat_customer as alamat_pihak1_stb,
             c_stb_pihak2.nama_customer as nama_pihak2_stb,
@@ -444,11 +500,19 @@ class Md_tracking extends CI_Model
             kd.marketing as marketing_kirim,
             kd.link_doc as link_doc_kirim,
             kd.tgl_kirim,
-            kd.ekspedisi as ekspedisi_kirim
+            kd.ekspedisi as ekspedisi_kirim,
+            (SELECT pm.id_po FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as id_po_masuk,
+            (SELECT pm.kode_masuk FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_kode_masuk,
+            (SELECT pm.cro_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date,
+            (SELECT pm.gm_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_gm_date,
+            (SELECT pm.created_at FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_created_at,
+            (SELECT MIN(ts1.created_at) FROM tracking_status ts1 WHERE ts1.id_tracking = t.id_tracking AND ts1.id_status >= 1) as status1_time,
+            (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time
         ')
             ->from('tracking_barang t')
             ->join('gudang g', 't.id_gudang=g.id_gudang', 'LEFT')
             ->join('customer c', 't.id_customer=c.id_customer', 'LEFT')
+            ->join('pengeluaran_barang pb', 't.id_pengeluaran_barang=pb.id_pengeluaran_barang', 'LEFT')
             ->join('pengiriman_stok ps', 't.id_pengiriman_stok=ps.id_pengiriman_stok', 'LEFT')
             ->join('gudang g2', 'ps.id_gudang_tujuan=g2.id_gudang', 'LEFT')
             ->join('surat_stb stb', 't.id_serah_terima_barang=stb.id_stb', 'LEFT')
@@ -642,6 +706,10 @@ class Md_tracking extends CI_Model
                 t.nama_ekspedisi,
                 t.tgl_pengiriman,
                 t.tgl_sampai,
+                t.waktu_po_cro,
+                t.waktu_cetak_sj,
+                t.waktu_order_ekspedisi,
+                t.waktu_loading_handover,
                 t.biaya,
                 t.pic_penerima,
                 t.no_sj,
@@ -651,6 +719,15 @@ class Md_tracking extends CI_Model
                 t.created_at AS createdAt,
                 g.nama_gudang,
                 c.nama_customer,
+                pb.no_po as pb_no_po,
+                pb.data_created as pb_created_at,
+                ps.data_created as ps_created_at,
+                stb.created_at as stb_created_at,
+                (SELECT pm.cro_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_cro_date,
+                (SELECT pm.gm_date FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_gm_date,
+                (SELECT pm.created_at FROM po_masuk pm WHERE pm.no_po = pb.no_po AND pb.no_po IS NOT NULL AND pb.no_po != "" AND pm.deleted = 0 ORDER BY pm.id_po DESC LIMIT 1) as po_created_at,
+                (SELECT MIN(ts1.created_at) FROM tracking_status ts1 WHERE ts1.id_tracking = t.id_tracking AND ts1.id_status >= 1) as status1_time,
+                (SELECT MIN(ts2.created_at) FROM tracking_status ts2 WHERE ts2.id_tracking = t.id_tracking AND ts2.id_status IN (2,3,4,5)) as status2_time,
                 ts.id_tracking,
                 ts.id_status,
                 ts.nama_penerima,
@@ -659,16 +736,85 @@ class Md_tracking extends CI_Model
                 ts.created_at AS statusCreatedAt
             ')
             ->from('tracking_barang t')
-            ->join('gudang g', 't.id_gudang = g.id_gudang')
-            ->join('customer c', 't.id_customer = c.id_customer')
-            ->join('tracking_status ts', 't.id_tracking = ts.id_tracking')
-            ->join("($subquery) latest_ts", 'ts.id_tracking = latest_ts.id_tracking AND ts.created_at = latest_ts.latest_created_at')
+            ->join('gudang g', 't.id_gudang = g.id_gudang', 'LEFT')
+            ->join('customer c', 't.id_customer = c.id_customer', 'LEFT')
+            ->join('pengeluaran_barang pb', 't.id_pengeluaran_barang = pb.id_pengeluaran_barang', 'LEFT')
+            ->join('pengiriman_stok ps', 't.id_pengiriman_stok = ps.id_pengiriman_stok', 'LEFT')
+            ->join('surat_stb stb', 't.id_serah_terima_barang = stb.id_stb', 'LEFT')
+            ->join('tracking_status ts', 't.id_tracking = ts.id_tracking', 'LEFT')
+            ->join("($subquery) latest_ts", 'ts.id_tracking = latest_ts.id_tracking AND ts.created_at = latest_ts.latest_created_at', 'LEFT')
             ->where('t.stat', 1)
-            ->where('t.created_at >=', date('Y-m-d', strtotime($tglawal)))
-            ->where('t.created_at <=', date('Y-m-d', strtotime($tglakhir)))
+            ->where('t.created_at >=', date('Y-m-d 00:00:00', strtotime($tglawal)))
+            ->where('t.created_at <=', date('Y-m-d 23:59:59', strtotime($tglakhir)))
             ->order_by('t.id_tracking', 'DESC')
             ->get()
             ->result();
+    }
+
+    public function resolveWarehouseMilestoneTimes($row)
+    {
+        $cleanDt = function ($dt) {
+            if (empty($dt)) return null;
+            $s = trim((string)$dt);
+            if ($s === '' || strpos($s, '0000-00-00') !== false) return null;
+            return $s;
+        };
+
+        // 1. Waktu PO diterima dari CRO
+        $waktuPoCro = $cleanDt($row->waktu_po_cro ?? null);
+        if (!$waktuPoCro) {
+            $waktuPoCro = $cleanDt($row->po_cro_date ?? null)
+                ?: ($cleanDt($row->po_gm_date ?? null) ?: $cleanDt($row->po_created_at ?? null));
+        }
+
+        // 2. Waktu Cetak SJ / Dokumen Keluar
+        $waktuCetakSj = $cleanDt($row->waktu_cetak_sj ?? null);
+        if (!$waktuCetakSj) {
+            $waktuCetakSj = $cleanDt($row->pb_created_at ?? null)
+                ?: ($cleanDt($row->ps_created_at ?? null)
+                ?: ($cleanDt($row->stb_created_at ?? null)
+                ?: ($cleanDt($row->tgl_pengiriman ?? null) ? $row->tgl_pengiriman . ' 08:00:00' : $cleanDt($row->created_at ?? $row->createdAt ?? null))));
+        }
+
+        // 3. Waktu Order Ekspedisi
+        $waktuOrderEks = $cleanDt($row->waktu_order_ekspedisi ?? null);
+        if (!$waktuOrderEks) {
+            $waktuOrderEks = $cleanDt($row->status1_time ?? null) ?: $cleanDt($row->created_at ?? $row->createdAt ?? null);
+        }
+
+        // 4. Waktu Loading / Hand-over ke Ekspedisi
+        $waktuLoading = $cleanDt($row->waktu_loading_handover ?? null);
+        if (!$waktuLoading) {
+            $waktuLoading = $cleanDt($row->status2_time ?? null);
+            if (!$waktuLoading && !empty($row->no_resi) && trim((string)$row->no_resi) !== '-') {
+                $waktuLoading = $waktuOrderEks;
+            }
+        }
+
+        // Hitung kecepatan menggunakan standar indikator formatApprovalDurationInfo
+        $calcDur = function ($start, $end) {
+            if (function_exists('formatApprovalDurationInfo')) {
+                return formatApprovalDurationInfo($start, $end, false);
+            }
+            return ['valid' => false, 'text' => '-', 'tier' => 'none', 'label_tier' => ''];
+        };
+
+        $durPoToSj        = ($waktuPoCro && $waktuCetakSj) ? $calcDur($waktuPoCro, $waktuCetakSj) : $calcDur(null, null);
+        $durSjToOrder     = ($waktuCetakSj && $waktuOrderEks) ? $calcDur($waktuCetakSj, $waktuOrderEks) : $calcDur(null, null);
+        $durOrderToLoad   = ($waktuOrderEks && $waktuLoading) ? $calcDur($waktuOrderEks, $waktuLoading) : $calcDur(null, null);
+        $durSjToLoadTotal = ($waktuCetakSj && $waktuLoading) ? $calcDur($waktuCetakSj, $waktuLoading) : $calcDur(null, null);
+
+        return [
+            'no_po'              => !empty($row->pb_no_po) ? $row->pb_no_po : null,
+            'waktu_po_cro'       => $waktuPoCro,
+            'waktu_cetak_sj'     => $waktuCetakSj,
+            'waktu_order_eks'    => $waktuOrderEks,
+            'waktu_loading'      => $waktuLoading,
+            'dur_po_to_sj'       => $durPoToSj,
+            'dur_sj_to_order'    => $durSjToOrder,
+            'dur_order_to_load'  => $durOrderToLoad,
+            'dur_sj_to_load'     => $durSjToLoadTotal
+        ];
     }
 
     function getUpdateById($where)

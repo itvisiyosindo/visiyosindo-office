@@ -166,6 +166,36 @@ if ($is_pengiriman_stok) {
                             </div>
                         </div>
                     </div>
+                    <?php $slaEdit = $this->md_tracking->resolveWarehouseMilestoneTimes($tracking); ?>
+                    <div class="row mt-2 pt-3 border-top">
+                        <div class="col-12 mb-2">
+                            <strong class="text-primary"><i class="fas fa-stopwatch mr-1"></i>Waktu Tahapan & Kecepatan Warehouse (SLA)</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">1. Waktu PO Diterima CRO</label>
+                                <input type="datetime-local" class="form-control" name="waktu_po_cro" value="<?= !empty($slaEdit['waktu_po_cro']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_po_cro'])) : '' ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">2. Waktu Cetak SJ</label>
+                                <input type="datetime-local" class="form-control" name="waktu_cetak_sj" value="<?= !empty($slaEdit['waktu_cetak_sj']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_cetak_sj'])) : '' ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">3. Waktu Order Ekspedisi</label>
+                                <input type="datetime-local" class="form-control" name="waktu_order_ekspedisi" value="<?= !empty($slaEdit['waktu_order_eks']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_order_eks'])) : '' ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">4. Waktu Loading / Hand-over</label>
+                                <input type="datetime-local" class="form-control" name="waktu_loading_handover" value="<?= !empty($slaEdit['waktu_loading']) ? date('Y-m-d\TH:i', strtotime($slaEdit['waktu_loading'])) : '' ?>">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-section status-section">

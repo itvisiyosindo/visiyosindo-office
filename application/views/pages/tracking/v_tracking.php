@@ -222,6 +222,7 @@
 							<th class="text-center">Nama Barang</th>
 							<th class="text-center">Alamat Penerima</th>
 							<th class="text-center">Nama Ekspedisi</th>
+							<th class="text-center">Kecepatan Warehouse (SLA)</th>
 							<th class="text-center">Estimasi Penerimaan</th>
 							<th class="text-center">Status</th>
 							<th class="text-center">Aksi</th>
@@ -256,6 +257,8 @@
 						<select class="form-control" id="id_sj" name="id_sj" required>
 							<option value="">- Pilih No SJ -</option>
 							<?php foreach ($list_sj as $row) {
+								$cetakSjIso = !empty($row->data_created) ? date('Y-m-d\TH:i', strtotime($row->data_created)) : (!empty($row->tgl_keluar) ? date('Y-m-d\T08:00', strtotime($row->tgl_keluar)) : '');
+								$poCroIso   = !empty($row->po_cro_date) ? date('Y-m-d\TH:i', strtotime($row->po_cro_date)) : '';
 								$value_string =
 									$row->id_pengeluaran_barang . "PengHubunG" .
 									$row->nama_gudang . "PengHubunG" .
@@ -267,10 +270,13 @@
 									$row->nama_ekspedisi . "PengHubunG" .
 									$row->id_ekspedisi . "PengHubunG" .
 									$row->tgl_keluar . "PengHubunG" .
-									$row->no_pengiriman;
+									$row->no_pengiriman . "PengHubunG" .
+									($row->no_po ?? '') . "PengHubunG" .
+									$poCroIso . "PengHubunG" .
+									$cetakSjIso;
 							?>
 								<option value="<?= htmlspecialchars($value_string, ENT_QUOTES) ?>">
-									<?= $row->no_pengiriman ?>
+									<?= $row->no_pengiriman ?><?= !empty($row->no_po) ? ' (PO: ' . $row->no_po . ')' : '' ?>
 								</option>
 							<?php } ?>
 						</select>
@@ -316,7 +322,34 @@
 					</div>
 
 					<hr class="my-4">
-					<h6 class="mb-3"><strong>Diisi oleh Tim Warehouse</strong></h6>
+					<h6 class="mb-3"><strong>Diisi oleh Tim Warehouse (Tracking & Kecepatan SLA)</strong></h6>
+
+					<div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #cbd5e1;">
+						<div class="font-weight-bold text-primary mb-2" style="font-size: 0.85rem;">
+							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan)
+						</div>
+						<div class="row">
+							<div class="col-md-6 form-group mb-2">
+								<label class="small font-weight-bold mb-1">1. Waktu PO Diterima dari CRO</label>
+								<input type="datetime-local" id="waktu_po_cro" name="waktu_po_cro" class="form-control form-control-sm">
+								<small class="text-muted" id="info_no_po_cro">Otomatis dari Approval CRO (jika ada)</small>
+							</div>
+							<div class="col-md-6 form-group mb-2">
+								<label class="small font-weight-bold mb-1">2. Waktu Cetak SJ</label>
+								<input type="datetime-local" id="waktu_cetak_sj" name="waktu_cetak_sj" class="form-control form-control-sm">
+								<small class="text-muted">Otomatis dari waktu pembuatan SJ</small>
+							</div>
+							<div class="col-md-6 form-group mb-1">
+								<label class="small font-weight-bold mb-1">3. Waktu Order Ekspedisi <span class="text-danger">*</span></label>
+								<input type="datetime-local" id="waktu_order_ekspedisi" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
+							</div>
+							<div class="col-md-6 form-group mb-1">
+								<label class="small font-weight-bold mb-1">4. Waktu Loading / Hand-over ke Ekspedisi</label>
+								<input type="datetime-local" id="waktu_loading_handover" name="waktu_loading_handover" class="form-control form-control-sm">
+								<small class="text-muted">Isi saat barang naik armada / serah terima kurir</small>
+							</div>
+						</div>
+					</div>
 
 					<div class="form-group">
 						<label>Estimasi Sampai <span class="text-danger">*</span></label>
@@ -481,7 +514,27 @@
 					</div>
 
 					<hr class="my-4">
-					<h6 class="mb-3"><strong>Diisi oleh Tim Warehouse</strong></h6>
+					<h6 class="mb-3"><strong>Diisi oleh Tim Warehouse (Tracking & Kecepatan SLA)</strong></h6>
+
+					<div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #cbd5e1;">
+						<div class="font-weight-bold text-primary mb-2" style="font-size: 0.85rem;">
+							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan)
+						</div>
+						<div class="row">
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">1. Waktu Cetak TTB</label>
+								<input type="datetime-local" id="waktu_cetak_sj_ps" name="waktu_cetak_sj" class="form-control form-control-sm">
+							</div>
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">2. Waktu Order Ekspedisi <span class="text-danger">*</span></label>
+								<input type="datetime-local" id="waktu_order_ekspedisi_ps" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
+							</div>
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">3. Waktu Loading / Hand-over</label>
+								<input type="datetime-local" id="waktu_loading_handover_ps" name="waktu_loading_handover" class="form-control form-control-sm">
+							</div>
+						</div>
+					</div>
 
 					<div class="form-group">
 						<label>Estimasi Sampai <span class="text-danger">*</span></label>
@@ -648,7 +701,27 @@
 					</div>
 
 					<hr class="my-4">
-					<h6 class="mb-3"><strong>Diisi oleh Tim Warehouse</strong></h6>
+					<h6 class="mb-3"><strong>Diisi oleh Tim Warehouse (Tracking & Kecepatan SLA)</strong></h6>
+
+					<div class="p-3 mb-3 rounded" style="background: #f8fafc; border: 1px solid #cbd5e1;">
+						<div class="font-weight-bold text-primary mb-2" style="font-size: 0.85rem;">
+							<i class="fas fa-stopwatch mr-1"></i> Waktu Tahapan Proses Warehouse (Otomatis Hitung Kecepatan)
+						</div>
+						<div class="row">
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">1. Waktu Cetak STTB</label>
+								<input type="datetime-local" id="waktu_cetak_sj_stb" name="waktu_cetak_sj" class="form-control form-control-sm">
+							</div>
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">2. Waktu Order Ekspedisi <span class="text-danger">*</span></label>
+								<input type="datetime-local" id="waktu_order_ekspedisi_stb" name="waktu_order_ekspedisi" class="form-control form-control-sm" value="<?= date('Y-m-d\TH:i') ?>">
+							</div>
+							<div class="col-md-4 form-group mb-1">
+								<label class="small font-weight-bold mb-1">3. Waktu Loading / Hand-over</label>
+								<input type="datetime-local" id="waktu_loading_handover_stb" name="waktu_loading_handover" class="form-control form-control-sm">
+							</div>
+						</div>
+					</div>
 
 					<div class="form-group">
 						<label>Estimasi Sampai <span class="text-danger">*</span></label>
@@ -998,20 +1071,20 @@
 				$('[data-toggle="tooltip"]').tooltip();
 			},
 			"columnDefs": [{
-					targets: [0, 6, 7, 8],
+					targets: [0, 6, 8, 9],
 					className: 'text-center'
 				},
 				{
-					targets: 9, // Kolom Aksi
+					targets: 10, // Kolom Aksi
 					className: 'text-center',
 					render: function(data, type, row) {
 
 						let namaEkspedisi = row[6];
-						let idStatus = row[10];
-						let encId = row[11];
-						let idTagihan = row[12];
-						let statusApproval = row[13];
-						let trackingType = row[14];
+						let idStatus = row[11];
+						let encId = row[12];
+						let idTagihan = row[13];
+						let statusApproval = row[14];
+						let trackingType = row[15];
 
 						let btnTagihan = '';
 
@@ -1186,6 +1259,9 @@
 			let id_eks = isi[8];
 			let tgl_keluar = isi[9];
 			let no_sj = isi[10];
+			let no_po = isi[11] || '';
+			let po_cro_iso = isi[12] || '';
+			let cetak_sj_iso = isi[13] || '';
 
 			// SET UI - Update to use .value for input fields
 			document.getElementById('nama_gudang').value = nama_gudang;
@@ -1210,6 +1286,18 @@
 			document.getElementById('nama_ekspedisi_in').value = nama_eks;
 
 			document.getElementById('id_pb').value = idPB;
+
+			if (document.getElementById('waktu_po_cro')) {
+				document.getElementById('waktu_po_cro').value = po_cro_iso;
+			}
+			if (document.getElementById('waktu_cetak_sj')) {
+				document.getElementById('waktu_cetak_sj').value = cetak_sj_iso;
+			}
+			if (document.getElementById('info_no_po_cro')) {
+				document.getElementById('info_no_po_cro').innerHTML = no_po
+					? ('PO: <b>' + no_po + '</b>' + (po_cro_iso ? ' (Tercatat di sistem PO)' : ' (PO manual, silakan isi jam terima)'))
+					: 'Tidak ada No PO di SJ (bisa diisi manual)';
+			}
 		});
 
 		/** -------------------------------------------
