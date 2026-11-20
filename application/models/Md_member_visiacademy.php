@@ -55,7 +55,7 @@ class Md_member_visiacademy extends CI_Model
 
     public function getAllDeals()
     {
-        return $this->db->select('d.*, m.nama_member, m.kode_member, m.institusi_asal')
+        return $this->db->select('d.*, m.nama_member, m.kode_member, m.institusi_asal, m.no_telp, m.nama_bank, m.no_rekening, m.atas_nama_rekening')
                         ->from('va_member_deal d')
                         ->join('va_member m', 'm.id_member = d.id_member', 'left')
                         ->order_by('d.id_deal', 'DESC')
@@ -64,7 +64,11 @@ class Md_member_visiacademy extends CI_Model
 
     public function getDealById($id)
     {
-        return $this->db->where('id_deal', (int)$id)->get('va_member_deal')->row_array();
+        return $this->db->select('d.*, m.nama_member, m.kode_member, m.institusi_asal, m.no_telp, m.nama_bank, m.no_rekening, m.atas_nama_rekening')
+                        ->from('va_member_deal d')
+                        ->join('va_member m', 'm.id_member = d.id_member', 'left')
+                        ->where('d.id_deal', (int)$id)
+                        ->get()->row_array();
     }
 
     public function getDealByMember($id_member)
@@ -82,6 +86,11 @@ class Md_member_visiacademy extends CI_Model
         return $this->db->where('id_deal', (int)$id)->update('va_member_deal', ['status_deal' => $status]);
     }
 
+    public function updatePayment($id, $data)
+    {
+        return $this->db->where('id_deal', (int)$id)->update('va_member_deal', $data);
+    }
+
     public function deleteDeal($id)
     {
         return $this->db->where('id_deal', (int)$id)->delete('va_member_deal');
@@ -95,15 +104,19 @@ class Md_member_visiacademy extends CI_Model
             COUNT(id_deal) as total_deal,
             SUM(CASE WHEN status_deal = 'Deal' THEN estimasi_nilai ELSE 0 END) as total_nilai_deal,
             SUM(CASE WHEN status_deal = 'Deal' THEN nominal_komisi ELSE 0 END) as total_komisi_deal,
-            SUM(CASE WHEN status_deal = 'Pending' THEN nominal_komisi ELSE 0 END) as total_komisi_pending
+            SUM(CASE WHEN status_deal = 'Pending' THEN nominal_komisi ELSE 0 END) as total_komisi_pending,
+            SUM(CASE WHEN status_deal = 'Deal' AND status_bayar = 'Sudah Ditransfer' THEN nominal_komisi ELSE 0 END) as total_komisi_terbayar,
+            SUM(CASE WHEN status_deal = 'Deal' AND (status_bayar = 'Belum Ditransfer' OR status_bayar IS NULL) THEN nominal_komisi ELSE 0 END) as total_komisi_siap_bayar
         ")->get('va_member_deal')->row_array();
 
         return [
-            'total_member'         => (int)$totalMember,
-            'total_deal'           => (int)($dealStats['total_deal'] ?? 0),
-            'total_nilai_deal'     => (float)($dealStats['total_nilai_deal'] ?? 0),
-            'total_komisi_deal'    => (float)($dealStats['total_komisi_deal'] ?? 0),
-            'total_komisi_pending' => (float)($dealStats['total_komisi_pending'] ?? 0),
+            'total_member'              => (int)$totalMember,
+            'total_deal'                => (int)($dealStats['total_deal'] ?? 0),
+            'total_nilai_deal'          => (float)($dealStats['total_nilai_deal'] ?? 0),
+            'total_komisi_deal'         => (float)($dealStats['total_komisi_deal'] ?? 0),
+            'total_komisi_pending'      => (float)($dealStats['total_komisi_pending'] ?? 0),
+            'total_komisi_terbayar'     => (float)($dealStats['total_komisi_terbayar'] ?? 0),
+            'total_komisi_siap_bayar'   => (float)($dealStats['total_komisi_siap_bayar'] ?? 0),
         ];
     }
 }

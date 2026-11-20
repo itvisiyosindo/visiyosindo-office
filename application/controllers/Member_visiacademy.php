@@ -30,11 +30,14 @@ class Member_visiacademy extends CI_Controller
     {
         grantAccessFor('all');
 
-        $nama_member    = trim($this->input->post('nama_member', true));
-        $kode_member    = trim($this->input->post('kode_member', true));
-        $no_telp        = trim($this->input->post('no_telp', true));
-        $email          = trim($this->input->post('email', true));
-        $institusi_asal = trim($this->input->post('institusi_asal', true));
+        $nama_member        = trim($this->input->post('nama_member', true));
+        $kode_member        = trim($this->input->post('kode_member', true));
+        $no_telp            = trim($this->input->post('no_telp', true));
+        $email              = trim($this->input->post('email', true));
+        $institusi_asal     = trim($this->input->post('institusi_asal', true));
+        $nama_bank          = trim($this->input->post('nama_bank', true));
+        $no_rekening        = trim($this->input->post('no_rekening', true));
+        $atas_nama_rekening = trim($this->input->post('atas_nama_rekening', true));
 
         if (empty($nama_member)) {
             ajaxReturnDie('error', 'Nama member wajib diisi!');
@@ -51,12 +54,15 @@ class Member_visiacademy extends CI_Controller
         }
 
         $data = [
-            'kode_member'    => $kode_member,
-            'nama_member'    => $nama_member,
-            'no_telp'        => $no_telp,
-            'email'          => $email,
-            'institusi_asal' => $institusi_asal,
-            'status'         => 'aktif'
+            'kode_member'        => $kode_member,
+            'nama_member'        => $nama_member,
+            'no_telp'            => $no_telp,
+            'email'              => $email,
+            'institusi_asal'     => $institusi_asal,
+            'nama_bank'          => $nama_bank,
+            'no_rekening'        => $no_rekening,
+            'atas_nama_rekening' => $atas_nama_rekening,
+            'status'             => 'aktif'
         ];
 
         $inserted = $this->Md_member_visiacademy->addMember($data);
@@ -134,6 +140,60 @@ class Member_visiacademy extends CI_Controller
 
         $this->Md_member_visiacademy->updateDealStatus($id_deal, $status);
         ajaxReturnDie('success', 'Status deal berhasil diubah menjadi ' . $status, true);
+    }
+
+    public function konfirmasiBayar()
+    {
+        grantAccessFor('all');
+
+        $id_deal      = (int) $this->input->post('id_deal', true);
+        $status_bayar = $this->input->post('status_bayar', true) ?: 'Sudah Ditransfer';
+        $catatan      = trim($this->input->post('catatan_transfer', true));
+        $tgl_input    = $this->input->post('tgl_transfer', true);
+
+        if (!$id_deal) {
+            ajaxReturnDie('error', 'ID Deal tidak valid.');
+        }
+
+        $deal = $this->Md_member_visiacademy->getDealById($id_deal);
+        if (!$deal) {
+            ajaxReturnDie('error', 'Data deal tidak ditemukan.');
+        }
+
+        $updateData = [
+            'status_bayar'     => in_array($status_bayar, ['Belum Ditransfer', 'Sudah Ditransfer']) ? $status_bayar : 'Sudah Ditransfer',
+            'catatan_transfer' => $catatan
+        ];
+
+        if ($updateData['status_bayar'] === 'Sudah Ditransfer') {
+            $updateData['tgl_transfer'] = !empty($tgl_input) ? date('Y-m-d H:i:s', strtotime($tgl_input)) : date('Y-m-d H:i:s');
+        } else {
+            $updateData['tgl_transfer'] = null;
+        }
+
+        if (!empty($_FILES['bukti_transfer']['name'])) {
+            $uploadDir = FCPATH . 'uploads/bukti_komisi/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $config['upload_path']   = $uploadDir;
+            $config['allowed_types'] = 'jpg|jpeg|png|pdf|webp';
+            $config['max_size']      = 5120; // 5MB
+            $config['file_name']     = 'bukti_' . $id_deal . '_' . time();
+
+            $this->load->library('upload', $config);
+
+            if ($this->upload->do_upload('bukti_transfer')) {
+                $uploadData = $this->upload->data();
+                $updateData['bukti_transfer'] = $uploadData['file_name'];
+            } else {
+                ajaxReturnDie('error', 'Gagal upload bukti transfer: ' . $this->upload->display_errors('', ''));
+            }
+        }
+
+        $this->Md_member_visiacademy->updatePayment($id_deal, $updateData);
+        ajaxReturnDie('success', 'Status dan data pembayaran komisi berhasil disimpan.', true);
     }
 
     public function deleteMember($id = null)
