@@ -429,18 +429,8 @@ class Pelanggan extends CI_Controller
         ]);
 
         $survey_url = base_url('survey/' . $token);
-        $sapaan = !empty($nama_pic) ? $nama_pic : $nama_pelanggan;
-
-        $pesan_wa = "Kepada Yth. {$sapaan},\n"
-                  . "({$nama_pelanggan})\n\n"
-                  . "Terima kasih atas kepercayaan Anda telah menggunakan layanan PT Visi Yosindo Medika.\n\n"
-                  . "Dalam upaya kami untuk terus meningkatkan kualitas pelayanan, kami sangat mengharapkan kesediaan Bapak/Ibu untuk meluangkan waktu 1 menit guna mengisi Form Survey Kepuasan Pelanggan pada tautan berikut:\n\n"
-                  . "🔗 {$survey_url}\n\n"
-                  . "Setiap masukan dan penilaian yang Bapak/Ibu berikan sangat berharga bagi peningkatan mutu layanan kami ke depan.\n\n"
-                  . "Hormat kami,\n"
-                  . "PT Visi Yosindo Medika";
-
-        $wa_url = "https://api.whatsapp.com/send?phone=" . $clean_phone . "&text=" . rawurlencode($pesan_wa);
+        $pesan_wa   = $this->md_survey->build_wa_message($nama_pelanggan, $nama_pic, $survey_url);
+        $wa_url     = $this->md_survey->build_wa_url($clean_phone, $pesan_wa);
 
         echo json_encode([
             'status'     => 'success',

@@ -80,4 +80,57 @@ class Md_survey extends CI_Model
             'butuh_tindak_lanjut' => $butuh_tindak_lanjut
         ];
     }
+
+    public function build_wa_message($nama_pelanggan, $nama_pic, $survey_url)
+    {
+        $nama_pelanggan = trim((string)$nama_pelanggan);
+        $nama_pic       = trim((string)$nama_pic);
+
+        $hour = (int)date('G');
+        if ($hour >= 4 && $hour < 11) {
+            $waktu = 'Selamat Pagi';
+        } elseif ($hour >= 11 && $hour < 15) {
+            $waktu = 'Selamat Siang';
+        } elseif ($hour >= 15 && $hour < 18) {
+            $waktu = 'Selamat Sore';
+        } else {
+            $waktu = 'Selamat Malam';
+        }
+
+        if ($nama_pic !== '' && $nama_pic !== '-' && strcasecmp($nama_pic, $nama_pelanggan) !== 0) {
+            if (preg_match('/^(bapak|ibu|bpk|bp|bu|dr|drg|prof|ir|h|hj|tn|ny|sdr|sdri)\.?\s/i', $nama_pic)) {
+                $baris_pic = "*{$nama_pic}*";
+            } else {
+                $baris_pic = "*Bapak/Ibu {$nama_pic}*";
+            }
+        } else {
+            $baris_pic = "*Bapak/Ibu PIC / Pimpinan*";
+        }
+
+        $baris_instansi = $nama_pelanggan !== '' ? "\n*{$nama_pelanggan}*" : '';
+
+        return "{$waktu},\n\n"
+             . "Kepada Yth.\n"
+             . "{$baris_pic}{$baris_instansi}\n\n"
+             . "Terima kasih atas kepercayaan Bapak/Ibu yang telah menggunakan produk dan layanan *PT Visi Yosindo Medika*.\n\n"
+             . "Sebagai komitmen kami untuk terus meningkatkan mutu pelayanan dan purna jual, kami mohon kesediaan Bapak/Ibu meluangkan waktu sejenak (±1 menit) untuk mengisi *Survey Kepuasan Pelanggan* melalui tautan berikut:\n\n"
+             . "{$survey_url}\n\n"
+             . "Penilaian serta saran dan masukan dari Bapak/Ibu sangat berharga bagi evaluasi dan peningkatan kualitas layanan kami ke depannya.\n\n"
+             . "Atas waktu, perhatian, dan kerja sama yang baik, kami ucapkan terima kasih.\n\n"
+             . "Salam hangat,\n"
+             . "*Customer Relation Officer (CRO)*\n"
+             . "*PT Visi Yosindo Medika*";
+    }
+
+    public function build_wa_url($no_wa, $pesan_wa)
+    {
+        $clean_phone = preg_replace('/[^0-9]/', '', (string)$no_wa);
+        if (substr($clean_phone, 0, 1) === '0') {
+            $clean_phone = '62' . substr($clean_phone, 1);
+        } elseif (substr($clean_phone, 0, 2) !== '62' && strlen($clean_phone) > 0) {
+            $clean_phone = '62' . $clean_phone;
+        }
+
+        return 'https://wa.me/' . $clean_phone . '?text=' . rawurlencode($pesan_wa);
+    }
 }

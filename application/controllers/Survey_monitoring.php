@@ -128,17 +128,8 @@ class Survey_monitoring extends CI_Controller
 
             // Aksi
             $surveyUrl = base_url('survey/' . $row->token);
-            $sapaan = !empty($row->nama_pic) ? $row->nama_pic : (!empty($row->nama_pelanggan) ? $row->nama_pelanggan : 'Bapak/Ibu');
-            $pesanWa = "Kepada Yth. {$sapaan},\n"
-                     . "({$row->nama_pelanggan})\n\n"
-                     . "Terima kasih atas kepercayaan Anda telah menggunakan layanan PT Visi Yosindo Medika.\n\n"
-                     . "Dalam upaya kami untuk terus meningkatkan kualitas pelayanan, kami sangat mengharapkan kesediaan Bapak/Ibu untuk meluangkan waktu 1 menit guna mengisi Form Survey Kepuasan Pelanggan pada tautan berikut:\n\n"
-                     . "🔗 {$surveyUrl}\n\n"
-                     . "Setiap masukan dan penilaian yang Bapak/Ibu berikan sangat berharga bagi peningkatan mutu layanan kami ke depan.\n\n"
-                     . "Hormat kami,\n"
-                     . "PT Visi Yosindo Medika";
-
-            $waLink = "https://api.whatsapp.com/send?phone=" . $cleanWa . "&text=" . rawurlencode($pesanWa);
+            $pesanWa   = $this->md_survey->build_wa_message($row->nama_pelanggan, $row->nama_pic, $surveyUrl);
+            $waLink    = $this->md_survey->build_wa_url($cleanWa, $pesanWa);
 
             $colAksi = '<div class="btn-group" role="group">
                 <button type="button" class="btn btn-sm btn-info btn-detail-survey" data-id="' . $row->id . '" title="Lihat Detail Survey">
