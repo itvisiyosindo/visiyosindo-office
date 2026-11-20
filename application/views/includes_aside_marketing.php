@@ -58,6 +58,11 @@
 											Data Pelanggan
 										</a>
 									</li>
+									<li class="<?= $this->uri->segment(1) == 'survey_monitoring' ? 'nav-active' : '' ?>">
+										<a class="nav-link" href="<?= base_url('survey_monitoring') ?>">
+											Survey Kepuasan
+										</a>
+									</li>
 								<?php } ?>
 							</ul>
 						</li>

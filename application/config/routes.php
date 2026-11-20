@@ -180,3 +180,12 @@ $route['passport/(:any)'] = 'Passport/view/$1';
 $route['asset_passport'] = 'Asset_passport/index';
 $route['asset_passport/(:any)'] = 'Asset_passport/$1';
 $route['asset_passport/(:any)/(:any)'] = 'Asset_passport/$1/$2';
+
+// Survey Kepuasan Pelanggan (Public)
+$route['survey/submit'] = 'Survey/submit';
+$route['survey/sukses'] = 'Survey/sukses';
+$route['survey/(:any)'] = 'Survey/isi/$1';
+
+// Survey Kepuasan Pelanggan (Admin / Monitoring)
+$route['survey_monitoring'] = 'Survey_monitoring/index';
+$route['survey_monitoring/(:any)'] = 'Survey_monitoring/$1';

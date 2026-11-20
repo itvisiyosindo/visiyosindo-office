@@ -306,6 +306,7 @@ class Pelanggan extends CI_Controller
 
             $li_btn       = '
                 <div class="btn-group" role="group" aria-label="First group">
+                   <button type="button" class="btn btn-sm btn-success btn-kirim-survey" data-id="' . $id . '" data-nama="' . htmlspecialchars($row->nama ?? '', ENT_QUOTES) . '" data-pic="' . htmlspecialchars($row->cpname ?? '', ENT_QUOTES) . '" data-kontak="' . htmlspecialchars($row->kontak ?? '', ENT_QUOTES) . '" title="Kirim Survey Kepuasan"><i class="fab fa-whatsapp"></i></button>
                    <a href="pelanggan/show/detail_pelanggan/' . $id . '" class="btn btn-sm btn-info" title="Detail"><i class="bx bx-show"></i></a>
                    <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '" title="Edit"><i class="bx bx-pencil"></i></button>
                    <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $row->id_pelanggan . '" data-object="pelanggan/delete/' . $row->id_pelanggan . '"><i class="bx bx-trash"></i></button>
@@ -316,10 +317,15 @@ class Pelanggan extends CI_Controller
             // Format tanggal registrasi
             $tglRegistrasi = !empty($row->tanggal_registrasi) ? date('d-m-Y', strtotime($row->tanggal_registrasi)) : '-';
 
+            $kontakText = htmlspecialchars($row->kontak ?? '', ENT_QUOTES);
+            $colKontak = !empty($row->kontak)
+                ? '<div class="d-flex align-items-center justify-content-between">' . $kontakText . ' <button type="button" class="btn btn-xs btn-outline-success ml-1 btn-kirim-survey" data-id="' . $id . '" data-nama="' . htmlspecialchars($row->nama ?? '', ENT_QUOTES) . '" data-pic="' . htmlspecialchars($row->cpname ?? '', ENT_QUOTES) . '" data-kontak="' . $kontakText . '" title="Kirim Survey Kepuasan via WA"><i class="fab fa-whatsapp"></i></button></div>'
+                : '-';
+
             $th = array();
             $th[] = $namaPelanggan;
             $th[] = $row->tipe_bisnis ?? '-';
-            $th[] = $row->kontak;
+            $th[] = $colKontak;
             $th[] = $row->email ?? '-';
             $th[] = $row->kota;
             $th[] = $row->prov;
@@ -369,6 +375,84 @@ class Pelanggan extends CI_Controller
         addLog('Update Status Pelanggan', 'Mengubah status Pelanggan "' . $row->identitas_pelanggan . '" menjadi ' . $new_status_label);
 
         ajaxReturnDie('success', 'Status pelanggan berhasil diubah menjadi ' . $new_status_label);
+    }
+
+    public function generate_survey_link()
+    {
+        grantAccessFor('all');
+
+        $id_enc = $this->input->post('id_pelanggan', TRUE);
+        $id_pelanggan = !empty($id_enc) ? (is_numeric($id_enc) ? (int)$id_enc : (int)decrypt($id_enc)) : null;
+
+        $nama_pelanggan = trim((string)$this->input->post('nama_pelanggan', TRUE));
+        $nama_pic       = trim((string)$this->input->post('nama_pic', TRUE));
+        $no_wa          = trim((string)$this->input->post('no_wa', TRUE));
+
+        if (!empty($id_pelanggan) && empty($nama_pelanggan)) {
+            $p = $this->md_pelanggan->getById($id_pelanggan);
+            if (!empty($p)) {
+                $p = $p[0];
+                $nama_pelanggan = $p->identitas_pelanggan;
+                if (empty($nama_pic)) $nama_pic = $p->cpname;
+                if (empty($no_wa)) $no_wa = $p->kontak;
+            }
+        }
+
+        if (empty($nama_pelanggan) || empty($no_wa)) {
+            echo json_encode(['status' => 'error', 'message' => 'Nama pelanggan dan nomor WhatsApp wajib diisi.']);
+            return;
+        }
+
+        // Clean phone number for WhatsApp URL
+        $clean_phone = preg_replace('/[^0-9]/', '', $no_wa);
+        if (substr($clean_phone, 0, 1) === '0') {
+            $clean_phone = '62' . substr($clean_phone, 1);
+        } elseif (substr($clean_phone, 0, 2) !== '62' && strlen($clean_phone) > 0) {
+            $clean_phone = '62' . $clean_phone;
+        }
+
+        $token = bin2hex(random_bytes(16));
+
+        $this->load->model('md_survey');
+        $creatorName = function_exists('sessNamaPengguna') ? (sessNamaPengguna() ?: 'Admin Office') : (function_exists('sessNama') ? sessNama() : 'Admin Office');
+
+        $survey_id = $this->md_survey->create_survey([
+            'id_pelanggan'          => $id_pelanggan,
+            'token'                 => $token,
+            'nama_pelanggan'        => $nama_pelanggan,
+            'nama_pic'              => $nama_pic,
+            'no_wa'                 => $clean_phone,
+            'status'                => 'Pending',
+            'status_tindak_lanjut'  => 'Belum Ditindaklanjuti',
+            'created_by'            => $creatorName,
+            'created_at'            => date('Y-m-d H:i:s')
+        ]);
+
+        $survey_url = base_url('survey/' . $token);
+        $sapaan = !empty($nama_pic) ? $nama_pic : $nama_pelanggan;
+
+        $pesan_wa = "Kepada Yth. {$sapaan},\n"
+                  . "({$nama_pelanggan})\n\n"
+                  . "Terima kasih atas kepercayaan Anda telah menggunakan layanan PT Visi Yosindo Medika.\n\n"
+                  . "Dalam upaya kami untuk terus meningkatkan kualitas pelayanan, kami sangat mengharapkan kesediaan Bapak/Ibu untuk meluangkan waktu 1 menit guna mengisi Form Survey Kepuasan Pelanggan pada tautan berikut:\n\n"
+                  . "🔗 {$survey_url}\n\n"
+                  . "Setiap masukan dan penilaian yang Bapak/Ibu berikan sangat berharga bagi peningkatan mutu layanan kami ke depan.\n\n"
+                  . "Hormat kami,\n"
+                  . "PT Visi Yosindo Medika";
+
+        $wa_url = "https://api.whatsapp.com/send?phone=" . $clean_phone . "&text=" . rawurlencode($pesan_wa);
+
+        echo json_encode([
+            'status'     => 'success',
+            'survey_id'  => $survey_id,
+            'token'      => $token,
+            'survey_url' => $survey_url,
+            'wa_url'     => $wa_url,
+            'pesan_wa'   => $pesan_wa,
+            'no_wa'      => $clean_phone,
+            'message'    => 'Link survey berhasil dibuat.'
+        ]);
+        return;
     }
 
 

@@ -299,6 +299,52 @@
 	</div>
 </div>
 
+<!-- Modal Kirim Survey Kepuasan Pelanggan -->
+<div class="modal fade" id="modalKirimSurvey" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content" style="border-radius:12px; overflow:hidden;">
+			<div class="modal-header" style="background: linear-gradient(135deg, #16a34a, #15803d); color:#fff;">
+				<h5 class="modal-title font-weight-bold">
+					<i class="fab fa-whatsapp mr-2"></i> Kirim Survey Kepuasan Pelanggan
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="form-kirim-survey">
+				<input type="hidden" name="id_pelanggan" id="survey_id_pelanggan">
+				<div class="modal-body" style="background:#f8fafc;">
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small text-muted">Nama Pelanggan / Institusi</label>
+						<input type="text" class="form-control" name="nama_pelanggan" id="survey_nama_pelanggan" readonly style="background:#e2e8f0; font-weight:600;">
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small">Nama PIC / Kontak yang Dituju <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" name="nama_pic" id="survey_nama_pic" placeholder="Contoh: dr. Bambang / Ibu Siti" required>
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small">Nomor WhatsApp Pelanggan / PIC <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" name="no_wa" id="survey_no_wa" placeholder="Contoh: 08123456789 atau 628123456789" required>
+						<small class="form-text text-muted">Format otomatis disesuaikan untuk link WhatsApp (62xxx).</small>
+					</div>
+
+					<div class="alert alert-info py-2 px-3 small mb-0">
+						<i class="fas fa-info-circle mr-1"></i> Setelah klik <strong>"Buat & Buka WhatsApp"</strong>, link survey khusus bintang 1-5 akan digenerate dan aplikasi WhatsApp langsung terbuka dengan pesan yang siap dikirim.
+					</div>
+				</div>
+				<div class="modal-footer bg-white">
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-success btn-sm font-weight-bold" id="btn-submit-kirim-survey">
+						<i class="fab fa-whatsapp mr-1"></i> Buat & Buka WhatsApp
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <!-- Modal Form Pelanggan -->
 <div id="main-modal" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
 	<div class="modal-dialog modal-lg" role="document">
@@ -909,6 +955,63 @@
 		// After successful save, update statistik
 		$(document).on('datatable.reload', function() {
 			updateStatistik();
+		});
+
+		// Kirim Survey Kepuasan Pelanggan
+		$(document).on('click', '.btn-kirim-survey', function(e) {
+			e.preventDefault();
+			var id = $(this).data('id');
+			var nama = $(this).data('nama');
+			var pic = $(this).data('pic');
+			var kontak = $(this).data('kontak');
+
+			$('#survey_id_pelanggan').val(id || '');
+			$('#survey_nama_pelanggan').val(nama || '');
+			$('#survey_nama_pic').val(pic || '');
+			$('#survey_no_wa').val(kontak || '');
+
+			$('#modalKirimSurvey').modal('show');
+		});
+
+		$('#form-kirim-survey').on('submit', function(e) {
+			e.preventDefault();
+			var submitBtn = $('#btn-submit-kirim-survey');
+			submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Menyiapkan Link...');
+
+			$.ajax({
+				url: '<?= base_url('pelanggan/generate_survey_link') ?>',
+				type: 'POST',
+				data: $(this).serialize(),
+				dataType: 'json',
+				success: function(res) {
+					submitBtn.prop('disabled', false).html('<i class="fab fa-whatsapp mr-1"></i> Buat & Buka WhatsApp');
+					if (res.status === 'success') {
+						$('#modalKirimSurvey').modal('hide');
+						window.open(res.wa_url, '_blank');
+						Swal.fire({
+							icon: 'success',
+							title: 'Survey Berhasil Dibuat!',
+							html: 'Link survey kepuasan telah dibuat dan diarahkan ke WhatsApp.<br><br><small class="text-muted">Link Survey: <a href="' + res.survey_url + '" target="_blank">' + res.survey_url + '</a></small>',
+							showConfirmButton: true,
+							confirmButtonText: 'Tutup'
+						});
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: 'Gagal',
+							text: res.message || 'Terjadi kesalahan saat membuat survey.'
+						});
+					}
+				},
+				error: function() {
+					submitBtn.prop('disabled', false).html('<i class="fab fa-whatsapp mr-1"></i> Buat & Buka WhatsApp');
+					Swal.fire({
+						icon: 'error',
+						title: 'Error',
+						text: 'Terjadi kesalahan sistem.'
+					});
+				}
+			});
 		});
 	});
 </script>

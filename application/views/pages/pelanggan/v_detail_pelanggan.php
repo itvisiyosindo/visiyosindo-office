@@ -346,6 +346,9 @@ $statusClass = ($statusCustomer == 'New Customer') ? 'status-new' : 'status-exis
 	<a href="<?= base_url('pelanggan') ?>" class="btn btn-secondary">
 		<i class="fas fa-arrow-left"></i> Kembali ke Daftar
 	</a>
+	<button type="button" class="btn btn-success btn-kirim-survey" data-id="<?= encrypt($data_pelanggan[0]->id_pelanggan) ?>" data-nama="<?= htmlspecialchars($data_pelanggan[0]->nama, ENT_QUOTES) ?>" data-pic="<?= htmlspecialchars($data_pelanggan[0]->cpname ?? '', ENT_QUOTES) ?>" data-kontak="<?= htmlspecialchars($data_pelanggan[0]->kontak ?? '', ENT_QUOTES) ?>">
+		<i class="fab fa-whatsapp"></i> Kirim Survey Kepuasan
+	</button>
 	<?php if (sessPenggunaId() == 72 || sessPenggunaId() == 69 || sessPenggunaId() == 744 || sessPenggunaId() == 1 || sessPenggunaId() == 7) { ?>
 	<a href="javascript:;" class="btn btn-primary btn-edit-detail" data-id="<?= encrypt($data_pelanggan[0]->id_pelanggan) ?>">
 		<i class="fas fa-edit"></i> Edit Data
@@ -953,6 +956,52 @@ $statusClass = ($statusCustomer == 'New Customer') ? 'status-new' : 'status-exis
 	</div>
 </div>
 
+<!-- Modal Kirim Survey Kepuasan Pelanggan -->
+<div class="modal fade" id="modalKirimSurvey" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content" style="border-radius:12px; overflow:hidden;">
+			<div class="modal-header" style="background: linear-gradient(135deg, #16a34a, #15803d); color:#fff;">
+				<h5 class="modal-title font-weight-bold">
+					<i class="fab fa-whatsapp mr-2"></i> Kirim Survey Kepuasan Pelanggan
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="form-kirim-survey">
+				<input type="hidden" name="id_pelanggan" id="survey_id_pelanggan">
+				<div class="modal-body" style="background:#f8fafc;">
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small text-muted">Nama Pelanggan / Institusi</label>
+						<input type="text" class="form-control" name="nama_pelanggan" id="survey_nama_pelanggan" readonly style="background:#e2e8f0; font-weight:600;">
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small">Nama PIC / Kontak yang Dituju <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" name="nama_pic" id="survey_nama_pic" placeholder="Contoh: dr. Bambang / Ibu Siti" required>
+					</div>
+
+					<div class="form-group mb-3">
+						<label class="font-weight-bold small">Nomor WhatsApp Pelanggan / PIC <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" name="no_wa" id="survey_no_wa" placeholder="Contoh: 08123456789 atau 628123456789" required>
+						<small class="form-text text-muted">Format otomatis disesuaikan untuk link WhatsApp (62xxx).</small>
+					</div>
+
+					<div class="alert alert-info py-2 px-3 small mb-0">
+						<i class="fas fa-info-circle mr-1"></i> Setelah klik <strong>"Buat & Buka WhatsApp"</strong>, link survey khusus bintang 1-5 akan digenerate dan aplikasi WhatsApp langsung terbuka dengan pesan yang siap dikirim.
+					</div>
+				</div>
+				<div class="modal-footer bg-white">
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-success btn-sm font-weight-bold" id="btn-submit-kirim-survey">
+						<i class="fab fa-whatsapp mr-1"></i> Buat & Buka WhatsApp
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 	// Show/hide data baru fields
@@ -996,6 +1045,49 @@ document.addEventListener('DOMContentLoaded', function() {
 	$('.btn-edit-detail').click(function() {
 		var id = $(this).data('id');
 		window.location.href = '<?= base_url('pelanggan') ?>?edit=' + id;
+	});
+
+	// Kirim Survey Kepuasan Pelanggan
+	$('.btn-kirim-survey').click(function(e) {
+		e.preventDefault();
+		var id = $(this).data('id');
+		var nama = $(this).data('nama');
+		var pic = $(this).data('pic');
+		var kontak = $(this).data('kontak');
+
+		$('#survey_id_pelanggan').val(id || '');
+		$('#survey_nama_pelanggan').val(nama || '');
+		$('#survey_nama_pic').val(pic || '');
+		$('#survey_no_wa').val(kontak || '');
+
+		$('#modalKirimSurvey').modal('show');
+	});
+
+	$('#form-kirim-survey').on('submit', function(e) {
+		e.preventDefault();
+		var submitBtn = $('#btn-submit-kirim-survey');
+		submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Menyiapkan Link...');
+
+		$.ajax({
+			url: '<?= base_url('pelanggan/generate_survey_link') ?>',
+			type: 'POST',
+			data: $(this).serialize(),
+			dataType: 'json',
+			success: function(res) {
+				submitBtn.prop('disabled', false).html('<i class="fab fa-whatsapp mr-1"></i> Buat & Buka WhatsApp');
+				if (res.status === 'success') {
+					$('#modalKirimSurvey').modal('hide');
+					window.open(res.wa_url, '_blank');
+					alert('Survey berhasil dibuat! Link WhatsApp sedang dibuka.');
+				} else {
+					alert(res.message || 'Terjadi kesalahan saat membuat survey.');
+				}
+			},
+			error: function() {
+				submitBtn.prop('disabled', false).html('<i class="fab fa-whatsapp mr-1"></i> Buat & Buka WhatsApp');
+				alert('Terjadi kesalahan sistem.');
+			}
+		});
 	});
 });
 </script>
