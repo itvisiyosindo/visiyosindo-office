@@ -68,6 +68,59 @@ class calonpelanggan extends CI_Controller
         die;
     }
 
+    public function mergeduplikat()
+    {
+        grantAccessFor('all');
+        $nama = trim((string)$this->input->post('nama'));
+        if ($nama === '') {
+            echo json_encode(['status' => 'error', 'msg' => 'Nama customer tidak valid.']);
+            die;
+        }
+
+        $res = $this->Md_calonpelanggan->mergeDuplikatByNama($nama);
+        if (!empty($res['error'])) {
+            echo json_encode(['status' => 'error', 'msg' => 'Gagal menggabungkan data duplikat.']);
+            die;
+        }
+
+        addLog('Merge Calon Pelanggan Duplikat', 'Menggabungkan ' . $res['merged_rows'] . ' data duplikat "' . $nama . '" (' . $res['moved_pics'] . ' kontak PIC digabung)');
+        $stats = $this->Md_calonpelanggan->getStatsCalon();
+
+        echo json_encode([
+            'status'      => 'success',
+            'msg'         => 'Berhasil menggabungkan ' . $res['merged_rows'] . ' data duplikat "' . $nama . '" menjadi 1 data utama (' . $res['moved_pics'] . ' kontak PIC digabung).',
+            'merged_rows' => $res['merged_rows'],
+            'moved_pics'  => $res['moved_pics'],
+            'stats'       => [
+                'total'        => number_format($stats['total']),
+                'bulan_ini'    => number_format($stats['bulan_ini']),
+                'duplikat'     => number_format($stats['duplikat']),
+                'jml_duplikat' => number_format($stats['jml_duplikat']),
+            ]
+        ]);
+        die;
+    }
+
+    public function mergesemuaduplikat()
+    {
+        grantAccessFor('all');
+        $res = $this->Md_calonpelanggan->mergeSemuaDuplikat();
+        addLog('Merge Semua Calon Pelanggan Duplikat', 'Menggabungkan ' . $res['total_groups'] . ' grup duplikat (' . $res['total_merged_rows'] . ' baris, ' . $res['total_moved_pics'] . ' kontak PIC)');
+        $stats = $this->Md_calonpelanggan->getStatsCalon();
+
+        echo json_encode([
+            'status' => 'success',
+            'msg'    => 'Berhasil menggabungkan ' . $res['total_groups'] . ' grup nama duplikat (' . $res['total_merged_rows'] . ' baris duplikat disatukan, ' . $res['total_moved_pics'] . ' kontak PIC digabung).',
+            'stats'  => [
+                'total'        => number_format($stats['total']),
+                'bulan_ini'    => number_format($stats['bulan_ini']),
+                'duplikat'     => number_format($stats['duplikat']),
+                'jml_duplikat' => number_format($stats['jml_duplikat']),
+            ]
+        ]);
+        die;
+    }
+
     public function addpelanggan()
     {
         $page_data['switch'] = $this->id_navbar();

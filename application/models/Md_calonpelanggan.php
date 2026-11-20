@@ -568,4 +568,152 @@ class Md_calonpelanggan extends CI_Model
             'per_bulan'     => $per_bulan,
         ];
     }
+
+    function mergeDuplikatByNama($nama)
+    {
+        $namaKey = strtolower(trim((string)$nama));
+        if ($namaKey === '') {
+            return ['merged_rows' => 0, 'moved_pics' => 0, 'master_id' => null];
+        }
+
+        $rows = $this->db
+            ->where('deleted', 0)
+            ->where('statuscaloncustomer', 1)
+            ->where('LOWER(TRIM(namacaloncustomer)) =', $namaKey)
+            ->order_by('id', 'ASC')
+            ->get('calonpelanggan')
+            ->result();
+
+        if (count($rows) <= 1) {
+            return ['merged_rows' => 0, 'moved_pics' => 0, 'master_id' => isset($rows[0]) ? $rows[0]->id : null];
+        }
+
+        $master = $rows[0];
+        $duplicates = array_slice($rows, 1);
+        $dupIds = [];
+        $enrichUpdate = [];
+        $fillableFields = ['alamatcaloncustomer', 'email', 'website', 'provinsi', 'kota', 'tipecustomer', 'kelascustomer', 'namapihakketiga'];
+
+        foreach ($duplicates as $dup) {
+            $dupIds[] = (int)$dup->id;
+            foreach ($fillableFields as $f) {
+                $curVal = isset($enrichUpdate[$f]) ? $enrichUpdate[$f] : (isset($master->$f) ? trim((string)$master->$f) : '');
+                $dupVal = isset($dup->$f) ? trim((string)$dup->$f) : '';
+                if (($curVal === '' || $curVal === '-' || $curVal === '0') && $dupVal !== '' && $dupVal !== '-' && $dupVal !== '0') {
+                    $enrichUpdate[$f] = $dup->$f;
+                }
+            }
+        }
+
+        $this->db->trans_start();
+
+        if (!empty($enrichUpdate)) {
+            $this->db->where('id', $master->id)->update('calonpelanggan', $enrichUpdate);
+        }
+
+        // Ambil kontak PIC yang sudah ada di data utama
+        $masterPics = $this->db
+            ->where('idpic', $master->id)
+            ->where('deleted', 0)
+            ->get('calonpelangganpic')
+            ->result();
+
+        $existingPicKeys = [];
+        foreach ($masterPics as $mp) {
+            $k = strtolower(trim((string)$mp->namapic)) . '|' . preg_replace('/[^0-9]/', '', (string)$mp->teleponpic);
+            if ($k !== '|') {
+                $existingPicKeys[$k] = true;
+            }
+        }
+
+        // Ambil semua kontak PIC dari data duplikat
+        $dupPics = $this->db
+            ->where_in('idpic', $dupIds)
+            ->where('deleted', 0)
+            ->order_by('id', 'ASC')
+            ->get('calonpelangganpic')
+            ->result();
+
+        $movedPics = 0;
+        foreach ($dupPics as $dp) {
+            $n = trim((string)$dp->namapic);
+            $j = trim((string)$dp->jabatanpic);
+            $t = trim((string)$dp->teleponpic);
+            if ($n === '' && $j === '' && $t === '') {
+                $this->db->where('id', $dp->id)->update('calonpelangganpic', ['deleted' => 1]);
+                continue;
+            }
+
+            $k = strtolower($n) . '|' . preg_replace('/[^0-9]/', '', $t);
+            if ($k !== '|' && isset($existingPicKeys[$k])) {
+                $this->db->where('id', $dp->id)->update('calonpelangganpic', ['deleted' => 1]);
+            } else {
+                $this->db->where('id', $dp->id)->update('calonpelangganpic', ['idpic' => $master->id]);
+                if ($k !== '|') {
+                    $existingPicKeys[$k] = true;
+                }
+                $movedPics++;
+            }
+        }
+
+        // Pindahkan relasi modality, funnel, dan pelangganan ke master
+        $this->db->where_in('id_pelanggan', $dupIds)->update('pelanggananmodality', [
+            'id_pelanggan'  => $master->id,
+            'kodepelanggan' => $master->kodecaloncustomer
+        ]);
+
+        if ($this->db->table_exists('funnel')) {
+            $this->db->where_in('idpelanggan', $dupIds)->update('funnel', ['idpelanggan' => $master->id]);
+        }
+
+        if ($this->db->table_exists('pelangganan')) {
+            $this->db->where_in('idcalonpelanggan', $dupIds)->update('pelangganan', ['idcalonpelanggan' => $master->id]);
+        }
+
+        // Nonaktifkan (soft-delete) baris calonpelanggan yang duplikat
+        $this->db->where_in('id', $dupIds)->update('calonpelanggan', ['deleted' => 1]);
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            return ['merged_rows' => 0, 'moved_pics' => 0, 'master_id' => null, 'error' => true];
+        }
+
+        return [
+            'merged_rows' => count($dupIds),
+            'moved_pics'  => $movedPics,
+            'master_id'   => $master->id,
+            'master_nama' => $master->namacaloncustomer
+        ];
+    }
+
+    function mergeSemuaDuplikat()
+    {
+        $groups = $this->db->query("
+            SELECT TRIM(namacaloncustomer) as nama, COUNT(*) as jumlah
+            FROM calonpelanggan
+            WHERE deleted = 0 AND statuscaloncustomer = 1
+            GROUP BY LOWER(TRIM(namacaloncustomer))
+            HAVING jumlah > 1
+        ")->result();
+
+        $totalGroups = 0;
+        $totalMergedRows = 0;
+        $totalMovedPics = 0;
+
+        foreach ($groups as $g) {
+            $res = $this->mergeDuplikatByNama($g->nama);
+            if (!empty($res['merged_rows'])) {
+                $totalGroups++;
+                $totalMergedRows += $res['merged_rows'];
+                $totalMovedPics  += $res['moved_pics'];
+            }
+        }
+
+        return [
+            'total_groups'      => $totalGroups,
+            'total_merged_rows' => $totalMergedRows,
+            'total_moved_pics'  => $totalMovedPics
+        ];
+    }
 }

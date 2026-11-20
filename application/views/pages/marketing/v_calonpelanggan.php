@@ -90,7 +90,7 @@
             <div class="cp-kpi-body">
                 <div>
                     <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Total Calon Pelanggan</div>
-                    <div class="h3 font-weight-bold text-dark mb-0 mt-1"><?= number_format($stats['total']) ?></div>
+                    <div class="h3 font-weight-bold text-dark mb-0 mt-1" id="kpi-cp-total"><?= number_format($stats['total']) ?></div>
                     <div class="small text-muted mt-1"><i class="fas fa-database mr-1"></i> Data Terdaftar</div>
                 </div>
                 <div class="cp-kpi-icon" style="background: #eff6ff; color: #2563eb;">
@@ -104,7 +104,7 @@
             <div class="cp-kpi-body">
                 <div>
                     <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Tambah Bulan Ini</div>
-                    <div class="h3 font-weight-bold text-success mb-0 mt-1"><?= number_format($stats['bulan_ini']) ?></div>
+                    <div class="h3 font-weight-bold text-success mb-0 mt-1" id="kpi-cp-bulan"><?= number_format($stats['bulan_ini']) ?></div>
                     <div class="small text-muted mt-1"><i class="fas fa-calendar-check mr-1 text-success"></i> <?= date('F Y') ?></div>
                 </div>
                 <div class="cp-kpi-icon" style="background: #ecfdf5; color: #10b981;">
@@ -118,7 +118,7 @@
             <div class="cp-kpi-body">
                 <div>
                     <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Grup Nama Duplikat</div>
-                    <div class="h3 font-weight-bold text-danger mb-0 mt-1"><?= number_format($stats['duplikat']) ?></div>
+                    <div class="h3 font-weight-bold text-danger mb-0 mt-1" id="kpi-cp-duplikat"><?= number_format($stats['duplikat']) ?></div>
                     <div class="small text-danger mt-1"><i class="fas fa-exclamation-triangle mr-1"></i> Perlu Validasi</div>
                 </div>
                 <div class="cp-kpi-icon" style="background: #fef2f2; color: #ef4444;">
@@ -132,7 +132,7 @@
             <div class="cp-kpi-body">
                 <div>
                     <div class="text-uppercase text-muted font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Total Baris Duplikat</div>
-                    <div class="h3 font-weight-bold text-warning mb-0 mt-1"><?= number_format($stats['jml_duplikat']) ?></div>
+                    <div class="h3 font-weight-bold text-warning mb-0 mt-1" id="kpi-cp-jmlduplikat"><?= number_format($stats['jml_duplikat']) ?></div>
                     <div class="small text-muted mt-1"><i class="fas fa-copy mr-1 text-warning"></i> Entri Serupa</div>
                 </div>
                 <div class="cp-kpi-icon" style="background: #fffbeb; color: #f59e0b;">
@@ -189,7 +189,12 @@
         <div class="cp-panel-card" style="border-top: 3px solid #ef4444;">
             <div class="cp-panel-header">
                 <span class="text-danger"><i class="fas fa-exclamation-circle mr-1"></i> Daftar Calon Pelanggan Duplikat</span>
-                <small class="text-muted">Klik nama untuk filter tabel di bawah</small>
+                <div>
+                    <small class="text-muted mr-2 d-none d-sm-inline">Klik nama untuk filter / Gabung untuk satukan kontak</small>
+                    <button type="button" id="btn-merge-all-duplikat" class="btn btn-xs btn-danger d-none" title="Gabungkan semua data duplikat menjadi masing-masing 1 data utama">
+                        <i class="fas fa-object-group mr-1"></i> Gabungkan Semua
+                    </button>
+                </div>
             </div>
             <div class="cp-panel-body p-0" style="max-height: 245px; overflow-y: auto;">
                 <div id="duplikat-loading" class="text-muted text-center py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat data duplikat...</div>
@@ -198,8 +203,8 @@
                         <tr>
                             <th style="width: 45px;" class="text-center">#</th>
                             <th>Nama Customer Duplikat</th>
-                            <th style="width: 90px;" class="text-center">Jumlah</th>
-                            <th style="width: 80px;" class="text-center">Aksi</th>
+                            <th style="width: 85px;" class="text-center">Jumlah</th>
+                            <th style="width: 145px;" class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="duplikat-body"></tbody>
@@ -319,36 +324,146 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initCharts();
 
-    // Load Duplikat Data via AJAX + Click to Filter Table
-    $.get('<?= site_url('calonpelanggan/getduplikat') ?>', function(res) {
-        var rows = '';
-        if (res && res.length > 0) {
-            $.each(res, function(i, r) {
-                var safeName = $('<div>').text(r.nama).html();
-                var rawName  = $('<div>').text(r.nama).text();
-                rows += '<tr class="cp-duplikat-item" data-nama="' + rawName + '">' +
-                    '<td class="text-center text-muted">' + (i + 1) + '</td>' +
-                    '<td class="font-weight-bold text-dark">' + safeName + '</td>' +
-                    '<td class="text-center"><span class="badge badge-danger px-2 py-1">' + r.jumlah + ' Data</span></td>' +
-                    '<td class="text-center"><button type="button" class="btn btn-xs btn-outline-danger btn-filter-duplikat" data-nama="' + rawName + '"><i class="fas fa-search"></i> Cari</button></td>' +
-                    '</tr>';
-            });
-        } else {
-            rows = '<tr><td colspan="4" class="text-center text-success py-3"><i class="fas fa-check-circle mr-1"></i> Tidak ditemukan data calon pelanggan duplikat. Bersih!</td></tr>';
-        }
-        $('#duplikat-body').html(rows);
-        $('#tbl-duplikat').removeClass('d-none');
-        $('#duplikat-loading').addClass('d-none');
-    }, 'json');
+    function updateKpiStats(stats) {
+        if (!stats) return;
+        $('#kpi-cp-total').text(stats.total);
+        $('#kpi-cp-bulan').text(stats.bulan_ini);
+        $('#kpi-cp-duplikat').text(stats.duplikat);
+        $('#kpi-cp-jmlduplikat').text(stats.jml_duplikat);
+    }
+
+    function loadDuplikatList() {
+        $.get('<?= site_url('calonpelanggan/getduplikat') ?>', function(res) {
+            var rows = '';
+            if (res && res.length > 0) {
+                $('#btn-merge-all-duplikat').removeClass('d-none');
+                $.each(res, function(i, r) {
+                    var safeName = $('<div>').text(r.nama).html();
+                    var attrName = safeName.replace(/"/g, '&quot;');
+                    rows += '<tr class="cp-duplikat-item" data-nama="' + attrName + '">' +
+                        '<td class="text-center text-muted">' + (i + 1) + '</td>' +
+                        '<td class="font-weight-bold text-dark">' + safeName + '</td>' +
+                        '<td class="text-center"><span class="badge badge-danger px-2 py-1">' + r.jumlah + ' Data</span></td>' +
+                        '<td class="text-center text-nowrap">' +
+                            '<button type="button" class="btn btn-xs btn-outline-primary btn-filter-duplikat mr-1" data-nama="' + attrName + '" title="Lihat di tabel"><i class="fas fa-search"></i> Cari</button>' +
+                            '<button type="button" class="btn btn-xs btn-danger btn-merge-duplikat" data-nama="' + attrName + '" data-jumlah="' + r.jumlah + '" title="Gabungkan menjadi 1 data & satukan kontak PIC"><i class="fas fa-object-group"></i> Gabung</button>' +
+                        '</td>' +
+                        '</tr>';
+                });
+            } else {
+                $('#btn-merge-all-duplikat').addClass('d-none');
+                rows = '<tr><td colspan="4" class="text-center text-success py-3"><i class="fas fa-check-circle mr-1"></i> Tidak ditemukan data calon pelanggan duplikat. Bersih!</td></tr>';
+            }
+            $('#duplikat-body').html(rows);
+            $('#tbl-duplikat').removeClass('d-none');
+            $('#duplikat-loading').addClass('d-none');
+        }, 'json');
+    }
+
+    loadDuplikatList();
 
     // Klik tombol cari / baris duplikat langsung memfilter DataTables di bawah
     $(document).on('click', '.cp-duplikat-item, .btn-filter-duplikat', function(e) {
+        if ($(e.target).closest('.btn-merge-duplikat').length) return;
         var nama = $(this).data('nama');
         if (nama && typeof table !== 'undefined') {
             table.search(nama).draw();
             $('html, body').animate({
                 scrollTop: $('#kt_table_1').offset().top - 120
             }, 400);
+        }
+    });
+
+    // Klik tombol Gabung per nama customer duplikat
+    $(document).on('click', '.btn-merge-duplikat', function(e) {
+        e.stopPropagation();
+        var btn = $(this);
+        var nama = btn.data('nama');
+        var jumlah = btn.data('jumlah');
+
+        var doMerge = function() {
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            $.post('<?= site_url('calonpelanggan/mergeduplikat') ?>', { nama: nama }, function(res) {
+                if (res && res.status === 'success') {
+                    updateKpiStats(res.stats);
+                    loadDuplikatList();
+                    if (typeof table !== 'undefined') {
+                        table.search(nama).draw();
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Berhasil Digabung!', res.msg, 'success');
+                    } else {
+                        alert(res.msg);
+                    }
+                } else {
+                    btn.prop('disabled', false).html('<i class="fas fa-object-group"></i> Gabung');
+                    var errMsg = (res && res.msg) ? res.msg : 'Gagal menggabungkan data.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Gagal', errMsg, 'error');
+                    } else {
+                        alert(errMsg);
+                    }
+                }
+            }, 'json');
+        };
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Gabungkan ' + jumlah + ' Data?',
+                html: 'Satukan <b>' + jumlah + ' data "' + $('<div>').text(nama).html() + '"</b> menjadi 1 data utama?<br><small class="text-muted">Seluruh kontak PIC, Modality, dan riwayat Funnel akan digabungkan ke 1 data tersebut.</small>',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Gabungkan!',
+                cancelButtonText: 'Batal'
+            }).then(function(result) {
+                if (result.isConfirmed || result.value) {
+                    doMerge();
+                }
+            });
+        } else if (confirm('Gabungkan ' + jumlah + ' data "' + nama + '" menjadi 1 data utama beserta semua kontaknya?')) {
+            doMerge();
+        }
+    });
+
+    // Klik tombol Gabungkan Semua Duplikat
+    $(document).on('click', '#btn-merge-all-duplikat', function() {
+        var btn = $(this);
+        var doMergeAll = function() {
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menggabungkan...');
+            $.post('<?= site_url('calonpelanggan/mergesemuaduplikat') ?>', {}, function(res) {
+                btn.prop('disabled', false).html('<i class="fas fa-object-group mr-1"></i> Gabungkan Semua');
+                if (res && res.status === 'success') {
+                    updateKpiStats(res.stats);
+                    loadDuplikatList();
+                    if (typeof table !== 'undefined') {
+                        table.ajax.reload(null, false);
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Selesai!', res.msg, 'success');
+                    } else {
+                        alert(res.msg);
+                    }
+                }
+            }, 'json');
+        };
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Gabungkan Semua Duplikat?',
+                html: 'Seluruh grup calon pelanggan yang namanya kembar akan disatukan menjadi masing-masing <b>1 data utama</b> dan semua <b>kontak PIC-nya digabung</b>.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Gabungkan Semua!',
+                cancelButtonText: 'Batal'
+            }).then(function(result) {
+                if (result.isConfirmed || result.value) {
+                    doMergeAll();
+                }
+            });
+        } else if (confirm('Gabungkan seluruh grup calon pelanggan duplikat sekaligus?')) {
+            doMergeAll();
         }
     });
 });
