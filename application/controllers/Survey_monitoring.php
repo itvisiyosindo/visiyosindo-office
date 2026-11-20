@@ -141,6 +141,9 @@ class Survey_monitoring extends CI_Controller
                 <a href="' . $waLink . '" target="_blank" class="btn btn-sm btn-success" title="Kirim / Buka WhatsApp">
                     <i class="fab fa-whatsapp"></i>
                 </a>
+                <button type="button" class="btn btn-sm btn-danger btn-delete-survey" data-id="' . $row->id . '" data-nama="' . $namaPelanggan . '" title="Hapus Survey">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>';
 
             $data[] = [
@@ -207,6 +210,24 @@ class Survey_monitoring extends CI_Controller
                 'status'  => 'error',
                 'message' => 'Gagal memperbarui status tindak lanjut.'
             ]);
+        }
+    }
+
+    public function delete()
+    {
+        grantAccessFor('all');
+
+        $id = (int)$this->input->post('id', TRUE);
+        if (!$id) {
+            echo json_encode(['status' => 'error', 'message' => 'ID survey tidak valid.']);
+            return;
+        }
+
+        $deleted = $this->md_survey->delete_survey($id);
+        if ($deleted) {
+            echo json_encode(['status' => 'success', 'message' => 'Data survey berhasil dihapus.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menghapus data survey.']);
         }
     }
 

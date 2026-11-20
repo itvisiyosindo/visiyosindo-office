@@ -33,6 +33,12 @@ class Md_survey extends CI_Model
         return $this->db->update($this->table, $data);
     }
 
+    public function delete_survey($id)
+    {
+        $this->db->where('id', (int)$id);
+        return $this->db->delete($this->table);
+    }
+
     public function get_all_surveys($filter = [])
     {
         $this->db->select('s.*, p.kota, p.provinsi, p.tipe_bisnis');

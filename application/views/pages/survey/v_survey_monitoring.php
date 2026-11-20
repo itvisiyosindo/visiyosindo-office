@@ -582,5 +582,39 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		});
 	});
+
+	// Hapus data survey
+	$(document).on('click', '.btn-delete-survey', function() {
+		var id = $(this).data('id');
+		var nama = $(this).data('nama') || 'ini';
+
+		Swal.fire({
+			title: 'Hapus Data Survey?',
+			text: 'Data survey pelanggan "' + nama + '" akan dihapus permanen.',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			confirmButtonText: 'Ya, Hapus!',
+			cancelButtonText: 'Batal'
+		}).then(function(result) {
+			if (result.isConfirmed || result.value) {
+				$.post('<?= base_url('survey_monitoring/delete') ?>', { id: id }, function(res) {
+					if (res && res.status === 'success') {
+						Swal.fire({
+							icon: 'success',
+							title: 'Terhapus',
+							text: res.message,
+							timer: 1400,
+							showConfirmButton: false
+						});
+						table.ajax.reload(null, false);
+						refreshStats();
+					} else {
+						Swal.fire('Gagal', (res && res.message) ? res.message : 'Gagal menghapus data.', 'error');
+					}
+				}, 'json');
+			}
+		});
+	});
 });
 </script>
