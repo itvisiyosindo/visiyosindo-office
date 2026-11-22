@@ -821,6 +821,71 @@
                             <textarea name="keterangan" class="form-control form-control-custom" rows="2" placeholder="Catatan khusus terkait pengiriman, batas waktu, dll..."><?= htmlspecialchars($po_edit->keterangan ?? '') ?></textarea>
                         </div>
                     </div>
+
+                    <!-- Integrasi Program Visiyosindo Afiliasi (Opsional) -->
+                    <?php
+                        $selected_afiliator_id     = $is_edit ? (int)($po_edit->id_member_afiliasi ?? 0) : 0;
+                        $selected_deal_afiliasi_id = $is_edit ? (int)($po_edit->id_deal_afiliasi ?? 0) : 0;
+                        $persen_af_num             = ($is_edit && isset($po_edit->persen_komisi_afiliasi)) ? (float)$po_edit->persen_komisi_afiliasi : 2.0;
+                        $persen_af_clean           = (fmod($persen_af_num, 1) == 0)
+                            ? number_format($persen_af_num, 0, '.', '')
+                            : rtrim(rtrim(number_format($persen_af_num, 2, '.', ''), '0'), '.');
+                    ?>
+                    <div class="mt-2 p-3 border rounded" style="background: #f8fafc; border-color: #cbd5e1 !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                            <label class="form-label-custom text-primary mb-0">
+                                <i class="fas fa-handshake mr-1"></i> Program Visiyosindo Afiliasi <span class="text-muted font-weight-normal">(Opsional &mdash; jika PO berasal dari afiliator)</span>
+                            </label>
+                            <span class="badge badge-light border text-muted">Sinkron otomatis sebagai Pending &bull; Basis: Subtotal / DPP</span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 mb-2">
+                                <label class="form-label-custom">Pilih Afiliator</label>
+                                <select name="id_member_afiliasi" id="selectAfiliator" data-plugin-selectTwo class="form-control form-control-custom select2" style="width: 100%;" data-placeholder="-- Tanpa Afiliator --">
+                                    <option value="">-- Tanpa Afiliator --</option>
+                                    <?php if (!empty($afiliator_list)): ?>
+                                        <?php foreach ($afiliator_list as $af): ?>
+                                            <?php
+                                                $afLabel = ($af['nama_member'] ?? '-') . ' (' . ($af['kode_member'] ?? '-') . ')';
+                                                if (!empty($af['institusi_asal'])) {
+                                                    $afLabel .= ' - ' . $af['institusi_asal'];
+                                                }
+                                                if (($af['status'] ?? 'aktif') !== 'aktif') {
+                                                    $afLabel .= ' [Nonaktif]';
+                                                }
+                                            ?>
+                                            <option value="<?= (int)$af['id_member'] ?>" <?= ((int)$af['id_member'] === $selected_afiliator_id) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($afLabel) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2" id="wrapProspekAfiliasi" style="display: <?= $selected_afiliator_id > 0 ? 'block' : 'none' ?>;">
+                                <label class="form-label-custom">Hubungkan ke Prospek Portal (Pending)</label>
+                                <select name="id_deal_afiliasi" id="selectDealAfiliasi" class="form-control form-control-custom">
+                                    <option value="">+ Buat Entri Deal Baru dari PO ini</option>
+                                </select>
+                                <small class="help-hint">Pilih prospek jika afiliator sudah input di portal <code>visiyosindo.id</code> agar tidak dobel.</small>
+                            </div>
+                            <div class="col-md-3 mb-2" id="wrapKomisiAfiliasi" style="display: <?= $selected_afiliator_id > 0 ? 'block' : 'none' ?>;">
+                                <label class="form-label-custom">Komisi Afiliasi (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" name="persen_komisi_afiliasi" id="inputPersenAfiliasi" class="form-control form-control-custom" value="<?= htmlspecialchars($persen_af_clean) ?>">
+                                <small class="help-hint">Default 2% dari Subtotal (DPP).</small>
+                            </div>
+                        </div>
+                        <div id="boxPreviewAfiliasi" class="alert alert-info py-2 px-3 mt-2 mb-0" style="border-radius: 8px; display: <?= $selected_afiliator_id > 0 ? 'block' : 'none' ?>;">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap: 12px;">
+                                <div class="small">
+                                    <i class="fas fa-calculator text-primary mr-1"></i>
+                                    Dasar Komisi (Subtotal / DPP): <strong id="previewDppAfiliasi">Rp 0</strong>
+                                    &times; <strong id="previewPersenAfiliasi"><?= htmlspecialchars($persen_af_clean) ?>%</strong>
+                                    = Estimasi Komisi: <strong class="text-success" id="previewNominalAfiliasi" style="font-size: 0.95rem;">Rp 0</strong>
+                                </div>
+                                <small class="text-muted">Masuk sebagai <b>Pending</b>; perubahan ke <b>Deal</b> tetap manual di Visiyosindo Afiliasi.</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
@@ -1154,6 +1219,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('inputNominalPo').value = totalAkhir;
 
         updateDpPreview(totalAkhir);
+        if (typeof updateAfiliasiPreview === 'function') {
+            updateAfiliasiPreview(subtotal);
+        }
     }
 
     // Sinkronisasi Pilihan DP (Persen vs Nominal)
@@ -1425,6 +1493,101 @@ document.addEventListener('DOMContentLoaded', function () {
     // Bind initial row
     document.querySelectorAll('#itemsBody tr.item-row').forEach(bindRowEvents);
 
+    // 6. Integrasi Visiyosindo Afiliasi (Dropdown Afiliator, Prospek Pending & Preview Komisi DPP)
+    var pendingAfiliasiDeals = <?= json_encode($pending_afiliasi_deals ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+    var initSelectedDealId = <?= (int)($selected_deal_afiliasi_id ?? 0) ?>;
+    var elSelectAfiliator = document.getElementById('selectAfiliator');
+    var elWrapProspek = document.getElementById('wrapProspekAfiliasi');
+    var elWrapKomisi = document.getElementById('wrapKomisiAfiliasi');
+    var elBoxPreviewAfiliasi = document.getElementById('boxPreviewAfiliasi');
+    var elSelectDealAfiliasi = document.getElementById('selectDealAfiliasi');
+    var elInputPersenAfiliasi = document.getElementById('inputPersenAfiliasi');
+
+    function populateDealAfiliasiOptions(memberId, preferredDealId) {
+        if (!elSelectDealAfiliasi) return;
+        while (elSelectDealAfiliasi.firstChild) {
+            elSelectDealAfiliasi.removeChild(elSelectDealAfiliasi.firstChild);
+        }
+
+        var defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '+ Buat Entri Deal Baru dari PO ini';
+        elSelectDealAfiliasi.appendChild(defaultOpt);
+
+        var targetMemberId = parseInt(memberId, 10) || 0;
+        var targetDealId = parseInt(preferredDealId, 10) || 0;
+
+        if (targetMemberId > 0 && Array.isArray(pendingAfiliasiDeals)) {
+            pendingAfiliasiDeals.forEach(function (d) {
+                if (parseInt(d.id_member, 10) === targetMemberId) {
+                    var opt = document.createElement('option');
+                    opt.value = d.id_deal;
+                    var estNilai = parseFloat(d.estimasi_nilai) || 0;
+                    opt.textContent = '#' + d.id_deal + ' - ' + (d.nama_produk || 'Produk') + ' (Est. ' + formatRupiah(estNilai) + ' | ' + (d.status_deal || 'Pending') + ')';
+                    if (parseInt(d.id_deal, 10) === targetDealId) {
+                        opt.selected = true;
+                    }
+                    elSelectDealAfiliasi.appendChild(opt);
+                }
+            });
+        }
+    }
+
+    function updateAfiliasiPreview(subtotalOverride) {
+        if (!elSelectAfiliator) return;
+        var subtotal = (typeof subtotalOverride === 'number')
+            ? subtotalOverride
+            : (parseFloat((document.getElementById('inputSubtotal') || {}).value) || 0);
+        var rawPersen = elInputPersenAfiliasi ? String(elInputPersenAfiliasi.value || '0').replace(',', '.') : '0';
+        var persen = parseFloat(rawPersen) || 0;
+        if (persen < 0) persen = 0;
+        if (persen > 100) persen = 100;
+        var komisi = Math.round((subtotal * persen) / 100 * 100) / 100;
+
+        var elDpp = document.getElementById('previewDppAfiliasi');
+        var elPct = document.getElementById('previewPersenAfiliasi');
+        var elNom = document.getElementById('previewNominalAfiliasi');
+        if (elDpp) elDpp.innerText = formatRupiah(subtotal);
+        if (elPct) elPct.innerText = persen + '%';
+        if (elNom) elNom.innerText = formatRupiah(komisi);
+    }
+
+    function updateAfiliasiUI(preserveCurrentDeal) {
+        if (!elSelectAfiliator) return;
+        var memberId = parseInt(elSelectAfiliator.value, 10) || 0;
+        var hasMember = memberId > 0;
+
+        if (elWrapProspek) elWrapProspek.style.display = hasMember ? 'block' : 'none';
+        if (elWrapKomisi) elWrapKomisi.style.display = hasMember ? 'block' : 'none';
+        if (elBoxPreviewAfiliasi) elBoxPreviewAfiliasi.style.display = hasMember ? 'block' : 'none';
+
+        var preferred = preserveCurrentDeal
+            ? (parseInt((elSelectDealAfiliasi || {}).value, 10) || initSelectedDealId)
+            : initSelectedDealId;
+        populateDealAfiliasiOptions(memberId, hasMember ? preferred : 0);
+        updateAfiliasiPreview();
+    }
+
+    if (elSelectAfiliator) {
+        if (window.jQuery) {
+            $('#selectAfiliator').on('change select2:select select2:clear', function () {
+                updateAfiliasiUI(false);
+            });
+        } else {
+            elSelectAfiliator.addEventListener('change', function () {
+                updateAfiliasiUI(false);
+            });
+        }
+    }
+    if (elInputPersenAfiliasi) {
+        elInputPersenAfiliasi.addEventListener('input', function () {
+            updateAfiliasiPreview();
+        });
+        elInputPersenAfiliasi.addEventListener('change', function () {
+            updateAfiliasiPreview();
+        });
+    }
+
     // Tambah Baris Barang
     var btnTambah = document.getElementById('btnTambahBarang');
     if (btnTambah) {
@@ -1464,7 +1627,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Initial calculation
+    // Initial UI afiliasi & calculation
+    updateAfiliasiUI(true);
     recalculate();
 });
 </script>

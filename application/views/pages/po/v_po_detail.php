@@ -300,6 +300,50 @@
             <?php endif; ?>
         </div>
 
+        <?php if (!empty($po->id_member_afiliasi)): ?>
+            <?php
+                $afSubtotalDpp = (float)($po->nominal_subtotal ?? 0);
+                $afPersen      = isset($po->afiliasi_persen_komisi) ? (float)$po->afiliasi_persen_komisi : (float)($po->persen_komisi_afiliasi ?? 2.0);
+                $afNominal     = isset($po->afiliasi_nominal_komisi) ? (float)$po->afiliasi_nominal_komisi : round(($afSubtotalDpp * $afPersen) / 100, 2);
+                $afStatusDeal  = $po->afiliasi_status_deal ?? 'Pending';
+                $afStatusBayar = $po->afiliasi_status_bayar ?? '';
+                $afBadgeClass  = ($afStatusDeal === 'Deal') ? 'badge-success' : (($afStatusDeal === 'Batal') ? 'badge-danger' : 'badge-warning text-dark');
+                $afPersenStr   = (fmod($afPersen, 1) == 0) ? number_format($afPersen, 0, ',', '.') : rtrim(rtrim(number_format($afPersen, 2, ',', '.'), '0'), ',');
+                $afNavTarget   = (($switch ?? '') === 'accounting') ? 'accounting' : 'marketing';
+            ?>
+            <div class="mb-4 p-3 rounded shadow-sm bg-white border" style="border-left: 5px solid #4f46e5 !important;">
+                <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap: 10px;">
+                    <div>
+                        <div class="font-weight-bold text-primary mb-1" style="font-size: 0.92rem;">
+                            <i class="fas fa-handshake mr-1"></i> Informasi Visiyosindo Afiliasi
+                            <span class="badge <?= $afBadgeClass ?> ml-1">Status Deal: <?= htmlspecialchars($afStatusDeal) ?></span>
+                            <?php if ($afStatusDeal === 'Deal' && $afStatusBayar === 'Sudah Ditransfer'): ?>
+                                <span class="badge badge-success ml-1"><i class="fas fa-check-double mr-1"></i>Sudah Ditransfer</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="small text-dark">
+                            <strong><?= htmlspecialchars($po->nama_afiliator ?: '-') ?></strong>
+                            <?php if (!empty($po->kode_afiliator)): ?>
+                                <span class="badge badge-light border ml-1"><?= htmlspecialchars($po->kode_afiliator) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($po->institusi_afiliator)): ?>
+                                <span class="text-muted ml-1">&bull; <?= htmlspecialchars($po->institusi_afiliator) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            Basis DPP: <strong class="text-dark">Rp <?= number_format($afSubtotalDpp, 0, ',', '.') ?></strong>
+                            &bull; Komisi: <strong class="text-info"><?= $afPersenStr ?>%</strong> (<strong class="text-success">Rp <?= number_format($afNominal, 0, ',', '.') ?></strong>)
+                        </div>
+                    </div>
+                    <div>
+                        <a href="<?= base_url('Member_visiacademy?nav=' . $afNavTarget) ?>" class="btn btn-sm btn-outline-primary font-weight-bold">
+                            <i class="fas fa-external-link-alt mr-1"></i> Buka di Visiyosindo Afiliasi
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- TIMELINE & TRACKING BAR WAKTU APPROVAL PO (SLA MONITOR) -->
         <?php
         if (function_exists('renderApprovalTimelineBar')) {

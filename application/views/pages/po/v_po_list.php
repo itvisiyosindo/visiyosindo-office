@@ -559,6 +559,13 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null) use 
                                             <?php else: ?>
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>
+                                            <?php if (!empty($row->nama_afiliator)): ?>
+                                                <div class="mt-1">
+                                                    <span class="badge badge-light border text-primary" style="font-size: 10.5px;">
+                                                        <i class="fas fa-handshake mr-1"></i>Afiliasi: <?= htmlspecialchars($row->nama_afiliator) ?><?= !empty($row->kode_afiliator) ? ' (' . htmlspecialchars($row->kode_afiliator) . ')' : '' ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="text-center text-dark">
                                             <?= !empty($row->tanggal_po) ? date('d/m/Y', strtotime($row->tanggal_po)) : '-' ?>

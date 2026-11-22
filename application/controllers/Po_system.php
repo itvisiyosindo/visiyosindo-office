@@ -16,6 +16,7 @@ class Po_system extends CI_Controller
 
         $this->load->model('md_po_system');
         $this->load->model('md_pengguna');
+        $this->load->model('Md_member_visiacademy');
     }
 
     public function id_navbar()
@@ -359,6 +360,10 @@ class Po_system extends CI_Controller
         // 3. Ambil data sales/marketing
         $page_data['sales_list'] = $this->getPengajuList();
 
+        // 4. Ambil data member & prospek pending Visiyosindo Afiliasi
+        $page_data['afiliator_list']         = $this->Md_member_visiacademy->getActiveMembers();
+        $page_data['pending_afiliasi_deals'] = $this->Md_member_visiacademy->getPendingDealsForPo();
+
         $page_data['kode_masuk_auto'] = $this->md_po_system->generateKodeMasuk();
 
         $user = $this->md_pengguna->getById(sessPenggunaId());
@@ -406,6 +411,10 @@ class Po_system extends CI_Controller
 
         // Ambil data pengaju aktif
         $page_data['sales_list'] = $this->getPengajuList();
+
+        // Ambil data member & prospek pending Visiyosindo Afiliasi
+        $page_data['afiliator_list']         = $this->Md_member_visiacademy->getActiveMembers($po->id_member_afiliasi ?? null);
+        $page_data['pending_afiliasi_deals'] = $this->Md_member_visiacademy->getPendingDealsForPo($po->id_po, $po->id_deal_afiliasi ?? null);
 
         $page_data['kode_masuk_auto'] = $po->kode_masuk ?: $this->md_po_system->generateKodeMasuk();
         $page_data['po_edit']         = $po;
@@ -487,6 +496,13 @@ class Po_system extends CI_Controller
         $id_sales        = $this->input->post('id_sales');
         $nama_sales      = trim($this->input->post('nama_sales'));
         $keterangan      = trim($this->input->post('keterangan'));
+
+        $id_member_afiliasi    = (int)$this->input->post('id_member_afiliasi');
+        $raw_persen_af         = $this->input->post('persen_komisi_afiliasi');
+        $persen_komisi_afiliasi = ($raw_persen_af === null || trim((string)$raw_persen_af) === '')
+            ? 2.0
+            : (float)str_replace(',', '.', trim((string)$raw_persen_af));
+        $selected_deal_afiliasi = (int)$this->input->post('id_deal_afiliasi');
 
         if (empty($no_po) || empty($tanggal_po)) {
             $this->session->set_flashdata('error', 'Nomor PO dan Tanggal PO wajib diisi!');
@@ -647,6 +663,22 @@ class Po_system extends CI_Controller
             $data_update['gm_status']     = null;
             $data_update['gm_date']       = null;
 
+            $afSync = $this->_syncPoToAfiliasi(
+                (int)$po_existing->id_po,
+                $po_existing->kode_masuk ?: ('PO#' . $po_existing->id_po),
+                $no_po,
+                $nama_customer,
+                $items_data,
+                $nominal_subtotal,
+                $keterangan,
+                $id_member_afiliasi,
+                $persen_komisi_afiliasi,
+                $selected_deal_afiliasi,
+                (int)($po_existing->id_deal_afiliasi ?? 0),
+                (int)($po_existing->id_member_afiliasi ?? 0)
+            );
+            $data_update = array_merge($data_update, $afSync);
+
             $this->md_po_system->updatePo($po_existing->id_po, $data_update);
 
             if (!empty($items_data)) {
@@ -722,6 +754,9 @@ class Po_system extends CI_Controller
             'id_sales'                 => !empty($id_sales) ? $id_sales : sessPenggunaId(),
             'nama_sales'               => !empty($nama_sales) ? $nama_sales : $nama_pembuat,
             'keterangan'               => $keterangan,
+            'id_member_afiliasi'       => null,
+            'persen_komisi_afiliasi'   => 2.00,
+            'id_deal_afiliasi'         => null,
             'status'                   => 'menunggu_kroscek',
             'status_proses'            => 'BELUM DI PROSES',
             'created_by'               => sessPenggunaId(),
@@ -736,6 +771,25 @@ class Po_system extends CI_Controller
                 $it['id_po'] = $id_po;
             }
             $this->md_po_system->insertItems($items_data);
+        }
+
+        // Sinkronisasi otomatis ke Visiyosindo Afiliasi (status awal Pending) jika afiliator dipilih
+        if ($id_member_afiliasi > 0) {
+            $afSync = $this->_syncPoToAfiliasi(
+                (int)$id_po,
+                $kode_masuk,
+                $no_po,
+                $nama_customer,
+                $items_data,
+                $nominal_subtotal,
+                $keterangan,
+                $id_member_afiliasi,
+                $persen_komisi_afiliasi,
+                $selected_deal_afiliasi,
+                0,
+                0
+            );
+            $this->md_po_system->updatePo($id_po, $afSync);
         }
 
         // Catat log
@@ -1500,6 +1554,10 @@ class Po_system extends CI_Controller
 
         $this->md_po_system->deletePo($id_po);
 
+        if (!empty($po->id_deal_afiliasi)) {
+            $this->_cleanupOldPoDealLink((int)$po->id_deal_afiliasi, $po->kode_masuk ?: ('PO#' . $po->id_po), true);
+        }
+
         $user = $this->md_pengguna->getById(sessPenggunaId());
         $nama_user = is_array($user) ? $user[0]->nama : ($user->nama ?? 'Admin');
         $this->md_po_system->addLog($id_po, $po->status, 'deleted', 'PO dihapus oleh ' . $nama_user, sessPenggunaId(), $nama_user);
@@ -1533,5 +1591,203 @@ class Po_system extends CI_Controller
         }
 
         $this->load->view('pages/po/v_po_print', $data);
+    }
+
+    private function _buildAfiliasiProdukSummary($items_data, $no_po)
+    {
+        $parts = [];
+        if (!empty($items_data) && is_array($items_data)) {
+            foreach ($items_data as $item) {
+                $nama = trim((string)($item['nama_barang'] ?? ''));
+                if ($nama === '') {
+                    continue;
+                }
+                $qty = (float)($item['qty'] ?? 1);
+                $satuan = trim((string)($item['satuan'] ?? 'Unit'));
+                if ($qty > 1) {
+                    $qtyStr = (fmod($qty, 1) == 0)
+                        ? number_format($qty, 0, '.', '')
+                        : rtrim(rtrim(number_format($qty, 2, '.', ''), '0'), '.');
+                    $parts[] = $nama . ' (' . $qtyStr . ($satuan !== '' ? ' ' . $satuan : '') . ')';
+                } else {
+                    $parts[] = $nama;
+                }
+            }
+        }
+
+        if (empty($parts)) {
+            return 'PO ' . trim((string)$no_po);
+        }
+
+        return mb_strimwidth(implode(', ', $parts), 0, 250, '...');
+    }
+
+    private function _sanitizeSyncPoToken($val)
+    {
+        return trim(str_replace(['[', ']'], ['(', ')'], (string)$val));
+    }
+
+    private function _mergeSyncPoNote($existingNote, $kodeMasuk, $noPo, $namaCustomer, $poKeterangan = '')
+    {
+        $kodeSafe = $this->_sanitizeSyncPoToken($kodeMasuk);
+        $noPoSafe = $this->_sanitizeSyncPoToken($noPo);
+        $custSafe = $this->_sanitizeSyncPoToken($namaCustomer);
+        $tag      = "[Sync PO: {$kodeSafe} | No. PO: {$noPoSafe} | Customer: {$custSafe}]";
+
+        $cleanExisting = trim((string)preg_replace('/\s*\[Sync PO:[^\]]*\]/', '', (string)$existingNote));
+        if ($cleanExisting !== '') {
+            return $cleanExisting . ' ' . $tag;
+        }
+
+        $ket = trim((string)$poKeterangan);
+        return $tag . ($ket !== '' ? ' - ' . $ket : '');
+    }
+
+    private function _isAutoCreatedFromPo($deal, $kodeMasuk)
+    {
+        if (empty($deal) || ($deal['status_deal'] ?? '') !== 'Pending') {
+            return false;
+        }
+        $kodeSafe = $this->_sanitizeSyncPoToken($kodeMasuk);
+        return strpos(trim((string)($deal['catatan'] ?? '')), '[Sync PO: ' . $kodeSafe) === 0;
+    }
+
+    private function _cleanupOldPoDealLink($oldDealId, $kodeMasuk, $markDeleted = false)
+    {
+        $oldDealId = (int)$oldDealId;
+        if ($oldDealId <= 0) {
+            return;
+        }
+
+        $oldDeal = $this->Md_member_visiacademy->getDealById($oldDealId);
+        if (!$oldDeal || ($oldDeal['status_deal'] ?? '') !== 'Pending') {
+            return;
+        }
+
+        $kodeSafe = $this->_sanitizeSyncPoToken($kodeMasuk);
+        if ($this->_isAutoCreatedFromPo($oldDeal, $kodeMasuk)) {
+            if ($markDeleted) {
+                $note = trim((string)($oldDeal['catatan'] ?? ''));
+                $this->Md_member_visiacademy->updateDeal($oldDealId, [
+                    'status_deal' => 'Batal',
+                    'catatan'     => trim($note . " [PO {$kodeSafe} dihapus]"),
+                ]);
+            } else {
+                $this->Md_member_visiacademy->deleteDeal($oldDealId);
+            }
+            return;
+        }
+
+        // Prospek berasal dari portal: lepas tag Sync PO saja dan biarkan prospek Pending tetap utuh
+        $cleaned = trim((string)preg_replace('/\s*\[Sync PO:[^\]]*\]/', '', (string)($oldDeal['catatan'] ?? '')));
+        $this->Md_member_visiacademy->updateDeal($oldDealId, ['catatan' => $cleaned]);
+    }
+
+    private function _syncPoToAfiliasi($poId, $kodeMasuk, $noPo, $namaCustomer, $itemsData, $nominalSubtotal, $keterangan, $idMemberAfiliasi, $persenKomisi, $selectedDealId, $oldDealId = 0, $oldMemberId = 0)
+    {
+        $persenKomisi = max(0.0, min(100.0, (float)$persenKomisi));
+        $nilaiDasar   = max(0.0, (float)$nominalSubtotal);
+        $nominalKomisi = round(($nilaiDasar * $persenKomisi) / 100, 2);
+
+        $idMemberAfiliasi = (int)$idMemberAfiliasi;
+        $selectedDealId   = (int)$selectedDealId;
+        $oldDealId        = (int)$oldDealId;
+        $oldMemberId      = (int)$oldMemberId;
+
+        if ($idMemberAfiliasi <= 0) {
+            if ($oldDealId > 0) {
+                $this->_cleanupOldPoDealLink($oldDealId, $kodeMasuk, false);
+            }
+            return [
+                'id_member_afiliasi'     => null,
+                'persen_komisi_afiliasi' => 2.00,
+                'id_deal_afiliasi'       => null,
+            ];
+        }
+
+        $member = $this->Md_member_visiacademy->getMemberById($idMemberAfiliasi);
+        if (!$member) {
+            if ($oldDealId > 0) {
+                $this->_cleanupOldPoDealLink($oldDealId, $kodeMasuk, false);
+            }
+            return [
+                'id_member_afiliasi'     => null,
+                'persen_komisi_afiliasi' => 2.00,
+                'id_deal_afiliasi'       => null,
+            ];
+        }
+
+        $produkSummary = $this->_buildAfiliasiProdukSummary($itemsData, $noPo);
+
+        $targetDeal = null;
+        if ($selectedDealId > 0) {
+            $candidate = $this->Md_member_visiacademy->getDealById($selectedDealId);
+            $validCandidate = $candidate
+                && (int)($candidate['id_member'] ?? 0) === $idMemberAfiliasi
+                && !$this->Md_member_visiacademy->isDealLinkedToOtherPo($selectedDealId, $poId);
+
+            if ($validCandidate && $selectedDealId !== $oldDealId && ($candidate['status_deal'] ?? '') !== 'Pending') {
+                $validCandidate = false;
+            }
+
+            if ($validCandidate) {
+                $targetDeal = $candidate;
+            } else {
+                $selectedDealId = 0;
+            }
+        }
+
+        if ($oldDealId > 0 && ($oldDealId !== $selectedDealId || $oldMemberId !== $idMemberAfiliasi)) {
+            $this->_cleanupOldPoDealLink($oldDealId, $kodeMasuk, false);
+        }
+
+        $finalDealId = null;
+        if ($selectedDealId > 0 && $targetDeal) {
+            if (($targetDeal['status_deal'] ?? '') === 'Pending') {
+                $isAutoNote = $this->_isAutoCreatedFromPo($targetDeal, $kodeMasuk);
+                $kodeSafe   = $this->_sanitizeSyncPoToken($kodeMasuk);
+                $noPoSafe   = $this->_sanitizeSyncPoToken($noPo);
+                $custSafe   = $this->_sanitizeSyncPoToken($namaCustomer);
+                $ketSafe    = trim((string)$keterangan);
+
+                $updatedNote = $isAutoNote
+                    ? "[Sync PO: {$kodeSafe} | No. PO: {$noPoSafe} | Customer: {$custSafe}]" . ($ketSafe !== '' ? " - {$ketSafe}" : '')
+                    : $this->_mergeSyncPoNote($targetDeal['catatan'] ?? '', $kodeMasuk, $noPo, $namaCustomer, '');
+
+                $this->Md_member_visiacademy->updateDeal($selectedDealId, [
+                    'nama_produk'    => $produkSummary,
+                    'estimasi_nilai' => $nilaiDasar,
+                    'persen_komisi'  => $persenKomisi,
+                    'nominal_komisi' => $nominalKomisi,
+                    'catatan'        => $updatedNote,
+                ]);
+            }
+            $finalDealId = $selectedDealId;
+        } else {
+            $kodeSafe = $this->_sanitizeSyncPoToken($kodeMasuk);
+            $noPoSafe = $this->_sanitizeSyncPoToken($noPo);
+            $custSafe = $this->_sanitizeSyncPoToken($namaCustomer);
+            $ketSafe  = trim((string)$keterangan);
+            $catatan  = "[Sync PO: {$kodeSafe} | No. PO: {$noPoSafe} | Customer: {$custSafe}]" . ($ketSafe !== '' ? " - {$ketSafe}" : '');
+
+            $inserted = $this->Md_member_visiacademy->addDeal([
+                'id_member'      => $idMemberAfiliasi,
+                'nama_produk'    => $produkSummary,
+                'estimasi_nilai' => $nilaiDasar,
+                'persen_komisi'  => $persenKomisi,
+                'nominal_komisi' => $nominalKomisi,
+                'status_deal'    => 'Pending',
+                'catatan'        => $catatan,
+            ]);
+            if ($inserted) {
+                $finalDealId = (int)$this->db->insert_id() ?: null;
+            }
+        }
+
+        return [
+            'id_member_afiliasi'     => $idMemberAfiliasi,
+            'persen_komisi_afiliasi' => $persenKomisi,
+            'id_deal_afiliasi'       => $finalDealId,
+        ];
     }
 }

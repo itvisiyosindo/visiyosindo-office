@@ -279,6 +279,11 @@ $isKatalogTab = (isset($active_tab) && $active_tab === 'katalog');
                                 <td>
                                     <span class="font-weight-bold text-primary"><?= htmlspecialchars($d['nama_produk']) ?></span>
                                     <br><small class="text-muted"><i class="far fa-clock"></i> <?= date('d M Y', strtotime($d['created_at'])) ?></small>
+                                    <?php if (!empty($d['linked_id_po'])): ?>
+                                        <br><a href="<?= base_url('po_system/detail/' . encrypt($d['linked_id_po'])) ?>" class="badge badge-primary mt-1" title="Lihat Detail PO Terkait">
+                                            <i class="fas fa-file-invoice mr-1"></i>PO: <?= htmlspecialchars($d['linked_no_po'] ?: '-', ENT_QUOTES, 'UTF-8') ?><?= !empty($d['linked_kode_masuk']) ? ' (' . htmlspecialchars($d['linked_kode_masuk'], ENT_QUOTES, 'UTF-8') . ')' : '' ?>
+                                        </a>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="text-right font-weight-bold text-dark">
                                     Rp <?= number_format($d['estimasi_nilai'], 0, ',', '.') ?>

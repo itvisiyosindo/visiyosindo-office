@@ -43,6 +43,15 @@ class Md_po_system extends CI_Model
             if (!$this->db->field_exists('gm_alasan_terlambat', 'po_masuk')) {
                 @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `gm_alasan_terlambat` TEXT NULL DEFAULT NULL AFTER `gm_catatan`");
             }
+            if (!$this->db->field_exists('id_member_afiliasi', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `id_member_afiliasi` INT NULL DEFAULT NULL");
+            }
+            if (!$this->db->field_exists('persen_komisi_afiliasi', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `persen_komisi_afiliasi` DECIMAL(5,2) NOT NULL DEFAULT 2.00");
+            }
+            if (!$this->db->field_exists('id_deal_afiliasi', 'po_masuk')) {
+                @$this->db->query("ALTER TABLE `po_masuk` ADD COLUMN `id_deal_afiliasi` INT NULL DEFAULT NULL");
+            }
         }
     }
 
@@ -51,7 +60,8 @@ class Md_po_system extends CI_Model
      */
     public function getAllPo($filter_status = null, $filter_status_proses = null, $filter_sales = null, $tgl_awal = null, $tgl_akhir = null)
     {
-        $this->db->select('
+        $hasAfiliasiMember = $this->db->table_exists('va_member') && $this->db->field_exists('id_member_afiliasi', 'po_masuk');
+        $select = '
             p.*,
             c.nama_customer as master_nama_customer,
             c.contact as master_contact,
@@ -65,8 +75,14 @@ class Md_po_system extends CI_Model
             acc.nama as nama_acc,
             pjk.nama as nama_pajak,
             gm.nama as nama_gm,
-            (SELECT COUNT(*) FROM po_masuk_item WHERE id_po = p.id_po) as total_item
-        ');
+            (SELECT COUNT(*) FROM po_masuk_item WHERE id_po = p.id_po) as total_item';
+        if ($hasAfiliasiMember) {
+            $select .= ',
+            va.nama_member as nama_afiliator,
+            va.kode_member as kode_afiliator';
+        }
+
+        $this->db->select($select);
         $this->db->from('po_masuk p');
         $this->db->join('customer c', 'p.id_customer = c.id_customer', 'left');
         $this->db->join('pelanggan pl', 'p.id_pelanggan = pl.id_pelanggan', 'left');
@@ -75,6 +91,9 @@ class Md_po_system extends CI_Model
         $this->db->join('pengguna acc', 'p.acc_user_id = acc.pengguna_id', 'left');
         $this->db->join('pengguna pjk', 'p.pajak_user_id = pjk.pengguna_id', 'left');
         $this->db->join('pengguna gm', 'p.gm_user_id = gm.pengguna_id', 'left');
+        if ($hasAfiliasiMember) {
+            $this->db->join('va_member va', 'p.id_member_afiliasi = va.id_member', 'left');
+        }
         $this->db->where('p.deleted', 0);
 
         if (!empty($filter_status)) {
@@ -106,7 +125,10 @@ class Md_po_system extends CI_Model
      */
     public function getPoById($id_po)
     {
-        $this->db->select('
+        $hasAfiliasiMember = $this->db->table_exists('va_member') && $this->db->field_exists('id_member_afiliasi', 'po_masuk');
+        $hasAfiliasiDeal   = $this->db->table_exists('va_member_deal') && $this->db->field_exists('id_deal_afiliasi', 'po_masuk');
+
+        $select = '
             p.*,
             c.nama_customer as master_nama_customer,
             c.contact as master_contact,
@@ -123,8 +145,23 @@ class Md_po_system extends CI_Model
             pjk.nama as nama_pajak,
             pjk.jabatan as jabatan_pajak,
             gm.nama as nama_gm,
-            gm.jabatan as jabatan_gm
-        ');
+            gm.jabatan as jabatan_gm';
+        if ($hasAfiliasiMember) {
+            $select .= ',
+            va.nama_member as nama_afiliator,
+            va.kode_member as kode_afiliator,
+            va.institusi_asal as institusi_afiliator';
+        }
+        if ($hasAfiliasiDeal) {
+            $select .= ',
+            vad.status_deal as afiliasi_status_deal,
+            vad.estimasi_nilai as afiliasi_nilai_deal,
+            vad.persen_komisi as afiliasi_persen_komisi,
+            vad.nominal_komisi as afiliasi_nominal_komisi,
+            vad.status_bayar as afiliasi_status_bayar';
+        }
+
+        $this->db->select($select);
         $this->db->from('po_masuk p');
         $this->db->join('customer c', 'p.id_customer = c.id_customer', 'left');
         $this->db->join('pelanggan pl', 'p.id_pelanggan = pl.id_pelanggan', 'left');
@@ -133,6 +170,12 @@ class Md_po_system extends CI_Model
         $this->db->join('pengguna acc', 'p.acc_user_id = acc.pengguna_id', 'left');
         $this->db->join('pengguna pjk', 'p.pajak_user_id = pjk.pengguna_id', 'left');
         $this->db->join('pengguna gm', 'p.gm_user_id = gm.pengguna_id', 'left');
+        if ($hasAfiliasiMember) {
+            $this->db->join('va_member va', 'p.id_member_afiliasi = va.id_member', 'left');
+        }
+        if ($hasAfiliasiDeal) {
+            $this->db->join('va_member_deal vad', 'p.id_deal_afiliasi = vad.id_deal', 'left');
+        }
         $this->db->where('p.id_po', $id_po);
         $this->db->where('p.deleted', 0);
         return $this->db->get()->row();

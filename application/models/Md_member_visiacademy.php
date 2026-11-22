@@ -39,6 +39,20 @@ class Md_member_visiacademy extends CI_Model
         return $this->db->order_by('id_member', 'DESC')->get('va_member')->result_array();
     }
 
+    public function getActiveMembers($includeMemberId = null)
+    {
+        $this->db->from('va_member');
+        if ((int)$includeMemberId > 0) {
+            $this->db->group_start()
+                     ->where('status', 'aktif')
+                     ->or_where('id_member', (int)$includeMemberId)
+                     ->group_end();
+        } else {
+            $this->db->where('status', 'aktif');
+        }
+        return $this->db->order_by('nama_member', 'ASC')->get()->result_array();
+    }
+
     public function getMemberById($id)
     {
         return $this->db->where('id_member', (int)$id)->get('va_member')->row_array();
@@ -86,11 +100,61 @@ class Md_member_visiacademy extends CI_Model
 
     public function getAllDeals()
     {
-        return $this->db->select('d.*, m.nama_member, m.kode_member, m.institusi_asal, m.no_telp, m.nama_bank, m.no_rekening, m.atas_nama_rekening')
-                        ->from('va_member_deal d')
-                        ->join('va_member m', 'm.id_member = d.id_member', 'left')
-                        ->order_by('d.id_deal', 'DESC')
+        $hasPoLink = $this->db->table_exists('po_masuk') && $this->db->field_exists('id_deal_afiliasi', 'po_masuk');
+        $select = 'd.*, m.nama_member, m.kode_member, m.institusi_asal, m.no_telp, m.nama_bank, m.no_rekening, m.atas_nama_rekening';
+        if ($hasPoLink) {
+            $select .= ', po.linked_id_po, po.linked_no_po, po.linked_kode_masuk, po.linked_po_status, po.linked_po_status_proses';
+        }
+
+        $this->db->select($select)
+                 ->from('va_member_deal d')
+                 ->join('va_member m', 'm.id_member = d.id_member', 'left');
+
+        if ($hasPoLink) {
+            $poSubquery = "(SELECT pm1.id_deal_afiliasi, pm1.id_po AS linked_id_po, pm1.no_po AS linked_no_po, pm1.kode_masuk AS linked_kode_masuk, pm1.status AS linked_po_status, pm1.status_proses AS linked_po_status_proses FROM po_masuk pm1 INNER JOIN (SELECT id_deal_afiliasi, MAX(id_po) AS max_id_po FROM po_masuk WHERE deleted = 0 AND id_deal_afiliasi IS NOT NULL GROUP BY id_deal_afiliasi) pm2 ON pm1.id_po = pm2.max_id_po)";
+            $this->db->join($poSubquery . ' po', 'po.id_deal_afiliasi = d.id_deal', 'left', false);
+        }
+
+        return $this->db->order_by('d.id_deal', 'DESC')
                         ->get()->result_array();
+    }
+
+    public function getPendingDealsForPo($excludePoId = null, $includeDealId = null)
+    {
+        $this->db->select('d.id_deal, d.id_member, d.nama_produk, d.estimasi_nilai, d.persen_komisi, d.nominal_komisi, d.status_deal, d.catatan, d.created_at');
+        $this->db->from('va_member_deal d');
+
+        if ((int)$includeDealId > 0) {
+            $this->db->group_start()
+                     ->where('d.status_deal', 'Pending')
+                     ->or_where('d.id_deal', (int)$includeDealId)
+                     ->group_end();
+        } else {
+            $this->db->where('d.status_deal', 'Pending');
+        }
+
+        if ($this->db->table_exists('po_masuk') && $this->db->field_exists('id_deal_afiliasi', 'po_masuk')) {
+            $excludeCond = ((int)$excludePoId > 0) ? ' AND pm.id_po != ' . (int)$excludePoId : '';
+            $this->db->where("NOT EXISTS (SELECT 1 FROM po_masuk pm WHERE pm.id_deal_afiliasi = d.id_deal AND pm.deleted = 0{$excludeCond})", null, false);
+        }
+
+        return $this->db->order_by('d.id_deal', 'DESC')->get()->result_array();
+    }
+
+    public function isDealLinkedToOtherPo($id_deal, $excludePoId = null)
+    {
+        $id_deal = (int)$id_deal;
+        if ($id_deal <= 0 || !$this->db->table_exists('po_masuk') || !$this->db->field_exists('id_deal_afiliasi', 'po_masuk')) {
+            return false;
+        }
+
+        $this->db->from('po_masuk');
+        $this->db->where('id_deal_afiliasi', $id_deal);
+        $this->db->where('deleted', 0);
+        if ((int)$excludePoId > 0) {
+            $this->db->where('id_po !=', (int)$excludePoId);
+        }
+        return $this->db->count_all_results() > 0;
     }
 
     public function getDealById($id)
