@@ -2363,5 +2363,277 @@ class Laporan extends CI_Controller
         $mpdf->WriteHTML($html);
         $mpdf->Output('Rangkuman_Laporan_Bulanan_' . ($data_job ? str_replace(' ', '_', $data_job->nama) : 'Karyawan') . '_' . $month . '.pdf', 'I');
     }
+
+    public function inject_laporan_dimas()
+    {
+        $token = $this->input->get('token');
+        $can_access = ($token === 'vysi_laporan_dimas_2026') || isAdmin() || sessPenggunaId() == 778;
+        if (!$can_access) {
+            echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak.']);
+            return;
+        }
+
+        // 1. Ambil akun Dimas Chandra Winata (ID 778)
+        $user = $this->db->select('pengguna_id, nama')
+            ->from('pengguna')
+            ->where('pengguna_id', 778)
+            ->or_like('nama', 'Dimas Chandra')
+            ->get()
+            ->row();
+
+        if (!$user) {
+            echo json_encode(['status' => 'error', 'msg' => 'Pengguna Dimas tidak ditemukan.']);
+            return;
+        }
+
+        $uid = (int)$user->pengguna_id;
+
+        // 2. Ambil jobdesk aktif non-header milik Dimas untuk periode 16 - 22 Nov 2026
+        $jobs = $this->db->query("
+            SELECT jd.id, jd.deskripsi, jd.nilai, jd.point, jd.id_urut
+            FROM jobdesc_detail jd
+            LEFT JOIN jobdesc j ON j.id = jd.id_jobdesc
+            WHERE jd.idPengguna = {$uid}
+              AND jd.status = 1
+              AND COALESCE(jd.nilai, 0) != 1
+              AND (j.tgl_mulai IS NULL OR (j.tgl_mulai <= '2026-11-22' AND (j.tgl_selesai IS NULL OR j.tgl_selesai >= '2026-11-16')) OR jd.id_jobdesc IS NULL)
+            ORDER BY jd.point ASC, jd.id_urut ASC, jd.id ASC
+        ")->result();
+
+        if (empty($jobs)) {
+            $jobs = $this->db->query("
+                SELECT jd.id, jd.deskripsi, jd.nilai, jd.point, jd.id_urut
+                FROM jobdesc_detail jd
+                LEFT JOIN jobdesc j ON j.id = jd.id_jobdesc
+                WHERE jd.idPengguna = {$uid}
+                  AND jd.status = 1
+                  AND COALESCE(jd.nilai, 0) != 1
+                ORDER BY jd.point ASC, jd.id_urut ASC, jd.id ASC
+            ")->result();
+        }
+
+        if (empty($jobs)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Tidak ditemukan jobdesk aktif non-header untuk Dimas.']);
+            return;
+        }
+
+        $jobById = [];
+        foreach ($jobs as $j) {
+            $jobById[(int)$j->id] = $j->deskripsi;
+        }
+
+        $findJobId = function ($exactWords) use ($jobs) {
+            foreach ($jobs as $j) {
+                $text = strtolower($j->deskripsi);
+                $allMatch = true;
+                foreach ($exactWords as $w) {
+                    if (strpos($text, strtolower($w)) === false) {
+                        $allMatch = false;
+                        break;
+                    }
+                }
+                if ($allMatch) {
+                    return (int)$j->id;
+                }
+            }
+            foreach ($jobs as $j) {
+                $text = strtolower($j->deskripsi);
+                foreach ($exactWords as $w) {
+                    if (strpos($text, strtolower($w)) !== false) {
+                        return (int)$j->id;
+                    }
+                }
+            }
+            return (int)$jobs[0]->id;
+        };
+
+        $jobDevAnalisis  = $findJobId(['menganalisis kebutuhan', 'mengembangkan sistem']);
+        $jobMaintenance  = $findJobId(['maintenance', 'troubleshooting terhadap sistem']);
+        $jobAkunSecurity = $findJobId(['mengelola akun', 'keamanan']);
+        $jobKoordinasi   = $findJobId(['berkoordinasi', 'mengevaluasi']);
+
+        $jobMap = [
+            'dev_analisis'  => ['id' => $jobDevAnalisis, 'deskripsi' => $jobById[$jobDevAnalisis] ?? ''],
+            'maintenance'   => ['id' => $jobMaintenance, 'deskripsi' => $jobById[$jobMaintenance] ?? ''],
+            'akun_security' => ['id' => $jobAkunSecurity, 'deskripsi' => $jobById[$jobAkunSecurity] ?? ''],
+            'koordinasi'    => ['id' => $jobKoordinasi, 'deskripsi' => $jobById[$jobKoordinasi] ?? ''],
+        ];
+
+        $makeEntry = function ($jobId, $tanggal, $progress, $ketHasil) use ($uid) {
+            return [
+                'id_pengaju'       => $uid,
+                'id_job'           => $jobId,
+                'tanggal'          => $tanggal,
+                'jenis'            => 'JOBDESK RUTIN',
+                'progress'         => $progress,
+                'status_pekerjaan' => 'SELESAI',
+                'ket_hasil'        => $ketHasil,
+                'pihak'            => 'TIDAK ADA',
+                'keterangan'       => '',
+                'pencapaian'       => '1',
+                'status'           => 1,
+            ];
+        };
+
+        // 3. Susun 21 item laporan mingguan 16 - 20 November 2026 (Senin - Jumat)
+        $entries = [
+            // --- SENIN, 16 November 2026 (5 items) ---
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-16',
+                'Pengembangan fitur Timeline & Tracking Bar durasi respon approval TTD pada modul PO dan SPH, penerapan batas SLA approval 2 jam kerja (wajib alasan keterlambatan), serta penalti SLA keterlambatan approval pada Leaderboard KPI.',
+                'Timeline respon approval dan perhitungan penalti SLA keterlambatan TTD PO/SPH aktif dan terintegrasi pada Leaderboard KPI.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-16',
+                'Pengembangan alur pemilihan pegawai, tampilan status audit kinerja pada kartu pegawai, filter status pada modul Audit Kinerja, serta aktivasi fitur bulk nilai (Nilai A/B) Laporan Mingguan untuk Administrator.',
+                'Modul Audit Kinerja lebih terstruktur dan fitur bulk nilai laporan mingguan dapat digunakan Administrator secara atomik.'
+            ),
+            $makeEntry(
+                $jobAkunSecurity,
+                '2026-11-16',
+                'Pengaturan pembatasan hak akses kelola soal dan kunci jawaban Kuis Pegawai khusus HRD/Administrator, auto-aktivasi kuis terjadwal, penyesuaian jadwal kuis, serta perapihan tampilan mobile ujian kuis.',
+                'Akses kelola soal dan kunci jawaban kuis terjaga hanya untuk HRD/Admin dan ujian kuis berjalan lancar di perangkat mobile.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-16',
+                'Perbaikan error 503 saat cetak/download PDF SPH (optimasi memory limit dan aset tanda tangan), perbaikan mapping divisi pegawai pada Sasaran Mutu/Audit, perbaikan permission approval CRO, serta penambahan fitur edit SPH bertanda tangan dan harga item FPP.',
+                'Cetak PDF SPH berjalan normal tanpa error 503, mapping divisi pegawai akurat, dan proses approval serta update SPH/FPP lancar.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-16',
+                'Pembaruan notifikasi approval WhatsApp personal ke approver PO, penyesuaian log antrean dan panel monitoring nama asli WhatsApp Sessions, penambahan tombol Hubungi Admin (WA CRO) di Asset Passport, serta perapihan UI Berita Acara dan form mobile STB.',
+                'Notifikasi WA approval terkirim tepat sasaran, panel monitoring WA menampilkan nama asli pegawai, dan form STB responsif di mobile.'
+            ),
+
+            // --- SELASA, 17 November 2026 (4 items) ---
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-17',
+                'Pembangunan modul baru Sistem After Sales Service (purna jual) lengkap dengan menu sidebar Marketing dan Accounting, notifikasi WhatsApp otomatis ke grup TEKNISI MEDIKAL, pencegahan duplikasi nomor tiket, dan update status teknisi.',
+                'Sistem After Sales Service aktif digunakan dengan notifikasi otomatis ke grup Teknisi Medikal dan validasi nomor tiket unik.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-17',
+                'Pengembangan perhitungan nilai dan breakdown kepatuhan laporan mingguan karyawan per hari kerja, sinkronisasi data cuti/sakit/izin resmi, serta integrasi surat PPA ke modul Audit Keuangan bersama PBOK.',
+                'Audit kepatuhan laporan mingguan menampilkan status izin/cuti secara akurat dan surat PPA terintegrasi di Audit Keuangan.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-17',
+                'Penyempurnaan fitur bulk nilai Laporan Mingguan (review sebelum simpan, sinkronisasi realtime, kolom total nilai) serta perbaikan mekanisme checklist Task Proyek dan validasi alasan penolakan pada approval Forwarder.',
+                'Fitur bulk nilai lebih aman untuk di-review, checklist Task Proyek tidak auto-submit prematur, dan penolakan Forwarder wajib menyertakan alasan.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-17',
+                'Pemulihan aset tanda tangan/stempel GM pada SPH, penambahan fitur cek estimasi pengiriman ekspedisi (Berdu.id) pada modul SPH, dan pembaruan tampilan logo header aplikasi office.',
+                'Tanda tangan dan stempel GM pada SPH tampil normal dan tim dapat mengecek estimasi ongkir ekspedisi langsung dari modul SPH.'
+            ),
+
+            // --- RABU, 18 November 2026 (3 items) ---
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-18',
+                'Pengembangan dukungan 5 penandatangan pada modul Berita Acara (penambahan kolom Diketahui 2 pada form pengajuan, alur approval WhatsApp, halaman detail, dan cetak PDF) serta penambahan TTD khusus BA 755.',
+                'Modul Berita Acara mendukung hingga 5 penandatangan lengkap dengan alur approval WA dan format cetak PDF yang rapi.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-18',
+                'Penambahan kolom dan fitur edit keterangan dokumen yang dikirimkan pada detail Tagihan Ekspedisi, penambahan field alamat gudang asal dan tujuan, serta penambahan menu dan kategori AKD pada Dokumen Product.',
+                'Detail tagihan ekspedisi mendukung pencatatan keterangan dokumen dan alamat gudang, serta kategori AKD tersedia di Dokumen Product.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-18',
+                'Sinkronisasi butir Evaluasi Pegawai agar selalu mengambil dari jobdesk aktif (status=1), pembaruan isi Berita Acara ID 735, perbaikan link lampiran SPH pada FPP 3989 dan 3987, serta penyesuaian reload cache LiteSpeed server.',
+                'Butir evaluasi pegawai tersinkron dengan jobdesk aktif, data BA dan lampiran FPP terbarui, dan deployment server berjalan stabil.'
+            ),
+
+            // --- KAMIS, 19 November 2026 (4 items) ---
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-19',
+                'Implementasi awal modul Member Visi Academy pada sistem Office meliputi modal input member dan deal, submit AJAX, kalkulasi komisi otomatis, manajemen status deal, ringkasan KPI, dan integrasi DataTables.',
+                'Modul Member Visi Academy berjalan di sistem Office untuk pencatatan member, transaksi deal, dan perhitungan komisi.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-19',
+                'Penambahan fitur edit alamat gudang asal dan alamat gudang tujuan via dropdown pada modal Edit Data Tagihan Ekspedisi (khusus Administrator) serta fitur edit detail shipment Forwarder (reset approval saat diedit, kolom HS Code dan Keterangan).',
+                'Administrator dapat memperbarui alamat gudang tagihan via dropdown dan tim dapat mengedit detail shipment Forwarder lengkap dengan HS Code.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-19',
+                'Pengembangan fitur export Excel Laporan FPP dengan rincian Nama Barang dan Harga yang Ditawarkan, tombol cetak FPP satuan ke Excel, serta sinkronisasi seluruh checkbox filter ke kolom export Excel.',
+                'Laporan FPP dapat diekspor ke Excel (rekap maupun satuan) sesuai kolom checkbox yang dipilih pengguna.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-19',
+                'Perbaikan tampilan tanda tangan dan pihak terkait pada halaman detail serta cetak dokumen SSTB non-pusat.',
+                'Tanda tangan dan informasi pihak pada detail serta hasil cetak SSTB non-pusat tampil lengkap dan benar.'
+            ),
+
+            // --- JUMAT, 20 November 2026 (5 items) ---
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-20',
+                'Pembangunan modul Sistem Tracking Import 9 Tahap (auto-sync PO Supplier, Approval Forwarder dan Penerimaan Barang, tombol 1-klik lanjut tahap) serta Warehouse SLA Tracking (PO CRO ke SJ, order ekspedisi, loading/handover, packaging, akurasi pengiriman, checklist SOP gudang).',
+                'Sistem Tracking Import 9 tahap dan Warehouse SLA Tracking aktif memantau seluruh tahapan logistik dan kepatuhan SOP gudang.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-20',
+                'Implementasi modul Survey Kepuasan Pelanggan dan Dashboard Monitoring (format pesan WA survey, tombol hapus data) serta fitur gabung data duplikat Calon Pelanggan beserta kontak PIC.',
+                'Survey kepuasan pelanggan terpantau di dashboard monitoring dan data duplikat calon pelanggan dapat digabungkan tanpa kehilangan kontak PIC.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-20',
+                'Pembangunan Student Portal Visilab Academy pada website perusahaan (visiyosindo-website) mencakup akun siswa, pendaftaran kelas, penerbitan dan verifikasi sertifikat, role academy_admin (CRUD kelas, upload flyer, manajemen sertifikat/afiliasi), dan overhaul UI/UX menyeluruh.',
+                'Student Portal dan dashboard manajemen academy_admin Visilab Academy aktif digunakan dengan tampilan modern dan responsif.'
+            ),
+            $makeEntry(
+                $jobDevAnalisis,
+                '2026-11-20',
+                'Inisialisasi dan pengembangan Portal Member Visi Academy (visiyosindo-member-deal), integrasi Visiyosindo Link Manager dan shortlink, notifikasi WA otomatis ke Grup Marketing dan Dirangga saat deal, serta integrasi rekening bank dan konfirmasi pembayaran komisi Finance antara portal dan sistem Office.',
+                'Portal Member Visi Academy terhubung dengan sistem Office dan notifikasi WA otomatis, serta mendukung pelacakan transfer komisi Finance.'
+            ),
+            $makeEntry(
+                $jobMaintenance,
+                '2026-11-20',
+                'Perbaikan rumus perhitungan rata-rata pada cetak Evaluasi Pegawai serta perbaikan urutan, paginasi (25 baris), redirect, dan status Task Proyek agar tetap Sedang Dikerjakan pada progres 100% hingga submit selesai eksplisit.',
+                'Perhitungan rata-rata cetak evaluasi pegawai akurat dan pengelolaan status serta tampilan daftar Task Proyek berjalan sesuai alur.'
+            ),
+        ];
+
+        $this->db->where('id_pengaju', $uid)
+            ->where('tanggal >=', '2026-11-16')
+            ->where('tanggal <=', '2026-11-20')
+            ->delete('laporan');
+
+        $inserted = 0;
+        foreach ($entries as $row) {
+            $this->db->insert('laporan', $row);
+            $inserted++;
+        }
+
+        addLog('Laporan', "Inject otomatis laporan mingguan Dimas Chandra Winata 16-20 Nov 2026 (Insert: {$inserted})");
+
+        echo json_encode([
+            'status'   => 'success',
+            'msg'      => "Laporan mingguan Dimas Chandra Winata (16-20 Nov 2026) berhasil disimpan ke database ({$inserted} item).",
+            'inserted' => $inserted,
+            'job_map'  => $jobMap,
+            'user'     => $user->nama,
+        ]);
+    }
 }
 
