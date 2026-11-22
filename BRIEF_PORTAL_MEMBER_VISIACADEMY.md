@@ -40,11 +40,25 @@ Kedua project menggunakan database yang sama di server:
    - `id_member` (INT, FK -> va_member.id_member)
    - `nama_produk` (VARCHAR 255) -> Nama alkes yang dibutuhkan RS
    - `estimasi_nilai` (DECIMAL 15,2) -> Nilai transaksi
-   - `persen_komisi` (DECIMAL 5,2) -> Persentase komisi
-   - `nominal_komisi` (DECIMAL 15,2) -> Nilai komisi terhitung
+   - `persen_komisi` (DECIMAL 5,2) -> Persentase komisi (estimasi awal dari portal dikunci di `2.00%`; persentase & nominal final diverifikasi/disesuaikan di Office saat status diubah ke `Deal`)
+   - `nominal_komisi` (DECIMAL 15,2) -> Nilai komisi terhitung (`estimasi_nilai * persen_komisi / 100`)
    - `status_deal` (ENUM: 'Pending', 'Deal', 'Batal') DEFAULT 'Pending'
    - `catatan` (TEXT) -> Spesifikasi atau info PIC RS
    - `created_at` (DATETIME)
+
+3. **`va_katalog_produk` (Katalog Produk Alkes & Brosur):**
+   - `id_produk` (`INT UNSIGNED`, PK, Auto Increment)
+   - `nama_produk` (`VARCHAR(200) NOT NULL`) -> Nama produk alkes
+   - `kategori` (`VARCHAR(100) NOT NULL DEFAULT 'Radiologi'`) -> Kategori produk
+   - `deskripsi_singkat` (`TEXT NULL`) -> Ringkasan spesifikasi / keunggulan produk
+   - `estimasi_harga` (`DECIMAL(15,2) NOT NULL DEFAULT 0.00`) -> Estimasi harga (`0.00` tampil sebagai On Request)
+   - `url_gambar` (`VARCHAR(255) NULL`) -> Path relatif (`uploads/katalog/...`) atau URL eksternal (`https://...`)
+   - `url_brosur` (`VARCHAR(255) NULL`) -> Path relatif (`uploads/brosur/...`) atau URL eksternal (`https://...`)
+   - `status` (`ENUM('aktif','nonaktif') NOT NULL DEFAULT 'aktif'`) -> Produk `aktif` ditampilkan di portal (`katalog.php`)
+   - `urutan` (`INT NOT NULL DEFAULT 0`) -> Urutan tampil di portal
+   - `created_at` (`DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`)
+   - `updated_at` (`DATETIME NULL ON UPDATE CURRENT_TIMESTAMP`)
+   - **Kontrak path file gambar & brosur:** Portal otomatis meresolve `url_gambar` dan `url_brosur` — jika diawali `https://` / `http://` dipakai langsung, jika path relatif (misal `uploads/katalog/usg.jpg` atau `uploads/brosur/usg.pdf`) otomatis digabungkan dengan `https://office.visiyosindo.id/<path>`.
 
 ## 4. Fitur-Fitur yang Perlu Dibangun di Project Portal Member:
 1. **Halaman Autentikasi:**

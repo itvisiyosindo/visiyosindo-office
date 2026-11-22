@@ -3,6 +3,37 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Md_member_visiacademy extends CI_Model
 {
+    private $katalogTableChecked = false;
+
+    /**
+     * Pastikan tabel va_katalog_produk tersedia pada shared DB visiyosi_office.
+     */
+    private function ensureKatalogTable()
+    {
+        if ($this->katalogTableChecked) {
+            return;
+        }
+        $this->katalogTableChecked = true;
+
+        if (!$this->db->table_exists('va_katalog_produk')) {
+            $sql = "CREATE TABLE IF NOT EXISTS `va_katalog_produk` (
+                `id_produk` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `nama_produk` VARCHAR(200) NOT NULL,
+                `kategori` VARCHAR(100) NOT NULL DEFAULT 'Radiologi',
+                `deskripsi_singkat` TEXT NULL,
+                `estimasi_harga` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+                `url_gambar` VARCHAR(255) NULL,
+                `url_brosur` VARCHAR(255) NULL,
+                `status` ENUM('aktif','nonaktif') NOT NULL DEFAULT 'aktif',
+                `urutan` INT NOT NULL DEFAULT 0,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                KEY `idx_status_urutan` (`status`, `urutan`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            $this->db->query($sql);
+        }
+    }
+
     public function getAllMember()
     {
         return $this->db->order_by('id_member', 'DESC')->get('va_member')->result_array();
@@ -86,6 +117,11 @@ class Md_member_visiacademy extends CI_Model
         return $this->db->where('id_deal', (int)$id)->update('va_member_deal', ['status_deal' => $status]);
     }
 
+    public function updateDeal($id, $data)
+    {
+        return $this->db->where('id_deal', (int)$id)->update('va_member_deal', $data);
+    }
+
     public function updatePayment($id, $data)
     {
         return $this->db->where('id_deal', (int)$id)->update('va_member_deal', $data);
@@ -94,6 +130,76 @@ class Md_member_visiacademy extends CI_Model
     public function deleteDeal($id)
     {
         return $this->db->where('id_deal', (int)$id)->delete('va_member_deal');
+    }
+
+    // =========================================================================
+    // KATALOG PRODUK ALKES (va_katalog_produk)
+    // =========================================================================
+
+    public function getAllKatalog()
+    {
+        $this->ensureKatalogTable();
+        return $this->db->order_by('urutan', 'ASC')
+                        ->order_by('id_produk', 'DESC')
+                        ->get('va_katalog_produk')
+                        ->result_array();
+    }
+
+    public function getKatalogById($id)
+    {
+        $this->ensureKatalogTable();
+        return $this->db->where('id_produk', (int)$id)
+                        ->get('va_katalog_produk')
+                        ->row_array();
+    }
+
+    public function getKatalogKategoriList()
+    {
+        $this->ensureKatalogTable();
+        $defaults = [
+            'Radiologi',
+            'Proteksi Radiasi',
+            'USG & Imaging',
+            'X-Ray & C-Arm',
+            'Aksesoris Alkes',
+            'Lainnya',
+        ];
+
+        $rows = $this->db->distinct()
+                         ->select('kategori')
+                         ->where('kategori IS NOT NULL', null, false)
+                         ->where("TRIM(kategori) !=", '')
+                         ->order_by('kategori', 'ASC')
+                         ->get('va_katalog_produk')
+                         ->result_array();
+
+        $dbCategories = [];
+        foreach ($rows as $row) {
+            $kat = trim((string)($row['kategori'] ?? ''));
+            if ($kat !== '') {
+                $dbCategories[] = $kat;
+            }
+        }
+
+        return array_values(array_unique(array_merge($defaults, $dbCategories)));
+    }
+
+    public function addKatalog($data)
+    {
+        $this->ensureKatalogTable();
+        return $this->db->insert('va_katalog_produk', $data);
+    }
+
+    public function updateKatalog($id, $data)
+    {
+        $this->ensureKatalogTable();
+        return $this->db->where('id_produk', (int)$id)->update('va_katalog_produk', $data);
+    }
+
+    public function deleteKatalog($id)
+    {
+        $this->ensureKatalogTable();
+        return $this->db->where('id_produk', (int)$id)->delete('va_katalog_produk');
     }
 
     public function getSummary()
