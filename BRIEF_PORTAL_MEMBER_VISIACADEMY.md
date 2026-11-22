@@ -1,14 +1,15 @@
-# BRIEF & SPESIFIKASI PROYEK: PORTAL MEMBER VISI ACADEMY (VISIYOSINDO.ID)
+# BRIEF & SPESIFIKASI PROYEK: VISIYOSINDO AFILIASI (VISIYOSINDO.ID)
 
 ## 1. Latar Belakang & Alur Bisnis
-PT Visi Yosindo Medikal memiliki program referral pemasaran untuk produk alat kesehatan (Mobile X-Ray, Apron Pb, USG, dll) melalui unit pelatihannya (Visi Academy).
-Member (dokter, radiografer, fisikawan medis, staf RS, alumni pelatihan) dapat mendaftar mandiri, mendapatkan kode member unik, dan menginfokan kebutuhan alat kesehatan di rumah sakit/klinik mereka.
+PT Visi Yosindo Medikal memiliki program afiliasi & referral pemasaran untuk produk alat kesehatan (Mobile X-Ray, Apron Pb, USG, dll) bernama **Visiyosindo Afiliasi** (sebelumnya Member Visi Academy).
+Member/afiliator (dokter, radiografer, fisikawan medis, staf RS, alumni pelatihan) dapat mendaftar mandiri, mendapatkan kode member unik, dan menginfokan kebutuhan alat kesehatan di rumah sakit/klinik mereka.
 Jika informasi kebutuhan tersebut berhasil terjual (Deal) oleh tim sales internal, member mendapatkan komisi uang tunai.
 
 ## 2. Struktur Dua Aplikasi (Satu Server & Satu Database)
 1. **Aplikasi Admin Internal (Office ERP):**
    - Lokasi: `D:\vsiyosindo office` (Domain: `office.visiyosindo.id`)
-   - Fungsi: Admin/Sales memantau seluruh member, mem-follow up prospek, mengubah status deal (Pending -> Deal / Batal), dan mencairkan komisi.
+   - Menu Office: Berada pada tab **Marketing** dan **Accounting & Tax** sebagai **Visiyosindo Afiliasi** (endpoint `/member_visiacademy` atau alias `/visiyosindo_afiliasi`).
+   - Fungsi: Admin/Sales/Finance memantau seluruh member, mengelola katalog produk alkes, mem-follow up prospek, mengubah status & nilai deal final (Pending -> Deal / Batal), dan mencairkan komisi.
 2. **Aplikasi Portal Member (Project Ini):**
    - Lokasi: `F:\visiyosindo member deal` (Domain: `visiyosindo.id`)
    - Fungsi: Khusus untuk member luar (Daftar mandiri, Login, Cek Saldo Komisi, Input Kebutuhan Alkes Baru, Tracking Status Deal, dan Kelola Rekening Bank).

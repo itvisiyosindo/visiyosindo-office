@@ -120,6 +120,13 @@
 					</li>
 					</li>
 
+					<li class="<?= in_array($page_name, ['v_member_visiacademy', 'member_visiacademy/v_member_visiacademy']) ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('Member_visiacademy?nav=accounting') ?>">
+							<i class="fas fa-handshake" aria-hidden="true"></i>
+							<span>Visiyosindo Afiliasi</span>
+						</a>
+					</li>
+
 					<li>
 						<a class="nav-link text-danger border-top" href="<?= base_url('auth/logout') ?>">
 							<i class="fas fa-sign-out-alt text-danger" aria-hidden="true"></i>

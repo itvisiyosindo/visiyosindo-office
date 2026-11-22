@@ -29,10 +29,10 @@ $isKatalogTab = (isset($active_tab) && $active_tab === 'katalog');
 ?>
 
 <header class="page-header">
-    <h2><i class="fas fa-users"></i>&nbsp;<?= $page_title ?></h2>
+    <h2><i class="fas fa-handshake"></i>&nbsp;<?= $page_title ?></h2>
     <div class="right-wrapper text-left">
         <ol class="breadcrumbs">
-            <li><span>Home</span></li>
+            <li><span><?= (isset($switch) && $switch === 'accounting') ? 'Accounting &amp; Tax' : 'Marketing' ?></span></li>
             <li><span><?= $page_title ?></span></li>
         </ol>
     </div>
@@ -151,7 +151,7 @@ $isKatalogTab = (isset($active_tab) && $active_tab === 'katalog');
 <!-- CARD 1: DAFTAR MEMBER -->
 <div class="card card-modern shadow-sm border-0">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title"><i class="fas fa-id-card text-primary mr-2"></i> Daftar Member Visi Academy</h5>
+        <h5 class="card-title"><i class="fas fa-id-card text-primary mr-2"></i> Daftar Member Visiyosindo Afiliasi</h5>
         <div>
             <button type="button" class="btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#modal-member">
                 <i class="fas fa-user-plus mr-1"></i> Tambah Member Baru

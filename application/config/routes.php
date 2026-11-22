@@ -189,3 +189,8 @@ $route['survey/(:any)'] = 'Survey/isi/$1';
 // Survey Kepuasan Pelanggan (Admin / Monitoring)
 $route['survey_monitoring'] = 'Survey_monitoring/index';
 $route['survey_monitoring/(:any)'] = 'Survey_monitoring/$1';
+
+// Visiyosindo Afiliasi (alias untuk Member_visiacademy)
+$route['visiyosindo_afiliasi'] = 'Member_visiacademy/index';
+$route['visiyosindo_afiliasi/(:any)'] = 'Member_visiacademy/$1';
+$route['visiyosindo_afiliasi/(:any)/(:any)'] = 'Member_visiacademy/$1/$2';

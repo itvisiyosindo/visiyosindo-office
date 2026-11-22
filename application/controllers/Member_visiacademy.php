@@ -14,10 +14,10 @@ class Member_visiacademy extends CI_Controller
     {
         grantAccessFor('all');
 
-        $page_data['switch']             = 'home';
+        $page_data['switch']             = $this->_resolveNavSwitch();
         $page_data['page_name']          = 'member_visiacademy/v_member_visiacademy';
-        $page_data['page_title']         = 'Member Visi Academy';
-        $page_data['page_desc']          = 'Program Referral Marketing & Komisi Alkes PT Visi Yosindo Medikal';
+        $page_data['page_title']         = 'Visiyosindo Afiliasi';
+        $page_data['page_desc']          = 'Program Afiliasi Pemasaran & Komisi Alkes PT Visi Yosindo Medikal';
         $page_data['members']            = $this->Md_member_visiacademy->getAllMember();
         $page_data['deals']              = $this->Md_member_visiacademy->getAllDeals();
         $page_data['next_kode']          = $this->Md_member_visiacademy->generateNextKode();
@@ -27,6 +27,40 @@ class Member_visiacademy extends CI_Controller
         $page_data['active_tab']         = $this->input->get('tab', true) ?: '';
 
         $this->load->view('index', $page_data);
+    }
+
+    private function _resolveNavSwitch()
+    {
+        $nav = $this->input->get('nav', true) ?: $this->input->get('from', true);
+        if (in_array($nav, ['marketing', 'accounting'], true)) {
+            $this->session->set_userdata('va_afiliasi_nav', $nav);
+            return $nav;
+        }
+
+        $saved = $this->session->userdata('va_afiliasi_nav');
+        if (in_array($saved, ['marketing', 'accounting'], true)) {
+            return $saved;
+        }
+
+        $referer = (string) $this->input->server('HTTP_REFERER');
+        if ($referer !== '') {
+            if (strpos($referer, 'accounting') !== false) {
+                return 'accounting';
+            }
+            if (strpos($referer, 'marketing') !== false) {
+                return 'marketing';
+            }
+        }
+
+        if (
+            function_exists('isAccountingUser') && isAccountingUser()
+            && !(function_exists('isTeamMarketing') && isTeamMarketing())
+            && !(function_exists('isAdmin') && isAdmin())
+        ) {
+            return 'accounting';
+        }
+
+        return 'marketing';
     }
 
     public function add()
@@ -635,9 +669,9 @@ class Member_visiacademy extends CI_Controller
             $anRek      = $deal['atas_nama_rekening'] ?: $namaMember;
             $catatan    = !empty($deal['catatan']) ? $deal['catatan'] : '-';
 
-            $pesan = "*Notifikasi Deal Baru - Member Visi Academy* 🤝%0A%0A"
+            $pesan = "*Notifikasi Deal Baru - Visiyosindo Afiliasi* 🤝%0A%0A"
                    . "Halo Pak Dirangga,%0A"
-                   . "Terdapat transaksi pengadaan alkes dari program Referral Member Visi Academy yang telah berstatus *DEAL* dan siap diproses komisi pencairannya oleh Finance:%0A%0A"
+                   . "Terdapat transaksi pengadaan alkes dari program Visiyosindo Afiliasi yang telah berstatus *DEAL* dan siap diproses komisi pencairannya oleh Finance:%0A%0A"
                    . "📋 *Detail Transaksi:*%0A"
                    . "• *ID Deal:* #DL-" . str_pad($deal['id_deal'], 4, '0', STR_PAD_LEFT) . "%0A"
                    . "• *Produk Alkes:* " . $produk . "%0A"
@@ -651,7 +685,7 @@ class Member_visiacademy extends CI_Controller
                    . "• *No. Rekening:* *" . $noRek . "*%0A"
                    . "• *Atas Nama:* " . $anRek . "%0A%0A"
                    . "Silakan periksa detail rekening dan konfirmasi transfer komisi pada sistem ERP Office:%0A"
-                   . "https://office.visiyosindo.id/member_visiacademy";
+                   . "https://office.visiyosindo.id/member_visiacademy?nav=accounting";
 
             sendWa([
                 'devId'    => hostWa('3'),
