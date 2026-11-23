@@ -14,7 +14,7 @@
 			<div class="card-body">
 				<!-- Filter Section -->
 				<div class="row mb-3 align-items-end">
-					<div class="col-md-4 mb-2">
+					<div class="col-md-3 mb-2">
 						<label class="font-weight-bold">Filter Kegiatan / Event:</label>
 						<select id="filter_kegiatan" class="form-control">
 							<option value="">-- Semua Kegiatan / Event --</option>
@@ -26,10 +26,18 @@
 						</select>
 					</div>
 					<div class="col-md-3 mb-2">
+						<label class="font-weight-bold">Status Hubungi:</label>
+						<select id="filter_status_hubungi" class="form-control">
+							<option value="">-- Semua Status --</option>
+							<option value="belum">Belum Dihubungi</option>
+							<option value="sudah">Sudah Dihubungi</option>
+						</select>
+					</div>
+					<div class="col-md-2 mb-2">
 						<label class="font-weight-bold">Tanggal Mulai:</label>
 						<input type="date" id="filter_tanggal_mulai" class="form-control">
 					</div>
-					<div class="col-md-3 mb-2">
+					<div class="col-md-2 mb-2">
 						<label class="font-weight-bold">Tanggal Selesai:</label>
 						<input type="date" id="filter_tanggal_selesai" class="form-control">
 					</div>
@@ -45,7 +53,7 @@
 
 				<div class="alert alert-info py-2 mb-3">
 					<i class="fas fa-info-circle mr-1"></i>
-					Daftar nomor kontak diambil dari <strong>Buku Tamu</strong>. Klik tombol <strong>Hubungi WA</strong> pada baris kontak untuk membuka WhatsApp dan mengirim pesan secara manual.
+					Daftar nomor kontak diambil dari <strong>Buku Tamu</strong>. Saat tombol <strong>Hubungi WA</strong> diklik, sistem akan <strong>otomatis mencatat tracking</strong> (siapa marketing yang menghubungi & jamnya) lalu membuka tab WhatsApp untuk mengirim pesan secara manual.
 				</div>
 
 				<!-- Table Section -->
@@ -53,14 +61,15 @@
 					<table class="table table-bordered table-striped table-hover mb-0" id="table_broadcast" style="width:100%">
 						<thead>
 							<tr class="text-center">
-								<th style="width: 50px;">No</th>
+								<th style="width: 45px;">No</th>
 								<th>Nama Lengkap</th>
 								<th>Instansi / Perusahaan</th>
 								<th>Jabatan</th>
 								<th>Kegiatan / Event</th>
 								<th>Nomor WhatsApp</th>
 								<th>Waktu Input</th>
-								<th style="width: 140px;">Aksi</th>
+								<th style="width: 150px;">Status Hubungi</th>
+								<th style="width: 130px;">Aksi</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -87,13 +96,14 @@
 				type: 'POST',
 				data: function(d) {
 					d.kegiatan_id = $('#filter_kegiatan').val();
+					d.status_hubungi = $('#filter_status_hubungi').val();
 					d.tanggal_mulai = $('#filter_tanggal_mulai').val();
 					d.tanggal_selesai = $('#filter_tanggal_selesai').val();
 					d.csrf_token = csrfToken;
 				}
 			},
 			columnDefs: [
-				{ targets: [0, 6, 7], className: 'text-center' }
+				{ targets: [0, 6, 7, 8], className: 'text-center' }
 			],
 			language: {
 				search: 'Cari Kontak:',
@@ -111,19 +121,56 @@
 			}
 		});
 
+		// Trigger Filter
 		$('#btn_filter').on('click', function() {
 			table.ajax.reload();
 		});
 
 		$('#btn_reset').on('click', function() {
 			$('#filter_kegiatan').val('');
+			$('#filter_status_hubungi').val('');
 			$('#filter_tanggal_mulai').val('');
 			$('#filter_tanggal_selesai').val('');
 			table.ajax.reload();
 		});
 
-		$('#filter_kegiatan').on('change', function() {
+		$('#filter_kegiatan, #filter_status_hubungi').on('change', function() {
 			table.ajax.reload();
+		});
+
+		// Handler Klik Tombol Hubungi WA (Track & Open WhatsApp)
+		$(document).on('click', '.btn-hubungi-wa', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var idBukutamu = $btn.data('id');
+			var kegiatanId = $btn.data('kegiatan');
+			var nama = $btn.data('nama');
+			var wa = $btn.data('wa');
+			var url = $btn.data('url');
+
+			// Buka WhatsApp di tab baru
+			window.open(url, '_blank', 'noopener,noreferrer');
+
+			// Catat log ke database office
+			$.ajax({
+				url: '<?= base_url("broadcast_pesan/track_click") ?>',
+				type: 'POST',
+				dataType: 'JSON',
+				data: {
+					id_bukutamu: idBukutamu,
+					kegiatan_id: kegiatanId,
+					nama: nama,
+					nomorwa: wa,
+					csrf_token: csrfToken
+				},
+				success: function(resp) {
+					// Refresh tabel agar status & info waktu ter-update
+					table.ajax.reload(null, false);
+				},
+				error: function() {
+					table.ajax.reload(null, false);
+				}
+			});
 		});
 	});
 </script>
