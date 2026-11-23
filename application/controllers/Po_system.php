@@ -1411,6 +1411,11 @@ class Po_system extends CI_Controller
 
         $this->md_po_system->updatePo($id_po, $data_update);
 
+        if ($divisi === 'gudang') {
+            $this->load->model('md_tracking');
+            $this->md_tracking->syncFromPoMasukGudang($id_po);
+        }
+
         $this->md_po_system->addLog($id_po, $po->status, $po->status, "Pembaruan Dokumen " . strtoupper($divisi) . " (" . $detailDocText . ") oleh " . $nama_user, sessPenggunaId(), $nama_user);
 
         // Notifikasi WA update dokumen ke grup

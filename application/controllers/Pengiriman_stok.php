@@ -19,6 +19,7 @@ class Pengiriman_stok extends CI_Controller
         $this->load->model('md_ekspedisi');
         $this->load->model('md_riwayat_status_pengiriman_stok');
         $this->load->model('md_detail_barang_penerimaan_stok');
+        $this->load->model('md_tracking');
     }
 	
 	function id_navbar(){
@@ -304,6 +305,9 @@ class Pengiriman_stok extends CI_Controller
         if ($this->db->trans_status() === TRUE) {
             $this->db->trans_commit();
 
+            // Auto-sync langsung ke tabel Data Tracking Barang (TTB)
+            $this->md_tracking->syncPengirimanStokToTracking($dta['id_pengiriman_stok']);
+
             //add log
             $gudang_asal = $this->md_gudang->getById($data['id_gudang_asal']);
             $gudang_tujuan = $this->md_gudang->getById($data['id_gudang_tujuan']);
@@ -391,6 +395,7 @@ class Pengiriman_stok extends CI_Controller
                 ajaxReturnDie('error', 'Silahkan upload File Pendukung');
             }
             $this->md_pengiriman_stok->update(['id_pengiriman_stok' => $id], $data);
+            $this->md_tracking->syncPengirimanStokToTracking($id);
             ajaxReturnDie('success', 'File Berhasil di Upload', TRUE);
         }
         // if ($this->input->post('no_batch')) {
@@ -446,6 +451,9 @@ class Pengiriman_stok extends CI_Controller
         }
         if ($this->db->trans_status() === TRUE) {
             $this->db->trans_commit();
+
+            // Auto-sync perubahan No. Resi / Ekspedisi ke Data Tracking Barang (TTB)
+            $this->md_tracking->syncPengirimanStokToTracking($id_pengiriman_stok);
 
             //add log
             $no_batch = $this->md_pengiriman_stok->getByid($id_pengiriman_stok)[0]->no_pemindahan;
@@ -523,6 +531,9 @@ class Pengiriman_stok extends CI_Controller
         $this->md_detail_barang_pengiriman_stok->deleteByIdPengirimanStok($id_pengiriman_stok, $data);
         if ($this->db->trans_status() === TRUE) {
             $this->db->trans_commit();
+
+            // Auto-sync perubahan No. Resi / Ekspedisi ke Data Tracking Barang (TTB)
+            $this->md_tracking->syncPengirimanStokToTracking($id_pengiriman_stok);
 
             //add log
             $temp = $this->md_pengiriman_stok->getById($id_pengiriman_stok);

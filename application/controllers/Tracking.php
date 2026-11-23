@@ -39,6 +39,9 @@ class Tracking extends CI_Controller
     {
         grantAccessFor('all');
 
+        // Sinkronisasi otomatis dokumen SJBK, TTB, dan STTB aktif yang belum masuk ke tracking_barang
+        $this->md_tracking->autoBackfillUntrackedDocuments();
+
         $page_data['switch']          = $this->id_navbar();
         $page_data['list_gudang']   = $this->md_tracking->getAllGudang();
         $page_data['list_cust']     = $this->md_tracking->getAllCustomer();
@@ -1686,6 +1689,7 @@ class Tracking extends CI_Controller
         } elseif ($tracking_mode === 'barang') {
             // Will exclude kirim_dokumen in model query (handled in model)
             $_POST['exclude_kirim_dokumen'] = true;
+            $this->md_tracking->autoBackfillUntrackedDocuments();
         }
 
         $dt = $this->md_tracking->getAllTrackingNew();
@@ -1766,6 +1770,25 @@ class Tracking extends CI_Controller
                 $type_badge = '<span class="badge badge-primary badge-sm">Pengiriman</span>';
             }
 
+            // Tombol 1-Klik Lanjut Tahap Berikutnya
+            $nextStage = $this->md_tracking->getNextStageInfo($row->id_status);
+            if ($nextStage) {
+                $nextBtnClass = ((int)$nextStage['next_status'] === 5) ? 'btn-success' : 'btn-outline-primary';
+                $stat .= '<div class="mt-1">'
+                    . '<button type="button" class="btn btn-xs ' . $nextBtnClass . ' font-weight-bold shadow-sm btn-quick-next-track" '
+                    . 'style="font-size:10.5px; padding:2px 7px; border-radius:6px;" '
+                    . 'data-id="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '" '
+                    . 'data-nosj="' . htmlspecialchars($row->no_sj ?? '-', ENT_QUOTES, 'UTF-8') . '" '
+                    . 'data-cur="' . (int)$row->id_status . '" '
+                    . 'data-next="' . (int)$nextStage['next_status'] . '" '
+                    . 'data-next-label="' . htmlspecialchars($nextStage['label'], ENT_QUOTES, 'UTF-8') . '" '
+                    . 'data-penerima="' . htmlspecialchars($nama_penerima ?? '-', ENT_QUOTES, 'UTF-8') . '" '
+                    . 'data-resi="' . htmlspecialchars($row->no_resi ?? '-', ENT_QUOTES, 'UTF-8') . '" '
+                    . 'title="1-Klik Majukan ke Tahap: ' . htmlspecialchars($nextStage['label'], ENT_QUOTES, 'UTF-8') . '">'
+                    . '<i class="fas ' . $nextStage['icon'] . ' mr-1"></i>Lanjut: ' . htmlspecialchars($nextStage['btn_label'], ENT_QUOTES, 'UTF-8')
+                    . '</button></div>';
+            }
+
             // --- Kalkulasi Kecepatan Warehouse (PO CRO -> Cetak SJ -> Order Ekspedisi -> Packaging -> Loading/Hand-over) ---
             $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($row);
             $poInfoHtml = '';
@@ -1839,6 +1862,81 @@ class Tracking extends CI_Controller
         $dt['data'] = $data;
         echo json_encode($dt);
         die;
+    }
+
+    /**
+     * Endpoint 1-Klik Majukan Tahap Status Tracking Barang
+     */
+    public function quick_next_status()
+    {
+        grantAccessFor('all');
+
+        $id_enc        = $this->input->post('id_tracking', TRUE);
+        $id_tracking   = !empty($id_enc) ? (int)decrypt($id_enc) : 0;
+        $target_status = (int)$this->input->post('target_status', TRUE);
+
+        if ($id_tracking <= 0 || !in_array($target_status, [1, 7, 2, 3, 4, 5, 6], true)) {
+            ajaxReturnDie('error', 'Parameter tracking atau status tidak valid.');
+        }
+
+        $trRows = $this->md_tracking->getById($id_tracking);
+        if (empty($trRows)) {
+            ajaxReturnDie('error', 'Data tracking tidak ditemukan.');
+        }
+        $tr = $trRows[0];
+
+        $no_resi        = trim((string)$this->input->post('no_resi', TRUE));
+        $nama_penerima  = trim((string)$this->input->post('nama_penerima', TRUE));
+        $tgl_penerima   = trim((string)$this->input->post('tgl_penerima', TRUE));
+        $bukti_penerima = trim((string)$this->input->post('bukti_penerima', TRUE));
+        $keterangan     = trim((string)$this->input->post('keterangan', TRUE));
+
+        $statusLabels = [
+            1 => 'Proses Kirim / Order Ekspedisi',
+            7 => 'Packaging Barang',
+            2 => 'Manifest Berangkat / Loading Hand-over',
+            3 => 'Proses Sortir',
+            6 => 'Menunggu Konfirmasi',
+            4 => 'Pengantaran Kurir',
+            5 => 'Diterima',
+        ];
+        $statusLabel = $statusLabels[$target_status] ?? 'Tahap Berikutnya';
+
+        $opts = [
+            'force'          => true,
+            'keterangan'     => $keterangan !== '' ? $keterangan : ('Diperbarui ke tahap ' . $statusLabel),
+            'no_resi'        => $no_resi,
+            'nama_penerima'  => $nama_penerima !== '' ? $nama_penerima : ($tr->pic_penerima ?: 'Penerima'),
+            'tgl_penerima'   => $tgl_penerima !== '' ? date('Y-m-d', strtotime($tgl_penerima)) : date('Y-m-d'),
+            'bukti_penerima' => $bukti_penerima !== '' ? $bukti_penerima : ($tr->link_resi ?: '-'),
+        ];
+
+        $ok = $this->md_tracking->advanceTrackingStage($id_tracking, $target_status, $opts);
+        if (!$ok) {
+            ajaxReturnDie('error', 'Gagal memperbarui tahapan status tracking.');
+        }
+
+        // Sinkron balik ke pengeluaran_barang jika ada perubahan resi atau status diterima
+        if (!empty($tr->id_pengeluaran_barang) && $this->db->table_exists('pengeluaran_barang')) {
+            $pbUpd = [];
+            if ($no_resi !== '' && $no_resi !== '-') {
+                $pbUpd['resi'] = $no_resi;
+            }
+            if ($target_status === 5) {
+                $pbUpd['status_pengiriman'] = 'Diterima';
+            }
+            if (!empty($pbUpd)) {
+                $this->db->where('id_pengeluaran_barang', (int)$tr->id_pengeluaran_barang)->update('pengeluaran_barang', $pbUpd);
+            }
+        }
+
+        // Sinkron balik no_resi ke pengiriman_stok jika TTB
+        if (!empty($tr->id_pengiriman_stok) && $no_resi !== '' && $no_resi !== '-' && $this->db->table_exists('pengiriman_stok')) {
+            $this->db->where('id_pengiriman_stok', (int)$tr->id_pengiriman_stok)->update('pengiriman_stok', ['no_resi' => $no_resi]);
+        }
+
+        addlog('Quick Next Status Tracking', 'Memajukan status tracking ' . ($tr->no_sj ?? ('#' . $id_tracking)) . ' ke ' . $statusLabel);
+        ajaxReturnDie('success', 'Status ' . ($tr->no_sj ?? '') . ' berhasil dimajukan ke: ' . $statusLabel, 'reload_table');
     }
 
     public function notifWaAppGudangGroup($ulang, $detail)

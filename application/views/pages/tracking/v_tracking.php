@@ -183,9 +183,12 @@
 		<!-- Filter Tipe Tracking Segmented Control -->
 		<div class="tracking-filter-card mb-3">
 			<div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-				<div class="d-flex align-items-center mr-3 py-1">
+				<div class="d-flex align-items-center flex-wrap mr-3 py-1" style="gap: 8px;">
 					<span class="tracking-filter-label">
 						<i class="fas fa-filter"></i> Filter Tipe :
+					</span>
+					<span class="badge badge-light border text-success px-2 py-1" style="font-size: 11px;">
+						<i class="fas fa-sync-alt mr-1"></i>Auto-Sync Aktif (SJBK, TTB, STTB &amp; Dokumen Gudang PO)
 					</span>
 				</div>
 				<div class="btn-group btn-group-toggle tracking-filter-group" data-toggle="buttons">
@@ -1211,6 +1214,154 @@
 		 * ------------------------------------------*/
 		$('input[name="filter_type"]').change(function() {
 			table.ajax.reload();
+		});
+
+		/** -------------------------------------------
+		 * 1-KLIK LANJUT TAHAP STATUS TRACKING
+		 * ------------------------------------------*/
+		$(document).on('click', '.btn-quick-next-track', function() {
+			const $btn      = $(this);
+			const encId     = $btn.attr('data-id');
+			const noSj      = $btn.attr('data-nosj') || '-';
+			const nextSt    = parseInt($btn.attr('data-next'), 10) || 0;
+			const nextLabel = $btn.attr('data-next-label') || 'Tahap Berikutnya';
+			const penerima  = $btn.attr('data-penerima') || '';
+			const curResi   = $btn.attr('data-resi') || '-';
+			const todayIso  = new Date().toISOString().slice(0, 10);
+
+			if (!encId || !nextSt) return;
+
+			const sendQuickNext = function(extraData) {
+				const payload = Object.assign({
+					id_tracking: encId,
+					target_status: nextSt
+				}, extraData || {});
+
+				if (typeof token !== 'undefined') {
+					payload.csrf_token = token;
+				}
+
+				Swal.fire({
+					title: 'Memperbarui Status...',
+					text: 'Mohon tunggu sebentar',
+					allowOutsideClick: false,
+					showConfirmButton: false,
+					didOpen: function() {
+						Swal.showLoading();
+					}
+				});
+
+				$.ajax({
+					url: '<?= base_url('tracking/quick_next_status') ?>',
+					type: 'POST',
+					dataType: 'JSON',
+					data: payload,
+					success: function(resp) {
+						if (resp && resp.status === 'success') {
+							Swal.fire({
+								icon: 'success',
+								title: 'Berhasil!',
+								text: resp.msg || ('Status ' + noSj + ' diperbarui ke ' + nextLabel),
+								timer: 1400,
+								showConfirmButton: false
+							});
+							table.ajax.reload(null, false);
+						} else {
+							Swal.fire('Gagal!', (resp && resp.msg) ? resp.msg : 'Gagal memperbarui status tracking.', 'error');
+						}
+					},
+					error: function() {
+						Swal.fire('Error!', 'Terjadi kesalahan saat menghubungi server.', 'error');
+					}
+				});
+			};
+
+			if (nextSt === 5) {
+				Swal.fire({
+					title: 'Konfirmasi Barang Diterima',
+					html: `
+						<div class="text-left">
+							<p class="small text-muted mb-2">Dokumen: <b>${noSj}</b></p>
+							<div class="form-group mb-2">
+								<label class="small font-weight-bold mb-1">Nama Penerima <span class="text-danger">*</span></label>
+								<input type="text" id="swal-nama-penerima" class="form-control form-control-sm" value="${penerima.replace(/"/g, '&quot;')}">
+							</div>
+							<div class="form-group mb-2">
+								<label class="small font-weight-bold mb-1">Tanggal Diterima <span class="text-danger">*</span></label>
+								<input type="date" id="swal-tgl-penerima" class="form-control form-control-sm" value="${todayIso}">
+							</div>
+							<div class="form-group mb-0">
+								<label class="small font-weight-bold mb-1">Link Bukti / Keterangan Penerimaan</label>
+								<input type="text" id="swal-bukti-penerima" class="form-control form-control-sm" placeholder="Link Google Drive / catatan penerima">
+							</div>
+						</div>
+					`,
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonColor: '#16a34a',
+					cancelButtonColor: '#64748b',
+					confirmButtonText: 'Simpan Diterima',
+					cancelButtonText: 'Batal',
+					preConfirm: function() {
+						const nm = (document.getElementById('swal-nama-penerima').value || '').trim();
+						const tg = (document.getElementById('swal-tgl-penerima').value || '').trim();
+						const bk = (document.getElementById('swal-bukti-penerima').value || '').trim();
+						if (!nm || !tg) {
+							Swal.showValidationMessage('Nama Penerima dan Tanggal Diterima wajib diisi!');
+							return false;
+						}
+						return {
+							nama_penerima: nm,
+							tgl_penerima: tg,
+							bukti_penerima: bk || '-',
+							keterangan: 'Barang diterima oleh ' + nm
+						};
+					}
+				}).then(function(res) {
+					if ((res.value || res.isConfirmed) && res.value) {
+						sendQuickNext(res.value);
+					}
+				});
+			} else if (nextSt === 2 && (!curResi || curResi === '-')) {
+				Swal.fire({
+					title: 'Majukan ke Manifest Berangkat',
+					html: `
+						<div class="text-left">
+							<p class="small text-muted mb-2">Dokumen: <b>${noSj}</b></p>
+							<div class="form-group mb-0">
+								<label class="small font-weight-bold mb-1">Nomor Resi Ekspedisi (Opsional)</label>
+								<input type="text" id="swal-no-resi" class="form-control form-control-sm" placeholder="Masukkan No. Resi jika sudah ada...">
+							</div>
+						</div>
+					`,
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonColor: '#2563eb',
+					cancelButtonColor: '#64748b',
+					confirmButtonText: 'Ya, Lanjutkan',
+					cancelButtonText: 'Batal'
+				}).then(function(res) {
+					if (res.value || res.isConfirmed) {
+						const resiInput = document.getElementById('swal-no-resi') ? (document.getElementById('swal-no-resi').value || '').trim() : '';
+						sendQuickNext({ no_resi: resiInput });
+					}
+				});
+			} else {
+				Swal.fire({
+					title: 'Lanjut ke ' + nextLabel + '?',
+					text: 'Majukan status tracking untuk dokumen ' + noSj + '?',
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonColor: '#2563eb',
+					cancelButtonColor: '#64748b',
+					confirmButtonText: 'Ya, Lanjutkan',
+					cancelButtonText: 'Batal'
+				}).then(function(res) {
+					if (res.value || res.isConfirmed) {
+						sendQuickNext({});
+					}
+				});
+			}
 		});
 
 		/** -------------------------------------------

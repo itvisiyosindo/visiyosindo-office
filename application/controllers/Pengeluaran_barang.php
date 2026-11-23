@@ -407,6 +407,9 @@ class Pengeluaran_barang extends CI_Controller
             }
             $this->db->trans_commit();
 
+            // Auto-sync langsung ke tabel Data Tracking Barang (SJBK)
+            $this->md_tracking->syncPengeluaranBarangToTracking($dt['id_pengeluaran_barang']);
+
             //add log
             $aksi = 'Tambah Pengeluaran Barang';
             $ket = 'Menambahkan data Pengeluaran Barang - No pengiriman : ' . $data['no_pengiriman'];
@@ -773,6 +776,7 @@ class Pengeluaran_barang extends CI_Controller
                 ajaxReturnDie('error', 'Silahkan upload File Pendukung');
             }
             $this->md_pengeluaran_barang->update(['id_pengeluaran_barang' => $id], $data);
+            $this->md_tracking->syncPengeluaranBarangToTracking($id);
             ajaxReturnDie('success', 'File Berhasil di Upload', TRUE);
         } else {
             // if($this->input->post('no_batch')){
@@ -868,6 +872,9 @@ class Pengeluaran_barang extends CI_Controller
                     /////end cek///////
                 }
                 $this->db->trans_commit();
+
+                // Auto-sync perubahan Resi / Status Pengiriman ke Data Tracking Barang
+                $this->md_tracking->syncPengeluaranBarangToTracking($id_pengeluaran_barang);
 
                 //add log
                 $aksi = 'Edit Pengeluaran Barang';
@@ -1193,6 +1200,13 @@ class Pengeluaran_barang extends CI_Controller
             return;
         } else {
             $this->db->trans_commit();
+
+            // Auto-sync Waktu Order Ekspedisi & Status ke Data Tracking Barang
+            $this->md_tracking->syncPengeluaranBarangToTracking($id_pengeluaran_barang, [
+                'target_status'        => 1,
+                'overwrite_order_time' => true,
+                'keterangan'           => 'Otomatis Order Ekspedisi dari Konfirmasi Email TIKI',
+            ]);
 
             // 3. Catat Log
             $aksi = 'Konfirmasi Email TIKI';

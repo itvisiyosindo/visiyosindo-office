@@ -44,6 +44,7 @@ class Serah_terima_barang extends CI_Controller
         $this->load->model('md_serah_terima_barang');
         $this->load->model('md_surat_list');
         $this->load->model('md_prov_kota');
+        $this->load->model('md_tracking');
         $this->load->helper('email_helper');
         $this->load->helper('terbilang_helper');
         $this->load->helper('tanggal_helper');
@@ -154,6 +155,9 @@ class Serah_terima_barang extends CI_Controller
               
                       
 
+            // Auto-sync langsung ke tabel Data Tracking Barang (STTB)
+            $this->md_tracking->syncSerahTerimaToTracking($lastGcId);
+
             /** LOG */
             addLog('Pengajuan Serah Terima Barang', 'Permintaan Serah Terima Barang');
             ajaxReturnDie('success', 'Serah Terima Barang Berhasil Diajukan', TRUE);
@@ -252,6 +256,7 @@ class Serah_terima_barang extends CI_Controller
         
 
           $this->md_serah_terima_barang->update($id, $data);
+          $this->md_tracking->syncSerahTerimaToTracking($id);
 
           /** LOG */
           addLog('Update Data', 'Memperbarui data STB "' . $data['id_stb'] . '"');

@@ -21,6 +21,7 @@ class Penerimaan_stok extends CI_Controller
         $this->load->model('md_detail_barang_keluar');
         $this->load->model('md_riwayat_status_pengiriman_stok');
         $this->load->model('md_gudang');
+        $this->load->model('md_tracking');
     }
 	
 	function id_navbar(){
@@ -183,6 +184,9 @@ class Penerimaan_stok extends CI_Controller
         if ($this->db->trans_status() === TRUE) {
             $this->db->trans_commit();
 
+            // Auto-sync status penerimaan stok gudang tujuan ke Data Tracking Barang (TTB)
+            $this->md_tracking->syncPengirimanStokToTracking($dt['id_pengiriman_stok']);
+
             //add log
             $gudang_asal = $this->md_gudang->getById($dt2['id_gudang_asal']);
             $gudang_tujuan = $this->md_gudang->getById($dt2['id_gudang']);
@@ -318,6 +322,9 @@ class Penerimaan_stok extends CI_Controller
         if ($this->db->trans_status() === TRUE) {
             $this->db->trans_commit();
 
+            // Auto-sync status penerimaan stok gudang tujuan ke Data Tracking Barang (TTB)
+            $this->md_tracking->syncPengirimanStokToTracking($id_pengiriman_stok);
+
             //add log
             $temp1 = $this->md_penerimaan_stok->getById($id_penerimaan_stok);
             $aksi = 'Edit Penerimaan Stok';
@@ -419,6 +426,9 @@ class Penerimaan_stok extends CI_Controller
 
         if ($this->db->trans_status() === TRUE) {
             $this->db->trans_commit();
+
+            // Auto-sync status penerimaan stok gudang tujuan ke Data Tracking Barang (TTB)
+            $this->md_tracking->syncPengirimanStokToTracking($id_pengiriman_stok);
 
             //add log
             $temp = $this->md_penerimaan_stok->getById($id);
