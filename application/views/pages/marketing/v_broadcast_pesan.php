@@ -16,8 +16,8 @@
 				<div class="row mb-3 align-items-end">
 					<div class="col-md-4 mb-2">
 						<label class="font-weight-bold">Filter Kegiatan / Event:</label>
-						<select id="filter_kegiatan" class="form-control select2">
-							<option value="0">-- Semua Kegiatan / Event --</option>
+						<select id="filter_kegiatan" class="form-control">
+							<option value="">-- Semua Kegiatan / Event --</option>
 							<?php if (!empty($kegiatan_list)): ?>
 								<?php foreach ($kegiatan_list as $keg): ?>
 									<option value="<?= $keg->id ?>"><?= htmlspecialchars($keg->nama) ?></option>
@@ -45,7 +45,7 @@
 
 				<div class="alert alert-info py-2 mb-3">
 					<i class="fas fa-info-circle mr-1"></i>
-					Daftar nomor kontak diambil dari <strong>Buku Tamu</strong>. Klik tombol <strong>Hubungi WA</strong> pada baris kontak untuk membuka chat WhatsApp dan mengirim pesan secara manual.
+					Daftar nomor kontak diambil dari <strong>Buku Tamu</strong>. Klik tombol <strong>Hubungi WA</strong> pada baris kontak untuk membuka WhatsApp dan mengirim pesan secara manual.
 				</div>
 
 				<!-- Table Section -->
@@ -73,13 +73,14 @@
 </div>
 
 <script>
-	$(document).ready(function() {
-		var token = $('input[name="token"]').val() || $('meta[name="csrf-token"]').attr('content');
+	document.addEventListener('DOMContentLoaded', function() {
+		var csrfToken = (typeof token !== 'undefined') ? token : ($('input[name="token"]').val() || '');
 
 		var table = $('#table_broadcast').DataTable({
 			processing: true,
 			serverSide: true,
-			responsive: true,
+			responsive: false,
+			scrollX: true,
 			order: [[6, 'desc']],
 			ajax: {
 				url: '<?= base_url("broadcast_pesan/pagination") ?>',
@@ -88,7 +89,7 @@
 					d.kegiatan_id = $('#filter_kegiatan').val();
 					d.tanggal_mulai = $('#filter_tanggal_mulai').val();
 					d.tanggal_selesai = $('#filter_tanggal_selesai').val();
-					d.csrf_token = token;
+					d.csrf_token = csrfToken;
 				}
 			},
 			columnDefs: [
@@ -115,7 +116,7 @@
 		});
 
 		$('#btn_reset').on('click', function() {
-			$('#filter_kegiatan').val('0').trigger('change');
+			$('#filter_kegiatan').val('');
 			$('#filter_tanggal_mulai').val('');
 			$('#filter_tanggal_selesai').val('');
 			table.ajax.reload();

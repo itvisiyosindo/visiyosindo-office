@@ -47,8 +47,6 @@ class Broadcast_pesan extends CI_Controller
 
     public function pagination()
     {
-        grantAccessFor('all');
-
         $kegiatanId = (int) $this->input->post('kegiatan_id');
         $tanggalMulai = $this->normalizeTanggalFilter($this->input->post('tanggal_mulai', true));
         $tanggalSelesai = $this->normalizeTanggalFilter($this->input->post('tanggal_selesai', true));
@@ -63,51 +61,54 @@ class Broadcast_pesan extends CI_Controller
         $data  = array();
         $index = ((int) $this->input->post('start')) + 1;
 
-        foreach ($dt['data'] as $row) {
-            $rawWa = (string)$row->nomorwa;
-            $isImportDummy = (strpos($rawWa, 'IMPORT_') === 0);
-            $cleanDigits = preg_replace('/\D+/', '', $rawWa);
+        if (!empty($dt['data'])) {
+            foreach ($dt['data'] as $row) {
+                $rawWa = (string)$row->nomorwa;
+                $isImportDummy = (strpos($rawWa, 'IMPORT_') === 0);
+                $cleanDigits = preg_replace('/\D+/', '', $rawWa);
 
-            $waTarget = '';
-            if (!$isImportDummy && !empty($cleanDigits)) {
-                if (strpos($cleanDigits, '62') === 0) {
-                    $waTarget = $cleanDigits;
-                } elseif (strpos($cleanDigits, '0') === 0) {
-                    $waTarget = '62' . substr($cleanDigits, 1);
-                } elseif (strpos($cleanDigits, '8') === 0) {
-                    $waTarget = '62' . $cleanDigits;
-                } else {
-                    $waTarget = $cleanDigits;
+                $waTarget = '';
+                if (!$isImportDummy && !empty($cleanDigits)) {
+                    if (strpos($cleanDigits, '62') === 0) {
+                        $waTarget = $cleanDigits;
+                    } elseif (strpos($cleanDigits, '0') === 0) {
+                        $waTarget = '62' . substr($cleanDigits, 1);
+                    } elseif (strpos($cleanDigits, '8') === 0) {
+                        $waTarget = '62' . $cleanDigits;
+                    } else {
+                        $waTarget = $cleanDigits;
+                    }
                 }
+
+                $namaEsc = htmlspecialchars($row->nama, ENT_QUOTES, 'UTF-8');
+                $noWaDisplay = $isImportDummy ? '-' : htmlspecialchars($rawWa, ENT_QUOTES, 'UTF-8');
+
+                if (!empty($waTarget) && strlen($waTarget) >= 9) {
+                    $waUrl = 'https://wa.me/' . $waTarget;
+                    $btnAksi = '<a href="' . $waUrl . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-success text-nowrap" title="Chat WhatsApp Manual">'
+                             . '<i class="fab fa-whatsapp mr-1"></i> Hubungi WA'
+                             . '</a>';
+                } else {
+                    $btnAksi = '<span class="badge badge-secondary py-1 px-2 text-nowrap"><i class="fas fa-times-circle mr-1"></i> Tidak Valid</span>';
+                }
+
+                $th = array();
+                $th[] = $index;
+                $th[] = '<strong>' . $namaEsc . '</strong>';
+                $th[] = htmlspecialchars($row->instansi ?: '-', ENT_QUOTES, 'UTF-8');
+                $th[] = htmlspecialchars($row->jabatan ?: '-', ENT_QUOTES, 'UTF-8');
+                $th[] = '<span class="badge badge-info">' . htmlspecialchars($row->nama_kegiatan ?: 'Umum', ENT_QUOTES, 'UTF-8') . '</span>';
+                $th[] = '<span class="text-nowrap"><i class="fab fa-whatsapp text-success mr-1"></i> ' . $noWaDisplay . '</span>';
+                $th[] = !empty($row->created_at) ? date('d-M-Y | H:i', strtotime($row->created_at)) : '-';
+                $th[] = $btnAksi;
+
+                $data[] = $th;
+                $index++;
             }
-
-            $namaEsc = htmlspecialchars($row->nama, ENT_QUOTES, 'UTF-8');
-            $noWaDisplay = $isImportDummy ? '-' : htmlspecialchars($rawWa, ENT_QUOTES, 'UTF-8');
-
-            if (!empty($waTarget) && strlen($waTarget) >= 9) {
-                $waUrl = 'https://wa.me/' . $waTarget;
-                $btnAksi = '<a href="' . $waUrl . '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success shadow-sm" title="Chat WhatsApp Manual">'
-                         . '<i class="fab fa-whatsapp mr-1"></i> Hubungi WA'
-                         . '</a>';
-            } else {
-                $btnAksi = '<span class="badge badge-secondary py-1 px-2"><i class="fas fa-times-circle mr-1"></i> No WA Tidak Valid</span>';
-            }
-
-            $th = array();
-            $th[] = $index;
-            $th[] = '<strong>' . $namaEsc . '</strong>';
-            $th[] = htmlspecialchars($row->instansi ?: '-', ENT_QUOTES, 'UTF-8');
-            $th[] = htmlspecialchars($row->jabatan ?: '-', ENT_QUOTES, 'UTF-8');
-            $th[] = '<span class="badge badge-info">' . htmlspecialchars($row->nama_kegiatan ?: 'Umum', ENT_QUOTES, 'UTF-8') . '</span>';
-            $th[] = '<span class="text-nowrap"><i class="fab fa-whatsapp text-success mr-1"></i> ' . $noWaDisplay . '</span>';
-            $th[] = !empty($row->created_at) ? date('d-m-Y H:i', strtotime($row->created_at)) : '-';
-            $th[] = $btnAksi;
-
-            $data[] = $th;
-            $index++;
         }
 
         $dt['data'] = $data;
         echo json_encode($dt);
+        die;
     }
 }
