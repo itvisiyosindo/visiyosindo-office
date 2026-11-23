@@ -40,6 +40,13 @@
 						</a>
 					</li>
 
+					<li class="<?= ($page_name == 'marketing/v_broadcast_pesan') ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('broadcast_pesan') ?>">
+							<i class="fas fa-bullhorn text-warning" aria-hidden="true"></i>
+							<span>Broadcast Pesan</span>
+						</a>
+					</li>
+
 					<?php if (isAdmin() || isHrd() || isTeamMarketing() || isCRO() || isGa() || sessPenggunaId() == '755') { ?>
 						<li class="nav-parent <?= in_array($page_name, ['marketing/v_calonpelanggan', 'marketing/v_pelangganan']) ? 'nav-active nav-expanded' : ''; ?>">
 							<a class="nav-link" href="#">
