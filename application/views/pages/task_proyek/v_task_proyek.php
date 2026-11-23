@@ -4719,9 +4719,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 var canReview = !isPenerima && (res.can_review !== undefined ? !!res.can_review : ((parseInt(t.id_pemberi, 10) === myId) || !!res.is_admin_reviewer));
 
                 var stInt = parseInt(t.status_task, 10) || 0;
-                if (stInt === 1 && (parseInt(t.progres, 10) >= 100 || !!t.tgl_submit)) {
-                    stInt = 2;
-                }
                 var statusBadgeHtml = '';
                 if (stInt === 5) {
                     statusBadgeHtml = '<span class="tp-status-badge tp-st-5" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;"><i class="fas fa-hourglass-start"></i> Menunggu ACC HRD</span>';
