@@ -3534,7 +3534,7 @@ function waPoProgressGroup($data)
  * Kirim notifikasi WhatsApp personal langsung ke PIC yang bertugas melakukan TTD / Approval PO
  * Alur bergiliran:
  * 1. Baru diajukan / Revisi selesai -> CRO
- * 2. CRO Sesuai -> Accounting (Mulia / Staff Accounting: 081378941122)
+ * 2. CRO Sesuai -> Accounting (Mulia / Staff Accounting: 0895629410710)
  * 3. Accounting Sesuai -> Pajak (Staff Tax)
  * 4. Pajak Sesuai -> General Manager (GM)
  * 5. Revisi / Ditolak / Selesai Disetujui GM -> Notifikasi personal ke Sales / Pembuat PO
@@ -3581,10 +3581,10 @@ function waPoSendApproverPersonal($data, $po = null)
 	// 3. Tahap CRO Selesai -> Target: Accounting (Mulia / Staff Accounting)
 	elseif ($stage === 'cro' && $action_status === 'sesuai') {
 		$nextRole = 'Verifikasi Accounting';
-		// Nomor khusus Mulia Accounting: 081378941122
+		// Nomor khusus Mulia Accounting: 0895629410710
 		$targetUsers[] = [
 			'nama'  => 'Mulia (Staff Accounting)',
-			'phone' => '6281378941122',
+			'phone' => '62895629410710',
 			'id'    => 777
 		];
 	}
@@ -3801,7 +3801,7 @@ function _getPenggunaContactsByRole($role, $defaultUserId = null)
  */
 function sendWa($dataSend)
 {
-	// 0. Alihkan seluruh notifikasi untuk Mulya / Mulia / Staff Accounting ke nomor: 6281378941122 (+62 813-7894-1122)
+	// 0. Alihkan seluruh notifikasi untuk Mulya / Mulia / Staff Accounting ke nomor: 62895629410710 (+62 895-6294-10710)
 	// Untuk karyawan lainnya, notifikasi selalu dikirim ke nomor HP pribadi mereka
 	if (!empty($dataSend['penerima'])) {
 		$cleanPenerima = preg_replace('/[^0-9]/', '', (string)$dataSend['penerima']);
@@ -3812,11 +3812,11 @@ function sendWa($dataSend)
 		}
 
 		if (in_array($cleanPenerima, ['6285668033598', '085668033598', '85668033598', '6281378941122', '081378941122', '81378941122', '62895629410710', '0895629410710', '895629410710'])) {
-			$dataSend['penerima'] = '6281378941122';
+			$dataSend['penerima'] = '62895629410710';
 		} elseif (isset($dataSend['idPenerima1']) && in_array($dataSend['idPenerima1'], ['777', 777, '714', 714])) {
-			$dataSend['penerima'] = '6281378941122';
+			$dataSend['penerima'] = '62895629410710';
 		} elseif (isset($dataSend['idPenerima2']) && in_array($dataSend['idPenerima2'], ['777', 777, '714', 714])) {
-			$dataSend['penerima'] = '6281378941122';
+			$dataSend['penerima'] = '62895629410710';
 		} elseif (function_exists('get_instance')) {
 			$ci = &get_instance();
 			if (isset($ci->db)) {
@@ -3841,7 +3841,7 @@ function sendWa($dataSend)
 					->row();
 
 				if (!empty($checkKantor)) {
-					$dataSend['penerima'] = '6281378941122';
+					$dataSend['penerima'] = '62895629410710';
 				}
 			}
 		}
