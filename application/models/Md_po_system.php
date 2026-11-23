@@ -58,7 +58,7 @@ class Md_po_system extends CI_Model
     /**
      * Ambil semua PO masuk dengan filter status, status proses, sales/marketing, dan tanggal
      */
-    public function getAllPo($filter_status = null, $filter_status_proses = null, $filter_sales = null, $tgl_awal = null, $tgl_akhir = null)
+    public function getAllPo($filter_status = null, $filter_status_proses = null, $filter_sales = null, $tgl_awal = null, $tgl_akhir = null, $bulan = null, $tahun = null)
     {
         $hasAfiliasiMember = $this->db->table_exists('va_member') && $this->db->field_exists('id_member_afiliasi', 'po_masuk');
         $select = '
@@ -114,6 +114,14 @@ class Md_po_system extends CI_Model
         if (!empty($tgl_awal) && !empty($tgl_akhir)) {
             $this->db->where('p.tanggal_po >=', $tgl_awal);
             $this->db->where('p.tanggal_po <=', $tgl_akhir);
+        }
+
+        if (!empty($bulan)) {
+            $this->db->where('MONTH(p.tanggal_po)', (int)$bulan);
+        }
+
+        if (!empty($tahun)) {
+            $this->db->where('YEAR(p.tanggal_po)', (int)$tahun);
         }
 
         $this->db->order_by('p.id_po', 'DESC');
@@ -288,9 +296,9 @@ class Md_po_system extends CI_Model
     /**
      * Ringkasan statistik status PO
      */
-    public function getStatistik()
+    public function getStatistik($bulan = null, $tahun = null, $sales = null)
     {
-        $sql = "SELECT 
+        $this->db->select("
             COUNT(*) as total,
             SUM(CASE WHEN status = 'menunggu_kroscek' THEN 1 ELSE 0 END) as total_menunggu,
             SUM(CASE WHEN status = 'sesuai' THEN 1 ELSE 0 END) as total_sesuai,
@@ -300,9 +308,49 @@ class Md_po_system extends CI_Model
             SUM(CASE WHEN status_proses = 'PROSES SEBAGIAN' THEN 1 ELSE 0 END) as total_sebagian,
             SUM(CASE WHEN status_proses = 'SUDAH DI PROSES' THEN 1 ELSE 0 END) as total_sudah,
             SUM(CASE WHEN status_proses = 'HOLD / INDENT' THEN 1 ELSE 0 END) as total_hold
-        FROM po_masuk 
-        WHERE deleted = 0";
-        return $this->db->query($sql)->row();
+        ", false);
+        $this->db->from('po_masuk');
+        $this->db->where('deleted', 0);
+        if (!empty($bulan)) {
+            $this->db->where('MONTH(tanggal_po)', (int)$bulan);
+        }
+        if (!empty($tahun)) {
+            $this->db->where('YEAR(tanggal_po)', (int)$tahun);
+        }
+        if (!empty($sales)) {
+            $this->db->group_start();
+            $this->db->where('id_sales', (int)$sales);
+            $this->db->or_where('created_by', (int)$sales);
+            $this->db->group_end();
+        }
+        return $this->db->get()->row();
+    }
+
+    /**
+     * Ambil daftar tahun unik dari PO Masuk untuk dropdown filter
+     */
+    public function getTahunPoList()
+    {
+        $rows = $this->db->select('DISTINCT YEAR(tanggal_po) as tahun', false)
+            ->from('po_masuk')
+            ->where('deleted', 0)
+            ->where('tanggal_po IS NOT NULL', null, false)
+            ->where('tanggal_po !=', '0000-00-00')
+            ->order_by('tahun', 'DESC')
+            ->get()
+            ->result();
+        $years = [];
+        if (!empty($rows)) {
+            foreach ($rows as $r) {
+                if (!empty($r->tahun)) $years[] = (int)$r->tahun;
+            }
+        }
+        $curYear = (int)date('Y');
+        if (!in_array($curYear, $years)) {
+            $years[] = $curYear;
+        }
+        rsort($years);
+        return $years;
     }
 
     /**

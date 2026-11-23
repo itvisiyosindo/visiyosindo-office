@@ -290,15 +290,24 @@
 
 <?php
 // Helper query URL generator
-$makeUrl = function($newStatus = null, $newProses = null, $newSales = null) use ($cur_status, $cur_status_proses, $cur_sales, $cur_tgl_awal, $cur_tgl_akhir) {
+$cur_bulan = $cur_bulan ?? null;
+$cur_tahun = $cur_tahun ?? null;
+$from_nav  = $from_nav ?? null;
+
+$makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $newBulan = null, $newTahun = null) use ($cur_status, $cur_status_proses, $cur_sales, $cur_tgl_awal, $cur_tgl_akhir, $cur_bulan, $cur_tahun, $from_nav) {
     $params = [];
     $s = ($newStatus !== null) ? $newStatus : $cur_status;
     $p = ($newProses !== null) ? $newProses : $cur_status_proses;
     $m = ($newSales !== null) ? $newSales : $cur_sales;
+    $b = ($newBulan !== null) ? $newBulan : $cur_bulan;
+    $y = ($newTahun !== null) ? $newTahun : $cur_tahun;
     
+    if (!empty($from_nav)) $params['from'] = $from_nav;
     if (!empty($s)) $params['status'] = $s;
     if (!empty($p)) $params['status_proses'] = $p;
     if (!empty($m)) $params['sales'] = $m;
+    if (!empty($b)) $params['bulan'] = $b;
+    if (!empty($y)) $params['tahun'] = $y;
     if (!empty($cur_tgl_awal)) $params['tgl_awal'] = $cur_tgl_awal;
     if (!empty($cur_tgl_akhir)) $params['tgl_akhir'] = $cur_tgl_akhir;
 
@@ -490,13 +499,81 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null) use 
                             </button>
                         </div>
                     </div>
+
+                    <!-- Filter Bar Periode (Bulan & Tahun) -->
+                    <div class="d-flex align-items-center flex-wrap mt-2 pt-2 border-top">
+                        <span class="small font-weight-bold text-muted mr-2" style="min-width: 95px;"><i class="fas fa-calendar-alt mr-1 text-info"></i> Periode:</span>
+                        <div class="d-inline-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <!-- Dropdown Bulan -->
+                            <select id="select_filter_bulan" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; min-width: 145px; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff;">
+                                <option value="">-- Semua Bulan --</option>
+                                <?php
+                                $namaBulanList = [
+                                    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                                    '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                                    '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                                ];
+                                foreach ($namaBulanList as $mCode => $mName):
+                                    $isSelectedBulan = (!empty($cur_bulan) && (int)$cur_bulan === (int)$mCode);
+                                ?>
+                                    <option value="<?= $mCode ?>" <?= $isSelectedBulan ? 'selected' : '' ?>><?= $mName ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <!-- Dropdown Tahun -->
+                            <select id="select_filter_tahun" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; min-width: 125px; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff;">
+                                <option value="">-- Semua Tahun --</option>
+                                <?php if (!empty($tahun_list)): ?>
+                                    <?php foreach ($tahun_list as $yr): ?>
+                                        <?php $isSelectedTahun = (!empty($cur_tahun) && (int)$cur_tahun === (int)$yr); ?>
+                                        <option value="<?= $yr ?>" <?= $isSelectedTahun ? 'selected' : '' ?>><?= $yr ?></option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="<?= date('Y') ?>" <?= (!empty($cur_tahun) && (int)$cur_tahun === (int)date('Y')) ? 'selected' : '' ?>><?= date('Y') ?></option>
+                                <?php endif; ?>
+                            </select>
+
+                            <!-- Tombol Terapkan Filter Periode -->
+                            <button type="button" id="btnApplyPeriode" class="btn btn-xs btn-primary font-weight-bold shadow-sm" style="border-radius: 20px; padding: 4px 12px; height: 32px;" title="Terapkan filter periode">
+                                <i class="fas fa-filter mr-1"></i> Filter
+                            </button>
+
+                            <!-- Pill Cepat Bulan Ini -->
+                            <?php
+                            $isBulanIni = (!empty($cur_bulan) && (int)$cur_bulan === (int)date('m') && !empty($cur_tahun) && (int)$cur_tahun === (int)date('Y'));
+                            ?>
+                            <a href="<?= $makeUrl(null, null, null, date('m'), date('Y')) ?>" class="filter-pill <?= $isBulanIni ? 'active' : '' ?>" style="font-size: 0.78rem; padding: 4px 10px;" title="Tampilkan PO bulan <?= date('F Y') ?>">
+                                <i class="fas fa-calendar-check mr-1 text-success"></i> Bulan Ini (<?= date('M Y') ?>)
+                            </a>
+
+                            <?php if (!empty($cur_bulan) || !empty($cur_tahun)): ?>
+                                <?php
+                                $labelPeriode = '';
+                                if (!empty($cur_bulan) && isset($namaBulanList[$cur_bulan])) {
+                                    $labelPeriode .= $namaBulanList[$cur_bulan] . ' ';
+                                } elseif (!empty($cur_bulan)) {
+                                    $labelPeriode .= 'Bulan ' . (int)$cur_bulan . ' ';
+                                }
+                                if (!empty($cur_tahun)) {
+                                    $labelPeriode .= $cur_tahun;
+                                }
+                                ?>
+                                <span class="badge badge-info px-2 py-1 font-weight-bold" style="border-radius: 20px; font-size: 0.78rem;">
+                                    <i class="fas fa-check-circle mr-1"></i> <?= trim($labelPeriode) ?>
+                                </span>
+                                <a href="<?= $makeUrl(null, null, null, '', '') ?>" class="btn btn-xs btn-outline-danger font-weight-bold" style="border-radius: 20px; padding: 4px 10px;" title="Reset filter periode">
+                                    <i class="fas fa-times mr-1"></i> Reset
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-3 mt-xl-0 d-flex align-items-center">
                     <button type="button" class="btn btn-outline-secondary font-weight-bold px-3 py-2 mr-2 shadow-sm" data-toggle="modal" data-target="#modalCetakLaporan" style="border-radius: 8px;">
                         <i class="fas fa-print mr-1"></i> Cetak Laporan
                     </button>
-                    <a href="<?= base_url('po_system/tambah') ?>" class="btn btn-primary shadow-sm font-weight-bold px-3 py-2" style="border-radius: 8px;">
+                    <a href="<?= base_url('po_system/tambah' . (!empty($from_nav) ? '?from=' . urlencode($from_nav) : '')) ?>" class="btn btn-primary shadow-sm font-weight-bold px-3 py-2" style="border-radius: 8px;">
                         <i class="fas fa-plus-circle mr-1"></i> Input PO Baru
                     </a>
                 </div>
@@ -704,6 +781,9 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null) use 
                 </button>
             </div>
             <form action="<?= base_url('po_system/cetak') ?>" method="GET" target="_blank">
+                <?php if (!empty($from_nav)): ?>
+                    <input type="hidden" name="from" value="<?= htmlspecialchars($from_nav) ?>">
+                <?php endif; ?>
                 <div class="modal-body p-4">
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-dark small">Periode Tanggal PO</label>
@@ -773,6 +853,29 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null) use 
             if (url) {
                 window.location.href = url;
             }
+        });
+
+        // Filter Periode (Bulan & Tahun)
+        function applyPeriodeFilter() {
+            var b = $('#select_filter_bulan').val();
+            var y = $('#select_filter_tahun').val();
+            var currentUrl = new URL(window.location.href);
+            if (b) {
+                currentUrl.searchParams.set('bulan', b);
+            } else {
+                currentUrl.searchParams.delete('bulan');
+            }
+            if (y) {
+                currentUrl.searchParams.set('tahun', y);
+            } else {
+                currentUrl.searchParams.delete('tahun');
+            }
+            window.location.href = currentUrl.toString();
+        }
+
+        $('#btnApplyPeriode').on('click', applyPeriodeFilter);
+        $('#select_filter_bulan, #select_filter_tahun').on('change', function() {
+            applyPeriodeFilter();
         });
 
         if ($.fn.DataTable && $('#table-po-masuk tbody tr').length > 0 && !$('#table-po-masuk tbody td').hasClass('py-5')) {

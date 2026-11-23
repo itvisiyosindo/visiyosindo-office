@@ -196,13 +196,37 @@ class Po_system extends CI_Controller
         $tgl_awal     = $this->input->get('tgl_awal');
         $tgl_akhir    = $this->input->get('tgl_akhir');
 
-        $page_data['po_list']           = $this->md_po_system->getAllPo($status_filter, $status_proses_filter, $sales_filter, $tgl_awal, $tgl_akhir);
-        $page_data['stats']             = $this->md_po_system->getStatistik();
+        $bulan_filter = $this->input->get('bulan');
+        if (!empty($bulan_filter)) {
+            $bulan_filter = str_pad((string)intval($bulan_filter), 2, '0', STR_PAD_LEFT);
+            if ((int)$bulan_filter < 1 || (int)$bulan_filter > 12) {
+                $bulan_filter = null;
+            }
+        } else {
+            $bulan_filter = null;
+        }
+
+        $tahun_filter = $this->input->get('tahun');
+        if (!empty($tahun_filter)) {
+            $tahun_filter = intval($tahun_filter);
+            if ($tahun_filter < 2000 || $tahun_filter > 2100) {
+                $tahun_filter = null;
+            }
+        } else {
+            $tahun_filter = null;
+        }
+
+        $page_data['po_list']           = $this->md_po_system->getAllPo($status_filter, $status_proses_filter, $sales_filter, $tgl_awal, $tgl_akhir, $bulan_filter, $tahun_filter);
+        $page_data['stats']             = $this->md_po_system->getStatistik($bulan_filter, $tahun_filter, $sales_filter);
         $page_data['cur_status']        = $status_filter;
         $page_data['cur_status_proses'] = $status_proses_filter;
         $page_data['cur_sales']         = $sales_filter;
         $page_data['cur_tgl_awal']      = $tgl_awal;
         $page_data['cur_tgl_akhir']     = $tgl_akhir;
+        $page_data['cur_bulan']         = $bulan_filter;
+        $page_data['cur_tahun']         = $tahun_filter;
+        $page_data['from_nav']          = $this->input->get('from') ?: $this->session->userdata('po_from_nav');
+        $page_data['tahun_list']        = $this->md_po_system->getTahunPoList();
 
         // Ambil list sales untuk filter/cetak
         $page_data['sales_list'] = $this->getPengajuList();
@@ -1576,10 +1600,16 @@ class Po_system extends CI_Controller
         $sales_filter         = $this->input->get('sales') ? intval($this->input->get('sales')) : null;
         $tgl_awal             = $this->input->get('tgl_awal');
         $tgl_akhir            = $this->input->get('tgl_akhir');
+        $bulan_filter         = $this->input->get('bulan');
+        $tahun_filter         = $this->input->get('tahun');
+        if (!empty($bulan_filter)) $bulan_filter = str_pad((string)intval($bulan_filter), 2, '0', STR_PAD_LEFT);
+        if (!empty($tahun_filter)) $tahun_filter = intval($tahun_filter);
 
-        $data['po_list']       = $this->md_po_system->getAllPo($status_filter, $status_proses_filter, $sales_filter, $tgl_awal, $tgl_akhir);
+        $data['po_list']       = $this->md_po_system->getAllPo($status_filter, $status_proses_filter, $sales_filter, $tgl_awal, $tgl_akhir, $bulan_filter, $tahun_filter);
         $data['tgl_awal']      = $tgl_awal;
         $data['tgl_akhir']     = $tgl_akhir;
+        $data['cur_bulan']     = $bulan_filter;
+        $data['cur_tahun']     = $tahun_filter;
         $data['status_proses'] = $status_proses_filter;
         $data['status_kroscek']= $status_filter;
 

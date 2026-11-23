@@ -80,7 +80,21 @@
         <table style="border: none; margin: 0;">
             <tr style="border: none;">
                 <td style="border: none; width: 50%; padding: 2px;">
-                    <b>Periode:</b> <?= (!empty($tgl_awal) && !empty($tgl_akhir)) ? date('d M Y', strtotime($tgl_awal)) . ' s/d ' . date('d M Y', strtotime($tgl_akhir)) : 'Semua Periode' ?>
+                    <?php
+                    $periodeText = 'Semua Periode';
+                    if (!empty($tgl_awal) && !empty($tgl_akhir)) {
+                        $periodeText = date('d M Y', strtotime($tgl_awal)) . ' s/d ' . date('d M Y', strtotime($tgl_akhir));
+                    } elseif (!empty($cur_bulan) || !empty($cur_tahun)) {
+                        $bulanMap = [
+                            '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                            '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                            '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                        ];
+                        $bText = (!empty($cur_bulan) && isset($bulanMap[$cur_bulan])) ? $bulanMap[$cur_bulan] : (!empty($cur_bulan) ? 'Bulan ' . (int)$cur_bulan : '');
+                        $periodeText = trim($bText . ' ' . ($cur_tahun ?? ''));
+                    }
+                    ?>
+                    <b>Periode:</b> <?= htmlspecialchars($periodeText) ?>
                 </td>
                 <td style="border: none; width: 50%; padding: 2px;">
                     <b>Status Proses:</b> <?= !empty($status_proses) ? htmlspecialchars($status_proses) : 'Semua Status Proses' ?>
