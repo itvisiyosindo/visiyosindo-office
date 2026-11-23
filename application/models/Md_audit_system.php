@@ -1460,9 +1460,6 @@ class Md_audit_system extends CI_Model
         // Ambil catatan audit kinerja pada tahun tersebut
         $auditRecords = $this->loadAuditKinerjaRecords($year);
 
-        // Ambil data kepatuhan laporan mingguan seluruh pegawai sekaligus (bulk cache) untuk efisiensi
-        $allCompliance = $this->getBulkLaporanMingguanCompliance($year);
-
         // Ambil pegawai aktif non-sistem
         $query = @$this->db->select('pg.pengguna_id, pg.nama, pg.jabatan, pg.email, d.nama as nama_divisi')
             ->from('pengguna pg')
@@ -1539,8 +1536,7 @@ class Md_audit_system extends CI_Model
                     'pending_audit'       => $pendingCount,
                     'status_audit_label'  => $statusAuditLabel,
                     'status_audit_badge'  => $statusAuditBadge,
-                    'status_audit_code'   => $statusAuditCode,
-                    'laporan_compliance'  => isset($allCompliance[(int)$row['pengguna_id']]) ? $allCompliance[(int)$row['pengguna_id']] : $this->getEmptyComplianceData($year)
+                    'status_audit_code'   => $statusAuditCode
                 ];
             }
         }

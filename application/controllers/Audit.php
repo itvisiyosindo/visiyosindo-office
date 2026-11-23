@@ -122,13 +122,6 @@ class Audit extends CI_Controller
         $page_data['current_user_id']       = sessPenggunaId();
         $page_data['user_jabatan']          = $user_jabatan;
 
-        // Ambil detail breakdown kepatuhan laporan mingguan jika pegawai dipilih
-        $laporanComplianceDetail = null;
-        if (!empty($selectedPegawai)) {
-            $laporanComplianceDetail = $this->md_audit_system->getLaporanMingguanCompliance($year, $selectedPegawai['pengguna_id']);
-        }
-        $page_data['laporan_compliance_detail'] = $laporanComplianceDetail;
-
         $this->load->view('index', $page_data);
     }
 
@@ -346,14 +339,7 @@ class Audit extends CI_Controller
         // Header Dokumen
         $sheetTitle = !empty($selectedPegawai) ? ('AUDIT KINERJA - ' . strtoupper($selectedPegawai['nama'])) : 'AUDIT KINERJA KARYAWAN - PT VISI YOSINDO MEDIKAL';
         $sheet->setCellValue('A1', $sheetTitle);
-        $complianceStr = '';
-        if (!empty($selectedPegawai)) {
-            $comp = $this->md_audit_system->getLaporanMingguanCompliance($year, $selectedPegawai['pengguna_id']);
-            if ($comp) {
-                $complianceStr = ' | Kepatuhan Laporan: ' . $comp['compliance_score'] . '% (' . $comp['count_tepat_waktu'] . ' Tepat, ' . $comp['count_telat'] . ' Telat, ' . $comp['count_tidak_isi'] . ' Kosong)';
-            }
-        }
-        $subTitle = 'Tahun Periode: ' . $year . (!empty($selectedPegawai) ? (' | Posisi: ' . $selectedPegawai['posisi'] . ' (' . $selectedPegawai['divisi'] . ')') : '') . $complianceStr . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s');
+        $subTitle = 'Tahun Periode: ' . $year . (!empty($selectedPegawai) ? (' | Posisi: ' . $selectedPegawai['posisi'] . ' (' . $selectedPegawai['divisi'] . ')') : '') . ' | Tanggal Unduh: ' . date('d/m/Y H:i:s');
         $sheet->setCellValue('A2', $subTitle);
         $sheet->mergeCells('A1:J1');
         $sheet->mergeCells('A2:J2');
