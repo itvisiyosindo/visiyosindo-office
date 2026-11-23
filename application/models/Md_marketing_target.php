@@ -28,6 +28,48 @@ class Md_marketing_target extends CI_Model
         return $this->db->get_where('marketing_target_penjualan', ['id' => $id])->row();
     }
 
+    // === Target Produk Items CRUD ===
+    function get_produk_by_target_id($target_id)
+    {
+        return $this->db->get_where('marketing_target_produk', ['target_id' => $target_id])->result();
+    }
+
+    function save_target_produk($target_id, $items)
+    {
+        // Delete existing items for this target
+        $this->db->where('target_id', $target_id)->delete('marketing_target_produk');
+
+        if (!empty($items) && is_array($items)) {
+            $insert_batch = [];
+            foreach ($items as $item) {
+                if (empty(trim($item['nama_produk'] ?? ''))) {
+                    continue;
+                }
+                $insert_batch[] = [
+                    'target_id'   => $target_id,
+                    'id_barang'   => !empty($item['id_barang']) ? (int)$item['id_barang'] : NULL,
+                    'nama_produk' => trim($item['nama_produk']),
+                    'harga_jual'  => (float)($item['harga_jual'] ?? 0),
+                    'komisi'      => (float)($item['komisi'] ?? 0),
+                ];
+            }
+            if (!empty($insert_batch)) {
+                $this->db->insert_batch('marketing_target_produk', $insert_batch);
+            }
+        }
+        return true;
+    }
+
+    function get_all_barang_inventory()
+    {
+        return $this->db->select('id_barang, kode_barang, nama_barang')
+                        ->from('barang')
+                        ->where('status', 1)
+                        ->order_by('nama_barang', 'ASC')
+                        ->get()
+                        ->result();
+    }
+
     function get_targets($marketing_id = NULL, $tahun = NULL, $bulan = NULL)
     {
         $this->db->select('t.*, p.nama as nama_marketing, prov.nama as nama_provinsi, k.nama as nama_kota');

@@ -450,25 +450,56 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="font-weight-bold">Nama Unit / Produk <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_unit" id="nama_unit" class="form-control form-control-premium" placeholder="Nama Unit Alat Kesehatan / Produk" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
                         <label class="font-weight-bold">Estimasi Closing <span class="text-danger">*</span></label>
                         <input type="date" name="estimasi_closing" id="estimasi_closing" class="form-control form-control-premium" required>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="font-weight-bold">Harga Jual (Rp) <span class="text-danger">*</span></label>
-                        <input type="text" name="harga_jual" id="harga_jual" class="form-control form-control-premium format-rupiah" placeholder="0" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="font-weight-bold">Harga Permintaan Customer (Rp) <span class="text-danger">*</span></label>
                         <input type="text" name="harga_permintaan" id="harga_permintaan" class="form-control form-control-premium format-rupiah" placeholder="0" required>
                     </div>
                 </div>
+
+                <!-- Section: Tabel Produk / Unit Terintegrasi Inventory -->
+                <div class="card mb-3 border" style="border-radius: 10px; background-color: #FAFAFA;">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 px-3" style="border-bottom: 1px solid #E5E7EB;">
+                        <span class="font-weight-bold text-dark"><i class="fas fa-boxes text-primary mr-1"></i> Rincian Unit / Produk & Komisi</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-tambah-produk-row">
+                            <i class="fas fa-plus"></i> Tambah Produk
+                        </button>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0 bg-white" id="table-produk-items">
+                                <thead class="thead-light">
+                                    <tr style="font-size: 0.85rem;">
+                                        <th style="min-width: 250px;">Nama Unit / Produk (Inventory / Manual)</th>
+                                        <th style="width: 180px;">Harga Jual (Rp)</th>
+                                        <th style="width: 160px;">Komisi (Rp)</th>
+                                        <th style="width: 45px;" class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-produk-items">
+                                    <!-- Baris produk dinamis -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="bg-light font-weight-bold" style="font-size: 0.88rem;">
+                                        <td class="text-right">Total Harga Jual:</td>
+                                        <td>
+                                            <input type="text" name="harga_jual" id="harga_jual" class="form-control form-control-sm font-weight-bold text-success format-rupiah" placeholder="0" required readonly style="background-color: #F3F4F6;">
+                                        </td>
+                                        <td colspan="2">
+                                            <small class="text-muted d-block">Terhitung dari total baris produk</small>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-1"><i class="fas fa-info-circle text-info"></i> Pilih produk dari master inventory atau ketik nama produk manual. Total harga jual akan otomatis menjumlahkan nilai dari tabel.</small>
+                    </div>
+                </div>
+
+                <!-- Fallback Hidden/Summary field nama_unit -->
+                <input type="hidden" name="nama_unit" id="nama_unit" value="">
 
                 <div class="row align-items-center">
                     <div class="col-md-4 mb-3">
@@ -731,6 +762,126 @@
             });
         });
 
+        // Master inventory produk data for autocomplete / select
+        const inventoryBarangList = <?= !empty($barang_inventory) ? json_encode($barang_inventory) : '[]' ?>;
+
+        // Function: Tambah baris produk baru ke tabel
+        function tambahProdukRow(itemData = {}) {
+            let idBarang = itemData.id_barang || '';
+            let namaProduk = itemData.nama_produk || '';
+            let hargaJual = itemData.harga_jual ? String(Math.round(itemData.harga_jual)).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '';
+            let komisi = itemData.komisi ? String(Math.round(itemData.komisi)).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '';
+
+            let rowIdx = Date.now() + Math.floor(Math.random() * 1000);
+
+            let rowHtml = `
+                <tr class="produk-row" data-row-id="${rowIdx}">
+                    <td>
+                        <div class="input-group input-group-sm mb-1">
+                            <select class="form-control form-control-sm select-inventory-item" style="max-width: 100%;">
+                                <option value="">-- Pilih dari Master Inventory --</option>
+                                ${inventoryBarangList.map(b => `<option value="${b.id_barang}" data-nama="${escapeHtml(b.nama_barang)}" ${b.id_barang == idBarang ? 'selected' : ''}>${escapeHtml(b.nama_barang)} [${escapeHtml(b.kode_barang)}]</option>`).join('')}
+                            </select>
+                        </div>
+                        <input type="hidden" name="produk_id_barang[]" class="row-id-barang" value="${idBarang}">
+                        <input type="text" name="produk_nama[]" class="form-control form-control-sm row-nama-produk" placeholder="Atau ketik nama unit / produk manual..." value="${escapeHtml(namaProduk)}" required>
+                    </td>
+                    <td>
+                        <input type="text" name="produk_harga_jual[]" class="form-control form-control-sm format-rupiah row-harga-jual" placeholder="0" value="${hargaJual}" required>
+                    </td>
+                    <td>
+                        <input type="text" name="produk_komisi[]" class="form-control form-control-sm format-rupiah row-komisi" placeholder="0" value="${komisi}">
+                    </td>
+                    <td class="text-center align-middle">
+                        <button type="button" class="btn btn-xs btn-outline-danger btn-remove-produk-row" title="Hapus Produk">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            $('#tbody-produk-items').append(rowHtml);
+            recalculateTotalHargaJual();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Event: Pilih produk dari select inventory -> otomatis set input nama_produk & id_barang
+        $(document).on('change', '.select-inventory-item', function() {
+            let $row = $(this).closest('tr');
+            let id = $(this).val();
+            let selectedOpt = $(this).find('option:selected');
+            let nama = selectedOpt.data('nama') || '';
+
+            $row.find('.row-id-barang').val(id);
+            if (nama) {
+                $row.find('.row-nama-produk').val(nama);
+            }
+            updateSummaryNamaUnit();
+        });
+
+        // Event: Ketik manual nama produk
+        $(document).on('input keyup', '.row-nama-produk', function() {
+            let $row = $(this).closest('tr');
+            if (!$(this).val()) {
+                $row.find('.row-id-barang').val('');
+                $row.find('.select-inventory-item').val('');
+            }
+            updateSummaryNamaUnit();
+        });
+
+        // Event: Input harga jual per baris -> update total harga jual & gap
+        $(document).on('input keyup', '.row-harga-jual', function() {
+            recalculateTotalHargaJual();
+        });
+
+        // Event: Hapus baris produk
+        $(document).on('click', '.btn-remove-produk-row', function() {
+            if ($('#tbody-produk-items tr').length <= 1) {
+                // Jangan hapus jika hanya 1 baris, cukup reset isinya
+                let $firstRow = $('#tbody-produk-items tr:first');
+                $firstRow.find('input').val('');
+                $firstRow.find('select').val('');
+            } else {
+                $(this).closest('tr').remove();
+            }
+            recalculateTotalHargaJual();
+            updateSummaryNamaUnit();
+        });
+
+        // Event: Tombol Tambah Produk
+        $('#btn-tambah-produk-row').on('click', function() {
+            tambahProdukRow();
+        });
+
+        // Hitung total harga jual dari seluruh baris
+        function recalculateTotalHargaJual() {
+            let total = 0;
+            $('.row-harga-jual').each(function() {
+                let val = $(this).val() || "0";
+                let num = parseFloat(val.replace(/\D/g, "")) || 0;
+                total += num;
+            });
+
+            let formatted = String(total).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            $('#harga_jual').val(formatted);
+            calculateGapPercentage();
+            updateSummaryNamaUnit();
+        }
+
+        // Update hidden field nama_unit sebagai ringkasan semua produk
+        function updateSummaryNamaUnit() {
+            let names = [];
+            $('.row-nama-produk').each(function() {
+                let val = $.trim($(this).val());
+                if (val) names.push(val);
+            });
+            $('#nama_unit').val(names.join(', '));
+        }
+
         // 4. Currency Input Helper (Rupiah formatting)
         $(document).on('input keyup', '.format-rupiah', function() {
             let val = $(this).val();
@@ -778,6 +929,10 @@
             $('#gap_harga_display').val('0%');
             $('#funnel_status_badge').html('<span class="badge badge-danger font-weight-bold" style="background-color: #dc3545; color: white; padding: 8px 12px; font-size: 0.9rem;">Cold</span>');
             
+            // Inisialisasi 1 baris kosong pada tabel produk
+            $('#tbody-produk-items').empty();
+            tambahProdukRow();
+
             if ($.fn.select2 && $('#autofill_customer').hasClass('select2-hidden-accessible')) {
                 $('#autofill_customer').val('').trigger('change.select2');
             } else {
@@ -811,6 +966,23 @@
 
                     $('#nama_unit').val(data.nama_unit);
                     $('#estimasi_closing').val(data.estimasi_closing);
+
+                    // Render baris produk yang tersimpan
+                    $('#tbody-produk-items').empty();
+                    if (data.items && data.items.length > 0) {
+                        data.items.forEach(function(item) {
+                            tambahProdukRow(item);
+                        });
+                    } else if (data.nama_unit) {
+                        // Fallback data lama jika belum ada di tabel produk
+                        tambahProdukRow({
+                            nama_produk: data.nama_unit,
+                            harga_jual: data.harga_jual,
+                            komisi: 0
+                        });
+                    } else {
+                        tambahProdukRow();
+                    }
 
                     // Format values
                     let hj_formatted = String(Math.round(data.harga_jual)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");

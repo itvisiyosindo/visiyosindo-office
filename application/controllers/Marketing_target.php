@@ -33,6 +33,7 @@ class Marketing_target extends CI_Controller
         $page_data['provinsi'] = $this->md_prov_kota->getAllProvinsi();
         $page_data['marketing_list'] = $this->md_pengguna->getPenggunaMarketing();
         $page_data['is_admin_or_leader'] = isAdmin() || isHrd() || isEksekutif();
+        $page_data['barang_inventory'] = $this->Md_marketing_target->get_all_barang_inventory();
         
         $this->load->view('index', $page_data);
     }
@@ -280,12 +281,54 @@ class Marketing_target extends CI_Controller
             'kebutuhan_support' => $this->input->post('kebutuhan_support')
         ];
 
+        // Parse multi-product items if submitted
+        $produk_items = [];
+        $raw_nama_produk = $this->input->post('produk_nama');
+        $raw_id_barang   = $this->input->post('produk_id_barang');
+        $raw_harga_jual  = $this->input->post('produk_harga_jual');
+        $raw_komisi      = $this->input->post('produk_komisi');
+
+        if (is_array($raw_nama_produk) && !empty($raw_nama_produk)) {
+            $total_hj_items = 0;
+            $nama_unit_list = [];
+            foreach ($raw_nama_produk as $idx => $np) {
+                $np_clean = trim($np);
+                if ($np_clean === '') continue;
+
+                $hj_item = isset($raw_harga_jual[$idx]) ? (float) delete_currency($raw_harga_jual[$idx]) : 0;
+                $kom_item = isset($raw_komisi[$idx]) ? (float) delete_currency($raw_komisi[$idx]) : 0;
+                $id_b = isset($raw_id_barang[$idx]) && !empty($raw_id_barang[$idx]) ? (int)$raw_id_barang[$idx] : NULL;
+
+                $produk_items[] = [
+                    'id_barang'   => $id_b,
+                    'nama_produk' => $np_clean,
+                    'harga_jual'  => $hj_item,
+                    'komisi'      => $komisi_item ?? $kom_item
+                ];
+                $total_hj_items += $hj_item;
+                $nama_unit_list[] = $np_clean;
+            }
+
+            if (!empty($nama_unit_list)) {
+                $data['nama_unit'] = implode(', ', $nama_unit_list);
+            }
+            if ($total_hj_items > 0) {
+                $data['harga_jual'] = $total_hj_items;
+                // Recalculate gap
+                $data['gap_harga'] = (($data['harga_jual'] - $harga_permintaan) / $data['harga_jual']) * 100;
+            }
+        }
+
         if ($id) {
             $this->Md_marketing_target->update_target($id, $data);
+            $this->Md_marketing_target->save_target_produk($id, $produk_items);
             addLog('Update Target Prospek', 'Memperbarui prospek target jangka pendek: ' . $data['nama_instansi']);
             ajaxReturnDie('success', 'Data target berhasil diperbarui', true);
         } else {
-            $this->Md_marketing_target->add_target($data);
+            $target_id = $this->Md_marketing_target->add_target($data);
+            if ($target_id) {
+                $this->Md_marketing_target->save_target_produk($target_id, $produk_items);
+            }
             addLog('Tambah Target Prospek', 'Menambahkan prospek target jangka pendek baru: ' . $data['nama_instansi']);
             ajaxReturnDie('success', 'Data target berhasil ditambahkan', true);
         }
@@ -302,6 +345,7 @@ class Marketing_target extends CI_Controller
             if (in_array($row->marketing_id, [54, 72, 77])) {
                 $row->marketing_id = 54;
             }
+            $row->items = $this->Md_marketing_target->get_produk_by_target_id($id);
             echo json_encode($row);
         } else {
             ajaxReturnDie('error', 'Data target tidak ditemukan');
