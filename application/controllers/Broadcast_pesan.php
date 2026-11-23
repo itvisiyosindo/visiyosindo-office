@@ -39,9 +39,10 @@ class Broadcast_pesan extends CI_Controller
         $page_data['switch'] = $this->id_navbar();
         $page_data['page_name'] = 'marketing/v_broadcast_pesan';
         $page_data['page_title'] = 'Broadcast Pesan Marketing';
-        $page_data['page_desc'] = 'Kontak Buku Tamu & Aksi Kirim Pesan WhatsApp';
+        $page_data['page_desc'] = 'Kontak Buku Tamu, Kirim WA Manual & Rekap Harian';
 
         $page_data['kegiatan_list'] = $this->md_bukutamu->getKegiatan();
+        $page_data['today_stats'] = $this->Md_broadcast_pesan->getDailyStats(date('Y-m-d'));
 
         $this->load->view('index', $page_data);
     }
@@ -84,6 +85,8 @@ class Broadcast_pesan extends CI_Controller
 
                 $namaEsc = htmlspecialchars($row->nama, ENT_QUOTES, 'UTF-8');
                 $instansiEsc = htmlspecialchars($row->instansi ?: '-', ENT_QUOTES, 'UTF-8');
+                $jabatanEsc = htmlspecialchars($row->jabatan ?: '-', ENT_QUOTES, 'UTF-8');
+                $namaKegiatanEsc = htmlspecialchars($row->nama_kegiatan ?: 'Umum', ENT_QUOTES, 'UTF-8');
                 $noWaDisplay = $isImportDummy ? '-' : htmlspecialchars($rawWa, ENT_QUOTES, 'UTF-8');
 
                 // Tracking Info
@@ -111,6 +114,8 @@ class Broadcast_pesan extends CI_Controller
                               . 'data-kegiatan="' . (int)$row->kegiatan . '" '
                               . 'data-nama="' . $namaEsc . '" '
                               . 'data-instansi="' . $instansiEsc . '" '
+                              . 'data-jabatan="' . $jabatanEsc . '" '
+                              . 'data-kegiatannama="' . $namaKegiatanEsc . '" '
                               . 'data-wa="' . htmlspecialchars($waTarget, ENT_QUOTES, 'UTF-8') . '" '
                               . 'data-url="' . $waUrl . '" '
                               . 'data-status="' . ($hasTracked ? 'sudah' : 'belum') . '">';
@@ -121,6 +126,9 @@ class Broadcast_pesan extends CI_Controller
                              . 'data-id="' . (int)$row->id_bukutamu . '" '
                              . 'data-kegiatan="' . (int)$row->kegiatan . '" '
                              . 'data-nama="' . $namaEsc . '" '
+                             . 'data-instansi="' . $instansiEsc . '" '
+                             . 'data-jabatan="' . $jabatanEsc . '" '
+                             . 'data-kegiatannama="' . $namaKegiatanEsc . '" '
                              . 'data-wa="' . htmlspecialchars($waTarget, ENT_QUOTES, 'UTF-8') . '" '
                              . 'data-url="' . $waUrl . '" '
                              . 'title="Hubungi WA & Catat Tracking">'
@@ -135,8 +143,8 @@ class Broadcast_pesan extends CI_Controller
                 $th[] = $index;
                 $th[] = '<strong>' . $namaEsc . '</strong>';
                 $th[] = $instansiEsc;
-                $th[] = htmlspecialchars($row->jabatan ?: '-', ENT_QUOTES, 'UTF-8');
-                $th[] = '<span class="badge badge-info">' . htmlspecialchars($row->nama_kegiatan ?: 'Umum', ENT_QUOTES, 'UTF-8') . '</span>';
+                $th[] = $jabatanEsc;
+                $th[] = '<span class="badge badge-info">' . $namaKegiatanEsc . '</span>';
                 $th[] = '<span class="text-nowrap"><i class="fab fa-whatsapp text-success mr-1"></i> ' . $noWaDisplay . '</span>';
                 $th[] = !empty($row->created_at) ? date('d-M-Y | H:i', strtotime($row->created_at)) : '-';
                 $th[] = $statusBadge;
@@ -152,15 +160,71 @@ class Broadcast_pesan extends CI_Controller
         die;
     }
 
+    public function pagination_daily()
+    {
+        $tanggal = $this->normalizeTanggalFilter($this->input->post('tanggal', true));
+        if (empty($tanggal)) {
+            $tanggal = date('Y-m-d');
+        }
+        $kegiatanId = (int)$this->input->post('kegiatan_id');
+
+        $dt = $this->Md_broadcast_pesan->getDailyHistoryData($tanggal, $kegiatanId);
+        $data  = array();
+        $index = ((int) $this->input->post('start')) + 1;
+
+        if (!empty($dt['data'])) {
+            foreach ($dt['data'] as $row) {
+                $rawWa = (string)$row->nomorwa;
+                $cleanDigits = preg_replace('/\D+/', '', $rawWa);
+                $waUrl = !empty($cleanDigits) ? ('https://wa.me/' . $cleanDigits) : '#';
+
+                $th = array();
+                $th[] = $index;
+                $th[] = '<strong>' . htmlspecialchars($row->nama, ENT_QUOTES, 'UTF-8') . '</strong>';
+                $th[] = htmlspecialchars($row->instansi ?: '-', ENT_QUOTES, 'UTF-8');
+                $th[] = htmlspecialchars($row->jabatan ?: '-', ENT_QUOTES, 'UTF-8');
+                $th[] = '<span class="badge badge-info">' . htmlspecialchars($row->nama_kegiatan ?: 'Umum', ENT_QUOTES, 'UTF-8') . '</span>';
+                $th[] = '<a href="' . $waUrl . '" target="_blank" rel="noopener noreferrer" class="text-success font-weight-bold"><i class="fab fa-whatsapp mr-1"></i>' . htmlspecialchars($row->nomorwa, ENT_QUOTES, 'UTF-8') . '</a>';
+                $th[] = '<span class="badge badge-light border"><i class="fas fa-user mr-1"></i>' . htmlspecialchars($row->nama_pengguna ?: 'Marketing', ENT_QUOTES, 'UTF-8') . '</span>';
+                $th[] = '<i class="far fa-clock mr-1 text-muted"></i>' . date('H:i:s', strtotime($row->clicked_at));
+
+                $data[] = $th;
+                $index++;
+            }
+        }
+
+        $dt['data'] = $data;
+        echo json_encode($dt);
+        die;
+    }
+
+    public function get_daily_stats()
+    {
+        $tanggal = $this->normalizeTanggalFilter($this->input->post('tanggal', true));
+        if (empty($tanggal)) {
+            $tanggal = date('Y-m-d');
+        }
+
+        $stats = $this->Md_broadcast_pesan->getDailyStats($tanggal);
+        echo json_encode([
+            'status' => 'success',
+            'data'   => $stats
+        ]);
+        die;
+    }
+
     public function track_click()
     {
         $id_bukutamu = (int)$this->input->post('id_bukutamu');
         $nomorwa = trim((string)$this->input->post('nomorwa', true));
         $nama = trim((string)$this->input->post('nama', true));
+        $instansi = trim((string)$this->input->post('instansi', true));
+        $jabatan = trim((string)$this->input->post('jabatan', true));
+        $nama_kegiatan = trim((string)$this->input->post('nama_kegiatan', true));
         $kegiatan_id = (int)$this->input->post('kegiatan_id');
 
         if ($id_bukutamu > 0) {
-            $result = $this->Md_broadcast_pesan->logClick($id_bukutamu, $nomorwa, $nama, $kegiatan_id);
+            $result = $this->Md_broadcast_pesan->logClick($id_bukutamu, $nomorwa, $nama, $kegiatan_id, $instansi, $jabatan, $nama_kegiatan);
             echo json_encode([
                 'status'  => 'success',
                 'message' => 'Tracking berhasil dicatat.',

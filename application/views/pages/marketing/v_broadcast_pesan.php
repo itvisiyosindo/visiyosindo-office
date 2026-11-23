@@ -10,90 +10,188 @@
 
 <div class="row">
 	<div class="col-12">
-		<div class="card card-modern">
-			<div class="card-body">
-				<!-- Filter Section -->
-				<div class="row mb-3 align-items-end">
-					<div class="col-md-3 mb-2">
-						<label class="font-weight-bold">Filter Kegiatan / Event:</label>
-						<select id="filter_kegiatan" class="form-control">
-							<option value="">-- Semua Kegiatan / Event --</option>
-							<?php if (!empty($kegiatan_list)): ?>
-								<?php foreach ($kegiatan_list as $keg): ?>
-									<option value="<?= $keg->id ?>"><?= htmlspecialchars($keg->nama) ?></option>
-								<?php endforeach; ?>
-							<?php endif; ?>
-						</select>
-					</div>
-					<div class="col-md-3 mb-2">
-						<label class="font-weight-bold">Status Hubungi:</label>
-						<select id="filter_status_hubungi" class="form-control">
-							<option value="">-- Semua Status --</option>
-							<option value="belum">Belum Dihubungi</option>
-							<option value="sudah">Sudah Dihubungi</option>
-						</select>
-					</div>
-					<div class="col-md-2 mb-2">
-						<label class="font-weight-bold">Tanggal Mulai:</label>
-						<input type="date" id="filter_tanggal_mulai" class="form-control">
-					</div>
-					<div class="col-md-2 mb-2">
-						<label class="font-weight-bold">Tanggal Selesai:</label>
-						<input type="date" id="filter_tanggal_selesai" class="form-control">
-					</div>
-					<div class="col-md-2 mb-2">
-						<button type="button" id="btn_filter" class="btn btn-primary btn-block">
-							<i class="fas fa-filter mr-1"></i> Filter
-						</button>
-						<button type="button" id="btn_reset" class="btn btn-default btn-block mt-1">
-							<i class="fas fa-undo mr-1"></i> Reset
-						</button>
-					</div>
-				</div>
+		<!-- Navigation Tabs -->
+		<ul class="nav nav-tabs nav-tabs-modern mb-3" id="broadcastTabs" role="tablist">
+			<li class="nav-item">
+				<a class="nav-link active font-weight-bold" id="tab-kontak-link" data-toggle="tab" href="#tab-kontak" role="tab" aria-controls="tab-kontak" aria-selected="true">
+					<i class="fas fa-address-book mr-1 text-primary"></i> Kontak Buku Tamu
+				</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link font-weight-bold" id="tab-rekap-link" data-toggle="tab" href="#tab-rekap" role="tab" aria-controls="tab-rekap" aria-selected="false">
+					<i class="fas fa-calendar-check mr-1 text-success"></i> Rekap / Riwayat Harian
+					<span class="badge badge-success ml-1" id="badge_today_count"><?= (int)($today_stats['total_kontak_unik'] ?? 0) ?></span>
+				</a>
+			</li>
+		</ul>
 
-				<!-- Selection Bar / Multi Contact Action -->
-				<div class="card bg-light border p-3 mb-3 d-flex flex-row justify-content-between align-items-center flex-wrap" style="border-radius: 8px;">
-					<div class="d-flex align-items-center mb-1">
-						<div class="custom-control custom-checkbox mr-3">
-							<input type="checkbox" class="custom-control-input" id="check_all_page">
-							<label class="custom-control-label font-weight-bold" for="check_all_page">Pilih Semua di Halaman Ini</label>
+		<div class="tab-content border-0 p-0" id="broadcastTabsContent">
+			<!-- ================= TAB 1: KONTAK BUKU TAMU ================= -->
+			<div class="tab-pane fade show active" id="tab-kontak" role="tabpanel" aria-labelledby="tab-kontak-link">
+				<div class="card card-modern">
+					<div class="card-body">
+						<!-- Filter Section -->
+						<div class="row mb-3 align-items-end">
+							<div class="col-md-3 mb-2">
+								<label class="font-weight-bold">Filter Kegiatan / Event:</label>
+								<select id="filter_kegiatan" class="form-control">
+									<option value="">-- Semua Kegiatan / Event --</option>
+									<?php if (!empty($kegiatan_list)): ?>
+										<?php foreach ($kegiatan_list as $keg): ?>
+											<option value="<?= $keg->id ?>"><?= htmlspecialchars($keg->nama) ?></option>
+										<?php endforeach; ?>
+									<?php endif; ?>
+								</select>
+							</div>
+							<div class="col-md-3 mb-2">
+								<label class="font-weight-bold">Status Hubungi:</label>
+								<select id="filter_status_hubungi" class="form-control">
+									<option value="">-- Semua Status --</option>
+									<option value="belum">Belum Dihubungi</option>
+									<option value="sudah">Sudah Dihubungi</option>
+								</select>
+							</div>
+							<div class="col-md-2 mb-2">
+								<label class="font-weight-bold">Tanggal Mulai:</label>
+								<input type="date" id="filter_tanggal_mulai" class="form-control">
+							</div>
+							<div class="col-md-2 mb-2">
+								<label class="font-weight-bold">Tanggal Selesai:</label>
+								<input type="date" id="filter_tanggal_selesai" class="form-control">
+							</div>
+							<div class="col-md-2 mb-2">
+								<button type="button" id="btn_filter" class="btn btn-primary btn-block">
+									<i class="fas fa-filter mr-1"></i> Filter
+								</button>
+								<button type="button" id="btn_reset" class="btn btn-default btn-block mt-1">
+									<i class="fas fa-undo mr-1"></i> Reset
+								</button>
+							</div>
 						</div>
-						<span class="badge badge-info py-1 px-2 font-size-sm" id="badge_selected_count">0 kontak terpilih</span>
-					</div>
-					<div class="mb-1">
-						<button type="button" class="btn btn-sm btn-success shadow-sm" id="btn_mulai_antrean" disabled>
-							<i class="fab fa-whatsapp mr-1"></i> Mulai Hubungi Kontak Terpilih (Satu per Satu)
-						</button>
-						<button type="button" class="btn btn-sm btn-outline-secondary ml-1" id="btn_clear_selection" style="display: none;">
-							<i class="fas fa-times mr-1"></i> Batal Pilih
-						</button>
+
+						<!-- Selection Bar / Multi Contact Action -->
+						<div class="card bg-light border p-3 mb-3 d-flex flex-row justify-content-between align-items-center flex-wrap" style="border-radius: 8px;">
+							<div class="d-flex align-items-center mb-1">
+								<div class="custom-control custom-checkbox mr-3">
+									<input type="checkbox" class="custom-control-input" id="check_all_page">
+									<label class="custom-control-label font-weight-bold" for="check_all_page">Pilih Semua di Halaman Ini</label>
+								</div>
+								<span class="badge badge-info py-1 px-2 font-size-sm" id="badge_selected_count">0 kontak terpilih</span>
+							</div>
+							<div class="mb-1">
+								<button type="button" class="btn btn-sm btn-success shadow-sm" id="btn_mulai_antrean" disabled>
+									<i class="fab fa-whatsapp mr-1"></i> Mulai Hubungi Kontak Terpilih (Satu per Satu)
+								</button>
+								<button type="button" class="btn btn-sm btn-outline-secondary ml-1" id="btn_clear_selection" style="display: none;">
+									<i class="fas fa-times mr-1"></i> Batal Pilih
+								</button>
+							</div>
+						</div>
+
+						<div class="alert alert-info py-2 mb-3">
+							<i class="fas fa-info-circle mr-1"></i>
+							Daftar nomor kontak diambil dari <strong>Buku Tamu</strong>. Klik tombol <strong>Hubungi WA</strong> pada kontak atau centang beberapa kontak untuk memprosesnya satu per satu. Setiap aktivitas otomatis terekam di tab <strong>Rekap Harian</strong>.
+						</div>
+
+						<!-- Table Section -->
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped table-hover mb-0" id="table_broadcast" style="width:100%">
+								<thead>
+									<tr class="text-center">
+										<th style="width: 45px;">No</th>
+										<th>Nama Lengkap</th>
+										<th>Instansi / Perusahaan</th>
+										<th>Jabatan</th>
+										<th>Kegiatan / Event</th>
+										<th>Nomor WhatsApp</th>
+										<th>Waktu Input</th>
+										<th style="width: 150px;">Status Hubungi</th>
+										<th style="width: 160px;">Aksi</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
+			</div>
 
-				<div class="alert alert-info py-2 mb-3">
-					<i class="fas fa-info-circle mr-1"></i>
-					Anda dapat mencentang checklist kontak untuk memilih beberapa nomor sekaligus, lalu klik tombol <strong>Mulai Hubungi Kontak Terpilih</strong> untuk memproses kontak satu per satu secara berurutan.
-				</div>
+			<!-- ================= TAB 2: REKAP / RIWAYAT HARIAN ================= -->
+			<div class="tab-pane fade" id="tab-rekap" role="tabpanel" aria-labelledby="tab-rekap-link">
+				<div class="card card-modern">
+					<div class="card-body">
+						<!-- Filter Rekap Harian -->
+						<div class="row mb-3 align-items-end">
+							<div class="col-md-3 mb-2">
+								<label class="font-weight-bold">Pilih Tanggal Rekap:</label>
+								<input type="date" id="rekap_tanggal" class="form-control" value="<?= date('Y-m-d') ?>">
+							</div>
+							<div class="col-md-4 mb-2">
+								<label class="font-weight-bold">Filter Kegiatan / Event:</label>
+								<select id="rekap_filter_kegiatan" class="form-control">
+									<option value="">-- Semua Kegiatan / Event --</option>
+									<?php if (!empty($kegiatan_list)): ?>
+										<?php foreach ($kegiatan_list as $keg): ?>
+											<option value="<?= $keg->id ?>"><?= htmlspecialchars($keg->nama) ?></option>
+										<?php endforeach; ?>
+									<?php endif; ?>
+								</select>
+							</div>
+							<div class="col-md-2 mb-2">
+								<button type="button" id="btn_filter_rekap" class="btn btn-primary btn-block">
+									<i class="fas fa-search mr-1"></i> Tampilkan
+								</button>
+							</div>
+							<div class="col-md-3 mb-2">
+								<button type="button" id="btn_today_rekap" class="btn btn-outline-success btn-block">
+									<i class="fas fa-calendar-day mr-1"></i> Hari Ini
+								</button>
+							</div>
+						</div>
 
-				<!-- Table Section -->
-				<div class="table-responsive">
-					<table class="table table-bordered table-striped table-hover mb-0" id="table_broadcast" style="width:100%">
-						<thead>
-							<tr class="text-center">
-								<th style="width: 45px;">No</th>
-								<th>Nama Lengkap</th>
-								<th>Instansi / Perusahaan</th>
-								<th>Jabatan</th>
-								<th>Kegiatan / Event</th>
-								<th>Nomor WhatsApp</th>
-								<th>Waktu Input</th>
-								<th style="width: 150px;">Status Hubungi</th>
-								<th style="width: 160px;">Aksi</th>
-							</tr>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
+						<!-- Metric Cards -->
+						<div class="row mb-3">
+							<div class="col-md-6 mb-2">
+								<div class="p-3 bg-light rounded border d-flex align-items-center justify-content-between">
+									<div>
+										<div class="text-muted small font-weight-bold text-uppercase">Kontak Unik Dihubungi</div>
+										<h3 class="mb-0 font-weight-bold text-success" id="stat_rekap_unik"><?= (int)($today_stats['total_kontak_unik'] ?? 0) ?></h3>
+									</div>
+									<div class="text-success"><i class="fas fa-users fa-2x"></i></div>
+								</div>
+							</div>
+							<div class="col-md-6 mb-2">
+								<div class="p-3 bg-light rounded border d-flex align-items-center justify-content-between">
+									<div>
+										<div class="text-muted small font-weight-bold text-uppercase">Total Pengiriman / Klik WA</div>
+										<h3 class="mb-0 font-weight-bold text-primary" id="stat_rekap_total"><?= (int)($today_stats['total_klik'] ?? 0) ?></h3>
+									</div>
+									<div class="text-primary"><i class="fab fa-whatsapp fa-2x"></i></div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Table Rekap Harian -->
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped table-hover mb-0" id="table_rekap" style="width:100%">
+								<thead>
+									<tr class="text-center">
+										<th style="width: 45px;">No</th>
+										<th>Nama Kontak</th>
+										<th>Instansi / Perusahaan</th>
+										<th>Jabatan</th>
+										<th>Kegiatan / Event</th>
+										<th>Nomor WhatsApp</th>
+										<th>Dihubungi Oleh</th>
+										<th style="width: 120px;">Waktu Kirim</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -152,6 +250,7 @@
 		var queueList = [];
 		var currentQueueIndex = 0;
 
+		// ==================== DATATABLE TAB 1: KONTAK ====================
 		var table = $('#table_broadcast').DataTable({
 			processing: true,
 			serverSide: true,
@@ -173,7 +272,6 @@
 				{ targets: [0, 6, 7, 8], className: 'text-center' }
 			],
 			drawCallback: function() {
-				// Sinkronisasi status centang checkbox setelah tabel di-reload
 				$('.chk-kontak').each(function() {
 					var id = $(this).data('id');
 					if (selectedContacts[id]) {
@@ -198,6 +296,85 @@
 			}
 		});
 
+		// ==================== DATATABLE TAB 2: REKAP HARIAN ====================
+		var tableRekap = $('#table_rekap').DataTable({
+			processing: true,
+			serverSide: true,
+			responsive: false,
+			scrollX: true,
+			order: [[7, 'desc']],
+			ajax: {
+				url: '<?= base_url("broadcast_pesan/pagination_daily") ?>',
+				type: 'POST',
+				data: function(d) {
+					d.tanggal = $('#rekap_tanggal').val();
+					d.kegiatan_id = $('#rekap_filter_kegiatan').val();
+					d.csrf_token = csrfToken;
+				}
+			},
+			columnDefs: [
+				{ targets: [0, 5, 6, 7], className: 'text-center' }
+			],
+			language: {
+				search: 'Cari di Rekap:',
+				emptyTable: 'Belum ada kontak yang dihubungi pada tanggal ini.',
+				zeroRecords: 'Data tidak cocok dengan pencarian.',
+				lengthMenu: 'Tampilkan _MENU_ data',
+				info: 'Menampilkan _START_ - _END_ dari _TOTAL_ data terkirim',
+				infoEmpty: 'Menampilkan 0 data',
+				paginate: {
+					first: '<<',
+					last: '>>',
+					next: '>',
+					previous: '<'
+				}
+			}
+		});
+
+		function loadDailyStats() {
+			var tgl = $('#rekap_tanggal').val();
+			$.ajax({
+				url: '<?= base_url("broadcast_pesan/get_daily_stats") ?>',
+				type: 'POST',
+				dataType: 'JSON',
+				data: { tanggal: tgl, csrf_token: csrfToken },
+				success: function(res) {
+					if (res && res.status === 'success') {
+						$('#stat_rekap_unik').text(res.data.total_kontak_unik || 0);
+						$('#stat_rekap_total').text(res.data.total_klik || 0);
+						// Update badge tab jika tanggal hari ini
+						var todayStr = new Date().toISOString().slice(0, 10);
+						if (tgl === todayStr) {
+							$('#badge_today_count').text(res.data.total_kontak_unik || 0);
+						}
+					}
+				}
+			});
+		}
+
+		$('#btn_filter_rekap').on('click', function() {
+			tableRekap.ajax.reload();
+			loadDailyStats();
+		});
+
+		$('#btn_today_rekap').on('click', function() {
+			var todayStr = new Date().toISOString().slice(0, 10);
+			$('#rekap_tanggal').val(todayStr);
+			$('#rekap_filter_kegiatan').val('');
+			tableRekap.ajax.reload();
+			loadDailyStats();
+		});
+
+		// Trigger reload table saat ganti tab agar layout pas
+		$('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+			if ($(e.target).attr('id') === 'tab-rekap-link') {
+				tableRekap.columns.adjust().draw();
+				loadDailyStats();
+			} else {
+				table.columns.adjust().draw();
+			}
+		});
+
 		function updateSelectionBar() {
 			var count = Object.keys(selectedContacts).length;
 			$('#badge_selected_count').text(count + ' kontak terpilih');
@@ -209,7 +386,6 @@
 				$('#btn_clear_selection').hide();
 			}
 
-			// Cek apakah semua di halaman aktif tercentang
 			var allCheckedInPage = $('.chk-kontak').length > 0;
 			$('.chk-kontak').each(function() {
 				if (!$(this).prop('checked')) {
@@ -219,7 +395,7 @@
 			$('#check_all_page').prop('checked', allCheckedInPage);
 		}
 
-		// Centang / uncentang per baris
+		// Centang per baris
 		$(document).on('change', '.chk-kontak', function() {
 			var id = $(this).data('id');
 			if ($(this).is(':checked')) {
@@ -228,6 +404,8 @@
 					kegiatan: $(this).data('kegiatan'),
 					nama: $(this).data('nama'),
 					instansi: $(this).data('instansi'),
+					jabatan: $(this).data('jabatan'),
+					nama_kegiatan: $(this).data('kegiatannama'),
 					wa: $(this).data('wa'),
 					url: $(this).data('url')
 				};
@@ -249,6 +427,8 @@
 						kegiatan: $(this).data('kegiatan'),
 						nama: $(this).data('nama'),
 						instansi: $(this).data('instansi'),
+						jabatan: $(this).data('jabatan'),
+						nama_kegiatan: $(this).data('kegiatannama'),
 						wa: $(this).data('wa'),
 						url: $(this).data('url')
 					};
@@ -267,7 +447,7 @@
 			updateSelectionBar();
 		});
 
-		// Trigger Filter
+		// Filter Tab 1
 		$('#btn_filter').on('click', function() {
 			table.ajax.reload();
 		});
@@ -294,11 +474,16 @@
 					id_bukutamu: item.id,
 					kegiatan_id: item.kegiatan,
 					nama: item.nama,
+					instansi: item.instansi || '',
+					jabatan: item.jabatan || '',
+					nama_kegiatan: item.nama_kegiatan || '',
 					nomorwa: item.wa,
 					csrf_token: csrfToken
 				},
 				success: function() {
 					table.ajax.reload(null, false);
+					tableRekap.ajax.reload(null, false);
+					loadDailyStats();
 				}
 			});
 		}
@@ -311,6 +496,9 @@
 				id: $btn.data('id'),
 				kegiatan: $btn.data('kegiatan'),
 				nama: $btn.data('nama'),
+				instansi: $btn.closest('tr').find('td:eq(2)').text().trim(),
+				jabatan: $btn.closest('tr').find('td:eq(3)').text().trim(),
+				nama_kegiatan: $btn.closest('tr').find('td:eq(4)').text().trim(),
 				wa: $btn.data('wa'),
 				url: $btn.data('url')
 			};
@@ -338,6 +526,8 @@
 				selectedContacts = {};
 				updateSelectionBar();
 				table.ajax.reload(null, false);
+				tableRekap.ajax.reload(null, false);
+				loadDailyStats();
 				return;
 			}
 
