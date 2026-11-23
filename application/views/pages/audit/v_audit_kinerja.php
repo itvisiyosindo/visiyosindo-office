@@ -180,25 +180,6 @@
 		padding: 3px 8px;
 		display: inline-block;
 	}
-	.badge-lap-score {
-		font-size: 10px;
-		font-weight: 700;
-		border-radius: 6px;
-		padding: 3px 8px;
-		display: inline-block;
-	}
-	.lap-score-card {
-		background: #ffffff;
-		border-radius: 10px;
-		border: 1px solid #e2e8f0;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-		overflow: hidden;
-		transition: all 0.2s ease;
-	}
-	.lap-score-card:hover {
-		box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-		border-color: #cbd5e1;
-	}
 	.selected-employee-banner {
 		background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 		border-radius: 10px;
@@ -231,14 +212,6 @@
 							<?php if (!empty($selected_pegawai['status_audit_label'])): ?>
 								<span class="badge <?= htmlspecialchars($selected_pegawai['status_audit_badge']) ?> px-2 py-1 font-weight-bold" style="font-size: 11px;">
 									<i class="fas fa-clipboard-check mr-1"></i><?= htmlspecialchars($selected_pegawai['status_audit_label']) ?>
-								</span>
-							<?php endif; ?>
-							<?php if (!empty($laporan_compliance_detail)): 
-								$scD = (float)$laporan_compliance_detail['compliance_score'];
-								$bgD = ($scD >= 85) ? 'badge-success' : (($scD >= 60) ? 'badge-warning text-dark' : 'badge-danger');
-							?>
-								<span class="badge <?= $bgD ?> px-2 py-1 font-weight-bold" style="font-size: 11px; cursor: pointer;" onclick="openLaporanBreakdownModal(<?= (int)$selected_pegawai['pengguna_id'] ?>);" title="Klik untuk melihat breakdown per hari">
-									<i class="far fa-file-alt mr-1"></i>Kepatuhan Laporan: <?= $scD ?>%
 								</span>
 							<?php endif; ?>
 							<?php if (!empty($selected_pegawai['jabatan']) && $selected_pegawai['jabatan'] !== $selected_pegawai['posisi']): ?>
@@ -396,16 +369,6 @@
 										<span class="badge-audit-status <?= htmlspecialchars($peg['status_audit_badge']) ?>">
 											<?= htmlspecialchars($peg['status_audit_label']) ?>
 										</span>
-										<?php 
-										$lapComp = isset($peg['laporan_compliance']) ? $peg['laporan_compliance'] : null;
-										if ($lapComp):
-											$sc = (float)$lapComp['compliance_score'];
-											$badgeLapColor = ($sc >= 85) ? 'badge-success' : (($sc >= 60) ? 'badge-warning text-dark' : 'badge-danger');
-										?>
-											<span class="badge-lap-score <?= $badgeLapColor ?>" title="Kepatuhan Laporan Mingguan: <?= $sc ?>% (Tepat: <?= $lapComp['count_tepat_waktu'] ?>, Telat: <?= $lapComp['count_telat'] ?>, Kosong: <?= $lapComp['count_tidak_isi'] ?> dari <?= $lapComp['total_workdays'] ?> hari kerja)">
-												<i class="far fa-file-alt mr-1"></i>Lap: <?= $sc ?>%
-											</span>
-										<?php endif; ?>
 									</div>
 								</div>
 							</a>
@@ -417,65 +380,6 @@
 
 		<!-- Summary Cards & Filter Bar (Hanya tampil saat karyawan/filter terpilih) -->
 		<?php if ($has_employee_selected): ?>
-		
-		<?php if (!empty($selected_pegawai) && !empty($laporan_compliance_detail)): 
-			$lcd = $laporan_compliance_detail;
-			$scoreL = (float)$lcd['compliance_score'];
-			$scoreColor = ($scoreL >= 85) ? '#10b981' : (($scoreL >= 60) ? '#f59e0b' : '#ef4444');
-		?>
-		<!-- Kartu Kepatuhan Laporan Mingguan Pegawai -->
-		<div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; background: #ffffff; border: 1px solid #e2e8f0 !important;">
-			<div class="card-body p-3">
-				<div class="row align-items-center">
-					<div class="col-lg-3 col-md-6 mb-2 mb-lg-0 border-right">
-						<div class="d-flex align-items-center" style="gap: 12px;">
-							<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.1); color: #2563eb; font-size: 20px; flex-shrink: 0;">
-								<i class="fas fa-file-invoice"></i>
-							</div>
-							<div>
-								<div class="small font-weight-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 11px;">Nilai Kepatuhan Laporan</div>
-								<div class="h3 font-weight-bold mb-0" style="color: <?= $scoreColor ?>;"><?= $scoreL ?>%</div>
-								<div class="small text-muted" style="font-size: 11px;"><?= $lcd['total_points'] ?> dari <?= $lcd['effective_workdays'] ?? $lcd['total_workdays'] ?> Hari Beban Kerja</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-lg-2 col-md-4 mb-2 mb-lg-0 text-center border-right">
-						<div class="small text-muted font-weight-bold mb-1" style="font-size: 11px;"><i class="fas fa-check-circle text-success mr-1"></i> Tepat Waktu (1.0)</div>
-						<div class="h4 font-weight-bold text-success mb-0"><?= $lcd['count_tepat_waktu'] ?> <span class="small font-weight-normal text-muted">hari</span></div>
-						<div class="small text-muted" style="font-size: 10px;">Nilai Penuh</div>
-					</div>
-
-					<div class="col-lg-2 col-md-4 mb-2 mb-lg-0 text-center border-right">
-						<div class="small text-muted font-weight-bold mb-1" style="font-size: 11px;"><i class="fas fa-history text-warning mr-1"></i> Telat (0.5)</div>
-						<div class="h4 font-weight-bold text-warning mb-0"><?= $lcd['count_telat'] ?> <span class="small font-weight-normal text-muted">hari</span></div>
-						<div class="small text-muted" style="font-size: 10px;">Dihitung Setengah</div>
-					</div>
-
-					<div class="col-lg-2 col-md-4 mb-2 mb-lg-0 text-center border-right">
-						<div class="small text-muted font-weight-bold mb-1" style="font-size: 11px;"><i class="fas fa-times-circle text-danger mr-1"></i> Kosong (0)</div>
-						<div class="h4 font-weight-bold text-danger mb-0"><?= $lcd['count_tidak_isi'] ?> <span class="small font-weight-normal text-muted">hari</span></div>
-						<div class="small text-muted" style="font-size: 10px; cursor: pointer; text-decoration: underline;" onclick="openLaporanBreakdownModal(<?= (int)$selected_pegawai['pengguna_id'] ?>, 'kosong');" title="Klik untuk langsung melihat daftar hari laporan kosong">
-							<i class="fas fa-search mr-1"></i>Cek Hari Kosong
-						</div>
-					</div>
-
-					<div class="col-lg-3 col-md-12 text-lg-right text-center mt-2 mt-lg-0">
-						<?php if (!empty($lcd['count_izin_cuti'])): ?>
-							<div class="small text-info font-weight-bold mb-1" style="font-size: 11px;">
-								<i class="fas fa-user-shield mr-1"></i><?= $lcd['count_izin_cuti'] ?> Hari Cuti/Sakit/Izin (Dilewati)
-							</div>
-						<?php endif; ?>
-						<button type="button" class="btn btn-sm btn-outline-primary font-weight-bold shadow-sm px-3" onclick="openLaporanBreakdownModal(<?= (int)$selected_pegawai['pengguna_id'] ?>);">
-							<i class="fas fa-calendar-alt mr-1"></i> Lihat Breakdown Per Hari
-						</button>
-						<div class="small text-muted mt-1" style="font-size: 10px;">Cek rincian seluruh hari kerja tahun <?= $selected_year ?></div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<?php endif; ?>
-
 		<div class="row mb-3">
 			<div class="col-md-3 col-sm-6 mb-2">
 				<div class="stat-card-audit" style="border-left: 4px solid #3b82f6;">
@@ -825,104 +729,6 @@
 	</div>
 </div>
 
-<!-- Modal Breakdown Kepatuhan Laporan Mingguan Per Hari -->
-<div class="modal fade" id="modalLaporanBreakdown" tabindex="-1" role="dialog" aria-labelledby="modalLaporanBreakdownLabel" aria-hidden="true">
-	<div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-		<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
-			<div class="modal-header bg-dark text-white">
-				<h5 class="modal-title font-weight-bold" id="modalLaporanBreakdownLabel">
-					<i class="fas fa-calendar-check text-primary mr-1"></i> Breakdown Kepatuhan Laporan Mingguan Per Hari
-				</h5>
-				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body p-4" style="background-color: #f8fafc;">
-				<!-- Info Pegawai & Rekap -->
-				<div class="card p-3 mb-3 border bg-white shadow-sm">
-					<div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px;">
-						<div>
-							<div class="small text-uppercase text-muted font-weight-bold">Rekap Karyawan</div>
-							<div class="h5 font-weight-bold text-dark mb-0" id="lbNamaPegawai">-</div>
-							<div class="small text-muted" id="lbJabatanPegawai">-</div>
-						</div>
-						<div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
-							<div class="px-3 py-2 text-center rounded border bg-light">
-								<div class="small text-muted font-weight-bold" style="font-size: 10px;">SKOR AKHIR</div>
-								<div class="h5 font-weight-bold mb-0 text-primary" id="lbSkorAkhir">0%</div>
-							</div>
-							<div class="px-3 py-2 text-center rounded border bg-light">
-								<div class="small text-muted font-weight-bold" style="font-size: 10px;">TEPAT WAKTU (1.0)</div>
-								<div class="h5 font-weight-bold mb-0 text-success" id="lbTepat">0</div>
-							</div>
-							<div class="px-3 py-2 text-center rounded border bg-light">
-								<div class="small text-muted font-weight-bold" style="font-size: 10px;">TELAT (0.5)</div>
-								<div class="h5 font-weight-bold mb-0 text-warning" id="lbTelat">0</div>
-							</div>
-							<div class="px-3 py-2 text-center rounded border bg-light">
-								<div class="small text-muted font-weight-bold" style="font-size: 10px;">KOSONG (0)</div>
-								<div class="h5 font-weight-bold mb-0 text-danger" id="lbKosong">0</div>
-							</div>
-							<div class="px-3 py-2 text-center rounded border bg-light" id="boxLbIzinCuti">
-								<div class="small text-muted font-weight-bold" style="font-size: 10px;">CUTI / SAKIT / IZIN</div>
-								<div class="h5 font-weight-bold mb-0 text-info" id="lbIzinCuti">0</div>
-							</div>
-							<div class="px-3 py-2 text-center rounded border bg-light">
-								<div class="small text-muted font-weight-bold" style="font-size: 10px;">BEBAN KERJA</div>
-								<div class="h5 font-weight-bold mb-0 text-dark" id="lbTotalHari">0</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<!-- Filter Status Breakdown -->
-				<div class="d-flex align-items-center justify-content-between flex-wrap mb-3" style="gap: 10px;">
-					<div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
-						<span class="small font-weight-bold text-muted mr-1"><i class="fas fa-filter"></i> Filter Hari:</span>
-						<button type="button" class="btn btn-xs btn-outline-dark font-weight-bold active" id="btnFilterBreakdownAll" onclick="filterModalBreakdownTable('all', this);">Semua Hari</button>
-						<button type="button" class="btn btn-xs btn-outline-danger font-weight-bold" id="btnFilterBreakdownKosong" onclick="filterModalBreakdownTable('kosong', this);"><i class="fas fa-exclamation-triangle mr-1"></i>Hanya Hari Kosong (Tidak Isi)</button>
-						<button type="button" class="btn btn-xs btn-outline-warning font-weight-bold" id="btnFilterBreakdownTelat" onclick="filterModalBreakdownTable('telat', this);">Telat (0.5)</button>
-						<button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnFilterBreakdownTepat" onclick="filterModalBreakdownTable('tepat', this);">Tepat Waktu (1.0)</button>
-						<button type="button" class="btn btn-xs btn-outline-info font-weight-bold" id="btnFilterBreakdownIzin" onclick="filterModalBreakdownTable('izin_cuti', this);">Cuti / Sakit / Izin (Dilewati)</button>
-					</div>
-					<div class="small text-muted font-italic">
-						<i class="fas fa-info-circle mr-1"></i>Hari cuti/sakit/izin resmi dilewati sehingga tidak mengurangi skor karyawan.
-					</div>
-				</div>
-
-				<!-- Tabel Breakdown Harian -->
-				<div class="table-responsive bg-white rounded border shadow-sm" style="max-height: 480px; overflow-y: auto;">
-					<table class="table table-sm table-hover mb-0" id="tableLaporanBreakdown">
-						<thead class="thead-light" style="position: sticky; top: 0; z-index: 2;">
-							<tr style="font-size: 12px;">
-								<th style="width: 50px;" class="text-center">No</th>
-								<th style="width: 140px;">Hari & Tanggal</th>
-								<th style="width: 150px;">Rentang Minggu</th>
-								<th style="width: 160px;">Status Kepatuhan</th>
-								<th style="width: 80px;" class="text-center">Poin</th>
-								<th style="width: 160px;">Waktu Input Laporan</th>
-								<th>Jobdesk / Aktivitas Terisi</th>
-							</tr>
-						</thead>
-						<tbody id="tbodyLaporanBreakdown" style="font-size: 12px;">
-							<tr>
-								<td colspan="7" class="text-center py-4 text-muted">
-									<i class="fas fa-spinner fa-spin mr-1"></i> Memuat data breakdown...
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<div class="modal-footer bg-white border-top">
-				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-					<i class="fas fa-times mr-1"></i> Tutup
-				</button>
-			</div>
-		</div>
-	</div>
-</div>
-
 <script>
 	const divTreeData = <?= json_encode($div_tree) ?>;
 	let currentKinerjaRow = null;
@@ -1249,133 +1055,5 @@
 			.replace(/>/g, "&gt;")
 			.replace(/"/g, "&quot;")
 			.replace(/'/g, "&#039;");
-	}
-
-	let currentBreakdownData = [];
-	let activeBreakdownFilter = 'all';
-
-	function openLaporanBreakdownModal(pegId, initialFilter = 'all') {
-		if (!pegId) return;
-		const year = '<?= $selected_year ?>';
-		$('#modalLaporanBreakdown').modal('show');
-
-		document.getElementById('lbNamaPegawai').textContent = 'Memuat nama...';
-		document.getElementById('lbJabatanPegawai').textContent = '-';
-		document.getElementById('lbSkorAkhir').textContent = '...';
-		document.getElementById('lbTepat').textContent = '...';
-		document.getElementById('lbTelat').textContent = '...';
-		document.getElementById('lbKosong').textContent = '...';
-		document.getElementById('lbIzinCuti').textContent = '...';
-		document.getElementById('lbTotalHari').textContent = '...';
-
-		const tbody = document.getElementById('tbodyLaporanBreakdown');
-		tbody.innerHTML = `
-			<tr>
-				<td colspan="7" class="text-center py-4 text-muted">
-					<i class="fas fa-spinner fa-spin mr-1"></i> Sedang mengambil rekap audit laporan mingguan per hari...
-				</td>
-			</tr>
-		`;
-
-		fetch(`<?= base_url('audit/get_laporan_breakdown?tahun=') ?>${year}&pegawai_id=${pegId}`)
-			.then(res => res.json())
-			.then(resp => {
-				if (resp.status !== 'success' || !resp.data) {
-					tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">${escapeHtml(resp.message || 'Gagal memuat data')}</td></tr>`;
-					return;
-				}
-
-				const d = resp.data;
-				const p = resp.pegawai || {};
-				document.getElementById('lbNamaPegawai').textContent = p.nama || 'Pegawai';
-				document.getElementById('lbJabatanPegawai').textContent = p.jabatan || '-';
-				document.getElementById('lbSkorAkhir').textContent = d.compliance_score + '%';
-				document.getElementById('lbTepat').textContent = d.count_tepat_waktu;
-				document.getElementById('lbTelat').textContent = d.count_telat;
-				document.getElementById('lbKosong').textContent = d.count_tidak_isi;
-				document.getElementById('lbIzinCuti').textContent = d.count_izin_cuti || 0;
-				document.getElementById('lbTotalHari').textContent = d.effective_workdays || d.total_workdays;
-
-				currentBreakdownData = d.breakdown || [];
-				activeBreakdownFilter = initialFilter || 'all';
-
-				// Set active button
-				const allBtns = document.querySelectorAll('#modalLaporanBreakdown .btn-xs');
-				allBtns.forEach(b => b.classList.remove('active'));
-				if (activeBreakdownFilter === 'kosong') {
-					const btnK = document.getElementById('btnFilterBreakdownKosong');
-					if (btnK) btnK.classList.add('active');
-				} else {
-					const btnA = document.getElementById('btnFilterBreakdownAll');
-					if (btnA) btnA.classList.add('active');
-				}
-
-				renderBreakdownTableRows();
-			})
-			.catch(err => {
-				console.error(err);
-				tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Terjadi kesalahan koneksi server.</td></tr>`;
-			});
-	}
-
-	function filterModalBreakdownTable(filterCode, btn) {
-		activeBreakdownFilter = filterCode || 'all';
-		const parent = btn ? btn.parentElement : null;
-		if (parent) {
-			parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-			if (btn) btn.classList.add('active');
-		}
-		renderBreakdownTableRows();
-	}
-
-	function renderBreakdownTableRows() {
-		const tbody = document.getElementById('tbodyLaporanBreakdown');
-		if (!tbody) return;
-
-		let list = currentBreakdownData;
-		if (activeBreakdownFilter !== 'all') {
-			list = list.filter(item => item.status_code === activeBreakdownFilter);
-		}
-
-		if (list.length === 0) {
-			tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Tidak ada rekaman hari kerja untuk filter ini.</td></tr>`;
-			return;
-		}
-
-		let html = '';
-		list.forEach((row, idx) => {
-			let badgeHtml = '';
-			let rowBg = '';
-			if (row.status_code === 'tepat') {
-				badgeHtml = '<span class="badge badge-success px-2 py-1"><i class="fas fa-check-circle mr-1"></i> Tepat Waktu</span>';
-			} else if (row.status_code === 'telat') {
-				badgeHtml = '<span class="badge badge-warning text-dark px-2 py-1"><i class="fas fa-history mr-1"></i> Telat (0.5)</span>';
-				rowBg = 'style="background-color: #fffbeb;"';
-			} else if (row.status_code === 'izin_cuti') {
-				badgeHtml = `<span class="badge badge-info px-2 py-1"><i class="fas fa-user-shield mr-1"></i> ${escapeHtml(row.status)}</span>`;
-				rowBg = 'style="background-color: #f0fdfa;"';
-			} else {
-				badgeHtml = '<span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle mr-1"></i> Kosong (0)</span>';
-				rowBg = 'style="background-color: #fef2f2;"';
-			}
-
-			html += `
-				<tr ${rowBg}>
-					<td class="text-center font-weight-bold text-muted">${idx + 1}</td>
-					<td>
-						<div class="font-weight-bold text-dark">${escapeHtml(row.hari)}, ${escapeHtml(row.tanggal)}</div>
-					</td>
-					<td class="text-muted small">${escapeHtml(row.rentang_minggu)}</td>
-					<td>${badgeHtml}</td>
-					<td class="text-center font-weight-bold">${row.point}</td>
-					<td class="small text-muted">${escapeHtml(row.created_at)}</td>
-					<td class="small text-dark text-truncate" style="max-width: 250px;" title="${escapeHtml(row.jobdesc)}">
-						${escapeHtml(row.jobdesc)}
-					</td>
-				</tr>
-			`;
-		});
-
-		tbody.innerHTML = html;
 	}
 </script>
