@@ -408,8 +408,29 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
 
         <!-- Main Content Card -->
         <div class="card-modern">
-            <div class="card-header-modern flex-wrap pb-3">
-                <div>
+            <div class="card-header-modern d-flex flex-column align-items-stretch pb-3">
+                <!-- Toolbar Atas: Judul & Tombol Aksi Utama -->
+                <div class="d-flex align-items-center justify-content-between flex-wrap pb-3 mb-3 border-bottom" style="gap: 12px;">
+                    <div class="d-flex align-items-center">
+                        <span class="badge badge-primary px-3 py-2 mr-2 font-weight-bold shadow-sm" style="border-radius: 8px; font-size: 0.85rem; background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+                            <i class="fas fa-file-invoice mr-1"></i> Data PO Masuk
+                        </span>
+                        <span class="text-muted small font-weight-500 d-none d-md-inline">
+                            Kelola dan pantau seluruh alur kroscek & progres pengadaan Purchase Order
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap: 8px;">
+                        <button type="button" class="btn btn-outline-secondary font-weight-bold px-3 py-2 shadow-sm" data-toggle="modal" data-target="#modalCetakLaporan" style="border-radius: 8px; font-size: 0.84rem;">
+                            <i class="fas fa-print mr-1 text-primary"></i> Cetak Laporan
+                        </button>
+                        <a href="<?= base_url('po_system/tambah' . (!empty($from_nav) ? '?from=' . urlencode($from_nav) : '')) ?>" class="btn btn-primary shadow-sm font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 0.84rem;">
+                            <i class="fas fa-plus-circle mr-1"></i> Input PO Baru
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bagian Filter (Full Width 100%) -->
+                <div class="w-100">
                     <!-- Filter Bar Status Kroscek -->
                     <div class="d-flex align-items-center flex-wrap mb-2">
                         <span class="small font-weight-bold text-muted mr-2" style="min-width: 95px;"><i class="fas fa-check-square mr-1"></i> Kroscek:</span>
@@ -431,7 +452,7 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                     </div>
 
                     <!-- Filter Bar Status Proses -->
-                    <div class="d-flex align-items-center flex-wrap">
+                    <div class="d-flex align-items-center flex-wrap mb-2">
                         <span class="small font-weight-bold text-muted mr-2" style="min-width: 95px;"><i class="fas fa-tasks mr-1"></i> Proses PO:</span>
                         <a href="<?= $makeUrl(null, '') ?>" class="filter-pill <?= empty($cur_status_proses) ? 'active' : '' ?>">
                             Semua Proses
@@ -451,10 +472,10 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                     </div>
 
                     <!-- Filter Bar Marketing / Sales -->
-                    <div class="d-flex align-items-center flex-wrap mt-2 pt-2 border-top">
+                    <div class="d-flex align-items-center flex-wrap mb-2 pt-2 border-top">
                         <span class="small font-weight-bold text-muted mr-2" style="min-width: 95px;"><i class="fas fa-user-tie mr-1 text-primary"></i> Marketing:</span>
                         <div class="d-inline-flex align-items-center flex-wrap" style="gap: 8px;">
-                            <select id="select_filter_sales" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; min-width: 250px; max-width: 320px; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff;">
+                            <select id="select_filter_sales" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; width: 260px !important; max-width: 320px; display: inline-block; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff; padding: 2px 10px;">
                                 <option value="<?= $makeUrl(null, null, '') ?>" <?= empty($cur_sales) ? 'selected' : '' ?>>-- Semua Marketing / Pengaju --</option>
                                 <?php if (!empty($sales_list)): ?>
                                     <?php foreach ($sales_list as $sl): ?>
@@ -472,6 +493,14 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                                 <?php endif; ?>
                             </select>
 
+                            <!-- Tombol Cepat Sortir Tabel A-Z / Z-A -->
+                            <button type="button" id="btnSortMarketingAsc" class="btn btn-xs btn-outline-primary font-weight-bold shadow-sm ml-1" style="border-radius: 20px; padding: 4px 11px; height: 32px;" title="Urutkan tabel langsung berdasarkan nama marketing A ke Z">
+                                <i class="fas fa-sort-alpha-down mr-1"></i> Sortir A-Z
+                            </button>
+                            <button type="button" id="btnSortMarketingDesc" class="btn btn-xs btn-outline-secondary font-weight-bold shadow-sm" style="border-radius: 20px; padding: 4px 11px; height: 32px;" title="Urutkan tabel langsung berdasarkan nama marketing Z ke A">
+                                <i class="fas fa-sort-alpha-up-alt mr-1"></i> Z-A
+                            </button>
+
                             <?php if (!empty($cur_sales)): ?>
                                 <?php
                                     $activeSalesName = '';
@@ -482,30 +511,22 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                                         }
                                     }
                                 ?>
-                                <span class="badge badge-info px-2 py-1 font-weight-bold" style="border-radius: 20px; font-size: 0.78rem;">
+                                <span class="badge badge-info px-2 py-1 font-weight-bold d-inline-flex align-items-center" style="border-radius: 20px; font-size: 0.78rem; height: 32px;">
                                     <i class="fas fa-user-check mr-1"></i> <?= htmlspecialchars($activeSalesName ?: 'Sales #' . $cur_sales) ?>
                                 </span>
-                                <a href="<?= $makeUrl(null, null, '') ?>" class="btn btn-xs btn-outline-danger font-weight-bold" style="border-radius: 20px; padding: 4px 10px;" title="Reset filter marketing">
+                                <a href="<?= $makeUrl(null, null, '') ?>" class="btn btn-xs btn-outline-danger font-weight-bold d-inline-flex align-items-center" style="border-radius: 20px; padding: 4px 10px; height: 32px;" title="Reset filter marketing">
                                     <i class="fas fa-times mr-1"></i> Reset
                                 </a>
                             <?php endif; ?>
-
-                            <!-- Tombol Cepat Sortir Tabel A-Z / Z-A -->
-                            <button type="button" id="btnSortMarketingAsc" class="btn btn-xs btn-outline-primary font-weight-bold shadow-sm ml-1" style="border-radius: 20px; padding: 4px 11px;" title="Urutkan tabel langsung berdasarkan nama marketing A ke Z">
-                                <i class="fas fa-sort-alpha-down mr-1"></i> Sortir A-Z
-                            </button>
-                            <button type="button" id="btnSortMarketingDesc" class="btn btn-xs btn-outline-secondary font-weight-bold shadow-sm" style="border-radius: 20px; padding: 4px 11px;" title="Urutkan tabel langsung berdasarkan nama marketing Z ke A">
-                                <i class="fas fa-sort-alpha-up-alt mr-1"></i> Z-A
-                            </button>
                         </div>
                     </div>
 
                     <!-- Filter Bar Periode (Bulan & Tahun) -->
-                    <div class="d-flex align-items-center flex-wrap mt-2 pt-2 border-top">
+                    <div class="d-flex align-items-center flex-wrap pt-2 border-top">
                         <span class="small font-weight-bold text-muted mr-2" style="min-width: 95px;"><i class="fas fa-calendar-alt mr-1 text-info"></i> Periode:</span>
                         <div class="d-inline-flex align-items-center flex-wrap" style="gap: 8px;">
                             <!-- Dropdown Bulan -->
-                            <select id="select_filter_bulan" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; min-width: 145px; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff;">
+                            <select id="select_filter_bulan" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; width: 145px !important; max-width: 150px; display: inline-block; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff; padding: 2px 10px;">
                                 <option value="">-- Semua Bulan --</option>
                                 <?php
                                 $namaBulanList = [
@@ -521,7 +542,7 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                             </select>
 
                             <!-- Dropdown Tahun -->
-                            <select id="select_filter_tahun" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; min-width: 125px; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff;">
+                            <select id="select_filter_tahun" class="form-control form-control-sm font-weight-bold shadow-sm" style="border-radius: 20px; width: 115px !important; max-width: 120px; display: inline-block; border-color: #cbd5e1; height: 32px; font-size: 0.8rem; background-color: #ffffff; padding: 2px 10px;">
                                 <option value="">-- Semua Tahun --</option>
                                 <?php if (!empty($tahun_list)): ?>
                                     <?php foreach ($tahun_list as $yr): ?>
@@ -534,7 +555,7 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                             </select>
 
                             <!-- Tombol Terapkan Filter Periode -->
-                            <button type="button" id="btnApplyPeriode" class="btn btn-xs btn-primary font-weight-bold shadow-sm" style="border-radius: 20px; padding: 4px 12px; height: 32px;" title="Terapkan filter periode">
+                            <button type="button" id="btnApplyPeriode" class="btn btn-xs btn-primary font-weight-bold shadow-sm d-inline-flex align-items-center" style="border-radius: 20px; padding: 4px 14px; height: 32px; font-size: 0.8rem;" title="Terapkan filter periode">
                                 <i class="fas fa-filter mr-1"></i> Filter
                             </button>
 
@@ -542,7 +563,7 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                             <?php
                             $isBulanIni = (!empty($cur_bulan) && (int)$cur_bulan === (int)date('m') && !empty($cur_tahun) && (int)$cur_tahun === (int)date('Y'));
                             ?>
-                            <a href="<?= $makeUrl(null, null, null, date('m'), date('Y')) ?>" class="filter-pill <?= $isBulanIni ? 'active' : '' ?>" style="font-size: 0.78rem; padding: 4px 10px;" title="Tampilkan PO bulan <?= date('F Y') ?>">
+                            <a href="<?= $makeUrl(null, null, null, date('m'), date('Y')) ?>" class="filter-pill <?= $isBulanIni ? 'active' : '' ?> d-inline-flex align-items-center" style="font-size: 0.78rem; padding: 4px 12px; height: 32px; margin-bottom: 0;" title="Tampilkan PO bulan <?= date('F Y') ?>">
                                 <i class="fas fa-calendar-check mr-1 text-success"></i> Bulan Ini (<?= date('M Y') ?>)
                             </a>
 
@@ -558,24 +579,15 @@ $makeUrl = function($newStatus = null, $newProses = null, $newSales = null, $new
                                     $labelPeriode .= $cur_tahun;
                                 }
                                 ?>
-                                <span class="badge badge-info px-2 py-1 font-weight-bold" style="border-radius: 20px; font-size: 0.78rem;">
+                                <span class="badge badge-info px-2 py-1 font-weight-bold d-inline-flex align-items-center" style="border-radius: 20px; font-size: 0.78rem; height: 32px;">
                                     <i class="fas fa-check-circle mr-1"></i> <?= trim($labelPeriode) ?>
                                 </span>
-                                <a href="<?= $makeUrl(null, null, null, '', '') ?>" class="btn btn-xs btn-outline-danger font-weight-bold" style="border-radius: 20px; padding: 4px 10px;" title="Reset filter periode">
+                                <a href="<?= $makeUrl(null, null, null, '', '') ?>" class="btn btn-xs btn-outline-danger font-weight-bold d-inline-flex align-items-center" style="border-radius: 20px; padding: 4px 10px; height: 32px;" title="Reset filter periode">
                                     <i class="fas fa-times mr-1"></i> Reset
                                 </a>
                             <?php endif; ?>
                         </div>
                     </div>
-                </div>
-
-                <div class="mt-3 mt-xl-0 d-flex align-items-center">
-                    <button type="button" class="btn btn-outline-secondary font-weight-bold px-3 py-2 mr-2 shadow-sm" data-toggle="modal" data-target="#modalCetakLaporan" style="border-radius: 8px;">
-                        <i class="fas fa-print mr-1"></i> Cetak Laporan
-                    </button>
-                    <a href="<?= base_url('po_system/tambah' . (!empty($from_nav) ? '?from=' . urlencode($from_nav) : '')) ?>" class="btn btn-primary shadow-sm font-weight-bold px-3 py-2" style="border-radius: 8px;">
-                        <i class="fas fa-plus-circle mr-1"></i> Input PO Baru
-                    </a>
                 </div>
             </div>
 
