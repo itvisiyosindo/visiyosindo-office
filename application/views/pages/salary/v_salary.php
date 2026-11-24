@@ -63,7 +63,7 @@
                     </div>
                     <div class="col-md-9 d-flex flex-wrap align-items-center" style="gap: 8px; padding-top: 8px;">
                         <button type="button" id="btn-download-slip-batch" class="btn btn-danger" disabled>
-                            <i class="fas fa-download"></i> Download Slip Terpilih (<span id="slip-selected-count">0</span>)
+                            <i class="fas fa-file-archive"></i> Download ZIP Slip Terpilih (<span id="slip-selected-count">0</span>)
                         </button>
                         <button type="button" id="btn-select-all-slips" class="btn btn-outline-danger">
                             <i class="fas fa-check-double"></i> Pilih Semua Karyawan
@@ -450,18 +450,98 @@
                 });
         });
 
+        // Minimal standard ZIP (STORE) builder in browser so PDFs are fetched 1-by-1 without server timeout
+        function buildZipBlob(files) {
+            var crcTable = new Uint32Array(256);
+            for (var n = 0; n < 256; n++) {
+                var c = n;
+                for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                crcTable[n] = c >>> 0;
+            }
+            function crc32(bytes) {
+                var crc = 0xFFFFFFFF;
+                for (var i = 0; i < bytes.length; i++) crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+                return (crc ^ 0xFFFFFFFF) >>> 0;
+            }
+            var enc = new TextEncoder();
+            var localParts = [];
+            var centralParts = [];
+            var offset = 0;
+            var now = new Date();
+            var dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((now.getSeconds() >> 1) & 31);
+            var dosDate = (((Math.max(1980, now.getFullYear()) - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
+
+            for (var i = 0; i < files.length; i++) {
+                var nameBytes = enc.encode(files[i].name);
+                var data = files[i].data;
+                var crc = crc32(data);
+                var lh = new ArrayBuffer(30);
+                var lv = new DataView(lh);
+                lv.setUint32(0, 0x04034b50, true);
+                lv.setUint16(4, 20, true);
+                lv.setUint16(6, 0x0800, true);
+                lv.setUint16(8, 0, true);
+                lv.setUint16(10, dosTime, true);
+                lv.setUint16(12, dosDate, true);
+                lv.setUint32(14, crc, true);
+                lv.setUint32(18, data.length, true);
+                lv.setUint32(22, data.length, true);
+                lv.setUint16(26, nameBytes.length, true);
+                lv.setUint16(28, 0, true);
+                localParts.push(new Uint8Array(lh), nameBytes, data);
+
+                var ch = new ArrayBuffer(46);
+                var cv = new DataView(ch);
+                cv.setUint32(0, 0x02014b50, true);
+                cv.setUint16(4, 20, true);
+                cv.setUint16(6, 20, true);
+                cv.setUint16(8, 0x0800, true);
+                cv.setUint16(10, 0, true);
+                cv.setUint16(12, dosTime, true);
+                cv.setUint16(14, dosDate, true);
+                cv.setUint32(16, crc, true);
+                cv.setUint32(20, data.length, true);
+                cv.setUint32(24, data.length, true);
+                cv.setUint16(28, nameBytes.length, true);
+                cv.setUint16(30, 0, true);
+                cv.setUint16(32, 0, true);
+                cv.setUint16(34, 0, true);
+                cv.setUint16(36, 0, true);
+                cv.setUint32(38, 0, true);
+                cv.setUint32(42, offset, true);
+                centralParts.push(new Uint8Array(ch), nameBytes);
+
+                offset += 30 + nameBytes.length + data.length;
+            }
+
+            var centralSize = centralParts.reduce(function (s, p) { return s + p.length; }, 0);
+            var eocd = new ArrayBuffer(22);
+            var ev = new DataView(eocd);
+            ev.setUint32(0, 0x06054b50, true);
+            ev.setUint16(4, 0, true);
+            ev.setUint16(6, 0, true);
+            ev.setUint16(8, files.length, true);
+            ev.setUint16(10, files.length, true);
+            ev.setUint32(12, centralSize, true);
+            ev.setUint32(16, offset, true);
+            ev.setUint16(20, 0, true);
+
+            return new Blob(localParts.concat(centralParts, [new Uint8Array(eocd)]), { type: 'application/zip' });
+        }
+
         $('#btn-download-slip-batch').on('click', async function () {
             var items = Array.from(selectedSlips.values());
             if (items.length === 0) return;
 
             var monthVal = $('#filter_month').val() || 'Terbaru';
             var cancelled = false;
-            var okCount = 0;
+            var zipEntries = [];
+            var usedNames = {};
             var failList = [];
 
             swal.fire({
-                title: 'Mengunduh Slip Gaji...',
-                html: '<div id="slip-dl-status">Menyiapkan 0 / ' + items.length + '...</div><small class="text-muted">Jika browser meminta izin download beberapa file, klik <b>Allow / Izinkan</b>.</small>',
+                title: 'Menyiapkan ZIP Slip Gaji...',
+                html: '<div id="slip-dl-status">Memproses 0 / ' + items.length + '...</div>',
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 showCancelButton: true,
@@ -476,7 +556,7 @@
                 var item = items[i];
                 var statusEl = document.getElementById('slip-dl-status');
                 if (statusEl) {
-                    statusEl.textContent = 'Mengunduh ' + (i + 1) + ' / ' + items.length + ': ' + item.nama;
+                    statusEl.textContent = 'Mengambil slip ' + (i + 1) + ' / ' + items.length + ': ' + item.nama;
                 }
                 try {
                     var sep = item.url.indexOf('?') === -1 ? '?' : '&';
@@ -485,31 +565,45 @@
                     if (!resp.ok || ct.indexOf('pdf') === -1) {
                         throw new Error('HTTP ' + resp.status);
                     }
-                    var blob = await resp.blob();
-                    var safeName = String(item.nama || 'Karyawan').replace(/[^A-Za-z0-9 _.-]/g, '').trim();
-                    var a = document.createElement('a');
-                    var blobUrl = URL.createObjectURL(blob);
-                    a.href = blobUrl;
-                    a.download = 'Slip Gaji - ' + safeName + ' - ' + monthVal + '.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    setTimeout(function (u) { URL.revokeObjectURL(u); }, 1500, blobUrl);
-                    okCount++;
+                    var buf = await resp.arrayBuffer();
+                    var safeName = String(item.nama || 'Karyawan').replace(/[^A-Za-z0-9 _.-]/g, '').trim() || 'Karyawan';
+                    var baseFile = 'Slip Gaji - ' + safeName + ' - ' + monthVal;
+                    var finalName = baseFile + '.pdf';
+                    if (usedNames[finalName]) {
+                        usedNames[finalName]++;
+                        finalName = baseFile + ' (' + usedNames[finalName] + ').pdf';
+                    } else {
+                        usedNames[finalName] = 1;
+                    }
+                    zipEntries.push({ name: finalName, data: new Uint8Array(buf) });
                 } catch (err) {
                     failList.push(item.nama);
-                }
-                if (!cancelled && i < items.length - 1) {
-                    await new Promise(function (r) { setTimeout(r, 450); });
                 }
             }
 
             if (cancelled) {
-                swal.fire('Dibatalkan', okCount + ' dari ' + items.length + ' slip sudah terdownload.', 'info');
-            } else if (failList.length > 0) {
-                swal.fire('Selesai Sebagian', okCount + ' slip berhasil didownload. Gagal (' + failList.length + '): ' + failList.join(', '), 'warning');
+                swal.fire('Dibatalkan', 'Proses download ZIP dibatalkan.', 'info');
+                return;
+            }
+            if (zipEntries.length === 0) {
+                swal.fire('Gagal', 'Tidak ada slip gaji yang berhasil diambil.', 'error');
+                return;
+            }
+
+            var zipBlob = buildZipBlob(zipEntries);
+            var a = document.createElement('a');
+            var blobUrl = URL.createObjectURL(zipBlob);
+            a.href = blobUrl;
+            a.download = 'Slip Gaji - ' + monthVal + '.zip';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 2000);
+
+            if (failList.length > 0) {
+                swal.fire('Selesai Sebagian', zipEntries.length + ' slip masuk ke ZIP. Gagal (' + failList.length + '): ' + failList.join(', '), 'warning');
             } else {
-                swal.fire('Selesai', okCount + ' slip gaji berhasil didownload satu per satu.', 'success');
+                swal.fire('Selesai', 'File ZIP berisi ' + zipEntries.length + ' slip gaji berhasil didownload.', 'success');
             }
         });
 
