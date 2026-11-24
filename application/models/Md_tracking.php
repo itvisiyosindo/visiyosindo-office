@@ -2138,60 +2138,34 @@ class Md_tracking extends CI_Model
             'stat'                  => 1,
         ])->row();
 
+        // Hanya sync progres jika tracking sudah dibuat manual oleh gudang
         if (!$existing) {
-            $insertData = [
-                'id_gudang'              => $pb->id_gudang,
-                'id_customer'            => $pb->id_customer,
-                'pic_penerima'           => $picPenerima,
-                'alamat_penerima'        => $alamatPenerima,
-                'id_ekspedisi'           => $pb->id_ekspedisi,
-                'nama_ekspedisi'         => $pb->nama_ekspedisi ?: '-',
-                'nama_barang'            => $namaBarangStr,
-                'tgl_pengiriman'         => $tglPengiriman,
-                'tgl_sampai'             => null,
-                'no_sj'                  => $pb->no_pengiriman,
-                'no_resi'                => $noResi,
-                'link_resi'              => $linkResi,
-                'keterangan'             => !empty($pb->keterangan) ? $pb->keterangan : 'Auto-sync Pengeluaran Barang',
-                'id_pengeluaran_barang'  => $id_pb,
-                'id_pengiriman_stok'     => null,
-                'id_serah_terima_barang' => null,
-                'tracking_type'          => 'pengeluaran_barang',
-                'waktu_po_cro'           => $waktuPoCro,
-                'waktu_cetak_sj'         => $waktuCetakSj,
-                'waktu_order_ekspedisi'  => null,
-                'waktu_packaging'        => null,
-                'waktu_loading_handover' => null,
-                'stat'                   => 1,
-                'created_at'             => $waktuCetakSj,
-            ];
-            $this->db->insert('tracking_barang', $insertData);
-            $idTracking = (int)$this->db->insert_id();
-        } else {
-            $idTracking = (int)$existing->id_tracking;
-            $upd = [
-                'no_sj'           => $pb->no_pengiriman,
-                'id_gudang'       => $pb->id_gudang,
-                'id_customer'     => $pb->id_customer,
-                'id_ekspedisi'    => $pb->id_ekspedisi,
-                'nama_ekspedisi'  => $pb->nama_ekspedisi ?: $existing->nama_ekspedisi,
-                'alamat_penerima' => $alamatPenerima ?: $existing->alamat_penerima,
-                'tgl_pengiriman'  => $tglPengiriman ?: $existing->tgl_pengiriman,
-            ];
-            if ($noResi !== '-') {
-                $upd['no_resi'] = $noResi;
-            }
-            if ($linkResi !== '-') {
-                $upd['link_resi'] = $linkResi;
-            }
-            if (empty($existing->waktu_po_cro) && $waktuPoCro) {
-                $upd['waktu_po_cro'] = $waktuPoCro;
-            }
-            if (empty($existing->waktu_cetak_sj) && $waktuCetakSj) {
-                $upd['waktu_cetak_sj'] = $waktuCetakSj;
-            }
-            $this->db->where('id_tracking', $idTracking)->update('tracking_barang', $upd);
+            return false;
         }
+
+        $idTracking = (int)$existing->id_tracking;
+        $upd = [
+            'no_sj'           => $pb->no_pengiriman,
+            'id_gudang'       => $pb->id_gudang,
+            'id_customer'     => $pb->id_customer,
+            'id_ekspedisi'    => $pb->id_ekspedisi,
+            'nama_ekspedisi'  => $pb->nama_ekspedisi ?: $existing->nama_ekspedisi,
+            'alamat_penerima' => $alamatPenerima ?: $existing->alamat_penerima,
+            'tgl_pengiriman'  => $tglPengiriman ?: $existing->tgl_pengiriman,
+        ];
+        if ($noResi !== '-') {
+            $upd['no_resi'] = $noResi;
+        }
+        if ($linkResi !== '-') {
+            $upd['link_resi'] = $linkResi;
+        }
+        if (empty($existing->waktu_po_cro) && $waktuPoCro) {
+            $upd['waktu_po_cro'] = $waktuPoCro;
+        }
+        if (empty($existing->waktu_cetak_sj) && $waktuCetakSj) {
+            $upd['waktu_cetak_sj'] = $waktuCetakSj;
+        }
+        $this->db->where('id_tracking', $idTracking)->update('tracking_barang', $upd);
 
         $advOpts = [
             'keterangan'     => $ketAuto,
@@ -2293,50 +2267,26 @@ class Md_tracking extends CI_Model
             'stat'               => 1,
         ])->row();
 
+        // Hanya sync progres jika tracking sudah dibuat manual oleh gudang
         if (!$existing) {
-            $insertData = [
-                'id_gudang'              => $ps->id_gudang_asal,
-                'id_customer'            => null,
-                'pic_penerima'           => $ps->nama_gudang_tujuan ?: 'Gudang Tujuan',
-                'alamat_penerima'        => $ps->alamat_gudang_tujuan ?: ($ps->nama_gudang_tujuan ?: '-'),
-                'id_ekspedisi'           => $ps->id_ekspedisi,
-                'nama_ekspedisi'         => $ps->nama_ekspedisi ?: '-',
-                'tgl_pengiriman'         => $tglPengiriman,
-                'tgl_sampai'             => null,
-                'no_sj'                  => $ps->no_pemindahan,
-                'no_resi'                => $noResi,
-                'link_resi'              => $linkResi,
-                'keterangan'             => !empty($ps->keterangan) ? $ps->keterangan : 'Auto-sync Pengiriman Stok',
-                'id_pengeluaran_barang'  => null,
-                'id_pengiriman_stok'     => $id_ps,
-                'id_serah_terima_barang' => null,
-                'tracking_type'          => 'pengiriman_stok',
-                'waktu_cetak_sj'         => $waktuCetak,
-                'waktu_order_ekspedisi'  => null,
-                'waktu_packaging'        => null,
-                'waktu_loading_handover' => null,
-                'stat'                   => 1,
-                'created_at'             => $waktuCetak,
-            ];
-            $this->db->insert('tracking_barang', $insertData);
-            $idTracking = (int)$this->db->insert_id();
-        } else {
-            $idTracking = (int)$existing->id_tracking;
-            $upd = [
-                'no_sj'          => $ps->no_pemindahan,
-                'id_gudang'      => $ps->id_gudang_asal,
-                'id_ekspedisi'   => $ps->id_ekspedisi,
-                'nama_ekspedisi' => $ps->nama_ekspedisi ?: $existing->nama_ekspedisi,
-                'tgl_pengiriman' => $tglPengiriman ?: $existing->tgl_pengiriman,
-            ];
-            if ($noResi !== '-') {
-                $upd['no_resi'] = $noResi;
-            }
-            if ($linkResi !== '-') {
-                $upd['link_resi'] = $linkResi;
-            }
-            $this->db->where('id_tracking', $idTracking)->update('tracking_barang', $upd);
+            return false;
         }
+
+        $idTracking = (int)$existing->id_tracking;
+        $upd = [
+            'no_sj'          => $ps->no_pemindahan,
+            'id_gudang'      => $ps->id_gudang_asal,
+            'id_ekspedisi'   => $ps->id_ekspedisi,
+            'nama_ekspedisi' => $ps->nama_ekspedisi ?: $existing->nama_ekspedisi,
+            'tgl_pengiriman' => $tglPengiriman ?: $existing->tgl_pengiriman,
+        ];
+        if ($noResi !== '-') {
+            $upd['no_resi'] = $noResi;
+        }
+        if ($linkResi !== '-') {
+            $upd['link_resi'] = $linkResi;
+        }
+        $this->db->where('id_tracking', $idTracking)->update('tracking_barang', $upd);
 
         $namaPenerimaAktual = ($penerimaan && !empty($penerimaan->nama_penerima_user))
             ? ($penerimaan->nama_penerima_user . ' (' . ($ps->nama_gudang_tujuan ?: 'Gudang Tujuan') . ')')
@@ -2401,39 +2351,17 @@ class Md_tracking extends CI_Model
         $targetStatus = isset($triggerOpts['target_status']) ? (int)$triggerOpts['target_status'] : 0;
         $ketAuto      = !empty($triggerOpts['keterangan']) ? $triggerOpts['keterangan'] : 'Otomatis masuk ke Tracking saat STTB dibuat (Menunggu Order Ekspedisi)';
 
+        // Hanya sync progres jika tracking sudah dibuat manual oleh gudang
         if (!$existing) {
-            $insertData = [
-                'id_gudang'              => null,
-                'id_customer'            => $stb->id_customer,
-                'pic_penerima'           => !empty($stb->contact_pihak2) ? $stb->contact_pihak2 : ($stb->nama_pihak2 ?: '-'),
-                'alamat_penerima'        => !empty($stb->alamat_pihak2) ? $stb->alamat_pihak2 : ($stb->kota_pengajuan ?: '-'),
-                'id_ekspedisi'           => null,
-                'nama_ekspedisi'         => 'Diantarkan Langsung',
-                'tgl_pengiriman'         => $tglPengajuan,
-                'tgl_sampai'             => null,
-                'no_sj'                  => $stb->kode_stb,
-                'no_resi'                => '-',
-                'link_resi'              => '-',
-                'keterangan'             => 'Auto-sync Serah Terima Barang (STTB)',
-                'id_pengeluaran_barang'  => null,
-                'id_pengiriman_stok'     => null,
-                'id_serah_terima_barang' => $id_stb,
-                'tracking_type'          => 'serah_terima_barang',
-                'waktu_cetak_sj'         => $waktuCetak,
-                'waktu_order_ekspedisi'  => null,
-                'stat'                   => 1,
-                'created_at'             => $waktuCetak,
-            ];
-            $this->db->insert('tracking_barang', $insertData);
-            $idTracking = (int)$this->db->insert_id();
-        } else {
-            $idTracking = (int)$existing->id_tracking;
-            $this->db->where('id_tracking', $idTracking)->update('tracking_barang', [
-                'no_sj'           => $stb->kode_stb,
-                'id_customer'     => $stb->id_customer,
-                'alamat_penerima' => !empty($stb->alamat_pihak2) ? $stb->alamat_pihak2 : $existing->alamat_penerima,
-            ]);
+            return false;
         }
+
+        $idTracking = (int)$existing->id_tracking;
+        $this->db->where('id_tracking', $idTracking)->update('tracking_barang', [
+            'no_sj'           => $stb->kode_stb,
+            'id_customer'     => $stb->id_customer,
+            'alamat_penerima' => !empty($stb->alamat_pihak2) ? $stb->alamat_pihak2 : $existing->alamat_penerima,
+        ]);
 
         $this->advanceTrackingStage($idTracking, $targetStatus, [
             'keterangan'     => $ketAuto,
@@ -2595,59 +2523,7 @@ class Md_tracking extends CI_Model
             }
         }
 
-        // 1. Backfill Pengeluaran Barang (SJBK) aktif 30 hari terakhir yang belum masuk ke tracking_barang
-        if ($this->db->table_exists('pengeluaran_barang')) {
-            $untrackedPb = $this->db->query("
-                SELECT pb.id_pengeluaran_barang
-                FROM pengeluaran_barang pb
-                LEFT JOIN tracking_barang tb ON tb.id_pengeluaran_barang = pb.id_pengeluaran_barang
-                WHERE pb.status = 1
-                  AND tb.id_tracking IS NULL
-                  AND COALESCE(NULLIF(pb.tgl_keluar, '0000-00-00'), DATE(pb.data_created)) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                ORDER BY pb.id_pengeluaran_barang DESC
-                LIMIT 100
-            ")->result();
-            foreach ($untrackedPb as $row) {
-                $this->syncPengeluaranBarangToTracking($row->id_pengeluaran_barang);
-            }
-        }
-
-        // 2. Backfill Pengiriman Stok (TTB) aktif 30 hari terakhir yang belum masuk ke tracking_barang
-        if ($this->db->table_exists('pengiriman_stok')) {
-            $untrackedPs = $this->db->query("
-                SELECT ps.id_pengiriman_stok
-                FROM pengiriman_stok ps
-                LEFT JOIN tracking_barang tb ON tb.id_pengiriman_stok = ps.id_pengiriman_stok
-                WHERE ps.status = 1
-                  AND tb.id_tracking IS NULL
-                  AND COALESCE(NULLIF(ps.tgl_pengiriman, '0000-00-00'), DATE(ps.data_created)) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                ORDER BY ps.id_pengiriman_stok DESC
-                LIMIT 100
-            ")->result();
-            foreach ($untrackedPs as $row) {
-                $this->syncPengirimanStokToTracking($row->id_pengiriman_stok);
-            }
-        }
-
-        // 3. Backfill Serah Terima Barang (STTB) aktif 30 hari terakhir yang belum masuk ke tracking_barang
-        if ($this->db->table_exists('surat_stb')) {
-            $hasStbStatus = $this->db->field_exists('status', 'surat_stb');
-            $whereStb     = $hasStbStatus ? "WHERE (stb.status IS NULL OR stb.status != 5) AND tb.id_tracking IS NULL" : "WHERE tb.id_tracking IS NULL";
-            $untrackedStb = $this->db->query("
-                SELECT stb.id_stb
-                FROM surat_stb stb
-                LEFT JOIN tracking_barang tb ON tb.id_serah_terima_barang = stb.id_stb
-                {$whereStb}
-                  AND COALESCE(NULLIF(stb.tgl_pengajuan, '0000-00-00'), DATE(stb.created_at)) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                ORDER BY stb.id_stb DESC
-                LIMIT 100
-            ")->result();
-            foreach ($untrackedStb as $row) {
-                $this->syncSerahTerimaToTracking($row->id_stb);
-            }
-        }
-
-        // 4. Auto-sync progres untuk tracking aktif yang dokumen sumbernya sudah maju (misal TTB sudah diterima / SJ sudah punya resi atau status diterima)
+        // Hanya auto-sync progres untuk tracking yang SUDAH dibuat manual oleh gudang (tidak auto-insert baris baru)
         if ($this->db->table_exists('pengiriman_stok') && $this->db->table_exists('riwayat_status_pengiriman_stok')) {
             $pendingPsTracks = $this->db->query("
                 SELECT tb.id_pengiriman_stok

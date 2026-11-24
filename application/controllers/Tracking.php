@@ -405,6 +405,15 @@ class Tracking extends CI_Controller
 
         $this->md_tracking->addStatus($dataDetailGc);
 
+        // Tarik otomatis progres & waktu aktivitas Office yang sudah terjadi sebelumnya
+        if (!empty($data['id_pengeluaran_barang'])) {
+            $this->md_tracking->syncPengeluaranBarangToTracking($data['id_pengeluaran_barang']);
+        } elseif (!empty($data['id_pengiriman_stok'])) {
+            $this->md_tracking->syncPengirimanStokToTracking($data['id_pengiriman_stok']);
+        } elseif (!empty($data['id_serah_terima_barang'])) {
+            $this->md_tracking->syncSerahTerimaToTracking($data['id_serah_terima_barang']);
+        }
+
 
         if ($status == 1) {
             $statusTracking = 'Proses Kirim / Order Ekspedisi';
@@ -1946,6 +1955,25 @@ class Tracking extends CI_Controller
         if (!empty($tr->id_pengiriman_stok) && $no_resi !== '' && $no_resi !== '-' && $this->db->table_exists('pengiriman_stok')) {
             $this->db->where('id_pengiriman_stok', (int)$tr->id_pengiriman_stok)->update('pengiriman_stok', ['no_resi' => $no_resi]);
         }
+
+        // Kirim notifikasi WA ke grup Gudang & Marketing sama seperti update manual
+        $gudangRow   = !empty($tr->id_gudang) ? $this->db->select('nama_gudang')->get_where('gudang', ['id_gudang' => $tr->id_gudang])->row() : null;
+        $customerRow = !empty($tr->id_customer) ? $this->md_tracking->getCustomerById($tr->id_customer) : [];
+        $dataWa = [
+            'idPenerima1'    => 'MARKETING PT. VYM',
+            'idPenerima2'    => 'Gudang PT. VYM',
+            'namaSurat'      => 'Tracking Barang',
+            'statusSurat'    => 'Update Status',
+            'statusTracking' => $statusLabel,
+            'status'         => 'memperbarui status',
+            'nosj'           => $tr->no_sj ?: '-',
+            'gudangAsal'     => $gudangRow->nama_gudang ?? '-',
+            'alamatTujuan'   => $tr->alamat_penerima ?: '-',
+            'keTerangan'     => $opts['keterangan'],
+            'idTracking'     => encrypt($id_tracking),
+            'csname'         => !empty($customerRow[0]->nama_customer) ? $customerRow[0]->nama_customer : ($tr->pic_penerima ?: '-'),
+        ];
+        $this->notifWaAppGudangGroup(2, $dataWa);
 
         addlog('Quick Next Status Tracking', 'Memajukan status tracking ' . ($tr->no_sj ?? ('#' . $id_tracking)) . ' ke ' . $statusLabel);
         ajaxReturnDie('success', 'Status ' . ($tr->no_sj ?? '') . ' berhasil dimajukan ke: ' . $statusLabel, 'reload_table');

@@ -188,7 +188,7 @@
 						<i class="fas fa-filter"></i> Filter Tipe :
 					</span>
 					<span class="badge badge-light border text-success px-2 py-1" style="font-size: 11px;">
-						<i class="fas fa-sync-alt mr-1"></i>Auto-Sync Aktif (SJBK, TTB, STTB &amp; Dokumen Gudang PO)
+						<i class="fas fa-sync-alt mr-1"></i>Auto-Sync Progres Aktif (dari PO, SJ &amp; Penerimaan)
 					</span>
 				</div>
 				<div class="btn-group btn-group-toggle tracking-filter-group" data-toggle="buttons">
