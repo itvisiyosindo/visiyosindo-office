@@ -603,12 +603,17 @@ class Salary extends CI_Controller
         ];
 
         // filename dari pdf ketika didownload
-        $file_pdf = 'SLIP GAJI KARYAWAN ' . $data['periode'];
+        $is_download = ($this->input->get('download') == '1');
+        $nama_karyawan = !empty($dtgaji->nama) ? $dtgaji->nama : (!empty($data['dt'][0]->nama) ? $data['dt'][0]->nama : 'Karyawan');
+        $safe_nama = trim(preg_replace('/[^A-Za-z0-9 _.-]/', '', $nama_karyawan));
+        $file_pdf = $is_download
+            ? 'Slip Gaji - ' . $safe_nama . ' - ' . $data['periode']
+            : 'SLIP GAJI KARYAWAN ' . $data['periode'];
 
         // page htmk yang akan di jadikan ke pdf
         $html = $this->load->view('pages/v_print/print_slip_gaji', $data, true);
         $mpdf->WriteHTML($html);
-        $mpdf->Output($file_pdf . '.pdf', 'I');
+        $mpdf->Output($file_pdf . '.pdf', $is_download ? 'D' : 'I');
     }
 
 
@@ -684,10 +689,15 @@ class Salary extends CI_Controller
             'dtsalary' => $dtsalary_obj
         ];
 
-        $file_pdf = 'SLIP GAJI KARYAWAN ' . $data['periode'];
+        $is_download = ($this->input->get('download') == '1');
+        $nama_karyawan = !empty($dtgaji->nama) ? $dtgaji->nama : (!empty($data['dt'][0]->nama) ? $data['dt'][0]->nama : 'Karyawan');
+        $safe_nama = trim(preg_replace('/[^A-Za-z0-9 _.-]/', '', $nama_karyawan));
+        $file_pdf = $is_download
+            ? 'Slip Gaji - ' . $safe_nama . ' - ' . $data['periode']
+            : 'SLIP GAJI KARYAWAN ' . $data['periode'];
         $html = $this->load->view('pages/v_print/print_slip_gaji', $data, true);
         $mpdf->WriteHTML($html);
-        $mpdf->Output($file_pdf . '.pdf', 'I');
+        $mpdf->Output($file_pdf . '.pdf', $is_download ? 'D' : 'I');
     }
 
 
@@ -891,8 +901,11 @@ class Salary extends CI_Controller
                     </a>
                 </div>';
 
+            $safe_nama_attr = htmlspecialchars($row->nama, ENT_QUOTES, 'UTF-8');
             $th = array();
-            $th[] = ++$start . '.';
+            $th[] = '<label class="mb-0 d-inline-flex align-items-center" style="cursor:pointer;gap:6px;">'
+                  . '<input type="checkbox" class="slip-check" value="' . $id_enc . '" data-nama="' . $safe_nama_attr . '" data-url="' . base_url($url_slip) . '">'
+                  . '<span>' . (++$start) . '.</span></label>';
             $th[] = '<a href="salary/show/detail_salary/' . $id_enc . '">' . $row->nama . '</a>';
             
             // Tampilkan Gaji Pokok & Tunjangan Jabatan dari data yang sudah difilter
@@ -925,6 +938,33 @@ class Salary extends CI_Controller
     
         $dt['data'] = $data;
         echo json_encode($dt);
+        die;
+    }
+
+    public function slip_list()
+    {
+        grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+
+        $month_filter = $this->input->get('filter_month');
+        $rows = $this->md_pengguna->getAllPenggunaAktifList();
+        $tglcetakstamp = strtotime(date('Y-m-d H:i:s'));
+        $items = [];
+
+        foreach ($rows as $row) {
+            $id_enc = encrypt($row->pengguna_id);
+            $url_slip = !empty($month_filter)
+                ? "salary/print_slip_month/" . $month_filter . "/" . $id_enc
+                : "salary/print_slip/" . encryptvym($id_enc . "," . $tglcetakstamp);
+
+            $items[] = [
+                'id'   => $id_enc,
+                'nama' => $row->nama,
+                'url'  => base_url($url_slip),
+            ];
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'success', 'data' => $items]);
         die;
     }
 

@@ -51,9 +51,9 @@
                                 class="icons fas fa-file-excel"></i> Import PPh 21 (Excel)</button>
                     </div>
                 </div>
-                <div class="row mb-3">
+                <div class="row mb-3 align-items-end">
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>Filter Bulan & Tahun:</label>
                             <input type="text" id="filter_month" class="form-control" 
                                    data-plugin-datepicker 
@@ -61,12 +61,23 @@
                                    placeholder="Pilih Bulan" value="<?= date('Y-m') ?>">
                         </div>
                     </div>
+                    <div class="col-md-9 d-flex flex-wrap align-items-center" style="gap: 8px; padding-top: 8px;">
+                        <button type="button" id="btn-download-slip-batch" class="btn btn-danger" disabled>
+                            <i class="fas fa-download"></i> Download Slip Terpilih (<span id="slip-selected-count">0</span>)
+                        </button>
+                        <button type="button" id="btn-select-all-slips" class="btn btn-outline-danger">
+                            <i class="fas fa-check-double"></i> Pilih Semua Karyawan
+                        </button>
+                        <button type="button" id="btn-clear-slips" class="btn btn-outline-secondary d-none">
+                            <i class="fas fa-times"></i> Reset Pilihan
+                        </button>
+                    </div>
                 </div>
                 <br>
                 <table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">
                     <thead>
                         <tr>
-                            <th> # </th>
+                            <th style="white-space: nowrap;"><input type="checkbox" id="check-all-page" title="Pilih semua di halaman ini" style="cursor:pointer;"> #</th>
                             <th> Nama Karyawan</th>
                             <th> Gaji Pokok </th>
                             <th> Komisi </th>
@@ -359,10 +370,152 @@
             },
             columnDefs: [{
                 targets: [0],
-                className: 'text-center'
-            }]
+                className: 'text-center',
+                orderable: false
+            }],
+            drawCallback: function () {
+                syncSlipCheckboxes();
+            }
         });
+
+        // Multi-select & sequential download slip gaji satu per satu
+        var selectedSlips = new Map();
+
+        function updateSlipBatchUI() {
+            var count = selectedSlips.size;
+            $('#slip-selected-count').text(count);
+            $('#btn-download-slip-batch').prop('disabled', count === 0);
+            $('#btn-clear-slips').toggleClass('d-none', count === 0);
+            var $pageChecks = $('#kt_table_1 tbody .slip-check');
+            var allChecked = $pageChecks.length > 0 && $pageChecks.filter(':checked').length === $pageChecks.length;
+            $('#check-all-page').prop('checked', allChecked);
+        }
+
+        function syncSlipCheckboxes() {
+            $('#kt_table_1 tbody .slip-check').each(function () {
+                var id = $(this).val();
+                $(this).prop('checked', selectedSlips.has(id));
+            });
+            updateSlipBatchUI();
+        }
+
+        $(document).on('change', '.slip-check', function () {
+            var id = $(this).val();
+            if ($(this).is(':checked')) {
+                selectedSlips.set(id, { nama: $(this).data('nama'), url: $(this).data('url') });
+            } else {
+                selectedSlips.delete(id);
+            }
+            updateSlipBatchUI();
+        });
+
+        $('#check-all-page').on('change', function () {
+            var checked = $(this).is(':checked');
+            $('#kt_table_1 tbody .slip-check').each(function () {
+                $(this).prop('checked', checked);
+                var id = $(this).val();
+                if (checked) {
+                    selectedSlips.set(id, { nama: $(this).data('nama'), url: $(this).data('url') });
+                } else {
+                    selectedSlips.delete(id);
+                }
+            });
+            updateSlipBatchUI();
+        });
+
+        $('#btn-clear-slips').on('click', function () {
+            selectedSlips.clear();
+            syncSlipCheckboxes();
+        });
+
+        $('#btn-select-all-slips').on('click', function () {
+            var $btn = $(this);
+            var month = $('#filter_month').val() || '';
+            $btn.prop('disabled', true);
+            fetch('<?= base_url("salary/slip_list") ?>?filter_month=' + encodeURIComponent(month), { credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res && res.data) {
+                        res.data.forEach(function (item) {
+                            selectedSlips.set(item.id, { nama: item.nama, url: item.url });
+                        });
+                        syncSlipCheckboxes();
+                    }
+                })
+                .catch(function () {
+                    swal.fire('Gagal', 'Tidak dapat mengambil daftar karyawan.', 'error');
+                })
+                .finally(function () {
+                    $btn.prop('disabled', false);
+                });
+        });
+
+        $('#btn-download-slip-batch').on('click', async function () {
+            var items = Array.from(selectedSlips.values());
+            if (items.length === 0) return;
+
+            var monthVal = $('#filter_month').val() || 'Terbaru';
+            var cancelled = false;
+            var okCount = 0;
+            var failList = [];
+
+            swal.fire({
+                title: 'Mengunduh Slip Gaji...',
+                html: '<div id="slip-dl-status">Menyiapkan 0 / ' + items.length + '...</div><small class="text-muted">Jika browser meminta izin download beberapa file, klik <b>Allow / Izinkan</b>.</small>',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Batal',
+                didOpen: function () { swal.showLoading(); }
+            }).then(function (res) {
+                if (res.dismiss === swal.DismissReason.cancel) cancelled = true;
+            });
+
+            for (var i = 0; i < items.length; i++) {
+                if (cancelled) break;
+                var item = items[i];
+                var statusEl = document.getElementById('slip-dl-status');
+                if (statusEl) {
+                    statusEl.textContent = 'Mengunduh ' + (i + 1) + ' / ' + items.length + ': ' + item.nama;
+                }
+                try {
+                    var sep = item.url.indexOf('?') === -1 ? '?' : '&';
+                    var resp = await fetch(item.url + sep + 'download=1', { credentials: 'same-origin' });
+                    var ct = (resp.headers.get('content-type') || '').toLowerCase();
+                    if (!resp.ok || ct.indexOf('pdf') === -1) {
+                        throw new Error('HTTP ' + resp.status);
+                    }
+                    var blob = await resp.blob();
+                    var safeName = String(item.nama || 'Karyawan').replace(/[^A-Za-z0-9 _.-]/g, '').trim();
+                    var a = document.createElement('a');
+                    var blobUrl = URL.createObjectURL(blob);
+                    a.href = blobUrl;
+                    a.download = 'Slip Gaji - ' + safeName + ' - ' + monthVal + '.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(function (u) { URL.revokeObjectURL(u); }, 1500, blobUrl);
+                    okCount++;
+                } catch (err) {
+                    failList.push(item.nama);
+                }
+                if (!cancelled && i < items.length - 1) {
+                    await new Promise(function (r) { setTimeout(r, 450); });
+                }
+            }
+
+            if (cancelled) {
+                swal.fire('Dibatalkan', okCount + ' dari ' + items.length + ' slip sudah terdownload.', 'info');
+            } else if (failList.length > 0) {
+                swal.fire('Selesai Sebagian', okCount + ' slip berhasil didownload. Gagal (' + failList.length + '): ' + failList.join(', '), 'warning');
+            } else {
+                swal.fire('Selesai', okCount + ' slip gaji berhasil didownload satu per satu.', 'success');
+            }
+        });
+
         $('#filter_month').change(function () {
+            selectedSlips.clear();
+            updateSlipBatchUI();
             table.ajax.reload();
         });
 
