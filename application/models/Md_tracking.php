@@ -382,7 +382,12 @@ class Md_tracking extends CI_Model
             $orderCol = isset($columns[$colIdx]) ? $columns[$colIdx] : $columns[0];
             $orderDir = $_POST['order'][0]['dir'] === 'desc' ? 'DESC' : 'ASC';
         }
-        $this->db->order_by($orderCol, $orderDir);
+        if ($orderCol === 't.id_tracking') {
+            $this->db->order_by("COALESCE(NULLIF(t.tgl_pengiriman, '0000-00-00'), DATE(t.created_at))", $orderDir, false);
+            $this->db->order_by('t.id_tracking', $orderDir);
+        } else {
+            $this->db->order_by($orderCol, $orderDir);
+        }
 
         if ($_POST['length'] != -1) {
             $this->db->limit($_POST['length'], $_POST['start']);
@@ -846,6 +851,8 @@ class Md_tracking extends CI_Model
             return $s;
         };
 
+        $curStatus = (isset($row->id_status) && $row->id_status !== '' && $row->id_status !== null) ? (int)$row->id_status : 0;
+
         // 1. Waktu PO diterima dari CRO
         $waktuPoCro = $cleanDt($row->waktu_po_cro ?? null);
         if (!$waktuPoCro) {
@@ -864,7 +871,7 @@ class Md_tracking extends CI_Model
 
         // 3. Waktu Order Ekspedisi
         $waktuOrderEks = $cleanDt($row->waktu_order_ekspedisi ?? null);
-        if (!$waktuOrderEks) {
+        if (!$waktuOrderEks && $curStatus >= 1) {
             $waktuOrderEks = $cleanDt($row->status1_time ?? null) ?: $cleanDt($row->created_at ?? $row->createdAt ?? null);
         }
 
@@ -904,7 +911,6 @@ class Md_tracking extends CI_Model
         // --- Ketepatan Pengiriman (On-Time Delivery: Estimasi Sampai vs Tanggal Diterima) ---
         $tglEstimasi = $cleanDt($row->tgl_sampai ?? null);
         $tglDiterima = $cleanDt($row->tgl_penerima_aktual ?? ($row->tgl_penerima ?? null));
-        $curStatus   = (int)($row->id_status ?? 0);
         if ($curStatus === 5 && !$tglDiterima) {
             $st5Time = $cleanDt($row->status5_time ?? ($row->statusCreatedAt ?? null));
             if ($st5Time) {
@@ -968,22 +974,33 @@ class Md_tracking extends CI_Model
                 }
             }
         } else {
-            $ketepatan['label']      = 'Estimasi Belum Diisi';
-            $ketepatan['badge_bg']   = '#f1f5f9';
-            $ketepatan['badge_text'] = '#64748b';
-            $ketepatan['badge_bdr']  = '#cbd5e1';
-            $ketepatan['icon']       = 'fa-minus-circle';
+            if ($curStatus === 5) {
+                $ketepatan['status']     = 'delivered_no_est';
+                $ketepatan['label']      = 'Selesai (Diterima)';
+                $ketepatan['badge_bg']   = '#dcfce7';
+                $ketepatan['badge_text'] = '#166534';
+                $ketepatan['badge_bdr']  = '#86efac';
+                $ketepatan['icon']       = 'fa-check-circle';
+            } else {
+                $ketepatan['status']     = 'no_estimate';
+                $ketepatan['label']      = 'Estimasi Belum Diisi';
+                $ketepatan['badge_bg']   = '#f1f5f9';
+                $ketepatan['badge_text'] = '#64748b';
+                $ketepatan['badge_bdr']  = '#cbd5e1';
+                $ketepatan['icon']       = 'fa-minus-circle';
+            }
         }
 
         // --- Kepatuhan SOP Warehouse ---
         $hasResi = (!empty($row->no_resi) && trim((string)$row->no_resi) !== '-') || (!empty($row->link_resi) && trim((string)$row->link_resi) !== '-');
+        $hasEkspedisi = !empty($row->nama_ekspedisi) && trim((string)$row->nama_ekspedisi) !== '-';
         $isDirectDelivery = in_array(trim((string)($row->nama_ekspedisi ?? '')), ['Diantarkan Langsung', 'Dijemput Langsung'], true);
         $hasPod  = ($curStatus === 5) && (!empty($row->nama_penerima_aktual ?? ($row->nama_penerima ?? null)) || !empty($row->bukti_penerima_aktual ?? ($row->bukti_penerima ?? null)));
 
         $sopChecks = [
             ['label' => 'PO CRO / Dokumen Sumber', 'done' => !empty($waktuPoCro) || !empty($waktuCetakSj)],
             ['label' => 'Cetak SJ / Dokumen Keluar', 'done' => !empty($waktuCetakSj)],
-            ['label' => 'Order Ekspedisi', 'done' => !empty($waktuOrderEks) && !empty($row->nama_ekspedisi)],
+            ['label' => 'Order Ekspedisi', 'done' => !empty($waktuOrderEks) && $hasEkspedisi],
             ['label' => 'Packaging & QC Barang', 'done' => !empty($waktuPackaging)],
             ['label' => 'Loading / Hand-over & Resi', 'done' => !empty($waktuLoading) && ($hasResi || $isDirectDelivery)],
             ['label' => 'Bukti Serah Terima (POD)', 'done' => $hasPod]
@@ -1001,6 +1018,11 @@ class Md_tracking extends CI_Model
             $sopBg    = '#dcfce7';
             $sopText  = '#166534';
             $sopBdr   = '#86efac';
+        } elseif ($curStatus === 0) {
+            $sopLabel = 'Menunggu Proses (' . $sopDoneCount . '/' . $sopTotalCount . ')';
+            $sopBg    = '#f1f5f9';
+            $sopText  = '#475569';
+            $sopBdr   = '#cbd5e1';
         } elseif ($sopDoneCount >= 4) {
             $sopLabel = 'SOP Berjalan (' . $sopDoneCount . '/' . $sopTotalCount . ')';
             $sopBg    = '#e0f2fe';
@@ -1872,6 +1894,7 @@ class Md_tracking extends CI_Model
     public function getStageRank($id_status)
     {
         $map = [
+            0 => 0, // Menunggu Order Ekspedisi
             1 => 1, // Proses Kirim / Order Ekspedisi
             7 => 2, // Packaging Barang
             2 => 3, // Manifest Berangkat / Loading Hand-over
@@ -1885,8 +1908,9 @@ class Md_tracking extends CI_Model
 
     public function getNextStageInfo($current_status)
     {
-        $cur = (int)$current_status;
+        $cur = ($current_status === null || $current_status === '') ? 0 : (int)$current_status;
         $flow = [
+            0 => ['next_status' => 1, 'label' => 'Proses Kirim / Order Ekspedisi', 'btn_label' => 'Order Ekspedisi', 'icon' => 'fa-paper-plane'],
             1 => ['next_status' => 7, 'label' => 'Packaging Barang', 'btn_label' => 'Packaging', 'icon' => 'fa-box-open'],
             7 => ['next_status' => 2, 'label' => 'Manifest Berangkat / Loading Hand-over', 'btn_label' => 'Manifest / Kirim', 'icon' => 'fa-truck-loading'],
             2 => ['next_status' => 3, 'label' => 'Proses Sortir', 'btn_label' => 'Proses Sortir', 'icon' => 'fa-random'],
@@ -1914,7 +1938,7 @@ class Md_tracking extends CI_Model
     {
         $id_tracking   = (int)$id_tracking;
         $target_status = (int)$target_status;
-        if ($id_tracking <= 0 || $target_status <= 0) {
+        if ($id_tracking <= 0 || $target_status < 0) {
             return false;
         }
 
@@ -1923,8 +1947,9 @@ class Md_tracking extends CI_Model
             return false;
         }
 
-        $curStatus  = $this->getLatestStatusId($id_tracking);
-        $curRank    = $this->getStageRank($curStatus);
+        $hasStatus  = $this->db->where('id_tracking', $id_tracking)->count_all_results('tracking_status') > 0;
+        $curStatus  = $hasStatus ? $this->getLatestStatusId($id_tracking) : -1;
+        $curRank    = $hasStatus ? $this->getStageRank($curStatus) : -1;
         $targetRank = $this->getStageRank($target_status);
         $force      = !empty($opts['force']);
 
@@ -1939,7 +1964,7 @@ class Md_tracking extends CI_Model
             $tbUpdate['waktu_cetak_sj'] = $opts['waktu_cetak_sj'];
         }
         if ($targetRank >= 1 && empty($tr->waktu_order_ekspedisi)) {
-            $tbUpdate['waktu_order_ekspedisi'] = $opts['waktu_order_ekspedisi'] ?? ($tr->waktu_cetak_sj ?: $now);
+            $tbUpdate['waktu_order_ekspedisi'] = $opts['waktu_order_ekspedisi'] ?? $now;
         } elseif (!empty($opts['waktu_order_ekspedisi']) && !empty($opts['overwrite_order_time'])) {
             $tbUpdate['waktu_order_ekspedisi'] = $opts['waktu_order_ekspedisi'];
         }
@@ -1955,8 +1980,10 @@ class Md_tracking extends CI_Model
         if (!empty($opts['link_resi']) && trim((string)$opts['link_resi']) !== '-') {
             $tbUpdate['link_resi'] = trim((string)$opts['link_resi']);
         }
-        if (!empty($opts['tgl_sampai']) && (empty($tr->tgl_sampai) || strpos((string)$tr->tgl_sampai, '0000') !== false)) {
-            $tbUpdate['tgl_sampai'] = $opts['tgl_sampai'];
+        if (!empty($opts['tgl_sampai']) && strpos((string)$opts['tgl_sampai'], '0000') === false) {
+            if (!empty($opts['overwrite_tgl_sampai']) || empty($tr->tgl_sampai) || strpos((string)$tr->tgl_sampai, '0000') !== false) {
+                $tbUpdate['tgl_sampai'] = $opts['tgl_sampai'];
+            }
         }
 
         if (!empty($tbUpdate)) {
@@ -1964,7 +1991,7 @@ class Md_tracking extends CI_Model
         }
 
         // Jangan turunkan status jika sudah berada di tahap yang sama atau lebih tinggi
-        if (!$force && $curStatus > 0 && ($targetRank < $curRank || $target_status === $curStatus)) {
+        if (!$force && $hasStatus && ($targetRank < $curRank || $target_status === $curStatus)) {
             return false;
         }
 
@@ -1984,11 +2011,6 @@ class Md_tracking extends CI_Model
             $statusData['nama_penerima']  = !empty($opts['nama_penerima']) ? $opts['nama_penerima'] : ($tr->pic_penerima ?: 'Penerima');
             $statusData['tgl_penerima']   = !empty($opts['tgl_penerima']) ? $opts['tgl_penerima'] : date('Y-m-d');
             $statusData['bukti_penerima'] = !empty($opts['bukti_penerima']) ? $opts['bukti_penerima'] : ($tr->link_resi ?: '-');
-            if (empty($tr->tgl_sampai) || strpos((string)$tr->tgl_sampai, '0000') !== false) {
-                $this->db->where('id_tracking', $id_tracking)->update('tracking_barang', [
-                    'tgl_sampai' => $statusData['tgl_penerima'],
-                ]);
-            }
         }
 
         $this->db->insert('tracking_status', $statusData);
@@ -2076,12 +2098,15 @@ class Md_tracking extends CI_Model
         $tglPengiriman = (!empty($pb->tgl_keluar) && strpos((string)$pb->tgl_keluar, '0000') === false)
             ? $pb->tgl_keluar
             : date('Y-m-d');
-        $tglSampaiDefault = date('Y-m-d', strtotime($tglPengiriman . ' +3 days'));
 
         // Tentukan status target otomatis berdasarkan kelengkapan data
-        $targetStatus = 1; // Default: Proses Kirim / Order Ekspedisi
-        $ketAuto      = 'Otomatis masuk ke Tracking saat Surat Jalan dibuat';
+        $targetStatus = 0; // Default: Menunggu Order Ekspedisi (belum ada aksi order ekspedisi)
+        $ketAuto      = 'Otomatis masuk ke Tracking saat Surat Jalan dibuat (Menunggu Order Ekspedisi)';
 
+        if (!empty($pb->status_email_tiki) && (int)$pb->status_email_tiki === 1) {
+            $targetStatus = 1; // Proses Kirim / Order Ekspedisi
+            $ketAuto      = 'Otomatis Order Ekspedisi (Email TIKI sudah dikonfirmasi)';
+        }
         if ($pm && !empty($pm->doc_gudang_packing_list)) {
             $targetStatus = 7; // Packaging Barang
             $ketAuto      = 'Otomatis update ke Packaging Barang dari dokumen Packing List PO';
@@ -2098,7 +2123,7 @@ class Md_tracking extends CI_Model
             $ketAuto      = 'Otomatis selesai (Diterima) dari status Pengeluaran Barang / SSTB';
         }
 
-        if (!empty($triggerOpts['target_status'])) {
+        if (isset($triggerOpts['target_status'])) {
             $reqStatus = (int)$triggerOpts['target_status'];
             if ($this->getStageRank($reqStatus) >= $this->getStageRank($targetStatus)) {
                 $targetStatus = $reqStatus;
@@ -2123,7 +2148,7 @@ class Md_tracking extends CI_Model
                 'nama_ekspedisi'         => $pb->nama_ekspedisi ?: '-',
                 'nama_barang'            => $namaBarangStr,
                 'tgl_pengiriman'         => $tglPengiriman,
-                'tgl_sampai'             => $tglSampaiDefault,
+                'tgl_sampai'             => null,
                 'no_sj'                  => $pb->no_pengiriman,
                 'no_resi'                => $noResi,
                 'link_resi'              => $linkResi,
@@ -2134,9 +2159,9 @@ class Md_tracking extends CI_Model
                 'tracking_type'          => 'pengeluaran_barang',
                 'waktu_po_cro'           => $waktuPoCro,
                 'waktu_cetak_sj'         => $waktuCetakSj,
-                'waktu_order_ekspedisi'  => $waktuCetakSj,
-                'waktu_packaging'        => ($this->getStageRank($targetStatus) >= 2) ? ($pm->doc_gudang_updated_at ?? $waktuCetakSj) : null,
-                'waktu_loading_handover' => ($this->getStageRank($targetStatus) >= 3) ? ($pm->doc_gudang_updated_at ?? $waktuCetakSj) : null,
+                'waktu_order_ekspedisi'  => null,
+                'waktu_packaging'        => null,
+                'waktu_loading_handover' => null,
                 'stat'                   => 1,
                 'created_at'             => $waktuCetakSj,
             ];
@@ -2178,6 +2203,10 @@ class Md_tracking extends CI_Model
             'tgl_penerima'   => date('Y-m-d'),
             'bukti_penerima' => ($pm && !empty($pm->doc_gudang_sstb)) ? $pm->doc_gudang_sstb : $linkResi,
         ];
+        if ($pm && !empty($pm->doc_gudang_updated_at) && strpos((string)$pm->doc_gudang_updated_at, '0000') === false) {
+            $advOpts['waktu_packaging']        = $pm->doc_gudang_updated_at;
+            $advOpts['waktu_loading_handover'] = $pm->doc_gudang_updated_at;
+        }
         if (!empty($triggerOpts['overwrite_order_time'])) {
             $advOpts['waktu_order_ekspedisi'] = date('Y-m-d H:i:s');
             $advOpts['overwrite_order_time']  = true;
@@ -2233,12 +2262,11 @@ class Md_tracking extends CI_Model
             : ((!empty($ps->tgl_pengiriman) && strpos((string)$ps->tgl_pengiriman, '0000') === false) ? ($ps->tgl_pengiriman . ' 08:00:00') : date('Y-m-d H:i:s'));
 
         $tglPengiriman    = (!empty($ps->tgl_pengiriman) && strpos((string)$ps->tgl_pengiriman, '0000') === false) ? $ps->tgl_pengiriman : date('Y-m-d');
-        $tglSampaiDefault = date('Y-m-d', strtotime($tglPengiriman . ' +3 days'));
         $noResi           = (!empty($ps->no_resi) && trim((string)$ps->no_resi) !== '') ? trim($ps->no_resi) : '-';
         $linkResi         = !empty($ps->file_pendukung) ? base_url('uploads/pengiriman_stok/' . $ps->file_pendukung) : '-';
 
-        $targetStatus = 1;
-        $ketAuto      = 'Otomatis masuk ke Tracking saat Pengiriman Stok (TTB) dibuat';
+        $targetStatus = 0;
+        $ketAuto      = 'Otomatis masuk ke Tracking saat Pengiriman Stok (TTB) dibuat (Menunggu Order Ekspedisi)';
         if ($noResi !== '-' && $noResi !== '') {
             $targetStatus = 2;
             $ketAuto      = 'Otomatis update ke Manifest Berangkat (No. Resi TTB terisi)';
@@ -2250,7 +2278,7 @@ class Md_tracking extends CI_Model
             $targetStatus = 5;
             $ketAuto      = 'Otomatis Diterima saat Penerimaan Stok dikonfirmasi oleh Gudang Tujuan';
         }
-        if (!empty($triggerOpts['target_status'])) {
+        if (isset($triggerOpts['target_status'])) {
             $reqStatus = (int)$triggerOpts['target_status'];
             if ($this->getStageRank($reqStatus) >= $this->getStageRank($targetStatus)) {
                 $targetStatus = $reqStatus;
@@ -2274,7 +2302,7 @@ class Md_tracking extends CI_Model
                 'id_ekspedisi'           => $ps->id_ekspedisi,
                 'nama_ekspedisi'         => $ps->nama_ekspedisi ?: '-',
                 'tgl_pengiriman'         => $tglPengiriman,
-                'tgl_sampai'             => $tglSampaiDefault,
+                'tgl_sampai'             => null,
                 'no_sj'                  => $ps->no_pemindahan,
                 'no_resi'                => $noResi,
                 'link_resi'              => $linkResi,
@@ -2284,9 +2312,9 @@ class Md_tracking extends CI_Model
                 'id_serah_terima_barang' => null,
                 'tracking_type'          => 'pengiriman_stok',
                 'waktu_cetak_sj'         => $waktuCetak,
-                'waktu_order_ekspedisi'  => $waktuCetak,
-                'waktu_packaging'        => ($this->getStageRank($targetStatus) >= 2) ? $waktuCetak : null,
-                'waktu_loading_handover' => ($this->getStageRank($targetStatus) >= 3) ? $waktuCetak : null,
+                'waktu_order_ekspedisi'  => null,
+                'waktu_packaging'        => null,
+                'waktu_loading_handover' => null,
                 'stat'                   => 1,
                 'created_at'             => $waktuCetak,
             ];
@@ -2364,15 +2392,14 @@ class Md_tracking extends CI_Model
         $waktuCetak = (!empty($stb->created_at) && strpos((string)$stb->created_at, '0000') === false)
             ? $stb->created_at
             : ($tglPengajuan . ' 08:00:00');
-        $tglSampaiDefault = date('Y-m-d', strtotime($tglPengajuan . ' +3 days'));
 
         $existing = $this->db->get_where('tracking_barang', [
             'id_serah_terima_barang' => $id_stb,
             'stat'                   => 1,
         ])->row();
 
-        $targetStatus = !empty($triggerOpts['target_status']) ? (int)$triggerOpts['target_status'] : 1;
-        $ketAuto      = !empty($triggerOpts['keterangan']) ? $triggerOpts['keterangan'] : 'Otomatis masuk ke Tracking saat STTB dibuat';
+        $targetStatus = isset($triggerOpts['target_status']) ? (int)$triggerOpts['target_status'] : 0;
+        $ketAuto      = !empty($triggerOpts['keterangan']) ? $triggerOpts['keterangan'] : 'Otomatis masuk ke Tracking saat STTB dibuat (Menunggu Order Ekspedisi)';
 
         if (!$existing) {
             $insertData = [
@@ -2383,7 +2410,7 @@ class Md_tracking extends CI_Model
                 'id_ekspedisi'           => null,
                 'nama_ekspedisi'         => 'Diantarkan Langsung',
                 'tgl_pengiriman'         => $tglPengajuan,
-                'tgl_sampai'             => $tglSampaiDefault,
+                'tgl_sampai'             => null,
                 'no_sj'                  => $stb->kode_stb,
                 'no_resi'                => '-',
                 'link_resi'              => '-',
@@ -2393,7 +2420,7 @@ class Md_tracking extends CI_Model
                 'id_serah_terima_barang' => $id_stb,
                 'tracking_type'          => 'serah_terima_barang',
                 'waktu_cetak_sj'         => $waktuCetak,
-                'waktu_order_ekspedisi'  => $waktuCetak,
+                'waktu_order_ekspedisi'  => null,
                 'stat'                   => 1,
                 'created_at'             => $waktuCetak,
             ];
@@ -2470,13 +2497,113 @@ class Md_tracking extends CI_Model
             return;
         }
 
-        // 1. Backfill Pengeluaran Barang (SJBK) aktif yang belum masuk ke tracking_barang
+        $autoKetCond = "(
+            ts_chk.keterangan_konfirmasi LIKE 'Otomatis masuk ke Tracking%'
+            OR ts_chk.keterangan_konfirmasi LIKE 'Otomatis update ke %'
+            OR ts_chk.keterangan_konfirmasi LIKE 'Otomatis selesai (Diterima)%'
+            OR ts_chk.keterangan_konfirmasi LIKE 'Otomatis Diterima saat Penerimaan Stok%'
+        )";
+
+        // 0A. Cleanup aman: hapus baris arsip > 30 hari yang barusan tertarik backfill tanpa aksi manual/tagihan
+        $hasTagihanTable = $this->db->table_exists('tagihan_ekspedisi');
+        $tagihanNotExistsSql = $hasTagihanTable
+            ? "AND NOT EXISTS (SELECT 1 FROM tagihan_ekspedisi te WHERE te.id_tracking = tb.id_tracking)"
+            : "";
+
+        $staleRows = $this->db->query("
+            SELECT tb.id_tracking
+            FROM tracking_barang tb
+            WHERE tb.stat = 1
+              AND tb.tgl_pengiriman IS NOT NULL
+              AND tb.tgl_pengiriman != '0000-00-00'
+              AND tb.tgl_pengiriman < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+              {$tagihanNotExistsSql}
+              AND (SELECT COUNT(*) FROM tracking_status ts_all WHERE ts_all.id_tracking = tb.id_tracking) = 1
+              AND EXISTS (
+                  SELECT 1 FROM tracking_status ts_chk
+                  WHERE ts_chk.id_tracking = tb.id_tracking
+                    AND {$autoKetCond}
+              )
+        ")->result();
+
+        if (!empty($staleRows)) {
+            $staleIds = array_map(function ($r) {
+                return (int)$r->id_tracking;
+            }, $staleRows);
+            foreach (array_chunk($staleIds, 200) as $chunk) {
+                $this->db->where_in('id_tracking', $chunk)->delete('tracking_status');
+                $this->db->where_in('id_tracking', $chunk)->delete('tracking_barang');
+            }
+        }
+
+        // 0B. Perbaiki baris auto-sync 30 hari terakhir yang masih membawa waktu palsu = waktu_cetak_sj atau ETA palsu +3 hari
+        $recentAutoRows = $this->db->query("
+            SELECT
+                tb.id_tracking,
+                tb.tgl_pengiriman,
+                tb.tgl_sampai,
+                tb.no_resi,
+                tb.waktu_cetak_sj,
+                tb.waktu_order_ekspedisi,
+                tb.waktu_packaging,
+                tb.waktu_loading_handover,
+                ts_chk.id as status_row_id,
+                ts_chk.id_status as cur_id_status,
+                ts_chk.keterangan_konfirmasi
+            FROM tracking_barang tb
+            INNER JOIN tracking_status ts_chk ON ts_chk.id_tracking = tb.id_tracking
+            WHERE tb.stat = 1
+              AND (tb.tgl_pengiriman IS NULL OR tb.tgl_pengiriman = '0000-00-00' OR tb.tgl_pengiriman >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))
+              AND (SELECT COUNT(*) FROM tracking_status ts_all WHERE ts_all.id_tracking = tb.id_tracking) = 1
+              AND {$autoKetCond}
+        ")->result();
+
+        foreach ($recentAutoRows as $r) {
+            $upd = [];
+            if (!empty($r->tgl_pengiriman) && strpos((string)$r->tgl_pengiriman, '0000') === false && !empty($r->tgl_sampai)) {
+                $fakeEta = date('Y-m-d', strtotime($r->tgl_pengiriman . ' +3 days'));
+                if (substr((string)$r->tgl_sampai, 0, 10) === $fakeEta) {
+                    $upd['tgl_sampai'] = null;
+                }
+            }
+
+            $isInitialAuto = ((int)$r->cur_id_status === 1)
+                && strpos((string)$r->keterangan_konfirmasi, 'Otomatis masuk ke Tracking') === 0
+                && (empty($r->no_resi) || trim((string)$r->no_resi) === '-');
+
+            if ($isInitialAuto) {
+                if (!empty($r->waktu_order_ekspedisi) && !empty($r->waktu_cetak_sj) && $r->waktu_order_ekspedisi === $r->waktu_cetak_sj) {
+                    $upd['waktu_order_ekspedisi'] = null;
+                }
+                $this->db->where('id', (int)$r->status_row_id)->update('tracking_status', [
+                    'id_status' => '0',
+                ]);
+            } elseif ((int)$r->cur_id_status >= 1) {
+                if (!empty($r->waktu_order_ekspedisi) && !empty($r->waktu_cetak_sj) && $r->waktu_order_ekspedisi === $r->waktu_cetak_sj) {
+                    $upd['waktu_order_ekspedisi'] = null;
+                }
+                if (!empty($r->waktu_packaging) && !empty($r->waktu_cetak_sj) && $r->waktu_packaging === $r->waktu_cetak_sj) {
+                    $upd['waktu_packaging'] = null;
+                }
+                if (!empty($r->waktu_loading_handover) && !empty($r->waktu_cetak_sj) && $r->waktu_loading_handover === $r->waktu_cetak_sj) {
+                    $upd['waktu_loading_handover'] = null;
+                }
+            }
+
+            if (!empty($upd)) {
+                $this->db->where('id_tracking', (int)$r->id_tracking)->update('tracking_barang', $upd);
+            }
+        }
+
+        // 1. Backfill Pengeluaran Barang (SJBK) aktif 30 hari terakhir yang belum masuk ke tracking_barang
         if ($this->db->table_exists('pengeluaran_barang')) {
             $untrackedPb = $this->db->query("
                 SELECT pb.id_pengeluaran_barang
                 FROM pengeluaran_barang pb
-                LEFT JOIN tracking_barang tb ON tb.id_pengeluaran_barang = pb.id_pengeluaran_barang AND tb.stat = 1
-                WHERE pb.status = 1 AND tb.id_tracking IS NULL
+                LEFT JOIN tracking_barang tb ON tb.id_pengeluaran_barang = pb.id_pengeluaran_barang
+                WHERE pb.status = 1
+                  AND tb.id_tracking IS NULL
+                  AND COALESCE(NULLIF(pb.tgl_keluar, '0000-00-00'), DATE(pb.data_created)) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                 ORDER BY pb.id_pengeluaran_barang DESC
                 LIMIT 100
             ")->result();
@@ -2485,13 +2612,15 @@ class Md_tracking extends CI_Model
             }
         }
 
-        // 2. Backfill Pengiriman Stok (TTB) aktif yang belum masuk ke tracking_barang
+        // 2. Backfill Pengiriman Stok (TTB) aktif 30 hari terakhir yang belum masuk ke tracking_barang
         if ($this->db->table_exists('pengiriman_stok')) {
             $untrackedPs = $this->db->query("
                 SELECT ps.id_pengiriman_stok
                 FROM pengiriman_stok ps
-                LEFT JOIN tracking_barang tb ON tb.id_pengiriman_stok = ps.id_pengiriman_stok AND tb.stat = 1
-                WHERE ps.status = 1 AND tb.id_tracking IS NULL
+                LEFT JOIN tracking_barang tb ON tb.id_pengiriman_stok = ps.id_pengiriman_stok
+                WHERE ps.status = 1
+                  AND tb.id_tracking IS NULL
+                  AND COALESCE(NULLIF(ps.tgl_pengiriman, '0000-00-00'), DATE(ps.data_created)) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                 ORDER BY ps.id_pengiriman_stok DESC
                 LIMIT 100
             ")->result();
@@ -2500,15 +2629,16 @@ class Md_tracking extends CI_Model
             }
         }
 
-        // 3. Backfill Serah Terima Barang (STTB) aktif yang belum masuk ke tracking_barang
+        // 3. Backfill Serah Terima Barang (STTB) aktif 30 hari terakhir yang belum masuk ke tracking_barang
         if ($this->db->table_exists('surat_stb')) {
             $hasStbStatus = $this->db->field_exists('status', 'surat_stb');
             $whereStb     = $hasStbStatus ? "WHERE (stb.status IS NULL OR stb.status != 5) AND tb.id_tracking IS NULL" : "WHERE tb.id_tracking IS NULL";
             $untrackedStb = $this->db->query("
                 SELECT stb.id_stb
                 FROM surat_stb stb
-                LEFT JOIN tracking_barang tb ON tb.id_serah_terima_barang = stb.id_stb AND tb.stat = 1
+                LEFT JOIN tracking_barang tb ON tb.id_serah_terima_barang = stb.id_stb
                 {$whereStb}
+                  AND COALESCE(NULLIF(stb.tgl_pengajuan, '0000-00-00'), DATE(stb.created_at)) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                 ORDER BY stb.id_stb DESC
                 LIMIT 100
             ")->result();

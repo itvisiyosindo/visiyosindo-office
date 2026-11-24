@@ -283,11 +283,11 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
         <div class="row mb-3">
             <div class="col-md-6">
                 <strong>Tanggal Pengiriman:</strong><br>
-                <?= date('d-M-Y', strtotime($data_tracking[0]->tgl_pengiriman)); ?>
+                <?= (!empty($data_tracking[0]->tgl_pengiriman) && strpos((string)$data_tracking[0]->tgl_pengiriman, '0000') === false && strtotime($data_tracking[0]->tgl_pengiriman) > 0) ? date('d-M-Y', strtotime($data_tracking[0]->tgl_pengiriman)) : '-'; ?>
             </div>
             <div class="col-md-6">
                 <strong>Tanggal Estimasi Sampai:</strong><br>
-                <?= date('d-M-Y', strtotime($data_tracking[0]->tgl_sampai)); ?>
+                <?= (!empty($data_tracking[0]->tgl_sampai) && strpos((string)$data_tracking[0]->tgl_sampai, '0000') === false && strtotime($data_tracking[0]->tgl_sampai) > 0) ? date('d-M-Y', strtotime($data_tracking[0]->tgl_sampai)) : '-'; ?>
             </div>
         </div>
 
@@ -312,22 +312,26 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
             <?= nl2br(htmlspecialchars($data_tracking[0]->keterangan)) ?>
         </div>
 
-        <?php if ($data_status[0]->id_status == 1) {
+        <?php
+        $latestStatusId = !empty($data_status[0]) ? $data_status[0]->id_status : 0;
+        $status = "Menunggu Order Ekspedisi";
+        if ($latestStatusId == 0) {
+            $status = "Menunggu Order Ekspedisi";
+        } else if ($latestStatusId == 1) {
             $status = "Proses Kirim / Order Ekspedisi";
-        } else if ($data_status[0]->id_status == 7) {
+        } else if ($latestStatusId == 7) {
             $status = "Packaging Barang";
-        } else if ($data_status[0]->id_status == 2) {
+        } else if ($latestStatusId == 2) {
             $status = "Manifest Berangkat / Loading Hand-over";
-        } else if ($data_status[0]->id_status == 3) {
+        } else if ($latestStatusId == 3) {
             $status = "Proses Sortir";
-        } else if ($data_status[0]->id_status == 4) {
+        } else if ($latestStatusId == 4) {
             $status = "Pengantaran Kurir";
-        } else if ($data_status[0]->id_status == 5) {
+        } else if ($latestStatusId == 5) {
             $status = "Diterima";
-        } else if ($data_status[0]->id_status == 6) {
+        } else if ($latestStatusId == 6) {
             $status = "Menunggu Konfirmasi";
         }
-
         ?>
 
         <div class="mb-3">
@@ -509,7 +513,10 @@ $id_tracking_enc = encrypt($data_tracking[0]->id_tracking);
                         $diff  = date_diff($dari, $sampai); //untuk menghitung hari
                         // echo $diff->d . ' Hari, ';                         <span><i class="fa fa-clock-o mr-1"></i>21 March, 2019</span>
 
-                        if ($each->id_status == 1) {
+                        $status = "Menunggu Order Ekspedisi";
+                        if ($each->id_status == 0) {
+                            $status = "Menunggu Order Ekspedisi";
+                        } else if ($each->id_status == 1) {
                             $status = "Proses Kirim / Order Ekspedisi";
                         } else if ($each->id_status == 7) {
                             $status = "Packaging Barang";

@@ -870,6 +870,7 @@ class Tracking extends CI_Controller
 
         // Define list status untuk dropdown dan label
         $list_status = [
+            0 => 'Menunggu Order Ekspedisi',
             1 => 'Proses Kirim / Order Ekspedisi',
             7 => 'Packaging Barang',
             2 => 'Manifest Berangkat / Loading Hand-over',
@@ -1689,7 +1690,11 @@ class Tracking extends CI_Controller
         } elseif ($tracking_mode === 'barang') {
             // Will exclude kirim_dokumen in model query (handled in model)
             $_POST['exclude_kirim_dokumen'] = true;
-            $this->md_tracking->autoBackfillUntrackedDocuments();
+            $searchArr = $this->input->post('search', TRUE);
+            $searchVal = isset($searchArr['value']) ? trim((string)$searchArr['value']) : '';
+            if ((int)$this->input->post('start') === 0 && $searchVal === '') {
+                $this->md_tracking->autoBackfillUntrackedDocuments();
+            }
         }
 
         $dt = $this->md_tracking->getAllTrackingNew();
@@ -1723,7 +1728,9 @@ class Tracking extends CI_Controller
 
             // --- Logic Status Badge ---
             $stat = '<span class="badge badge-secondary">Unknown</span>'; // Default
-            if ($row->id_status == "1") {
+            if ($row->id_status === "0" || $row->id_status === 0 || $row->id_status === null || $row->id_status === "") {
+                $stat = '<span class="badge badge-ecommerce badge-secondary">Menunggu Order Eks</span>';
+            } else if ($row->id_status == "1") {
                 $stat = '<span class="badge badge-ecommerce badge-info">Proses Kirim / Order Eks</span>';
             } else if ($row->id_status == "7") {
                 $stat = '<span class="badge badge-ecommerce badge-primary">Packaging Barang</span>';
@@ -1771,7 +1778,7 @@ class Tracking extends CI_Controller
             }
 
             // Tombol 1-Klik Lanjut Tahap Berikutnya
-            $nextStage = $this->md_tracking->getNextStageInfo($row->id_status);
+            $nextStage = $this->md_tracking->getNextStageInfo($row->id_status ?? 0);
             if ($nextStage) {
                 $nextBtnClass = ((int)$nextStage['next_status'] === 5) ? 'btn-success' : 'btn-outline-primary';
                 $stat .= '<div class="mt-1">'
@@ -1886,6 +1893,7 @@ class Tracking extends CI_Controller
         $tr = $trRows[0];
 
         $no_resi        = trim((string)$this->input->post('no_resi', TRUE));
+        $tgl_sampai     = trim((string)$this->input->post('tgl_sampai', TRUE));
         $nama_penerima  = trim((string)$this->input->post('nama_penerima', TRUE));
         $tgl_penerima   = trim((string)$this->input->post('tgl_penerima', TRUE));
         $bukti_penerima = trim((string)$this->input->post('bukti_penerima', TRUE));
@@ -1910,6 +1918,10 @@ class Tracking extends CI_Controller
             'tgl_penerima'   => $tgl_penerima !== '' ? date('Y-m-d', strtotime($tgl_penerima)) : date('Y-m-d'),
             'bukti_penerima' => $bukti_penerima !== '' ? $bukti_penerima : ($tr->link_resi ?: '-'),
         ];
+        if ($tgl_sampai !== '' && strtotime($tgl_sampai) > 0) {
+            $opts['tgl_sampai']           = date('Y-m-d', strtotime($tgl_sampai));
+            $opts['overwrite_tgl_sampai'] = true;
+        }
 
         $ok = $this->md_tracking->advanceTrackingStage($id_tracking, $target_status, $opts);
         if (!$ok) {
@@ -2074,7 +2086,9 @@ class Tracking extends CI_Controller
 
         foreach ($data as $marketing) {
 
-            if ($marketing->id_status == 1) {
+            if ($marketing->id_status === '0' || $marketing->id_status === 0 || $marketing->id_status === null || $marketing->id_status === '') {
+                $status = "Menunggu Order Ekspedisi";
+            } else if ($marketing->id_status == 1) {
                 $status = "Proses Kirim / Order Ekspedisi";
             } else if ($marketing->id_status == 7) {
                 $status = "Packaging Barang";
@@ -2098,6 +2112,13 @@ class Tracking extends CI_Controller
                 $tglPenerima = "";
             }
 
+            $tglKirimStr = (!empty($marketing->tgl_pengiriman) && strpos((string)$marketing->tgl_pengiriman, '0000') === false && strtotime($marketing->tgl_pengiriman) > 0)
+                ? date('j F Y', strtotime($marketing->tgl_pengiriman))
+                : '-';
+            $tglSampaiStr = (!empty($marketing->tgl_sampai) && strpos((string)$marketing->tgl_sampai, '0000') === false && strtotime($marketing->tgl_sampai) > 0)
+                ? date('j F Y', strtotime($marketing->tgl_sampai))
+                : '-';
+
             $sla = $this->md_tracking->resolveWarehouseMilestoneTimes($marketing);
             $durSjOrderStr = !empty($sla['dur_sj_to_order']['valid']) ? $sla['dur_sj_to_order']['text'] . ' (' . $sla['dur_sj_to_order']['label_tier'] . ')' : '-';
             $durOrderPackStr = !empty($sla['dur_order_to_pack']['valid']) ? $sla['dur_order_to_pack']['text'] . ' (' . $sla['dur_order_to_pack']['label_tier'] . ')' : '-';
@@ -2112,8 +2133,8 @@ class Tracking extends CI_Controller
                 ->setCellValue('E' . $kolom, $marketing->pic_penerima)
                 ->setCellValue('F' . $kolom, $marketing->alamat_penerima)
                 ->setCellValue('G' . $kolom, $marketing->nama_ekspedisi)
-                ->setCellValue('H' . $kolom, date('j F Y', strtotime($marketing->tgl_pengiriman)))
-                ->setCellValue('I' . $kolom, date('j F Y', strtotime($marketing->tgl_sampai)))
+                ->setCellValue('H' . $kolom, $tglKirimStr)
+                ->setCellValue('I' . $kolom, $tglSampaiStr)
                 ->setCellValue('J' . $kolom, $marketing->biaya)
                 ->setCellValue('K' . $kolom, $marketing->no_sj)
                 ->setCellValue('L' . $kolom, $marketing->no_resi)

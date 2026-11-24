@@ -1322,15 +1322,45 @@
 						sendQuickNext(res.value);
 					}
 				});
-			} else if (nextSt === 2 && (!curResi || curResi === '-')) {
+			} else if (nextSt === 1) {
+				Swal.fire({
+					title: 'Proses Order Ekspedisi',
+					html: `
+						<div class="text-left">
+							<p class="small text-muted mb-2">Dokumen: <b>${noSj}</b></p>
+							<div class="form-group mb-0">
+								<label class="small font-weight-bold mb-1">Estimasi Sampai (Opsional)</label>
+								<input type="date" id="swal-tgl-sampai" class="form-control form-control-sm">
+								<small class="text-muted">Bisa diisi sekarang atau nanti saat barang berangkat</small>
+							</div>
+						</div>
+					`,
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonColor: '#2563eb',
+					cancelButtonColor: '#64748b',
+					confirmButtonText: 'Ya, Order Ekspedisi',
+					cancelButtonText: 'Batal'
+				}).then(function(res) {
+					if (res.value || res.isConfirmed) {
+						const etaInput = document.getElementById('swal-tgl-sampai') ? (document.getElementById('swal-tgl-sampai').value || '').trim() : '';
+						sendQuickNext({ tgl_sampai: etaInput });
+					}
+				});
+			} else if (nextSt === 2) {
+				const initResi = (curResi && curResi !== '-') ? curResi.replace(/"/g, '&quot;') : '';
 				Swal.fire({
 					title: 'Majukan ke Manifest Berangkat',
 					html: `
 						<div class="text-left">
 							<p class="small text-muted mb-2">Dokumen: <b>${noSj}</b></p>
-							<div class="form-group mb-0">
+							<div class="form-group mb-2">
 								<label class="small font-weight-bold mb-1">Nomor Resi Ekspedisi (Opsional)</label>
-								<input type="text" id="swal-no-resi" class="form-control form-control-sm" placeholder="Masukkan No. Resi jika sudah ada...">
+								<input type="text" id="swal-no-resi" class="form-control form-control-sm" value="${initResi}" placeholder="Masukkan No. Resi jika sudah ada...">
+							</div>
+							<div class="form-group mb-0">
+								<label class="small font-weight-bold mb-1">Estimasi Sampai (Opsional)</label>
+								<input type="date" id="swal-tgl-sampai" class="form-control form-control-sm">
 							</div>
 						</div>
 					`,
@@ -1343,7 +1373,8 @@
 				}).then(function(res) {
 					if (res.value || res.isConfirmed) {
 						const resiInput = document.getElementById('swal-no-resi') ? (document.getElementById('swal-no-resi').value || '').trim() : '';
-						sendQuickNext({ no_resi: resiInput });
+						const etaInput = document.getElementById('swal-tgl-sampai') ? (document.getElementById('swal-tgl-sampai').value || '').trim() : '';
+						sendQuickNext({ no_resi: resiInput, tgl_sampai: etaInput });
 					}
 				});
 			} else {

@@ -150,13 +150,13 @@ if ($is_pengiriman_stok) {
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tanggal Pengiriman <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="tgl_pengiriman" value="<?= date('Y-m-d', strtotime($tracking->tgl_pengiriman)) ?>" required>
+                                <input type="date" class="form-control" name="tgl_pengiriman" value="<?= (!empty($tracking->tgl_pengiriman) && strpos((string)$tracking->tgl_pengiriman, '0000') === false && strtotime($tracking->tgl_pengiriman) > 0) ? date('Y-m-d', strtotime($tracking->tgl_pengiriman)) : '' ?>" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tanggal Barang Diterima</label>
-                                <input type="date" class="form-control" name="tgl_sampai" value="<?= !empty($tracking->tgl_sampai) ? date('Y-m-d', strtotime($tracking->tgl_sampai)) : '' ?>">
+                                <input type="date" class="form-control" name="tgl_sampai" value="<?= (!empty($tracking->tgl_sampai) && strpos((string)$tracking->tgl_sampai, '0000') === false && strtotime($tracking->tgl_sampai) > 0) ? date('Y-m-d', strtotime($tracking->tgl_sampai)) : '' ?>">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -220,6 +220,7 @@ if ($is_pengiriman_stok) {
                                 <?php
                                 // Gunakan list_status dari controller jika ada, fallback ke array lokal
                                 $status_labels = isset($list_status) ? $list_status : [
+                                    0 => 'Menunggu Order Ekspedisi',
                                     1 => 'Proses Kirim / Order Ekspedisi',
                                     7 => 'Packaging Barang',
                                     2 => 'Manifest Berangkat / Loading Hand-over',
@@ -230,6 +231,7 @@ if ($is_pengiriman_stok) {
                                 ];
 
                                 $status_classes = [
+                                    0 => 'secondary',
                                     1 => 'secondary',
                                     7 => 'info',
                                     2 => 'primary',
