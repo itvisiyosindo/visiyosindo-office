@@ -105,6 +105,11 @@ class It_maintenance extends CI_Controller
     private function _decrypt_id($val)
     {
         if (empty($val)) return 0;
+        // Prioritaskan Hashids dulu karena hasil encrypt() bisa kebetulan berupa 6 digit angka (misal ID 10 => '127925')
+        $hashDecoded = decrypt($val);
+        if (!empty($hashDecoded) && is_numeric($hashDecoded)) {
+            return intval($hashDecoded);
+        }
         if (is_numeric($val)) {
             return intval($val);
         }
@@ -112,7 +117,7 @@ class It_maintenance extends CI_Controller
         if ($decoded !== false && is_numeric($decoded)) {
             return intval($decoded);
         }
-        return intval(decrypt($val));
+        return 0;
     }
 
     public function id_navbar()
@@ -384,14 +389,23 @@ class It_maintenance extends CI_Controller
     {
         grantAccessFor('all');
 
-        // Jika parameter berupa angka mentah (ID asli), redirect ke URL yang di-encrypt (Hashids)
-        if (is_numeric($id_ticket_enc)) {
+        // Hanya redirect jika parameter benar-benar ID mentah (bukan Hashids yang kebetulan semua angka seperti '127925')
+        if (is_numeric($id_ticket_enc) && empty(decrypt($id_ticket_enc))) {
             redirect('it_maintenance/detail_ticket/' . encrypt(intval($id_ticket_enc)));
             return;
         }
 
         $id_ticket = $this->_decrypt_id($id_ticket_enc);
         $ticket = $this->md_it_maintenance->getTicketById($id_ticket);
+
+        // Tangani link lama yang sempat ter-double-encrypt (misal 0gw740 -> 127925 -> 10)
+        if (empty($ticket) && $id_ticket > 0) {
+            $unwrapped = decrypt((string)$id_ticket);
+            if (!empty($unwrapped) && $this->md_it_maintenance->getTicketById(intval($unwrapped))) {
+                redirect('it_maintenance/detail_ticket/' . encrypt(intval($unwrapped)));
+                return;
+            }
+        }
 
         if (empty($ticket)) {
             show_404();
