@@ -94,13 +94,53 @@ class Salary extends CI_Controller
         $periode_label = getMonthName(date('m', strtotime($edit_month . '-01'))) . ' ' . date('Y', strtotime($edit_month . '-01'));
         $tmp = $this->md_pengguna->getById($data['pengguna_id']);
 
-        // Bulan lampau: hanya ubah slip (salary_history) bulan tersebut, master salary & bulan berjalan tidak disentuh
+        // Bulan lampau: hanya ubah/buat slip (salary_history) bulan tersebut, master salary & bulan berjalan tidak disentuh
         if ($edit_month < $curr_month) {
             $existing_history = $this->md_salary->getSlipByMonth($edit_month, $data['pengguna_id']);
             if (empty($existing_history)) {
-                ajaxReturnDie('error', 'Slip gaji periode ' . $periode_label . ' belum tersedia (belum tutup buku), sehingga tidak bisa diedit.');
+                $bpjs_kes = (int)round($data['dasar_bpjs_sehat'] * 0.01);
+                $bpjs_tk  = (int)round($data['dasar_bpjs_kerja'] * 0.02);
+                $pph      = (int)pph21_manual($data['pengguna_id'], $edit_month);
+                $total_a  = (int)$data['gaji_pokok'] + (int)$data['tunjangan_konsumsi'] + (int)$data['tunjangan_kinerja']
+                          + (int)$data['tunjangan_komunikasi'] + (int)$data['tunjangan_transportasi'] + (int)$data['tunjangan_bbm']
+                          + (int)$data['tunjangan_jabatan'] + (int)$data['bonus_tahunan'] + (int)$data['tunjangan_raya']
+                          + (int)$data['pendapatan_lain'];
+                $total_b  = $bpjs_kes + $bpjs_tk + $pph + (int)$data['potongan'];
+                $total_terima = $total_a - $total_b;
+
+                $this->md_salary->addHistorySalary([
+                    'tahun'                     => (int)date('Y', strtotime($edit_month . '-01')),
+                    'bulan'                     => (int)date('n', strtotime($edit_month . '-01')),
+                    'nama'                      => !empty($tmp[0]->nama) ? $tmp[0]->nama : '',
+                    'lama'                      => '',
+                    'no_rek'                    => !empty($tmp[0]->no_rek) ? $tmp[0]->no_rek : '',
+                    'idpengguna'                => (int)$data['pengguna_id'],
+                    'gajipokok'                 => (int)$data['gaji_pokok'],
+                    'tunjangankonsumsi'         => (int)$data['tunjangan_konsumsi'],
+                    'tunjangankinerja'          => (int)$data['tunjangan_kinerja'],
+                    'tunjangankomunikasi'       => (int)$data['tunjangan_komunikasi'],
+                    'tunjangantransport'        => (int)$data['tunjangan_transportasi'],
+                    'tunjanganbbm'              => (int)$data['tunjangan_bbm'],
+                    'tunjanganjabatan'          => (int)$data['tunjangan_jabatan'],
+                    'tunjanganraya'             => (int)$data['tunjangan_raya'],
+                    'bonus'                     => (int)$data['bonus_tahunan'],
+                    'pendapatanlain'            => (int)$data['pendapatan_lain'],
+                    'pendapatanlain_tidaktetap' => 0,
+                    'pph21'                     => $pph,
+                    'bpjskesehatan'             => $bpjs_kes,
+                    'bpjstk'                    => $bpjs_tk,
+                    'potonganlainnya'           => (int)$data['potongan'],
+                    'totalpendapatan'           => $total_a,
+                    'totalpotongan'             => $total_b,
+                    'totalterima'               => $total_terima,
+                    'sebelum_pajak'             => $total_a - ($bpjs_kes + $bpjs_tk + (int)$data['potongan']),
+                    'setelah_pajak'             => $total_terima,
+                    'dariPerusahaan'            => 0,
+                    'created_at'                => $edit_month . '-' . date('t', strtotime($edit_month . '-01')) . ' 23:59:59',
+                ]);
+            } else {
+                $this->syncSalaryHistory($existing_history, $data, TRUE);
             }
-            $this->syncSalaryHistory($existing_history, $data, TRUE);
 
             /** LOG */
             addLog('Update Salary', 'Mengupdate slip salary "' . $tmp[0]->nama . '" periode ' . $periode_label);
