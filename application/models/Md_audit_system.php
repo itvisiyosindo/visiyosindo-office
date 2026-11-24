@@ -434,7 +434,7 @@ class Md_audit_system extends CI_Model
             return 'Sales Manager';
         }
         if (preg_match('/\b(regulatory|import|ekspor|impor|izin edar)\b/', $combined)) {
-            return 'Regulatory & Import Officer';
+            return 'Regulatory';
         }
         if (preg_match('/\b(product specialist|aplikasi|specialist product|aplicant|applicant)\b/', $combined)) {
             return 'Aplicant and Specialist Product';

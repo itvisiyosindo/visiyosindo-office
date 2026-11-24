@@ -208,7 +208,7 @@
                         </td>
                         <td></td>
                         <td style="text-align:center; vertical-align:top; padding-top:2px;">
-                            <i>Regulatory & Import</i>
+                            <i>Regulatory</i>
                         </td>
                         <td></td>
                         <td style="text-align:center; vertical-align:top; padding-top:2px;">
@@ -232,7 +232,7 @@
 					<tr>
 						<td style="text-align:center; vertical-align:top;"><i><?= $forecast->jabatan ?></i></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; vertical-align:top;"><i>Regulatory & Import</i></td>
+						<td style="text-align:center; vertical-align:top;"><i>Regulatory</i></td>
 						<td style="text-align:center; "></td>
 						<td style="text-align:center; vertical-align:top;"><i>Director of Corporate Planning & Business Management</i></td>
 						<td style="text-align:center; "></td>

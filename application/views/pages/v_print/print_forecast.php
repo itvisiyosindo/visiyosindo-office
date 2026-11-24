@@ -330,7 +330,7 @@
                         </td>
                         <td></td>
                         <td style="text-align:center; vertical-align:top; padding-top:2px;">
-                            <i>Regulatory & Import</i>
+                            <i>Regulatory</i>
                         </td>
                         <td></td>
                         <td style="text-align:center; vertical-align:top; padding-top:2px;">

@@ -306,7 +306,7 @@ class Forecast extends CI_Controller
               }else if($row->status == "1"){
                 $stat_surat = '<span class="badge badge-ecommerce badge-success">Baru Diajukan</span>';
               }else if($row->status == "2"){
-                $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui Regulatory & Import</span>';
+                $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui Regulatory</span>';
               }else if($row->status == "3"){
                 $stat_surat = '<span class="badge badge-ecommerce badge-info">Disetujui Director of Corporate Planning & Business Management</span>';
               }else if($row->status == "4"){
@@ -351,7 +351,7 @@ class Forecast extends CI_Controller
                             'idPenerima2' 	=> '',
                             'namaSurat' 	=> 'Permintaan Forecast',
                             'urlNotif' 	    => $urlNotif,
-                            'penerima' 	    => '_Regulatory and Import_',
+                            'penerima' 	    => '_Regulatory_',
                             'perihal' 	    => $kategori,
                             'kode' 	        => $kode
                           ];
@@ -423,7 +423,7 @@ public function notifWaAddSuratLink($ulang, $detail){
                             'namaSurat' 	=> 'Permintaan Forecast',
                             'urlNotif' 	    => $urlNotif,
                             'penerima' 	    => 'Meilina Safitri',
-                            'ttd_sebelum1' 	=> 'Regulatory and Import',
+                            'ttd_sebelum1' 	=> 'Regulatory',
                             'ttd_sebelum2' 	=> '',
                             'ttd_sebelum3' 	=> '',
                             'ttd_sebelum4' 	=> ''
@@ -458,7 +458,7 @@ public function notifWaAddSuratLink($ulang, $detail){
                             'namaSurat' 	=> 'Permintaan Forecast',
                             'urlNotif' 	    => $urlNotif,
                             'penerima' 	    => 'Director',
-                            'ttd_sebelum1' 	=> 'Regulatory and Import',
+                            'ttd_sebelum1' 	=> 'Regulatory',
                             'ttd_sebelum2' 	=> 'Director of Corporate Planning and Business Management',
                             'ttd_sebelum3' 	=> '',
                             'ttd_sebelum4' 	=> ''
@@ -493,7 +493,7 @@ public function notifWaAddSuratLink($ulang, $detail){
                                   'namaSurat' 	    => 'Permintaan Forecast',
                                   'urlNotif' 	    => $urlNotif,
                                   'penerima' 	    => '',
-                                  'ttd_sebelum1' 	=> 'Regulatory and Import',
+                                  'ttd_sebelum1' 	=> 'Regulatory',
                                   'ttd_sebelum2' 	=> 'Director of Corporate Planning and Business Management',
                                   'ttd_sebelum3' 	=> 'Director',
                                   'ttd_sebelum4' 	=> ''
@@ -510,7 +510,7 @@ public function notifWaAddSuratLink($ulang, $detail){
                         'idPenerima2' 	=> '',
                         'namaSurat' 	=> 'Permintaan Forecast',
                         'penerima' 	    => '',
-                        'ttd_sebelum1' 	=> 'Regulatory and Import',
+                        'ttd_sebelum1' 	=> 'Regulatory',
                         'ttd_sebelum2' 	=> 'Director of Corporate Planning and Business Management',
                         'ttd_sebelum3' 	=> 'Director',
                         'ttd_sebelum4' 	=> ''
@@ -640,7 +640,7 @@ public function ttd_tolak($param1="", $param2="", $param3=""){
                             'namaSurat'     => 'Permintaan Forecast',
                                   'id' 	    => $id_sp,
                             'idPenolak'     => '84',
-                            'namaPenolak' 	=> 'Regulatory and import'
+                            'namaPenolak' 	=> 'Regulatory'
                               ];
                               $this->notifWaRejectBa($dataWa);
                   /** LOG */
