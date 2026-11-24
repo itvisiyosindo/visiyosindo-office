@@ -2115,12 +2115,9 @@ class Md_tracking extends CI_Model
             $targetStatus = 2; // Manifest Berangkat / Loading Hand-over
             $ketAuto      = 'Otomatis update ke Manifest Berangkat (No. Resi telah terbit)';
         }
-        if (
-            stripos((string)($pb->status_pengiriman ?? ''), 'diterima') !== false
-            || ($pm && !empty($pm->doc_gudang_sstb))
-        ) {
+        if (stripos((string)($pb->status_pengiriman ?? ''), 'diterima') !== false) {
             $targetStatus = 5; // Diterima
-            $ketAuto      = 'Otomatis selesai (Diterima) dari status Pengeluaran Barang / SSTB';
+            $ketAuto      = 'Otomatis selesai (Diterima) dari status Pengeluaran Barang';
         }
 
         if (isset($triggerOpts['target_status'])) {
@@ -2178,8 +2175,9 @@ class Md_tracking extends CI_Model
             'bukti_penerima' => ($pm && !empty($pm->doc_gudang_sstb)) ? $pm->doc_gudang_sstb : $linkResi,
         ];
         if ($pm && !empty($pm->doc_gudang_updated_at) && strpos((string)$pm->doc_gudang_updated_at, '0000') === false) {
-            $advOpts['waktu_packaging']        = $pm->doc_gudang_updated_at;
-            $advOpts['waktu_loading_handover'] = $pm->doc_gudang_updated_at;
+            if (!empty($pm->doc_gudang_packing_list)) {
+                $advOpts['waktu_packaging'] = $pm->doc_gudang_updated_at;
+            }
         }
         if (!empty($triggerOpts['overwrite_order_time'])) {
             $advOpts['waktu_order_ekspedisi'] = date('Y-m-d H:i:s');
