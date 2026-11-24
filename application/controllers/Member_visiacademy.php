@@ -492,6 +492,80 @@ class Member_visiacademy extends CI_Controller
         ajaxReturnDie('success', 'Produk katalog berhasil dihapus.', true);
     }
 
+    public function getOfficeKatalogSources()
+    {
+        grantAccessFor('all');
+
+        $allowedSources = ['katalog_office', 'brosur_endoscopy', 'brosur_office', 'master_barang'];
+        $source = trim((string) $this->input->get('source', true));
+        if (!in_array($source, $allowedSources, true)) {
+            $source = 'katalog_office';
+        }
+        $search = trim((string) $this->input->get('search', true));
+
+        $items  = $this->Md_member_visiacademy->getOfficeKatalogSources($source, $search);
+        $counts = $this->Md_member_visiacademy->getOfficeKatalogSourceCounts();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'success',
+            'source' => $source,
+            'items'  => $items,
+            'counts' => $counts,
+        ]);
+        die;
+    }
+
+    public function importKatalogFromOffice()
+    {
+        grantAccessFor('all');
+
+        $allowedSources = ['katalog_office', 'brosur_endoscopy', 'brosur_office', 'master_barang'];
+        $source = trim((string) $this->input->post('source', true));
+        if (!in_array($source, $allowedSources, true)) {
+            $source = 'all';
+        }
+
+        $selectedKeys = $this->input->post('selected_keys', true);
+        if (!is_array($selectedKeys) || empty($selectedKeys)) {
+            ajaxReturnDie('error', 'Pilih minimal 1 item dari data Office untuk diimport ke katalog.');
+        }
+
+        $cleanKeys = [];
+        foreach ($selectedKeys as $k) {
+            $k = trim((string) $k);
+            if (preg_match('/^(pl|br|bg)_\d+$/', $k)) {
+                $cleanKeys[] = $k;
+            }
+        }
+        $cleanKeys = array_values(array_unique($cleanKeys));
+        if (empty($cleanKeys)) {
+            ajaxReturnDie('error', 'Data item terpilih tidak valid.');
+        }
+
+        $defaultStatusRaw = trim((string) $this->input->post('default_status', true));
+        $defaultStatus = in_array($defaultStatusRaw, ['aktif', 'nonaktif'], true) ? $defaultStatusRaw : 'aktif';
+
+        $matchedItems = $this->Md_member_visiacademy->getOfficeKatalogSources($source, '', $cleanKeys);
+        if (empty($matchedItems)) {
+            ajaxReturnDie('error', 'Item yang dipilih tidak ditemukan pada data Office.');
+        }
+
+        $res = $this->Md_member_visiacademy->importKatalogFromOffice($matchedItems, $defaultStatus);
+        $inserted = (int)($res['inserted'] ?? 0);
+        $skipped  = (int)($res['skipped'] ?? 0);
+
+        if ($inserted <= 0) {
+            ajaxReturnDie('error', 'Semua item yang dipilih sudah ada di Katalog Produk Alkes (' . $skipped . ' duplikat dilewati).');
+        }
+
+        $msg = $inserted . ' produk berhasil ditambahkan ke Katalog Visiyosindo Afiliasi.';
+        if ($skipped > 0) {
+            $msg .= ' (' . $skipped . ' item dilewati karena sudah ada).';
+        }
+        ajaxReturnDie('success', $msg, true);
+    }
+
     private function _parseRupiah($raw)
     {
         $str = trim((string) $raw);

@@ -266,6 +266,326 @@ class Md_member_visiacademy extends CI_Model
         return $this->db->where('id_produk', (int)$id)->delete('va_katalog_produk');
     }
 
+    public function getOfficeKatalogSourceCounts()
+    {
+        $counts = [
+            'katalog_office'   => 0,
+            'brosur_endoscopy' => 0,
+            'brosur_office'    => 0,
+            'master_barang'    => 0,
+        ];
+
+        if ($this->db->table_exists('price_list')) {
+            $counts['katalog_office'] = (int)$this->db->where('status', 1)->where('jenis', 2)->count_all_results('price_list');
+            $counts['brosur_endoscopy'] = (int)$this->db->where('status', 1)->where('jenis', 3)->count_all_results('price_list');
+        }
+
+        if ($this->db->table_exists('brosur')) {
+            $counts['brosur_office'] = (int)$this->db->where('status', 1)->count_all_results('brosur');
+        }
+
+        if ($this->db->table_exists('barang')) {
+            $counts['master_barang'] = (int)$this->db->where('status', 1)->count_all_results('barang');
+        }
+
+        return $counts;
+    }
+
+    public function getOfficeKatalogSources($source = 'katalog_office', $search = '', $onlyKeys = null)
+    {
+        $this->ensureKatalogTable();
+
+        $search = trim((string)$search);
+        $filterByKeys = (is_array($onlyKeys) && !empty($onlyKeys));
+        $keySet = [];
+        $plIds = [];
+        $brIds = [];
+        $bgIds = [];
+
+        if ($filterByKeys) {
+            foreach ($onlyKeys as $k) {
+                $k = trim((string)$k);
+                if ($k === '') {
+                    continue;
+                }
+                $keySet[$k] = true;
+                if (preg_match('/^pl_(\d+)$/', $k, $m)) {
+                    $plIds[] = (int)$m[1];
+                } elseif (preg_match('/^br_(\d+)$/', $k, $m)) {
+                    $brIds[] = (int)$m[1];
+                } elseif (preg_match('/^bg_(\d+)$/', $k, $m)) {
+                    $bgIds[] = (int)$m[1];
+                }
+            }
+        }
+
+        // Ambil daftar nama produk yang sudah ada di va_katalog_produk untuk deteksi duplikat
+        $existingRows = $this->db->select('nama_produk')->get('va_katalog_produk')->result_array();
+        $existingNames = [];
+        foreach ($existingRows as $er) {
+            $nm = mb_strtolower(trim((string)($er['nama_produk'] ?? '')));
+            if ($nm !== '') {
+                $existingNames[$nm] = true;
+            }
+        }
+
+        $cleanUrl = function ($raw) {
+            $url = trim((string)$raw);
+            if ($url === '' || strlen($url) > 255) {
+                return null;
+            }
+            if (!preg_match('#^https?://#i', $url)) {
+                return null;
+            }
+            return filter_var($url, FILTER_VALIDATE_URL) ? $url : null;
+        };
+
+        $items = [];
+        $sourcesToRun = ($source === 'all')
+            ? ['katalog_office', 'brosur_endoscopy', 'brosur_office', 'master_barang']
+            : [$source];
+
+        // 1 & 2. Tabel Katalog (jenis=2) & Brosur Endoscopy (jenis=3) dari price_list
+        if ($this->db->table_exists('price_list')) {
+            foreach (['katalog_office' => [2, 'Katalog Office', 'Radiologi'], 'brosur_endoscopy' => [3, 'Brosur Endoscopy', 'Endoscopy']] as $srcKey => $meta) {
+                if (!in_array($srcKey, $sourcesToRun, true)) {
+                    continue;
+                }
+                if ($filterByKeys && empty($plIds)) {
+                    continue;
+                }
+                $this->db->select('id_price_list, nama_price_list, kategori, diskon, link_download')
+                         ->from('price_list')
+                         ->where('status', 1)
+                         ->where('jenis', $meta[0]);
+                if ($filterByKeys) {
+                    $this->db->where_in('id_price_list', $plIds);
+                } elseif ($search !== '') {
+                    $this->db->group_start()
+                             ->like('nama_price_list', $search)
+                             ->or_like('kategori', $search)
+                             ->or_like('diskon', $search)
+                             ->group_end();
+                }
+                $rows = $this->db->order_by('kategori', 'ASC')
+                                 ->order_by('nama_price_list', 'ASC')
+                                 ->get()
+                                 ->result_array();
+                foreach ($rows as $r) {
+                    $sKey = 'pl_' . (int)$r['id_price_list'];
+                    if ($filterByKeys && !isset($keySet[$sKey])) {
+                        continue;
+                    }
+                    $nama = mb_substr(trim((string)($r['nama_price_list'] ?? '')), 0, 200);
+                    if ($nama === '') {
+                        continue;
+                    }
+                    $kat = mb_substr(trim((string)($r['kategori'] ?? '')), 0, 100);
+                    if ($kat === '') {
+                        $kat = $meta[2];
+                    }
+                    $diskon = trim((string)($r['diskon'] ?? ''));
+                    $desk = ($diskon !== '' && $diskon !== '-') ? ('Info: ' . $diskon) : null;
+                    $items[] = [
+                        'source_key'        => $sKey,
+                        'source_type'       => $srcKey,
+                        'source_label'      => $meta[1],
+                        'nama_produk'       => $nama,
+                        'kategori'          => $kat,
+                        'deskripsi_singkat' => $desk,
+                        'url_brosur'        => $cleanUrl($r['link_download'] ?? ''),
+                        'already_exists'    => isset($existingNames[mb_strtolower($nama)]),
+                    ];
+                }
+            }
+        }
+
+        // 3. Brosur Produk dari tabel brosur
+        if (in_array('brosur_office', $sourcesToRun, true) && $this->db->table_exists('brosur')) {
+            if (!$filterByKeys || !empty($brIds)) {
+                $this->db->select('id_brosur, nama_brosur, kategori, link_download')
+                         ->from('brosur')
+                         ->where('status', 1);
+                if ($filterByKeys) {
+                    $this->db->where_in('id_brosur', $brIds);
+                } elseif ($search !== '') {
+                    $this->db->group_start()
+                             ->like('nama_brosur', $search)
+                             ->or_like('kategori', $search)
+                             ->group_end();
+                }
+                $rows = $this->db->order_by('kategori', 'ASC')
+                                 ->order_by('nama_brosur', 'ASC')
+                                 ->get()
+                                 ->result_array();
+                foreach ($rows as $r) {
+                    $sKey = 'br_' . (int)$r['id_brosur'];
+                    if ($filterByKeys && !isset($keySet[$sKey])) {
+                        continue;
+                    }
+                    $nama = mb_substr(trim((string)($r['nama_brosur'] ?? '')), 0, 200);
+                    if ($nama === '') {
+                        continue;
+                    }
+                    $kat = mb_substr(trim((string)($r['kategori'] ?? '')), 0, 100);
+                    if ($kat === '') {
+                        $kat = 'Radiologi';
+                    }
+                    $items[] = [
+                        'source_key'        => $sKey,
+                        'source_type'       => 'brosur_office',
+                        'source_label'      => 'Brosur Produk',
+                        'nama_produk'       => $nama,
+                        'kategori'          => $kat,
+                        'deskripsi_singkat' => null,
+                        'url_brosur'        => $cleanUrl($r['link_download'] ?? ''),
+                        'already_exists'    => isset($existingNames[mb_strtolower($nama)]),
+                    ];
+                }
+            }
+        }
+
+        // 4. Master Barang dari tabel barang
+        if (in_array('master_barang', $sourcesToRun, true) && $this->db->table_exists('barang')) {
+            if (!$filterByKeys || !empty($bgIds)) {
+                $hasKatTable = $this->db->table_exists('kategori_barang');
+                $this->db->select('b.id_barang, b.nama_barang, b.keterangan, b.tipe, b.akl' . ($hasKatTable ? ', kb.nama_kategori' : ''))
+                         ->from('barang b');
+                if ($hasKatTable) {
+                    $this->db->join('kategori_barang kb', 'kb.id_kategori = b.id_kategori', 'left');
+                }
+                $this->db->where('b.status', 1);
+                if ($filterByKeys) {
+                    $this->db->where_in('b.id_barang', $bgIds);
+                } elseif ($search !== '') {
+                    $this->db->group_start()
+                             ->like('b.nama_barang', $search)
+                             ->or_like('b.tipe', $search)
+                             ->or_like('b.akl', $search);
+                    if ($hasKatTable) {
+                        $this->db->or_like('kb.nama_kategori', $search);
+                    }
+                    $this->db->group_end();
+                }
+                $this->db->order_by('b.nama_barang', 'ASC');
+                if (!$filterByKeys) {
+                    $this->db->limit(200);
+                }
+                $rows = $this->db->get()->result_array();
+                foreach ($rows as $r) {
+                    $sKey = 'bg_' . (int)$r['id_barang'];
+                    if ($filterByKeys && !isset($keySet[$sKey])) {
+                        continue;
+                    }
+                    $nama = mb_substr(trim((string)($r['nama_barang'] ?? '')), 0, 200);
+                    if ($nama === '') {
+                        continue;
+                    }
+                    $kat = mb_substr(trim((string)($r['nama_kategori'] ?? '')), 0, 100);
+                    if ($kat === '') {
+                        $kat = 'Lainnya';
+                    }
+                    $parts = [];
+                    $tipe = trim((string)($r['tipe'] ?? ''));
+                    $akl  = trim((string)($r['akl'] ?? ''));
+                    $ket  = trim((string)($r['keterangan'] ?? ''));
+                    if ($tipe !== '' && $tipe !== '-') {
+                        $parts[] = 'Tipe: ' . $tipe;
+                    }
+                    if ($akl !== '' && $akl !== '-') {
+                        $parts[] = 'AKL: ' . $akl;
+                    }
+                    if ($ket !== '' && $ket !== '-') {
+                        $parts[] = $ket;
+                    }
+                    $desk = !empty($parts) ? mb_substr(implode(' | ', $parts), 0, 300) : null;
+                    $items[] = [
+                        'source_key'        => $sKey,
+                        'source_type'       => 'master_barang',
+                        'source_label'      => 'Master Barang',
+                        'nama_produk'       => $nama,
+                        'kategori'          => $kat,
+                        'deskripsi_singkat' => $desk,
+                        'url_brosur'        => null,
+                        'already_exists'    => isset($existingNames[mb_strtolower($nama)]),
+                    ];
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    public function importKatalogFromOffice($items, $defaultStatus = 'aktif')
+    {
+        $this->ensureKatalogTable();
+
+        $status = in_array($defaultStatus, ['aktif', 'nonaktif'], true) ? $defaultStatus : 'aktif';
+
+        $existingRows = $this->db->select('nama_produk')->get('va_katalog_produk')->result_array();
+        $existingNames = [];
+        foreach ($existingRows as $er) {
+            $nm = mb_strtolower(trim((string)($er['nama_produk'] ?? '')));
+            if ($nm !== '') {
+                $existingNames[$nm] = true;
+            }
+        }
+
+        $maxRow = $this->db->select_max('urutan')->get('va_katalog_produk')->row_array();
+        $nextUrutan = (int)($maxRow['urutan'] ?? 0);
+
+        $inserted = 0;
+        $skipped  = 0;
+
+        foreach ($items as $item) {
+            $nama = mb_substr(trim((string)($item['nama_produk'] ?? '')), 0, 200);
+            if ($nama === '') {
+                $skipped++;
+                continue;
+            }
+            $normKey = mb_strtolower($nama);
+            if (isset($existingNames[$normKey])) {
+                $skipped++;
+                continue;
+            }
+
+            $kat = mb_substr(trim((string)($item['kategori'] ?? '')), 0, 100);
+            if ($kat === '') {
+                $kat = 'Radiologi';
+            }
+
+            $deskRaw = trim((string)($item['deskripsi_singkat'] ?? ''));
+            $desk = ($deskRaw !== '') ? $deskRaw : null;
+
+            $brosurRaw = trim((string)($item['url_brosur'] ?? ''));
+            $brosur = ($brosurRaw !== '' && strlen($brosurRaw) <= 255) ? $brosurRaw : null;
+
+            $nextUrutan++;
+            $ok = $this->db->insert('va_katalog_produk', [
+                'nama_produk'       => $nama,
+                'kategori'          => $kat,
+                'deskripsi_singkat' => $desk,
+                'estimasi_harga'    => 0,
+                'url_gambar'        => null,
+                'url_brosur'        => $brosur,
+                'status'            => $status,
+                'urutan'            => $nextUrutan,
+            ]);
+
+            if ($ok) {
+                $existingNames[$normKey] = true;
+                $inserted++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return [
+            'inserted' => $inserted,
+            'skipped'  => $skipped,
+        ];
+    }
+
     public function getSummary()
     {
         $totalMember = $this->db->count_all('va_member');

@@ -393,7 +393,10 @@ $isKatalogTab = (isset($active_tab) && $active_tab === 'katalog');
                     <h5 class="card-title"><i class="fas fa-book-medical text-primary mr-2"></i> Katalog Produk Alkes &amp; Brosur</h5>
                     <small class="text-muted d-block mt-1">Produk berstatus <strong>Aktif</strong> tampil otomatis di portal afiliator (<code>https://visiyosindo.id/katalog.php</code>) dengan kontrak path relatif <code>uploads/katalog/...</code> &amp; <code>uploads/brosur/...</code>.</small>
                 </div>
-                <div class="mt-2 mt-md-0">
+                <div class="mt-2 mt-md-0 d-flex flex-wrap align-items-center" style="gap: 6px;">
+                    <button type="button" class="btn btn-sm btn-outline-primary shadow-sm" id="btn-import-office-katalog">
+                        <i class="fas fa-cloud-download-alt mr-1"></i> Ambil dari Data Office
+                    </button>
                     <button type="button" class="btn btn-sm btn-primary shadow-sm" id="btn-tambah-katalog">
                         <i class="fas fa-plus-circle mr-1"></i> Tambah Produk Katalog
                     </button>
@@ -872,6 +875,103 @@ $isKatalogTab = (isset($active_tab) && $active_tab === 'katalog');
     </div>
 </div>
 
+<!-- MODAL: Ambil / Import Katalog dari Data Office -->
+<div id="modal-import-office-katalog" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-cloud-download-alt mr-2"></i> Ambil / Import Katalog dari Data Office</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-3 p-md-4">
+                <!-- Source Tabs -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap: 8px;">
+                    <div class="btn-group btn-group-sm flex-wrap" role="group" id="office-katalog-source-tabs">
+                        <button type="button" class="btn btn-primary active office-source-tab" data-source="katalog_office">
+                            <i class="fas fa-book mr-1"></i> Katalog Office <span class="badge badge-light ml-1" id="cnt-katalog_office">0</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary office-source-tab" data-source="brosur_endoscopy">
+                            <i class="fas fa-microscope mr-1"></i> Brosur Endoscopy <span class="badge badge-light ml-1" id="cnt-brosur_endoscopy">0</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary office-source-tab" data-source="brosur_office">
+                            <i class="fas fa-file-pdf mr-1"></i> Brosur Produk <span class="badge badge-light ml-1" id="cnt-brosur_office">0</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary office-source-tab" data-source="master_barang">
+                            <i class="fas fa-boxes mr-1"></i> Master Barang <span class="badge badge-light ml-1" id="cnt-master_barang">0</span>
+                        </button>
+                    </div>
+                    <small class="text-muted">Item yang namanya sudah ada di katalog otomatis ditandai &amp; tidak diduplikasi.</small>
+                </div>
+
+                <!-- Search & Options Toolbar -->
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-5 mb-2 mb-md-0">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            </div>
+                            <input type="text" id="office-katalog-search" class="form-control" placeholder="Cari nama produk, kategori, atau tipe...">
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2 mb-md-0">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light font-weight-semibold">Status Awal</span>
+                            </div>
+                            <select id="office-katalog-default-status" class="form-control">
+                                <option value="aktif">Aktif (Langsung Tampil di Portal)</option>
+                                <option value="nonaktif">Nonaktif (Draft dulu, lengkapi gambar/harga)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-md-right">
+                        <div class="custom-control custom-checkbox d-inline-block">
+                            <input type="checkbox" class="custom-control-input" id="office-katalog-check-all">
+                            <label class="custom-control-label small font-weight-bold text-primary" for="office-katalog-check-all" style="cursor: pointer;">Pilih Semua (Baru)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Table -->
+                <div class="table-responsive border rounded" style="max-height: 390px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-hover mb-0">
+                        <thead class="thead-light" style="position: sticky; top: 0; z-index: 2;">
+                            <tr>
+                                <th class="text-center" style="width: 42px;">Pilih</th>
+                                <th>Nama Produk &amp; Info</th>
+                                <th style="width: 170px;">Kategori</th>
+                                <th class="text-center" style="width: 120px;">Link Brosur</th>
+                                <th class="text-center" style="width: 135px;">Status Katalog</th>
+                            </tr>
+                        </thead>
+                        <tbody id="office-katalog-tbody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Memuat data dari Office...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted d-block mt-2" id="office-katalog-hint">
+                    <i class="fas fa-info-circle mr-1"></i> Setelah diimport, Anda dapat melengkapi foto produk dan estimasi harga masing-masing item lewat tombol <strong>Edit</strong> di tabel Katalog.
+                </small>
+            </div>
+            <div class="modal-footer bg-light py-2 d-flex justify-content-between align-items-center">
+                <span class="small font-weight-bold text-dark">
+                    Dipilih: <span class="badge badge-primary" id="office-katalog-selected-count">0</span> item
+                </span>
+                <div>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btn-submit-import-office" disabled>
+                        <i class="fas fa-file-import mr-1"></i> Import Terpilih ke Katalog
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL: Konfirmasi Pembayaran Komisi (Finance) -->
 <div id="modal-bayar-komisi" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -1314,5 +1414,197 @@ $isKatalogTab = (isset($active_tab) && $active_tab === 'katalog');
 
             $('#modal-bayar-komisi').modal('show');
         });
+
+        // =========================================================================
+        // IMPORT KATALOG PRODUK DARI DATA OFFICE
+        // =========================================================================
+        (function initOfficeKatalogImport() {
+            var currentSource = 'katalog_office';
+            var searchTimer = null;
+
+            function escapeHtml(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function updateSelectedCounter() {
+                var checkedCount = $('#office-katalog-tbody .office-item-cb:checked').length;
+                $('#office-katalog-selected-count').text(checkedCount);
+                $('#btn-submit-import-office').prop('disabled', checkedCount === 0);
+
+                var totalSelectable = $('#office-katalog-tbody .office-item-cb:not(:disabled)').length;
+                $('#office-katalog-check-all').prop('checked', totalSelectable > 0 && checkedCount === totalSelectable);
+            }
+
+            function loadOfficeKatalog(source, search) {
+                currentSource = source || 'katalog_office';
+                $('#office-katalog-check-all').prop('checked', false);
+                $('#office-katalog-tbody').html('<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat data dari Office...</td></tr>');
+                updateSelectedCounter();
+
+                $.ajax({
+                    url: '<?= base_url('Member_visiacademy/getOfficeKatalogSources') ?>',
+                    method: 'GET',
+                    dataType: 'JSON',
+                    data: {
+                        source: currentSource,
+                        search: search || ''
+                    },
+                    success: function(resp) {
+                        if (!resp || resp.status !== 'success') {
+                            $('#office-katalog-tbody').html('<tr><td colspan="5" class="text-center text-danger py-4">Gagal memuat data dari Office.</td></tr>');
+                            return;
+                        }
+
+                        if (resp.counts) {
+                            $.each(resp.counts, function(k, v) {
+                                $('#cnt-' + k).text(v);
+                            });
+                        }
+
+                        var items = Array.isArray(resp.items) ? resp.items : [];
+                        if (items.length === 0) {
+                            $('#office-katalog-tbody').html('<tr><td colspan="5" class="text-center text-muted py-4">Tidak ada data yang ditemukan pada sumber ini.</td></tr>');
+                            updateSelectedCounter();
+                            return;
+                        }
+
+                        var rowsHtml = '';
+                        items.forEach(function(it) {
+                            var exists = !!it.already_exists;
+                            var cbHtml = exists
+                                ? '<input type="checkbox" class="office-item-cb" disabled title="Sudah ada di Katalog">'
+                                : '<input type="checkbox" class="office-item-cb" value="' + escapeHtml(it.source_key) + '">';
+                            var deskHtml = it.deskripsi_singkat
+                                ? '<div class="small text-muted mt-1">' + escapeHtml(it.deskripsi_singkat) + '</div>'
+                                : '';
+                            var brosurHtml = it.url_brosur
+                                ? '<a href="' + escapeHtml(it.url_brosur) + '" target="_blank" rel="noopener noreferrer" class="badge badge-danger px-2 py-1"><i class="fas fa-external-link-alt mr-1"></i> Buka Link</a>'
+                                : '<span class="text-muted small">-</span>';
+                            var statusBadge = exists
+                                ? '<span class="badge badge-secondary px-2 py-1"><i class="fas fa-check mr-1"></i> Sudah Ada</span>'
+                                : '<span class="badge badge-success px-2 py-1"><i class="fas fa-plus mr-1"></i> Siap Import</span>';
+
+                            rowsHtml += '<tr class="' + (exists ? 'bg-light text-muted' : '') + '">'
+                                + '<td class="text-center align-middle">' + cbHtml + '</td>'
+                                + '<td class="align-middle"><strong class="' + (exists ? 'text-muted' : 'text-dark') + '">' + escapeHtml(it.nama_produk) + '</strong>' + deskHtml + '</td>'
+                                + '<td class="align-middle"><span class="badge badge-light border">' + escapeHtml(it.kategori) + '</span></td>'
+                                + '<td class="text-center align-middle">' + brosurHtml + '</td>'
+                                + '<td class="text-center align-middle">' + statusBadge + '</td>'
+                                + '</tr>';
+                        });
+
+                        $('#office-katalog-tbody').html(rowsHtml);
+                        if (currentSource === 'master_barang' && items.length >= 200) {
+                            $('#office-katalog-hint').html('<i class="fas fa-info-circle mr-1"></i> Menampilkan maksimal 200 barang pertama. Gunakan kotak <strong>Cari</strong> untuk menemukan barang spesifik di Master Barang.');
+                        } else {
+                            $('#office-katalog-hint').html('<i class="fas fa-info-circle mr-1"></i> Setelah diimport, Anda dapat melengkapi foto produk dan estimasi harga masing-masing item lewat tombol <strong>Edit</strong> di tabel Katalog.');
+                        }
+                        updateSelectedCounter();
+                    },
+                    error: function() {
+                        $('#office-katalog-tbody').html('<tr><td colspan="5" class="text-center text-danger py-4">Terjadi kesalahan saat menghubungi server.</td></tr>');
+                    }
+                });
+            }
+
+            $('#btn-import-office-katalog').on('click', function() {
+                $('#office-katalog-search').val('');
+                $('#modal-import-office-katalog').modal('show');
+                loadOfficeKatalog(currentSource, '');
+            });
+
+            $(document).on('click', '.office-source-tab', function() {
+                var $btn = $(this);
+                var src = $btn.attr('data-source') || 'katalog_office';
+                $('.office-source-tab').removeClass('btn-primary active').addClass('btn-outline-primary');
+                $btn.removeClass('btn-outline-primary').addClass('btn-primary active');
+                loadOfficeKatalog(src, $('#office-katalog-search').val());
+            });
+
+            $('#office-katalog-search').on('input', function() {
+                var q = $(this).val();
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function() {
+                    loadOfficeKatalog(currentSource, q);
+                }, 300);
+            });
+
+            $('#office-katalog-check-all').on('change', function() {
+                var checked = $(this).is(':checked');
+                $('#office-katalog-tbody .office-item-cb:not(:disabled)').prop('checked', checked);
+                updateSelectedCounter();
+            });
+
+            $(document).on('change', '#office-katalog-tbody .office-item-cb', function() {
+                updateSelectedCounter();
+            });
+
+            $('#btn-submit-import-office').on('click', function() {
+                var selectedKeys = [];
+                $('#office-katalog-tbody .office-item-cb:checked').each(function() {
+                    var v = $(this).val();
+                    if (v) selectedKeys.push(v);
+                });
+                if (selectedKeys.length === 0) return;
+
+                var defaultStatus = $('#office-katalog-default-status').val() || 'aktif';
+                var statusText = (defaultStatus === 'aktif') ? 'Aktif (langsung tampil di portal)' : 'Nonaktif (draft)';
+
+                Swal.fire({
+                    title: 'Import ' + selectedKeys.length + ' Item ke Katalog?',
+                    text: 'Produk terpilih akan ditambahkan dengan status awal: ' + statusText + '.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Ya, Import Sekarang',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.value || result.isConfirmed) {
+                        var postData = {
+                            source: currentSource,
+                            selected_keys: selectedKeys,
+                            default_status: defaultStatus
+                        };
+                        if (typeof token !== 'undefined') {
+                            postData.csrf_token = token;
+                        }
+                        Swal.fire({
+                            title: 'Mengimport Data...',
+                            text: 'Mohon tunggu sebentar',
+                            allowOutsideClick: false,
+                            showConfirmButton: false,
+                            didOpen: function() {
+                                Swal.showLoading();
+                            }
+                        });
+                        $.ajax({
+                            url: '<?= base_url('Member_visiacademy/importKatalogFromOffice') ?>',
+                            method: 'POST',
+                            dataType: 'JSON',
+                            data: postData,
+                            success: function(resp) {
+                                $('#modal-import-office-katalog').modal('hide');
+                                handleResponse(resp);
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    title: 'Gagal!',
+                                    text: 'Terjadi kesalahan saat mengimport katalog dari data Office.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444',
+                                    confirmButtonText: 'Tutup'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        })();
     });
 </script>
