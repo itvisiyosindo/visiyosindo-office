@@ -98,6 +98,40 @@ class Md_tracking extends CI_Model
                 KEY `idx_id_import` (`id_import`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
+
+        if ($this->db->table_exists('tracking_import')) {
+            $newImportCols = [
+                'hs_code'                   => "VARCHAR(100) NULL DEFAULT NULL AFTER `daftar_unit`",
+                'ada_lartas'                => "VARCHAR(20) NULL DEFAULT NULL AFTER `hs_code`",
+                'keterangan_lartas'         => "TEXT NULL DEFAULT NULL AFTER `ada_lartas`",
+                'id_approval_forwarder'     => "INT(11) NULL DEFAULT NULL AFTER `id_forwarder`",
+                'tgl_siap_jemput'           => "DATE NULL DEFAULT NULL AFTER `tgl_estimasi_sampai_gudang`",
+                'tgl_jatuh_tempo_forwarder' => "DATE NULL DEFAULT NULL AFTER `tgl_siap_jemput`"
+            ];
+            foreach ($newImportCols as $col => $def) {
+                if (!$this->db->field_exists($col, 'tracking_import')) {
+                    @$this->db->query("ALTER TABLE `tracking_import` ADD COLUMN `{$col}` {$def}");
+                }
+            }
+        }
+
+        if (!$this->db->table_exists('tracking_import_steps')) {
+            @$this->db->query("CREATE TABLE IF NOT EXISTS `tracking_import_steps` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `id_import` INT(11) NOT NULL,
+                `stage` TINYINT(2) NOT NULL,
+                `status` VARCHAR(20) NOT NULL DEFAULT 'belum',
+                `data_json` LONGTEXT NULL DEFAULT NULL,
+                `docs_json` LONGTEXT NULL DEFAULT NULL,
+                `catatan` TEXT NULL DEFAULT NULL,
+                `completed_at` DATETIME NULL DEFAULT NULL,
+                `updated_by` INT(11) NULL DEFAULT NULL,
+                `updated_at` DATETIME NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uniq_import_stage` (`id_import`, `stage`),
+                KEY `idx_import_id` (`id_import`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
     }
 
     function add($data)
@@ -1283,65 +1317,481 @@ class Md_tracking extends CI_Model
     }
 
     // =========================================================================
-    // SISTEM TRACKING IMPORT (9 TAHAP: PO MANUFACTURE -> GUDANG PUSAT/JKT/JOGJA)
+    // SISTEM TRACKING IMPORT (14 TAHAP END-TO-END STAFF IMPORT)
     // =========================================================================
+
+    public function getImportPhaseDefinitions()
+    {
+        return [
+            1 => ['name' => 'Fase 1: Pre-Order & Payment PI',      'short' => 'Pre-Order & PI',      'stages' => [1, 2, 3, 4],     'color' => '#2563eb', 'icon' => 'fa-file-contract'],
+            2 => ['name' => 'Fase 2: Produksi & Shipping Docs',    'short' => 'Produksi & Shipping', 'stages' => [5, 6, 7],        'color' => '#7c3aed', 'icon' => 'fa-ship'],
+            3 => ['name' => 'Fase 3: Customs & Pajak Impor',       'short' => 'Customs & Pajak',     'stages' => [8, 9, 10],       'color' => '#d97706', 'icon' => 'fa-file-invoice-dollar'],
+            4 => ['name' => 'Fase 4: Release & Warehouse',         'short' => 'Release & Gudang',    'stages' => [11, 12],         'color' => '#0284c7', 'icon' => 'fa-warehouse'],
+            5 => ['name' => 'Fase 5: Settlement Forwarder',        'short' => 'Settlement Forwarder','stages' => [13, 14],         'color' => '#16a34a', 'icon' => 'fa-money-check-alt'],
+        ];
+    }
 
     public function getImportStageDefinitions()
     {
         return [
             1 => [
-                'field' => 'waktu_1_po_manufacture',
-                'label' => '1. PO ke Manufacture',
-                'role'  => 'Purchasing / Pengadaan Import',
-                'short' => 'PO Manufacture'
+                'stage' => 1,
+                'phase' => 1,
+                'label' => '1. Penerimaan Purchase Order (PO)',
+                'short' => 'Penerimaan PO',
+                'role'  => 'Purchasing / Office PO Supplier',
+                'desc'  => 'Penerimaan dokumen PO Supplier dari sistem Office untuk diproses import.',
+                'fields' => [],
+                'docs' => [
+                    'doc_po_supplier' => [
+                        'label' => 'PO Supplier (dari Office - PO Supplier / Link Drive)',
+                        'type'  => 'office_po'
+                    ]
+                ]
             ],
             2 => [
-                'field' => 'waktu_2_order_forwarder',
-                'label' => '2. Order Ekspedisi / Forwarder',
-                'role'  => 'Booking Space & AWB / B/L',
-                'short' => 'Order Forwarder'
+                'stage' => 2,
+                'phase' => 1,
+                'label' => '2. Pengecekan HS Code dan Lartas',
+                'short' => 'Cek HS Code & Lartas',
+                'role'  => 'Staff Import & Regulatory',
+                'desc'  => 'Staff Import update pengecekan HS Code dan Lartas. Apabila ada lartas, berikan informasi rencana import ke Regulatory dan pastikan lartas terpenuhi saat barang tiba di Indonesia.',
+                'fields' => [
+                    'hs_code' => [
+                        'label' => 'Kode HS Code',
+                        'type'  => 'text',
+                        'placeholder' => 'Contoh: 9018.12.00'
+                    ],
+                    'ada_lartas' => [
+                        'label' => 'Status Lartas',
+                        'type'  => 'select',
+                        'options' => [
+                            ''      => '-- Pilih Status Lartas --',
+                            'tidak' => 'Tidak Ada Lartas (Tahap 9 otomatis N/A)',
+                            'ada'   => 'Ada Lartas (Perlu Koordinasi Regulatory)'
+                        ]
+                    ],
+                    'keterangan_lartas' => [
+                        'label' => 'Keterangan Lartas',
+                        'type'  => 'textarea',
+                        'placeholder' => 'Jelaskan ketentuan lartas / koordinasi dengan Regulatory...'
+                    ]
+                ],
+                'docs' => [
+                    'doc_hs_intr' => [
+                        'label' => 'Print Check HS Code dari website INTR (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ],
             3 => [
-                'field' => 'waktu_3_loading_kapal',
-                'label' => '3. Unit Loading Kapal / Pesawat',
-                'role'  => 'Port of Loading (Origin)',
-                'short' => 'Loading Kapal'
+                'stage' => 3,
+                'phase' => 1,
+                'label' => '3. Pengiriman PO ke Supplier & Permintaan Proforma Invoice',
+                'short' => 'Kirim PO & Minta PI',
+                'role'  => 'Staff Import',
+                'desc'  => 'Mengirimkan PO ke supplier luar negeri dan meminta dokumen Proforma Invoice (PI).',
+                'fields' => [
+                    'status_permintaan_pi' => [
+                        'label' => 'Status Permintaan Invoice (PI)',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Belum Diminta' => 'Belum Diminta',
+                            'PO Terkirim / Menunggu PI' => 'PO Terkirim / Menunggu PI',
+                            'Revisi PI' => 'Revisi PI',
+                            'Proforma Invoice Diterima' => 'Proforma Invoice Diterima'
+                        ]
+                    ]
+                ],
+                'docs' => [
+                    'doc_bukti_kirim_po' => [
+                        'label' => 'Bukti Pengiriman PO ke Supplier (Link Drive)',
+                        'type'  => 'link'
+                    ],
+                    'doc_proforma_invoice' => [
+                        'label' => 'Proforma Invoice Supplier (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ],
             4 => [
-                'field' => 'waktu_4_perjalanan_kapal',
-                'label' => '4. Perjalanan Kapal / Pesawat',
-                'role'  => 'In Transit Internasional',
-                'short' => 'Perjalanan Kapal'
+                'stage' => 4,
+                'phase' => 1,
+                'label' => '4. Proses Pembayaran Proforma Invoice (PI)',
+                'short' => 'Pembayaran PI',
+                'role'  => 'Staff Import & Finance',
+                'desc'  => 'Staff Import memastikan informasi Price, Quantity, dan spesifikasi produk sesuai antara Dokumen PI dan PO sebelum melakukan proses pembayaran.',
+                'fields' => [
+                    'cek_kesesuaian_pi_po' => [
+                        'label' => 'Verifikasi Kesesuaian Price, Qty & Spesifikasi (PI vs PO)',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Hasil Cek --',
+                            'Belum Dicek' => 'Belum Dicek',
+                            'Sesuai (PI = PO)' => 'Sesuai (PI = PO)',
+                            'Perlu Revisi' => 'Perlu Revisi'
+                        ]
+                    ],
+                    'status_pembayaran_pi' => [
+                        'label' => 'Status Pembayaran Invoice',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Belum Diajukan' => 'Belum Diajukan',
+                            'Diajukan PBOK' => 'Diajukan PBOK',
+                            'Proses Transfer / DP' => 'Proses Transfer / DP',
+                            'Lunas / Sudah Dibayar' => 'Lunas / Sudah Dibayar'
+                        ]
+                    ]
+                ],
+                'docs' => [
+                    'doc_pbok_pi' => [
+                        'label' => 'Link Lampiran PBOK (PI, PO Supplier, Dokumen Pendukung Lainnya)',
+                        'type'  => 'office_pbok'
+                    ],
+                    'doc_bukti_bayar_pi' => [
+                        'label' => 'Bukti Pembayaran PI (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ],
             5 => [
-                'field' => 'waktu_5_sampai_port',
-                'label' => '5. Sampai Seaport / Airport',
-                'role'  => 'Port of Discharge (Indonesia)',
-                'short' => 'Sampai Seaport/Airport'
+                'stage' => 5,
+                'phase' => 2,
+                'label' => '5. Follow Up Status Produksi & Tanggal Pengiriman Produk',
+                'short' => 'Produksi & Forwarder',
+                'role'  => 'Staff Import & Forwarder',
+                'desc'  => 'Monitoring proses produksi di supplier, pemilihan/perbandingan forwarder, dan jadwal pengiriman.',
+                'fields' => [
+                    'status_produksi' => [
+                        'label' => 'Update Status Produksi',
+                        'type'  => 'text',
+                        'placeholder' => 'Contoh: Antri Produksi / Proses Produksi / Ready to Ship'
+                    ],
+                    'tgl_rencana_kirim' => [
+                        'label' => 'Tanggal Rencana / Pengiriman Produk',
+                        'type'  => 'date'
+                    ],
+                    'status_pengiriman' => [
+                        'label' => 'Update Status Pengiriman',
+                        'type'  => 'text',
+                        'placeholder' => 'Contoh: Booking Space Forwarder / Pickup / Sudah Berangkat'
+                    ]
+                ],
+                'docs' => [
+                    'doc_perbandingan_forwarder' => [
+                        'label' => 'Link Perbandingan Forwarder (dari Office / Link Drive)',
+                        'type'  => 'office_forwarder'
+                    ]
+                ]
             ],
             6 => [
-                'field' => 'waktu_6_bayar_pajak',
-                'label' => '6. Pembayaran Pajak & Bea Cukai',
-                'role'  => 'PIB, Bea Masuk, PPN & PPh Impor',
-                'short' => 'Pembayaran Pajak'
+                'stage' => 6,
+                'phase' => 2,
+                'label' => '6. Koordinasi Dokumen CIPL',
+                'short' => 'Dokumen CIPL',
+                'role'  => 'Staff Import & Supplier',
+                'desc'  => 'Koordinasi kelengkapan dan validasi dokumen Commercial Invoice & Packing List.',
+                'fields' => [
+                    'status_cipl' => [
+                        'label' => 'Update Status Dokumen CIPL',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Belum Diminta' => 'Belum Diminta',
+                            'Draft / Review' => 'Draft / Review',
+                            'Revisi' => 'Revisi',
+                            'Final Diterima' => 'Final Diterima'
+                        ]
+                    ]
+                ],
+                'docs' => [
+                    'doc_commercial_invoice' => [
+                        'label' => 'Commercial Invoice (Link Drive)',
+                        'type'  => 'link'
+                    ],
+                    'doc_packing_list' => [
+                        'label' => 'Packing List (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ],
             7 => [
-                'field' => 'waktu_7_keluar_port',
-                'label' => '7. Keluar Gudang Seaport / Airport',
-                'role'  => 'SPPB / Custom Clearance Release',
-                'short' => 'Keluar Seaport/Airport'
+                'stage' => 7,
+                'phase' => 2,
+                'label' => '7. Koordinasi Dokumen AWB / BL',
+                'short' => 'Dokumen AWB / BL',
+                'role'  => 'Staff Import & Forwarder',
+                'desc'  => 'Koordinasi dokumen Air Way Bill (AWB) / Bill of Lading (BL) serta foto produk sebelum dikirim.',
+                'fields' => [
+                    'status_awb_bl' => [
+                        'label' => 'Update Status Dokumen AWB / BL',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Menunggu Draft' => 'Menunggu Draft',
+                            'Draft / Review' => 'Draft / Review',
+                            'Final / Telex Release' => 'Final / Telex Release'
+                        ]
+                    ],
+                    'no_bl_awb' => [
+                        'label' => 'Nomor AWB / B/L',
+                        'type'  => 'text',
+                        'placeholder' => 'Masukkan nomor AWB atau Bill of Lading'
+                    ]
+                ],
+                'docs' => [
+                    'doc_foto_produk' => [
+                        'label' => 'Foto Produk Sebelum Dikirim (Link Drive)',
+                        'type'  => 'link'
+                    ],
+                    'doc_awb_bl' => [
+                        'label' => 'Air Way Bill (AWB) / Bill of Lading (BL) (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ],
             8 => [
-                'field' => 'waktu_8_handover_domestik',
-                'label' => '8. Hand-over Ekspedisi Domestik / Lokal',
-                'role'  => 'Pengiriman Lokal ke Gudang VYM',
-                'short' => 'Hand-over Domestik'
+                'stage' => 8,
+                'phase' => 3,
+                'label' => '8. Koordinasi Dokumen PIB',
+                'short' => 'Dokumen PIB',
+                'role'  => 'Staff Import & PPJK / Forwarder',
+                'desc'  => 'Koordinasi penyusunan dan validasi Pemberitahuan Import Barang (PIB).',
+                'fields' => [
+                    'status_pib' => [
+                        'label' => 'Update Status Dokumen PIB',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Menunggu Draft PIB' => 'Menunggu Draft PIB',
+                            'Draft PIB Direview' => 'Draft PIB Direview',
+                            'PIB Submitted / Aju' => 'PIB Submitted / Aju',
+                            'PIB Final' => 'PIB Final'
+                        ]
+                    ],
+                    'no_pib' => [
+                        'label' => 'Nomor PIB / Aju',
+                        'type'  => 'text',
+                        'placeholder' => 'Nomor Aju / PIB'
+                    ]
+                ],
+                'docs' => [
+                    'doc_pib' => [
+                        'label' => 'Pemberitahuan Import Barang (PIB) (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ],
             9 => [
-                'field' => 'waktu_9_sampai_gudang',
-                'label' => '9. Sampai Gudang Pusat / Jakarta / Jogja',
-                'role'  => 'Penerimaan & QC Warehouse VYM',
-                'short' => 'Sampai Gudang VYM'
+                'stage' => 9,
+                'phase' => 3,
+                'label' => '9. Koordinasi Dokumen Lartas',
+                'short' => 'Dokumen Lartas',
+                'role'  => 'Staff Import & Regulatory',
+                'conditional_lartas' => true,
+                'desc'  => 'Pastikan kebutuhan dokumen pengurusan lartas sudah lengkap dan sesuai informasi di PIB, AWB/BL, dan CIPL. Koordinasi dengan Regulatory (jika ada lartas).',
+                'fields' => [
+                    'status_dokumen_lartas' => [
+                        'label' => 'Update Status Dokumen Lartas',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Tidak Ada Lartas (N/A)' => 'Tidak Ada Lartas (N/A)',
+                            'Koordinasi Regulatory' => 'Koordinasi Regulatory',
+                            'Proses Pengurusan' => 'Proses Pengurusan',
+                            'Dokumen Lartas Terbit / Lengkap' => 'Dokumen Lartas Terbit / Lengkap'
+                        ]
+                    ]
+                ],
+                'docs' => [
+                    'doc_lartas' => [
+                        'label' => 'Dokumen Lartas (jika ada) (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
+            ],
+            10 => [
+                'stage' => 10,
+                'phase' => 3,
+                'label' => '10. Koordinasi Dokumen Pajak Impor',
+                'short' => 'Pajak Impor',
+                'role'  => 'Staff Import & Finance',
+                'desc'  => 'Pengurusan Billing Pajak Impor, pengajuan PBOK, hingga bukti bayar pajak impor.',
+                'fields' => [
+                    'status_pajak_impor' => [
+                        'label' => 'Update Status Dokumen Pajak Impor',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Menunggu Billing' => 'Menunggu Billing',
+                            'Billing Diterima' => 'Billing Diterima',
+                            'Diajukan PBOK' => 'Diajukan PBOK',
+                            'Pajak Sudah Dibayar' => 'Pajak Sudah Dibayar'
+                        ]
+                    ],
+                    'nominal_pajak_import' => [
+                        'label' => 'Nominal Pajak Impor (Rp)',
+                        'type'  => 'number',
+                        'placeholder' => 'Total Bea Masuk + PPN + PPh Impor'
+                    ]
+                ],
+                'docs' => [
+                    'doc_billing_pajak' => [
+                        'label' => 'Billing Pajak Impor (Link Drive)',
+                        'type'  => 'link'
+                    ],
+                    'doc_pbok_pajak' => [
+                        'label' => 'Link Lampiran PBOK (Billing Pajak, PI, CI, PL, Resi, PIB, Lartas, dll.)',
+                        'type'  => 'office_pbok'
+                    ],
+                    'doc_bukti_bayar_pajak' => [
+                        'label' => 'Bukti Bayar Pajak Import (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
+            ],
+            11 => [
+                'stage' => 11,
+                'phase' => 4,
+                'label' => '11. Follow Up Status Pengeluaran Barang',
+                'short' => 'Pengeluaran / SPPB',
+                'role'  => 'Staff Import & Forwarder',
+                'desc'  => 'Follow up SPPB, proses bongkar barang di pelabuhan/bandara, pemindahan ke gudang forwarder/perusahaan, dan tanggal barang siap dijemput/dikirim.',
+                'fields' => [
+                    'status_pengeluaran' => [
+                        'label' => 'Update Status Pengeluaran Barang (Bongkar Port / Pindah Gudang Forwarder)',
+                        'type'  => 'text',
+                        'placeholder' => 'Contoh: SPPB Terbit / Bongkar di Pelabuhan / Siap Dijemput'
+                    ],
+                    'tgl_siap_jemput' => [
+                        'label' => 'Tanggal Barang Bisa Dijemput / Dikirim ke Warehouse',
+                        'type'  => 'date'
+                    ]
+                ],
+                'docs' => [
+                    'doc_sppb' => [
+                        'label' => 'SPPB / Info Barang Siap Dijemput atau Dikirim ke Warehouse (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
+            ],
+            12 => [
+                'stage' => 12,
+                'phase' => 4,
+                'label' => '12. Follow Up Penjemputan / Pengiriman ke Warehouse',
+                'short' => 'Kirim ke Warehouse',
+                'role'  => 'Staff Import & Warehouse',
+                'desc'  => 'Penjemputan oleh Warehouse atau pengiriman via ekspedisi lokal beserta bukti foto penerimaan barang.',
+                'fields' => [
+                    'status_penjemputan' => [
+                        'label' => 'Status Penjemputan / Pengiriman ke Warehouse',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Belum Dijemput' => 'Belum Dijemput',
+                            'Dijadwalkan Penjemputan' => 'Dijadwalkan Penjemputan',
+                            'Dalam Perjalanan ke Warehouse' => 'Dalam Perjalanan ke Warehouse',
+                            'Diterima di Warehouse' => 'Diterima di Warehouse'
+                        ]
+                    ],
+                    'ekspedisi_domestik' => [
+                        'label' => 'Ekspedisi yang Digunakan untuk Penjemputan / Pengiriman',
+                        'type'  => 'text',
+                        'placeholder' => 'Contoh: Armada Internal VYM / JNE Cargo / Forwarder'
+                    ],
+                    'no_resi_domestik' => [
+                        'label' => 'No. Resi / Surat Jalan Lokal (Opsional)',
+                        'type'  => 'text',
+                        'placeholder' => 'No. Resi jika pakai ekspedisi'
+                    ],
+                    'nama_gudang_tujuan' => [
+                        'label' => 'Gudang Tujuan VYM',
+                        'type'  => 'select',
+                        'options' => [
+                            'Gudang Pusat'   => 'Gudang Pusat',
+                            'Gudang Jakarta' => 'Gudang Jakarta',
+                            'Gudang Jogja'   => 'Gudang Jogja'
+                        ]
+                    ]
+                ],
+                'docs' => [
+                    'doc_bukti_terima_wh' => [
+                        'label' => 'Bukti Foto Produk / Penerimaan Barang oleh Warehouse (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
+            ],
+            13 => [
+                'stage' => 13,
+                'phase' => 5,
+                'label' => '13. Follow Up Dokumen Invoice Forwarder (Ongkir & Handling)',
+                'short' => 'Invoice Forwarder',
+                'role'  => 'Staff Import & Forwarder',
+                'desc'  => 'Pengumpulan Invoice Forwarder, Faktur Pajak Forwarder, dan pencatatan tanggal jatuh tempo pembayaran.',
+                'fields' => [
+                    'status_inv_forwarder' => [
+                        'label' => 'Update Status Dokumen Pembayaran',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Menunggu Invoice Forwarder' => 'Menunggu Invoice Forwarder',
+                            'Invoice & Faktur Pajak Diterima' => 'Invoice & Faktur Pajak Diterima',
+                            'Review / Verifikasi Nominal' => 'Review / Verifikasi Nominal',
+                            'Siap Diajukan Pembayaran' => 'Siap Diajukan Pembayaran'
+                        ]
+                    ],
+                    'tgl_jatuh_tempo_forwarder' => [
+                        'label' => 'Info Jatuh Tempo Pembayaran',
+                        'type'  => 'date'
+                    ]
+                ],
+                'docs' => [
+                    'doc_invoice_forwarder' => [
+                        'label' => 'Invoice Forwarder (Link Drive)',
+                        'type'  => 'link'
+                    ],
+                    'doc_faktur_pajak_forwarder' => [
+                        'label' => 'Faktur Pajak Invoice Forwarder (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
+            ],
+            14 => [
+                'stage' => 14,
+                'phase' => 5,
+                'label' => '14. Follow Up Pembayaran Invoice Forwarder',
+                'short' => 'Bayar Inv. Forwarder',
+                'role'  => 'Staff Import & Finance',
+                'desc'  => 'Pengajuan PBOK pembayaran Invoice Forwarder, bukti potong pajak, hingga pelunasan.',
+                'fields' => [
+                    'status_bayar_forwarder' => [
+                        'label' => 'Update Status Pembayaran Invoice Forwarder',
+                        'type'  => 'select',
+                        'options' => [
+                            '' => '-- Pilih Status --',
+                            'Belum Diajukan' => 'Belum Diajukan',
+                            'Diajukan PBOK' => 'Diajukan PBOK',
+                            'Proses Transfer' => 'Proses Transfer',
+                            'Lunas / Selesai' => 'Lunas / Selesai'
+                        ]
+                    ]
+                ],
+                'docs' => [
+                    'doc_bukti_potong_pajak' => [
+                        'label' => 'Bukti Potong Pajak (Link Drive)',
+                        'type'  => 'link'
+                    ],
+                    'doc_pbok_forwarder' => [
+                        'label' => 'Link Lampiran PBOK (Inv. Forwarder, Faktur Pajak, PI/CI, PL, Resi, Bukti Terima, dll.)',
+                        'type'  => 'office_pbok'
+                    ],
+                    'doc_bukti_bayar_forwarder' => [
+                        'label' => 'Bukti Bayar Invoice Forwarder (Link Drive)',
+                        'type'  => 'link'
+                    ]
+                ]
             ]
         ];
     }
@@ -1383,6 +1833,43 @@ class Md_tracking extends CI_Model
         return $this->db->query($sql)->result();
     }
 
+    public function getAllPbokForImport()
+    {
+        if (!$this->db->table_exists('surat_pbok')) {
+            return [];
+        }
+        $sql = "SELECT 
+                    sb.id_pbok,
+                    sb.kode_pbok,
+                    sb.tgl_pengajuan,
+                    p.nama as nama_pengaju,
+                    (SELECT GROUP_CONCAT(d.keterangan SEPARATOR ', ') FROM surat_pbok_detail d WHERE d.id_pbok = sb.id_pbok) as ringkasan
+                FROM surat_pbok sb
+                LEFT JOIN pengguna p ON p.pengguna_id = sb.id_pengguna
+                ORDER BY sb.id_pbok DESC
+                LIMIT 150";
+        return $this->db->query($sql)->result();
+    }
+
+    public function getAllApprovalForwarderForImport()
+    {
+        if (!$this->db->table_exists('approval_forwarder')) {
+            return [];
+        }
+        $sql = "SELECT 
+                    af.id,
+                    af.kode,
+                    af.nama,
+                    af.tanggal,
+                    af.pol,
+                    af.pod,
+                    (SELECT f.nama FROM approval_forwarder_detail afd JOIN forwarder f ON afd.id_forwarder = f.id WHERE afd.id_app = af.id ORDER BY afd.dipilih DESC, afd.id ASC LIMIT 1) as nama_forwarder
+                FROM approval_forwarder af
+                ORDER BY af.id DESC
+                LIMIT 150";
+        return $this->db->query($sql)->result();
+    }
+
     public function getAllForwarderMaster()
     {
         if (!$this->db->table_exists('forwarder')) {
@@ -1391,11 +1878,80 @@ class Md_tracking extends CI_Model
         return $this->db->where('status', 1)->order_by('nama', 'ASC')->get('forwarder')->result();
     }
 
+    public function ensureImportStepRow($id_import, $stage, $defaults = [])
+    {
+        if (!$this->db->table_exists('tracking_import_steps')) {
+            return;
+        }
+        $exists = $this->db->get_where('tracking_import_steps', [
+            'id_import' => (int)$id_import,
+            'stage'     => (int)$stage
+        ])->row();
+
+        if (!$exists) {
+            $ins = [
+                'id_import'    => (int)$id_import,
+                'stage'        => (int)$stage,
+                'status'       => $defaults['status'] ?? 'belum',
+                'data_json'    => isset($defaults['data']) ? json_encode($defaults['data'], JSON_UNESCAPED_UNICODE) : null,
+                'docs_json'    => isset($defaults['docs']) ? json_encode($defaults['docs'], JSON_UNESCAPED_UNICODE) : null,
+                'catatan'      => $defaults['catatan'] ?? null,
+                'completed_at' => $defaults['completed_at'] ?? null,
+                'updated_by'   => $defaults['updated_by'] ?? null,
+                'updated_at'   => date('Y-m-d H:i:s')
+            ];
+            $this->db->insert('tracking_import_steps', $ins);
+        } else {
+            // Merge non-destructively jika diminta dari auto-sync
+            $curData = !empty($exists->data_json) ? (json_decode($exists->data_json, true) ?: []) : [];
+            $curDocs = !empty($exists->docs_json) ? (json_decode($exists->docs_json, true) ?: []) : [];
+            $upd = [];
+
+            if (!empty($defaults['docs'])) {
+                $changed = false;
+                foreach ($defaults['docs'] as $dk => $dv) {
+                    if (empty($curDocs[$dk]) && !empty($dv)) {
+                        $curDocs[$dk] = $dv;
+                        $changed = true;
+                    }
+                }
+                if ($changed) {
+                    $upd['docs_json'] = json_encode($curDocs, JSON_UNESCAPED_UNICODE);
+                }
+            }
+
+            if (!empty($defaults['data'])) {
+                $changed = false;
+                foreach ($defaults['data'] as $dk => $dv) {
+                    if (empty($curData[$dk]) && !empty($dv)) {
+                        $curData[$dk] = $dv;
+                        $changed = true;
+                    }
+                }
+                if ($changed) {
+                    $upd['data_json'] = json_encode($curData, JSON_UNESCAPED_UNICODE);
+                }
+            }
+
+            if (!empty($defaults['status']) && $exists->status === 'belum' && $defaults['status'] !== 'belum') {
+                $upd['status'] = $defaults['status'];
+                if ($defaults['status'] === 'selesai' && empty($exists->completed_at) && !empty($defaults['completed_at'])) {
+                    $upd['completed_at'] = $defaults['completed_at'];
+                }
+            }
+
+            if (!empty($upd)) {
+                $upd['updated_at'] = date('Y-m-d H:i:s');
+                $this->db->where('id', $exists->id)->update('tracking_import_steps', $upd);
+            }
+        }
+    }
+
     /**
-     * Sinkronisasi Otomatis Tracking Import dari:
-     * - Tahap 1: purchase_order & purchase_order_detail (Pengajuan PO Supplier)
-     * - Tahap 2: approval_forwarder & approval_forwarder_detail (Approval Forwarder Luar Negeri)
-     * - Tahap 9: penerimaan_barang (Penerimaan Barang di Gudang Pusat / Jakarta / Jogja)
+     * Sinkronisasi Otomatis Tracking Import (tanpa interpolasi fiktif):
+     * - Tahap 1: purchase_order (Pengajuan PO Supplier) -> otomatis link ke detail PO Office
+     * - Tahap 5: approval_forwarder (Perbandingan Forwarder) -> otomatis link ke detail Approval Forwarder Office
+     * - Tahap 12: penerimaan_barang (Penerimaan Barang Gudang) -> otomatis tandai diterima di Warehouse
      */
     public function syncAutomaticImportFromExistingData()
     {
@@ -1405,7 +1961,6 @@ class Md_tracking extends CI_Model
 
         $stage_defs = $this->getImportStageDefinitions();
 
-        // Ambil semua Pengajuan PO Supplier yang sudah memiliki No PO atau sudah disetujui (status IN 4,7,8,9)
         $sqlPo = "SELECT 
                     po.id as id_po,
                     po.kode_po,
@@ -1428,7 +1983,6 @@ class Md_tracking extends CI_Model
             return;
         }
 
-        // Map existing tracking_import by id_po_supplier
         $existingRows = $this->db->get('tracking_import')->result();
         $byPoId = [];
         foreach ($existingRows as $er) {
@@ -1437,7 +1991,6 @@ class Md_tracking extends CI_Model
             }
         }
 
-        // Ambil data Approval Forwarder Luar Negeri untuk pencocokan otomatis Tahap 2
         $appForwarders = [];
         if ($this->db->table_exists('approval_forwarder')) {
             $sqlAf = "SELECT af.*,
@@ -1448,7 +2001,6 @@ class Md_tracking extends CI_Model
             $appForwarders = $this->db->query($sqlAf)->result();
         }
 
-        // Ambil data Penerimaan Barang yang punya no_po untuk pencocokan otomatis Tahap 9
         $penerimaanList = [];
         if ($this->db->table_exists('penerimaan_barang')) {
             $sqlPb = "SELECT pb.id_penerimaan_barang, pb.no_terima, pb.no_po, pb.tgl_masuk, pb.data_created, g.nama_gudang
@@ -1460,7 +2012,6 @@ class Md_tracking extends CI_Model
             $penerimaanList = $this->db->query($sqlPb)->result();
         }
 
-        // Filter hanya supplier / PO yang relevan (mengabaikan pembelian lokal via uang kas / shopee / koperasi lokal bila bukan forwarder)
         $localSkipKeywords = ['uang kas', 'shopee', 'tokopedia', 'nuklindolab', 'sumpah gajah mada', 'uno medical', 'alisha jaya', 'inti cakra'];
 
         foreach ($poList as $po) {
@@ -1470,11 +2021,10 @@ class Md_tracking extends CI_Model
                 continue;
             }
 
-            // Cek apakah ada kecocokan di Approval Forwarder Luar Negeri
             $matchedAf = null;
             $noPoDigits = '';
             if (preg_match('/\b(0\d{2})\b/', $noPoRaw, $mNum)) {
-                $noPoDigits = $mNum[1]; // misal 041, 044, 052, 058, 063
+                $noPoDigits = $mNum[1];
             }
 
             foreach ($appForwarders as $af) {
@@ -1484,7 +2034,7 @@ class Md_tracking extends CI_Model
                     break;
                 }
                 if ($supplierName !== '' && strlen($supplierName) >= 4) {
-                    $firstWord = strtolower( strtok($supplierName, ' ') );
+                    $firstWord = strtolower(strtok($supplierName, ' '));
                     if (strlen($firstWord) >= 3 && !in_array($firstWord, ['pt', 'pt.', 'cv', 'cv.', 'lain-lain']) && strpos($afTitle, $firstWord) !== false) {
                         $matchedAf = $af;
                         break;
@@ -1492,7 +2042,6 @@ class Md_tracking extends CI_Model
                 }
             }
 
-            // Skip supplier lokal murni kecuali punya dokumen Approval Forwarder Luar Negeri
             $supLower = strtolower($supplierName . ' ' . $noPoRaw);
             $isLocal = false;
             foreach ($localSkipKeywords as $kw) {
@@ -1505,14 +2054,12 @@ class Md_tracking extends CI_Model
                 continue;
             }
 
-            // Tentukan Waktu Tahap 1 (PO Manufacture)
             $waktu1 = !empty($po->ttd_4_at) && strpos($po->ttd_4_at, '0000-00-00') === false
                 ? $po->ttd_4_at
                 : (!empty($po->created_at) && strpos($po->created_at, '0000-00-00') === false
                     ? $po->created_at
                     : (!empty($po->tgl_pengajuan) ? date('Y-m-d H:i:s', strtotime($po->tgl_pengajuan)) : date('Y-m-d H:i:s')));
 
-            // Cek apakah ada kecocokan di Penerimaan Barang Gudang (Tahap 9) yang tanggal masuknya >= tanggal PO
             $matchedPb = null;
             $poDateOnly = date('Y-m-d', strtotime($waktu1));
             foreach ($penerimaanList as $pb) {
@@ -1520,7 +2067,7 @@ class Md_tracking extends CI_Model
                 if ($pbPo === '') continue;
                 $pbDate = !empty($pb->tgl_masuk) ? $pb->tgl_masuk : (!empty($pb->data_created) ? date('Y-m-d', strtotime($pb->data_created)) : '');
                 if ($pbDate !== '' && strtotime($pbDate) < (strtotime($poDateOnly) - 86400 * 7)) {
-                    continue; // Abaikan penerimaan barang tahun/bulan lama yang kebetulan nomor urut PO-nya sama
+                    continue;
                 }
                 if (strcasecmp($pbPo, $noPoRaw) === 0) {
                     $matchedPb = $pb;
@@ -1532,21 +2079,15 @@ class Md_tracking extends CI_Model
                 }
             }
 
-            // Tentukan Waktu Tahap 2, 3, 4 & Info Forwarder dari Approval Forwarder
-            $waktu2 = null;
-            $waktu3 = null;
-            $waktu4 = null;
             $moda   = 'Sea Freight (Kapal)';
             $idFw   = null;
+            $idAf   = null;
             $namaFw = null;
             $pol    = null;
             $pod    = null;
 
             if ($matchedAf) {
-                $waktu2 = !empty($matchedAf->created_at) ? $matchedAf->created_at : (!empty($matchedAf->tanggal) ? $matchedAf->tanggal . ' 09:00:00' : $waktu1);
-                if (strtotime($waktu2) < strtotime($waktu1)) {
-                    $waktu1 = $waktu2;
-                }
+                $idAf   = (int)$matchedAf->id;
                 $idFw   = $matchedAf->id_forwarder_chose ?: null;
                 $namaFw = $matchedAf->nama_forwarder_chose ?: null;
                 $pol    = $matchedAf->pol ?: null;
@@ -1554,20 +2095,14 @@ class Md_tracking extends CI_Model
                 if (stripos((string)$matchedAf->sistem_pengiriman, 'udara') !== false || stripos((string)$matchedAf->sistem_pengiriman, 'air') !== false) {
                     $moda = 'Air Freight (Pesawat)';
                 }
-                // Jika Approval Forwarder sudah Disetujui Direktur (status IN 3, 4), otomatis aktifkan Tahap 3 & 4
-                if (in_array((int)$matchedAf->status, [3, 4])) {
-                    $waktu3 = date('Y-m-d H:i:s', strtotime($waktu2) + 86400);
-                    $waktu4 = date('Y-m-d H:i:s', strtotime($waktu2) + 86400 * 2);
-                }
             }
 
-            // Tentukan Waktu Tahap 9 & Gudang Tujuan dari Penerimaan Barang / Status PO
-            $waktu9 = null;
-            $gudangTujuan = 'Gudang Pusat';
+            $waktuTerimaWh = null;
+            $gudangTujuan  = 'Gudang Pusat';
             $ketPenerimaan = null;
 
             if ($matchedPb) {
-                $waktu9 = !empty($matchedPb->data_created) && strpos($matchedPb->data_created, '0000-00-00') === false
+                $waktuTerimaWh = !empty($matchedPb->data_created) && strpos($matchedPb->data_created, '0000-00-00') === false
                     ? $matchedPb->data_created
                     : (!empty($matchedPb->tgl_masuk) ? $matchedPb->tgl_masuk . ' 15:00:00' : null);
                 $nmGdg = strtolower((string)$matchedPb->nama_gudang);
@@ -1579,44 +2114,12 @@ class Md_tracking extends CI_Model
                     $gudangTujuan = 'Gudang Pusat';
                 }
                 $ketPenerimaan = 'Diterima otomatis dari Penerimaan Barang No: ' . $matchedPb->no_terima . ' (' . $matchedPb->nama_gudang . ')';
-            } elseif ((int)$po->status == 8) {
-                // Status 8 di purchase_order = Barang Diterima Seluruh oleh Admin Warehouse
-                $waktu9 = !empty($po->ttd_4_at) ? date('Y-m-d H:i:s', strtotime($po->ttd_4_at) + 86400) : $waktu1;
-                $ketPenerimaan = 'Status PO Supplier: Barang Diterima Seluruh di Gudang';
             }
 
-            // Fungsi bantu interpolasi waktu tahapan tengah (2..8) bila Tahap 9 sudah selesai agar timeline tidak bolong
-            $buildInterpolatedMiddleTimes = function ($t1, $t9, $existingObj = null) use ($stage_defs) {
-                $ts1 = strtotime($t1);
-                $ts9 = max($ts1 + 3600, strtotime($t9));
-                $span = $ts9 - $ts1;
-                $ratios = [
-                    2 => 0.10, // Order Forwarder
-                    3 => 0.25, // Loading Kapal
-                    4 => 0.35, // Perjalanan Kapal
-                    5 => 0.65, // Sampai Seaport/Airport
-                    6 => 0.75, // Pembayaran Pajak
-                    7 => 0.85, // Keluar Gudang Port
-                    8 => 0.92, // Hand-over Domestik
-                ];
-                $res = [];
-                foreach ($ratios as $st => $ratio) {
-                    $fld = $stage_defs[$st]['field'];
-                    $curVal = $existingObj ? ($existingObj->$fld ?? null) : null;
-                    if (empty($curVal) || strpos((string)$curVal, '0000-00-00') !== false) {
-                        $res[$fld] = date('Y-m-d H:i:s', (int)round($ts1 + ($span * $ratio)));
-                    }
-                }
-                return $res;
-            };
+            $poOfficeUrl = base_url('purchase_order/show/detail/purchase_order/' . $po->id_po);
+            $afOfficeUrl = $matchedAf ? base_url('forwarder/show/detail/' . $matchedAf->id) : null;
 
             if (!isset($byPoId[(int)$po->id_po])) {
-                // INSERT OTOMATIS BARU
-                $curStage = 1;
-                if ($waktu2) $curStage = 2;
-                if ($waktu4) $curStage = 4;
-                if ($waktu9) $curStage = 9;
-
                 $kodeImport = $this->generateKodeImport();
                 $ins = [
                     'kode_import'              => $kodeImport,
@@ -1627,105 +2130,109 @@ class Md_tracking extends CI_Model
                     'daftar_unit'              => $po->items_summary ?: '-',
                     'moda_transportasi'        => $moda,
                     'id_forwarder'             => $idFw,
+                    'id_approval_forwarder'    => $idAf,
                     'nama_forwarder'           => $namaFw,
                     'pelabuhan_asal'           => $pol,
                     'pelabuhan_tujuan'         => $pod,
                     'nama_gudang_tujuan'       => $gudangTujuan,
                     'bukti_terima_gudang'      => !empty($po->lampiran_adm) ? strip_tags($po->lampiran_adm) : null,
                     'waktu_1_po_manufacture'   => $waktu1,
-                    'waktu_2_order_forwarder'  => $waktu2,
-                    'waktu_3_loading_kapal'    => $waktu3,
-                    'waktu_4_perjalanan_kapal' => $waktu4,
-                    'waktu_9_sampai_gudang'    => $waktu9,
-                    'current_stage'            => $curStage,
-                    'keterangan'               => $ketPenerimaan ?: (!empty($po->ket_adm) ? strip_tags($po->ket_adm) : ('Tersinkronisasi otomatis dari PO Supplier ' . $po->kode_po)),
+                    'waktu_9_sampai_gudang'    => $waktuTerimaWh,
+                    'current_stage'            => $waktuTerimaWh ? 12 : ($matchedAf ? 5 : 1),
+                    'keterangan'               => $ketPenerimaan ?: (!empty($po->ket_adm) ? strip_tags($po->ket_adm) : ('Tersinkronisasi dari PO Supplier ' . $po->kode_po)),
                     'created_by'               => $po->id_pengaju ?: 1,
                     'created_at'               => $waktu1,
                     'updated_at'               => date('Y-m-d H:i:s'),
                     'stat'                     => 1
                 ];
 
-                if ($waktu9) {
-                    $mid = $buildInterpolatedMiddleTimes($waktu1, $waktu9, (object)$ins);
-                    foreach ($mid as $k => $v) {
-                        $ins[$k] = $v;
-                    }
-                }
-
                 $this->db->insert('tracking_import', $ins);
                 $newId = $this->db->insert_id();
 
                 if ($newId) {
+                    // Tahap 1: Penerimaan PO (Otomatis Selesai)
+                    $this->ensureImportStepRow($newId, 1, [
+                        'status'       => 'selesai',
+                        'docs'         => ['doc_po_supplier' => $poOfficeUrl],
+                        'catatan'      => 'Otomatis ditarik dari Office PO Supplier: ' . $po->kode_po,
+                        'completed_at' => $waktu1,
+                        'updated_by'   => $po->id_pengaju ?: 1
+                    ]);
+
                     $this->db->insert('tracking_import_log', [
                         'id_import'       => $newId,
                         'stage'           => 1,
                         'stage_label'     => $stage_defs[1]['label'],
                         'waktu_milestone' => $waktu1,
                         'catatan'         => 'Otomatis ditarik dari Pengajuan PO Supplier: ' . $po->kode_po . ' (No PO: ' . ($noPoRaw ?: '-') . ')',
+                        'bukti_link'      => $poOfficeUrl,
                         'id_pengguna'     => $po->id_pengaju ?: 1,
                         'created_at'      => $waktu1
                     ]);
 
-                    if ($waktu2 && $matchedAf) {
-                        $this->db->insert('tracking_import_log', [
-                            'id_import'       => $newId,
-                            'stage'           => 2,
-                            'stage_label'     => $stage_defs[2]['label'],
-                            'waktu_milestone' => $waktu2,
-                            'catatan'         => 'Otomatis terhubung dengan Approval Forwarder: ' . $matchedAf->kode . ' (' . ($namaFw ?: $matchedAf->nama) . ')',
-                            'id_pengguna'     => $matchedAf->id_pengguna ?: 1,
-                            'created_at'      => $waktu2
+                    // Tahap 5: Link Perbandingan Forwarder jika ada
+                    if ($matchedAf && $afOfficeUrl) {
+                        $this->ensureImportStepRow($newId, 5, [
+                            'status'     => 'proses',
+                            'docs'       => ['doc_perbandingan_forwarder' => $afOfficeUrl],
+                            'catatan'    => 'Terhubung otomatis dengan Approval Forwarder: ' . $matchedAf->kode,
+                            'updated_by' => $matchedAf->id_pengguna ?: 1
                         ]);
                     }
 
-                    if ($waktu9) {
-                        $this->db->insert('tracking_import_log', [
-                            'id_import'       => $newId,
-                            'stage'           => 9,
-                            'stage_label'     => $stage_defs[9]['label'],
-                            'waktu_milestone' => $waktu9,
-                            'catatan'         => $ketPenerimaan,
-                            'id_pengguna'     => $po->id_pengaju ?: 1,
-                            'created_at'      => $waktu9
+                    // Tahap 12: Penerimaan Warehouse jika sudah masuk penerimaan_barang
+                    if ($waktuTerimaWh) {
+                        $this->ensureImportStepRow($newId, 12, [
+                            'status'       => 'selesai',
+                            'data'         => [
+                                'status_penjemputan' => 'Diterima di Warehouse',
+                                'nama_gudang_tujuan' => $gudangTujuan
+                            ],
+                            'docs'         => !empty($po->lampiran_adm) ? ['doc_bukti_terima_wh' => strip_tags($po->lampiran_adm)] : [],
+                            'catatan'      => $ketPenerimaan,
+                            'completed_at' => $waktuTerimaWh,
+                            'updated_by'   => $po->id_pengaju ?: 1
                         ]);
                     }
                 }
             } else {
-                // UPDATE OTOMATIS JIKA ADA DATA BARU DARI APPROVAL FORWARDER ATAU PENERIMAAN BARANG
+                // Pastikan row lama juga memiliki step Tahap 1, 5, dan 12 jika cocok
                 $ex = $byPoId[(int)$po->id_po];
-                $upd = [];
+                $this->ensureImportStepRow($ex->id_import, 1, [
+                    'status'       => 'selesai',
+                    'docs'         => ['doc_po_supplier' => $poOfficeUrl],
+                    'completed_at' => $ex->waktu_1_po_manufacture ?: $waktu1,
+                    'updated_by'   => $ex->created_by ?: 1
+                ]);
 
-                if (empty($ex->waktu_2_order_forwarder) && $waktu2) {
-                    $upd['waktu_2_order_forwarder'] = $waktu2;
+                $upd = [];
+                if ($matchedAf && $afOfficeUrl) {
+                    if (empty($ex->id_approval_forwarder)) $upd['id_approval_forwarder'] = $idAf;
                     if (empty($ex->nama_forwarder) && $namaFw) $upd['nama_forwarder'] = $namaFw;
                     if (empty($ex->pelabuhan_asal) && $pol) $upd['pelabuhan_asal'] = $pol;
                     if (empty($ex->pelabuhan_tujuan) && $pod) $upd['pelabuhan_tujuan'] = $pod;
-                    if ((int)$ex->current_stage < 2) $upd['current_stage'] = 2;
+                    $this->ensureImportStepRow($ex->id_import, 5, [
+                        'status'     => 'proses',
+                        'docs'       => ['doc_perbandingan_forwarder' => $afOfficeUrl],
+                        'updated_by' => $matchedAf->id_pengguna ?: 1
+                    ]);
                 }
 
-                if (empty($ex->waktu_3_loading_kapal) && $waktu3) {
-                    $upd['waktu_3_loading_kapal'] = $waktu3;
-                    if ((int)$ex->current_stage < 3) $upd['current_stage'] = 3;
-                }
-                if (empty($ex->waktu_4_perjalanan_kapal) && $waktu4) {
-                    $upd['waktu_4_perjalanan_kapal'] = $waktu4;
-                    if ((int)$ex->current_stage < 4) $upd['current_stage'] = 4;
-                }
-
-                $finalWaktu9 = !empty($ex->waktu_9_sampai_gudang) ? $ex->waktu_9_sampai_gudang : $waktu9;
-                if ($finalWaktu9) {
+                if ($waktuTerimaWh) {
                     if (empty($ex->waktu_9_sampai_gudang)) {
-                        $upd['waktu_9_sampai_gudang'] = $finalWaktu9;
+                        $upd['waktu_9_sampai_gudang'] = $waktuTerimaWh;
                         $upd['nama_gudang_tujuan']    = $gudangTujuan;
                     }
-                    if ((int)$ex->current_stage < 9) {
-                        $upd['current_stage'] = 9;
-                    }
-                    // Lengkapi otomatis tahapan 2..8 yang masih kosong jika barang sudah sampai gudang (Tahap 9)
-                    $mid = $buildInterpolatedMiddleTimes($ex->waktu_1_po_manufacture ?: $waktu1, $finalWaktu9, $ex);
-                    foreach ($mid as $k => $v) {
-                        $upd[$k] = $v;
-                    }
+                    $this->ensureImportStepRow($ex->id_import, 12, [
+                        'status'       => 'selesai',
+                        'data'         => [
+                            'status_penjemputan' => 'Diterima di Warehouse',
+                            'nama_gudang_tujuan' => $gudangTujuan
+                        ],
+                        'catatan'      => $ketPenerimaan,
+                        'completed_at' => $waktuTerimaWh,
+                        'updated_by'   => $ex->created_by ?: 1
+                    ]);
                 }
 
                 if (!empty($upd)) {
@@ -1736,7 +2243,258 @@ class Md_tracking extends CI_Model
         }
     }
 
-    public function getAllTrackingImport($filter_gudang = null, $filter_stage = null)
+    public function getImportStepsMap($id_import)
+    {
+        $defs = $this->getImportStageDefinitions();
+        $rows = [];
+        if ($this->db->table_exists('tracking_import_steps')) {
+            $rows = $this->db->select('s.*, p.nama as nama_pengguna')
+                ->from('tracking_import_steps s')
+                ->join('pengguna p', 's.updated_by = p.pengguna_id', 'left')
+                ->where('s.id_import', (int)$id_import)
+                ->get()->result();
+        }
+
+        $byStage = [];
+        foreach ($rows as $r) {
+            $r->data = !empty($r->data_json) ? (json_decode($r->data_json, true) ?: []) : [];
+            $r->docs = !empty($r->docs_json) ? (json_decode($r->docs_json, true) ?: []) : [];
+            $byStage[(int)$r->stage] = $r;
+        }
+
+        $result = [];
+        foreach ($defs as $st => $def) {
+            if (isset($byStage[$st])) {
+                $result[$st] = $byStage[$st];
+            } else {
+                $result[$st] = (object)[
+                    'id'            => null,
+                    'id_import'     => (int)$id_import,
+                    'stage'         => $st,
+                    'status'        => 'belum',
+                    'data'          => [],
+                    'docs'          => [],
+                    'catatan'       => null,
+                    'completed_at'  => null,
+                    'updated_by'    => null,
+                    'updated_at'    => null,
+                    'nama_pengguna' => null
+                ];
+            }
+        }
+        return $result;
+    }
+
+    public function getAllImportStepsGrouped($importIds = [])
+    {
+        $grouped = [];
+        if (empty($importIds) || !$this->db->table_exists('tracking_import_steps')) {
+            return $grouped;
+        }
+        $rows = $this->db->where_in('id_import', $importIds)->get('tracking_import_steps')->result();
+        foreach ($rows as $r) {
+            $r->data = !empty($r->data_json) ? (json_decode($r->data_json, true) ?: []) : [];
+            $r->docs = !empty($r->docs_json) ? (json_decode($r->docs_json, true) ?: []) : [];
+            $grouped[(int)$r->id_import][(int)$r->stage] = $r;
+        }
+        return $grouped;
+    }
+
+    public function saveImportStep($id_import, $stage, $payload, $user_id)
+    {
+        $defs = $this->getImportStageDefinitions();
+        if (!isset($defs[$stage])) {
+            return ['ok' => false, 'msg' => 'Tahapan import tidak valid!'];
+        }
+
+        $row = $this->getTrackingImportById($id_import);
+        if (!$row) {
+            return ['ok' => false, 'msg' => 'Data Tracking Import tidak ditemukan!'];
+        }
+
+        $def = $defs[$stage];
+        $now = date('Y-m-d H:i:s');
+
+        $status = strtolower(trim((string)($payload['status'] ?? 'proses')));
+        if (!in_array($status, ['belum', 'proses', 'selesai', 'na'], true)) {
+            $status = 'proses';
+        }
+        if ($stage !== 9 && $status === 'na') {
+            $status = 'belum';
+        }
+
+        // Ambil data & docs lama agar tidak hilang jika sebagian tidak dikirim
+        $existing = $this->db->get_where('tracking_import_steps', [
+            'id_import' => (int)$id_import,
+            'stage'     => (int)$stage
+        ])->row();
+
+        $stepData = $existing && !empty($existing->data_json) ? (json_decode($existing->data_json, true) ?: []) : [];
+        $stepDocs = $existing && !empty($existing->docs_json) ? (json_decode($existing->docs_json, true) ?: []) : [];
+
+        if (!empty($payload['data']) && is_array($payload['data'])) {
+            foreach ($def['fields'] as $fk => $fmeta) {
+                if (array_key_exists($fk, $payload['data'])) {
+                    $stepData[$fk] = trim((string)$payload['data'][$fk]);
+                }
+            }
+        }
+
+        $firstDocLink = null;
+        if (!empty($payload['docs']) && is_array($payload['docs'])) {
+            foreach ($def['docs'] as $dk => $dmeta) {
+                if (array_key_exists($dk, $payload['docs'])) {
+                    $val = trim((string)$payload['docs'][$dk]);
+                    $stepDocs[$dk] = $val;
+                    if ($val !== '' && $firstDocLink === null) {
+                        $firstDocLink = $val;
+                    }
+                }
+            }
+        }
+
+        $catatan = isset($payload['catatan']) ? trim((string)$payload['catatan']) : ($existing ? $existing->catatan : null);
+
+        // Waktu selesai aktual (bisa input manual tanggal/jam, default $now saat status selesai)
+        $completedAt = $existing ? $existing->completed_at : null;
+        if (!empty($payload['completed_at'])) {
+            $ts = strtotime(str_replace('T', ' ', trim((string)$payload['completed_at'])));
+            if ($ts && $ts > 0) {
+                $completedAt = date('Y-m-d H:i:s', $ts);
+            }
+        }
+        if ($status === 'selesai' && empty($completedAt)) {
+            $completedAt = $now;
+        } elseif ($status === 'belum') {
+            $completedAt = null;
+        }
+
+        $stepRecord = [
+            'status'       => $status,
+            'data_json'    => json_encode($stepData, JSON_UNESCAPED_UNICODE),
+            'docs_json'    => json_encode($stepDocs, JSON_UNESCAPED_UNICODE),
+            'catatan'      => $catatan !== '' ? $catatan : null,
+            'completed_at' => $completedAt,
+            'updated_by'   => $user_id,
+            'updated_at'   => $now
+        ];
+
+        $this->db->trans_begin();
+
+        if ($existing) {
+            $this->db->where('id', $existing->id)->update('tracking_import_steps', $stepRecord);
+        } else {
+            $stepRecord['id_import'] = (int)$id_import;
+            $stepRecord['stage']     = (int)$stage;
+            $this->db->insert('tracking_import_steps', $stepRecord);
+        }
+
+        // Sinkronisasi kolom ringkasan ke header tracking_import
+        $headerUpd = ['updated_at' => $now];
+
+        if ($stage === 2) {
+            if (isset($stepData['hs_code'])) $headerUpd['hs_code'] = $stepData['hs_code'] ?: null;
+            if (isset($stepData['ada_lartas'])) $headerUpd['ada_lartas'] = $stepData['ada_lartas'] ?: null;
+            if (isset($stepData['keterangan_lartas'])) $headerUpd['keterangan_lartas'] = $stepData['keterangan_lartas'] ?: null;
+
+            // Jika Tidak Ada Lartas -> otomatis set Tahap 9 menjadi N/A
+            if (($stepData['ada_lartas'] ?? '') === 'tidak') {
+                $st9 = $this->db->get_where('tracking_import_steps', ['id_import' => (int)$id_import, 'stage' => 9])->row();
+                $st9Data = $st9 && !empty($st9->data_json) ? (json_decode($st9->data_json, true) ?: []) : [];
+                $st9Data['status_dokumen_lartas'] = 'Tidak Ada Lartas (N/A)';
+                $st9Rec = [
+                    'status'       => 'na',
+                    'data_json'    => json_encode($st9Data, JSON_UNESCAPED_UNICODE),
+                    'catatan'      => 'Otomatis N/A karena Tahap 2 ditandai Tidak Ada Lartas.',
+                    'completed_at' => $now,
+                    'updated_by'   => $user_id,
+                    'updated_at'   => $now
+                ];
+                if ($st9) {
+                    $this->db->where('id', $st9->id)->update('tracking_import_steps', $st9Rec);
+                } else {
+                    $st9Rec['id_import'] = (int)$id_import;
+                    $st9Rec['stage']     = 9;
+                    $this->db->insert('tracking_import_steps', $st9Rec);
+                }
+            } elseif (($stepData['ada_lartas'] ?? '') === 'ada') {
+                // Jika sebelumnya N/A, kembalikan ke belum agar bisa diproses
+                $st9 = $this->db->get_where('tracking_import_steps', ['id_import' => (int)$id_import, 'stage' => 9])->row();
+                if ($st9 && $st9->status === 'na') {
+                    $this->db->where('id', $st9->id)->update('tracking_import_steps', [
+                        'status'       => 'belum',
+                        'completed_at' => null,
+                        'updated_by'   => $user_id,
+                        'updated_at'   => $now
+                    ]);
+                }
+            }
+        } elseif ($stage === 7) {
+            if (!empty($stepData['no_bl_awb'])) $headerUpd['no_bl_awb'] = $stepData['no_bl_awb'];
+        } elseif ($stage === 8) {
+            if (!empty($stepData['no_pib'])) $headerUpd['no_pib'] = $stepData['no_pib'];
+        } elseif ($stage === 10) {
+            if (isset($stepData['nominal_pajak_import']) && $stepData['nominal_pajak_import'] !== '') {
+                $clean = preg_replace('/[^0-9.]/', '', str_replace(',', '', $stepData['nominal_pajak_import']));
+                $headerUpd['nominal_pajak_import'] = (float)$clean;
+            }
+            if (!empty($stepDocs['doc_bukti_bayar_pajak'])) {
+                $headerUpd['bukti_bayar_pajak'] = $stepDocs['doc_bukti_bayar_pajak'];
+            }
+        } elseif ($stage === 11) {
+            if (!empty($stepData['tgl_siap_jemput'])) {
+                $headerUpd['tgl_siap_jemput'] = $stepData['tgl_siap_jemput'];
+            }
+        } elseif ($stage === 12) {
+            if (!empty($stepData['ekspedisi_domestik'])) $headerUpd['nama_ekspedisi_domestik'] = $stepData['ekspedisi_domestik'];
+            if (!empty($stepData['no_resi_domestik'])) $headerUpd['no_resi_domestik'] = $stepData['no_resi_domestik'];
+            if (!empty($stepData['nama_gudang_tujuan'])) $headerUpd['nama_gudang_tujuan'] = $stepData['nama_gudang_tujuan'];
+            if (!empty($stepDocs['doc_bukti_terima_wh'])) $headerUpd['bukti_terima_gudang'] = $stepDocs['doc_bukti_terima_wh'];
+            if ($status === 'selesai') {
+                $headerUpd['waktu_9_sampai_gudang'] = $completedAt ?: $now;
+            }
+        } elseif ($stage === 13) {
+            if (!empty($stepData['tgl_jatuh_tempo_forwarder'])) {
+                $headerUpd['tgl_jatuh_tempo_forwarder'] = $stepData['tgl_jatuh_tempo_forwarder'];
+            }
+        }
+
+        // Hitung ulang current_stage (tahap tertinggi yang berstatus proses/selesai)
+        $allSteps = $this->db->where('id_import', (int)$id_import)->get('tracking_import_steps')->result();
+        $highest = 1;
+        foreach ($allSteps as $sRow) {
+            if (in_array($sRow->status, ['proses', 'selesai'], true) && (int)$sRow->stage > $highest) {
+                $highest = (int)$sRow->stage;
+            }
+        }
+        $headerUpd['current_stage'] = $highest;
+
+        $this->db->where('id_import', (int)$id_import)->update('tracking_import', $headerUpd);
+
+        // Catat log aktivitas
+        $statusText = strtoupper($status);
+        $logCatatan = $catatan !== '' ? ("[$statusText] " . $catatan) : ("Update status tahap menjadi: " . $statusText);
+        $this->db->insert('tracking_import_log', [
+            'id_import'       => (int)$id_import,
+            'stage'           => (int)$stage,
+            'stage_label'     => $def['label'],
+            'waktu_milestone' => $completedAt ?: $now,
+            'catatan'         => $logCatatan,
+            'bukti_link'      => $firstDocLink,
+            'id_pengguna'     => $user_id,
+            'created_at'      => $now
+        ]);
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            return ['ok' => false, 'msg' => 'Gagal menyimpan perubahan tahapan import!'];
+        }
+
+        $this->db->trans_commit();
+        return ['ok' => true, 'msg' => 'Tahap "' . $def['label'] . '" berhasil disimpan!'];
+    }
+
+    public function getAllTrackingImport($filter_gudang = null, $filter_phase = null)
     {
         $this->syncAutomaticImportFromExistingData();
 
@@ -1748,12 +2506,24 @@ class Md_tracking extends CI_Model
         if (!empty($filter_gudang)) {
             $this->db->where('ti.nama_gudang_tujuan', $filter_gudang);
         }
-        if (!empty($filter_stage)) {
-            $this->db->where('ti.current_stage', (int)$filter_stage);
-        }
 
         $this->db->order_by('ti.id_import', 'DESC');
-        return $this->db->get()->result();
+        $rows = $this->db->get()->result();
+
+        if (!empty($filter_phase) && !empty($rows)) {
+            $ids = array_map(function ($r) { return (int)$r->id_import; }, $rows);
+            $stepsGrouped = $this->getAllImportStepsGrouped($ids);
+            $filtered = [];
+            foreach ($rows as $r) {
+                $m = $this->resolveImportMetrics($r, $stepsGrouped[(int)$r->id_import] ?? []);
+                if ((string)$m['active_phase'] === (string)$filter_phase) {
+                    $filtered[] = $r;
+                }
+            }
+            return $filtered;
+        }
+
+        return $rows;
     }
 
     public function getTrackingImportById($id_import)
@@ -1772,118 +2542,163 @@ class Md_tracking extends CI_Model
         $this->db->from('tracking_import_log l');
         $this->db->join('pengguna p', 'l.id_pengguna = p.pengguna_id', 'left');
         $this->db->where('l.id_import', $id_import);
-        $this->db->order_by('l.waktu_milestone', 'DESC');
+        $this->db->order_by('l.created_at', 'DESC');
         $this->db->order_by('l.id', 'DESC');
         return $this->db->get()->result();
     }
 
-    public function resolveImportMetrics($row)
+    public function resolveImportMetrics($row, $stepsMap = null)
     {
-        $defs = $this->getImportStageDefinitions();
-        $cleanDt = function ($dt) {
-            if (empty($dt)) return null;
-            $s = trim((string)$dt);
-            if ($s === '' || strpos($s, '0000-00-00') !== false) return null;
-            return $s;
-        };
+        $defs   = $this->getImportStageDefinitions();
+        $phases = $this->getImportPhaseDefinitions();
 
-        $calcDur = function ($start, $end) {
-            if (function_exists('formatApprovalDurationInfo')) {
-                return formatApprovalDurationInfo($start, $end, false);
-            }
-            return ['valid' => false, 'text' => '-', 'tier' => 'none', 'label_tier' => ''];
-        };
-
-        $times = [];
-        foreach ($defs as $num => $d) {
-            $field = $d['field'];
-            $times[$num] = $cleanDt($row->$field ?? null);
-        }
-
-        $stepDurations = [];
-        $prevTime = $times[1];
-        for ($i = 2; $i <= 9; $i++) {
-            $curTime = $times[$i];
-            $stepDurations[$i] = ($prevTime && $curTime) ? $calcDur($prevTime, $curTime) : $calcDur(null, null);
-            if ($curTime) {
-                $prevTime = $curTime;
-            }
-        }
-
-        // Ringkasan 4 Segmen Utama Import
-        // 1. Produksi & Origin (PO Manufacture -> Loading Kapal)
-        $durOrigin   = ($times[1] && $times[3]) ? $calcDur($times[1], $times[3]) : $calcDur(null, null);
-        // 2. Freight Transit (Loading Kapal -> Sampai Seaport/Airport)
-        $durFreight  = ($times[3] && $times[5]) ? $calcDur($times[3], $times[5]) : $calcDur(null, null);
-        // 3. Pajak & Customs Clearance (Sampai Seaport/Airport -> Keluar Gudang Seaport/Airport)
-        $durCustoms  = ($times[5] && $times[7]) ? $calcDur($times[5], $times[7]) : $calcDur(null, null);
-        // 4. Domestik ke Gudang VYM (Keluar Seaport/Airport -> Sampai Gudang Pusat/JKT/Jogja)
-        $durDomestik = ($times[7] && $times[9]) ? $calcDur($times[7], $times[9]) : $calcDur(null, null);
-        // 5. Total End-to-End Import (PO Manufacture -> Sampai Gudang VYM)
-        $durTotal    = ($times[1] && $times[9]) ? $calcDur($times[1], $times[9]) : $calcDur(null, null);
-
-        // Ketepatan Pengiriman Import (Estimasi Sampai Gudang vs Aktual Sampai Gudang)
-        $estGudang = $cleanDt($row->tgl_estimasi_sampai_gudang ?? null);
-        $actGudang = $times[9] ? date('Y-m-d', strtotime($times[9])) : null;
-
-        $ketepatan = [
-            'label'      => 'Estimasi Belum Diisi',
-            'badge_bg'   => '#f1f5f9',
-            'badge_text' => '#64748b',
-            'badge_bdr'  => '#cbd5e1',
-            'icon'       => 'fa-clock'
-        ];
-
-        if ($estGudang) {
-            if ($actGudang) {
-                $diffDays = (int)floor((strtotime($actGudang) - strtotime($estGudang)) / 86400);
-                if ($diffDays <= 0) {
-                    $ketepatan['label']      = ($diffDays < 0) ? ('Tepat Waktu (' . abs($diffDays) . ' Hr Lebih Cepat)') : 'Tepat Waktu (On-Time)';
-                    $ketepatan['badge_bg']   = '#dcfce7';
-                    $ketepatan['badge_text'] = '#166534';
-                    $ketepatan['badge_bdr']  = '#86efac';
-                    $ketepatan['icon']       = 'fa-check-circle';
-                } else {
-                    $ketepatan['label']      = 'Terlambat ' . $diffDays . ' Hari';
-                    $ketepatan['badge_bg']   = '#fee2e2';
-                    $ketepatan['badge_text'] = '#991b1b';
-                    $ketepatan['badge_bdr']  = '#fca5a5';
-                    $ketepatan['icon']       = 'fa-exclamation-triangle';
-                }
-            } else {
-                $diffDays = (int)floor((strtotime(date('Y-m-d')) - strtotime($estGudang)) / 86400);
-                if ($diffDays > 0) {
-                    $ketepatan['label']      = 'Melewati Estimasi ' . $diffDays . ' Hari';
-                    $ketepatan['badge_bg']   = '#fef3c7';
-                    $ketepatan['badge_text'] = '#92400e';
-                    $ketepatan['badge_bdr']  = '#fcd34d';
-                    $ketepatan['icon']       = 'fa-exclamation-circle';
-                } else {
-                    $ketepatan['label']      = 'Dalam Jadwal (H-' . abs($diffDays) . ')';
-                    $ketepatan['badge_bg']   = '#e0f2fe';
-                    $ketepatan['badge_text'] = '#0369a1';
-                    $ketepatan['badge_bdr']  = '#bae6fd';
-                    $ketepatan['icon']       = 'fa-ship';
-                }
-            }
+        if ($stepsMap === null) {
+            $stepsMap = $this->getImportStepsMap($row->id_import);
         }
 
         $completedCount = 0;
-        foreach ($times as $t) {
-            if (!empty($t)) $completedCount++;
+        $inProgressCount = 0;
+        $stepStatuses = [];
+        $times = [];
+        $activeStage = 1;
+        $firstIncompleteStage = null;
+
+        for ($s = 1; $s <= 14; $s++) {
+            $stObj = $stepsMap[$s] ?? null;
+            $status = $stObj ? ($stObj->status ?: 'belum') : 'belum';
+            $compAt = ($stObj && !empty($stObj->completed_at) && strpos((string)$stObj->completed_at, '0000-00-00') === false)
+                ? $stObj->completed_at : null;
+
+            // Fallback untuk data lama sebelum migrasi steps
+            if ($s === 1 && $status === 'belum' && !empty($row->waktu_1_po_manufacture)) {
+                $status = 'selesai';
+                $compAt = $row->waktu_1_po_manufacture;
+            }
+            if ($s === 9 && $status === 'belum' && ($row->ada_lartas ?? '') === 'tidak') {
+                $status = 'na';
+            }
+
+            $stepStatuses[$s] = $status;
+            $times[$s] = $compAt;
+
+            if ($status === 'selesai' || $status === 'na') {
+                $completedCount++;
+            } else {
+                if ($status === 'proses') {
+                    $inProgressCount++;
+                }
+                if ($firstIncompleteStage === null) {
+                    $firstIncompleteStage = $s;
+                }
+            }
+        }
+
+        if ($firstIncompleteStage !== null) {
+            $activeStage = $firstIncompleteStage;
+        } else {
+            $activeStage = 14; // Semua selesai
+        }
+
+        $activePhase = $defs[$activeStage]['phase'] ?? 1;
+        $isAllDone   = ($completedCount >= 14);
+
+        // Ringkasan per fase (1..5)
+        $phaseStats = [];
+        foreach ($phases as $pNum => $pDef) {
+            $pTotal = count($pDef['stages']);
+            $pDone  = 0;
+            $pProc  = 0;
+            foreach ($pDef['stages'] as $stNum) {
+                if (in_array($stepStatuses[$stNum], ['selesai', 'na'], true)) {
+                    $pDone++;
+                } elseif ($stepStatuses[$stNum] === 'proses') {
+                    $pProc++;
+                }
+            }
+            $phaseStats[$pNum] = [
+                'done'  => $pDone,
+                'total' => $pTotal,
+                'pct'   => (int)round(($pDone / $pTotal) * 100),
+                'state' => ($pDone === $pTotal) ? 'selesai' : (($pDone > 0 || $pProc > 0) ? 'proses' : 'belum')
+            ];
+        }
+
+        // Hitung Lead Time aktual (tanpa interpolasi fiktif)
+        $calcDur = function ($start, $end) {
+            if (empty($start) || empty($end)) {
+                return ['valid' => false, 'text' => '-'];
+            }
+            if (function_exists('formatApprovalDurationInfo')) {
+                return formatApprovalDurationInfo($start, $end, false);
+            }
+            $diff = strtotime($end) - strtotime($start);
+            if ($diff < 0) return ['valid' => false, 'text' => '-'];
+            $days = floor($diff / 86400);
+            $hrs  = floor(($diff % 86400) / 3600);
+            return ['valid' => true, 'text' => ($days > 0 ? "{$days} hr " : '') . "{$hrs} jam"];
+        };
+
+        $t1  = $times[1] ?: ($row->waktu_1_po_manufacture ?: $row->created_at);
+        $t12 = $times[12] ?: (!empty($row->waktu_9_sampai_gudang) ? $row->waktu_9_sampai_gudang : null);
+        $t14 = $times[14];
+
+        $durToWarehouse = $calcDur($t1, $t12);
+        $durEndToEnd    = $calcDur($t1, $t14);
+
+        // Status Jatuh Tempo Invoice Forwarder (Tahap 13 vs Tahap 14)
+        $jtBadge = [
+            'has_date'   => false,
+            'label'      => 'Belum Diisi',
+            'badge_bg'   => '#f1f5f9',
+            'badge_text' => '#64748b',
+            'badge_bdr'  => '#cbd5e1',
+            'icon'       => 'fa-calendar'
+        ];
+        if (!empty($row->tgl_jatuh_tempo_forwarder) && strpos((string)$row->tgl_jatuh_tempo_forwarder, '0000-00-00') === false) {
+            $jtBadge['has_date'] = true;
+            if ($stepStatuses[14] === 'selesai') {
+                $jtBadge['label']      = 'Lunas (' . date('d/m/Y', strtotime($row->tgl_jatuh_tempo_forwarder)) . ')';
+                $jtBadge['badge_bg']   = '#dcfce7';
+                $jtBadge['badge_text'] = '#166534';
+                $jtBadge['badge_bdr']  = '#86efac';
+                $jtBadge['icon']       = 'fa-check-circle';
+            } else {
+                $diffJt = (int)floor((strtotime($row->tgl_jatuh_tempo_forwarder) - strtotime(date('Y-m-d'))) / 86400);
+                if ($diffJt < 0) {
+                    $jtBadge['label']      = 'Overdue ' . abs($diffJt) . ' Hr (' . date('d/m/Y', strtotime($row->tgl_jatuh_tempo_forwarder)) . ')';
+                    $jtBadge['badge_bg']   = '#fee2e2';
+                    $jtBadge['badge_text'] = '#991b1b';
+                    $jtBadge['badge_bdr']  = '#fca5a5';
+                    $jtBadge['icon']       = 'fa-exclamation-triangle';
+                } elseif ($diffJt <= 3) {
+                    $jtBadge['label']      = 'Jatuh Tempo H-' . $diffJt . ' (' . date('d/m/Y', strtotime($row->tgl_jatuh_tempo_forwarder)) . ')';
+                    $jtBadge['badge_bg']   = '#fef3c7';
+                    $jtBadge['badge_text'] = '#92400e';
+                    $jtBadge['badge_bdr']  = '#fcd34d';
+                    $jtBadge['icon']       = 'fa-clock';
+                } else {
+                    $jtBadge['label']      = 'JT: ' . date('d/m/Y', strtotime($row->tgl_jatuh_tempo_forwarder)) . ' (H-' . $diffJt . ')';
+                    $jtBadge['badge_bg']   = '#e0f2fe';
+                    $jtBadge['badge_text'] = '#0369a1';
+                    $jtBadge['badge_bdr']  = '#bae6fd';
+                    $jtBadge['icon']       = 'fa-calendar-alt';
+                }
+            }
         }
 
         return [
-            'times'          => $times,
-            'step_durations' => $stepDurations,
-            'dur_origin'     => $durOrigin,
-            'dur_freight'    => $durFreight,
-            'dur_customs'    => $durCustoms,
-            'dur_domestik'   => $durDomestik,
-            'dur_total'      => $durTotal,
-            'ketepatan'      => $ketepatan,
-            'completed_cnt'  => $completedCount,
-            'progress_pct'   => (int)round(($completedCount / 9) * 100)
+            'times'            => $times,
+            'step_statuses'    => $stepStatuses,
+            'phase_stats'      => $phaseStats,
+            'active_stage'     => $activeStage,
+            'active_phase'     => $activePhase,
+            'is_all_done'      => $isAllDone,
+            'completed_cnt'    => $completedCount,
+            'in_progress_cnt'  => $inProgressCount,
+            'progress_pct'     => (int)round(($completedCount / 14) * 100),
+            'dur_to_warehouse' => $durToWarehouse,
+            'dur_end_to_end'   => $durEndToEnd,
+            'jatuh_tempo'      => $jtBadge
         ];
     }
 

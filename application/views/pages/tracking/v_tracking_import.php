@@ -1,20 +1,17 @@
 <?php
-$total_import    = count($import_list);
-$cnt_origin_ship = 0; // Tahap 1-4
-$cnt_port_pajak  = 0; // Tahap 5-7
-$cnt_domestik    = 0; // Tahap 8
-$cnt_selesai     = 0; // Tahap 9
+$total_import = count($import_list);
+$phase_counts = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
+$cnt_selesai  = 0;
 
 foreach ($import_list as $r) {
-    $st = (int)$r->current_stage;
-    if ($st <= 4) {
-        $cnt_origin_ship++;
-    } elseif ($st <= 7) {
-        $cnt_port_pajak++;
-    } elseif ($st == 8) {
-        $cnt_domestik++;
-    } else {
+    $m = $metrics_map[$r->id_import];
+    if ($m['is_all_done']) {
         $cnt_selesai++;
+    } else {
+        $ap = (int)$m['active_phase'];
+        if (isset($phase_counts[$ap])) {
+            $phase_counts[$ap]++;
+        }
     }
 }
 ?>
@@ -24,14 +21,21 @@ foreach ($import_list as $r) {
         background: #fff;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        padding: 14px 16px;
+        padding: 12px 14px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        text-decoration: none !important;
+        display: block;
+    }
+    .import-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
     .import-filter-pill {
         border-radius: 8px;
-        font-size: 0.82rem;
+        font-size: 0.81rem;
         font-weight: 600;
-        padding: 6px 13px;
+        padding: 5px 12px;
         border: 1px solid #cbd5e1;
         background: #f8fafc;
         color: #475569;
@@ -51,21 +55,18 @@ foreach ($import_list as $r) {
     }
     .stage-mini-dots {
         display: flex;
-        gap: 3px;
+        gap: 2px;
         margin-top: 5px;
     }
     .stage-mini-dot {
-        height: 6px;
+        height: 7px;
         flex: 1;
-        border-radius: 3px;
+        border-radius: 2px;
         background: #e2e8f0;
     }
-    .stage-mini-dot.done {
-        background: #10b981;
-    }
-    .stage-mini-dot.current {
-        background: #2563eb;
-    }
+    .stage-mini-dot.selesai { background: #10b981; }
+    .stage-mini-dot.na      { background: #94a3b8; }
+    .stage-mini-dot.proses  { background: #2563eb; }
 </style>
 
 <header class="page-header">
@@ -77,43 +78,38 @@ foreach ($import_list as $r) {
     </div>
 </header>
 
-<!-- RINGKASAN KPI -->
+<!-- RINGKASAN KPI 5 FASE + SELESAI -->
 <div class="row mb-3">
-    <div class="col-md-3 col-sm-6 mb-2">
-        <div class="import-kpi-card" style="border-left: 4px solid #2563eb;">
-            <div class="text-muted small font-weight-bold">1-4. PO / FORWARDER / KAPAL</div>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-                <h3 class="mb-0 font-weight-bold text-primary"><?= $cnt_origin_ship ?> <small class="text-muted" style="font-size:0.8rem;">Pengiriman</small></h3>
-                <i class="fas fa-ship fa-lg text-primary" style="opacity:0.65;"></i>
-            </div>
+    <?php foreach ($phase_defs as $pNum => $pDef):
+        $isActive = ((string)$filter_phase === (string)$pNum);
+        $phaseUrl = base_url('tracking/tracking_import?phase=' . $pNum . (!empty($filter_gudang) ? '&gudang=' . urlencode($filter_gudang) : ''));
+    ?>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
+            <a href="<?= $phaseUrl ?>" class="import-kpi-card" style="border-left: 4px solid <?= $pDef['color'] ?>; <?= $isActive ? 'background:#f0f9ff; border-color:' . $pDef['color'] . ';' : '' ?>">
+                <div class="text-muted font-weight-bold" style="font-size:0.72rem; letter-spacing:0.2px;">
+                    FASE <?= $pNum ?>: <?= strtoupper($pDef['short']) ?>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <h4 class="mb-0 font-weight-bold" style="color:<?= $pDef['color'] ?>;">
+                        <?= $phase_counts[$pNum] ?> <small class="text-muted" style="font-size:0.74rem;">PO</small>
+                    </h4>
+                    <i class="fas <?= $pDef['icon'] ?>" style="color:<?= $pDef['color'] ?>; opacity:0.65;"></i>
+                </div>
+                <div class="text-muted" style="font-size:0.7rem;">Tahap <?= min($pDef['stages']) ?>–<?= max($pDef['stages']) ?></div>
+            </a>
         </div>
-    </div>
-    <div class="col-md-3 col-sm-6 mb-2">
-        <div class="import-kpi-card" style="border-left: 4px solid #d97706;">
-            <div class="text-muted small font-weight-bold">5-7. PORT / PAJAK PIB / KELUAR PORT</div>
+    <?php endforeach; ?>
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
+        <a href="<?= base_url('tracking/tracking_import' . (!empty($filter_gudang) ? '?gudang=' . urlencode($filter_gudang) : '')) ?>" class="import-kpi-card" style="border-left: 4px solid #059669;">
+            <div class="text-muted font-weight-bold" style="font-size:0.72rem;">SELESAI 14/14</div>
             <div class="d-flex justify-content-between align-items-center mt-1">
-                <h3 class="mb-0 font-weight-bold text-warning"><?= $cnt_port_pajak ?> <small class="text-muted" style="font-size:0.8rem;">Clearance</small></h3>
-                <i class="fas fa-file-invoice-dollar fa-lg text-warning" style="opacity:0.75;"></i>
+                <h4 class="mb-0 font-weight-bold text-success">
+                    <?= $cnt_selesai ?> <small class="text-muted" style="font-size:0.74rem;">PO</small>
+                </h4>
+                <i class="fas fa-check-double text-success" style="opacity:0.7;"></i>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 mb-2">
-        <div class="import-kpi-card" style="border-left: 4px solid #0284c7;">
-            <div class="text-muted small font-weight-bold">8. HAND-OVER EKSPEDISI DOMESTIK</div>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-                <h3 class="mb-0 font-weight-bold text-info"><?= $cnt_domestik ?> <small class="text-muted" style="font-size:0.8rem;">Transit Lokal</small></h3>
-                <i class="fas fa-truck-moving fa-lg text-info" style="opacity:0.7;"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 mb-2">
-        <div class="import-kpi-card" style="border-left: 4px solid #16a34a;">
-            <div class="text-muted small font-weight-bold">9. SAMPAI GUDANG PUSAT / JKT / JOGJA</div>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-                <h3 class="mb-0 font-weight-bold text-success"><?= $cnt_selesai ?> <small class="text-muted" style="font-size:0.8rem;">Selesai</small></h3>
-                <i class="fas fa-warehouse fa-lg text-success" style="opacity:0.7;"></i>
-            </div>
-        </div>
+            <div class="text-muted" style="font-size:0.7rem;">Total Aktif: <?= $total_import ?> PO</div>
+        </a>
     </div>
 </div>
 
@@ -124,77 +120,61 @@ foreach ($import_list as $r) {
                 <button type="button" class="btn btn-primary btn-sm font-weight-bold" data-toggle="modal" data-target="#modalAddImport">
                     <i class="fas fa-plus-circle mr-1"></i> Tambah Tracking Import
                 </button>
-                <a href="<?= base_url('tracking/export_import?gudang=' . urlencode((string)$filter_gudang) . '&stage=' . urlencode((string)$filter_stage)) ?>" class="btn btn-success btn-sm font-weight-bold ml-1">
-                    <i class="fas fa-file-excel mr-1"></i> Export Excel Import
+                <a href="<?= base_url('tracking/export_import?gudang=' . urlencode((string)$filter_gudang) . '&phase=' . urlencode((string)$filter_phase)) ?>" class="btn btn-success btn-sm font-weight-bold ml-1">
+                    <i class="fas fa-file-excel mr-1"></i> Export Excel (14 Tahap)
                 </a>
+                <?php if (!empty($filter_phase) || !empty($filter_gudang)): ?>
+                    <a href="<?= base_url('tracking/tracking_import') ?>" class="btn btn-outline-secondary btn-sm ml-1">
+                        <i class="fas fa-times mr-1"></i> Reset Filter
+                    </a>
+                <?php endif; ?>
             </div>
 
             <!-- Filter Gudang Tujuan -->
             <div class="d-flex flex-wrap align-items-center" style="gap:6px;">
-                <span class="small font-weight-bold text-muted mr-1"><i class="fas fa-warehouse mr-1"></i>Gudang Tujuan:</span>
-                <a href="<?= base_url('tracking/tracking_import') ?>" class="import-filter-pill <?= empty($filter_gudang) ? 'active' : '' ?>">
+                <span class="small font-weight-bold text-muted mr-1"><i class="fas fa-warehouse mr-1"></i>Gudang:</span>
+                <a href="<?= base_url('tracking/tracking_import' . (!empty($filter_phase) ? '?phase=' . urlencode($filter_phase) : '')) ?>" class="import-filter-pill <?= empty($filter_gudang) ? 'active' : '' ?>">
                     Semua (<?= $total_import ?>)
                 </a>
-                <a href="<?= base_url('tracking/tracking_import?gudang=' . urlencode('Gudang Pusat')) ?>" class="import-filter-pill <?= $filter_gudang === 'Gudang Pusat' ? 'active' : '' ?>">
-                    <i class="fas fa-building mr-1"></i> Gudang Pusat
-                </a>
-                <a href="<?= base_url('tracking/tracking_import?gudang=' . urlencode('Gudang Jakarta')) ?>" class="import-filter-pill <?= $filter_gudang === 'Gudang Jakarta' ? 'active' : '' ?>">
-                    <i class="fas fa-city mr-1"></i> Gudang Jakarta
-                </a>
-                <a href="<?= base_url('tracking/tracking_import?gudang=' . urlencode('Gudang Jogja')) ?>" class="import-filter-pill <?= $filter_gudang === 'Gudang Jogja' ? 'active' : '' ?>">
-                    <i class="fas fa-map-marker-alt mr-1"></i> Gudang Jogja
-                </a>
+                <?php foreach (['Gudang Pusat', 'Gudang Jakarta', 'Gudang Jogja'] as $gName): ?>
+                    <a href="<?= base_url('tracking/tracking_import?gudang=' . urlencode($gName) . (!empty($filter_phase) ? '&phase=' . urlencode($filter_phase) : '')) ?>" class="import-filter-pill <?= $filter_gudang === $gName ? 'active' : '' ?>">
+                        <?= $gName ?>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
     </header>
 
     <div class="card-body">
-        <!-- Info Otomatisasi & Alur 9 Tahapan Banner -->
+        <!-- Info Alur 14 Tahap -->
         <div class="mb-3 p-2 rounded" style="background:#eff6ff; border:1px solid #bfdbfe; font-size:0.79rem; color:#1e3a8a;">
             <div>
-                <strong><i class="fas fa-sync-alt text-primary mr-1"></i> Terintegrasi Otomatis dengan Modul Lain:</strong>
-                Data <strong>Tahap 1 (PO Manufacture)</strong> otomatis ditarik dari <em>Pengajuan PO Supplier</em>, <strong>Tahap 2 (Order Forwarder)</strong> otomatis terhubung dengan <em>Approval Forwarder Luar Negeri</em>, dan <strong>Tahap 9 (Sampai Gudang Pusat/Jakarta/Jogja)</strong> otomatis terupdate saat barang diinput di <em>Penerimaan Barang Gudang</em>. Untuk tahapan transit di luar sistem (Loading Kapal, Pajak PIB, Keluar Port, Resi Domestik) tinggal klik tombol <strong>Detail (<i class="fas fa-eye"></i>)</strong> untuk update progresnya.
-            </div>
-            <div class="mt-1 pt-1" style="border-top:1px dashed #93c5fd; color:#334155;">
-                <strong><i class="fas fa-route text-primary mr-1"></i> 9 Tahap:</strong>
-                <span class="badge badge-light border">1. PO Manufacture (Otomatis)</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">2. Order Forwarder (Otomatis)</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">3. Loading Kapal</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">4. Perjalanan Kapal</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">5. Sampai Seaport/Airport</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">6. Pembayaran Pajak</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">7. Keluar Gudang Port</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">8. Hand-over Domestik</span> <i class="fas fa-arrow-right text-muted mx-1"></i>
-                <span class="badge badge-light border">9. Sampai Gudang Pusat/JKT/Jogja (Otomatis)</span>
+                <strong><i class="fas fa-tasks text-primary mr-1"></i> Checklist 14 Tahap Staff Import (Fleksibel & Terintegrasi Office):</strong>
+                Tahap 1 terhubung otomatis dengan <em>PO Supplier (Office)</em>, Tahap 4/10/14 dapat memilih <em>PBOK (Office)</em>, Tahap 5 terhubung dengan <em>Perbandingan Forwarder (Office)</em>, dan Tahap 12 dengan <em>Penerimaan Warehouse</em>. Semua dokumen mendukung <strong>Link Google Drive</strong>. Klik <strong>Detail (<i class="fas fa-folder-open"></i>)</strong> untuk update checklist tiap tahap.
             </div>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover mb-0" id="tableTrackingImport" style="font-size:0.84rem;">
+            <table class="table table-bordered table-striped table-hover mb-0" id="tableTrackingImport" style="font-size:0.83rem;">
                 <thead class="thead-dark">
                     <tr>
-                        <th width="35" class="text-center">No</th>
-                        <th>Kode & PO Manufacture</th>
+                        <th width="32" class="text-center">No</th>
+                        <th>Kode & PO Supplier</th>
                         <th>Daftar Unit / Barang</th>
-                        <th>Forwarder & Kapal / Flight</th>
-                        <th>Pajak Impor & Domestik</th>
-                        <th width="190">Progress 9 Tahapan Import</th>
-                        <th width="215">Kecepatan Proses (Lead Time)</th>
-                        <th>Gudang Tujuan & Ketepatan</th>
-                        <th width="85" class="text-center">Aksi</th>
+                        <th>HS Code & Lartas</th>
+                        <th>Dokumen Shipping & Pajak</th>
+                        <th width="205">Progress 14 Tahap</th>
+                        <th>Gudang & Jatuh Tempo Forwarder</th>
+                        <th width="82" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php $no = 1; foreach ($import_list as $row):
                         $id_enc = encrypt($row->id_import);
                         $m = $metrics_map[$row->id_import];
-                        $curStage = (int)$row->current_stage;
-                        $stageInfo = $stage_defs[$curStage] ?? $stage_defs[1];
-
-                        $stageBadgeClass = 'badge-primary';
-                        if ($curStage == 9) $stageBadgeClass = 'badge-success';
-                        elseif ($curStage >= 5 && $curStage <= 7) $stageBadgeClass = 'badge-warning';
-                        elseif ($curStage == 8) $stageBadgeClass = 'badge-info';
+                        $activeStage = $m['active_stage'];
+                        $stageInfo = $stage_defs[$activeStage] ?? $stage_defs[1];
+                        $phaseInfo = $phase_defs[$m['active_phase']] ?? $phase_defs[1];
                     ?>
                         <tr>
                             <td class="text-center"><?= $no++ ?></td>
@@ -211,117 +191,85 @@ foreach ($import_list as $r) {
                                 </div>
                             </td>
                             <td>
-                                <div style="max-width:220px; white-space:normal; line-height:1.35;">
+                                <div style="max-width:210px; white-space:normal; line-height:1.35;">
                                     <?= nl2br(htmlspecialchars($row->daftar_unit)) ?>
                                 </div>
                             </td>
                             <td>
-                                <div>
-                                    <span class="badge badge-secondary"><?= htmlspecialchars($row->moda_transportasi ?: 'Sea Freight') ?></span>
+                                <div class="small">
+                                    <strong>HS Code:</strong>
+                                    <?= !empty($row->hs_code) ? '<span class="badge badge-light border font-weight-bold">' . htmlspecialchars($row->hs_code) . '</span>' : '<span class="text-muted">-</span>' ?>
                                 </div>
-                                <div class="font-weight-bold mt-1"><?= htmlspecialchars($row->nama_forwarder ?: '-') ?></div>
-                                <?php if (!empty($row->no_bl_awb)): ?>
-                                    <div class="small text-muted">B/L / AWB: <strong><?= htmlspecialchars($row->no_bl_awb) ?></strong></div>
-                                <?php endif; ?>
-                                <?php if (!empty($row->nama_kapal_flight)): ?>
-                                    <div class="small text-muted"><i class="fas fa-anchor mr-1"></i><?= htmlspecialchars($row->nama_kapal_flight) ?></div>
-                                <?php endif; ?>
-                                <?php if (!empty($row->pelabuhan_asal) || !empty($row->pelabuhan_tujuan)): ?>
-                                    <div class="small text-info">
-                                        <?= htmlspecialchars($row->pelabuhan_asal ?: '?') ?> <i class="fas fa-arrow-right mx-1"></i> <?= htmlspecialchars($row->pelabuhan_tujuan ?: '?') ?>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="mt-1">
+                                    <?php if ($row->ada_lartas === 'ada'): ?>
+                                        <span class="badge badge-danger"><i class="fas fa-exclamation-circle mr-1"></i>Ada Lartas</span>
+                                    <?php elseif ($row->ada_lartas === 'tidak'): ?>
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Tidak Ada Lartas</span>
+                                    <?php else: ?>
+                                        <span class="badge badge-secondary">Lartas: Belum Dicek</span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td>
-                                <div class="small">
-                                    <strong>PIB:</strong> <?= htmlspecialchars($row->no_pib ?: '-') ?>
-                                </div>
+                                <div class="small"><strong>Forwarder:</strong> <?= htmlspecialchars($row->nama_forwarder ?: '-') ?></div>
+                                <div class="small"><strong>AWB/BL:</strong> <?= htmlspecialchars($row->no_bl_awb ?: '-') ?></div>
+                                <div class="small"><strong>PIB:</strong> <?= htmlspecialchars($row->no_pib ?: '-') ?></div>
                                 <div class="small">
                                     <strong>Pajak:</strong>
                                     <?php if ((float)$row->nominal_pajak_import > 0): ?>
                                         <span class="text-success font-weight-bold">Rp <?= number_format((float)$row->nominal_pajak_import, 0, ',', '.') ?></span>
                                     <?php else: ?>
-                                        <span class="text-muted">Belum diisi</span>
+                                        <span class="text-muted">-</span>
                                     <?php endif; ?>
                                 </div>
-                                <hr class="my-1">
-                                <div class="small">
-                                    <strong>Domestik:</strong> <?= htmlspecialchars($row->nama_ekspedisi_domestik ?: '-') ?>
-                                </div>
-                                <?php if (!empty($row->no_resi_domestik)): ?>
-                                    <div class="small text-muted">Resi: <strong><?= htmlspecialchars($row->no_resi_domestik) ?></strong></div>
-                                <?php endif; ?>
                             </td>
                             <td>
-                                <span class="badge <?= $stageBadgeClass ?> p-1" style="font-size:0.76rem; white-space:normal; text-align:left;">
-                                    <?= htmlspecialchars($stageInfo['label']) ?>
-                                </span>
-                                <div class="stage-mini-dots" title="Tahap <?= $curStage ?> dari 9 (<?= $m['progress_pct'] ?>%)">
-                                    <?php for ($s = 1; $s <= 9; $s++):
-                                        $dotCls = '';
-                                        if (!empty($m['times'][$s])) {
-                                            $dotCls = ($s == $curStage && $curStage < 9) ? 'current' : 'done';
-                                        }
+                                <?php if ($m['is_all_done']): ?>
+                                    <span class="badge badge-success p-1" style="font-size:0.75rem;">
+                                        <i class="fas fa-check-double mr-1"></i> Selesai Lengkap (14/14)
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge p-1 text-white" style="background:<?= $phaseInfo['color'] ?>; font-size:0.74rem; white-space:normal; text-align:left;">
+                                        <?= htmlspecialchars($stageInfo['label']) ?>
+                                    </span>
+                                <?php endif; ?>
+
+                                <div class="stage-mini-dots" title="Progress <?= $m['completed_cnt'] ?>/14 tahap (<?= $m['progress_pct'] ?>%)">
+                                    <?php for ($s = 1; $s <= 14; $s++):
+                                        $stState = $m['step_statuses'][$s] ?? 'belum';
                                     ?>
-                                        <span class="stage-mini-dot <?= $dotCls ?>" title="<?= htmlspecialchars($stage_defs[$s]['label']) ?>"></span>
+                                        <span class="stage-mini-dot <?= $stState ?>" title="<?= htmlspecialchars($stage_defs[$s]['label']) ?> (<?= strtoupper($stState) ?>)"></span>
                                     <?php endfor; ?>
                                 </div>
                                 <div class="d-flex justify-content-between small text-muted mt-1">
-                                    <span>Tahap <?= $curStage ?>/9</span>
+                                    <span><?= $m['completed_cnt'] ?>/14 Tahap</span>
                                     <strong><?= $m['progress_pct'] ?>%</strong>
                                 </div>
-                                <?php if ($curStage < 9):
-                                    $nextSt = $curStage + 1;
-                                    $nextLabel = $stage_defs[$nextSt]['short'] ?? ('Tahap ' . $nextSt);
-                                ?>
-                                    <button type="button"
-                                        class="btn btn-xs btn-outline-primary btn-block mt-1 font-weight-bold btn-quick-next-stage"
-                                        style="font-size:0.74rem; padding:3px 6px;"
-                                        data-id="<?= $id_enc ?>"
-                                        data-stage="<?= $nextSt ?>"
-                                        data-label="<?= htmlspecialchars($stage_defs[$nextSt]['label']) ?>"
-                                        title="Klik 1x untuk langsung lanjut ke <?= htmlspecialchars($stage_defs[$nextSt]['label']) ?>">
-                                        <i class="fas fa-forward mr-1"></i> Lanjut: <?= $nextSt ?>. <?= htmlspecialchars($nextLabel) ?>
-                                    </button>
-                                <?php else: ?>
-                                    <div class="mt-1 text-center">
-                                        <span class="badge badge-success btn-block py-1" style="font-size:0.73rem;">
-                                            <i class="fas fa-check-double mr-1"></i> Lengkap 9/9 Tahap
-                                        </span>
+                                <?php if ($m['dur_to_warehouse']['valid']): ?>
+                                    <div class="small text-muted">
+                                        <i class="fas fa-warehouse mr-1"></i>Ke WH: <strong><?= $m['dur_to_warehouse']['text'] ?></strong>
                                     </div>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <div class="small" style="line-height:1.45;">
-                                    <div><span class="text-muted">Origin (1➔3):</span> <strong><?= $m['dur_origin']['valid'] ? $m['dur_origin']['text'] : '-' ?></strong></div>
-                                    <div><span class="text-muted">Kapal (3➔5):</span> <strong><?= $m['dur_freight']['valid'] ? $m['dur_freight']['text'] : '-' ?></strong></div>
-                                    <div><span class="text-muted">Pajak/Port (5➔7):</span> <strong><?= $m['dur_customs']['valid'] ? $m['dur_customs']['text'] : '-' ?></strong></div>
-                                    <div><span class="text-muted">Domestik (7➔9):</span> <strong><?= $m['dur_domestik']['valid'] ? $m['dur_domestik']['text'] : '-' ?></strong></div>
-                                    <div class="mt-1 pt-1" style="border-top:1px dashed #cbd5e1;">
-                                        <span class="text-dark font-weight-bold">Total (1➔9):</span>
-                                        <span class="badge badge-dark"><?= $m['dur_total']['valid'] ? $m['dur_total']['text'] : 'Berjalan' ?></span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge badge-info" style="font-size:0.78rem;">
+                                <span class="badge badge-info" style="font-size:0.76rem;">
                                     <i class="fas fa-warehouse mr-1"></i><?= htmlspecialchars($row->nama_gudang_tujuan ?: 'Gudang Pusat') ?>
                                 </span>
-                                <?php if (!empty($row->tgl_estimasi_sampai_gudang)): ?>
+                                <?php if (!empty($row->tgl_siap_jemput) && strpos((string)$row->tgl_siap_jemput, '0000-00-00') === false): ?>
                                     <div class="small text-muted mt-1">
-                                        ETA Gudang: <strong><?= date('d/m/Y', strtotime($row->tgl_estimasi_sampai_gudang)) ?></strong>
+                                        Siap Jemput: <strong><?= date('d/m/Y', strtotime($row->tgl_siap_jemput)) ?></strong>
                                     </div>
                                 <?php endif; ?>
                                 <div class="mt-1">
-                                    <span class="badge" style="background:<?= $m['ketepatan']['badge_bg'] ?>; color:<?= $m['ketepatan']['badge_text'] ?>; border:1px solid <?= $m['ketepatan']['badge_bdr'] ?>; font-size:0.73rem;">
-                                        <i class="fas <?= $m['ketepatan']['icon'] ?> mr-1"></i><?= htmlspecialchars($m['ketepatan']['label']) ?>
+                                    <span class="badge" style="background:<?= $m['jatuh_tempo']['badge_bg'] ?>; color:<?= $m['jatuh_tempo']['badge_text'] ?>; border:1px solid <?= $m['jatuh_tempo']['badge_bdr'] ?>; font-size:0.72rem;">
+                                        <i class="fas <?= $m['jatuh_tempo']['icon'] ?> mr-1"></i><?= htmlspecialchars($m['jatuh_tempo']['label']) ?>
                                     </span>
                                 </div>
                             </td>
                             <td class="text-center">
                                 <div class="btn-group">
-                                    <a href="<?= base_url('tracking/detail_import/' . $id_enc) ?>" class="btn btn-info btn-sm" title="Detail & Update Tahapan Import">
-                                        <i class="fas fa-eye"></i>
+                                    <a href="<?= base_url('tracking/detail_import/' . $id_enc) ?>" class="btn btn-primary btn-sm" title="Buka Checklist 14 Tahap">
+                                        <i class="fas fa-folder-open"></i>
                                     </a>
                                     <button type="button" class="btn btn-danger btn-sm btn-delete-import" data-id="<?= $id_enc ?>" data-kode="<?= htmlspecialchars($row->kode_import) ?>" title="Hapus">
                                         <i class="fas fa-trash"></i>
@@ -351,22 +299,23 @@ foreach ($import_list as $r) {
                 </div>
 
                 <div class="modal-body">
-                    <!-- Ambil dari PO Supplier (Opsional) -->
+                    <!-- Tarik Otomatis dari PO Supplier Office -->
                     <div class="form-group p-2 rounded" style="background:#f1f5f9; border:1px solid #cbd5e1;">
                         <label class="font-weight-bold small text-primary mb-1">
-                            <i class="fas fa-link mr-1"></i> Tarik Otomatis dari Pengajuan PO Supplier (Opsional)
+                            <i class="fas fa-link mr-1"></i> Tahap 1: Tarik Otomatis dari PO Supplier (Office) — Opsional
                         </label>
                         <select name="id_po_supplier" id="selectPoSupplier" class="form-control form-control-sm">
-                            <option value="">-- Input Manual atau Pilih PO Supplier yang Sudah Ada --</option>
+                            <option value="">-- Input Manual atau Pilih PO Supplier dari Office --</option>
                             <?php foreach ($list_po_supplier as $po):
                                 $noPoText = !empty($po->no_po) ? $po->no_po : $po->kode_po;
+                                $poUrl    = base_url('purchase_order/show/detail/purchase_order/' . $po->id_po);
                             ?>
                                 <option value="<?= $po->id_po ?>"
                                     data-nopo="<?= htmlspecialchars($noPoText) ?>"
                                     data-supplier="<?= htmlspecialchars($po->supplier ?: '') ?>"
                                     data-items="<?= htmlspecialchars($po->items_summary ?: '') ?>"
-                                    data-tgl="<?= !empty($po->tgl_pengajuan) ? date('Y-m-d\TH:i', strtotime($po->tgl_pengajuan)) : '' ?>">
-                                    <?= htmlspecialchars($noPoText) ?> <?= !empty($po->supplier) ? (' - ' . htmlspecialchars($po->supplier)) : '' ?> (<?= htmlspecialchars(mb_strimwidth((string)$po->items_summary, 0, 60, '...')) ?>)
+                                    data-url="<?= htmlspecialchars($poUrl) ?>">
+                                    <?= htmlspecialchars($noPoText) ?> <?= !empty($po->supplier) ? (' - ' . htmlspecialchars($po->supplier)) : '' ?> (<?= htmlspecialchars(mb_strimwidth((string)$po->items_summary, 0, 55, '...')) ?>)
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -375,13 +324,13 @@ foreach ($import_list as $r) {
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="font-weight-bold">1. No. PO ke Manufacture <span class="text-danger">*</span></label>
+                                <label class="font-weight-bold">No. PO Supplier <span class="text-danger">*</span></label>
                                 <input type="text" name="no_po_manufacture" id="inp_no_po" class="form-control" placeholder="Contoh: PO-IMP/2026/001" required>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="form-group">
-                                <label class="font-weight-bold">Nama Manufacture / Pabrik <span class="text-danger">*</span></label>
+                                <label class="font-weight-bold">Nama Supplier / Manufacture <span class="text-danger">*</span></label>
                                 <input type="text" name="nama_manufacture" id="inp_manufacture" class="form-control" placeholder="Nama Manufacture Luar Negeri" required>
                             </div>
                         </div>
@@ -398,6 +347,11 @@ foreach ($import_list as $r) {
                         <textarea name="daftar_unit" id="inp_daftar_unit" class="form-control" rows="2" placeholder="Contoh: 2 Unit Mesin Ultrasound, 5 Set Probe..." required></textarea>
                     </div>
 
+                    <div class="form-group">
+                        <label class="font-weight-bold">Link Dokumen PO Supplier (Office / Google Drive)</label>
+                        <input type="text" name="doc_po_supplier" id="inp_doc_po" class="form-control form-control-sm" placeholder="Otomatis terisi jika pilih PO Office di atas, atau paste Link Drive...">
+                    </div>
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -411,19 +365,7 @@ foreach ($import_list as $r) {
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="font-weight-bold">2. Ekspedisi / Forwarder Import</label>
-                                <select name="id_forwarder" id="selectForwarderImport" class="form-control">
-                                    <option value="">-- Pilih / Ketik Manual di Bawah --</option>
-                                    <?php foreach ($list_forwarder as $fw): ?>
-                                        <option value="<?= $fw->id ?>" data-nama="<?= htmlspecialchars($fw->nama) ?>"><?= htmlspecialchars($fw->nama) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <input type="text" name="nama_forwarder" id="inp_nama_forwarder" class="form-control form-control-sm mt-1" placeholder="Atau ketik nama Forwarder...">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">9. Gudang Tujuan VYM <span class="text-danger">*</span></label>
+                                <label class="font-weight-bold">Gudang Tujuan VYM <span class="text-danger">*</span></label>
                                 <select name="nama_gudang_tujuan" class="form-control" required>
                                     <option value="Gudang Pusat">Gudang Pusat</option>
                                     <option value="Gudang Jakarta">Gudang Jakarta</option>
@@ -431,56 +373,16 @@ foreach ($import_list as $r) {
                                 </select>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="font-weight-bold">No. B/L atau AWB</label>
-                                <input type="text" name="no_bl_awb" class="form-control" placeholder="Bill of Lading / Air Waybill">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Nama Kapal / Flight</label>
-                                <input type="text" name="nama_kapal_flight" class="form-control" placeholder="Contoh: MV. Ever Given / V.102">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Pelabuhan / Airport Tujuan</label>
-                                <input type="text" name="pelabuhan_tujuan" class="form-control" placeholder="Tanjung Priok / Soekarno-Hatta">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Tahapan Awal Saat Ini</label>
-                                <select name="current_stage" class="form-control">
-                                    <?php foreach ($stage_defs as $num => $sd): ?>
-                                        <option value="<?= $num ?>"><?= htmlspecialchars($sd['label']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Estimasi Sampai Seaport/Airport</label>
-                                <input type="date" name="tgl_estimasi_sampai_port" class="form-control">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Estimasi Sampai Gudang VYM</label>
+                                <label class="font-weight-bold">Estimasi Sampai Gudang</label>
                                 <input type="date" name="tgl_estimasi_sampai_gudang" class="form-control">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group mb-0">
-                        <label class="font-weight-bold">Catatan / Keterangan Import</label>
+                        <label class="font-weight-bold">Catatan Awal</label>
                         <textarea name="keterangan" class="form-control" rows="2" placeholder="Catatan tambahan pengiriman import..."></textarea>
                     </div>
                 </div>
@@ -505,7 +407,7 @@ foreach ($import_list as $r) {
             });
         }
 
-        // Auto-fill dari dropdown PO Supplier
+        // Auto-fill dari dropdown PO Supplier Office
         var selPo = document.getElementById('selectPoSupplier');
         if (selPo) {
             selPo.addEventListener('change', function() {
@@ -514,17 +416,7 @@ foreach ($import_list as $r) {
                 document.getElementById('inp_no_po').value = opt.getAttribute('data-nopo') || '';
                 document.getElementById('inp_manufacture').value = opt.getAttribute('data-supplier') || '';
                 document.getElementById('inp_daftar_unit').value = opt.getAttribute('data-items') || '';
-            });
-        }
-
-        // Auto-fill nama forwarder
-        var selFw = document.getElementById('selectForwarderImport');
-        if (selFw) {
-            selFw.addEventListener('change', function() {
-                var opt = selFw.options[selFw.selectedIndex];
-                if (opt && opt.value) {
-                    document.getElementById('inp_nama_forwarder').value = opt.getAttribute('data-nama') || '';
-                }
+                document.getElementById('inp_doc_po').value = opt.getAttribute('data-url') || '';
             });
         }
 
@@ -552,39 +444,6 @@ foreach ($import_list as $r) {
                 error: function() {
                     alert('Terjadi kesalahan server.');
                     btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan Tracking Import');
-                }
-            });
-        });
-
-        // 1-Klik Lanjut Tahap Berikutnya langsung dari tabel depan
-        $(document).on('click', '.btn-quick-next-stage', function() {
-            var btn = $(this);
-            var idEnc = btn.data('id');
-            var nextStage = btn.data('stage');
-            var nextLabel = btn.data('label');
-
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Memproses...');
-
-            $.ajax({
-                url: '<?= base_url('tracking/update_import_stage') ?>',
-                type: 'POST',
-                data: {
-                    id_import: idEnc,
-                    stage: nextStage,
-                    catatan_log: 'Update cepat 1-klik ke tahapan: ' + nextLabel
-                },
-                dataType: 'json',
-                success: function(res) {
-                    if (res.status === 'success') {
-                        window.location.reload();
-                    } else {
-                        alert(res.msg || 'Gagal memperbarui tahapan.');
-                        btn.prop('disabled', false).html('<i class="fas fa-forward mr-1"></i> Lanjut Tahap ' + nextStage);
-                    }
-                },
-                error: function() {
-                    alert('Terjadi kesalahan server.');
-                    btn.prop('disabled', false).html('<i class="fas fa-forward mr-1"></i> Lanjut Tahap ' + nextStage);
                 }
             });
         });
