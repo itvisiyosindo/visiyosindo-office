@@ -9,10 +9,20 @@
 
 <div class="row">
 	<div class="col">
-		<div class="">
+		<div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 10px;">
             <?php if(isAdmin() || isGa() || sessPenggunaId()=='74' || sessPenggunaId()=='83' || sessPenggunaId()=='86' || sessPenggunaId()=='84' || sessPenggunaId()=='766'){ ?>
 			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah Dokumen Rahasia</a>
             <?php } ?>
+
+			<div class="d-flex align-items-center" style="gap: 8px;">
+				<label for="filter_kategori" class="mb-0 font-weight-bold" style="font-size: 13px;"><i class="fas fa-filter text-primary mr-1"></i> Filter Kategori:</label>
+				<select class="form-control form-control-sm" id="filter_kategori" style="min-width: 200px;">
+					<option value="">-- Semua Kategori --</option>
+					<?php foreach ($list_kategori as $row) { ?>
+						<option value="<?= $row->id ?>"><?= $row->nama ?></option>
+					<?php } ?>
+				</select>
+			</div>
 		</div>
 		<br>
 		<div class="card-body">
@@ -118,7 +128,7 @@
 				url: 'dokumen/pagination/rahasia',
 				type: 'POST',
 				data: function(e) {
-					// e.tahun = $('#tahun').val()
+					e.kategori = $('#filter_kategori').val()
 					e.csrf_token = token
 				}
 			},
@@ -126,6 +136,10 @@
 				targets: [0, 2, 3],
 				className: 'text-center'
 			}]
+		})
+
+		$('#filter_kategori').on('change', function() {
+			updateDatatable()
 		})
 
 		$('#btn-show-add-form').click(function() {

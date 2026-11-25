@@ -225,10 +225,10 @@ class Md_dokumen extends CI_Model {
 	}
 
     
-    function getAll($dok)
+    function getAll($dok, $filterKategori = null)
     {
         if($dok == "rahasia"){
-            return $this->datatables
+            $dt = $this->datatables
             ->select('  
                 dr.id as id_dokumen,
                 dr.nama_dokumen,
@@ -241,8 +241,13 @@ class Md_dokumen extends CI_Model {
             ')
             ->from('dokumen_rahasia dr')
             ->join('dokumen_kategori kt', 'dr.id_kategori=kt.id')
-            ->where('dr.status = 1')
-            ->generate();
+            ->where('dr.status = 1');
+
+            if (!empty($filterKategori)) {
+                $dt->where('dr.id_kategori', (int)$filterKategori);
+            }
+
+            return $dt->generate();
             
         }else if($dok == "umum"){
             return $this->datatables

@@ -808,7 +808,8 @@ class Dokumen extends CI_Controller
         grantAccessFor('all');
 
         if ($kode == "rahasia") {
-            $dt             = $this->md_dokumen->getAll($kode);
+            $filterKategori = $this->input->post('kategori', true);
+            $dt             = $this->md_dokumen->getAll($kode, $filterKategori);
             $start          = $this->input->post('start');
             $data           = array();
             foreach ($dt['data'] as $row) {
