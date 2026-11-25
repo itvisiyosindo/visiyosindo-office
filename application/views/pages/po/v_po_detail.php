@@ -930,26 +930,47 @@
                     <!-- PAJAK (TAX) -->
                     <div class="col-md-6 col-lg-3 mb-3">
                         <?php
-                        $fakturLinks = [];
+                        $fakturItems = [];
                         if (!empty($po->doc_pajak_faktur)) {
                             $rawF = trim($po->doc_pajak_faktur);
                             if (strpos($rawF, '[') === 0) {
                                 $arrF = json_decode($rawF, true);
                                 if (is_array($arrF)) {
-                                    $fakturLinks = array_values(array_filter(array_map('trim', $arrF)));
+                                    foreach ($arrF as $itemF) {
+                                        if (is_array($itemF)) {
+                                            $u = trim($itemF['url'] ?? '');
+                                            $k = trim($itemF['ket'] ?? '');
+                                            if ($u !== '' || $k !== '') {
+                                                $fakturItems[] = ['url' => $u, 'ket' => $k];
+                                            }
+                                        } elseif (is_string($itemF) && trim($itemF) !== '') {
+                                            $fakturItems[] = ['url' => trim($itemF), 'ket' => ''];
+                                        }
+                                    }
                                 }
                             }
-                            if (empty($fakturLinks)) {
+                            if (empty($fakturItems) && strpos($rawF, '{') === 0) {
+                                $objF = json_decode($rawF, true);
+                                if (is_array($objF) && (!empty($objF['url']) || !empty($objF['ket']))) {
+                                    $fakturItems[] = ['url' => trim($objF['url'] ?? ''), 'ket' => trim($objF['ket'] ?? '')];
+                                }
+                            }
+                            if (empty($fakturItems)) {
                                 $linesF = preg_split('/[\r\n]+/', $rawF);
-                                $fakturLinks = array_values(array_filter(array_map('trim', $linesF)));
+                                foreach ($linesF as $lineF) {
+                                    $lineF = trim($lineF);
+                                    if ($lineF !== '') {
+                                        $fakturItems[] = ['url' => $lineF, 'ket' => ''];
+                                    }
+                                }
                             }
                         }
                         ?>
-                        <div class="doc-fulfillment-card <?= (!empty($fakturLinks) || !empty($po->doc_pajak_bukti_potong)) ? 'filled' : '' ?>">
+                        <div class="doc-fulfillment-card <?= (!empty($fakturItems) || !empty($po->doc_pajak_bukti_potong)) ? 'filled' : '' ?>">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="font-weight-bold text-dark"><i class="fas fa-receipt mr-1 text-primary"></i> Pajak (Tax)</span>
-                                <?php if (!empty($fakturLinks)): ?>
-                                    <span class="badge badge-success"><i class="fas fa-check"></i> Terisi<?= count($fakturLinks) > 1 ? ' (' . count($fakturLinks) . ')' : '' ?></span>
+                                <?php if (!empty($fakturItems)): ?>
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Terisi<?= count($fakturItems) > 1 ? ' (' . count($fakturItems) . ')' : '' ?></span>
                                 <?php else: ?>
                                     <span class="badge badge-light border">Kosong</span>
                                 <?php endif; ?>
@@ -957,15 +978,27 @@
                             <div style="font-size: 0.8rem;" class="mb-3">
                                 <div>
                                     <b>Faktur Pajak:</b>
-                                    <?php if (!empty($fakturLinks)): ?>
-                                        <?php if (count($fakturLinks) === 1): ?>
-                                            <a href="<?= htmlspecialchars($fakturLinks[0]) ?>" target="_blank">Buka Link</a>
+                                    <?php if (!empty($fakturItems)): ?>
+                                        <?php if (count($fakturItems) === 1): ?>
+                                            <?php if (!empty($fakturItems[0]['url'])): ?>
+                                                <a href="<?= htmlspecialchars($fakturItems[0]['url']) ?>" target="_blank">
+                                                    <?= !empty($fakturItems[0]['ket']) ? htmlspecialchars($fakturItems[0]['ket']) : 'Buka Link' ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span><?= htmlspecialchars($fakturItems[0]['ket']) ?></span>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <div class="mt-1" style="display: flex; flex-direction: column; gap: 2px;">
-                                                <?php foreach ($fakturLinks as $idxF => $flnk): ?>
+                                            <div class="mt-1" style="display: flex; flex-direction: column; gap: 3px;">
+                                                <?php foreach ($fakturItems as $idxF => $itemF): ?>
                                                     <div>
                                                         <span class="text-muted small">#<?= ($idxF + 1) ?>:</span>
-                                                        <a href="<?= htmlspecialchars($flnk) ?>" target="_blank">Buka Link Faktur <?= ($idxF + 1) ?></a>
+                                                        <?php if (!empty($itemF['url'])): ?>
+                                                            <a href="<?= htmlspecialchars($itemF['url']) ?>" target="_blank">
+                                                                <?= !empty($itemF['ket']) ? htmlspecialchars($itemF['ket']) : ('Buka Link Faktur ' . ($idxF + 1)) ?>
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <span><?= htmlspecialchars($itemF['ket']) ?></span>
+                                                        <?php endif; ?>
                                                     </div>
                                                 <?php endforeach; ?>
                                             </div>
@@ -1481,12 +1514,13 @@
                             </button>
                         </div>
                         <div id="container-faktur-links">
-                            <?php if (!empty($fakturLinks)): ?>
-                                <?php foreach ($fakturLinks as $flnk): ?>
+                            <?php if (!empty($fakturItems)): ?>
+                                <?php foreach ($fakturItems as $item): ?>
                                     <div class="input-group mb-2 faktur-link-row">
-                                        <input type="url" name="doc_pajak_faktur[]" class="form-control" placeholder="https://drive.google.com/..." value="<?= htmlspecialchars($flnk) ?>">
+                                        <input type="text" name="doc_pajak_faktur_ket[]" class="form-control" style="max-width: 38%;" placeholder="Ket (mis: Termin 1)" value="<?= htmlspecialchars($item['ket'] ?? '') ?>">
+                                        <input type="url" name="doc_pajak_faktur_url[]" class="form-control" placeholder="https://drive.google.com/..." value="<?= htmlspecialchars($item['url'] ?? '') ?>">
                                         <div class="input-group-append">
-                                            <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Link Ini">
+                                            <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Baris Ini">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </div>
@@ -1494,16 +1528,17 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <div class="input-group mb-2 faktur-link-row">
-                                    <input type="url" name="doc_pajak_faktur[]" class="form-control" placeholder="https://drive.google.com/..." value="">
+                                    <input type="text" name="doc_pajak_faktur_ket[]" class="form-control" style="max-width: 38%;" placeholder="Ket (mis: Termin 1)" value="">
+                                    <input type="url" name="doc_pajak_faktur_url[]" class="form-control" placeholder="https://drive.google.com/..." value="">
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Link Ini">
+                                        <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Baris Ini">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                 </div>
                             <?php endif; ?>
                         </div>
-                        <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Bisa input lebih dari 1 link jika ada beberapa termin atau faktur terpisah.</small>
+                        <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Isi <b>Keterangan</b> (opsional, misal: Termin 1 / No. Faktur) dan tempelkan link Google Drive.</small>
                     </div>
                     <div class="form-group">
                         <label class="font-weight-bold">Link Bukti Potong</label>
@@ -1760,9 +1795,10 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         var rowHtml = `
             <div class="input-group mb-2 faktur-link-row">
-                <input type="url" name="doc_pajak_faktur[]" class="form-control" placeholder="https://drive.google.com/..." value="">
+                <input type="text" name="doc_pajak_faktur_ket[]" class="form-control" style="max-width: 38%;" placeholder="Ket (mis: Termin 1)" value="">
+                <input type="url" name="doc_pajak_faktur_url[]" class="form-control" placeholder="https://drive.google.com/..." value="">
                 <div class="input-group-append">
-                    <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Link Ini">
+                    <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Baris Ini">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>

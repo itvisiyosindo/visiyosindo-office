@@ -1398,18 +1398,35 @@ class Po_system extends CI_Controller
             $data_update['doc_gudang_updated_at']   = date('Y-m-d H:i:s');
             $detailDocText = 'Surat Jalan (SJ) / Resi / Packing List / SSTB';
         } elseif ($divisi === 'pajak') {
-            $fakturPost = $this->input->post('doc_pajak_faktur');
-            if (is_array($fakturPost)) {
-                $cleanFaktur = array_values(array_filter(array_map('trim', $fakturPost)));
+            $fakturUrls = $this->input->post('doc_pajak_faktur_url');
+            $fakturKets = $this->input->post('doc_pajak_faktur_ket');
+            if (is_array($fakturUrls)) {
+                $cleanFaktur = [];
+                foreach ($fakturUrls as $i => $u) {
+                    $u = trim((string)$u);
+                    $k = isset($fakturKets[$i]) ? trim((string)$fakturKets[$i]) : '';
+                    if ($u !== '' || $k !== '') {
+                        $cleanFaktur[] = [
+                            'url' => $u,
+                            'ket' => $k
+                        ];
+                    }
+                }
                 if (count($cleanFaktur) === 0) {
                     $data_update['doc_pajak_faktur'] = '';
-                } elseif (count($cleanFaktur) === 1) {
-                    $data_update['doc_pajak_faktur'] = $cleanFaktur[0];
+                } elseif (count($cleanFaktur) === 1 && empty($cleanFaktur[0]['ket'])) {
+                    $data_update['doc_pajak_faktur'] = $cleanFaktur[0]['url'];
                 } else {
                     $data_update['doc_pajak_faktur'] = json_encode($cleanFaktur);
                 }
             } else {
-                $data_update['doc_pajak_faktur'] = trim((string)$fakturPost);
+                $fakturPost = $this->input->post('doc_pajak_faktur');
+                if (is_array($fakturPost)) {
+                    $cleanFaktur = array_values(array_filter(array_map('trim', $fakturPost)));
+                    $data_update['doc_pajak_faktur'] = (count($cleanFaktur) <= 1) ? ($cleanFaktur[0] ?? '') : json_encode($cleanFaktur);
+                } else {
+                    $data_update['doc_pajak_faktur'] = trim((string)$fakturPost);
+                }
             }
             $data_update['doc_pajak_bukti_potong']       = trim($this->input->post('doc_pajak_bukti_potong'));
             $data_update['doc_pajak_ppbj_endorsement']   = trim($this->input->post('doc_pajak_ppbj_endorsement'));
