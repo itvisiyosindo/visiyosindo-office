@@ -929,17 +929,51 @@
 
                     <!-- PAJAK (TAX) -->
                     <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="doc-fulfillment-card <?= (!empty($po->doc_pajak_faktur) || !empty($po->doc_pajak_bukti_potong)) ? 'filled' : '' ?>">
+                        <?php
+                        $fakturLinks = [];
+                        if (!empty($po->doc_pajak_faktur)) {
+                            $rawF = trim($po->doc_pajak_faktur);
+                            if (strpos($rawF, '[') === 0) {
+                                $arrF = json_decode($rawF, true);
+                                if (is_array($arrF)) {
+                                    $fakturLinks = array_values(array_filter(array_map('trim', $arrF)));
+                                }
+                            }
+                            if (empty($fakturLinks)) {
+                                $linesF = preg_split('/[\r\n]+/', $rawF);
+                                $fakturLinks = array_values(array_filter(array_map('trim', $linesF)));
+                            }
+                        }
+                        ?>
+                        <div class="doc-fulfillment-card <?= (!empty($fakturLinks) || !empty($po->doc_pajak_bukti_potong)) ? 'filled' : '' ?>">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="font-weight-bold text-dark"><i class="fas fa-receipt mr-1 text-primary"></i> Pajak (Tax)</span>
-                                <?php if (!empty($po->doc_pajak_faktur)): ?>
-                                    <span class="badge badge-success"><i class="fas fa-check"></i> Terisi</span>
+                                <?php if (!empty($fakturLinks)): ?>
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Terisi<?= count($fakturLinks) > 1 ? ' (' . count($fakturLinks) . ')' : '' ?></span>
                                 <?php else: ?>
                                     <span class="badge badge-light border">Kosong</span>
                                 <?php endif; ?>
                             </div>
                             <div style="font-size: 0.8rem;" class="mb-3">
-                                <div><b>Faktur Pajak:</b> <?= !empty($po->doc_pajak_faktur) ? '<a href="'.htmlspecialchars($po->doc_pajak_faktur).'" target="_blank">Buka Link</a>' : '-' ?></div>
+                                <div>
+                                    <b>Faktur Pajak:</b>
+                                    <?php if (!empty($fakturLinks)): ?>
+                                        <?php if (count($fakturLinks) === 1): ?>
+                                            <a href="<?= htmlspecialchars($fakturLinks[0]) ?>" target="_blank">Buka Link</a>
+                                        <?php else: ?>
+                                            <div class="mt-1" style="display: flex; flex-direction: column; gap: 2px;">
+                                                <?php foreach ($fakturLinks as $idxF => $flnk): ?>
+                                                    <div>
+                                                        <span class="text-muted small">#<?= ($idxF + 1) ?>:</span>
+                                                        <a href="<?= htmlspecialchars($flnk) ?>" target="_blank">Buka Link Faktur <?= ($idxF + 1) ?></a>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        -
+                                    <?php endif; ?>
+                                </div>
                                 <div><b>Bukti Potong:</b> <?= !empty($po->doc_pajak_bukti_potong) ? '<a href="'.htmlspecialchars($po->doc_pajak_bukti_potong).'" target="_blank">Buka Link</a>' : '-' ?></div>
                                 <div><b>PPBJ / Endorsement:</b> <?= !empty($po->doc_pajak_ppbj_endorsement) ? '<a href="'.htmlspecialchars($po->doc_pajak_ppbj_endorsement).'" target="_blank">Buka Link</a>' : '-' ?></div>
                             </div>
@@ -1440,8 +1474,36 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="font-weight-bold">Link Faktur Pajak</label>
-                        <input type="url" name="doc_pajak_faktur" class="form-control" placeholder="https://drive.google.com/..." value="<?= htmlspecialchars($po->doc_pajak_faktur ?? '') ?>">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="font-weight-bold mb-0">Link Faktur Pajak</label>
+                            <button type="button" class="btn btn-xs btn-outline-primary shadow-sm" id="btn-add-faktur" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;">
+                                <i class="fas fa-plus mr-1"></i> Tambah Link
+                            </button>
+                        </div>
+                        <div id="container-faktur-links">
+                            <?php if (!empty($fakturLinks)): ?>
+                                <?php foreach ($fakturLinks as $flnk): ?>
+                                    <div class="input-group mb-2 faktur-link-row">
+                                        <input type="url" name="doc_pajak_faktur[]" class="form-control" placeholder="https://drive.google.com/..." value="<?= htmlspecialchars($flnk) ?>">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Link Ini">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="input-group mb-2 faktur-link-row">
+                                    <input type="url" name="doc_pajak_faktur[]" class="form-control" placeholder="https://drive.google.com/..." value="">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Link Ini">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Bisa input lebih dari 1 link jika ada beberapa termin atau faktur terpisah.</small>
                     </div>
                     <div class="form-group">
                         <label class="font-weight-bold">Link Bukti Potong</label>
@@ -1692,5 +1754,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Dynamic Multi-Link Faktur Pajak
+    $('#btn-add-faktur').on('click', function(e) {
+        e.preventDefault();
+        var rowHtml = `
+            <div class="input-group mb-2 faktur-link-row">
+                <input type="url" name="doc_pajak_faktur[]" class="form-control" placeholder="https://drive.google.com/..." value="">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-danger btn-remove-faktur" title="Hapus Link Ini">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#container-faktur-links').append(rowHtml);
+    });
+
+    $(document).on('click', '.btn-remove-faktur', function(e) {
+        e.preventDefault();
+        var rows = $('#container-faktur-links .faktur-link-row');
+        if (rows.length > 1) {
+            $(this).closest('.faktur-link-row').remove();
+        } else {
+            $(this).closest('.faktur-link-row').find('input').val('');
+        }
+    });
 });
 </script>

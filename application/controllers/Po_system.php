@@ -1398,7 +1398,19 @@ class Po_system extends CI_Controller
             $data_update['doc_gudang_updated_at']   = date('Y-m-d H:i:s');
             $detailDocText = 'Surat Jalan (SJ) / Resi / Packing List / SSTB';
         } elseif ($divisi === 'pajak') {
-            $data_update['doc_pajak_faktur']            = trim($this->input->post('doc_pajak_faktur'));
+            $fakturPost = $this->input->post('doc_pajak_faktur');
+            if (is_array($fakturPost)) {
+                $cleanFaktur = array_values(array_filter(array_map('trim', $fakturPost)));
+                if (count($cleanFaktur) === 0) {
+                    $data_update['doc_pajak_faktur'] = '';
+                } elseif (count($cleanFaktur) === 1) {
+                    $data_update['doc_pajak_faktur'] = $cleanFaktur[0];
+                } else {
+                    $data_update['doc_pajak_faktur'] = json_encode($cleanFaktur);
+                }
+            } else {
+                $data_update['doc_pajak_faktur'] = trim((string)$fakturPost);
+            }
             $data_update['doc_pajak_bukti_potong']       = trim($this->input->post('doc_pajak_bukti_potong'));
             $data_update['doc_pajak_ppbj_endorsement']   = trim($this->input->post('doc_pajak_ppbj_endorsement'));
             $data_update['doc_pajak_updated_at']        = date('Y-m-d H:i:s');
