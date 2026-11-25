@@ -31,8 +31,8 @@ if ($envCronKey === false && isset($_ENV['FONNTE_ABSENSI_CRON_KEY'])) {
 
 $config['fonnte_absensi_token']           = $envToken ? trim((string)$envToken) : '';
 $config['fonnte_absensi_sender']          = '0895410953259';
-$config['fonnte_absensi_group_name']      = 'Kepegawaian visi/vym group';
-$config['fonnte_absensi_group_id']        = $envGroupId ? trim((string)$envGroupId) : '';
+$config['fonnte_absensi_group_name']      = 'KEPEGAWAIAN VYM / VISI GROUP';
+$config['fonnte_absensi_group_id']        = $envGroupId ? trim((string)$envGroupId) : '120363185860852117@g.us';
 $config['fonnte_absensi_cron_key']        = $envCronKey ? trim((string)$envCronKey) : '';
 
 $config['fonnte_absensi_api_url']         = 'https://api.fonnte.com/send';
