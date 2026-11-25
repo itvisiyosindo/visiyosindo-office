@@ -166,6 +166,27 @@ if ($is_pengiriman_stok) {
                             </div>
                         </div>
                     </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>No. Resi</label>
+                                <input type="text" class="form-control" name="no_resi" value="<?= htmlspecialchars($tracking->no_resi ?? '') ?>" placeholder="Masukkan nomor resi">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Link Resi</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="link_resi" value="<?= htmlspecialchars($tracking->link_resi ?? '') ?>" placeholder="https://drive.google.com/...">
+                                    <?php if (!empty($tracking->link_resi) && $tracking->link_resi !== '-'): ?>
+                                        <div class="input-group-append">
+                                            <a href="<?= htmlspecialchars($tracking->link_resi) ?>" target="_blank" class="btn btn-info" title="Buka Link Resi"><i class="fas fa-external-link-alt"></i></a>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <?php $slaEdit = $this->md_tracking->resolveWarehouseMilestoneTimes($tracking); ?>
                     <div class="row mt-2 pt-3 border-top">
                         <div class="col-12 mb-2">

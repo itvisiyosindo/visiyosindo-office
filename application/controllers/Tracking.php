@@ -1003,18 +1003,22 @@ class Tracking extends CI_Controller
 
         $id_tracking = decrypt($id_tracking_raw);
 
-        // Siapkan data update
+        // Siapkan data update (jaga field opsional agar tidak ter-overwrite null jika tidak ada di form)
         $data_update = [
             'pic_penerima'   => $this->input->post('pic_penerima', TRUE),
-            'alamat_penerima' => $this->input->post('alamat_penerima', TRUE),
             'id_ekspedisi'   => $this->input->post('id_ekspedisi', TRUE),
             'tgl_pengiriman' => $this->input->post('tgl_pengiriman', TRUE),
             'tgl_sampai'     => $this->input->post('tgl_sampai') ?: null,
             'biaya'          => $this->input->post('biaya') ?: 0,
             'no_resi'        => $this->input->post('no_resi', TRUE),
             'link_resi'      => $this->input->post('link_resi', TRUE),
-            'keterangan'     => $this->input->post('keterangan', TRUE)
         ];
+        if ($this->input->post('alamat_penerima') !== null) {
+            $data_update['alamat_penerima'] = $this->input->post('alamat_penerima', TRUE);
+        }
+        if ($this->input->post('keterangan') !== null) {
+            $data_update['keterangan'] = $this->input->post('keterangan', TRUE);
+        }
 
         $parseDtInput = function ($val) {
             if (empty($val)) return null;
