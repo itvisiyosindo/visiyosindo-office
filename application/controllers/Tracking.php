@@ -609,6 +609,7 @@ class Tracking extends CI_Controller
         // Insert to kirim_status
         $this->db->insert('kirim_status', $data);
 
+        $this->notifGudangTrackingUpdate($id_kirim, $this->trackingStatusLabel($id_status), $data['keterangan_konfirmasi'] ?: 'Update status tracking dokumen', true);
         addlog('Tracking Dokumen', 'Update status tracking dokumen ID: ' . $id_kirim);
         ajaxReturnDie('success', 'Status tracking berhasil diupdate', TRUE);
     }
@@ -966,6 +967,11 @@ class Tracking extends CI_Controller
         $affected = $this->db->affected_rows();
 
         if ($affected > 0) {
+            $ketDok = trim((string)$data_update['keterangan']);
+            if (!empty($data_update['no_resi'])) {
+                $ketDok = ($ketDok ? $ketDok . ' | ' : '') . 'No. Resi: ' . $data_update['no_resi'];
+            }
+            $this->notifGudangTrackingUpdate($id_kirim, 'Update Data Dokumen', $ketDok ?: 'Data tracking dokumen diperbarui', true);
             addlog('Update Dokumen', 'Admin update kirim_dokumen.id=' . $id_kirim);
             echo json_encode([
                 'status' => 'success',
@@ -1086,6 +1092,18 @@ class Tracking extends CI_Controller
             ajaxReturnDie('error', 'Gagal update database!', FALSE);
         } else {
             $this->db->trans_commit();
+            $stLabel = !empty($new_status) ? $this->trackingStatusLabel($new_status) : 'Update Data Tracking';
+            $ketParts = [];
+            if (!empty($new_status) && !empty($status_data['keterangan_konfirmasi'])) {
+                $ketParts[] = $status_data['keterangan_konfirmasi'];
+            }
+            if (!empty($data_update['no_resi']) && $data_update['no_resi'] !== '-') {
+                $ketParts[] = 'No. Resi: ' . $data_update['no_resi'];
+            }
+            if (!empty($data_update['link_resi']) && $data_update['link_resi'] !== '-') {
+                $ketParts[] = 'Link Resi: ' . $data_update['link_resi'];
+            }
+            $this->notifGudangTrackingUpdate($id_tracking, $stLabel, !empty($ketParts) ? implode(' | ', $ketParts) : 'Data tracking diperbarui', false);
             addlog('Edit Tracking (Admin)', 'Update data ID: ' . $id_tracking);
 
             // PASTIKAN TIDAK ADA ECHO LAIN SEBELUM INI
@@ -1168,6 +1186,8 @@ class Tracking extends CI_Controller
         $this->db->trans_complete();
 
         if ($this->db->trans_status() === TRUE) {
+            $stId = !empty($id_status) ? $id_status : ($existing->id_status ?? '');
+            $this->notifGudangTrackingUpdate($existing->$field_id, $this->trackingStatusLabel($stId), $data_update['keterangan_konfirmasi'] ?: 'Riwayat status tracking diperbarui', $is_dokumen);
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Data berhasil diperbarui!'
@@ -1470,6 +1490,7 @@ class Tracking extends CI_Controller
 
         $this->md_tracking->update(['id_tracking' => $id_tracking], $data_update);
 
+        $this->notifGudangTrackingUpdate($id_tracking, 'Update Waktu SLA Warehouse', 'Waktu tahapan & kecepatan warehouse diperbarui', false);
         addlog('Tracking Warehouse SLA', 'Update Waktu Kecepatan Warehouse ID Tracking: ' . $id_tracking);
         ajaxReturnDie('success', 'Waktu Tracking & Kecepatan Warehouse berhasil disimpan!', TRUE);
     }
@@ -2026,6 +2047,74 @@ class Tracking extends CI_Controller
             ];
 
             waAppGroupGudang($dataWa);
+        }
+    }
+
+    private function trackingStatusLabel($id_status)
+    {
+        $map = [
+            0 => 'Menunggu Order Ekspedisi',
+            1 => 'Proses Kirim / Order Ekspedisi',
+            7 => 'Packaging Barang',
+            2 => 'Manifest Berangkat / Loading Hand-over',
+            3 => 'Proses Sortir',
+            4 => 'Pengantaran Kurir',
+            5 => 'Diterima',
+            6 => 'Menunggu Konfirmasi',
+        ];
+        return isset($map[(int)$id_status]) ? $map[(int)$id_status] : 'Update Status';
+    }
+
+    private function notifGudangTrackingUpdate($id_ref, $statusTracking, $keterangan = '-', $is_dokumen = false)
+    {
+        try {
+            $pengaju = $this->md_pengguna->getById(sessPenggunaId());
+            $namaPengaju = !empty($pengaju[0]->nama) ? $pengaju[0]->nama : 'Admin';
+
+            if ($is_dokumen) {
+                $row = $this->db->get_where('kirim_dokumen', ['id' => (int)$id_ref])->row();
+                if (!$row) return;
+                $namaSurat    = 'Tracking Dokumen';
+                $csname       = !empty($row->nama_customer) ? $row->nama_customer : ($row->pic ?: '-');
+                $nosj         = !empty($row->kode_kirim) ? $row->kode_kirim : ('DOK-' . $row->id);
+                $gudangAsal   = !empty($row->ekspedisi) ? $row->ekspedisi : '-';
+                $alamatTujuan = !empty($row->alamat) ? $row->alamat : '-';
+                $url          = 'https://office.visiyosindo.id/tracking/detail_dokumen/';
+            } else {
+                $trRows = $this->md_tracking->getById((int)$id_ref);
+                if (empty($trRows)) return;
+                $tr = $trRows[0];
+                $gudangRow   = !empty($tr->id_gudang) ? $this->db->select('nama_gudang')->get_where('gudang', ['id_gudang' => $tr->id_gudang])->row() : null;
+                $customerRow = !empty($tr->id_customer) ? $this->md_tracking->getCustomerById($tr->id_customer) : [];
+                $namaSurat    = 'Tracking Barang';
+                $csname       = !empty($customerRow[0]->nama_customer) ? $customerRow[0]->nama_customer : ($tr->pic_penerima ?: '-');
+                $nosj         = !empty($tr->no_sj) ? $tr->no_sj : '-';
+                $gudangAsal   = !empty($gudangRow->nama_gudang) ? $gudangRow->nama_gudang : '-';
+                $alamatTujuan = !empty($tr->alamat_penerima) ? $tr->alamat_penerima : '-';
+                $url          = 'https://office.visiyosindo.id/tracking/detail/';
+            }
+
+            error_reporting(E_ALL & ~E_NOTICE);
+            ini_set('display_errors', 0);
+
+            waAppGroupGudang([
+                'namaSurat'      => urlencode($namaSurat),
+                'noPenerima'     => 'Gudang PT. VYM',
+                'namaPengaju'    => $namaPengaju,
+                'csname'         => urlencode($csname),
+                'nosj'           => $nosj,
+                'gudangAsal'     => urlencode($gudangAsal),
+                'alamatTujuan'   => urlencode($alamatTujuan),
+                'statusTracking' => $statusTracking,
+                'statusSurat'    => 'Update Status',
+                'status'         => 'memperbarui',
+                'keTerangan'     => urlencode($keterangan ?: '-'),
+                'url'            => $url,
+                'idTracking'     => encrypt($id_ref),
+                'namaPenerima'   => '_Team Warehouse_',
+            ]);
+        } catch (\Throwable $e) {
+            // Jangan gagalkan respons update tracking jika API WA sedang bermasalah
         }
     }
 
