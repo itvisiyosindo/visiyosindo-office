@@ -115,11 +115,15 @@
 	}
 </style>
 
+<?php
+	$is_hs_code = !empty($is_hs_code);
+	$selected_kategori_id = isset($selected_kategori_id) ? (int)$selected_kategori_id : 0;
+?>
 <div class="doc-ui-shell">
 	<div class="doc-ui-head">
 		<div>
-			<h3>Dokumen Product</h3>
-			<p>Kelola dokumen product dengan tampilan rapi, presisi, dan konsisten untuk semua kategori termasuk ISO.</p>
+			<h3><?= $is_hs_code ? 'Data HS Code' : 'Dokumen Product' ?></h3>
+			<p><?= $is_hs_code ? 'Kelola data Kode HS Code, Keterangan, Dokumen Lartas, Tarif Impor, dan Link HS Code.' : 'Kelola dokumen product dengan tampilan rapi, presisi, dan konsisten untuk semua kategori termasuk ISO.' ?></p>
 		</div>
 		<div class="doc-ui-meta">
 			<span class="badge badge-light">Kategori Aktif: <?= count($list_kategori) ?></span>
@@ -129,7 +133,7 @@
 	<div class="doc-ui-toolbar">
 		<?php if(isAdmin()  || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='766'){ ?>
 			<a href="javascript:;" id="btn-show-add-formkategori" class="btn btn-sm btn-info"><i class="icons icon-plus"></i>&nbsp;Tambah Kategori Product</a>
-			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;Tambah Dokumen Product</a>
+			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;<?= $is_hs_code ? 'Tambah HS Code' : 'Tambah Dokumen Product' ?></a>
 		<?php } ?>
 	</div>
 
@@ -139,10 +143,18 @@
 				<thead>
 					<tr>
 						<th>#</th>
-						<th>Nama Dokumen</th>
-						<th>Masa Berlaku</th>
-						<th>Kategori</th>
-						<th>Link Download</th>
+						<?php if ($is_hs_code): ?>
+							<th>Kode HS Code</th>
+							<th>Keterangan</th>
+							<th>Dokumen Lartas</th>
+							<th>Tarif Impor</th>
+							<th>Link HS Code</th>
+						<?php else: ?>
+							<th>Nama Dokumen</th>
+							<th>Masa Berlaku</th>
+							<th>Kategori</th>
+							<th>Link Download</th>
+						<?php endif; ?>
 						<?php if (isAdmin() || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='92' || sessPenggunaId()=='766') { ?>
 							<th class="text-center">Aksi</th>
 						<?php } ?>
@@ -182,45 +194,69 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content ">
 			<div class="modal-header bg-dark text-light">
-				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> Form dokumen</h5>
+				<h5 id="modal-label"><i class="flaticon2-avatar icon-2x text-grey-light"></i> <?= $is_hs_code ? 'Form HS Code' : 'Form dokumen' ?></h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<?= form_open('#', array('id' => 'modal-form', 'autocomplete' => 'off')); ?>
 			<div class="modal-body">
 				<div>
-					<div class="form-group">
-						<label for="nama" class="form-control-label">Nama dokumen <span class="text-danger">*</span> :</label>
-						<input type="text" class="form-control" id="nama" name="nama" required>
-					</div>
-					<div class="form-group">
-						<label for="kategori" class="form-control-label"> Kategori <span class="text-danger">*</span> :</label>
-						<select class="form-control" id="kategori" name="kategori" required>
-							<option value="">- Pilih Kategori -</option>
-							<?php
-								foreach ($list_kategori as $row) {
-									echo "<option value='".$row->id."'>".$row->keterangan."</option>";
-								}
-							?>
-						</select>
-					</div>
-
-					<div class="form-group">
-						<label for="username" class="form-control-label">Link Download <span class="text-danger">*</span> :</label>
-						<input type="text" class="form-control" id="file" name="file" required>
-					</div>
-					<div class="form-group">
-						<label for="tanggal" class="form-control-label">Masa Berlaku :</label>
-						<div class="input-daterange input-group" data-plugin-datepicker data-plugin-options='{ "format": "dd-mm-yyyy"}'>
-							<span class="input-group-text">
-								<i class="fas fa-calendar-alt"></i>
-							</span>
-							<input type="text" class="form-control" id="tgl_mulai" name="tgl_mulai" required>
-							<span class="input-group-text border-start-0 border-end-0 rounded-0">
-								to
-							</span>
-							<input type="text" class="form-control" id="tgl_akhir" name="tgl_akhir" required>
+					<?php if ($is_hs_code): ?>
+						<input type="hidden" id="kategori" name="kategori" value="<?= $selected_kategori_id ?>">
+						<div class="form-group">
+							<label for="kode_hs_code" class="form-control-label">Kode HS Code <span class="text-danger">*</span> :</label>
+							<input type="text" class="form-control" id="kode_hs_code" name="kode_hs_code" placeholder="Contoh: 9018.12.00" required>
 						</div>
-					</div>
+						<div class="form-group">
+							<label for="keterangan_hs" class="form-control-label">Keterangan :</label>
+							<textarea class="form-control" id="keterangan_hs" name="keterangan_hs" rows="2" placeholder="Keterangan produk / HS Code"></textarea>
+						</div>
+						<div class="form-group">
+							<label for="dokumen_lartas" class="form-control-label">Dokumen Lartas :</label>
+							<textarea class="form-control" id="dokumen_lartas" name="dokumen_lartas" rows="2" placeholder="Contoh: AKL / Tidak Ada Lartas"></textarea>
+						</div>
+						<div class="form-group">
+							<label for="tarif_impor" class="form-control-label">Tarif Impor :</label>
+							<input type="text" class="form-control" id="tarif_impor" name="tarif_impor" placeholder="Contoh: BM 0%, PPN 11%, PPh 2.5%">
+						</div>
+						<div class="form-group">
+							<label for="file" class="form-control-label">Link HS Code <span class="text-danger">*</span> :</label>
+							<input type="text" class="form-control" id="file" name="file" placeholder="https://..." required>
+						</div>
+					<?php else: ?>
+						<div class="form-group">
+							<label for="nama" class="form-control-label">Nama dokumen <span class="text-danger">*</span> :</label>
+							<input type="text" class="form-control" id="nama" name="nama" required>
+						</div>
+						<div class="form-group">
+							<label for="kategori" class="form-control-label"> Kategori <span class="text-danger">*</span> :</label>
+							<select class="form-control" id="kategori" name="kategori" required>
+								<option value="">- Pilih Kategori -</option>
+								<?php
+									foreach ($list_kategori as $row) {
+										echo "<option value='".$row->id."'>".$row->keterangan."</option>";
+									}
+								?>
+							</select>
+						</div>
+
+						<div class="form-group">
+							<label for="username" class="form-control-label">Link Download <span class="text-danger">*</span> :</label>
+							<input type="text" class="form-control" id="file" name="file" required>
+						</div>
+						<div class="form-group">
+							<label for="tanggal" class="form-control-label">Masa Berlaku :</label>
+							<div class="input-daterange input-group" data-plugin-datepicker data-plugin-options='{ "format": "dd-mm-yyyy"}'>
+								<span class="input-group-text">
+									<i class="fas fa-calendar-alt"></i>
+								</span>
+								<input type="text" class="form-control" id="tgl_mulai" name="tgl_mulai" required>
+								<span class="input-group-text border-start-0 border-end-0 rounded-0">
+									to
+								</span>
+								<input type="text" class="form-control" id="tgl_akhir" name="tgl_akhir" required>
+							</div>
+						</div>
+					<?php endif; ?>
 				</div>
 			</div>
 			<div class="modal-footer">
@@ -290,7 +326,7 @@
 				}
 			},
 			columnDefs: [{
-				targets: [0, 2, 3, 4],
+				targets: <?= $is_hs_code ? '[0, 4, 5]' : '[0, 2, 3, 4]' ?>,
 				className: 'text-center'
 			}]
 		})
@@ -301,7 +337,10 @@
 			$('#main-modal-kategori').modal()
 		})
 		$('#btn-show-add-form').click(function() {
-			$('.form-control').val(null)
+			$('#main-modal .form-control').val(null)
+			<?php if ($is_hs_code): ?>
+				$('#main-modal #kategori').val('<?= $selected_kategori_id ?>')
+			<?php endif; ?>
 			$('#main-modal #modal-form').attr('action', 'dokumen/add/product')
 			$('#main-modal').modal()
 		})
@@ -318,11 +357,20 @@
 				})
 				.then(function(data) {
 					$('#main-modal #id_dokumen').val(data[0].id)
-					$('#main-modal #nama').val(data[0].nama_dokumen)
-					$('#main-modal #kategori option[value="' +data[0].id_kategori+ '"]').prop("selected", true).trigger('change')
-					$('#main-modal #file').val(data[0].file)
-					$('#main-modal #tgl_mulai').val(data[0].tgl_mulai)
-					$('#main-modal #tgl_akhir').val(data[0].tgl_akhir)
+					<?php if ($is_hs_code): ?>
+						$('#main-modal #kategori').val(data[0].id_kategori)
+						$('#main-modal #kode_hs_code').val(data[0].kode_hs_code || data[0].nama_dokumen)
+						$('#main-modal #keterangan_hs').val(data[0].keterangan || '')
+						$('#main-modal #dokumen_lartas').val(data[0].dokumen_lartas || '')
+						$('#main-modal #tarif_impor').val(data[0].tarif_impor || '')
+						$('#main-modal #file').val(data[0].file || '')
+					<?php else: ?>
+						$('#main-modal #nama').val(data[0].nama_dokumen)
+						$('#main-modal #kategori option[value="' +data[0].id_kategori+ '"]').prop("selected", true).trigger('change')
+						$('#main-modal #file').val(data[0].file)
+						$('#main-modal #tgl_mulai').val(data[0].tgl_mulai)
+						$('#main-modal #tgl_akhir').val(data[0].tgl_akhir)
+					<?php endif; ?>
 				})
 		})
 

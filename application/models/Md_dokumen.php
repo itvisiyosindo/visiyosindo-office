@@ -183,6 +183,10 @@ class Md_dokumen extends CI_Model {
             ->select('  
                 du.id as id_dokumen,
                 du.nama_dokumen,
+                du.kode_hs_code,
+                du.keterangan,
+                du.dokumen_lartas,
+                du.tarif_impor,
                 du.id_kategori,
                 du.tgl_mulai,
                 du.tgl_akhir,

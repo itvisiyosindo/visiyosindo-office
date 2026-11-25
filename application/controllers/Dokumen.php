@@ -22,7 +22,7 @@ class Dokumen extends CI_Controller
         return $id_navbar;
     }
 
-    public function index($kode)
+    public function index($kode, $param = null)
     {
         grantAccessFor('all');
 
@@ -41,11 +41,22 @@ class Dokumen extends CI_Controller
             $page_data['list_kategori'] = $this->md_dokumen->getAktif('kategori');
             $this->load->view('index', $page_data);
         } else if ($kode == "product") {
-            $page_data['switch']        = $this->id_navbar();
-            $page_data['page_name']      = 'dokumen/v_dok_product';
-            $page_data['page_title']     = 'Dokumen Product';
-            $page_data['page_desc']      = 'Management Data Dokumen Product';
-            $page_data['list_kategori'] = $this->md_dokumen->getKategoriProductAktif();
+            $list_kategori = $this->md_dokumen->getKategoriProductAktif();
+            $selected_kategori_id = $param ? (int)decrypt($param) : 0;
+            $is_hs_code = false;
+            foreach ($list_kategori as $kat) {
+                if ((int)$kat->id === $selected_kategori_id && strtoupper(trim((string)$kat->keterangan)) === 'HS CODE') {
+                    $is_hs_code = true;
+                    break;
+                }
+            }
+            $page_data['switch']               = $this->id_navbar();
+            $page_data['page_name']            = 'dokumen/v_dok_product';
+            $page_data['page_title']           = $is_hs_code ? 'HS Code' : 'Dokumen Product';
+            $page_data['page_desc']            = $is_hs_code ? 'Management Data HS Code' : 'Management Data Dokumen Product';
+            $page_data['list_kategori']        = $list_kategori;
+            $page_data['selected_kategori_id'] = $selected_kategori_id;
+            $page_data['is_hs_code']           = $is_hs_code;
             $this->load->view('index', $page_data);
         } else if ($kode == "kategori") {
             $page_data['switch']        = $this->id_navbar();
@@ -165,20 +176,40 @@ class Dokumen extends CI_Controller
             addlog($aksi, $ket);
             ajaxReturnDie('success', 'Data Berhasil Ditambahkan', 'reload_table');
         } else if ($kode == "product") {
-            $data['nama_dokumen']   = $this->input->post('nama');
-            $data['file']           = $this->input->post('file');
-            $data['tgl_mulai']           = date_db_format($this->input->post('tgl_mulai', TRUE));
-            $data['tgl_akhir']           = date_db_format($this->input->post('tgl_akhir', TRUE));
-            $data['id_kategori']    = $this->input->post('kategori');
-            checkEmptyForm($data);
+            $id_kategori = (int)$this->input->post('kategori');
+            $ambilKategori = $this->md_dokumen->getById('katproduct', $id_kategori);
+            $kategori = !empty($ambilKategori) ? $ambilKategori[0]->keterangan : '';
+            $is_hs_code = (strtoupper(trim((string)$kategori)) === 'HS CODE');
+
+            if ($is_hs_code) {
+                $kode_hs = trim((string)$this->input->post('kode_hs_code', TRUE));
+                $ket_hs  = trim((string)$this->input->post('keterangan_hs', TRUE));
+                $lartas  = trim((string)$this->input->post('dokumen_lartas', TRUE));
+                $tarif   = trim((string)$this->input->post('tarif_impor', TRUE));
+                $link_hs = trim((string)$this->input->post('file', TRUE));
+                if ($kode_hs === '' || $link_hs === '') {
+                    ajaxReturnDie('error', 'Kode HS Code dan Link HS Code wajib diisi.', FALSE);
+                }
+                $data['nama_dokumen']   = $kode_hs;
+                $data['kode_hs_code']   = $kode_hs;
+                $data['keterangan']     = $ket_hs;
+                $data['dokumen_lartas'] = $lartas;
+                $data['tarif_impor']    = $tarif;
+                $data['file']           = $link_hs;
+                $data['tgl_mulai']      = null;
+                $data['tgl_akhir']      = null;
+                $data['id_kategori']    = $id_kategori;
+            } else {
+                $data['nama_dokumen']   = $this->input->post('nama');
+                $data['file']           = $this->input->post('file');
+                $data['tgl_mulai']      = date_db_format($this->input->post('tgl_mulai', TRUE));
+                $data['tgl_akhir']      = date_db_format($this->input->post('tgl_akhir', TRUE));
+                $data['id_kategori']    = $id_kategori;
+                checkEmptyForm($data);
+            }
             $data['created_by']     = sessPenggunaId();
             $this->md_all->reset_increment('dokumen_product');
             $this->md_dokumen->add($kode, $data);
-
-
-            $dok = 'katproduct';
-            $ambilKategori     = $this->md_dokumen->getById($dok, $data['id_kategori']);
-            $kategori        = $ambilKategori[0]->keterangan;
 
             $url = 'https://office.visiyosindo.id/dokumen/index/product/';
 
@@ -561,19 +592,39 @@ class Dokumen extends CI_Controller
             ajaxReturnDie('success', 'Data berhasil diupdate', 'reload_table');
         } else if ($kode == "product") {
             $id = decrypt($this->input->post('id_dokumen'));
-            $data['nama_dokumen']   = $this->input->post('nama');
-            $data['id_kategori']    = $this->input->post('kategori');
-            $data['file']           = $this->input->post('file');
-            $data['tgl_mulai']           = date_db_format($this->input->post('tgl_mulai', TRUE));
-            $data['tgl_akhir']           = date_db_format($this->input->post('tgl_akhir', TRUE));
-            $data['last_updated_by'] = sessPenggunaId();
-            $data['last_updated_at'] = date('y-m-d H:i:s');
-            checkEmptyForm($data);
-            $this->md_dokumen->update($kode, ['id' => $id], $data);
+            $id_kategori = (int)$this->input->post('kategori');
+            $ambilKategori = $this->md_dokumen->getById('katproduct', $id_kategori);
+            $kategori = !empty($ambilKategori) ? $ambilKategori[0]->keterangan : '';
+            $is_hs_code = (strtoupper(trim((string)$kategori)) === 'HS CODE');
 
-            $dok = 'katproduct';
-            $ambilKategori     = $this->md_dokumen->getById($dok, $data['id_kategori']);
-            $kategori        = $ambilKategori[0]->keterangan;
+            if ($is_hs_code) {
+                $kode_hs = trim((string)$this->input->post('kode_hs_code', TRUE));
+                $link_hs = trim((string)$this->input->post('file', TRUE));
+                if ($kode_hs === '' || $link_hs === '') {
+                    ajaxReturnDie('error', 'Kode HS Code dan Link HS Code wajib diisi.', FALSE);
+                }
+                $data['nama_dokumen']   = $kode_hs;
+                $data['kode_hs_code']   = $kode_hs;
+                $data['keterangan']     = trim((string)$this->input->post('keterangan_hs', TRUE));
+                $data['dokumen_lartas'] = trim((string)$this->input->post('dokumen_lartas', TRUE));
+                $data['tarif_impor']    = trim((string)$this->input->post('tarif_impor', TRUE));
+                $data['id_kategori']    = $id_kategori;
+                $data['file']           = $link_hs;
+                $data['tgl_mulai']      = null;
+                $data['tgl_akhir']      = null;
+                $data['last_updated_by'] = sessPenggunaId();
+                $data['last_updated_at'] = date('y-m-d H:i:s');
+            } else {
+                $data['nama_dokumen']   = $this->input->post('nama');
+                $data['id_kategori']    = $id_kategori;
+                $data['file']           = $this->input->post('file');
+                $data['tgl_mulai']      = date_db_format($this->input->post('tgl_mulai', TRUE));
+                $data['tgl_akhir']      = date_db_format($this->input->post('tgl_akhir', TRUE));
+                $data['last_updated_by'] = sessPenggunaId();
+                $data['last_updated_at'] = date('y-m-d H:i:s');
+                checkEmptyForm($data);
+            }
+            $this->md_dokumen->update($kode, ['id' => $id], $data);
 
             $url = 'https://office.visiyosindo.id/dokumen/index/product/';
             $idTracking = encrypt($data['id_kategori']);
@@ -722,18 +773,46 @@ class Dokumen extends CI_Controller
 
     public function paginationproduct($id)
     {
-        $dt             = $this->md_dokumen->getAllProduct(decrypt($id));
+        $id_kat         = decrypt($id);
+        $dt             = $this->md_dokumen->getAllProduct($id_kat);
+        $kat_info       = $this->md_dokumen->getById('katproduct', $id_kat);
+        $is_hs_code     = (!empty($kat_info) && strtoupper(trim((string)$kat_info[0]->keterangan)) === 'HS CODE');
         $start          = $this->input->post('start');
         $data           = array();
         foreach ($dt['data'] as $row) {
-            $id         = encrypt($row->id_dokumen);
+            $id_enc     = encrypt($row->id_dokumen);
             $li_btn     = '
                     <center>
                     <div class="btn-group" role="group" aria-label="First group">
-                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id . '"><i class="bx bx-pencil"></i></button>
-                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id . '" data-object="dokumen/delete/product/' . $id . '"><i class="bx bx-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id_enc . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id_enc . '" data-object="dokumen/delete/product/' . $id_enc . '"><i class="bx bx-trash"></i></button>
                     </div>
                     </center>';
+            $can_action = (isAdmin() || isGa() || sessPenggunaId() == '74' || sessPenggunaId() == '83' || sessPenggunaId() == '84' || sessPenggunaId() == '86' || sessPenggunaId() == '750' || sessPenggunaId() == '92' || sessPenggunaId() == '766');
+
+            if ($is_hs_code) {
+                $kode_hs = !empty($row->kode_hs_code) ? $row->kode_hs_code : $row->nama_dokumen;
+                $ket_hs  = !empty($row->keterangan) ? $row->keterangan : '-';
+                $lartas  = !empty($row->dokumen_lartas) ? $row->dokumen_lartas : '-';
+                $tarif   = !empty($row->tarif_impor) ? $row->tarif_impor : '-';
+                $link_hs = !empty($row->file)
+                    ? '<a href="' . htmlspecialchars($row->file, ENT_QUOTES, 'UTF-8') . '" target="_blank"><i class="fas fa-external-link-alt"></i> Buka Link</a>'
+                    : '-';
+                $th = [
+                    ++$start . '.',
+                    htmlspecialchars((string)$kode_hs, ENT_QUOTES, 'UTF-8'),
+                    nl2br(htmlspecialchars((string)$ket_hs, ENT_QUOTES, 'UTF-8')),
+                    nl2br(htmlspecialchars((string)$lartas, ENT_QUOTES, 'UTF-8')),
+                    htmlspecialchars((string)$tarif, ENT_QUOTES, 'UTF-8'),
+                    $link_hs,
+                ];
+                if ($can_action) {
+                    $th[] = $li_btn;
+                }
+                $data[] = $th;
+                continue;
+            }
+
             $link_download = '<a href="' . $row->file . '"><i class="fas fa-download"></i> Download</a>';
             $masa_berlaku = '';
             $kategori_produk = strtoupper(trim((string) $row->kategori));
@@ -754,7 +833,7 @@ class Dokumen extends CI_Controller
             $th[] = $masa_berlaku;
             $th[] = $row->kategori;
             $th[] = $link_download;
-            if (isAdmin() || isGa() || sessPenggunaId() == '74' || sessPenggunaId() == '83' || sessPenggunaId() == '84' || sessPenggunaId() == '86' || sessPenggunaId() == '750' || sessPenggunaId() == '92' || sessPenggunaId() == '766') {
+            if ($can_action) {
                 $th[] = $li_btn;
             }
             $data[] = $th;
