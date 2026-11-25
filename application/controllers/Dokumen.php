@@ -232,7 +232,9 @@ class Dokumen extends CI_Controller
                 'penerima'         => 'Bapak dan Ibu',
                 'csname'             => $data['nama_dokumen']
             ];
-            $this->notifWaGroup(1, $dataWa);
+            if (!$is_hs_code) {
+                $this->notifWaGroup(1, $dataWa);
+            }
 
             //add log
             $aksi = 'Tambah Dokumen Product';
@@ -644,7 +646,9 @@ class Dokumen extends CI_Controller
                 'penerima'         => 'Bapak dan Ibu',
                 'csname'             => $data['nama_dokumen']
             ];
-            $this->notifWaGroup(1, $dataWa);
+            if (!$is_hs_code) {
+                $this->notifWaGroup(1, $dataWa);
+            }
 
             //add log
             $temp = $this->md_dokumen->getById($kode, $id);
@@ -806,8 +810,16 @@ class Dokumen extends CI_Controller
                     htmlspecialchars((string)$tarif, ENT_QUOTES, 'UTF-8'),
                     $link_hs,
                 ];
+                $li_btn_hs = '
+                    <center>
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-sm btn-success btn-notif-hs" title="Kirim Notif WA" data-id="' . $id_enc . '" data-kode="' . htmlspecialchars((string)$kode_hs, ENT_QUOTES, 'UTF-8') . '"><i class="fab fa-whatsapp"></i></button>
+                        <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="' . $id_enc . '"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id_enc . '" data-object="dokumen/delete/product/' . $id_enc . '"><i class="bx bx-trash"></i></button>
+                    </div>
+                    </center>';
                 if ($can_action) {
-                    $th[] = $li_btn;
+                    $th[] = $li_btn_hs;
                 }
                 $data[] = $th;
                 continue;
@@ -1024,6 +1036,43 @@ class Dokumen extends CI_Controller
             echo json_encode($dt);
             die;
         }
+    }
+
+    public function send_notif_hscode($id = null)
+    {
+        grantAccessFor('all');
+        $allowed = (isAdmin() || isGa() || in_array(sessPenggunaId(), ['23', '74', '75', '83', '84', '86', '92', '750', '766']));
+        if (!$allowed) {
+            ajaxReturnDie('error', 'Akses ditolak.', FALSE);
+        }
+
+        $id_kategori = 1;
+        $csname = 'Update Data HS Code';
+        if (!empty($id)) {
+            $row = $this->md_dokumen->getById('product', decrypt($id));
+            if (empty($row)) {
+                ajaxReturnDie('error', 'Data HS Code tidak ditemukan.', FALSE);
+            }
+            $id_kategori = (int)$row[0]->id_kategori;
+            $kode_hs = !empty($row[0]->kode_hs_code) ? $row[0]->kode_hs_code : $row[0]->nama_dokumen;
+            $csname = $kode_hs . (!empty($row[0]->keterangan) ? ' - ' . $row[0]->keterangan : '');
+        }
+
+        $dataWa = [
+            'idPenerima1' => 'Visi Yosindo Medical',
+            'idPenerima2' => '',
+            'namaSurat'   => 'Dokumen Produk',
+            'status'      => 'memperbarui',
+            'kategori'    => 'HS CODE',
+            'url'         => 'https://office.visiyosindo.id/dokumen/index/product/',
+            'idTracking'  => encrypt($id_kategori),
+            'penerima'    => 'Bapak dan Ibu',
+            'csname'      => $csname
+        ];
+        $this->notifWaGroup(1, $dataWa);
+
+        addlog('Notif WA HS Code', 'Mengirim notifikasi WA manual HS Code: ' . $csname);
+        ajaxReturnDie('success', 'Notifikasi WA HS Code berhasil dikirim ke grup Visi Yosindo Medical.', FALSE);
     }
 
     public function sendWa()

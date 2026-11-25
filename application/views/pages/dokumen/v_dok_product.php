@@ -134,6 +134,9 @@
 		<?php if(isAdmin()  || sessPenggunaId()=='23' || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='766'){ ?>
 			<a href="javascript:;" id="btn-show-add-formkategori" class="btn btn-sm btn-info"><i class="icons icon-plus"></i>&nbsp;Tambah Kategori Product</a>
 			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;<?= $is_hs_code ? 'Tambah HS Code' : 'Tambah Dokumen Product' ?></a>
+			<?php if ($is_hs_code): ?>
+				<a href="javascript:;" id="btn-notif-hs-all" class="btn btn-sm btn-outline-success"><i class="fab fa-whatsapp"></i>&nbsp;Kirim Notif WA</a>
+			<?php endif; ?>
 		<?php } ?>
 	</div>
 
@@ -379,6 +382,43 @@
 			$('#send-modal #id_dokumen').val($(this).attr("data-id"))
 			$('#send-modal').modal()
 		})
+
+		<?php if ($is_hs_code): ?>
+		function kirimNotifHs(id, label) {
+			Swal.fire({
+				title: 'Kirim Notifikasi WA?',
+				text: 'Kirim notif "' + label + '" ke grup Visi Yosindo Medical?',
+				icon: 'question',
+				showCancelButton: true,
+				confirmButtonColor: '#28a745',
+				confirmButtonText: 'Kirim',
+				cancelButtonText: 'Batal'
+			}).then(function(res) {
+				if (!res.isConfirmed && !res.value) return;
+				var url = '<?= base_url("dokumen/send_notif_hscode") ?>' + (id ? '/' + id : '');
+				fetch(url, { credentials: 'same-origin' })
+					.then(function(r) { return r.json(); })
+					.then(function(d) {
+						if (d && d.status === 'success') {
+							Swal.fire('Terkirim', d.msg || 'Notifikasi WA berhasil dikirim.', 'success');
+						} else {
+							Swal.fire('Gagal', (d && d.msg) ? d.msg : 'Gagal mengirim notifikasi WA.', 'error');
+						}
+					})
+					.catch(function() {
+						Swal.fire('Gagal', 'Terjadi kesalahan saat menghubungi server.', 'error');
+					});
+			});
+		}
+
+		$('#btn-notif-hs-all').on('click', function() {
+			kirimNotifHs('', 'Update Data HS Code');
+		});
+
+		$(document).on('click', '.btn-notif-hs', function() {
+			kirimNotifHs($(this).data('id'), 'HS Code ' + ($(this).data('kode') || ''));
+		});
+		<?php endif; ?>
 	})
 
 	function updateDatatable() {
