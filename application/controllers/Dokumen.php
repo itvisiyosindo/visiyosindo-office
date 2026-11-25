@@ -788,7 +788,7 @@ class Dokumen extends CI_Controller
                         <button type="button" class="btn btn-sm btn-danger btn-delete" title="Hapus Data" data-id="' . $id_enc . '" data-object="dokumen/delete/product/' . $id_enc . '"><i class="bx bx-trash"></i></button>
                     </div>
                     </center>';
-            $can_action = (isAdmin() || isGa() || sessPenggunaId() == '74' || sessPenggunaId() == '83' || sessPenggunaId() == '84' || sessPenggunaId() == '86' || sessPenggunaId() == '750' || sessPenggunaId() == '92' || sessPenggunaId() == '766');
+            $can_action = (isAdmin() || isGa() || sessPenggunaId() == '23' || sessPenggunaId() == '74' || sessPenggunaId() == '83' || sessPenggunaId() == '84' || sessPenggunaId() == '86' || sessPenggunaId() == '750' || sessPenggunaId() == '92' || sessPenggunaId() == '766');
 
             if ($is_hs_code) {
                 $kode_hs = !empty($row->kode_hs_code) ? $row->kode_hs_code : $row->nama_dokumen;

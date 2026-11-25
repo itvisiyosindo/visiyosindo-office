@@ -131,7 +131,7 @@
 	</div>
 
 	<div class="doc-ui-toolbar">
-		<?php if(isAdmin()  || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='766'){ ?>
+		<?php if(isAdmin()  || sessPenggunaId()=='23' || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='766'){ ?>
 			<a href="javascript:;" id="btn-show-add-formkategori" class="btn btn-sm btn-info"><i class="icons icon-plus"></i>&nbsp;Tambah Kategori Product</a>
 			<a href="javascript:;" id="btn-show-add-form" class="btn btn-sm btn-success"><i class="icons icon-plus"></i>&nbsp;<?= $is_hs_code ? 'Tambah HS Code' : 'Tambah Dokumen Product' ?></a>
 		<?php } ?>
@@ -155,7 +155,7 @@
 							<th>Kategori</th>
 							<th>Link Download</th>
 						<?php endif; ?>
-						<?php if (isAdmin() || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='92' || sessPenggunaId()=='766') { ?>
+						<?php if (isAdmin() || sessPenggunaId()=='23' || sessPenggunaId()=='75' || sessPenggunaId()=='84' || sessPenggunaId()=='750' || sessPenggunaId()=='92' || sessPenggunaId()=='766') { ?>
 							<th class="text-center">Aksi</th>
 						<?php } ?>
 					</tr>
