@@ -22,8 +22,21 @@
 						</a>
 					<?php endif; ?>
 				</div>
-				<div class="table-actions d-flex align-items-center">
-					<button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white shadow-sm mr-2" style="font-weight: 600;" title="Buka Print Preview Absensi Foto Selfie & Lokasi GPS 1 Bulan">
+				<div class="table-actions d-flex align-items-center flex-wrap" style="gap: 6px;">
+					<?php if (isAdmin() || isGa() || isHrd()): ?>
+						<div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Kirim WA Absensi">
+							<button type="button" class="btn btn-sm btn-outline-success btn-kirim-wa-absen" data-sesi="pagi" data-label="Pagi (Masuk)" title="Kirim Laporan Belum Absen Pagi ke Grup Kepegawaian">
+								<i class="fab fa-whatsapp"></i> Pagi
+							</button>
+							<button type="button" class="btn btn-sm btn-outline-success btn-kirim-wa-absen" data-sesi="siang" data-label="Siang (Istirahat)" title="Kirim Laporan Belum Absen Siang ke Grup Kepegawaian">
+								<i class="fab fa-whatsapp"></i> Siang
+							</button>
+							<button type="button" class="btn btn-sm btn-outline-success btn-kirim-wa-absen" data-sesi="sore" data-label="Sore (Pulang)" title="Kirim Laporan Belum Absen Sore ke Grup Kepegawaian">
+								<i class="fab fa-whatsapp"></i> Sore
+							</button>
+						</div>
+					<?php endif; ?>
+					<button type="button" id="btn_print_foto_gps" class="btn btn-sm btn-info text-white shadow-sm" style="font-weight: 600;" title="Buka Print Preview Absensi Foto Selfie & Lokasi GPS 1 Bulan">
 						<i class="fas fa-camera mr-1"></i> Cetak Foto & GPS
 					</button>
 					<?php if (sessPenggunaId()=='1' || sessPenggunaId()=='58' || sessPenggunaId()=='69' || sessPenggunaId()=='744') { ?>
@@ -296,6 +309,58 @@
 			$('#main-modal-add #modal-form-add').attr('action', 'absensi/addAbsenGa')
 			$('#main-modal-add').modal()
 		})
+
+		$(document).on('click', '.btn-kirim-wa-absen', async function() {
+			var sesi = $(this).data('sesi');
+			var label = $(this).data('label');
+			Swal.fire({
+				title: 'Memuat Preview ' + label + '...',
+				allowOutsideClick: false,
+				showConfirmButton: false,
+				didOpen: function() { Swal.showLoading(); }
+			});
+
+			try {
+				var prevResp = await fetch('<?= base_url("cron_absensi/preview/") ?>' + sesi, { credentials: 'same-origin' });
+				var prevData = await prevResp.json();
+				if (!prevResp.ok || prevData.status !== 'preview') {
+					throw new Error(prevData.message || 'Gagal memuat preview pesan.');
+				}
+
+				var esc = function(s) {
+					return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				};
+
+				var confirmRes = await Swal.fire({
+					title: 'Kirim Laporan WA ' + label + '?',
+					html: '<div class="text-left small mb-2 text-muted">Tujuan: <b>Kepegawaian visi/vym group</b> (' + prevData.total_belum + ' belum absen)</div>'
+						+ '<pre style="text-align:left;white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:6px;max-height:260px;overflow:auto;font-size:12px;">' + esc(prevData.message) + '</pre>',
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonColor: '#28a745',
+					confirmButtonText: 'Kirim Sekarang',
+					cancelButtonText: 'Batal'
+				});
+				if (!confirmRes.isConfirmed && !confirmRes.value) return;
+
+				Swal.fire({
+					title: 'Mengirim ke WhatsApp...',
+					allowOutsideClick: false,
+					showConfirmButton: false,
+					didOpen: function() { Swal.showLoading(); }
+				});
+
+				var sendResp = await fetch('<?= base_url("cron_absensi/") ?>' + sesi + '?force=1', { credentials: 'same-origin' });
+				var sendData = await sendResp.json();
+				if (sendResp.ok && sendData.status === 'success') {
+					Swal.fire('Terkirim!', 'Laporan WA ' + label + ' berhasil dikirim ke grup Kepegawaian.', 'success');
+				} else {
+					Swal.fire('Gagal', (sendData && sendData.message) ? sendData.message : 'Gagal mengirim pesan WA.', 'error');
+				}
+			} catch (err) {
+				Swal.fire('Gagal', err.message || 'Terjadi kesalahan saat menghubungi server.', 'error');
+			}
+		});
 
 
 	})
