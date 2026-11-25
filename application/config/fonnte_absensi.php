@@ -29,7 +29,7 @@ if ($envCronKey === false && isset($_ENV['FONNTE_ABSENSI_CRON_KEY'])) {
     $envCronKey = $_ENV['FONNTE_ABSENSI_CRON_KEY'];
 }
 
-$config['fonnte_absensi_token']           = $envToken ? trim((string)$envToken) : '';
+$config['fonnte_absensi_token']           = $envToken ? trim((string)$envToken) : 'TRgoT2pgX9piEMwvMzpx';
 $config['fonnte_absensi_sender']          = '0895410953259';
 $config['fonnte_absensi_group_name']      = 'Kepegawaian visi/vym group';
 $config['fonnte_absensi_group_id']        = $envGroupId ? trim((string)$envGroupId) : '';
