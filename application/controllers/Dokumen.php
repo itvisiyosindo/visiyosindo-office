@@ -132,6 +132,20 @@ class Dokumen extends CI_Controller
             $this->md_all->reset_increment('dokumen_rahasia');
             $this->md_dokumen->add($kode, $data);
 
+            $ambilKategori = $this->md_dokumen->getById('kategori', $data['id_kategori']);
+            $kategori      = !empty($ambilKategori) ? $ambilKategori[0]->nama : '-';
+            $this->notifWaGroup(1, [
+                'idPenerima1' => 'IZIN K3 ISO CDAKB VYM',
+                'idPenerima2' => '',
+                'namaSurat'   => 'Dokumen Rahasia',
+                'status'      => 'mengupload',
+                'kategori'    => $kategori,
+                'url'         => 'https://office.visiyosindo.id/dokumen/index/rahasia',
+                'idTracking'  => '',
+                'penerima'    => 'Bapak dan Ibu',
+                'csname'      => $data['nama_dokumen']
+            ]);
+
             //add log
             $aksi = 'Tambah Dokumen Rahasia';
             $ket = 'Menambahkan data dokumen - ' . $data['nama_dokumen'];
@@ -222,7 +236,7 @@ class Dokumen extends CI_Controller
             $dataWa = [
                 //'idPenerima1' 	=> 'Test Api Wa Group',
                 //'idPenerima2' 	=> '',
-                'idPenerima1'     => 'Visi Yosindo Medical',
+                'idPenerima1'     => 'IZIN K3 ISO CDAKB VYM',
                 'idPenerima2'     => '',
                 'namaSurat'          => 'Dokumen Produk',
                 'status'             => 'mengupload',
@@ -545,6 +559,20 @@ class Dokumen extends CI_Controller
             checkEmptyForm($data);
             $this->md_dokumen->update($kode, ['id' => $id], $data);
 
+            $ambilKategori = $this->md_dokumen->getById('kategori', $data['id_kategori']);
+            $kategori      = !empty($ambilKategori) ? $ambilKategori[0]->nama : '-';
+            $this->notifWaGroup(1, [
+                'idPenerima1' => 'IZIN K3 ISO CDAKB VYM',
+                'idPenerima2' => '',
+                'namaSurat'   => 'Dokumen Rahasia',
+                'status'      => 'mengedit',
+                'kategori'    => $kategori,
+                'url'         => 'https://office.visiyosindo.id/dokumen/index/rahasia',
+                'idTracking'  => '',
+                'penerima'    => 'Bapak dan Ibu',
+                'csname'      => $data['nama_dokumen']
+            ]);
+
             //add log
             $temp = $this->md_dokumen->getById($kode, $id);
             $aksi = 'Edit Master Data';
@@ -636,7 +664,7 @@ class Dokumen extends CI_Controller
 
                 //'idPenerima1' 	=> 'Test Api Wa Group',
                 //'idPenerima2' 	=> '',
-                'idPenerima1'     => 'Visi Yosindo Medical',
+                'idPenerima1'     => 'IZIN K3 ISO CDAKB VYM',
                 'idPenerima2'     => '',
                 'namaSurat'          => 'Dokumen Produk',
                 'status'             => 'mengedit',
@@ -1059,7 +1087,7 @@ class Dokumen extends CI_Controller
         }
 
         $dataWa = [
-            'idPenerima1' => 'Visi Yosindo Medical',
+            'idPenerima1' => 'IZIN K3 ISO CDAKB VYM',
             'idPenerima2' => '',
             'namaSurat'   => 'Dokumen Produk',
             'status'      => 'memperbarui',
@@ -1072,7 +1100,7 @@ class Dokumen extends CI_Controller
         $this->notifWaGroup(1, $dataWa);
 
         addlog('Notif WA HS Code', 'Mengirim notifikasi WA manual HS Code: ' . $csname);
-        ajaxReturnDie('success', 'Notifikasi WA HS Code berhasil dikirim ke grup Visi Yosindo Medical.', FALSE);
+        ajaxReturnDie('success', 'Notifikasi WA HS Code berhasil dikirim ke grup IZIN K3 ISO CDAKB VYM.', FALSE);
     }
 
     public function sendWa()

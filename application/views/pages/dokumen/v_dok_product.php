@@ -387,7 +387,7 @@
 		function kirimNotifHs(id, label) {
 			Swal.fire({
 				title: 'Kirim Notifikasi WA?',
-				text: 'Kirim notif "' + label + '" ke grup Visi Yosindo Medical?',
+				text: 'Kirim notif "' + label + '" ke grup IZIN K3 ISO CDAKB VYM?',
 				icon: 'question',
 				showCancelButton: true,
 				confirmButtonColor: '#28a745',
