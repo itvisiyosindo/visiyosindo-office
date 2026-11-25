@@ -46,6 +46,7 @@ class Md_broadcast_pesan extends CI_Model
             `nomorwa` VARCHAR(30) NULL,
             `pengguna_id` INT NULL,
             `nama_pengguna` VARCHAR(150) NULL,
+            `link_drive` TEXT NULL,
             `tanggal` DATE NOT NULL,
             `clicked_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
@@ -54,6 +55,13 @@ class Md_broadcast_pesan extends CI_Model
             KEY `idx_pengguna_id` (`pengguna_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
         $this->db->query($sql2);
+
+        // Check if column link_drive exists in historyTable, if not add it
+        if ($this->db->table_exists($this->historyTable)) {
+            if (!$this->db->field_exists('link_drive', $this->historyTable)) {
+                $this->db->query("ALTER TABLE `{$this->historyTable}` ADD COLUMN `link_drive` TEXT NULL AFTER `nama_pengguna`;");
+            }
+        }
 
         $this->db->db_debug = $dbDebug;
         $this->tableReady = true;
@@ -124,6 +132,15 @@ class Md_broadcast_pesan extends CI_Model
         }
     }
 
+    public function updateLinkDrive($id, $link_drive)
+    {
+        $this->ensureTable();
+        return $this->db->where('id', (int)$id)
+                        ->update($this->historyTable, [
+                            'link_drive' => trim((string)$link_drive)
+                        ]);
+    }
+
     public function getAllBroadcastData($kegiatan_id = null, $tanggal_mulai = null, $tanggal_selesai = null, $status_hubungi = null)
     {
         $this->ensureTable();
@@ -192,6 +209,7 @@ class Md_broadcast_pesan extends CI_Model
                 bwh.nama_kegiatan,
                 bwh.nomorwa,
                 bwh.nama_pengguna,
+                bwh.link_drive,
                 bwh.clicked_at,
                 bwh.tanggal
             ')

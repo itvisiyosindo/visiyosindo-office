@@ -184,7 +184,8 @@
 										<th>Kegiatan / Event</th>
 										<th>Nomor WhatsApp</th>
 										<th>Dihubungi Oleh</th>
-										<th style="width: 120px;">Waktu Kirim</th>
+										<th style="width: 250px;">Link Drive Copywriting BC</th>
+										<th style="width: 110px;">Waktu Kirim</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -302,7 +303,7 @@
 			serverSide: true,
 			responsive: false,
 			scrollX: true,
-			order: [[7, 'desc']],
+			order: [[8, 'desc']],
 			ajax: {
 				url: '<?= base_url("broadcast_pesan/pagination_daily") ?>',
 				type: 'POST',
@@ -313,7 +314,7 @@
 				}
 			},
 			columnDefs: [
-				{ targets: [0, 5, 6, 7], className: 'text-center' }
+				{ targets: [0, 5, 6, 8], className: 'text-center' }
 			],
 			language: {
 				search: 'Cari di Rekap:',
@@ -372,6 +373,51 @@
 				loadDailyStats();
 			} else {
 				table.columns.adjust().draw();
+			}
+		});
+
+		// Simpan Link Drive Copywriting BC
+		$(document).on('click', '.btn-save-drive', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var id = $btn.data('id');
+			var $input = $btn.closest('.input-group').find('.input-link-drive');
+			var link = $input.val();
+
+			$btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+			$.ajax({
+				url: '<?= base_url("broadcast_pesan/save_link_drive") ?>',
+				type: 'POST',
+				dataType: 'JSON',
+				data: {
+					id: id,
+					link_drive: link,
+					csrf_token: csrfToken
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html('<i class="fas fa-check text-success"></i>');
+					setTimeout(function() {
+						$btn.html('<i class="fas fa-save"></i>');
+					}, 1500);
+
+					if (typeof toastr !== 'undefined') {
+						toastr.success('Link Drive berhasil disimpan!');
+					}
+					tableRekap.ajax.reload(null, false);
+				},
+				error: function() {
+					$btn.prop('disabled', false).html('<i class="fas fa-save"></i>');
+					alert('Gagal menyimpan link drive. Silakan coba lagi.');
+				}
+			});
+		});
+
+		// Enter key pada input link drive
+		$(document).on('keypress', '.input-link-drive', function(e) {
+			if (e.which === 13) {
+				e.preventDefault();
+				$(this).closest('.input-group').find('.btn-save-drive').click();
 			}
 		});
 

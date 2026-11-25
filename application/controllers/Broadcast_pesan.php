@@ -178,6 +178,25 @@ class Broadcast_pesan extends CI_Controller
                 $cleanDigits = preg_replace('/\D+/', '', $rawWa);
                 $waUrl = !empty($cleanDigits) ? ('https://wa.me/' . $cleanDigits) : '#';
 
+                $linkDriveVal = htmlspecialchars((string)$row->link_drive, ENT_QUOTES, 'UTF-8');
+                $btnOpen = '';
+                if (!empty($row->link_drive)) {
+                    $href = prep_url($row->link_drive);
+                    $btnOpen = '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-info ml-1" title="Buka Link Drive">'
+                             . '<i class="fas fa-external-link-alt"></i>'
+                             . '</a>';
+                }
+
+                $driveHtml = '<div class="input-group input-group-sm" style="min-width: 220px;">'
+                           . '<input type="text" class="form-control form-control-sm input-link-drive" data-id="' . (int)$row->id . '" value="' . $linkDriveVal . '" placeholder="Paste link Google Drive...">'
+                           . '<div class="input-group-append">'
+                           . '<button type="button" class="btn btn-xs btn-primary btn-save-drive" data-id="' . (int)$row->id . '" title="Simpan Link">'
+                           . '<i class="fas fa-save"></i>'
+                           . '</button>'
+                           . $btnOpen
+                           . '</div>'
+                           . '</div>';
+
                 $th = array();
                 $th[] = $index;
                 $th[] = '<strong>' . htmlspecialchars($row->nama, ENT_QUOTES, 'UTF-8') . '</strong>';
@@ -186,6 +205,7 @@ class Broadcast_pesan extends CI_Controller
                 $th[] = '<span class="badge badge-info">' . htmlspecialchars($row->nama_kegiatan ?: 'Umum', ENT_QUOTES, 'UTF-8') . '</span>';
                 $th[] = '<a href="' . $waUrl . '" target="_blank" rel="noopener noreferrer" class="text-success font-weight-bold"><i class="fab fa-whatsapp mr-1"></i>' . htmlspecialchars($row->nomorwa, ENT_QUOTES, 'UTF-8') . '</a>';
                 $th[] = '<span class="badge badge-light border"><i class="fas fa-user mr-1"></i>' . htmlspecialchars($row->nama_pengguna ?: 'Marketing', ENT_QUOTES, 'UTF-8') . '</span>';
+                $th[] = $driveHtml;
                 $th[] = '<i class="far fa-clock mr-1 text-muted"></i>' . date('H:i:s', strtotime($row->clicked_at));
 
                 $data[] = $th;
@@ -195,6 +215,26 @@ class Broadcast_pesan extends CI_Controller
 
         $dt['data'] = $data;
         echo json_encode($dt);
+        die;
+    }
+
+    public function save_link_drive()
+    {
+        $id = (int)$this->input->post('id');
+        $link_drive = trim((string)$this->input->post('link_drive', true));
+
+        if ($id > 0) {
+            $this->Md_broadcast_pesan->updateLinkDrive($id, $link_drive);
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Link drive berhasil disimpan.'
+            ]);
+        } else {
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'ID data tidak valid.'
+            ]);
+        }
         die;
     }
 
