@@ -114,6 +114,18 @@
 						<label for="keterangan" class="form-control-label">Keterangan :</label>
 						<textarea class="form-control" id="keterangan" name="keterangan" cols="10" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
 					</div>
+					<div class="form-group">
+						<label for="link_invoice" class="form-control-label">Link Invoice :</label>
+						<input type="text" class="form-control" id="link_invoice" name="link_invoice" placeholder="https://...">
+					</div>
+					<div class="form-group">
+						<label for="link_packing" class="form-control-label">Link Packing List :</label>
+						<input type="text" class="form-control" id="link_packing" name="link_packing" placeholder="https://...">
+					</div>
+					<div class="form-group">
+						<label for="link_asuransi" class="form-control-label">Link Asuransi :</label>
+						<input type="text" class="form-control" id="link_asuransi" name="link_asuransi" placeholder="https://...">
+					</div>
 					
 
 				</div>
@@ -202,6 +214,9 @@
 					$('#main-modal #hs_code').val(data[0].hs_code || '')
 					$('#main-modal #berat_dimensi').val(data[0].berat_dimensi)
 					$('#main-modal #keterangan').val(data[0].keterangan || '')
+					$('#main-modal #link_invoice').val(data[0].link_invoice || '')
+					$('#main-modal #link_packing').val(data[0].link_packing || '')
+					$('#main-modal #link_asuransi').val(data[0].link_asuransi || '')
 					$('#main-modal #nilai_inv').val(data[0].nilai_inv)
 					var curr = data[0].mata_nilai_inv || 'USD';
 					$('#main-modal #uang_nilai_inv').val(curr).trigger('change');

@@ -574,6 +574,9 @@ class Forwarder extends CI_Controller
         $data["hs_code"] = $this->input->post("hs_code", true);
         $data["berat_dimensi"] = $this->input->post("berat_dimensi", true);
         $data["keterangan"] = $this->input->post("keterangan", true);
+        $data["link_invoice"] = $this->input->post("link_invoice", true);
+        $data["link_packing"] = $this->input->post("link_packing", true);
+        $data["link_asuransi"] = $this->input->post("link_asuransi", true);
         $data["mata_nilai_inv"] =
             $this->input->post("uang_nilai_inv", true) ?: "USD";
         $data["nilai_inv"] = $this->input->post("nilai_inv", true);
@@ -634,6 +637,9 @@ class Forwarder extends CI_Controller
         $data["nilai_inv"] = $this->input->post("nilai_inv", true);
         $data["kurs"] = $this->input->post("kurs", true);
         $data["keterangan"] = $this->input->post("keterangan", true);
+        $data["link_invoice"] = $this->input->post("link_invoice", true);
+        $data["link_packing"] = $this->input->post("link_packing", true);
+        $data["link_asuransi"] = $this->input->post("link_asuransi", true);
 
         // Reset approval jika surat sudah pernah diajukan (status >= 1)
         $prevStatus = (int)$existing[0]->status;

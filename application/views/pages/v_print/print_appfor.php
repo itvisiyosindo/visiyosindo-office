@@ -302,6 +302,30 @@
 								<font color='#000000'>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->keterangan) ? nl2br(htmlspecialchars($data_aprv[0]->keterangan)) : '-' ?>
 							</td>
 						</tr>
+						<tr>
+							<td>
+								<font color='#000000'>Link Invoice
+							</td>
+							<td>
+								<font color='#000000'>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->link_invoice) ? '<a href="' . htmlspecialchars($data_aprv[0]->link_invoice) . '" target="_blank">Invoice</a>' : '-' ?>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<font color='#000000'>Link Packing List
+							</td>
+							<td>
+								<font color='#000000'>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->link_packing) ? '<a href="' . htmlspecialchars($data_aprv[0]->link_packing) . '" target="_blank">Packing List</a>' : '-' ?>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<font color='#000000'>Link Asuransi
+							</td>
+							<td>
+								<font color='#000000'>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->link_asuransi) ? '<a href="' . htmlspecialchars($data_aprv[0]->link_asuransi) . '" target="_blank">Asuransi</a>' : '-' ?>
+							</td>
+						</tr>
 
 						<tr>
 							<td>
@@ -411,10 +435,7 @@
 								'Jenis Asuransi' => 'ins_jenis',
 								'FORWARDER YANG DIPILIH' => 'dipilih',
 								'Alasan' => 'alasan',
-								'Link Invoice' => 'link_invoice',
-								'Link Packing List' => 'link_packing',
 								'Link SPH Forwarder' => 'link_sph_for',
-								'Link SPH Asuransi' => 'link_sph_ins',
 							];
 
 							// Tambahkan ini: label yang ingin dibold

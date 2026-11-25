@@ -21,6 +21,15 @@ class Md_forwarder extends CI_Model
             if (!$this->db->field_exists('keterangan', 'approval_forwarder')) {
                 @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `keterangan` TEXT NULL DEFAULT NULL AFTER `berat_dimensi`");
             }
+            if (!$this->db->field_exists('link_invoice', 'approval_forwarder')) {
+                @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `link_invoice` TEXT NULL DEFAULT NULL AFTER `keterangan`");
+            }
+            if (!$this->db->field_exists('link_packing', 'approval_forwarder')) {
+                @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `link_packing` TEXT NULL DEFAULT NULL AFTER `link_invoice`");
+            }
+            if (!$this->db->field_exists('link_asuransi', 'approval_forwarder')) {
+                @$this->db->query("ALTER TABLE `approval_forwarder` ADD COLUMN `link_asuransi` TEXT NULL DEFAULT NULL AFTER `link_packing`");
+            }
         }
     }
 
@@ -115,6 +124,9 @@ class Md_forwarder extends CI_Model
                 f.hs_code,
                 f.berat_dimensi,
                 f.keterangan,
+                f.link_invoice,
+                f.link_packing,
+                f.link_asuransi,
                 f.nilai_inv,
                 f.mata_nilai_inv,
                 f.kurs,
@@ -191,6 +203,9 @@ class Md_forwarder extends CI_Model
                 f.hs_code,
                 f.berat_dimensi,
                 f.keterangan,
+                f.link_invoice,
+                f.link_packing,
+                f.link_asuransi,
                 f.nilai_inv,
                 f.mata_nilai_inv,
                 f.tanggal,

@@ -107,10 +107,7 @@ $keteranganList = [
 	'FORWARDER YANG DIPILIH' => 'dipilih',
 	'Alasan' => 'alasan',
 	'Keterangan' => 'keterangan_detail',
-	'Link Invoice' => 'link_invoice',
-	'Link Packing List' => 'link_packing',
 	'Link SPH Forwarder' => 'link_sph_for',
-	'Link SPH Asuransi' => 'link_sph_ins',
 	'Aksi' => null,
 ];
 
@@ -273,6 +270,18 @@ $dataDetail = $detail_aprv;
 						<td>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->keterangan) ? nl2br(htmlspecialchars($data_aprv[0]->keterangan)) : '-' ?></td>
 					</tr>
 					<tr>
+						<td>Link Invoice</td>
+						<td>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->link_invoice) ? '<a href="' . htmlspecialchars($data_aprv[0]->link_invoice) . '" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-link"></i> Invoice</a>' : '-' ?></td>
+					</tr>
+					<tr>
+						<td>Link Packing List</td>
+						<td>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->link_packing) ? '<a href="' . htmlspecialchars($data_aprv[0]->link_packing) . '" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-link"></i> Packing List</a>' : '-' ?></td>
+					</tr>
+					<tr>
+						<td>Link Asuransi</td>
+						<td>:&nbsp;&nbsp; <?= !empty($data_aprv[0]->link_asuransi) ? '<a href="' . htmlspecialchars($data_aprv[0]->link_asuransi) . '" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-link"></i> Asuransi</a>' : '-' ?></td>
+					</tr>
+					<tr>
 						<td><span style="color:white;">i</span></td>
 					</tr>
 				</table>
@@ -318,7 +327,7 @@ $dataDetail = $detail_aprv;
 										$align = 'center';
 									} elseif (
 										$kolomDb === 'ppn' || $kolomDb === 'ins_jenis' || $kolomDb === 'storage' || $kolomDb === 'dipilih' || $kolomDb === 'alasan' || $kolomDb === 'keterangan_detail'
-										|| $kolomDb === 'link_invoice' || $kolomDb === 'link_packing' || $kolomDb === 'link_sph_for' || $kolomDb === 'link_sph_ins'
+										|| $kolomDb === 'link_sph_for'
 									) {
 										$align = 'center';
 									}
@@ -552,6 +561,18 @@ $dataDetail = $detail_aprv;
 				<div class="form-group">
 					<label for="edit_keterangan" class="form-control-label font-weight-bold">Keterangan :</label>
 					<textarea class="form-control" id="edit_keterangan" name="keterangan" rows="3" placeholder="Masukkan keterangan tambahan..."><?= htmlspecialchars(!empty($data_aprv[0]->keterangan) ? $data_aprv[0]->keterangan : '') ?></textarea>
+				</div>
+				<div class="form-group">
+					<label for="edit_link_invoice" class="form-control-label font-weight-bold">Link Invoice :</label>
+					<input type="text" class="form-control" id="edit_link_invoice" name="link_invoice" value="<?= htmlspecialchars(!empty($data_aprv[0]->link_invoice) ? $data_aprv[0]->link_invoice : '') ?>" placeholder="https://...">
+				</div>
+				<div class="form-group">
+					<label for="edit_link_packing" class="form-control-label font-weight-bold">Link Packing List :</label>
+					<input type="text" class="form-control" id="edit_link_packing" name="link_packing" value="<?= htmlspecialchars(!empty($data_aprv[0]->link_packing) ? $data_aprv[0]->link_packing : '') ?>" placeholder="https://...">
+				</div>
+				<div class="form-group">
+					<label for="edit_link_asuransi" class="form-control-label font-weight-bold">Link Asuransi :</label>
+					<input type="text" class="form-control" id="edit_link_asuransi" name="link_asuransi" value="<?= htmlspecialchars(!empty($data_aprv[0]->link_asuransi) ? $data_aprv[0]->link_asuransi : '') ?>" placeholder="https://...">
 				</div>
 			</div>
 			<div class="modal-footer">
@@ -976,10 +997,7 @@ $dataDetail = $detail_aprv;
 					<div class="form-group"><label>KETERANGAN :</label><textarea type="text" class="form-control" id="keterangan" name="keterangan" cols="10" rows="3"></textarea></div>
 
 					<br><strong>Link </strong>
-					<div class="form-group"><label>Link Invoice :</label><textarea type="text" class="form-control" id="link_invoice" name="link_invoice" cols="10" rows="3"></textarea></div>
-					<div class="form-group"><label>Link Packing List :</label><textarea type="text" class="form-control" id="link_packing" name="link_packing" cols="10" rows="3"></textarea></div>
 					<div class="form-group"><label>Link SPH Forwarder :</label><textarea type="text" class="form-control" id="link_sph_for" name="link_sph_for" cols="10" rows="3"></textarea></div>
-					<div class="form-group"><label>LINK SPH Asuransi :</label><textarea type="text" class="form-control" id="link_sph_ins" name="link_sph_ins" cols="10" rows="3"></textarea></div>
 				</div>
 			</div>
 			<div class="modal-footer">
@@ -1401,10 +1419,7 @@ $dataDetail = $detail_aprv;
 					<div class="form-group"><label>KETERANGAN :</label><textarea type="text" class="form-control" id="keterangan" name="keterangan" cols="10" rows="3"></textarea></div>
 
 					<br><strong>Link </strong>
-					<div class="form-group"><label>Link Invoice :</label><textarea type="text" class="form-control" id="link_invoice" name="link_invoice" cols="10" rows="3"></textarea></div>
-					<div class="form-group"><label>Link Packing List :</label><textarea type="text" class="form-control" id="link_packing" name="link_packing" cols="10" rows="3"></textarea></div>
 					<div class="form-group"><label>Link SPH Forwarder :</label><textarea type="text" class="form-control" id="link_sph_for" name="link_sph_for" cols="10" rows="3"></textarea></div>
-					<div class="form-group"><label>LINK SPH Asuransi :</label><textarea type="text" class="form-control" id="link_sph_ins" name="link_sph_ins" cols="10" rows="3"></textarea></div>
 				</div>
 			</div>
 			<div class="modal-footer">
