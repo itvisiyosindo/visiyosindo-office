@@ -103,6 +103,7 @@ class Cron_absensi extends CI_Controller
             'is_holiday'     => $this->_isHoliday($today),
             'total_belum'    => count($report['belum_absen']),
             'belum_absen'    => $report['belum_absen'],
+            'dinas'          => $report['dinas'],
             'izin_cuti'      => $report['izin_cuti'],
             'terlambat'      => $report['terlambat'],
             'excluded_count' => $report['excluded_count'],
@@ -252,6 +253,7 @@ class Cron_absensi extends CI_Controller
             'target_group'   => $groupId,
             'total_belum'    => count($report['belum_absen']),
             'belum_absen'    => $report['belum_absen'],
+            'dinas'          => $report['dinas'],
             'izin_cuti'      => $report['izin_cuti'],
             'terlambat'      => $report['terlambat'],
             'excluded_count' => $report['excluded_count'],
@@ -260,12 +262,13 @@ class Cron_absensi extends CI_Controller
     }
 
     /**
-     * Hitung daftar karyawan aktif yang belum absen, izin/sakit/cuti, dan terlambat
+     * Hitung daftar karyawan aktif yang belum absen, dinas, izin/sakit/cuti, dan terlambat
      *
      * @param string $sesi  pagi|siang|sore
      * @param string $today Y-m-d
      * @return array{
      *     belum_absen: array<int, string>,
+     *     dinas: array<int, array{nama: string, keterangan: string}>,
      *     izin_cuti: array<int, array{nama: string, keterangan: string}>,
      *     terlambat: array<int, array{nama: string, jam: string}>,
      *     excluded_count: int
@@ -276,7 +279,8 @@ class Cron_absensi extends CI_Controller
         $karyawanAktif = $this->md_dashboard->daftarKaryawanAktifAbsensi();
         $perusahaan = (int)grantAccessForPerusahaan();
 
-        $rows = $this->db->select('pengguna_id, type_absen, status_absen, waktu_absen')
+        // 1. Data absensi log hari ini
+        $rows = $this->db->select('pengguna_id, type_absen, status_absen, waktu_absen, jenis_absen, jenis_lokasi')
             ->from('absensi')
             ->where('perusahaan', $perusahaan)
             ->where('data_created >=', $today . ' 00:00:00')
@@ -292,6 +296,8 @@ class Cron_absensi extends CI_Controller
                     'masuk'           => false,
                     'istirahat'       => false,
                     'keluar'          => false,
+                    'is_dinas'        => false,
+                    'dinas_label'     => '',
                     'izin_cuti'       => false,
                     'izin_cuti_label' => '',
                     'terlambat'       => false,
@@ -301,6 +307,8 @@ class Cron_absensi extends CI_Controller
 
             $type = strtolower(trim((string)$row->type_absen));
             $status = strtolower(trim((string)$row->status_absen));
+            $jenisAbsen = strtoupper(trim((string)$row->jenis_absen));
+            $jenisLokasi = strtoupper(trim((string)$row->jenis_lokasi));
 
             if ($type === 'masuk') {
                 $statusMap[$uid]['masuk'] = true;
@@ -317,6 +325,13 @@ class Cron_absensi extends CI_Controller
                 $statusMap[$uid]['keluar'] = true;
             }
 
+            if ($status === 'dinas' || $jenisAbsen === 'DINAS' || $jenisLokasi === 'DINAS' || $type === 'dinas') {
+                $statusMap[$uid]['is_dinas'] = true;
+                if ($statusMap[$uid]['dinas_label'] === '') {
+                    $statusMap[$uid]['dinas_label'] = 'Absen Dinas';
+                }
+            }
+
             if (in_array($type, ['izin', 'cuti'], true) || in_array($status, ['izin', 'sakit', 'cuti'], true)) {
                 $statusMap[$uid]['izin_cuti'] = true;
                 if ($status === 'cuti' || $type === 'cuti') {
@@ -325,6 +340,62 @@ class Cron_absensi extends CI_Controller
                     $statusMap[$uid]['izin_cuti_label'] = 'Sakit';
                 } elseif ($statusMap[$uid]['izin_cuti_label'] === '') {
                     $statusMap[$uid]['izin_cuti_label'] = 'Izin';
+                }
+            }
+        }
+
+        // 2. Sinkronkan Surat Perjalanan Dinas (surat_pd_dinas) yang disetujui untuk hari ini
+        $dinasSuratMap = [];
+        if ($this->db->table_exists('surat_pd_dinas')) {
+            $sqlPd = "SELECT sp.id_pengguna, sp.nama_karyawan, sp.lokasi_dinas, sp.perihal 
+                      FROM surat_pd_dinas sp
+                      WHERE sp.ttd_3 = 1
+                        AND sp.tgl_dinas <= ? AND sp.tgl_dinas_akhir >= ?";
+            $qPd = $this->db->query($sqlPd, [$today, $today]);
+            if ($qPd && $qPd->num_rows() > 0) {
+                foreach ($qPd->result() as $pd) {
+                    $ket = !empty($pd->lokasi_dinas) ? 'Dinas: ' . trim($pd->lokasi_dinas) : (!empty($pd->perihal) ? 'Dinas: ' . trim($pd->perihal) : 'Perjalanan Dinas');
+                    if (!empty($pd->id_pengguna)) {
+                        $dinasSuratMap[(int)$pd->id_pengguna] = $ket;
+                    }
+                    if (!empty($pd->nama_karyawan)) {
+                        $dinasSuratMap['name_' . strtolower(trim($pd->nama_karyawan))] = $ket;
+                    }
+                }
+            }
+        }
+
+        // 3. Sinkronkan Surat Cuti Tahunan yang disetujui untuk hari ini
+        $cutiSuratMap = [];
+        if ($this->db->table_exists('surat_cuti_tahunan')) {
+            $sqlCuti = "SELECT sc.id_pengaju, sc.alasan 
+                        FROM surat_cuti_tahunan sc
+                        WHERE sc.status IN (1, 2, 3)
+                          AND sc.tgl_awal <= ? AND sc.tgl_akhir >= ?";
+            $qCuti = $this->db->query($sqlCuti, [$today, $today]);
+            if ($qCuti && $qCuti->num_rows() > 0) {
+                foreach ($qCuti->result() as $ct) {
+                    if (!empty($ct->id_pengaju)) {
+                        $cutiSuratMap[(int)$ct->id_pengaju] = !empty($ct->alasan) ? 'Cuti: ' . trim($ct->alasan) : 'Cuti';
+                    }
+                }
+            }
+        }
+
+        // 4. Sinkronkan Surat Izin Jam Kerja yang berlaku hari ini
+        $izinSuratMap = [];
+        if ($this->db->table_exists('surat_izin_jam_kerja')) {
+            $sqlIzin = "SELECT si.id_pengaju, si.jenis_izin, si.alasan 
+                        FROM surat_izin_jam_kerja si
+                        WHERE (si.status IS NULL OR si.status NOT IN (4, 5))
+                          AND ((si.tanggal = ?) OR (si.tgl_awal <= ? AND si.tgl_akhir >= ?))";
+            $qIzin = $this->db->query($sqlIzin, [$today, $today, $today]);
+            if ($qIzin && $qIzin->num_rows() > 0) {
+                foreach ($qIzin->result() as $iz) {
+                    if (!empty($iz->id_pengaju)) {
+                        $lbl = (strtolower($iz->jenis_izin ?? '') === 'sakit') ? 'Sakit' : 'Izin';
+                        $izinSuratMap[(int)$iz->id_pengaju] = $lbl;
+                    }
                 }
             }
         }
@@ -338,6 +409,7 @@ class Cron_absensi extends CI_Controller
         }
 
         $belumAbsen = [];
+        $dinasList = [];
         $izinCutiList = [];
         $terlambatList = [];
         $excludedCount = 0;
@@ -345,23 +417,57 @@ class Cron_absensi extends CI_Controller
         foreach ($karyawanAktif as $karyawan) {
             $uid = (int)$karyawan->pengguna_id;
             $nama = trim((string)$karyawan->nama);
+            $namaKey = 'name_' . strtolower($nama);
+
             $userStatus = $statusMap[$uid] ?? [
                 'masuk'           => false,
                 'istirahat'       => false,
                 'keluar'          => false,
+                'is_dinas'        => false,
+                'dinas_label'     => '',
                 'izin_cuti'       => false,
                 'izin_cuti_label' => '',
                 'terlambat'       => false,
                 'waktu_masuk'     => '',
             ];
 
-            if (!$userStatus['masuk'] && $userStatus['izin_cuti']) {
+            // Terapkan dinas dari surat_pd_dinas jika ada
+            if (isset($dinasSuratMap[$uid])) {
+                $userStatus['is_dinas'] = true;
+                $userStatus['dinas_label'] = $dinasSuratMap[$uid];
+            } elseif (isset($dinasSuratMap[$namaKey])) {
+                $userStatus['is_dinas'] = true;
+                $userStatus['dinas_label'] = $dinasSuratMap[$namaKey];
+            }
+
+            // Terapkan cuti/izin dari surat jika belum tercatat di absensi
+            if (!$userStatus['izin_cuti']) {
+                if (isset($cutiSuratMap[$uid])) {
+                    $userStatus['izin_cuti'] = true;
+                    $userStatus['izin_cuti_label'] = $cutiSuratMap[$uid];
+                } elseif (isset($izinSuratMap[$uid])) {
+                    $userStatus['izin_cuti'] = true;
+                    $userStatus['izin_cuti_label'] = $izinSuratMap[$uid];
+                }
+            }
+
+            // Catat karyawan yang sedang dinas
+            if ($userStatus['is_dinas']) {
+                $dinasList[] = [
+                    'nama'       => $nama,
+                    'keterangan' => $userStatus['dinas_label'] ?: 'Dinas Luar',
+                ];
+            }
+
+            // Catat karyawan izin / sakit / cuti
+            if (!$userStatus['masuk'] && !$userStatus['is_dinas'] && $userStatus['izin_cuti']) {
                 $izinCutiList[] = [
                     'nama'       => $nama,
                     'keterangan' => $userStatus['izin_cuti_label'] ?: 'Izin',
                 ];
             }
 
+            // Catat karyawan terlambat
             if ($userStatus['terlambat']) {
                 $terlambatList[] = [
                     'nama' => $nama,
@@ -369,19 +475,20 @@ class Cron_absensi extends CI_Controller
                 ];
             }
 
+            // Filter status belum absen per sesi
             if ($sesi === 'pagi') {
-                // Pagi (09:00): belum absen masuk dan tidak sedang izin/sakit/cuti
-                if (!$userStatus['masuk'] && !$userStatus['izin_cuti']) {
+                // Pagi (09:00): belum absen masuk dan tidak sedang dinas/izin/sakit/cuti
+                if (!$userStatus['masuk'] && !$userStatus['is_dinas'] && !$userStatus['izin_cuti']) {
                     $belumAbsen[] = $nama;
                 }
             } elseif ($sesi === 'siang') {
-                // Siang (13:10): sudah absen masuk hari ini namun belum absen istirahat
-                if ($userStatus['masuk'] && !$userStatus['istirahat']) {
+                // Siang (13:10): sudah absen masuk tapi belum istirahat, kecuali yang sedang dinas
+                if ($userStatus['masuk'] && !$userStatus['istirahat'] && !$userStatus['is_dinas']) {
                     $belumAbsen[] = $nama;
                 }
             } elseif ($sesi === 'sore') {
-                // Sore (17:15): sudah absen masuk hari ini namun belum absen pulang
-                if ($userStatus['masuk'] && !$userStatus['keluar']) {
+                // Sore (17:15): sudah absen masuk tapi belum pulang, kecuali karyawan dikecualikan & yang sedang dinas
+                if ($userStatus['masuk'] && !$userStatus['keluar'] && !$userStatus['is_dinas']) {
                     if (isset($excludedLookup[strtolower($nama)])) {
                         $excludedCount++;
                         continue;
@@ -393,6 +500,7 @@ class Cron_absensi extends CI_Controller
 
         return [
             'belum_absen'    => $belumAbsen,
+            'dinas'          => $dinasList,
             'izin_cuti'      => $izinCutiList,
             'terlambat'      => $terlambatList,
             'excluded_count' => $excludedCount,
@@ -400,7 +508,7 @@ class Cron_absensi extends CI_Controller
     }
 
     /**
-     * Format pesan WhatsApp (belum absen, keterangan izin/sakit/cuti, dan terlambat)
+     * Format pesan WhatsApp (belum absen, dinas, keterangan izin/sakit/cuti, dan terlambat)
      */
     private function _formatWhatsappMessage($sesi, $today, $report)
     {
@@ -411,6 +519,7 @@ class Cron_absensi extends CI_Controller
         ];
 
         $belumAbsen = $report['belum_absen'] ?? [];
+        $dinas = $report['dinas'] ?? [];
         $izinCuti = $report['izin_cuti'] ?? [];
         $terlambat = $report['terlambat'] ?? [];
 
@@ -435,6 +544,16 @@ class Cron_absensi extends CI_Controller
 
         if ($sesi === 'pagi') {
             $lines[] = '';
+            if (!empty($dinas)) {
+                $lines[] = 'Karyawan Dinas (' . count($dinas) . ' orang):';
+                foreach ($dinas as $idx => $item) {
+                    $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $item['keterangan'] . ')';
+                }
+            } else {
+                $lines[] = "Karyawan Dinas:\n- Nihil";
+            }
+
+            $lines[] = '';
             if (!empty($izinCuti)) {
                 $lines[] = 'Keterangan tidak hadir (Izin / Sakit / Cuti) (' . count($izinCuti) . ' orang):';
                 foreach ($izinCuti as $idx => $item) {
@@ -453,6 +572,15 @@ class Cron_absensi extends CI_Controller
                 }
             } else {
                 $lines[] = "Daftar karyawan terlambat:\n- Nihil";
+            }
+        } else {
+            // Pada sesi Siang & Sore, tampilkan info karyawan yang sedang dinas jika ada
+            if (!empty($dinas)) {
+                $lines[] = '';
+                $lines[] = 'Karyawan Sedang Dinas (' . count($dinas) . ' orang):';
+                foreach ($dinas as $idx => $item) {
+                    $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $item['keterangan'] . ')';
+                }
             }
         }
 
