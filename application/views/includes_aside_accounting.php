@@ -81,6 +81,15 @@
 						</a>
 					</li>
 
+					<?php if (isAdmin() || isHrd() || sessPenggunaId() == 64) { ?>
+					<li class="<?= ($this->uri->segment(1) == 'salary') ? 'nav-active' : ''; ?>">
+						<a class="nav-link" href="<?= base_url('salary') ?>">
+							<i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+							<span>Import PPh 21 (Salary)</span>
+						</a>
+					</li>
+					<?php } ?>
+
 					<li class="nav-parent <?= ($this->uri->segment(1) == 'po_system') ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
 							<i class="fas fa-file-signature" aria-hidden="true"></i>

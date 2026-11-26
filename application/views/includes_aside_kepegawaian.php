@@ -95,7 +95,7 @@
 							</a>
 						</li>
 
-						<?php if (isAdmin() || isHrd() || isGa() || sessPenggunaId() == 764) { ?>
+						<?php if (isAdmin() || isHrd() || isGa() || sessPenggunaId() == 764 || sessPenggunaId() == 64) { ?>
 							<li class="nav-parent <?= in_array($page_name, ['salary/v_salary', 'salary/v_salary_tidak_tetap', 'salary/v_salary_thr', 'salary/v_detail_salary', 'salary/v_salary_freelance', 'salary/v_detail_salary_tt', 'salary/v_bonus', 'salary/v_salary_resign', 'salary/v_salary_resign_pokok']) ? 'nav-active nav-expanded' : ''; ?>">
 								<a class="nav-link" href="#">
 									<i class="fas fa-money-bill" aria-hidden="true"></i>
@@ -107,6 +107,7 @@
 											Salary Tetap
 										</a>
 									</li>
+									<?php if (isAdmin() || isHrd() || isGa() || sessPenggunaId() == 764) { ?>
 									<li class="<?= $this->uri->segment(1) == 'salary_tidak_tetap' ? 'nav-active' : '' ?>">
 										<a class="nav-link" href="<?= base_url('salary_tidak_tetap') ?>">
 											Salary Tidak Tetap
@@ -137,6 +138,7 @@
 											Bonus Tahunan
 										</a>
 									</li>
+									<?php } ?>
 								</ul>
 							</li>
 						<?php } ?>

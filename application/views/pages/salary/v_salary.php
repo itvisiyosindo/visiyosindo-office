@@ -16,6 +16,7 @@
         <div class="card-body">
             <div class="table-responsive">
                 <div class="row mb-3 ml-1">
+                    <?php if (isAdmin() || isHrd() || isGa() || sessPenggunaId() == 764) { ?>
                     <div>
                         <button type="button" print="gapok" class="btn btn-success btn-print-salary"><i
                                 class="icons fas fa-print"></i> Print Gapok</button>
@@ -46,10 +47,13 @@
                                 class="icons fas fa-file-excel"></i> Import Komisi (Excel)</button>
                     </div>
                     &nbsp;
+                    <?php } ?>
+                    <?php if (isAdmin() || isHrd() || isGa() || sessPenggunaId() == 764 || sessPenggunaId() == 64) { ?>
                     <div>
                         <button type="button" class="btn btn-primary btn-import-pph21"><i
                                 class="icons fas fa-file-excel"></i> Import PPh 21 (Excel)</button>
                     </div>
+                    <?php } ?>
                 </div>
                 <div class="row mb-3 align-items-end">
                     <div class="col-md-3">

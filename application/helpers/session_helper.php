@@ -25,8 +25,11 @@ function grantAccessFor($list)
 		$list = array('Administrator', 'Hrd', 'Karyawan', 'Ga');
 	}
 	$pass = 0;
+	$curr_id = sessPenggunaId();
 	foreach ($list as $row) {
 		if ($CI->session->userdata('login_type') == $row) {
+			$pass++;
+		} elseif (is_numeric($row) && $curr_id == $row) {
 			$pass++;
 		}
 	}

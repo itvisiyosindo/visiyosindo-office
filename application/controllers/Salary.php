@@ -29,7 +29,7 @@ class Salary extends CI_Controller
 
     public function index()
     {
-        // grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+        grantAccessFor(['Administrator', 'Hrd', 'Ga', 64]);
 
         $page_data['switch'] = $this->id_navbar();
         $page_data['page_name'] = 'salary/v_salary';
@@ -896,7 +896,7 @@ class Salary extends CI_Controller
 
     public function pagination()
     {
-        grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+        grantAccessFor(['Administrator', 'Hrd', 'Ga', 64]);
     
         $month_filter = $this->input->post('filter_month'); // Contoh: "2024-12"
         $dt = $this->md_pengguna->getAllPenggunaAktif();
@@ -1226,7 +1226,7 @@ class Salary extends CI_Controller
     
       public function download_template_pph21()
   {
-      grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+      grantAccessFor(['Administrator', 'Hrd', 'Ga', 64]);
 
       $master_file = FCPATH . 'uploads/template/Template_Import_PPh21.xlsx';
       if (file_exists($master_file)) {
@@ -1285,7 +1285,7 @@ class Salary extends CI_Controller
 
   public function import_pph21()
   {
-      grantAccessFor(['Administrator', 'Hrd', 'Ga']);
+      grantAccessFor(['Administrator', 'Hrd', 'Ga', 64]);
 
       if (empty($_FILES['file_excel']['name'])) {
           echo json_encode(['status' => 'error', 'message' => 'Silahkan pilih file Excel terlebih dahulu!']);
