@@ -1159,4 +1159,127 @@ class Dokumen extends CI_Controller
             waDokumenGroup($dataWa);
         }
     }
+
+    public function export_excel_hs($param = null)
+    {
+        grantAccessFor('all');
+
+        $id_kat = $param ? (int)decrypt($param) : 0;
+        if ($id_kat <= 0) {
+            $kat = $this->db->get_where('masterdokumenproduct', ['keterangan' => 'HS CODE'])->row();
+            $id_kat = $kat ? (int)$kat->id : 0;
+        }
+
+        $items = $this->md_dokumen->getProductDocsByKategori($id_kat);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data HS Code');
+
+        // Header Title
+        $sheet->setCellValue('A1', 'DAFTAR DATA HS CODE & TARIF IMPOR - PT VISI YOSINDO MEDIKAL');
+        $sheet->setCellValue('A2', 'Kategori: HS CODE | Total: ' . count($items) . ' Data | Tanggal Unduh: ' . date('d/m/Y H:i:s'));
+        $sheet->mergeCells('A1:F1');
+        $sheet->mergeCells('A2:F2');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10);
+
+        // Header Table
+        $headers = [
+            'A4' => 'No',
+            'B4' => 'Kode HS Code',
+            'C4' => 'Keterangan / Produk',
+            'D4' => 'Dokumen Lartas',
+            'E4' => 'Tarif Impor',
+            'F4' => 'Link HS Code (INSW)'
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+        }
+
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0F172A']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
+        ];
+        $sheet->getStyle('A4:F4')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(4)->setRowHeight(28);
+
+        $rowNum = 5;
+        $no = 1;
+        foreach ($items as $it) {
+            $kode_hs = !empty($it->kode_hs_code) ? $it->kode_hs_code : (!empty($it->nama_dokumen) ? $it->nama_dokumen : '-');
+            $keterangan = !empty($it->keterangan) ? $it->keterangan : '-';
+            $lartas = !empty($it->dokumen_lartas) ? $it->dokumen_lartas : '-';
+            $tarif = !empty($it->tarif_impor) ? $it->tarif_impor : '-';
+            $link = !empty($it->file) ? $it->file : '';
+
+            $sheet->setCellValue('A' . $rowNum, $no++);
+            $sheet->setCellValueExplicit('B' . $rowNum, (string)$kode_hs, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('C' . $rowNum, $keterangan);
+            $sheet->setCellValue('D' . $rowNum, $lartas);
+            $sheet->setCellValue('E' . $rowNum, $tarif);
+            $sheet->setCellValue('F' . $rowNum, $link);
+
+            if (!empty($link) && filter_var($link, FILTER_VALIDATE_URL)) {
+                $sheet->getCell('F' . $rowNum)->getHyperlink()->setUrl($link);
+                $sheet->getStyle('F' . $rowNum)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF1D4ED8'))->setUnderline(true);
+            }
+
+            // Alignment and borders
+            $sheet->getStyle('A' . $rowNum . ':F' . $rowNum)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP)->setWrapText(true);
+            $sheet->getStyle('A' . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('B' . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A' . $rowNum . ':F' . $rowNum)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
+
+            $rowNum++;
+        }
+
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('B')->setWidth(18);
+        $sheet->getColumnDimension('C')->setWidth(35);
+        $sheet->getColumnDimension('D')->setWidth(40);
+        $sheet->getColumnDimension('E')->setWidth(30);
+        $sheet->getColumnDimension('F')->setWidth(35);
+
+        $filename = "Data_HS_Code_PT_VYM_" . date('Ymd_His') . ".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function export_pdf_hs($param = null)
+    {
+        grantAccessFor('all');
+
+        $id_kat = $param ? (int)decrypt($param) : 0;
+        if ($id_kat <= 0) {
+            $kat = $this->db->get_where('masterdokumenproduct', ['keterangan' => 'HS CODE'])->row();
+            $id_kat = $kat ? (int)$kat->id : 0;
+        }
+
+        $items = $this->md_dokumen->getProductDocsByKategori($id_kat);
+
+        $page_data['title_pdf'] = 'DAFTAR HS CODE & TARIF IMPOR';
+        $page_data['data'] = $items;
+        $page_data['tgl_cetak'] = date('d F Y, H:i') . ' WIB';
+
+        $this->load->view('pages/v_print/print_hscode', $page_data);
+    }
 }

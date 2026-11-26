@@ -138,6 +138,10 @@
 				<a href="javascript:;" id="btn-notif-hs-all" class="btn btn-sm btn-outline-success"><i class="fab fa-whatsapp"></i>&nbsp;Kirim Notif WA</a>
 			<?php endif; ?>
 		<?php } ?>
+		<?php if ($is_hs_code): ?>
+			<a href="<?= base_url('dokumen/export_excel_hs/' . encrypt($selected_kategori_id)) ?>" class="btn btn-sm btn-outline-success" target="_blank" title="Export Excel (.xlsx)"><i class="fas fa-file-excel"></i>&nbsp;Export Excel</a>
+			<a href="<?= base_url('dokumen/export_pdf_hs/' . encrypt($selected_kategori_id)) ?>" class="btn btn-sm btn-outline-danger" target="_blank" title="Cetak / Simpan PDF"><i class="fas fa-file-pdf"></i>&nbsp;Cetak / PDF</a>
+		<?php endif; ?>
 	</div>
 
 	<div class="doc-ui-card">
