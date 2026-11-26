@@ -3761,8 +3761,8 @@ $namaBulanList = [
                         <i class="fas fa-hourglass-half fa-2x text-success mr-3"></i>
                         <div>
                             <h6 class="mb-1 font-weight-bold text-success"><i class="fas fa-check-circle mr-1"></i> Hasil Pekerjaan Sudah Terkirim!</h6>
-                            <div class="small text-muted">Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Penilaian / Rating Bintang ⭐ dari HRD / Manajemen / Atasan</strong>.</div>
-                            <div class="small text-muted mt-1" style="font-size: 11.5px;"><i class="fas fa-shield-alt text-warning mr-1"></i> Sesuai standar penilaian objektif perusahaan, tugas yang diajukan ke diri sendiri dinilai langsung oleh HRD dan Manajemen.</div>
+                            <div class="small text-muted" id="panelSudahDisubmitInfoText">Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Penilaian / Rating Bintang ⭐</strong>.</div>
+                            <div class="small text-muted mt-1" id="panelSudahDisubmitInfoSubtext" style="font-size: 11.5px;"></div>
                         </div>
                     </div>
                 </div>
@@ -4925,6 +4925,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#panelBawahanProgres').hide();
                     $('#panelBawahanSubmit').hide();
                     if (isPenerima && stInt === 2) {
+                        var isMandiri = (parseInt(t.is_mandiri, 10) === 1 || parseInt(t.id_pemberi, 10) === parseInt(t.id_penerima, 10));
+                        if (isMandiri) {
+                            $('#panelSudahDisubmitInfoText').html('Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Penilaian / Rating Bintang ⭐ dari Atasan Langsung atau HRD/Manajemen</strong>.');
+                            $('#panelSudahDisubmitInfoSubtext').html('<i class="fas fa-shield-alt text-warning mr-1"></i> Sesuai standar penilaian objektif perusahaan, tugas yang diajukan ke diri sendiri dinilai langsung oleh Atasan Langsung atau HRD/Manajemen.');
+                        } else {
+                            var namaPemberi = t.nama_pemberi ? $('<div>').text(t.nama_pemberi).html() : 'Pemberi Tugas';
+                            $('#panelSudahDisubmitInfoText').html('Laporan penyelesaian tugas ini telah berhasil diserahkan (100%) dan saat ini sedang <strong>Menunggu Review &amp; Penilaian Rating Bintang ⭐ dari ' + namaPemberi + ' (Pemberi Tugas) / Atasan Langsung</strong>.');
+                            $('#panelSudahDisubmitInfoSubtext').html('<i class="fas fa-user-check text-primary mr-1"></i> Tugas yang ditugaskan oleh atasan / rekan kerja akan direview dan dinilai oleh Pemberi Tugas atau Atasan Langsung Anda.');
+                        }
                         $('#panelSudahDisubmitInfo').show();
                     } else {
                         $('#panelSudahDisubmitInfo').hide();
