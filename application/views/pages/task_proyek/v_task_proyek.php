@@ -4594,14 +4594,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Buka Modal Buat Task
     $('#btnOpenModalBuatTask').on('click', function() {
-        <?php if (!$canAssignToAll && empty($list_bawahan)): ?>
-            if (window.swal) {
-                swal('Perhatian', 'Anda belum memiliki karyawan yang dibawahi langsung, sehingga belum dapat memberikan tugas. Karyawan harus memilih Anda sebagai Atasan Langsung terlebih dahulu.', 'warning');
-            } else {
-                alert('Anda belum memiliki karyawan yang dibawahi langsung, sehingga belum dapat memberikan tugas. Karyawan harus memilih Anda sebagai Atasan Langsung terlebih dahulu.');
-            }
-            return;
-        <?php endif; ?>
         $('#formBuatTask')[0].reset();
         $('#container_jobdesk_karyawan').hide();
         $('#select_jobdesk_karyawan').val('');
@@ -4641,14 +4633,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var selectedPenerima = $('#select_penerima_task').val() || [];
         if (selectedPenerima.length === 1 && !$('#select_jobdesk_karyawan').val()) {
-            if (window.swal) {
-                swal('Perhatian', 'Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!', 'warning');
-            } else {
-                alert('Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan ini!');
-            }
-            $('#menu_jobdesk_list').show();
-            $('#filter_jobdesk_search').focus();
-            return false;
+            // Auto fallback jika belum memilih jobdesk agar tidak memblokir penugasan
+            $('#select_jobdesk_karyawan').val('SM_CUSTOM_TASK');
+            $('#input_nama_jobdesk').val('Tugas & Tanggung Jawab Operasional Tambahan');
         }
 
         var $btn = $('#btnSubmitBuatTask');
@@ -5412,9 +5399,15 @@ document.addEventListener('DOMContentLoaded', function() {
         var val = $(this).val() || [];
         var myUserId = <?= (int)$myId ?>;
         var isSelf = (val.length === 1 && parseInt(val[0], 10) === myUserId);
+        var isTopLeader = <?= in_array((int)$myId, [1, 33, 54], true) ? 'true' : 'false' ?>;
         if (isSelf) {
-            $('#alert_task_mandiri').slideDown();
-            $('#btnSubmitBuatTask').html('<i class="fas fa-paper-plane mr-1"></i> Ajukan Task Mandiri ke HRD');
+            if (isTopLeader) {
+                $('#alert_task_mandiri').html('<i class="fas fa-check-circle text-success mr-1"></i> <strong>Task Mandiri Direksi / Manajemen:</strong> Tugas ini diajukan untuk diri Anda sendiri dan akan <strong>langsung aktif</strong> tanpa perlu persetujuan (ACC) HRD.').css({ 'border-left': '4px solid #10b981', 'background': '#ecfdf5', 'color': '#065f46' }).slideDown();
+                $('#btnSubmitBuatTask').html('<i class="fas fa-paper-plane mr-1"></i> Simpan Task Mandiri (Langsung Aktif)');
+            } else {
+                $('#alert_task_mandiri').html('<i class="fas fa-shield-alt text-warning mr-1"></i> <strong>Pengajuan Task Mandiri:</strong> Tugas ini diajukan untuk diri Anda sendiri. Sesuai ketentuan, tugas akan dikirimkan ke <strong>HRD</strong> untuk di-<strong>ACC</strong> terlebih dahulu sebelum Anda dapat mulai mengerjakan.').css({ 'border-left': '4px solid #f59e0b', 'background': '#fffbeb', 'color': '#92400e' }).slideDown();
+                $('#btnSubmitBuatTask').html('<i class="fas fa-paper-plane mr-1"></i> Ajukan Task Mandiri ke HRD');
+            }
             $('label[for="chk_kirim_wa"]').html('<i class="fab fa-whatsapp text-success"></i> Kirim Notifikasi Konfirmasi Pengajuan ke WhatsApp Saya');
         } else {
             $('#alert_task_mandiri').slideUp();

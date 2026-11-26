@@ -256,6 +256,12 @@ class Task_proyek extends CI_Controller
             ORDER BY p.nama ASC
         ")->result();
 
+        // Khusus Direktur / Top Eksekutif (Pak Bob Ariyos, Bu Yolanda) / Admin: jika belum diset relasi atasan oleh bawahan, default supervisi mencakup semua karyawan
+        $isTopExec = (in_array((int)$myId, [1, 33, 54], true) || (isset($me->hirarki) && (int)$me->hirarki === 1));
+        if ($isTopExec && empty($list_bawahan)) {
+            $list_bawahan = $list_semua_karyawan;
+        }
+
         // 1. Tugas Saya (Sebagai Penerima / Bawahan / Pengaju Mandiri)
         $this->db->select('t.*, p_beri.nama AS nama_pemberi, p_beri.jabatan AS jabatan_pemberi, p_terima.nama AS nama_penerima, p_terima.jabatan AS jabatan_penerima, p_tahu.nama AS nama_mengetahui, p_acc.nama AS nama_acc_hrd')
             ->from('task_proyek t')
@@ -718,10 +724,10 @@ class Task_proyek extends CI_Controller
         }
         $penerima_list = array_values(array_unique($cleaned_penerima));
 
-        // VALIDASI: Jika penerima tugas tepat 1 orang, Jobdesk Sasaran Mutu WAJIB dipilih!
+        // VALIDASI: Jika penerima tugas tepat 1 orang dan id_sasaran_mutu belum dipilih, gunakan fallback tugas operasional resmi
         if (count($penerima_list) === 1 && empty($id_sasaran_mutu)) {
-            ajaxReturnDie('error', 'Jobdesk Sasaran Mutu wajib dipilih untuk penugasan karyawan tersebut!', FALSE);
-            return;
+            $id_sasaran_mutu = 'SM_CUSTOM_TASK';
+            $nama_jobdesk    = !empty($nama_jobdesk) ? $nama_jobdesk : 'Tugas & Tanggung Jawab Operasional Tambahan';
         }
 
         // Validasi keberadaan user penerima
@@ -772,7 +778,9 @@ class Task_proyek extends CI_Controller
             // Cek apakah ini pengajuan task mandiri untuk diri sendiri
             $is_self = ($id_penerima === $myId);
             $is_mandiri = $is_self ? 1 : 0;
-            $status_task = $is_self ? 5 : 0; // 5 = Menunggu ACC HRD, 0 = Baru / Aktif
+            // Direktur (Bob Ariyos), Pimpinan (Yolanda), dan Admin tidak perlu menunggu ACC HRD untuk task mandiri
+            $isTopLeader = in_array((int)$myId, [1, 33, 54], true) || (isset($pembuatRow->hirarki) && (int)$pembuatRow->hirarki === 1);
+            $status_task = ($is_self && !$isTopLeader) ? 5 : 0; // 5 = Menunggu ACC HRD, 0 = Baru / Aktif
 
             // Generate kode task unik
             $lastRow = $this->db->select('id_task')->from('task_proyek')->order_by('id_task', 'DESC')->limit(1)->get()->row();
