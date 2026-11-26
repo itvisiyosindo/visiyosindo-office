@@ -2630,7 +2630,7 @@ $namaBulanList = [
                                                     <i class="fas fa-star"></i> Beri Rating ⭐
                                                 </button>
                                             <?php elseif ($effStatusAtasan === 2 && !$alreadyRated && $isSelfRow): ?>
-                                                <span class="badge badge-warning tp-badge-wrap text-center" style="font-size: 10px;"><i class="fas fa-hourglass-half"></i> Menunggu Rating HRD</span>
+                                                <span class="badge badge-warning tp-badge-wrap text-center" style="font-size: 10px;"><i class="fas fa-hourglass-half"></i> Menunggu Penilaian</span>
                                                 <button type="button" class="btn btn-xs btn-info btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
                                                     <i class="fas fa-eye"></i> Detail Task
                                                 </button>
@@ -2802,9 +2802,13 @@ $namaBulanList = [
                                                 <button type="button" class="btn btn-xs btn-primary btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="detail">
                                                     <i class="fas fa-eye"></i> Detail
                                                 </button>
-                                                <?php if ((int)$row->status_task === 2 && empty($row->rating_bintang) && (int)$row->id_penerima !== (int)$myId && !empty($isHrdAdmin)): ?>
+                                                <?php 
+                                                $canRateThisRow = ((int)$row->status_task === 2 && empty($row->rating_bintang) && (int)$row->id_penerima !== (int)$myId && ((int)$row->id_pemberi === (int)$myId || !empty($isHrdAdmin)));
+                                                if ($canRateThisRow): 
+                                                    $btnLabel = ((int)$row->id_pemberi === (int)$myId) ? 'Beri Rating ⭐' : 'Nilai (Atasan/HRD)';
+                                                ?>
                                                     <button type="button" class="btn btn-xs btn-warning font-weight-bold btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
-                                                        <i class="fas fa-star"></i> Nilai (HRD)
+                                                        <i class="fas fa-star"></i> <?= $btnLabel ?>
                                                     </button>
                                                 <?php endif; ?>
                                                 <?php if ((int)$row->status_task === 5 && !empty($isHrdAdmin)): ?>
@@ -3770,7 +3774,7 @@ $namaBulanList = [
                 <!-- PANEL 3: FORM PENILAIAN RATING BINTANG 5 & REVIEW ATASAN -->
                 <div id="panelAtasanReview" class="card mb-3" style="border: 2px solid #f59e0b; display:none;">
                     <div class="card-header py-2" style="background: #fef3c7;">
-                        <strong style="color:#b45309;"><i class="fas fa-star mr-1"></i> Form Evaluasi & Penilaian Bintang 5 (Khusus Atasan / HRD / Manajemen)</strong>
+                        <strong style="color:#b45309;"><i class="fas fa-star mr-1"></i> Form Evaluasi & Penilaian Bintang 5 (Pemberi Tugas / Atasan)</strong>
                     </div>
                     <div class="card-body py-3">
                         <form id="formReviewAtasan">

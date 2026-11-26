@@ -330,4 +330,17 @@ class Md_dokumen extends CI_Model {
             ->generate();
         }
     }
+
+    public function getProductDocsByKategori($id_kategori)
+    {
+        return $this->db
+            ->select('du.*, kt.keterangan as kategori_nama')
+            ->from('dokumen_product du')
+            ->join('masterdokumenproduct kt', 'du.id_kategori=kt.id', 'left')
+            ->where('du.status', 1)
+            ->where('du.id_kategori', $id_kategori)
+            ->order_by('du.id', 'ASC')
+            ->get()
+            ->result();
+    }
 }
