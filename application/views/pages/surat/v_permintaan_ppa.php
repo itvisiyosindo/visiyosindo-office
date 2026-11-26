@@ -201,7 +201,7 @@
 						<td height="20px"></td>
 					</tr>
 					<tr style="height: 35px;">
-						<td style="width:100%; height:35px; text-align:right; vertical-align:top;" colspan="7">
+						<td style="width:100%; height:35px; text-align:right; vertical-align:top;" colspan="9">
 							 <select id="kota_aju" name="kota_aju" style="text-align:right; width:50%; border:0px; margin:0px;" required>
 								<option value="">Pilih Kota</option>
 								<?php
@@ -215,9 +215,9 @@
 						</td>
 					</tr>
 					<tr style="height: 18px;">
-						<td style="text-align:center; width:25.5%;" colspan="3">Diajukan Oleh,</td>
-						<td style="text-align:center; width:49%;" colspan="3">Diverifikasi Oleh,</td>
-						<td style="text-align:center; width:25.5%;" colspan="3">Disetujui Oleh,</td>
+						<td style="text-align:center; width:20.25%;" colspan="2">Diajukan Oleh,</td>
+						<td style="text-align:center; width:40.5%;" colspan="4">Diverifikasi Oleh,</td>
+						<td style="text-align:center; width:39.25%;" colspan="3">Disetujui Oleh,</td>
 					</tr>
 					<tr style="height:60px;">
 						<?php
@@ -229,26 +229,26 @@
 							$ttd4 		= $img_path."ttd_blank.png";
 							$ttd5 		= $img_path."ttd_blank.png";
 						?>
-						<td style="text-align:center; width:23%;"> <?php echo'<img src="'.$ttdaju.'" height="70">';?></td>
-						<td style="text-align:center; width:2.5%;"></td>
-						<td style="text-align:center; width:23%;"><?php echo'<img src="'.$ttd1.'" height="70">';?></td>
-						<td style="text-align:center; width:2%;"></td>
-						<td style="text-align:center; width:24%;"><?php echo'<img src="'.$ttd2.'" height="70">';?></td>
-						<td style="text-align:center; width:2.5%;"></td>
-						<td style="text-align:center; width:23%;"><?php echo'<img src="'.$ttd3.'" height="70">';?></td>
-						<td style="text-align:center; width:2.5%;"></td>
-						<td style="text-align:center; width:23%;"><?php echo'<img src="'.$ttd4.'" height="70">';?></td>
+						<td style="text-align:center; width:19%;"> <?php echo'<img src="'.$ttdaju.'" height="70">';?></td>
+						<td style="text-align:center; width:1.25%;"></td>
+						<td style="text-align:center; width:19%;"><?php echo'<img src="'.$ttd1.'" height="70">';?></td>
+						<td style="text-align:center; width:1.25%;"></td>
+						<td style="text-align:center; width:19%;"><?php echo'<img src="'.$ttd2.'" height="70">';?></td>
+						<td style="text-align:center; width:1.25%;"></td>
+						<td style="text-align:center; width:19%;"><?php echo'<img src="'.$ttd3.'" height="70">';?></td>
+						<td style="text-align:center; width:1.25%;"></td>
+						<td style="text-align:center; width:19%;"><?php echo'<img src="'.$ttd4.'" height="70">';?></td>
 					</tr>
 					<tr>
-						<td style="text-align:center; "><?= $pengguna[0]->short_name ?><hr></hr></td>
+						<td style="text-align:center; "><?= $pengguna[0]->short_name ?><hr style="margin: 4px 0;"></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Dirangga Madali<hr></hr></td>
+						<td style="text-align:center; ">Dirangga Madali<hr style="margin: 4px 0;"></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Yolanda Pratiwi<hr></hr></td>
+						<td style="text-align:center; ">Yolanda Pratiwi<hr style="margin: 4px 0;"></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Meilina Safitri<hr></hr></td>
+						<td style="text-align:center; ">Meilina Safitri<hr style="margin: 4px 0;"></hr></td>
 						<td style="text-align:center; "></td>
-						<td style="text-align:center; ">Bob Ariyos<hr></hr></td>
+						<td style="text-align:center; ">Bob Ariyos<hr style="margin: 4px 0;"></hr></td>
 					</tr>
 					<tr>
 						<td style="text-align:center; vertical-align:top;"><i><?= $pengguna[0]->jabatan ?></i></td>
