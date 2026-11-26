@@ -433,20 +433,26 @@ class Cron_absensi extends CI_Controller
             }
         }
 
-        if ($sesi === 'pagi' && !empty($izinCuti)) {
+        if ($sesi === 'pagi') {
             $lines[] = '';
-            $lines[] = 'Keterangan tidak hadir / izin, sakit, cuti (' . count($izinCuti) . ' orang):';
-            foreach ($izinCuti as $idx => $item) {
-                $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $item['keterangan'] . ')';
+            if (!empty($izinCuti)) {
+                $lines[] = 'Keterangan tidak hadir (Izin / Sakit / Cuti) (' . count($izinCuti) . ' orang):';
+                foreach ($izinCuti as $idx => $item) {
+                    $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $item['keterangan'] . ')';
+                }
+            } else {
+                $lines[] = "Keterangan tidak hadir (Izin / Sakit / Cuti):\n- Nihil";
             }
-        }
 
-        if ($sesi === 'pagi' && !empty($terlambat)) {
             $lines[] = '';
-            $lines[] = 'Daftar karyawan terlambat (' . count($terlambat) . ' orang):';
-            foreach ($terlambat as $idx => $item) {
-                $jamLabel = $item['jam'] !== '' ? $item['jam'] . ' WIB' : '-';
-                $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $jamLabel . ')';
+            if (!empty($terlambat)) {
+                $lines[] = 'Daftar karyawan terlambat (' . count($terlambat) . ' orang):';
+                foreach ($terlambat as $idx => $item) {
+                    $jamLabel = $item['jam'] !== '' ? $item['jam'] . ' WIB' : '-';
+                    $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $jamLabel . ')';
+                }
+            } else {
+                $lines[] = "Daftar karyawan terlambat:\n- Nihil";
             }
         }
 
