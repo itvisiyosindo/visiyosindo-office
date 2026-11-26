@@ -2,7 +2,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
- * Shared KPI Leaderboard & Rank calculation model (Solusi A: 80% Mutu 6 Pilar + 20% Volume + Plafon SP).
+ * Shared KPI Leaderboard & Rank calculation model (60% Mutu + 40% Volume + Plafon SP).
  * Digunakan oleh Task_proyek dan Pengguna agar kalkulasi peringkat di seluruh modul 100% konsisten.
  */
 class Md_kpi_leaderboard extends CI_Model
@@ -1017,7 +1017,7 @@ class Md_kpi_leaderboard extends CI_Model
             $slaIncidents    = $slaInfo ? $slaInfo['incidents'] : [];
 
             if ($skorMutu !== null) {
-                $skorAkhirFormula = round(($skorMutu * 0.85) + ($skorProd * 0.15), 1);
+                $skorAkhirFormula = round(($skorMutu * 0.60) + ($skorProd * 0.40), 1);
                 // Terapkan potongan penalti keterlambatan approval TTD (jika ada)
                 $skorAkhirRaw     = max(0.0, round($skorAkhirFormula - $slaPenaltyPts, 1));
                 $skorAkhir        = min($skorAkhirRaw, (float)$spCap);
@@ -1248,7 +1248,7 @@ class Md_kpi_leaderboard extends CI_Model
         $cacheDir = (defined('APPPATH') && is_dir(APPPATH . 'cache') && is_writable(APPPATH . 'cache'))
             ? rtrim(APPPATH . 'cache', '/\\')
             : rtrim(sys_get_temp_dir(), '/\\');
-        return $cacheDir . DIRECTORY_SEPARATOR . 'kpi_dash_podium_v1_' . (int)$yInt . '_s' . (int)$smtInt . '.json';
+        return $cacheDir . DIRECTORY_SEPARATOR . 'kpi_dash_podium_v2_' . (int)$yInt . '_s' . (int)$smtInt . '.json';
     }
 
     /**

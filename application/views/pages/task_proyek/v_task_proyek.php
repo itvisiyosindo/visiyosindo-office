@@ -2893,7 +2893,7 @@ $namaBulanList = [
                                     <?php else: ?>
                                         <span class="tp-lb-chip"><i class="fas fa-sync-alt tp-lb-spin-slow"></i> Reset Per Semester</span>
                                     <?php endif; ?>
-                                    <span class="tp-lb-chip" style="background: rgba(56, 189, 248, 0.22); border-color: rgba(125, 211, 252, 0.45);"><i class="fas fa-balance-scale"></i> 85% Mutu + 15% Volume</span>
+                                    <span class="tp-lb-chip" style="background: rgba(56, 189, 248, 0.22); border-color: rgba(125, 211, 252, 0.45);"><i class="fas fa-balance-scale"></i> 60% Mutu + 40% Volume</span>
                                 </div>
                                 <h4 class="font-weight-bold mb-1" style="color: #ffffff; letter-spacing: -0.3px;">
                                     <i class="fas fa-trophy text-warning mr-2 tp-lb-trophy-anim"></i>Klasemen Performa Karyawan Terbaik
@@ -3102,7 +3102,7 @@ $namaBulanList = [
                                         </th>
                                         <th class="text-center align-middle" style="min-width: 135px; background: #ecfdf5 !important;">
                                             <div class="text-success font-weight-bold">Skor Akhir</div>
-                                            <small class="text-muted" style="font-size: 9.5px;">85% Mutu + 15% Vol</small>
+                                            <small class="text-muted" style="font-size: 9.5px;">60% Mutu + 40% Vol</small>
                                         </th>
                                         <th class="text-center align-middle" style="min-width: 130px;">Rating Agregat</th>
                                         <th class="text-center align-middle" style="min-width: 120px;">Grade Kinerja</th>
@@ -3976,13 +3976,13 @@ $namaBulanList = [
                     <div class="card-body p-3 p-md-4">
                         <div class="d-flex align-items-center mb-2" style="gap: 8px;">
                             <span class="badge badge-primary px-2 py-1" style="font-size: 11px;">RUMUS UTAMA</span>
-                            <h6 class="font-weight-bold text-dark mb-0" style="font-size: 15px;">Kombinasi Mutu (85%) & Volume (15%)</h6>
+                            <h6 class="font-weight-bold text-dark mb-0" style="font-size: 15px;">Kombinasi Mutu (60%) & Volume (40%)</h6>
                         </div>
                         <p class="text-muted small mb-3">
                             Skor akhir tidak hanya menilai seberapa bagus nilai Anda (kualitas), tetapi juga mengapresiasi keaktifan dan kedisiplinan kerja Anda (kuantitas):
                         </p>
                         <div class="p-3 rounded text-center font-weight-bold" style="background: #f0fdf4; border: 1.5px dashed #22c55e; color: #166534; font-size: 15px;">
-                            Skor Akhir KPI = (Skor Mutu &times; 85%) + (Skor Volume &times; 15%)
+                            Skor Akhir KPI = (Skor Mutu &times; 60%) + (Skor Volume &times; 40%)
                         </div>
                     </div>
                 </div>
@@ -3991,7 +3991,7 @@ $namaBulanList = [
                 <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
                     <div class="card-body p-3 p-md-4">
                         <h6 class="font-weight-bold text-dark mb-3" style="font-size: 15px;">
-                            <i class="fas fa-layer-group text-primary mr-1"></i> Pembagian Bobot Mutu (Kualitas 85%)
+                            <i class="fas fa-layer-group text-primary mr-1"></i> Pembagian Bobot Mutu (Kualitas 60%)
                         </h6>
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm mb-0 text-center" style="font-size: 12.5px;">
@@ -4044,7 +4044,7 @@ $namaBulanList = [
                 <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
                     <div class="card-body p-3 p-md-4">
                         <h6 class="font-weight-bold text-dark mb-2" style="font-size: 15px;">
-                            <i class="fas fa-chart-line text-success mr-1"></i> Apa itu Skor Volume (Produktivitas 15%)?
+                            <i class="fas fa-chart-line text-success mr-1"></i> Apa itu Skor Volume (Produktivitas 40%)?
                         </h6>
                         <p class="text-muted small mb-2">
                             Skor Volume mengukur seberapa banyak Anda memenuhi target kuantitas kerja:
@@ -4089,10 +4089,10 @@ $namaBulanList = [
                                 <strong>Pak Deni (Medical Engineer):</strong> Nilai Mutu Laporan 83.2, Kuis 92.5 (Mutu = 95.0). Namun, sudah menyelesaikan 2 Task (Volume task 100%) dan hanya 2 kali telat (Nilai Absensi 98.8, Volume Total = 79%).
                             </p>
                             <div class="small bg-white p-2 rounded border">
-                                <strong>Kalkulasi dengan Skema 85% Mutu + 15% Volume:</strong><br>
-                                &bull; Bu Yolanda: (96.6 &times; 0.85) + (70.0 &times; 0.15) = 82.11 + 10.50 = <strong>92.6</strong><br>
-                                &bull; Pak Deni: (95.0 &times; 0.85) + (79.0 &times; 0.15) = 80.75 + 11.85 = <strong>92.6</strong><br>
-                                <span class="text-success font-weight-bold">&rarr; Keduanya seimbang! Kualitas manajerial Bu Yolanda diapresiasi tinggi, dan kerajinan teknis Pak Deni tetap dihargai adil.</span>
+                                <strong>Kalkulasi dengan Skema 60% Mutu + 40% Volume:</strong><br>
+                                &bull; Bu Yolanda: (96.6 &times; 0.60) + (70.0 &times; 0.40) = 57.96 + 28.00 = <strong>86.0</strong><br>
+                                &bull; Pak Deni: (95.0 &times; 0.60) + (79.0 &times; 0.40) = 57.00 + 31.60 = <strong>88.6</strong><br>
+                                <span class="text-success font-weight-bold">&rarr; Karyawan dengan volume produktivitas lebih tinggi (banyak menyelesaikan tugas & kehadiran konsisten) terangkat secara adil dan proporsional.</span>
                             </div>
                         </div>
 
