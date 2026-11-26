@@ -1483,26 +1483,140 @@ class Laporan extends CI_Controller
 
         $nilai = $this->input->post('nilaia'); // array point => nilai_a
         $pengguna_id = $this->input->post('pengguna_id');
+        if (empty($pengguna_id)) {
+            $pengguna_id = $this->input->post('id_pengg');
+        }
         $wednesday = $this->input->post('wednesday');
-
-        if (empty($nilai) || !is_array($nilai)) {
-            ajaxReturnDie('error', 'Tidak ada nilai yang dikirim', FALSE);
+        if (empty($wednesday)) {
+            $wednesday = $this->input->post('hari_rabu');
         }
 
-        // Validasi seluruh input nilai (rentang 60 - 100)
-        foreach ($nilai as $point => $val) {
-            $val = trim($val);
-            if ($val !== '') {
-                if (!is_numeric($val) || $val < 60 || $val > 100) {
-                    ajaxReturnDie('error', "Nilai pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+        $hasData = false;
+
+        // 1. Simpan Nilai Laporan Mingguan Nilai A jika ada
+        if (!empty($nilai) && is_array($nilai)) {
+            // Validasi seluruh input nilai (rentang 60 - 100)
+            foreach ($nilai as $point => $val) {
+                $val = trim($val);
+                if ($val !== '') {
+                    if (!is_numeric($val) || $val < 60 || $val > 100) {
+                        ajaxReturnDie('error', "Nilai pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                    $hasData = true;
                 }
+            }
+            $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $nilai);
+        }
+
+        // 2. Simpan Nilai Laporan Mingguan Nilai B jika ada
+        $nilai_b = $this->input->post('nilaib');
+        if (!empty($nilai_b) && is_array($nilai_b)) {
+            $pointsB = [];
+            foreach ($nilai_b as $point => $val) {
+                $val = trim($val);
+                if ($val !== '') {
+                    if (!is_numeric($val) || $val < 60 || $val > 100) {
+                        ajaxReturnDie('error', "Nilai B pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                    $pointsB[$point] = $val;
+                    $hasData = true;
+                }
+            }
+            if (!empty($pointsB)) {
+                $this->md_laporan->saveOrUpdateNilaiPenilaiBatch($pengguna_id, $wednesday, $pointsB);
             }
         }
 
-        // Simpan menggunakan batch upsert efisien
-        $this->md_laporan->saveOrUpdateNilaiAdmBatch($pengguna_id, $wednesday, $nilai);
+        // 3. Simpan Pencapaian Arsip Nilai A & B jika ada
+        $nilaipa  = $this->input->post('nilaipa');
+        $catatana = $this->input->post('catatanpa');
+        if (!empty($nilaipa) && is_array($nilaipa)) {
+            foreach ($nilaipa as $id_sodetail => $val_pa) {
+                $val_pa = trim($val_pa);
+                if ($val_pa !== '') {
+                    if (!is_numeric($val_pa) || $val_pa < 60 || $val_pa > 100) {
+                        ajaxReturnDie('error', "Nilai pencapaian A tidak valid ($val_pa). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                    $hasData = true;
+                }
+                $dataPenc = [
+                    'nilai_a'   => ($val_pa !== '') ? $val_pa : null,
+                    'catatan_a' => isset($catatana[$id_sodetail]) ? $catatana[$id_sodetail] : null
+                ];
+                $this->md_laporan->updatePencapaian($id_sodetail, $dataPenc);
+            }
+        }
 
-        addlog('Laporan Mingguan', 'Mengisi Nilai A');
+        $nilaipb  = $this->input->post('nilaipb');
+        $catatanb = $this->input->post('catatanpb');
+        if (!empty($nilaipb) && is_array($nilaipb)) {
+            foreach ($nilaipb as $id_sodetail => $val_pb) {
+                $val_pb = trim($val_pb);
+                if ($val_pb !== '') {
+                    if (!is_numeric($val_pb) || $val_pb < 60 || $val_pb > 100) {
+                        ajaxReturnDie('error', "Nilai pencapaian B tidak valid ($val_pb). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                    $hasData = true;
+                }
+                $dataPenc = [
+                    'nilai_b'   => ($val_pb !== '') ? $val_pb : null,
+                    'catatan_b' => isset($catatanb[$id_sodetail]) ? $catatanb[$id_sodetail] : null
+                ];
+                $this->md_laporan->updatePencapaian($id_sodetail, $dataPenc);
+            }
+        }
+
+        // 4. Simpan Penilaian Umum A jika ada
+        $hasUmumA = false;
+        $dataUmumA = [
+            'id_pengguna' => $pengguna_id,
+            'date'        => $wednesday
+        ];
+        for ($i = 1; $i <= 5; $i++) {
+            $val = $this->input->post('nilaia' . $i);
+            if ($val !== null && trim($val) !== '') {
+                $valTrim = trim($val);
+                if (!is_numeric($valTrim) || $valTrim < 60 || $valTrim > 100) {
+                    ajaxReturnDie('error', "Nilai Indikator Umum ke-$i tidak valid ($valTrim). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                }
+                $hasUmumA = true;
+                $hasData = true;
+            }
+            $dataUmumA['nilaia' . $i] = ($val !== null) ? trim($val) : '';
+            $dataUmumA['catatana' . $i] = $this->input->post('catatana' . $i) ?? '';
+        }
+        if ($hasUmumA) {
+            $this->md_laporan->saveOrUpdateNilaiUmumAdm($dataUmumA);
+        }
+
+        // 5. Simpan Penilaian Umum B jika ada
+        $hasUmumB = false;
+        $dataUmumB = [
+            'id_pengguna' => $pengguna_id,
+            'date'        => $wednesday
+        ];
+        for ($i = 1; $i <= 5; $i++) {
+            $val = $this->input->post('nilaib' . $i);
+            if ($val !== null && trim($val) !== '') {
+                $valTrim = trim($val);
+                if (!is_numeric($valTrim) || $valTrim < 60 || $valTrim > 100) {
+                    ajaxReturnDie('error', "Nilai B Indikator Umum ke-$i tidak valid ($valTrim). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                }
+                $hasUmumB = true;
+                $hasData = true;
+            }
+            $dataUmumB['nilaib' . $i] = ($val !== null) ? trim($val) : '';
+            $dataUmumB['catatanb' . $i] = $this->input->post('catatanb' . $i) ?? '';
+        }
+        if ($hasUmumB) {
+            $this->md_laporan->saveOrUpdateNilaiUmum($dataUmumB);
+        }
+
+        if (!$hasData) {
+            ajaxReturnDie('error', 'Tidak ada nilai yang dikirim', FALSE);
+        }
+
+        addlog('Laporan Mingguan', 'Mengisi Nilai Laporan (Admin)');
 
         ajaxReturnDie('success', 'Data Nilai Laporan Berhasil Disimpan', TRUE);
     }
@@ -1514,35 +1628,90 @@ class Laporan extends CI_Controller
 
         $nilai = $this->input->post('nilaib'); // array point => nilai_b
         $pengguna_id = $this->input->post('pengguna_id');
+        if (empty($pengguna_id)) {
+            $pengguna_id = $this->input->post('id_pengg');
+        }
         $wednesday = $this->input->post('wednesday');
-
-        if (empty($nilai) || !is_array($nilai)) {
-            ajaxReturnDie('error', 'Tidak ada nilai yang dikirim', FALSE);
+        if (empty($wednesday)) {
+            $wednesday = $this->input->post('hari_rabu');
         }
 
-        // Validasi nilai B (rentang 60 - 100)
-        foreach ($nilai as $point => $val) {
-            $val = trim($val);
-            if ($val !== '') {
-                if (!is_numeric($val) || $val < 60 || $val > 100) {
-                    ajaxReturnDie('error', "Nilai pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+        $hasData = false;
+
+        // 1. Simpan Nilai Laporan Mingguan Nilai B jika ada
+        if (!empty($nilai) && is_array($nilai)) {
+            // Validasi nilai B (rentang 60 - 100)
+            foreach ($nilai as $point => $val) {
+                $val = trim($val);
+                if ($val !== '') {
+                    if (!is_numeric($val) || $val < 60 || $val > 100) {
+                        ajaxReturnDie('error', "Nilai pada Poin $point tidak valid ($val). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                    $hasData = true;
                 }
+            }
+
+            foreach ($nilai as $point => $nilai_b) {
+                $data = [
+                    'point' => $point,
+                    'nilai_b' => $nilai_b,
+                    'id_pengguna' => $pengguna_id,
+                    'date' => $wednesday
+                ];
+                $this->md_laporan->saveOrUpdateNilai($data);
             }
         }
 
-        foreach ($nilai as $point => $nilai_b) {
-            $data = [
-                'point' => $point,
-                'nilai_b' => $nilai_b,
-                'id_pengguna' => $pengguna_id,
-                'date' => $wednesday
-            ];
-            $this->md_laporan->saveOrUpdateNilai($data);
+        // 2. Simpan Pencapaian Arsip Nilai B jika ada
+        $nilaipb  = $this->input->post('nilaipb');
+        $catatanb = $this->input->post('catatanpb');
+        if (!empty($nilaipb) && is_array($nilaipb)) {
+            foreach ($nilaipb as $id_sodetail => $val_pb) {
+                $val_pb = trim($val_pb);
+                if ($val_pb !== '') {
+                    if (!is_numeric($val_pb) || $val_pb < 60 || $val_pb > 100) {
+                        ajaxReturnDie('error', "Nilai pencapaian B tidak valid ($val_pb). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                    }
+                    $hasData = true;
+                }
+                $dataPenc = [
+                    'nilai_b'   => ($val_pb !== '') ? $val_pb : null,
+                    'catatan_b' => isset($catatanb[$id_sodetail]) ? $catatanb[$id_sodetail] : null
+                ];
+                $this->md_laporan->updatePencapaian($id_sodetail, $dataPenc);
+            }
         }
 
-        addlog('Laporan Mingguan', 'Mengisi Nilai B');
+        // 3. Simpan Penilaian Umum B jika ada
+        $hasUmumB = false;
+        $dataUmumB = [
+            'id_pengguna' => $pengguna_id,
+            'date'        => $wednesday
+        ];
+        for ($i = 1; $i <= 5; $i++) {
+            $val = $this->input->post('nilaib' . $i);
+            if ($val !== null && trim($val) !== '') {
+                $valTrim = trim($val);
+                if (!is_numeric($valTrim) || $valTrim < 60 || $valTrim > 100) {
+                    ajaxReturnDie('error', "Nilai Indikator Umum ke-$i tidak valid ($valTrim). Nilai harus berada di rentang 60 sampai 100.", FALSE);
+                }
+                $hasUmumB = true;
+                $hasData = true;
+            }
+            $dataUmumB['nilaib' . $i] = ($val !== null) ? trim($val) : '';
+            $dataUmumB['catatanb' . $i] = $this->input->post('catatanb' . $i) ?? '';
+        }
+        if ($hasUmumB) {
+            $this->md_laporan->saveOrUpdateNilaiUmum($dataUmumB);
+        }
 
-        ajaxReturnDie('success', 'Data Berhasil Ditambahkan', TRUE);
+        if (!$hasData) {
+            ajaxReturnDie('error', 'Tidak ada nilai yang dikirim', FALSE);
+        }
+
+        addlog('Laporan Mingguan', 'Mengisi Nilai Laporan (Penilai)');
+
+        ajaxReturnDie('success', 'Data Berhasil Disimpan', TRUE);
     }
 
 

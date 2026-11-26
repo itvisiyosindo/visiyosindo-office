@@ -321,7 +321,7 @@ if (!function_exists('lap_limit_text')) {
 						<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-submit" onclick="runBulkNilaiPenilaiDirect(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
 					</div>
 					<div class="col-md-5 col-sm-12">
-						<small class="text-muted">Mengisi seluruh field nilai B di form secara instan. Klik tombol <strong>Simpan</strong> untuk menyimpan.</small>
+						<small class="text-muted">Mengisi seluruh field nilai di form secara instan. Klik tombol <strong>Simpan Penilaian</strong> untuk menyimpan.</small>
 					</div>
 				</form>
 			</div>
@@ -419,6 +419,8 @@ if (!function_exists('lap_limit_text')) {
 		<?= form_open('laporan/inputNilaiLaporan', array('id' => 'main-form', 'autocomplete' => 'off')); ?>
 		<input type="hidden" name="pengguna_id" value="<?= $data_job->pengguna_id ?>">
 		<input type="hidden" name="wednesday" value="<?= $wednesday ?>">
+		<input type="hidden" name="id_pengg" value="<?= $data_job->pengguna_id ?>">
+		<input type="hidden" name="hari_rabu" value="<?= $wednesday ?>">
 
 		<div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
 			<div class="card-body p-3 p-md-4">
@@ -584,7 +586,6 @@ if (!function_exists('lap_limit_text')) {
 				</div>
 			</div>
 		</div>
-		<?= form_close(); ?>
 
 		<!-- 4. PROJECT & TASK YANG DISELESAIKAN (SINKRON TASK & PROYEK) -->
 		<div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -775,7 +776,6 @@ if (!function_exists('lap_limit_text')) {
 
 		if ($jumlah_data_pencapaian > 0): 
 		?>
-		<?= form_open('laporan/inputNilaiPencapaian', array('id' => 'main-form-pencapaian', 'autocomplete' => 'off')); ?>
 		<div class="card mb-4 border-warning" style="background-color: #fffdfa; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
 			<div class="card-body p-3 p-md-4">
 				<div class="d-flex align-items-center justify-content-between mb-3">
@@ -843,14 +843,9 @@ if (!function_exists('lap_limit_text')) {
 				</div>
 			</div>
 		</div>
-		<?= form_close(); ?>
 		<?php endif; ?>
 
 		<!-- 6. TABEL PENILAIAN UMUM -->
-		<?= form_open('laporan/inputNilaiUmum', array('id' => 'main-form-umum', 'autocomplete' => 'off')); ?>
-		<input type="hidden" name="id_pengg" value="<?= $data_job->pengguna_id ?>">
-		<input type="hidden" name="hari_rabu" value="<?= $wednesday ?>">
-
 		<div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
 			<div class="card-body p-3 p-md-4">
 				<div class="d-flex align-items-center justify-content-between mb-3">

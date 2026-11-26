@@ -509,7 +509,7 @@ if (!function_exists('lap_limit_text')) {
 								<button type="button" class="btn btn-sm btn-primary shadow-sm w-100" id="btn-bulk-nilai-adm-submit" onclick="runBulkNilaiAdmDirect(event);" style="border-radius: 6px; font-weight: 600; padding: 6px 12px;"><i class="fas fa-magic mr-1"></i> Terapkan Nilai ke Form</button>
 							</div>
 							<div class="col-lg-3 col-md-12 col-sm-12 mt-1 mt-lg-0">
-								<small class="text-muted">Mengisi seluruh kolom nilai di form secara instan. Klik tombol <strong>Simpan</strong> pada masing-masing bagian untuk menyimpan.</small>
+								<small class="text-muted">Mengisi seluruh kolom nilai di form secara instan. Klik tombol <strong>Simpan Penilaian</strong> untuk menyimpan.</small>
 							</div>
 						</form>
 					</div>
@@ -626,6 +626,8 @@ if (!function_exists('lap_limit_text')) {
     <?= form_open('laporan/inputNilaiLaporanAdm', array('id' => 'main-form', 'autocomplete' => 'off')); ?>
 		<input type="hidden" name="pengguna_id" value="<?= $data_job->pengguna_id ?>">
 		<input type="hidden" name="wednesday" value="<?= $wednesday ?>">
+		<input type="hidden" name="id_pengg" value="<?= $data_job->pengguna_id ?>">
+		<input type="hidden" name="hari_rabu" value="<?= $wednesday ?>">
 
 		<div class="card laporan-card mb-4">
 		<div class="card-body p-3 p-md-4">
@@ -874,7 +876,6 @@ if (!function_exists('lap_limit_text')) {
                 </div>
 			</div>
 		</div>
-    <?= form_close(); ?>
 
 		<!-- PROJECT & TASK YANG DISELESAIKAN (SINKRON TASK & PROYEK) -->
 		<div class="card laporan-card mb-4">
@@ -1130,7 +1131,6 @@ if (!function_exists('lap_limit_text')) {
             $nilaiRataB = $total_nilai_b / $jumlah_data_pencapaian;
             $nilaiRataPencapaian = ($nilaiRataA + $nilaiRataB) / 2;
         ?>
-		<?= form_open('laporan/inputNilaiPencapaianAdm', array('id' => 'main-form-pencapaian', 'autocomplete' => 'off')); ?>
 		<!-- ARSIP PENCAPAIAN SEBELUMNYA -->
 		<div class="card laporan-card mb-4 border-warning" style="background-color: #fffdfa;">
 			<div class="card-body p-3 p-md-4">
@@ -1206,16 +1206,11 @@ if (!function_exists('lap_limit_text')) {
 			</div>
 		</div>
 		<!-- ARSIP PENCAPAIAN SEBELUMNYA -->
-		<?= form_close(); ?>
         <?php else: ?>
             <span id="val-rata-pa-a" style="display:none;">0</span>
             <span id="val-rata-pa-b" style="display:none;">0</span>
             <span id="val-rata-pa-total" style="display:none;">0</span>
         <?php endif; ?>
-
-		<?= form_open('laporan/inputNilaiUmumAdm', array('id' => 'main-form-umum', 'autocomplete' => 'off')); ?>
-		<input type="hidden" name="id_pengg" value="<?= $data_job->pengguna_id ?>">
-		<input type="hidden" name="hari_rabu" value="<?= $wednesday ?>">
 
 		<!-- PENILAIAN UMUM -->
 		<div class="card laporan-card mb-4">
