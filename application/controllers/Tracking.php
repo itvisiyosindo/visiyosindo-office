@@ -2038,6 +2038,9 @@ class Tracking extends CI_Controller
                 'csname'         => urlencode($detail['csname']),
                 'nosj'           => $detail['nosj'],
                 'namaEkspedisi'  => urlencode($detail['namaEkspedisi'] ?? ($detail['namaEks'] ?? '')),
+                'noPo'           => $detail['noPo'] ?? ($detail['no_po'] ?? ''),
+                'noResi'         => $detail['noResi'] ?? ($detail['no_resi'] ?? ($detail['resi'] ?? '')),
+                'linkResi'       => $detail['linkResi'] ?? ($detail['link_resi'] ?? ''),
                 'gudangAsal'     => urlencode($detail['gudangAsal']),
                 'alamatTujuan'     => urlencode($detail['alamatTujuan']),
                 'statusTracking' => $detail['statusTracking'],
@@ -2073,6 +2076,9 @@ class Tracking extends CI_Controller
         try {
             $pengaju = $this->md_pengguna->getById(sessPenggunaId());
             $namaPengaju = !empty($pengaju[0]->nama) ? $pengaju[0]->nama : 'Admin';
+            $noPo = '';
+            $noResi = '';
+            $linkResi = '';
 
             if ($is_dokumen) {
                 $row = $this->db->get_where('kirim_dokumen', ['id' => (int)$id_ref])->row();
@@ -2082,6 +2088,7 @@ class Tracking extends CI_Controller
                 $nosj         = !empty($row->kode_kirim) ? $row->kode_kirim : ('DOK-' . $row->id);
                 $gudangAsal   = !empty($row->ekspedisi) ? $row->ekspedisi : '-';
                 $namaEkspedisi = !empty($row->ekspedisi) ? $row->ekspedisi : '-';
+                $noResi       = !empty($row->resi) ? $row->resi : '';
                 $alamatTujuan = !empty($row->alamat) ? $row->alamat : '-';
                 $url          = 'https://office.visiyosindo.id/tracking/detail_dokumen/';
             } else {
@@ -2094,31 +2101,51 @@ class Tracking extends CI_Controller
                 $csname       = !empty($customerRow[0]->nama_customer) ? $customerRow[0]->nama_customer : ($tr->pic_penerima ?: '-');
                 $nosj         = !empty($tr->no_sj) ? $tr->no_sj : '-';
                 $namaEkspedisi = !empty($tr->nama_ekspedisi) ? $tr->nama_ekspedisi : '-';
+                $noResi       = !empty($tr->no_resi) ? $tr->no_resi : '';
+                $linkResi     = !empty($tr->link_resi) ? $tr->link_resi : '';
                 $gudangAsal   = !empty($gudangRow->nama_gudang) ? $gudangRow->nama_gudang : '-';
                 $alamatTujuan = !empty($tr->alamat_penerima) ? $tr->alamat_penerima : '-';
                 $url          = 'https://office.visiyosindo.id/tracking/detail/';
+
+                if (!empty($tr->id_pengeluaran_barang)) {
+                    $pbRow = $this->db->select('no_po')->get_where('pengeluaran_barang', ['id_pengeluaran_barang' => $tr->id_pengeluaran_barang])->row();
+                    if ($pbRow && !empty($pbRow->no_po)) {
+                        $noPo = $pbRow->no_po;
+                    }
+                }
             }
 
             error_reporting(E_ALL & ~E_NOTICE);
             ini_set('display_errors', 0);
 
-            waAppGroupGudang([
-                'namaSurat'      => urlencode($namaSurat),
-                'noPenerima'     => 'Gudang PT. VYM',
-                'namaPengaju'    => $namaPengaju,
-                'csname'         => urlencode($csname),
-                'nosj'           => $nosj,
-                'namaEkspedisi'  => urlencode($namaEkspedisi),
-                'gudangAsal'     => urlencode($gudangAsal),
-                'alamatTujuan'   => urlencode($alamatTujuan),
-                'statusTracking' => $statusTracking,
-                'statusSurat'    => 'Update Status',
-                'status'         => 'memperbarui',
-                'keTerangan'     => urlencode($keterangan ?: '-'),
-                'url'            => $url,
-                'idTracking'     => encrypt($id_ref),
-                'namaPenerima'   => '_Team Warehouse_',
-            ]);
+            // Sesuai instruksi Direktur (Pak Bob Ariyos): Notifikasi tracking warehouse wajib dikirim ke grup Marketing & Warehouse
+            $targetGroups = [
+                ['group' => 'MARKETING PT. VYM', 'penerima' => '_Team Marketing_'],
+                ['group' => 'Gudang PT. VYM',    'penerima' => '_Team Warehouse_']
+            ];
+
+            foreach ($targetGroups as $tg) {
+                waAppGroupGudang([
+                    'namaSurat'      => urlencode($namaSurat),
+                    'noPenerima'     => $tg['group'],
+                    'namaPengaju'    => $namaPengaju,
+                    'csname'         => urlencode($csname),
+                    'nosj'           => $nosj,
+                    'noPo'           => $noPo,
+                    'namaEkspedisi'  => urlencode($namaEkspedisi),
+                    'noResi'         => $noResi,
+                    'linkResi'       => $linkResi,
+                    'gudangAsal'     => urlencode($gudangAsal),
+                    'alamatTujuan'   => urlencode($alamatTujuan),
+                    'statusTracking' => $statusTracking,
+                    'statusSurat'    => 'Update Status',
+                    'status'         => 'memperbarui',
+                    'keTerangan'     => urlencode($keterangan ?: '-'),
+                    'url'            => $url,
+                    'idTracking'     => encrypt($id_ref),
+                    'namaPenerima'   => $tg['penerima'],
+                ]);
+            }
         } catch (\Throwable $e) {
             // Jangan gagalkan respons update tracking jika API WA sedang bermasalah
         }

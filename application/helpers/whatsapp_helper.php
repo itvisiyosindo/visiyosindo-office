@@ -1132,12 +1132,16 @@ function waAppGroupGudang($data)
 	$dataWa['pesan']	=   '*Notifikasi ' . $data['statusSurat'] . ' ' . $data['namaSurat'] . '*' .
 		'%0A%0ADear ' . $data['namaPenerima'] .
 		',%0A%0A' . $data['namaPengaju'] . ' *' . $data['status'] . '* ' . $data['namaSurat'] .
-		':%0A_Customer Name    : ' . $data['csname'] . '_' .
-		'%0A_Nomor SJ    : ' . $data['nosj'] . '_' . (!empty($data['namaEkspedisi']) ? ('%0A_Ekspedisi    : ' . $data['namaEkspedisi'] . '_') : '') .
-		'%0A_Gudang Asal    : ' . $data['gudangAsal'] . '_' .
-		'%0A_Alamat Tujuan   : ' . $data['alamatTujuan'] . '_' .
-		'%0A_Status    : ' . $data['statusTracking'] . '_' .
-		'%0A_Keterangan    : ' . $data['keTerangan'] . '_' .
+		':%0A_Customer Name   : ' . $data['csname'] . '_' .
+		'%0A_Nomor SJ         : ' . $data['nosj'] . '_' .
+		(!empty($data['noPo']) ? ('%0A_Nomor PO         : ' . $data['noPo'] . '_') : '') .
+		(!empty($data['namaEkspedisi']) ? ('%0A_Ekspedisi        : ' . $data['namaEkspedisi'] . '_') : '') .
+		(!empty($data['noResi']) ? ('%0A_Nomor Resi       : ' . $data['noResi'] . '_') : '') .
+		(!empty($data['linkResi']) ? ('%0A_Link Lacak Resi  : ' . $data['linkResi'] . '_') : '') .
+		'%0A_Gudang Asal      : ' . $data['gudangAsal'] . '_' .
+		'%0A_Alamat Tujuan    : ' . $data['alamatTujuan'] . '_' .
+		'%0A_Status           : ' . $data['statusTracking'] . '_' .
+		'%0A_Keterangan       : ' . $data['keTerangan'] . '_' .
 		'%0A%0ASegera periksa detail  *' . $data['namaSurat'] . '* di ' . $data['url'] . '' . $data['idTracking'] .
 		'%0A%0ATerima Kasih';
 	sendWaGroup($dataWa);
