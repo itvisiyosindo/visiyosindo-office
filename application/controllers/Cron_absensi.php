@@ -93,7 +93,7 @@ class Cron_absensi extends CI_Controller
 
         $today = date('Y-m-d');
         $report = $this->_buildBelumAbsenReport($sesi, $today);
-        $message = $this->_formatWhatsappMessage($sesi, $today, $report['belum_absen']);
+        $message = $this->_formatWhatsappMessage($sesi, $today, $report);
 
         $this->_jsonResponse([
             'status'         => 'preview',
@@ -103,6 +103,8 @@ class Cron_absensi extends CI_Controller
             'is_holiday'     => $this->_isHoliday($today),
             'total_belum'    => count($report['belum_absen']),
             'belum_absen'    => $report['belum_absen'],
+            'izin_cuti'      => $report['izin_cuti'],
+            'terlambat'      => $report['terlambat'],
             'excluded_count' => $report['excluded_count'],
             'message'        => $message,
         ]);
@@ -226,7 +228,7 @@ class Cron_absensi extends CI_Controller
         }
 
         $report = $this->_buildBelumAbsenReport($sesi, $today);
-        $message = $this->_formatWhatsappMessage($sesi, $today, $report['belum_absen']);
+        $message = $this->_formatWhatsappMessage($sesi, $today, $report);
 
         $sendResult = $this->_sendFonnteDirect($groupId, $message, $token);
         if (!$sendResult['ok']) {
@@ -250,24 +252,31 @@ class Cron_absensi extends CI_Controller
             'target_group'   => $groupId,
             'total_belum'    => count($report['belum_absen']),
             'belum_absen'    => $report['belum_absen'],
+            'izin_cuti'      => $report['izin_cuti'],
+            'terlambat'      => $report['terlambat'],
             'excluded_count' => $report['excluded_count'],
             'fonnte'         => $sendResult['data'],
         ]);
     }
 
     /**
-     * Hitung daftar karyawan aktif yang belum absen sesuai sesi
+     * Hitung daftar karyawan aktif yang belum absen, izin/sakit/cuti, dan terlambat
      *
      * @param string $sesi  pagi|siang|sore
      * @param string $today Y-m-d
-     * @return array{belum_absen: array<int, string>, excluded_count: int}
+     * @return array{
+     *     belum_absen: array<int, string>,
+     *     izin_cuti: array<int, array{nama: string, keterangan: string}>,
+     *     terlambat: array<int, array{nama: string, jam: string}>,
+     *     excluded_count: int
+     * }
      */
     private function _buildBelumAbsenReport($sesi, $today)
     {
         $karyawanAktif = $this->md_dashboard->daftarKaryawanAktifAbsensi();
         $perusahaan = (int)grantAccessForPerusahaan();
 
-        $rows = $this->db->select('pengguna_id, type_absen, status_absen')
+        $rows = $this->db->select('pengguna_id, type_absen, status_absen, waktu_absen')
             ->from('absensi')
             ->where('perusahaan', $perusahaan)
             ->where('data_created >=', $today . ' 00:00:00')
@@ -280,10 +289,13 @@ class Cron_absensi extends CI_Controller
             $uid = (int)$row->pengguna_id;
             if (!isset($statusMap[$uid])) {
                 $statusMap[$uid] = [
-                    'masuk'     => false,
-                    'istirahat' => false,
-                    'keluar'    => false,
-                    'izin_cuti' => false,
+                    'masuk'           => false,
+                    'istirahat'       => false,
+                    'keluar'          => false,
+                    'izin_cuti'       => false,
+                    'izin_cuti_label' => '',
+                    'terlambat'       => false,
+                    'waktu_masuk'     => '',
                 ];
             }
 
@@ -292,6 +304,13 @@ class Cron_absensi extends CI_Controller
 
             if ($type === 'masuk') {
                 $statusMap[$uid]['masuk'] = true;
+                if ($status === 'terlambat') {
+                    $statusMap[$uid]['terlambat'] = true;
+                    $waktu = trim((string)$row->waktu_absen);
+                    if ($waktu !== '' && $statusMap[$uid]['waktu_masuk'] === '') {
+                        $statusMap[$uid]['waktu_masuk'] = substr($waktu, 0, 5);
+                    }
+                }
             } elseif ($type === 'istirahat') {
                 $statusMap[$uid]['istirahat'] = true;
             } elseif ($type === 'keluar') {
@@ -300,6 +319,13 @@ class Cron_absensi extends CI_Controller
 
             if (in_array($type, ['izin', 'cuti'], true) || in_array($status, ['izin', 'sakit', 'cuti'], true)) {
                 $statusMap[$uid]['izin_cuti'] = true;
+                if ($status === 'cuti' || $type === 'cuti') {
+                    $statusMap[$uid]['izin_cuti_label'] = 'Cuti';
+                } elseif ($status === 'sakit') {
+                    $statusMap[$uid]['izin_cuti_label'] = 'Sakit';
+                } elseif ($statusMap[$uid]['izin_cuti_label'] === '') {
+                    $statusMap[$uid]['izin_cuti_label'] = 'Izin';
+                }
             }
         }
 
@@ -312,17 +338,36 @@ class Cron_absensi extends CI_Controller
         }
 
         $belumAbsen = [];
+        $izinCutiList = [];
+        $terlambatList = [];
         $excludedCount = 0;
 
         foreach ($karyawanAktif as $karyawan) {
             $uid = (int)$karyawan->pengguna_id;
             $nama = trim((string)$karyawan->nama);
             $userStatus = $statusMap[$uid] ?? [
-                'masuk'     => false,
-                'istirahat' => false,
-                'keluar'    => false,
-                'izin_cuti' => false,
+                'masuk'           => false,
+                'istirahat'       => false,
+                'keluar'          => false,
+                'izin_cuti'       => false,
+                'izin_cuti_label' => '',
+                'terlambat'       => false,
+                'waktu_masuk'     => '',
             ];
+
+            if (!$userStatus['masuk'] && $userStatus['izin_cuti']) {
+                $izinCutiList[] = [
+                    'nama'       => $nama,
+                    'keterangan' => $userStatus['izin_cuti_label'] ?: 'Izin',
+                ];
+            }
+
+            if ($userStatus['terlambat']) {
+                $terlambatList[] = [
+                    'nama' => $nama,
+                    'jam'  => $userStatus['waktu_masuk'],
+                ];
+            }
 
             if ($sesi === 'pagi') {
                 // Pagi (09:00): belum absen masuk dan tidak sedang izin/sakit/cuti
@@ -348,20 +393,26 @@ class Cron_absensi extends CI_Controller
 
         return [
             'belum_absen'    => $belumAbsen,
+            'izin_cuti'      => $izinCutiList,
+            'terlambat'      => $terlambatList,
             'excluded_count' => $excludedCount,
         ];
     }
 
     /**
-     * Format pesan WhatsApp (hanya melaporkan yang belum absen)
+     * Format pesan WhatsApp (belum absen, keterangan izin/sakit/cuti, dan terlambat)
      */
-    private function _formatWhatsappMessage($sesi, $today, $belumAbsen)
+    private function _formatWhatsappMessage($sesi, $today, $report)
     {
         $labels = [
             'pagi'  => 'BELUM ABSEN MASUK (PAGI)',
             'siang' => 'BELUM ABSEN ISTIRAHAT (SIANG)',
             'sore'  => 'BELUM ABSEN PULANG (SORE)',
         ];
+
+        $belumAbsen = $report['belum_absen'] ?? [];
+        $izinCuti = $report['izin_cuti'] ?? [];
+        $terlambat = $report['terlambat'] ?? [];
 
         $judul = $labels[$sesi] ?? 'BELUM ABSEN';
         $tanggalIndo = $this->_formatTanggalIndonesia($today);
@@ -379,6 +430,23 @@ class Cron_absensi extends CI_Controller
             $lines[] = 'Daftar karyawan yang belum absen (' . count($belumAbsen) . ' orang):';
             foreach ($belumAbsen as $idx => $nama) {
                 $lines[] = ($idx + 1) . '. ' . $nama;
+            }
+        }
+
+        if ($sesi === 'pagi' && !empty($izinCuti)) {
+            $lines[] = '';
+            $lines[] = 'Keterangan tidak hadir / izin, sakit, cuti (' . count($izinCuti) . ' orang):';
+            foreach ($izinCuti as $idx => $item) {
+                $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $item['keterangan'] . ')';
+            }
+        }
+
+        if ($sesi === 'pagi' && !empty($terlambat)) {
+            $lines[] = '';
+            $lines[] = 'Daftar karyawan terlambat (' . count($terlambat) . ' orang):';
+            foreach ($terlambat as $idx => $item) {
+                $jamLabel = $item['jam'] !== '' ? $item['jam'] . ' WIB' : '-';
+                $lines[] = ($idx + 1) . '. ' . $item['nama'] . ' (' . $jamLabel . ')';
             }
         }
 
