@@ -967,11 +967,6 @@ class Tracking extends CI_Controller
         $affected = $this->db->affected_rows();
 
         if ($affected > 0) {
-            $ketDok = trim((string)$data_update['keterangan']);
-            if (!empty($data_update['no_resi'])) {
-                $ketDok = ($ketDok ? $ketDok . ' | ' : '') . 'No. Resi: ' . $data_update['no_resi'];
-            }
-            $this->notifGudangTrackingUpdate($id_kirim, 'Update Data Dokumen', $ketDok ?: 'Data tracking dokumen diperbarui', true);
             addlog('Update Dokumen', 'Admin update kirim_dokumen.id=' . $id_kirim);
             echo json_encode([
                 'status' => 'success',
@@ -1092,18 +1087,22 @@ class Tracking extends CI_Controller
             ajaxReturnDie('error', 'Gagal update database!', FALSE);
         } else {
             $this->db->trans_commit();
-            $stLabel = !empty($new_status) ? $this->trackingStatusLabel($new_status) : 'Update Data Tracking';
-            $ketParts = [];
-            if (!empty($new_status) && !empty($status_data['keterangan_konfirmasi'])) {
-                $ketParts[] = $status_data['keterangan_konfirmasi'];
+            // Hanya kirim notifikasi ke grup jika ada update status tahapan baru
+            // Jangan kirim notifikasi jika hanya edit/koreksi data tracking (tanggal, resi, dsb)
+            if (!empty($new_status)) {
+                $stLabel = $this->trackingStatusLabel($new_status);
+                $ketParts = [];
+                if (!empty($status_data['keterangan_konfirmasi'])) {
+                    $ketParts[] = $status_data['keterangan_konfirmasi'];
+                }
+                if (!empty($data_update['no_resi']) && $data_update['no_resi'] !== '-') {
+                    $ketParts[] = 'No. Resi: ' . $data_update['no_resi'];
+                }
+                if (!empty($data_update['link_resi']) && $data_update['link_resi'] !== '-') {
+                    $ketParts[] = 'Link Resi: ' . $data_update['link_resi'];
+                }
+                $this->notifGudangTrackingUpdate($id_tracking, $stLabel, !empty($ketParts) ? implode(' | ', $ketParts) : 'Tahap tracking diperbarui', false);
             }
-            if (!empty($data_update['no_resi']) && $data_update['no_resi'] !== '-') {
-                $ketParts[] = 'No. Resi: ' . $data_update['no_resi'];
-            }
-            if (!empty($data_update['link_resi']) && $data_update['link_resi'] !== '-') {
-                $ketParts[] = 'Link Resi: ' . $data_update['link_resi'];
-            }
-            $this->notifGudangTrackingUpdate($id_tracking, $stLabel, !empty($ketParts) ? implode(' | ', $ketParts) : 'Data tracking diperbarui', false);
             addlog('Edit Tracking (Admin)', 'Update data ID: ' . $id_tracking);
 
             // PASTIKAN TIDAK ADA ECHO LAIN SEBELUM INI
@@ -1369,6 +1368,7 @@ class Tracking extends CI_Controller
                 'statusTracking'  => $statusTracking,
                 'status'          => 'memperbarui status',
                 'nosj'            => $noSj,
+                'namaEkspedisi'   => $ambilDataTracking[0]->nama_ekspedisi ?? '-',
                 'gudangAsal'      => $gudangAsal,
                 'alamatTujuan'    => $gudangTujuan . ' - ' . $alamatTujuan,
                 'keTerangan'      => $keTerangan,
@@ -1446,6 +1446,7 @@ class Tracking extends CI_Controller
                 'statusTracking'  => $statusTracking,
                 'status'          => 'memperbarui status',
                 'nosj'            => $noSj,
+                'namaEkspedisi'   => $ambilDataTracking[0]->nama_ekspedisi ?? '-',
                 'gudangAsal'      => $gudangAsal,
                 'alamatTujuan'    => $alamatTujuan,
                 'keTerangan'      => $keTerangan,
@@ -1992,6 +1993,7 @@ class Tracking extends CI_Controller
             'statusTracking' => $statusLabel,
             'status'         => 'memperbarui status',
             'nosj'           => $tr->no_sj ?: '-',
+            'namaEkspedisi'  => $tr->nama_ekspedisi ?: '-',
             'gudangAsal'     => $gudangRow->nama_gudang ?? '-',
             'alamatTujuan'   => $tr->alamat_penerima ?: '-',
             'keTerangan'     => $opts['keterangan'],
@@ -2034,7 +2036,8 @@ class Tracking extends CI_Controller
                 'noPenerima'     => $idpenerima,
                 'namaPengaju'   => $namaPengaju,
                 'csname'         => urlencode($detail['csname']),
-                'nosj'             => $detail['nosj'],
+                'nosj'           => $detail['nosj'],
+                'namaEkspedisi'  => urlencode($detail['namaEkspedisi'] ?? ($detail['namaEks'] ?? '')),
                 'gudangAsal'     => urlencode($detail['gudangAsal']),
                 'alamatTujuan'     => urlencode($detail['alamatTujuan']),
                 'statusTracking' => $detail['statusTracking'],
@@ -2078,6 +2081,7 @@ class Tracking extends CI_Controller
                 $csname       = !empty($row->nama_customer) ? $row->nama_customer : ($row->pic ?: '-');
                 $nosj         = !empty($row->kode_kirim) ? $row->kode_kirim : ('DOK-' . $row->id);
                 $gudangAsal   = !empty($row->ekspedisi) ? $row->ekspedisi : '-';
+                $namaEkspedisi = !empty($row->ekspedisi) ? $row->ekspedisi : '-';
                 $alamatTujuan = !empty($row->alamat) ? $row->alamat : '-';
                 $url          = 'https://office.visiyosindo.id/tracking/detail_dokumen/';
             } else {
@@ -2089,6 +2093,7 @@ class Tracking extends CI_Controller
                 $namaSurat    = 'Tracking Barang';
                 $csname       = !empty($customerRow[0]->nama_customer) ? $customerRow[0]->nama_customer : ($tr->pic_penerima ?: '-');
                 $nosj         = !empty($tr->no_sj) ? $tr->no_sj : '-';
+                $namaEkspedisi = !empty($tr->nama_ekspedisi) ? $tr->nama_ekspedisi : '-';
                 $gudangAsal   = !empty($gudangRow->nama_gudang) ? $gudangRow->nama_gudang : '-';
                 $alamatTujuan = !empty($tr->alamat_penerima) ? $tr->alamat_penerima : '-';
                 $url          = 'https://office.visiyosindo.id/tracking/detail/';
@@ -2103,6 +2108,7 @@ class Tracking extends CI_Controller
                 'namaPengaju'    => $namaPengaju,
                 'csname'         => urlencode($csname),
                 'nosj'           => $nosj,
+                'namaEkspedisi'  => urlencode($namaEkspedisi),
                 'gudangAsal'     => urlencode($gudangAsal),
                 'alamatTujuan'   => urlencode($alamatTujuan),
                 'statusTracking' => $statusTracking,

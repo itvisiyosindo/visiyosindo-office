@@ -1133,7 +1133,7 @@ function waAppGroupGudang($data)
 		'%0A%0ADear ' . $data['namaPenerima'] .
 		',%0A%0A' . $data['namaPengaju'] . ' *' . $data['status'] . '* ' . $data['namaSurat'] .
 		':%0A_Customer Name    : ' . $data['csname'] . '_' .
-		'%0A_Nomor SJ    : ' . $data['nosj'] . '_' .
+		'%0A_Nomor SJ    : ' . $data['nosj'] . '_' . (!empty($data['namaEkspedisi']) ? ('%0A_Ekspedisi    : ' . $data['namaEkspedisi'] . '_') : '') .
 		'%0A_Gudang Asal    : ' . $data['gudangAsal'] . '_' .
 		'%0A_Alamat Tujuan   : ' . $data['alamatTujuan'] . '_' .
 		'%0A_Status    : ' . $data['statusTracking'] . '_' .
