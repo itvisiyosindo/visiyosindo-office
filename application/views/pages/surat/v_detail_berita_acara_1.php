@@ -70,9 +70,12 @@
 			$disetujui = $data_ba[0]->id_disetujui;
 
 		    $ttd = "ttd_diketahui";
-				if((sessPenggunaId() == $diketahui)){
+				$gaIds = ['58', (string)GA_USER_ID, '771'];
+				$mySessId = (string)sessPenggunaId();
+				$isMyGa = in_array($mySessId, $gaIds, true);
+				if((sessPenggunaId() == $diketahui || ($isMyGa && in_array((string)$diketahui, $gaIds, true)))){
 					$ttd = 'ttd_diketahui';
-				}else if((sessPenggunaId() == $disetujui)){
+				}else if((sessPenggunaId() == $disetujui || ($isMyGa && in_array((string)$disetujui, $gaIds, true)))){
 					$ttd = 'ttd_disetujui';
 				}else if((sessPenggunaId() == '54')){
 					$ttd = 'ttd_dir';
@@ -283,7 +286,9 @@
 			<?= form_close(); ?>
 			<br><br>
 		<div width="100%">
-            <?php if (sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == $diketahui || sessPenggunaId() == $disetujui) { ?>
+            <?php 
+            $isBaGaMatch = (isset($isMyGa) && $isMyGa && (in_array((string)$diketahui, $gaIds, true) || in_array((string)$disetujui, $gaIds, true)));
+            if (sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == $diketahui || sessPenggunaId() == $disetujui || $isBaGaMatch) { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-times"></i> Tolak </button>				
             <?php } ?>

@@ -71,11 +71,14 @@
 			$has_extra_bob_col = ($is_ba_728 && (int)$id_dir !== 54);
 
 		    $ttd = "ttd_diketahui";
-				if((sessPenggunaId() == $diketahui)){
+				$gaIds = ['58', (string)GA_USER_ID, '771'];
+				$mySessId = (string)sessPenggunaId();
+				$isMyGa = in_array($mySessId, $gaIds, true);
+				if((sessPenggunaId() == $diketahui || ($isMyGa && in_array((string)$diketahui, $gaIds, true)))){
 					$ttd = 'ttd_diketahui';
-				}else if(!empty($diketahui2) && (sessPenggunaId() == $diketahui2)){
+				}else if(!empty($diketahui2) && (sessPenggunaId() == $diketahui2 || ($isMyGa && in_array((string)$diketahui2, $gaIds, true)))){
 					$ttd = 'ttd_diketahui2';
-				}else if((sessPenggunaId() == $disetujui)){
+				}else if((sessPenggunaId() == $disetujui || ($isMyGa && in_array((string)$disetujui, $gaIds, true)))){
 					$ttd = 'ttd_disetujui';
 				}else if((sessPenggunaId() == $id_dir)){
 					$ttd = 'ttd_dir';
@@ -553,7 +556,9 @@
 			<?= form_close(); ?>
 			<br><br>
 		<div width="100%">
-            <?php if (sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == $diketahui || (!empty($diketahui2) && sessPenggunaId() == $diketahui2) || sessPenggunaId() == $disetujui || sessPenggunaId() == $id_dir) { ?>
+            <?php 
+            $isBaGaMatch = (isset($isMyGa) && $isMyGa && (in_array((string)$diketahui, $gaIds, true) || in_array((string)$diketahui2, $gaIds, true) || in_array((string)$disetujui, $gaIds, true)));
+            if (sessPenggunaId() == '1' || sessPenggunaId() == '54' || sessPenggunaId() == $diketahui || (!empty($diketahui2) && sessPenggunaId() == $diketahui2) || sessPenggunaId() == $disetujui || sessPenggunaId() == $id_dir || $isBaGaMatch) { ?>
 				<button type="button" class="btn btn-success float-right btn-approval" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-check"></i> Setujui </button>
 				<button type="button" class="btn btn-secondary float-right btn-denial" style="margin-left:12px; margin-top:12px;" id-ba="<?=encrypt($data_ba[0]->id_ba)?>"> <i class="fas fa-times"></i> Tolak </button>				
             <?php } ?>

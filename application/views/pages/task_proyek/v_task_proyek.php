@@ -2623,7 +2623,8 @@ $namaBulanList = [
                                                 </button>
                                             <?php endif; ?>
                                             <?php 
-                                            $isSelfRow = ((int)$row->id_penerima === (int)$myId);
+                                            $gaIds = array_unique([58, 771, (int)(defined('GA_USER_ID') ? GA_USER_ID : 771)]);
+                                            $isSelfRow = ((int)$row->id_penerima === (int)$myId) || (in_array((int)$row->id_penerima, $gaIds, true) && in_array((int)$myId, $gaIds, true));
                                             if ($effStatusAtasan === 2 && !$alreadyRated && !$isSelfRow): 
                                             ?>
                                                 <button type="button" class="btn btn-xs btn-warning font-weight-bold btn-detail-task" data-id="<?= (int)$row->id_task ?>" data-focus="review">
@@ -2803,7 +2804,10 @@ $namaBulanList = [
                                                     <i class="fas fa-eye"></i> Detail
                                                 </button>
                                                 <?php 
-                                                $canRateThisRow = ((int)$row->status_task === 2 && empty($row->rating_bintang) && (int)$row->id_penerima !== (int)$myId && ((int)$row->id_pemberi === (int)$myId || !empty($isHrdAdmin)));
+                                                $gaIds = array_unique([58, 771, (int)(defined('GA_USER_ID') ? GA_USER_ID : 771)]);
+                                                $isMePenerima = ((int)$row->id_penerima === (int)$myId) || (in_array((int)$row->id_penerima, $gaIds, true) && in_array((int)$myId, $gaIds, true));
+                                                $isMeGiverOrTahu = ((int)$row->id_pemberi === (int)$myId) || ((int)$row->id_mengetahui === (int)$myId) || (in_array((int)$row->id_mengetahui, $gaIds, true) && in_array((int)$myId, $gaIds, true)) || (in_array((int)$row->id_pemberi, $gaIds, true) && in_array((int)$myId, $gaIds, true));
+                                                $canRateThisRow = ((int)$row->status_task === 2 && empty($row->rating_bintang) && !$isMePenerima && ($isMeGiverOrTahu || !empty($isHrdAdmin)));
                                                 if ($canRateThisRow): 
                                                     $btnLabel = ((int)$row->id_pemberi === (int)$myId) ? 'Beri Rating ⭐' : 'Nilai (Atasan/HRD)';
                                                 ?>
@@ -4703,7 +4707,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 var t = res.task;
                 var myId = parseInt(res.my_id, 10);
-                var isPenerima = (parseInt(t.id_penerima, 10) === myId);
+                var gaUserIds = [58, 771];
+                var isPenerima = (res.is_penerima !== undefined) ? !!res.is_penerima : (parseInt(t.id_penerima, 10) === myId || (gaUserIds.indexOf(parseInt(t.id_penerima, 10)) !== -1 && gaUserIds.indexOf(myId) !== -1));
 
                 // ATURAN MUTLAK: Pelaksana (penerima tugas) TIDAK BOLEH menilai tugas diri sendiri!
                 // canReview hanya bernilai true jika user BUKAN penerima dan backend memberikan izin review
@@ -4852,8 +4857,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sub_catatan_bawahan').val(t.catatan_bawahan || '');
                 $('#sub_bukti_selesai').val(t.bukti_selesai || '');
 
-                var isPenerima = (parseInt(t.id_penerima, 10) === myId);
-                var isGiver = (parseInt(t.id_pemberi, 10) === myId);
+                var gaUserIds = [58, 771];
+                var isPenerima = (res.is_penerima !== undefined) ? !!res.is_penerima : (parseInt(t.id_penerima, 10) === myId || (gaUserIds.indexOf(parseInt(t.id_penerima, 10)) !== -1 && gaUserIds.indexOf(myId) !== -1));
+                var isGiver = (res.is_giver !== undefined) ? !!res.is_giver : (parseInt(t.id_pemberi, 10) === myId || (gaUserIds.indexOf(parseInt(t.id_pemberi, 10)) !== -1 && gaUserIds.indexOf(myId) !== -1));
                 var isHrdOrAdmin = (res.is_hrd_admin === true || res.is_admin_reviewer === true);
                 var canEditChecklist = (isPenerima || isGiver || isHrdOrAdmin) && stInt < 4 && stInt !== 5 && stInt !== 6;
 

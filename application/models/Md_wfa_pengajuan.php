@@ -122,6 +122,9 @@ class Md_wfa_pengajuan extends CI_Model
         $can_memverifikasi = in_array($pengguna_id, $this->memverifikasi_user_ids, true);
         $can_menyetujui = in_array($pengguna_id, $this->menyetujui_user_ids, true);
 
+        $gaIds = array_unique([58, 771, (int)(defined('GA_USER_ID') ? GA_USER_ID : 771)]);
+        $mengetahui_ids = in_array((int)$pengguna_id, $gaIds, true) ? $gaIds : [(int)$pengguna_id];
+
         return $this->db->select(
             'w.id, w.kode_pengajuan, w.tanggal_wfa, w.status, w.created_at, '
             . 'p.nama AS nama_pengaju, p.jabatan AS jabatan_pengaju, '
@@ -136,7 +139,7 @@ class Md_wfa_pengajuan extends CI_Model
             ->where('w.is_active', 1)
             ->group_start()
                 ->group_start()
-                    ->where('w.id_mengetahui', $pengguna_id)
+                    ->where_in('w.id_mengetahui', $mengetahui_ids)
                     ->where('w.status_mengetahui', 0)
                     ->where('w.status', 0)
                 ->group_end()
@@ -164,6 +167,8 @@ class Md_wfa_pengajuan extends CI_Model
         $pengguna_id = (int) $pengguna_id;
         $can_memverifikasi = in_array($pengguna_id, $this->memverifikasi_user_ids, true);
         $can_menyetujui = in_array($pengguna_id, $this->menyetujui_user_ids, true);
+        $gaIds = array_unique([58, 771, (int)(defined('GA_USER_ID') ? GA_USER_ID : 771)]);
+        $mengetahui_ids = in_array($pengguna_id, $gaIds, true) ? $gaIds : [$pengguna_id];
 
         return $this->db->select(
             'w.id, w.kode_pengajuan, w.tanggal_wfa, w.status, w.created_at, w.updated_at, '
@@ -178,7 +183,7 @@ class Md_wfa_pengajuan extends CI_Model
             ->where('w.perusahaan', grantAccessForPerusahaan())
             ->where('w.is_active', 1)
             ->group_start()
-                ->where('w.id_mengetahui', $pengguna_id)
+                ->where_in('w.id_mengetahui', $mengetahui_ids)
                 ->or_group_start()
                     ->where('w.status_mengetahui', 1)
                     ->where('w.status_menyetujui !=', 0)

@@ -41,6 +41,9 @@ class Wfa_pengajuan extends CI_Controller
         return array_values(array_unique([
             (int) $this->memverifikasiUserId(),
             (int) $this->memverifikasiOfficeUserId(),
+            58,
+            771,
+            (int) GA_USER_ID,
         ]));
     }
 
@@ -119,9 +122,13 @@ class Wfa_pengajuan extends CI_Controller
                 return;
             }
 
+            $gaIds = array_unique([58, 771, (int) GA_USER_ID]);
+            $isMengetahuiSelf = ((int) $detail->id_mengetahui === (int) $pengguna_id)
+                || (in_array((int) $detail->id_mengetahui, $gaIds, true) && in_array((int) $pengguna_id, $gaIds, true));
+
             $can_view = (isAdmin() || isHrd())
                 || ((int) $detail->pengguna_id === (int) $pengguna_id)
-                || ((int) $detail->id_mengetahui === (int) $pengguna_id)
+                || $isMengetahuiSelf
                 || in_array((int) $pengguna_id, $memverifikasi_allowed_ids, true)
                 || in_array((int) $pengguna_id, $menyetujui_allowed_ids, true);
 
@@ -135,7 +142,7 @@ class Wfa_pengajuan extends CI_Controller
             $page_data['page_title'] = 'Detail Pengajuan WFA';
             $page_data['page_desc'] = 'Informasi lengkap pengajuan WFA';
             $page_data['detail'] = $detail;
-            $page_data['can_approve_mengetahui'] = ((int) $detail->id_mengetahui === (int) $pengguna_id)
+            $page_data['can_approve_mengetahui'] = $isMengetahuiSelf
                 && ((int) $detail->status_mengetahui === 0)
                 && ((int) $detail->status === 0);
             $page_data['can_approve_memverifikasi'] = in_array((int) $pengguna_id, $memverifikasi_allowed_ids, true)
@@ -329,8 +336,12 @@ class Wfa_pengajuan extends CI_Controller
         $memverifikasi_allowed_ids = $this->memverifikasiAllowedUserIds();
         $menyetujui_allowed_ids = $this->menyetujuiAllowedUserIds();
 
+        $gaIds = array_unique([58, 771, (int) GA_USER_ID]);
+        $isMengetahuiValid = ((int) $detail->id_mengetahui === $pengguna_id)
+            || (in_array((int) $detail->id_mengetahui, $gaIds, true) && in_array($pengguna_id, $gaIds, true));
+
         if ($aksi === 'setujui_mengetahui') {
-            if ((int) $detail->id_mengetahui !== $pengguna_id || (int) $detail->status_mengetahui !== 0 || (int) $detail->status !== 0) {
+            if (!$isMengetahuiValid || (int) $detail->status_mengetahui !== 0 || (int) $detail->status !== 0) {
                 ajaxReturnDie('error', 'Anda tidak memiliki hak mengetahui untuk pengajuan ini');
             }
 
@@ -365,7 +376,7 @@ class Wfa_pengajuan extends CI_Controller
         }
 
         if ($aksi === 'tolak_mengetahui') {
-            if ((int) $detail->id_mengetahui !== $pengguna_id || (int) $detail->status_mengetahui !== 0 || (int) $detail->status !== 0) {
+            if (!$isMengetahuiValid || (int) $detail->status_mengetahui !== 0 || (int) $detail->status !== 0) {
                 ajaxReturnDie('error', 'Anda tidak memiliki hak mengetahui untuk pengajuan ini');
             }
 
@@ -604,7 +615,11 @@ class Wfa_pengajuan extends CI_Controller
         $sent_phones = [];
 
         foreach ((array) $userIds as $user_id) {
-            $row = $this->getPenggunaRowById((int) $user_id);
+            $uIdInt = (int) $user_id;
+            if (in_array($uIdInt, [58, 771], true)) {
+                $uIdInt = defined('GA_USER_ID') ? (int) GA_USER_ID : 771;
+            }
+            $row = $this->getPenggunaRowById($uIdInt);
             if (!$row || empty($row->no_hp)) {
                 continue;
             }

@@ -9,8 +9,10 @@ class Md_kpi_leaderboard extends CI_Model
 {
     public function getAccountMergeMap()
     {
+        $gaId = defined('GA_USER_ID') ? (int)GA_USER_ID : 771;
         return [
-            107 => 106, // Head of Accounting and Tax -> Dirangga Madali
+            107 => 106,   // Head of Accounting and Tax -> Dirangga Madali
+            58  => $gaId, // General Affair (ID 58) -> Novemby Ardiansyah Putra Lingga (ID 771)
         ];
     }
 

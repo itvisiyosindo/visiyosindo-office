@@ -60,8 +60,20 @@ function isHrd()
 function isGa()
 {
 	$CI = get_instance();
-	return $CI->session->userdata('login_type') == 'Ga' ? TRUE : FALSE;
-	//return $CI->session->userdata('id_divisi') == '8' ? TRUE : FALSE;
+	$loginType = (string)$CI->session->userdata('login_type');
+	if ($loginType === 'Ga' || strcasecmp($loginType, 'General Affair') === 0) {
+		return TRUE;
+	}
+	$uid = (int)sessPenggunaId();
+	$gaId = defined('GA_USER_ID') ? (int)GA_USER_ID : 771;
+	if ($uid > 0 && ($uid === 58 || $uid === 771 || $uid === $gaId)) {
+		return TRUE;
+	}
+	$jabatan = strtolower((string)$CI->session->userdata('jabatan'));
+	if (strpos($jabatan, 'general affair') !== false) {
+		return TRUE;
+	}
+	return FALSE;
 }
 
 function isGudangUser()

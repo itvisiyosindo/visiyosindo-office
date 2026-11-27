@@ -100,7 +100,8 @@ class Task_proyek extends CI_Controller
 
     public function _isHrdOrAdmin($myId)
     {
-        if (isAdmin() || isHrd() || isEksekutif() || in_array((int)$myId, [1, 23, 33, 54, 55, 56, 58, 69, 744], true)) {
+        $gaId = defined('GA_USER_ID') ? (int)GA_USER_ID : 771;
+        if (isAdmin() || isHrd() || isEksekutif() || isGa() || in_array((int)$myId, [1, 23, 33, 54, 55, 56, 58, 69, 744, 771, $gaId], true)) {
             return true;
         }
         $sessUser = strtolower((string)$this->session->userdata("username"));
@@ -297,11 +298,8 @@ class Task_proyek extends CI_Controller
         if ($viewMode === 'all') {
             // Mode semua penugasan perusahaan
         } else {
-            if (count($myGiverIds) === 1) {
-                $this->db->where('t.id_pemberi', $myGiverIds[0]);
-            } else {
-                $this->db->where_in('t.id_pemberi', $myGiverIds);
-            }
+            $giverIdsStr = implode(',', array_map('intval', $myGiverIds));
+            $this->db->where("(t.id_pemberi IN ({$giverIdsStr}) OR t.id_mengetahui IN ({$giverIdsStr}))", null, false);
         }
 
         $this->db->where('t.created_at >=', $semStart . ' 00:00:00');
@@ -724,6 +722,10 @@ class Task_proyek extends CI_Controller
         }
         $penerima_list = array_values(array_unique($cleaned_penerima));
 
+        if ($id_mengetahui && isset($accountMergeMap[$id_mengetahui])) {
+            $id_mengetahui = (int)$accountMergeMap[$id_mengetahui];
+        }
+
         // VALIDASI: Jika penerima tugas tepat 1 orang dan id_sasaran_mutu belum dipilih, gunakan fallback tugas operasional resmi
         if (count($penerima_list) === 1 && empty($id_sasaran_mutu)) {
             $id_sasaran_mutu = 'SM_CUSTOM_TASK';
@@ -980,12 +982,14 @@ class Task_proyek extends CI_Controller
         $task->hrd_jadwal_tgl_fmt = !empty($task->hrd_jadwal_tgl) ? date('d-m-Y', strtotime($task->hrd_jadwal_tgl)) : '';
 
         $isHrdAdmin = $this->_isHrdOrAdmin($myId);
-        $isSelfTask = ((int)$task->id_penerima === $myId);
-        $isGiver = ((int)$task->id_pemberi === $myId);
+        $gaIds = array_unique([58, 771, (int)(defined('GA_USER_ID') ? GA_USER_ID : 771)]);
+        $isSelfTask = ((int)$task->id_penerima === $myId) || (in_array((int)$task->id_penerima, $gaIds, true) && in_array($myId, $gaIds, true));
+        $isGiver = ((int)$task->id_pemberi === $myId) || (in_array((int)$task->id_pemberi, $gaIds, true) && in_array($myId, $gaIds, true));
+        $isMengetahui = ((int)$task->id_mengetahui === $myId) || (in_array((int)$task->id_mengetahui, $gaIds, true) && in_array($myId, $gaIds, true));
         $isAtasanPenerima = false;
         if (!empty($task->id_penerima)) {
             $penerimaUser = $this->db->select('id_atasan')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
-            if ($penerimaUser && (int)$penerimaUser->id_atasan === $myId) {
+            if ($penerimaUser && ((int)$penerimaUser->id_atasan === $myId || (in_array((int)$penerimaUser->id_atasan, $gaIds, true) && in_array($myId, $gaIds, true)))) {
                 $isAtasanPenerima = true;
             }
         }
@@ -995,7 +999,7 @@ class Task_proyek extends CI_Controller
         if ($isSelfTask) {
             $canReviewThis = false;
         } else {
-            $canReviewThis = ($isGiver || $isAtasanPenerima || $isHrdAdmin);
+            $canReviewThis = ($isGiver || $isAtasanPenerima || $isHrdAdmin || $isMengetahui);
         }
 
         header('Content-Type: application/json; charset=utf-8');
@@ -1006,7 +1010,10 @@ class Task_proyek extends CI_Controller
             'my_id'             => $myId,
             'is_admin_reviewer' => $isHrdAdmin,
             'is_hrd_admin'      => $isHrdAdmin,
-            'can_review'        => $canReviewThis
+            'can_review'        => $canReviewThis,
+            'is_penerima'       => $isSelfTask,
+            'is_giver'          => $isGiver,
+            'is_mengetahui'     => $isMengetahui
         ]);
         exit;
     }
@@ -1378,31 +1385,34 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        $isGiver = ((int)$task->id_pemberi === $myId);
+        $gaIds = array_unique([58, 771, (int)(defined('GA_USER_ID') ? GA_USER_ID : 771)]);
+        $isSelfTask = ((int)$task->id_penerima === $myId) || (in_array((int)$task->id_penerima, $gaIds, true) && in_array($myId, $gaIds, true));
+        $isGiver = ((int)$task->id_pemberi === $myId) || (in_array((int)$task->id_pemberi, $gaIds, true) && in_array($myId, $gaIds, true));
+        $isMengetahui = ((int)$task->id_mengetahui === $myId) || (in_array((int)$task->id_mengetahui, $gaIds, true) && in_array($myId, $gaIds, true));
         $isHrdAdmin = $this->_isHrdOrAdmin($myId);
         $isAtasanPenerima = false;
         if (!empty($task->id_penerima)) {
             $penerimaUser = $this->db->select('id_atasan')->from('pengguna')->where('pengguna_id', $task->id_penerima)->get()->row();
-            if ($penerimaUser && (int)$penerimaUser->id_atasan === $myId) {
+            if ($penerimaUser && ((int)$penerimaUser->id_atasan === $myId || (in_array((int)$penerimaUser->id_atasan, $gaIds, true) && in_array($myId, $gaIds, true)))) {
                 $isAtasanPenerima = true;
             }
         }
 
         // ATURAN MUTLAK: Siapapun (termasuk Admin/HRD) TIDAK BOLEH menilai tugas dirinya sendiri!
-        if ((int)$task->id_penerima === $myId) {
+        if ($isSelfTask) {
             ajaxReturnDie('error', 'Anda tidak dapat memberikan penilaian/rating kepada tugas Anda sendiri. Penilaian wajib dilakukan oleh Atasan Langsung, HRD, atau Manajemen.', FALSE);
             return;
         }
 
         $isTaskMandiri = ((int)$task->is_mandiri === 1 || (int)$task->id_pemberi === (int)$task->id_penerima);
         if ($isTaskMandiri) {
-            if (!$isAtasanPenerima && !$isHrdAdmin) {
+            if (!$isAtasanPenerima && !$isHrdAdmin && !$isMengetahui) {
                 ajaxReturnDie('error', 'Untuk tugas mandiri / tugas ke diri sendiri, penilaian hanya dapat dilakukan oleh Atasan Langsung, HRD, atau Manajemen.', FALSE);
                 return;
             }
         } else {
-            if (!$isGiver && !$isAtasanPenerima && !$isHrdAdmin) {
-                ajaxReturnDie('error', 'Hanya Pemberi Tugas, Atasan Langsung, atau Direksi/HRD yang dapat menilai task ini.', FALSE);
+            if (!$isGiver && !$isAtasanPenerima && !$isHrdAdmin && !$isMengetahui) {
+                ajaxReturnDie('error', 'Hanya Pemberi Tugas, Atasan Langsung, Pihak Mengetahui, atau Direksi/HRD yang dapat menilai task ini.', FALSE);
                 return;
             }
         }

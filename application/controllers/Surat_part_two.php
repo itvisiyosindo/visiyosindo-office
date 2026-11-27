@@ -4797,7 +4797,9 @@ class Surat_part_two extends CI_Controller
     $ba = $rows[0];
     $myId = (int)sessPenggunaId();
     $isOwner = ((int)$ba->idPengaju === $myId);
-    $isApprover = ($myId === (int)$ba->id_diketahui || $myId === (int)$ba->id_disetujui || $myId === (int)$ba->id_dir || ($myId === 54 && (int)$id === 728));
+    $gaApproverIds = [58, (int)GA_USER_ID, 771];
+    $isGaMatchApprover = (in_array($myId, $gaApproverIds, true) && (in_array((int)$ba->id_diketahui, $gaApproverIds, true) || in_array((int)$ba->id_disetujui, $gaApproverIds, true)));
+    $isApprover = ($myId === (int)$ba->id_diketahui || $myId === (int)$ba->id_disetujui || $myId === (int)$ba->id_dir || ($myId === 54 && (int)$id === 728) || $isGaMatchApprover);
     $isPrivilege = (isAdmin() || isHrd() || isGa() || in_array($myId, [1, 23, 33, 54, 58, 69, 744, (int)GA_USER_ID], true));
 
     if (!$isOwner && !$isApprover && !$isPrivilege) {
