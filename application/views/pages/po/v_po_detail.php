@@ -173,56 +173,62 @@
         <!-- BANNER STATUS UTAMA -->
         <div class="card-modern bg-white">
             <div class="card-body p-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-center">
-                    <div>
-                        <span class="badge badge-primary px-3 py-1 font-weight-bold mb-2">KODE: <?= htmlspecialchars($po->kode_masuk ?? '-') ?></span>
-                        <h3 class="font-weight-bold mb-1 text-dark">
+                <div class="row align-items-center">
+                    <div class="col-lg-7 col-md-7 col-12 mb-3 mb-md-0">
+                        <div class="d-flex align-items-center flex-wrap mb-2" style="gap: 6px;">
+                            <span class="badge badge-primary px-3 py-1 font-weight-bold" style="font-size: 0.82rem; letter-spacing: 0.5px;">KODE: <?= htmlspecialchars($po->kode_masuk ?? '-') ?></span>
+                            <span class="badge badge-light border text-muted px-2 py-1" style="font-size: 0.8rem;">Status Kroscek: <b class="text-dark"><?= strtoupper($po->status) ?></b></span>
+                        </div>
+                        <h3 class="font-weight-bold mb-2 text-dark" style="font-size: 1.45rem;">
                             PO No: <?= htmlspecialchars($po->no_po) ?>
                         </h3>
-                        <p class="text-muted mb-0">
-                            <i class="fas fa-hospital mr-1 text-primary"></i> <?= htmlspecialchars($po->nama_customer) ?>
-                            <span class="mx-2">•</span>
-                            <i class="fas fa-calendar-alt mr-1"></i> Tanggal PO: <?= date('d M Y', strtotime($po->tanggal_po)) ?>
-                            <span class="mx-2">•</span>
-                            <i class="fas fa-user mr-1 text-info"></i> Sales/Marketing: <?= htmlspecialchars($po->nama_sales ?? '-') ?>
-                        </p>
+                        <div class="text-muted small" style="line-height: 1.6;">
+                            <div><i class="fas fa-hospital mr-1 text-primary"></i> <b class="text-dark"><?= htmlspecialchars($po->nama_customer) ?></b></div>
+                            <div class="mt-1 text-muted">
+                                <span class="mr-3"><i class="fas fa-calendar-alt mr-1 text-secondary"></i> Tanggal PO: <?= date('d M Y', strtotime($po->tanggal_po)) ?></span>
+                                <span><i class="fas fa-user-tie mr-1 text-info"></i> Sales/Marketing: <?= htmlspecialchars($po->nama_sales ?? '-') ?></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-right mt-3 mt-md-0">
-                        <span class="text-label">STATUS PROSES PO</span>
-                        <?php
-                            $sp = $po->status_proses ?? 'BELUM DI PROSES';
-                            $spBadge = 'badge-warning';
-                            $spIcon = 'fa-clock';
-                            if ($sp === 'SUDAH DI PROSES') { $spBadge = 'badge-success'; $spIcon = 'fa-check-double'; }
-                            elseif ($sp === 'PROSES SEBAGIAN') { $spBadge = 'badge-info'; $spIcon = 'fa-truck-loading'; }
-                            elseif ($sp === 'HOLD / INDENT') { $spBadge = 'badge-danger'; $spIcon = 'fa-pause-circle'; }
-                            elseif ($sp === 'DITOLAK') { $spBadge = 'badge-dark'; $spIcon = 'fa-times-circle'; }
-                        ?>
-                        <span class="badge-pill-status badge <?= $spBadge ?> text-white font-weight-bold" style="font-size: 0.95rem;">
-                            <i class="fas <?= $spIcon ?>"></i> <?= htmlspecialchars(($po->gm_status === 'disetujui' && $sp === 'SUDAH DI PROSES') ? 'PO BISA DIPROSES' : $sp) ?>
-                        </span>
-                        <div class="mt-2">
-                            <span class="badge badge-light border text-muted">Status Kroscek: <b><?= strtoupper($po->status) ?></b></span>
-                            <?php $is_gm_locked = in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true); ?>
-                            <?php if ($is_gm_locked): ?>
-                                <span class="badge badge-secondary ml-1 px-2 py-1" title="PO telah disetujui General Manager dan tidak dapat diedit">
-                                    <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
+                    <div class="col-lg-5 col-md-5 col-12 text-md-right text-left">
+                        <div class="d-inline-block text-md-right text-left">
+                            <div class="text-label mb-1" style="font-size: 0.72rem; letter-spacing: 0.7px;">STATUS PROSES PO</div>
+                            <?php
+                                $sp = $po->status_proses ?? 'BELUM DI PROSES';
+                                $spBadge = 'badge-warning';
+                                $spIcon = 'fa-clock';
+                                if ($sp === 'SUDAH DI PROSES') { $spBadge = 'badge-success'; $spIcon = 'fa-check-double'; }
+                                elseif ($sp === 'PROSES SEBAGIAN') { $spBadge = 'badge-info'; $spIcon = 'fa-truck-loading'; }
+                                elseif ($sp === 'HOLD / INDENT') { $spBadge = 'badge-danger'; $spIcon = 'fa-pause-circle'; }
+                                elseif ($sp === 'DITOLAK') { $spBadge = 'badge-dark'; $spIcon = 'fa-times-circle'; }
+                            ?>
+                            <div class="mb-2">
+                                <span class="badge-pill-status badge <?= $spBadge ?> text-white font-weight-bold shadow-sm" style="font-size: 0.95rem; padding: 7px 18px;">
+                                    <i class="fas <?= $spIcon ?> mr-1"></i> <?= htmlspecialchars(($po->gm_status === 'disetujui' && $sp === 'SUDAH DI PROSES') ? 'PO BISA DIPROSES' : $sp) ?>
                                 </span>
-                                <?php if ($can_gm): ?>
-                                    <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold ml-1 shadow-sm" data-toggle="modal" data-target="#modalGmReject" title="Khusus GM: Batalkan persetujuan dan tolak PO ini">
-                                        <i class="fas fa-times-circle mr-1"></i> Tolak PO (GM)
-                                    </button>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-md-end justify-content-start flex-wrap" style="gap: 6px;">
+                                <?php $is_gm_locked = in_array(strtolower(trim($po->gm_status ?? '')), ['disetujui', 'sesuai'], true); ?>
+                                <?php if ($is_gm_locked): ?>
+                                    <span class="badge badge-secondary px-2 py-1" style="font-size: 0.78rem;" title="PO telah disetujui General Manager dan tidak dapat diedit">
+                                        <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
+                                    </span>
+                                    <?php if ($can_gm): ?>
+                                        <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalGmReject" title="Khusus GM: Batalkan persetujuan dan tolak PO ini">
+                                            <i class="fas fa-times-circle mr-1"></i> Tolak PO (GM)
+                                        </button>
+                                    <?php endif; ?>
+                                <?php elseif (in_array($po->status, ['revisi', 'menunggu_kroscek']) || isAdmin() || isCRO()): ?>
+                                    <a href="<?= base_url('po_system/edit/' . $id_encrypt) ?>" class="btn btn-xs btn-warning text-dark font-weight-bold shadow-sm">
+                                        <i class="fas fa-edit mr-1"></i> Edit / Revisi PO
+                                    </a>
                                 <?php endif; ?>
-                            <?php elseif (in_array($po->status, ['revisi', 'menunggu_kroscek']) || isAdmin() || isCRO()): ?>
-                                <a href="<?= base_url('po_system/edit/' . $id_encrypt) ?>" class="btn btn-xs btn-warning text-dark font-weight-bold ml-1 shadow-sm">
-                                    <i class="fas fa-edit mr-1"></i> Edit / Revisi PO
-                                </a>
-                            <?php endif; ?>
-                            <?php if (isAdmin()): ?>
-                                <a href="<?= base_url('po_system/hapus/' . $id_encrypt) ?>" class="btn btn-xs btn-outline-danger font-weight-bold ml-1 shadow-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data PO No: <?= htmlspecialchars($po->no_po, ENT_QUOTES) ?>?')">
-                                    <i class="fas fa-trash-alt mr-1"></i> Hapus PO
-                                </a>
-                            <?php endif; ?>
+                                <?php if (isAdmin()): ?>
+                                    <a href="<?= base_url('po_system/hapus/' . $id_encrypt) ?>" class="btn btn-xs btn-outline-danger font-weight-bold shadow-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data PO No: <?= htmlspecialchars($po->no_po, ENT_QUOTES) ?>?')">
+                                        <i class="fas fa-trash-alt mr-1"></i> Hapus PO
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
