@@ -883,6 +883,7 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 	{
 		$res = [
 			'is_late'          => false,
+			'is_revised'       => false,
 			'hari_telat'       => 0,
 			'max_bintang'      => 5,
 			'sp_level'         => isset($t->sp_level) ? (int)$t->sp_level : 0,
@@ -892,12 +893,33 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 			'can_schedule_hrd' => false
 		];
 
-		if (!$t || empty($t->tgl_deadline)) {
+		if (!$t) {
+			return $res;
+		}
+
+		$statusTask = isset($t->status_task) ? (int)$t->status_task : 0;
+		$isRevised  = ($statusTask === 3 || !empty(trim((string)($t->catatan_revisi ?? ''))));
+		$res['is_revised'] = $isRevised;
+
+		if (empty($t->tgl_deadline)) {
+			if ($isRevised) {
+				$res['max_bintang'] = 4;
+			}
+			if (is_object($t)) {
+				$t->is_late          = $res['is_late'];
+				$t->is_revised       = $res['is_revised'];
+				$t->hari_telat       = $res['hari_telat'];
+				$t->max_bintang      = $res['max_bintang'];
+				$t->sp_level         = $res['sp_level'];
+				$t->sp_label         = $res['sp_label'];
+				$t->sp_desc          = $res['sp_desc'];
+				$t->sp_badge_cls     = $res['sp_badge_cls'];
+				$t->can_schedule_hrd = $res['can_schedule_hrd'];
+			}
 			return $res;
 		}
 
 		$deadlineDate = date('Y-m-d', strtotime($t->tgl_deadline));
-		$statusTask   = isset($t->status_task) ? (int)$t->status_task : 0;
 
 		// Jika sudah disubmit (2) atau selesai (4), tanggal acuan adalah tanggal submit/dinilai.
 		// Jika belum selesai (0 = Baru, 1 = Dikerjakan, 3 = Revisi), tanggal acuan adalah hari ini.
@@ -912,7 +934,7 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 		$diffDays = (int)floor($diffSec / 86400);
 
 		if ($diffDays <= 0) {
-			// Tepat waktu / Sebelum Deadline -> Otomatis Bintang 5
+			// Tepat waktu / Sebelum Deadline -> Maksimal Bintang 5 (atau 4 jika pernah direvisi)
 			$res['is_late']     = false;
 			$res['hari_telat']  = 0;
 			$res['max_bintang'] = 5;
@@ -939,6 +961,11 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 			if ($spCalc > $res['sp_level']) {
 				$res['sp_level'] = $spCalc;
 			}
+		}
+
+		// Task yang pernah diminta revisi maksimal mendapatkan Bintang 4
+		if ($isRevised && $res['max_bintang'] > 4) {
+			$res['max_bintang'] = 4;
 		}
 
 		// Jika sudah kena SP, nilai maksimal terkunci di Bintang 1
@@ -981,6 +1008,7 @@ if (!function_exists('evaluateTaskDeadlineAndSp')) {
 
 		if (is_object($t)) {
 			$t->is_late          = $res['is_late'];
+			$t->is_revised       = $res['is_revised'];
 			$t->hari_telat       = $res['hari_telat'];
 			$t->max_bintang      = $res['max_bintang'];
 			$t->sp_level         = $res['sp_level'];

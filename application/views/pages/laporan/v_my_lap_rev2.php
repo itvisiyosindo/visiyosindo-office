@@ -755,9 +755,10 @@ foreach ($data_detail as $row) {
                                                 <i class="fas fa-hourglass-half mr-1"></i>Belum Selesai
                                             </div>
                                         <?php endif; ?>
+                                        <?php $maxB = (int)($t->max_bintang ?? 5); ?>
                                         <?php if (!empty($t->is_late)): ?>
                                             <span class="badge badge-danger mt-1" style="font-size: 10px;">
-                                                Telat H+<?= (int)$t->hari_telat ?> (Maks ⭐1)
+                                                Telat H+<?= (int)$t->hari_telat ?> (Maks ⭐<?= $maxB ?>)
                                             </span>
                                         <?php endif; ?>
                                     </td>
@@ -789,16 +790,23 @@ foreach ($data_detail as $row) {
                                                 <span class="font-weight-bold text-dark ml-1" style="font-size: 12px;"><?= $t->rating_bintang ?>/5</span>
                                             </div>
                                             <?php if (!empty($t->is_late)): ?>
-                                                <div class="badge badge-light-danger text-danger mb-1" style="font-size: 9.5px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                <div class="badge badge-light-danger text-danger mb-1" style="font-size: 9.5px;">Maks ⭐<?= $maxB ?> (Lewat Deadline)</div>
+                                            <?php elseif (!empty($t->is_revised)): ?>
+                                                <div class="badge badge-light-warning text-warning mb-1" style="font-size: 9.5px;">Maks ⭐4 (Revisi)</div>
                                             <?php endif; ?>
                                             <?php if (!empty($t->ulasan_atasan)): ?>
                                                 <div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(lap_limit_text($t->ulasan_atasan, 60)) ?>"</div>
                                             <?php endif; ?>
                                         <?php elseif (!empty($t->is_late)): ?>
                                             <span class="badge badge-danger px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
-                                                <i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5
+                                                <i class="fas fa-lock mr-1"></i> Maks ⭐ <?= $maxB ?>/5
                                             </span>
                                             <div class="text-muted small mt-1" style="font-size: 10.5px;">Lewat deadline</div>
+                                        <?php elseif (!empty($t->is_revised)): ?>
+                                            <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 6px; font-size: 10.5px;">
+                                                <i class="fas fa-redo mr-1"></i> Maks ⭐ 4/5
+                                            </span>
+                                            <div class="text-muted small mt-1" style="font-size: 10.5px;">Pernah direvisi</div>
                                         <?php else: ?>
                                             <span class="badge badge-light-warning text-warning small px-2 py-1" style="border-radius: 6px;">
                                                 <i class="far fa-clock mr-1"></i> Menunggu Rating

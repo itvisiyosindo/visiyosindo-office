@@ -978,7 +978,7 @@ class Task_proyek extends CI_Controller
         if (function_exists('evaluateTaskDeadlineAndSp')) {
             evaluateTaskDeadlineAndSp($task, true);
         }
-        $task->is_overdue = (!empty($task->is_late) || (!empty($task->tgl_deadline) && (int)$task->status_task < 4 && date('Y-m-d') > $task->tgl_deadline));
+        $task->is_overdue = (!empty($task->is_late) || (!empty($task->tgl_deadline) && in_array((int)$task->status_task, [0, 1, 3], true) && date('Y-m-d') > $task->tgl_deadline));
         $task->hrd_jadwal_tgl_fmt = !empty($task->hrd_jadwal_tgl) ? date('d-m-Y', strtotime($task->hrd_jadwal_tgl)) : '';
 
         $isHrdAdmin = $this->_isHrdOrAdmin($myId);
@@ -1204,7 +1204,9 @@ class Task_proyek extends CI_Controller
             if ($autoStar === 5) {
                 $autoUlasan = 'Penilaian otomatis sistem: Selesai tepat waktu sebelum batas deadline (5/5 ⭐).';
             } elseif ($autoStar === 4) {
-                $autoUlasan = 'Penilaian otomatis sistem: Terlambat 1 hari dari batas deadline (Maksimal 4/5 ⭐).';
+                $autoUlasan = !empty($eval['is_late'])
+                    ? 'Penilaian otomatis sistem: Terlambat 1 hari dari batas deadline (Maksimal 4/5 ⭐).'
+                    : 'Penilaian otomatis sistem: Selesai tepat waktu setelah revisi (Maksimal 4/5 ⭐).';
             } else {
                 $spKet = !empty($eval['sp_label']) ? ' [' . $eval['sp_label'] . ']' : '';
                 $autoUlasan = 'Penilaian otomatis sistem: Terlambat ' . (int)$eval['hari_telat'] . ' hari dari batas deadline' . $spKet . ' (Maksimal 1/5 ⭐).';
@@ -1423,22 +1425,38 @@ class Task_proyek extends CI_Controller
         }
 
         if ($keputusan === 'revisi') {
-            if ($ulasan_atasan === '') {
+            $tgl_deadline_revisi = trim((string)$this->input->post('tgl_deadline_revisi', TRUE));
+            $catatanFinal = $ulasan_atasan !== '' ? $ulasan_atasan : ((int)$task->status_task === 3 ? trim((string)$task->catatan_revisi) : '');
+
+            if ($catatanFinal === '') {
                 ajaxReturnDie('error', 'Harap tuliskan catatan bagian mana yang perlu direvisi oleh karyawan!', FALSE);
                 return;
             }
+            if ($tgl_deadline_revisi === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl_deadline_revisi) || !strtotime($tgl_deadline_revisi)) {
+                ajaxReturnDie('error', 'Harap tentukan tanggal batas waktu (deadline) revisi!', FALSE);
+                return;
+            }
+            if ($tgl_deadline_revisi < date('Y-m-d')) {
+                ajaxReturnDie('error', 'Deadline revisi tidak boleh kurang dari tanggal hari ini (' . date('d-m-Y') . ')!', FALSE);
+                return;
+            }
+
+            $oldDeadlineFmt = !empty($task->tgl_deadline) ? date('d-m-Y', strtotime($task->tgl_deadline)) : '-';
+            $newDeadlineFmt = date('d-m-Y', strtotime($tgl_deadline_revisi));
+            $isUpdateDeadlineOnly = ((int)$task->status_task === 3 && $ulasan_atasan === '');
 
             $this->db->where('id_task', $id_task)->update('task_proyek', [
                 'status_task'    => 3, // Perlu Revisi
                 'progres'        => 75,
-                'catatan_revisi' => $ulasan_atasan
+                'catatan_revisi' => $catatanFinal,
+                'tgl_deadline'   => $tgl_deadline_revisi
             ]);
 
             $this->db->insert('task_proyek_log', [
                 'id_task'     => $id_task,
                 'id_pengguna' => $myId,
-                'aksi'        => 'Meminta Revisi Pekerjaan',
-                'catatan'     => $ulasan_atasan
+                'aksi'        => $isUpdateDeadlineOnly ? 'Memperbarui Deadline Revisi' : 'Meminta Revisi Pekerjaan',
+                'catatan'     => '[Deadline Revisi: ' . $newDeadlineFmt . ', sebelumnya: ' . $oldDeadlineFmt . ' | Maks ⭐4] ' . $catatanFinal
             ]);
 
             try {
@@ -1448,7 +1466,9 @@ class Task_proyek extends CI_Controller
                     $pesanWa = "[PERMINTAAN REVISI] *TASK PERLU DIPERBAIKI*" .
                         "%0A%0AHalo *" . $bawahan->nama . "*," .
                         "%0ATask Anda (*" . $task->kode_task . " - " . $task->judul . "*) membutuhkan revisi dari Atasan:" .
-                        "%0A%0A- *Catatan Revisi*: " . $ulasan_atasan .
+                        "%0A%0A- *Catatan Revisi*: " . $catatanFinal .
+                        "%0A- *Deadline Revisi*: " . $newDeadlineFmt .
+                        "%0A- *Ketentuan Rating*: Maksimal Bintang 4 (⭐ 4/5)" .
                         "%0A%0ASilakan perbaiki dan submit kembali di https://office.visiyosindo.id/task_proyek";
                     @sendWa([
                         'devId'    => hostWa('2'),
@@ -1459,7 +1479,7 @@ class Task_proyek extends CI_Controller
             } catch (\Throwable $e) {
             }
 
-            ajaxReturnDie('success', 'Permintaan revisi telah dikirimkan kepada karyawan.', TRUE);
+            ajaxReturnDie('success', 'Permintaan revisi telah dikirimkan dengan batas deadline ' . $newDeadlineFmt . ' (Maksimal Rating ⭐4).', TRUE);
             return;
         }
 
@@ -1469,10 +1489,10 @@ class Task_proyek extends CI_Controller
             return;
         }
 
-        // Evaluasi keterlambatan & batasan bintang sesuai deadline
+        // Evaluasi keterlambatan & batasan bintang sesuai deadline / status revisi
         $eval = function_exists('evaluateTaskDeadlineAndSp')
             ? evaluateTaskDeadlineAndSp($task, false)
-            : ['is_late' => false, 'hari_telat' => 0, 'max_bintang' => 5, 'sp_level' => 0];
+            : ['is_late' => false, 'is_revised' => false, 'hari_telat' => 0, 'max_bintang' => 5, 'sp_level' => 0];
 
         $maxStarAllowed = isset($eval['max_bintang']) ? (int)$eval['max_bintang'] : 5;
         if (!empty($eval['sp_level']) && (int)$eval['sp_level'] > 0) {
@@ -1484,9 +1504,13 @@ class Task_proyek extends CI_Controller
         }
 
         $starText = str_repeat('⭐', $rating_bintang) . ' (' . $rating_bintang . '/5)';
-        $defaultUlasan = !empty($eval['is_late'])
-            ? 'Pekerjaan disetujui atasan (Disesuaikan aturan deadline: Maksimal ' . $maxStarAllowed . ' Bintang).'
-            : 'Pekerjaan selesai dengan baik.';
+        if (!empty($eval['is_late'])) {
+            $defaultUlasan = 'Pekerjaan disetujui atasan (Disesuaikan aturan deadline: Maksimal ' . $maxStarAllowed . ' Bintang).';
+        } elseif (!empty($eval['is_revised'])) {
+            $defaultUlasan = 'Pekerjaan revisi disetujui atasan (Maksimal ' . $maxStarAllowed . ' Bintang).';
+        } else {
+            $defaultUlasan = 'Pekerjaan selesai dengan baik.';
+        }
 
         $updateData = [
             'status_task'    => 4, // Selesai & Dinilai

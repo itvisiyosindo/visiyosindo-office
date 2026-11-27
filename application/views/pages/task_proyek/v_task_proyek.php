@@ -2356,7 +2356,8 @@ $namaBulanList = [
                             </thead>
                             <tbody>
                                 <?php $no = 1; foreach ($tugas_saya as $row):
-                                    $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
+                                    $isOverdue = (!empty($row->tgl_deadline) && in_array((int)$row->status_task, [0, 1, 3], true) && date('Y-m-d') > $row->tgl_deadline);
+                                    $maxStarRow = (int)($row->max_bintang ?? 5);
                                 ?>
                                     <tr id="row_task_saya_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
                                         <td class="tp-col-no"><?= $no++ ?></td>
@@ -2391,7 +2392,7 @@ $namaBulanList = [
                                                 <i class="far fa-calendar-check text-muted mr-1"></i><?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
                                             <?php if (!empty($row->is_late)): ?>
-                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap" title="Melewati batas deadline (Maksimal Rating Bintang 1)"><i class="fas fa-exclamation-circle"></i> Telat H+<?= (int)$row->hari_telat ?> (Maks ⭐1)</span></div>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap" title="Melewati batas deadline (Maksimal Rating Bintang <?= $maxStarRow ?>)"><i class="fas fa-exclamation-circle"></i> Telat H+<?= (int)$row->hari_telat ?> (Maks ⭐<?= $maxStarRow ?>)</span></div>
                                             <?php elseif ($isOverdue): ?>
                                                 <div class="mt-1"><span class="badge badge-danger tp-badge-wrap">Terlambat / Overdue</span></div>
                                             <?php endif; ?>
@@ -2423,7 +2424,9 @@ $namaBulanList = [
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
                                                 <?php if (!empty($row->is_late)): ?>
-                                                    <div class="badge badge-light-danger text-danger tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                    <div class="badge badge-light-danger text-danger tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐<?= $maxStarRow ?> (Lewat Deadline)</div>
+                                                <?php elseif (!empty($row->is_revised)): ?>
+                                                    <div class="badge badge-light-warning text-warning tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐4 (Revisi)</div>
                                                 <?php endif; ?>
                                                 <?php if (!empty($row->ulasan_atasan)): ?>
                                                     <div class="tp-note-box tp-note-ulasan" title="<?= htmlspecialchars($row->ulasan_atasan) ?>">
@@ -2431,8 +2434,11 @@ $namaBulanList = [
                                                     </div>
                                                 <?php endif; ?>
                                             <?php elseif (!empty($row->is_late)): ?>
-                                                <span class="badge badge-danger" style="font-size:10.5px;"><i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5</span>
+                                                <span class="badge badge-danger" style="font-size:10.5px;"><i class="fas fa-lock mr-1"></i> Maks ⭐ <?= $maxStarRow ?>/5</span>
                                                 <div class="text-muted small mt-1"><em>Lewat deadline H+<?= (int)$row->hari_telat ?></em></div>
+                                            <?php elseif (!empty($row->is_revised)): ?>
+                                                <span class="badge badge-warning text-dark" style="font-size:10.5px;"><i class="fas fa-redo mr-1"></i> Maks ⭐ 4/5</span>
+                                                <div class="text-muted small mt-1"><em>Pernah direvisi</em></div>
                                             <?php else: ?>
                                                 <span class="text-muted small"><em>Belum dinilai</em></span>
                                             <?php endif; ?>
@@ -2509,7 +2515,8 @@ $namaBulanList = [
                             </thead>
                             <tbody>
                                 <?php $no = 1; foreach ($tugas_atasan as $row):
-                                    $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
+                                    $isOverdue = (!empty($row->tgl_deadline) && in_array((int)$row->status_task, [0, 1, 3], true) && date('Y-m-d') > $row->tgl_deadline);
+                                    $maxStarRow = (int)($row->max_bintang ?? 5);
                                 ?>
                                     <tr id="row_task_atasan_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
                                         <td class="tp-col-no"><?= $no++ ?></td>
@@ -2552,7 +2559,7 @@ $namaBulanList = [
                                                 <i class="far fa-calendar-check text-muted mr-1"></i><?= !empty($row->tgl_deadline) ? date('d-m-Y', strtotime($row->tgl_deadline)) : '-' ?>
                                             </div>
                                             <?php if (!empty($row->is_late)): ?>
-                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap" title="Melewati batas deadline (Maksimal Rating Bintang 1)"><i class="fas fa-exclamation-circle"></i> H+<?= (int)$row->hari_telat ?> (Maks ⭐1)</span></div>
+                                                <div class="mt-1"><span class="badge badge-danger tp-badge-wrap" title="Melewati batas deadline (Maksimal Rating Bintang <?= $maxStarRow ?>)"><i class="fas fa-exclamation-circle"></i> H+<?= (int)$row->hari_telat ?> (Maks ⭐<?= $maxStarRow ?>)</span></div>
                                             <?php elseif ($isOverdue): ?>
                                                 <div class="mt-1"><span class="badge badge-danger tp-badge-wrap">Overdue</span></div>
                                             <?php endif; ?>
@@ -2584,7 +2591,9 @@ $namaBulanList = [
                                             <?php if ((int)$row->status_task === 4 && !empty($row->rating_bintang)): ?>
                                                 <div style="white-space: nowrap;"><?= renderStarsHtml($row->rating_bintang) ?> <strong>(<?= (int)$row->rating_bintang ?>/5)</strong></div>
                                                 <?php if (!empty($row->is_late)): ?>
-                                                    <div class="badge badge-light-danger text-danger tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐1 (Lewat Deadline)</div>
+                                                    <div class="badge badge-light-danger text-danger tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐<?= $maxStarRow ?> (Lewat Deadline)</div>
+                                                <?php elseif (!empty($row->is_revised)): ?>
+                                                    <div class="badge badge-light-warning text-warning tp-badge-wrap mt-1" style="font-size:10px;">Maks ⭐4 (Revisi)</div>
                                                 <?php endif; ?>
                                                 <?php if (!empty($row->ulasan_atasan)): ?>
                                                     <div class="tp-note-box tp-note-ulasan" title="<?= htmlspecialchars($row->ulasan_atasan) ?>">
@@ -2594,10 +2603,14 @@ $namaBulanList = [
                                             <?php elseif ((int)$row->status_task === 2): ?>
                                                 <span class="badge badge-warning"><i class="fas fa-star"></i> Siap Dinilai</span>
                                                 <?php if (!empty($row->is_late)): ?>
-                                                    <div class="mt-1"><span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</span></div>
+                                                    <div class="mt-1"><span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐<?= $maxStarRow ?></span></div>
+                                                <?php elseif (!empty($row->is_revised)): ?>
+                                                    <div class="mt-1"><span class="badge badge-warning text-dark" style="font-size:10px;"><i class="fas fa-redo"></i> Maks ⭐4 (Revisi)</span></div>
                                                 <?php endif; ?>
                                             <?php elseif (!empty($row->is_late)): ?>
-                                                <span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐1</span>
+                                                <span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-lock"></i> Maks ⭐<?= $maxStarRow ?></span>
+                                            <?php elseif (!empty($row->is_revised)): ?>
+                                                <span class="badge badge-warning text-dark" style="font-size:10px;"><i class="fas fa-redo"></i> Maks ⭐4 (Revisi)</span>
                                             <?php else: ?>
                                                 <span class="text-muted small">-</span>
                                             <?php endif; ?>
@@ -2719,7 +2732,7 @@ $namaBulanList = [
                             </thead>
                             <tbody>
                                 <?php $noAll = 1; foreach ($semua_task as $row):
-                                    $isOverdue = (!empty($row->tgl_deadline) && (int)$row->status_task < 4 && date('Y-m-d') > $row->tgl_deadline);
+                                    $isOverdue = (!empty($row->tgl_deadline) && in_array((int)$row->status_task, [0, 1, 3], true) && date('Y-m-d') > $row->tgl_deadline);
                                 ?>
                                     <tr id="row_semua_task_<?= (int)$row->id_task ?>" data-id="<?= (int)$row->id_task ?>">
                                         <td class="tp-col-no"><?= $noAll++ ?></td>
@@ -3673,6 +3686,16 @@ $namaBulanList = [
                     <div id="dt_revisi_wrap" class="alert alert-danger mt-2 mb-0 py-2" style="display:none;">
                         <strong><i class="fas fa-redo"></i> Catatan Permintaan Revisi dari Atasan:</strong>
                         <div id="dt_catatan_revisi"></div>
+                        <div id="dt_revisi_deadline_editor" class="mt-2 pt-2 border-top border-danger" style="display:none;">
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                                <label for="dt_revisi_deadline_input" class="small font-weight-bold mb-0"><i class="far fa-calendar-alt mr-1"></i> Atur / Ubah Deadline Revisi:</label>
+                                <input type="date" id="dt_revisi_deadline_input" class="form-control form-control-sm" style="width: 170px;" min="<?= date('Y-m-d') ?>">
+                                <button type="button" id="btnUpdateDeadlineRevisi" class="btn btn-xs btn-danger font-weight-bold">
+                                    <i class="fas fa-save mr-1"></i> Simpan Deadline Revisi
+                                </button>
+                                <span class="small text-muted">(Maksimal Rating ⭐4)</span>
+                            </div>
+                        </div>
                     </div>
                     <div id="dt_sp_alert_wrap" class="mt-2" style="display:none;"></div>
                     <div id="dt_readonly_checklist_wrap" class="mt-2 p-2 rounded bg-white border" style="display:none;"></div>
@@ -3808,11 +3831,27 @@ $namaBulanList = [
                                 </div>
                             </div>
 
+                            <!-- BATAS WAKTU REVISI (MUNCUL SAAT PILIH REVISI) -->
+                            <div id="wrapDeadlineRevisi" class="p-3 mb-3 rounded" style="display:none; background:#fef2f2; border:1px dashed #ef4444;">
+                                <div class="form-group mb-1">
+                                    <label for="rev_tgl_deadline_revisi" class="font-weight-bold text-danger small mb-1">
+                                        <i class="far fa-calendar-alt mr-1"></i> Batas Waktu (Deadline) Penyelesaian Revisi <span class="text-danger">*</span>:
+                                    </label>
+                                    <input type="date" name="tgl_deadline_revisi" id="rev_tgl_deadline_revisi" class="form-control form-control-sm" style="max-width: 240px;" min="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-info-circle text-danger mr-1"></i>
+                                    Deadline task akan diperbarui sesuai tanggal yang Anda tentukan di atas. Task yang direvisi <strong>maksimal mendapatkan Rating Bintang 4 (⭐ 4/5)</strong>.
+                                </div>
+                            </div>
+
                             <!-- PILIH BINTANG 1 - 5 INTERAKTIF -->
                             <div id="wrapStarPicker" class="p-3 mb-3 rounded text-center" style="background:#fffbeb; border:1px dashed #f59e0b;">
                                 <div id="wrapOverdueMaxStarAlert" class="alert alert-danger py-2 px-3 mb-2 text-left small" style="display:none;">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>Melewati Batas Deadline (<span id="lblOverdueDays">0</span> hari):</strong> Sesuai aturan kedisiplinan, task yang terlambat <strong>maksimal mendapatkan Rating Bintang <span id="lblMaxAllowedStars">1</span> (⭐ <span id="lblMaxAllowedStars2">1</span>/5)</strong>.
+                                    <span id="wrapMaxStarAlertBody">
+                                        <strong>Melewati Batas Deadline (<span id="lblOverdueDays">0</span> hari):</strong> Sesuai aturan kedisiplinan, task yang terlambat <strong>maksimal mendapatkan Rating Bintang <span id="lblMaxAllowedStars">1</span> (⭐ <span id="lblMaxAllowedStars2">1</span>/5)</strong>.
+                                    </span>
                                 </div>
                                 <div class="small font-weight-bold text-uppercase mb-1" style="color:#b45309;">Klik Bintang untuk Memberikan Nilai Kualitas Kerja Karyawan:</div>
                                 <div class="star-rating-picker my-1" id="starPickerWidget">
@@ -4788,17 +4827,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#dt_lampiran_atasan_wrap').hide();
                 }
 
-                if (parseInt(t.status_task, 10) === 3 && t.catatan_revisi) {
+                var todayYmd = '<?= date('Y-m-d') ?>';
+                var tomorrowYmd = '<?= date('Y-m-d', strtotime('+1 day')) ?>';
+                var defaultRevDeadline = (t.tgl_deadline && t.tgl_deadline >= todayYmd) ? t.tgl_deadline : tomorrowYmd;
+                window.currentDetailTask = t;
+
+                if (stInt === 3 && t.catatan_revisi) {
                     $('#dt_catatan_revisi').text(t.catatan_revisi);
                     $('#dt_revisi_wrap').show();
+                    if (canReview) {
+                        $('#dt_revisi_deadline_input').val(defaultRevDeadline);
+                        $('#dt_revisi_deadline_editor').show();
+                    } else {
+                        $('#dt_revisi_deadline_editor').hide();
+                    }
                 } else {
                     $('#dt_revisi_wrap').hide();
+                    $('#dt_revisi_deadline_editor').hide();
                 }
 
-                // Tampilkan info keterlambatan, SP 1/2/3 & jadwal pertemuan HRD
+                // Tampilkan info keterlambatan, revisi, SP 1/2/3 & jadwal pertemuan HRD
                 var spLevel = parseInt(t.sp_level, 10) || 0;
                 var hariTelat = parseInt(t.hari_telat, 10) || 0;
-                var isLate = !!t.is_late || (parseInt(t.max_bintang, 10) === 1);
+                var isLate = !!t.is_late;
+                var isRevised = !!t.is_revised;
+                var allowedMaxStar = (t.max_bintang !== undefined && t.max_bintang !== null) ? parseInt(t.max_bintang, 10) : 5;
+                if (isNaN(allowedMaxStar) || allowedMaxStar < 1) allowedMaxStar = 1;
+                if (spLevel > 0) allowedMaxStar = 1;
+
                 if (isLate || spLevel >= 1) {
                     var spHtml = '<div class="alert ' + (spLevel >= 1 ? 'alert-danger' : 'alert-warning') + ' py-2 px-3 mb-0 small">';
                     spHtml += '<div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">';
@@ -4807,7 +4863,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         spHtml += '<span class="badge badge-danger mr-1" style="font-size:11.5px;"><i class="fas fa-gavel mr-1"></i> STATUS SANKSI: ' + (t.sp_label || ('SP ' + spLevel)) + '</span> ';
                     }
                     spHtml += '<strong>Terlambat H+' + hariTelat + ' hari dari deadline (' + (t.tgl_deadline_fmt || '-') + ').</strong> ';
-                    spHtml += 'Maksimal nilai bintang terkunci pada <strong>⭐ 1/5</strong>.';
+                    spHtml += 'Maksimal nilai bintang terkunci pada <strong>⭐ ' + allowedMaxStar + '/5</strong>.';
                     if (t.sp_desc) {
                         spHtml += '<div class="mt-1">' + $('<div>').text(t.sp_desc).html() + '</div>';
                     }
@@ -4839,6 +4895,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     spHtml += '</div></div>';
                     $('#dt_sp_alert_wrap').html(spHtml).show();
+                } else if (isRevised) {
+                    $('#dt_sp_alert_wrap').html(
+                        '<div class="alert alert-warning py-2 px-3 mb-0 small">' +
+                        '<i class="fas fa-redo mr-1"></i> <strong>Task Mengalami Revisi:</strong> Batas deadline revisi <strong>' + (t.tgl_deadline_fmt || '-') + '</strong>. Maksimal nilai bintang terkunci pada <strong>⭐ 4/5</strong>.' +
+                        '</div>'
+                    ).show();
                 } else {
                     $('#dt_sp_alert_wrap').hide().empty();
                 }
@@ -4948,36 +5010,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Panel Review / Beri Rating Bintang Atasan HANYA jika canReview dan statusnya Menunggu Penilaian (2) serta BELUM pernah diberi bintang
                 var isAlreadyRated = (stInt === 4 && parseInt(t.rating_bintang, 10) > 0);
-                var allowedMaxStar = 5;
-                if (isLate) {
-                    if (hariTelat === 1) {
-                        allowedMaxStar = 4;
-                    } else {
-                        allowedMaxStar = 1;
-                    }
-                }
-                if (parseInt(t.sp_level, 10) > 0) {
-                    allowedMaxStar = 1;
-                }
                 window.currentTaskMaxStar = allowedMaxStar;
+                window.currentTaskIsLate = isLate;
+                window.currentTaskIsRevised = isRevised;
 
                 if (isLate) {
-                    $('#lblOverdueDays').text(hariTelat);
-                    $('#lblMaxAllowedStars').text(allowedMaxStar);
-                    $('#lblMaxAllowedStars2').text(allowedMaxStar);
-                    $('#wrapOverdueMaxStarAlert').show();
+                    $('#wrapOverdueMaxStarAlert').removeClass('alert-warning').addClass('alert-danger').show();
+                    $('#wrapMaxStarAlertBody').html(
+                        '<strong>Melewati Batas Deadline (' + hariTelat + ' hari):</strong> Sesuai aturan kedisiplinan, task yang terlambat <strong>maksimal mendapatkan Rating Bintang ' + allowedMaxStar + ' (⭐ ' + allowedMaxStar + '/5)</strong>.'
+                    );
+                } else if (isRevised) {
+                    $('#wrapOverdueMaxStarAlert').removeClass('alert-danger').addClass('alert-warning').show();
+                    $('#wrapMaxStarAlertBody').html(
+                        '<strong>Task Pernah Direvisi:</strong> Sesuai ketentuan penilaian, task yang mengalami revisi <strong>maksimal mendapatkan Rating Bintang 4 (⭐ 4/5)</strong>.'
+                    );
+                } else {
+                    $('#wrapOverdueMaxStarAlert').hide();
+                }
+
+                if (allowedMaxStar < 5) {
+                    var lockReason = isLate ? 'karena keterlambatan deadline' : 'karena task pernah direvisi';
                     $('#starPickerWidget .star-btn').each(function() {
                         var sVal = parseInt($(this).data('val'), 10);
                         if (sVal > allowedMaxStar) {
-                            $(this).css({ opacity: 0.25, cursor: 'not-allowed' }).attr('title', 'Terkunci: Maksimal Bintang ' + allowedMaxStar + ' karena keterlambatan deadline');
+                            $(this).css({ opacity: 0.25, cursor: 'not-allowed' }).attr('title', 'Terkunci: Maksimal Bintang ' + allowedMaxStar + ' ' + lockReason);
                         } else {
                             $(this).css({ opacity: 1, cursor: 'pointer' }).removeAttr('title');
                         }
                     });
                 } else {
-                    $('#wrapOverdueMaxStarAlert').hide();
                     $('#starPickerWidget .star-btn').css({ opacity: 1, cursor: 'pointer' }).removeAttr('title');
                 }
+
+                // Reset form review ke mode terima setiap membuka detail task
+                $('input[name="keputusan"][value="terima"]').prop('checked', true);
+                $('#wrapStarPicker').show();
+                $('#wrapDeadlineRevisi').hide();
+                $('#rev_tgl_deadline_revisi').val(defaultRevDeadline);
+                $('#btnSubmitReviewAtasan').html('<i class="fas fa-award mr-1"></i> Simpan Penilaian & Kirim WA ke Karyawan');
 
                 if (canReview && stInt === 2 && !isAlreadyRated) {
                     $('#panelAtasanReview').show();
@@ -5291,6 +5361,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (maxAllowed === 1) {
             $('#starPickerLabel').text('⭐ (1 / 5 — Maksimal Bintang 1 karena melewati batas Deadline)');
+        } else if (maxAllowed === 4 && val === 4 && window.currentTaskIsRevised && !window.currentTaskIsLate) {
+            $('#starPickerLabel').text('⭐⭐⭐⭐ (4 / 5 — Maksimal Bintang 4 karena task pernah direvisi)');
         } else {
             $('#starPickerLabel').text(starDescriptions[val] || '');
         }
@@ -5300,7 +5372,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var val = parseInt($(this).data('val'), 10) || 1;
         var maxAllowed = parseInt(window.currentTaskMaxStar, 10) || 5;
         if (val > maxAllowed) {
-            setStarPickerValue(1);
+            setStarPickerValue(maxAllowed);
             return;
         }
         setStarPickerValue(val);
@@ -5309,9 +5381,60 @@ document.addEventListener('DOMContentLoaded', function() {
     $('input[name="keputusan"]').on('change', function() {
         if ($(this).val() === 'revisi') {
             $('#wrapStarPicker').slideUp(150);
+            $('#wrapDeadlineRevisi').slideDown(150);
+            $('#btnSubmitReviewAtasan').html('<i class="fas fa-redo mr-1"></i> Kirim Permintaan Revisi & Deadline Baru');
         } else {
+            $('#wrapDeadlineRevisi').slideUp(150);
             $('#wrapStarPicker').slideDown(150);
+            $('#btnSubmitReviewAtasan').html('<i class="fas fa-award mr-1"></i> Simpan Penilaian & Kirim WA ke Karyawan');
         }
+    });
+
+    // Update Deadline Revisi langsung untuk task yang sudah berstatus Perlu Revisi (status 3)
+    $(document).on('click', '#btnUpdateDeadlineRevisi', function() {
+        var t = window.currentDetailTask;
+        if (!t || !t.id_task) return;
+        var newDeadline = $.trim($('#dt_revisi_deadline_input').val());
+        if (!newDeadline) {
+            alert('Harap pilih tanggal batas waktu (deadline) revisi terlebih dahulu.');
+            return;
+        }
+        var $btn = $(this);
+        var origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
+        $.ajax({
+            url: baseUrl + 'task_proyek/review_atasan',
+            type: 'POST',
+            data: (function() {
+                var d = {
+                    id_task: t.id_task,
+                    keputusan: 'revisi',
+                    tgl_deadline_revisi: newDeadline,
+                    ulasan_atasan: ''
+                };
+                d[csrfName] = getCsrfHash();
+                return d;
+            })(),
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(origHtml);
+                if (res && res.status === 'success') {
+                    $('#modalDetailTask').modal('hide');
+                    if (window.swal) {
+                        swal('Berhasil!', res.msg, 'success').then(function() { window.location.reload(); });
+                    } else {
+                        alert(res.msg);
+                        window.location.reload();
+                    }
+                } else {
+                    alert(res && res.msg ? res.msg : 'Gagal menyimpan deadline revisi.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(origHtml);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
     });
 
     $(document).on('click', '.btn-quick-ulasan', function() {
@@ -5321,6 +5444,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Submit Review & Rating Bintang 5 Atasan
     $('#formReviewAtasan').on('submit', function(e) {
         e.preventDefault();
+        var keputusan = $('input[name="keputusan"]:checked').val();
+        if (keputusan === 'revisi' && !$.trim($('#rev_tgl_deadline_revisi').val())) {
+            alert('Harap tentukan batas waktu (deadline) penyelesaian revisi terlebih dahulu!');
+            $('#rev_tgl_deadline_revisi').trigger('focus');
+            return;
+        }
         var $btn = $('#btnSubmitReviewAtasan');
         var origHtml = $btn.html();
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan Penilaian...');

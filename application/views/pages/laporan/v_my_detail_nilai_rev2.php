@@ -667,8 +667,9 @@ if (!function_exists('lap_limit_text')) {
 										<?php else: ?>
 											<div class="text-warning font-weight-bold mt-1">Belum Selesai</div>
 										<?php endif; ?>
+										<?php $maxB = (int)($t->max_bintang ?? 5); ?>
 										<?php if (!empty($t->is_late)): ?>
-											<span class="badge badge-danger mt-1" style="font-size:10px;">Telat H+<?= (int)$t->hari_telat ?> (Maks ⭐1)</span>
+											<span class="badge badge-danger mt-1" style="font-size:10px;">Telat H+<?= (int)$t->hari_telat ?> (Maks ⭐<?= $maxB ?>)</span>
 										<?php endif; ?>
 									</td>
 									<td>
@@ -701,14 +702,20 @@ if (!function_exists('lap_limit_text')) {
 												<span class="font-weight-bold text-dark ml-1" style="font-size: 12px;"><?= $t->rating_bintang ?>/5</span>
 											</div>
 											<?php if (!empty($t->is_late)): ?>
-												<div class="badge badge-danger mb-1" style="font-size:9.5px;">Maks ⭐1</div>
+												<div class="badge badge-danger mb-1" style="font-size:9.5px;">Maks ⭐<?= $maxB ?></div>
+											<?php elseif (!empty($t->is_revised)): ?>
+												<div class="badge badge-warning text-dark mb-1" style="font-size:9.5px;">Maks ⭐4 (Revisi)</div>
 											<?php endif; ?>
 											<?php if (!empty($t->ulasan_atasan)): ?>
 												<div class="text-muted small" style="font-style: italic; line-height: 1.3;">"<?= htmlspecialchars(lap_limit_text($t->ulasan_atasan, 60)) ?>"</div>
 											<?php endif; ?>
 										<?php elseif (!empty($t->is_late)): ?>
 											<span class="badge badge-danger small px-2 py-1" style="border-radius: 6px;">
-												<i class="fas fa-lock mr-1"></i> Maks ⭐ 1/5
+												<i class="fas fa-lock mr-1"></i> Maks ⭐ <?= $maxB ?>/5
+											</span>
+										<?php elseif (!empty($t->is_revised)): ?>
+											<span class="badge badge-warning text-dark small px-2 py-1" style="border-radius: 6px;">
+												<i class="fas fa-redo mr-1"></i> Maks ⭐ 4/5
 											</span>
 										<?php else: ?>
 											<span class="badge badge-warning text-dark small px-2 py-1" style="border-radius: 6px;">
