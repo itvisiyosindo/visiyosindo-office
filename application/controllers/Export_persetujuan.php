@@ -214,17 +214,27 @@ class Export_persetujuan extends CI_Controller
         }
 
         $sheetIdx = 0;
-        if (count($grouped) > 1 || empty($grouped)) {
+        $isMultiJenis = count($grouped) > 1;
+        $includeRekapAll = $isMultiJenis && count($rows) <= 5000;
+
+        if ($isMultiJenis || empty($grouped)) {
             $sheet = $spreadsheet->getActiveSheet();
-            $this->_fillSheet($sheet, 'Rekap Semua', 'REKAP SEMUA PERSETUJUAN', $periodLabel, $filters['status'], $rows);
+            $this->_fillSummarySheet($sheet, $periodLabel, $filters['status'], $grouped, $jenisList, count($rows), $includeRekapAll);
             $sheetIdx++;
         }
+
+        if ($includeRekapAll) {
+            $sheet = $spreadsheet->createSheet($sheetIdx++);
+            $this->_fillSheet($sheet, 'Rekap Semua', 'REKAP SEMUA PERSETUJUAN', $periodLabel, $filters['status'], $rows);
+        }
+        unset($rows);
 
         foreach ($grouped as $jenisKey => $jenisRows) {
             $meta = isset($jenisList[$jenisKey]) ? $jenisList[$jenisKey] : ['label' => $jenisKey, 'full' => $jenisKey, 'sheet' => $jenisKey];
             $sheet = ($sheetIdx === 0) ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet($sheetIdx);
             $sheetTitle = $this->_safeSheetTitle($meta['sheet']);
             $this->_fillSheet($sheet, $sheetTitle, 'REKAP PERSETUJUAN - ' . strtoupper($meta['full']), $periodLabel, $filters['status'], $jenisRows);
+            unset($grouped[$jenisKey]);
             $sheetIdx++;
         }
 
@@ -257,6 +267,137 @@ class Export_persetujuan extends CI_Controller
             $clean = 'Sheet';
         }
         return substr($clean, 0, 31);
+    }
+
+    private function _fillSummarySheet($sheet, $periodLabel, $statusFilter, $grouped, $jenisList, $totalRows, $includeRekapAll)
+    {
+        $sheet->setTitle('Ringkasan');
+
+        $sheet->setCellValue('A1', 'RINGKASAN REKAP PERSETUJUAN');
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => '1E3A5F']],
+        ]);
+
+        $statusLabels = [
+            'all' => 'Semua Status',
+            'disetujui' => 'Disetujui',
+            'proses' => 'Proses / Menunggu',
+            'ditolak' => 'Ditolak',
+        ];
+        $metaLine = 'Periode: ' . $periodLabel . '   |   Status: ' . ($statusLabels[$statusFilter] ?? 'Semua Status') . '   |   Dicetak: ' . date('d/m/Y H:i') . ' WIB';
+        $sheet->setCellValue('A2', $metaLine);
+        $sheet->mergeCells('A2:G2');
+        $sheet->getStyle('A2')->applyFromArray([
+            'font' => ['italic' => true, 'size' => 10, 'color' => ['rgb' => '4A5568']],
+        ]);
+
+        if (!$includeRekapAll && $totalRows > 5000) {
+            $sheet->setCellValue('A3', 'Catatan: Total data ' . number_format($totalRows, 0, ',', '.') . ' baris — detail lengkap dipisahkan langsung per sheet jenis persetujuan agar file tetap ringan & cepat dibuka.');
+            $sheet->mergeCells('A3:G3');
+            $sheet->getStyle('A3')->applyFromArray([
+                'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => 'B45309']],
+            ]);
+        }
+
+        $headerRow = 5;
+        $headers = [
+            'A' => 'No',
+            'B' => 'Kategori',
+            'C' => 'Jenis Persetujuan',
+            'D' => 'Jml Dokumen',
+            'E' => 'Jml Baris / Item',
+            'F' => 'Total Nominal (Rp)',
+            'G' => 'Nominal Mata Uang Asing',
+        ];
+        foreach ($headers as $col => $txt) {
+            $sheet->setCellValue($col . $headerRow, $txt);
+        }
+        $sheet->getStyle("A{$headerRow}:G{$headerRow}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A5F']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]],
+        ]);
+        $sheet->getRowDimension($headerRow)->setRowHeight(24);
+
+        $rowNum = $headerRow + 1;
+        $no = 1;
+        $sumDocs = 0;
+        $sumItems = 0;
+
+        foreach ($grouped as $jenisKey => $items) {
+            $meta = isset($jenisList[$jenisKey]) ? $jenisList[$jenisKey] : ['group' => '-', 'full' => $jenisKey];
+            $uniqDocs = [];
+            $rpTotal = 0.0;
+            $fxTotals = [];
+            foreach ($items as $r) {
+                $uniqDocs[$r['no_surat'] !== '' ? $r['no_surat'] : ($r['tanggal'] . '|' . $r['nama_transaksi'])] = true;
+                if ((float)$r['nominal'] > 0) {
+                    $mu = $r['mata_uang'] ?: 'Rp';
+                    if ($mu === 'Rp') {
+                        $rpTotal += (float)$r['nominal'];
+                    } else {
+                        if (!isset($fxTotals[$mu])) $fxTotals[$mu] = 0.0;
+                        $fxTotals[$mu] += (float)$r['nominal'];
+                    }
+                }
+            }
+            $fxParts = [];
+            foreach ($fxTotals as $mu => $val) {
+                $fxParts[] = $mu . ' ' . number_format($val, 2, '.', ',');
+            }
+
+            $docCount = count($uniqDocs);
+            $itemCount = count($items);
+            $sumDocs += $docCount;
+            $sumItems += $itemCount;
+
+            $sheet->setCellValueExplicit('A' . $rowNum, $no++, DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit('B' . $rowNum, (string)$meta['group'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C' . $rowNum, (string)$meta['full'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $rowNum, $docCount, DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit('E' . $rowNum, $itemCount, DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit('F' . $rowNum, $rpTotal, DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit('G' . $rowNum, !empty($fxParts) ? implode(' | ', $fxParts) : '-', DataType::TYPE_STRING);
+            $rowNum++;
+        }
+
+        $lastDataRow = $rowNum - 1;
+        if ($lastDataRow >= $headerRow + 1) {
+            $sheet->getStyle("A6:G{$lastDataRow}")->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+            ]);
+            $sheet->getStyle("A6:A{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("D6:E{$lastDataRow}")->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle("F6:F{$lastDataRow}")->getNumberFormat()->setFormatCode('#,##0');
+
+            $sheet->setCellValueExplicit('A' . $rowNum, 'TOTAL KESELURUHAN', DataType::TYPE_STRING);
+            $sheet->mergeCells("A{$rowNum}:C{$rowNum}");
+            $sheet->setCellValueExplicit('D' . $rowNum, $sumDocs, DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit('E' . $rowNum, $sumItems, DataType::TYPE_NUMERIC);
+            $sheet->setCellValue('F' . $rowNum, "=SUM(F6:F{$lastDataRow})");
+            $sheet->setCellValueExplicit('G' . $rowNum, '-', DataType::TYPE_STRING);
+            $sheet->getStyle("D{$rowNum}:F{$rowNum}")->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle("A{$rowNum}:G{$rowNum}")->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'EDF2F7']],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']]],
+            ]);
+            $sheet->getStyle("A{$rowNum}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        } else {
+            $sheet->setCellValue('A6', 'Tidak ada data persetujuan pada periode / filter yang dipilih.');
+            $sheet->mergeCells('A6:G6');
+            $sheet->getStyle('A6')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        }
+
+        $widths = ['A' => 6, 'B' => 28, 'C' => 38, 'D' => 15, 'E' => 16, 'F' => 22, 'G' => 28];
+        foreach ($widths as $col => $w) {
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+        $sheet->freezePane('A6');
+        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
     }
 
     private function _fillSheet($sheet, $sheetTitle, $docTitle, $periodLabel, $statusFilter, $rows)
@@ -338,7 +479,6 @@ class Export_persetujuan extends CI_Controller
             if (!empty($r['link'])) {
                 $sheet->setCellValueExplicit('M' . $rowNum, $r['link'], DataType::TYPE_STRING);
                 $sheet->getCell('M' . $rowNum)->getHyperlink()->setUrl($r['link']);
-                $sheet->getStyle('M' . $rowNum)->getFont()->setUnderline(true)->getColor()->setRGB('0D6EFD');
             } else {
                 $sheet->setCellValueExplicit('M' . $rowNum, '-', DataType::TYPE_STRING);
             }
@@ -365,6 +505,9 @@ class Export_persetujuan extends CI_Controller
             $sheet->getStyle("I5:J{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("K5:K{$lastDataRow}")->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle("G5:H{$lastDataRow}")->getAlignment()->setWrapText(true);
+            $sheet->getStyle("M5:M{$lastDataRow}")->applyFromArray([
+                'font' => ['underline' => true, 'color' => ['rgb' => '0D6EFD']],
+            ]);
 
             // Total rows per currency
             if (empty($totalsByCurrency)) {

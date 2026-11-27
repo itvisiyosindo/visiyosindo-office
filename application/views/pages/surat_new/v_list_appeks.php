@@ -187,7 +187,7 @@
 				$('#main-modal-marketing').modal('hide')
 			}
 		});
-		--
+
 		$("#btn-export").click(function() {
 			if ($('#main-modal-marketing #namamarketing').val() == '') {
 				Swal.fire({

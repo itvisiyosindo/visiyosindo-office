@@ -3,6 +3,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Md_export_persetujuan extends CI_Model
 {
+    private $_penggunaMap = null;
+    private $_suratStatusMap = null;
+
     public function __construct()
     {
         parent::__construct();
@@ -62,6 +65,15 @@ class Md_export_persetujuan extends CI_Model
             $selectedJenis = $allJenis;
         }
 
+        // Preload map pengguna sekali saja (menghindari ribuan JOIN unindexed)
+        $this->_loadPenggunaMap();
+
+        // Preload surat_list hanya jika jenis yg diminta menggunakan surat_list
+        $suratListJenis = ['pbok', 'ppa', 'pb', 'spp_bayar', 'pkk', 'pkketoll', 'gc', 'approval_harga', 'kg', 'pd', 'sd'];
+        if (!empty(array_intersect($selectedJenis, $suratListJenis))) {
+            $this->_loadSuratStatusMap();
+        }
+
         $statusFilter = isset($filters['status']) ? strtolower(trim((string)$filters['status'])) : 'all';
         $rows = [];
 
@@ -90,28 +102,113 @@ class Md_export_persetujuan extends CI_Model
         return $rows;
     }
 
-    private function _buildDateWhere($colExpr, $filters)
+    private function _loadPenggunaMap()
+    {
+        if ($this->_penggunaMap !== null) {
+            return;
+        }
+        $this->_penggunaMap = [];
+        $res = $this->db->query("SELECT pengguna_id, nama FROM pengguna")->result();
+        foreach ($res as $u) {
+            $this->_penggunaMap[(int)$u->pengguna_id] = trim((string)$u->nama);
+        }
+    }
+
+    private function _getNamaPengguna($id)
+    {
+        $k = (int)$id;
+        return isset($this->_penggunaMap[$k]) ? $this->_penggunaMap[$k] : '';
+    }
+
+    /**
+     * Load surat_list sekali saja dan otomatis deduplikasi jika ada (id_kat_surat, id_srt) kembar
+     */
+    private function _loadSuratStatusMap()
+    {
+        if ($this->_suratStatusMap !== null) {
+            return;
+        }
+        $this->_suratStatusMap = [];
+        $res = $this->db->query("SELECT id_kat_surat, id_srt, status FROM surat_list WHERE id_kat_surat IN (1,2,3,4,5,6,7,8,9,10,11,12,20) ORDER BY id_list_surat ASC")->result();
+        foreach ($res as $s) {
+            $this->_suratStatusMap[(int)$s->id_kat_surat][(int)$s->id_srt] = (int)$s->status;
+        }
+    }
+
+    private function _getSuratStatus($katId, $srtId)
+    {
+        $k = (int)$katId;
+        $i = (int)$srtId;
+        return isset($this->_suratStatusMap[$k][$i]) ? $this->_suratStatusMap[$k][$i] : 0;
+    }
+
+    /**
+     * Fetch detail rows dalam batch O(N+M) tanpa JOIN unindexed
+     */
+    private function _fetchDetailsGrouped($table, $fkCol, $ids, $selectCols = '*', $extraWhere = '', $orderBy = '')
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        $cleanIds = array_values(array_unique(array_map('intval', $ids)));
+        $grouped = [];
+        // Chunk IN() agar tetap ringan walau ribuan ID
+        foreach (array_chunk($cleanIds, 1000) as $chunk) {
+            $sql = "SELECT $selectCols FROM `$table` WHERE `$fkCol` IN (" . implode(',', $chunk) . ")";
+            if ($extraWhere !== '') {
+                $sql .= " AND ($extraWhere)";
+            }
+            if ($orderBy !== '') {
+                $sql .= " ORDER BY $orderBy";
+            }
+            $rows = $this->db->query($sql)->result();
+            foreach ($rows as $row) {
+                $grouped[(int)$row->$fkCol][] = $row;
+            }
+        }
+        return $grouped;
+    }
+
+    /**
+     * Bangun kondisi tanggal yang SARGable untuk kolom date/datetime
+     */
+    private function _buildDateWhere($colExpr, $filters, $isDatetime = false)
     {
         $tglAwal = !empty($filters['tgl_awal']) ? trim((string)$filters['tgl_awal']) : '';
         $tglAkhir = !empty($filters['tgl_akhir']) ? trim((string)$filters['tgl_akhir']) : '';
         $tahun = !empty($filters['tahun']) ? (int)$filters['tahun'] : 0;
         $bulan = !empty($filters['bulan']) ? (int)$filters['bulan'] : 0;
 
-        $conds = [];
+        $start = '';
+        $endExclusive = '';
+
         if ($tglAwal !== '' || $tglAkhir !== '') {
             if ($tglAwal !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tglAwal)) {
-                $conds[] = "DATE($colExpr) >= " . $this->db->escape($tglAwal);
+                $start = $tglAwal;
             }
             if ($tglAkhir !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tglAkhir)) {
-                $conds[] = "DATE($colExpr) <= " . $this->db->escape($tglAkhir);
+                $endExclusive = date('Y-m-d', strtotime($tglAkhir . ' +1 day'));
             }
-        } else {
-            if ($tahun > 0) {
-                $conds[] = "YEAR($colExpr) = " . $tahun;
-            }
+        } elseif ($tahun > 0) {
             if ($bulan >= 1 && $bulan <= 12) {
-                $conds[] = "MONTH($colExpr) = " . $bulan;
+                $start = sprintf('%04d-%02d-01', $tahun, $bulan);
+                $endExclusive = date('Y-m-d', strtotime($start . ' +1 month'));
+            } else {
+                $start = sprintf('%04d-01-01', $tahun);
+                $endExclusive = sprintf('%04d-01-01', $tahun + 1);
             }
+        } elseif ($bulan >= 1 && $bulan <= 12) {
+            return "MONTH($colExpr) = " . $bulan;
+        }
+
+        $conds = [];
+        if ($start !== '') {
+            $val = $isDatetime ? ($start . ' 00:00:00') : $start;
+            $conds[] = "$colExpr >= " . $this->db->escape($val);
+        }
+        if ($endExclusive !== '') {
+            $val = $isDatetime ? ($endExclusive . ' 00:00:00') : $endExclusive;
+            $conds[] = "$colExpr < " . $this->db->escape($val);
         }
 
         return empty($conds) ? '1=1' : implode(' AND ', $conds);
@@ -200,25 +297,30 @@ class Md_export_persetujuan extends CI_Model
         $dateExpr = "COALESCE(NULLIF(h.tgl_pengajuan, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
 
-        $sql = "
-            SELECT h.id_pbok, h.kode_pbok, $dateExpr AS tgl, h.alamat, h.bank, h.rekening, h.ats_nama,
-                   h.mata_uang AS header_mu, h.pengajuan_ttd_1, h.ttd_2, h.ttd_3,
-                   s.status AS stat_persetujuan, p.nama AS pengaju,
-                   d.keterangan AS item_ket, d.qty, d.estimasi, d.total, d.mata_uang AS item_mu, d.catatan AS item_catatan
+        $headers = $this->db->query("
+            SELECT h.id_pbok, h.kode_pbok, $dateExpr AS tgl, h.id_pengguna, h.alamat, h.bank, h.ats_nama,
+                   h.mata_uang AS header_mu, h.ttd_2, h.ttd_3
             FROM surat_pbok h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_pbok AND s.id_kat_surat = 4
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
-            LEFT JOIN surat_pbok_detail d ON d.id_pbok = h.id_pbok
             WHERE $whereDate
-            ORDER BY tgl DESC, h.id_pbok DESC, d.id ASC
-        ";
-        $res = $this->db->query($sql)->result();
+            ORDER BY tgl DESC, h.id_pbok DESC
+        ")->result();
+
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id_pbok; }, $headers);
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_pbok_detail', 'id_pbok', $ids,
+            'id, id_pbok, keterangan, qty, estimasi, total, mata_uang, catatan', '', 'id ASC'
+        );
+
         $out = [];
-        foreach ($res as $r) {
-            if ((int)$r->stat_persetujuan === 0) {
+        foreach ($headers as $r) {
+            $id = (int)$r->id_pbok;
+            $stat = $this->_getSuratStatus(4, $id);
+            if ($stat === 0) {
                 $st = 'Baru Diajukan';
                 $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
+            } elseif ($stat === 1) {
                 if ((string)$r->ttd_3 === '1') {
                     $st = 'Disetujui';
                     $sg = 'disetujui';
@@ -234,20 +336,38 @@ class Md_export_persetujuan extends CI_Model
                 $sg = 'ditolak';
             }
 
+            $pengaju = $this->_getNamaPengguna($r->id_pengguna);
             $pihak = $this->_cleanParts([$r->ats_nama, $r->bank, $r->alamat], ' / ');
             $namaTrx = 'PBOK' . ($pihak !== '' ? ' - ' . $pihak : '');
-            $item = $this->_cleanParts([$r->item_ket, $r->item_catatan ? '(Catatan: ' . $r->item_catatan . ')' : ''], ' ');
-            $muCode = !empty($r->item_mu) ? $r->item_mu : (!empty($r->header_mu) ? $r->header_mu : 1);
-            $nom = $this->_cleanNum($r->total);
-            if ($nom == 0 && $this->_cleanNum($r->estimasi) > 0) {
-                $nom = $this->_cleanNum($r->estimasi) * max(1, (int)$r->qty);
-            }
+            $link = 'surat/show/detail_surat/pbok/' . $id . '/1';
+            $items = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
 
-            $out[] = $this->_row(
-                'pbok', 'PBOK', $r->tgl, $r->kode_pbok, $r->pengaju,
-                $namaTrx, $item ?: '-', (int)$r->qty ?: 1, mata_uang($muCode), $nom,
-                $st, $sg, 'surat/show/detail_surat/pbok/' . $r->id_pbok . '/1'
-            );
+            $emitted = 0;
+            foreach ($items as $d) {
+                $ket = trim((string)$d->keterangan);
+                $nom = $this->_cleanNum($d->total);
+                if ($nom == 0 && $this->_cleanNum($d->estimasi) > 0) {
+                    $nom = $this->_cleanNum($d->estimasi) * max(1, (int)$d->qty);
+                }
+                if ($ket === '' && $nom == 0) {
+                    continue;
+                }
+                $itemTxt = $this->_cleanParts([$ket, !empty($d->catatan) ? '(Catatan: ' . $d->catatan . ')' : ''], ' ');
+                $muCode = !empty($d->mata_uang) ? $d->mata_uang : (!empty($r->header_mu) ? $r->header_mu : 1);
+                $out[] = $this->_row(
+                    'pbok', 'PBOK', $r->tgl, $r->kode_pbok, $pengaju,
+                    $namaTrx, $itemTxt ?: '-', (int)$d->qty ?: 1, mata_uang($muCode), $nom,
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    'pbok', 'PBOK', $r->tgl, $r->kode_pbok, $pengaju,
+                    $namaTrx, '-', 1, mata_uang($r->header_mu ?: 1), 0,
+                    $st, $sg, $link
+                );
+            }
         }
         return $out;
     }
@@ -256,25 +376,30 @@ class Md_export_persetujuan extends CI_Model
     private function _fetch_ppa($filters)
     {
         $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters);
-        $sql = "
-            SELECT h.id_ppa, h.kode_ppa, h.tgl_pengajuan AS tgl, h.alamat, h.bank, h.ats_nama, h.catatan,
-                   h.pengajuan_ttd_1, h.ttd_2, h.ttd_3, h.ttd_4,
-                   s.status AS stat_persetujuan, p.nama AS pengaju,
-                   d.keterangan AS item_ket, d.qty, d.estimasi, d.total
+        $headers = $this->db->query("
+            SELECT h.id_ppa, h.kode_ppa, h.tgl_pengajuan AS tgl, h.id_pengguna, h.alamat, h.bank, h.ats_nama,
+                   h.catatan, h.ttd_2, h.ttd_3, h.ttd_4
             FROM surat_ppa h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_ppa AND s.id_kat_surat = 7
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
-            LEFT JOIN surat_ppa_detail d ON d.id_ppa = h.id_ppa
             WHERE $whereDate
-            ORDER BY h.tgl_pengajuan DESC, h.id_ppa DESC, d.id ASC
-        ";
-        $res = $this->db->query($sql)->result();
+            ORDER BY h.tgl_pengajuan DESC, h.id_ppa DESC
+        ")->result();
+
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id_ppa; }, $headers);
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_ppa_detail', 'id_ppa', $ids,
+            'id, id_ppa, keterangan, qty, estimasi, total', '', 'id ASC'
+        );
+
         $out = [];
-        foreach ($res as $r) {
-            if ((int)$r->stat_persetujuan === 0) {
+        foreach ($headers as $r) {
+            $id = (int)$r->id_ppa;
+            $stat = $this->_getSuratStatus(7, $id);
+            if ($stat === 0) {
                 $st = 'Baru Diajukan';
                 $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
+            } elseif ($stat === 1) {
                 if ((string)$r->ttd_4 === '1') {
                     $st = 'Disetujui';
                     $sg = 'disetujui';
@@ -293,19 +418,37 @@ class Md_export_persetujuan extends CI_Model
                 $sg = 'ditolak';
             }
 
+            $pengaju = $this->_getNamaPengguna($r->id_pengguna);
             $pihak = $this->_cleanParts([$r->alamat, $r->ats_nama, $r->bank], ' / ');
             $namaTrx = 'PPA' . ($pihak !== '' ? ' - ' . $pihak : '');
-            $item = $this->_cleanParts([$r->item_ket, $r->catatan ? '(Catatan: ' . $r->catatan . ')' : ''], ' ');
-            $nom = $this->_cleanNum($r->total);
-            if ($nom == 0 && $this->_cleanNum($r->estimasi) > 0) {
-                $nom = $this->_cleanNum($r->estimasi) * max(1, (int)$r->qty);
-            }
+            $link = 'surat/show/detail_surat/ppa/' . $id . '/1';
+            $items = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
 
-            $out[] = $this->_row(
-                'ppa', 'PPA', $r->tgl, $r->kode_ppa, $r->pengaju,
-                $namaTrx, $item ?: '-', (int)$r->qty ?: 1, 'Rp', $nom,
-                $st, $sg, 'surat/show/detail_surat/ppa/' . $r->id_ppa . '/1'
-            );
+            $emitted = 0;
+            foreach ($items as $d) {
+                $ket = trim((string)$d->keterangan);
+                $nom = $this->_cleanNum($d->total);
+                if ($nom == 0 && $this->_cleanNum($d->estimasi) > 0) {
+                    $nom = $this->_cleanNum($d->estimasi) * max(1, (int)$d->qty);
+                }
+                if ($ket === '' && $nom == 0) {
+                    continue;
+                }
+                $itemTxt = $this->_cleanParts([$ket, !empty($r->catatan) ? '(Catatan: ' . $r->catatan . ')' : ''], ' ');
+                $out[] = $this->_row(
+                    'ppa', 'PPA', $r->tgl, $r->kode_ppa, $pengaju,
+                    $namaTrx, $itemTxt ?: '-', (int)$d->qty ?: 1, 'Rp', $nom,
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    'ppa', 'PPA', $r->tgl, $r->kode_ppa, $pengaju,
+                    $namaTrx, $r->catatan ?: '-', 1, 'Rp', 0,
+                    $st, $sg, $link
+                );
+            }
         }
         return $out;
     }
@@ -313,42 +456,31 @@ class Md_export_persetujuan extends CI_Model
     // 3. Pembiayaan Dinas
     private function _fetch_pb($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters);
+        $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters, true);
         $headers = $this->db->query("
-            SELECT h.id_pb, h.kode_pb, h.tgl_pengajuan AS tgl, h.kota, h.keperluan, h.tgl_pergi, h.tgl_kembali,
-                   h.pengajuan_ttd_2, h.pengajuan_ttd_3, h.laporan_ttd_2, h.laporan_ttd_3, h.persetujuan_ga,
-                   s.status AS stat_persetujuan, p.nama AS pengaju
+            SELECT h.id_pb, h.kode_pb, h.tgl_pengajuan AS tgl, h.id_pengguna, h.kota, h.keperluan,
+                   h.pengajuan_ttd_2, h.pengajuan_ttd_3, h.laporan_ttd_2, h.laporan_ttd_3, h.persetujuan_ga
             FROM surat_biaya_dinas h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_pb AND s.id_kat_surat = 1
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
             WHERE $whereDate
             ORDER BY h.tgl_pengajuan DESC, h.id_pb DESC
         ")->result();
 
-        if (empty($headers)) {
-            return [];
-        }
+        if (empty($headers)) return [];
 
         $ids = array_map(function ($x) { return (int)$x->id_pb; }, $headers);
-        $detailsRaw = $this->db->query("
-            SELECT id_pb, kode_laporan, tanggal, keterangan, nominal
-            FROM surat_detail_biaya_dinas
-            WHERE id_pb IN (" . implode(',', $ids) . ") AND kode_laporan IN (1, 2)
-            ORDER BY id_detail_pb ASC
-        ")->result();
-
-        $byPb = [];
-        foreach ($detailsRaw as $d) {
-            $byPb[(int)$d->id_pb][(int)$d->kode_laporan][] = $d;
-        }
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_detail_biaya_dinas', 'id_pb', $ids,
+            'id_detail_pb, id_pb, kode_laporan, keterangan, nominal', 'kode_laporan IN (1, 2)', 'id_detail_pb ASC'
+        );
 
         $out = [];
         foreach ($headers as $r) {
             $id = (int)$r->id_pb;
-            if ((int)$r->stat_persetujuan === 0) {
+            $stat = $this->_getSuratStatus(1, $id);
+            if ($stat === 0) {
                 $st = 'Baru Diajukan';
                 $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
+            } elseif ($stat === 1) {
                 if ((string)$r->pengajuan_ttd_3 === '1') {
                     $st = 'Pengajuan Disetujui';
                     $sg = 'disetujui';
@@ -359,7 +491,7 @@ class Md_export_persetujuan extends CI_Model
                     $st = 'Disetujui Finance';
                     $sg = 'proses';
                 }
-            } elseif ((int)$r->stat_persetujuan === 2) {
+            } elseif ($stat === 2) {
                 if ((int)$r->persetujuan_ga === 1) {
                     $st = 'Laporan Disetujui GA';
                     $sg = 'proses';
@@ -370,7 +502,7 @@ class Md_export_persetujuan extends CI_Model
                     $st = 'Laporan Diajukan';
                     $sg = 'proses';
                 }
-            } elseif ((int)$r->stat_persetujuan === 3) {
+            } elseif ($stat === 3) {
                 if ((string)$r->laporan_ttd_3 === '1') {
                     $st = 'Laporan Disetujui';
                     $sg = 'disetujui';
@@ -386,31 +518,37 @@ class Md_export_persetujuan extends CI_Model
                 $sg = 'ditolak';
             }
 
+            $pengaju = $this->_getNamaPengguna($r->id_pengguna);
             $namaTrx = 'Pembiayaan Dinas - ' . $this->_cleanParts([$r->kota, $r->keperluan], ': ');
-            // Gunakan realisasi (kode_laporan=2) jika sudah dilaporkan agar tidak dobel hitung dengan estimasi (kode_laporan=1)
-            $useKode = !empty($byPb[$id][2]) ? 2 : 1;
-            $tag = ($useKode === 2) ? '[Realisasi] ' : '[Pengajuan] ';
-            $items = !empty($byPb[$id][$useKode]) ? $byPb[$id][$useKode] : [];
+            $link = 'surat/show/detail_surat/PB/' . $id . '/1';
 
-            if (empty($items)) {
-                $out[] = $this->_row(
-                    'pb', 'Pembiayaan Dinas', $r->tgl, $r->kode_pb, $r->pengaju,
-                    $namaTrx, $r->keperluan ?: '-', 1, 'Rp', 0,
-                    $st, $sg, 'surat/show/detail_surat/PB/' . $id . '/1'
-                );
-                continue;
+            $rawItems = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
+            $byKode = [1 => [], 2 => []];
+            foreach ($rawItems as $d) {
+                $byKode[(int)$d->kode_laporan][] = $d;
             }
+            // Gunakan realisasi (kode_laporan=2) jika sudah dilaporkan agar tidak dobel hitung estimasi (1)
+            $useKode = !empty($byKode[2]) ? 2 : 1;
+            $tag = ($useKode === 2) ? '[Realisasi] ' : '[Pengajuan] ';
+            $items = $byKode[$useKode];
 
+            $emitted = 0;
             foreach ($items as $d) {
                 $ket = trim((string)$d->keterangan);
                 $nom = $this->_cleanNum($d->nominal);
-                if ($ket === '' && $nom == 0) {
-                    continue;
-                }
+                if ($ket === '' && $nom == 0) continue;
                 $out[] = $this->_row(
-                    'pb', 'Pembiayaan Dinas', $r->tgl, $r->kode_pb, $r->pengaju,
+                    'pb', 'Pembiayaan Dinas', $r->tgl, $r->kode_pb, $pengaju,
                     $namaTrx, $tag . ($ket ?: '-'), 1, 'Rp', $nom,
-                    $st, $sg, 'surat/show/detail_surat/PB/' . $id . '/1'
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    'pb', 'Pembiayaan Dinas', $r->tgl, $r->kode_pb, $pengaju,
+                    $namaTrx, $r->keperluan ?: '-', 1, 'Rp', 0,
+                    $st, $sg, $link
                 );
             }
         }
@@ -420,30 +558,31 @@ class Md_export_persetujuan extends CI_Model
     // 4. Permintaan Pembayaran (SPP Surat)
     private function _fetch_spp_bayar($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters);
-        $sql = "
-            SELECT h.id, h.kode, h.tgl_pengajuan AS tgl, h.rek_bank, h.rek_nama, h.kode_mata_uang, h.catatan,
-                   h.ttd1, h.ttd2, h.ttd3, s.status AS stat_persetujuan, p.nama AS pengaju,
-                   d.keterangan AS item_ket, d.nominal, d.mata_uang AS item_mu
+        $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters, true);
+        $headers = $this->db->query("
+            SELECT h.id, h.kode, h.tgl_pengajuan AS tgl, h.id_pengaju, h.rek_bank, h.rek_nama,
+                   h.kode_mata_uang, h.ttd2, h.ttd3
             FROM surat_permintaan_pembayaran h
-            LEFT JOIN surat_list s ON s.id_srt = h.id AND s.id_kat_surat = 2
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
-            LEFT JOIN surat_permintaan_pembayaran_detail d ON d.id_srt = h.id
             WHERE $whereDate
-            ORDER BY h.tgl_pengajuan DESC, h.id DESC, d.id ASC
-        ";
-        $res = $this->db->query($sql)->result();
+            ORDER BY h.tgl_pengajuan DESC, h.id DESC
+        ")->result();
+
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id; }, $headers);
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_permintaan_pembayaran_detail', 'id_srt', $ids,
+            'id, id_srt, keterangan, nominal, mata_uang', '', 'id ASC'
+        );
+
         $out = [];
-        foreach ($res as $r) {
-            $ket = trim((string)$r->item_ket);
-            $nom = $this->_cleanNum($r->nominal);
-            if ($ket === '' && $nom == 0) {
-                continue;
-            }
-            if ((int)$r->stat_persetujuan === 0) {
+        foreach ($headers as $r) {
+            $id = (int)$r->id;
+            $stat = $this->_getSuratStatus(2, $id);
+            if ($stat === 0) {
                 $st = 'Baru Diajukan';
                 $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
+            } elseif ($stat === 1) {
                 if ((string)$r->ttd3 === '1') {
                     $st = 'Disetujui';
                     $sg = 'disetujui';
@@ -459,15 +598,32 @@ class Md_export_persetujuan extends CI_Model
                 $sg = 'ditolak';
             }
 
+            $pengaju = $this->_getNamaPengguna($r->id_pengaju);
             $pihak = $this->_cleanParts([$r->rek_nama, $r->rek_bank], ' / ');
             $namaTrx = 'Permintaan Pembayaran' . ($pihak !== '' ? ' - ' . $pihak : '');
-            $muCode = !empty($r->item_mu) ? $r->item_mu : (!empty($r->kode_mata_uang) ? $r->kode_mata_uang : 1);
+            $link = 'surat/show/detail_surat/spp/' . $id . '/1';
+            $items = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
 
-            $out[] = $this->_row(
-                'spp_bayar', 'Permintaan Pembayaran', $r->tgl, $r->kode, $r->pengaju,
-                $namaTrx, $ket ?: '-', 1, mata_uang($muCode), $nom,
-                $st, $sg, 'surat/show/detail_surat/spp/' . $r->id . '/1'
-            );
+            $emitted = 0;
+            foreach ($items as $d) {
+                $ket = trim((string)$d->keterangan);
+                $nom = $this->_cleanNum($d->nominal);
+                if ($ket === '' && $nom == 0) continue;
+                $muCode = !empty($d->mata_uang) ? $d->mata_uang : (!empty($r->kode_mata_uang) ? $r->kode_mata_uang : 1);
+                $out[] = $this->_row(
+                    'spp_bayar', 'Permintaan Pembayaran', $r->tgl, $r->kode, $pengaju,
+                    $namaTrx, $ket ?: '-', 1, mata_uang($muCode), $nom,
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    'spp_bayar', 'Permintaan Pembayaran', $r->tgl, $r->kode, $pengaju,
+                    $namaTrx, '-', 1, mata_uang($r->kode_mata_uang ?: 1), 0,
+                    $st, $sg, $link
+                );
+            }
         }
         return $out;
     }
@@ -488,34 +644,34 @@ class Md_export_persetujuan extends CI_Model
     {
         $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters);
         $hasHeaderMu = ($tbl === 'surat_pkk');
-        $hasDetailMu = ($tbl === 'surat_pkk');
-        $selMu = ($hasHeaderMu ? 'h.kode_mata_uang' : '1') . ' AS header_mu, ' . ($hasDetailMu ? 'd.mata_uang' : '1') . ' AS item_mu';
-        $selKartu = ($tbl === 'surat_pkketoll') ? 'd.nokartu,' : "'' AS nokartu,";
+        $selHeaderMu = $hasHeaderMu ? 'h.kode_mata_uang AS header_mu' : '1 AS header_mu';
 
-        $sql = "
-            SELECT h.id_pkk, h.kode_pkk, h.tgl_pengajuan AS tgl, h.type, h.keterangan_pengaju, h.nama_bank, h.ats_nama,
-                   h.ttd_2, h.ttd_3, $selMu, s.status AS stat_persetujuan, p.nama AS pengaju,
-                   $selKartu d.ket_detail, d.jenis_pengajuan, d.nominal
-            FROM $tbl h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_pkk AND s.id_kat_surat = $katId
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
-            LEFT JOIN $dtlTbl d ON d.id_pkk = h.id_pkk
+        $headers = $this->db->query("
+            SELECT h.id_pkk, h.kode_pkk, h.tgl_pengajuan AS tgl, h.id_pengguna, h.type, h.keterangan_pengaju,
+                   h.ats_nama, h.ttd_2, h.ttd_3, $selHeaderMu
+            FROM `$tbl` h
             WHERE $whereDate
-            ORDER BY h.tgl_pengajuan DESC, h.id_pkk DESC, d.id_dpkk ASC
-        ";
-        $res = $this->db->query($sql)->result();
+            ORDER BY h.tgl_pengajuan DESC, h.id_pkk DESC
+        ")->result();
+
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id_pkk; }, $headers);
+        $dtlSelect = ($tbl === 'surat_pkketoll')
+            ? 'id_dpkk, id_pkk, nokartu, ket_detail, jenis_pengajuan, nominal, 1 AS mata_uang'
+            : "id_dpkk, id_pkk, '' AS nokartu, ket_detail, jenis_pengajuan, nominal, mata_uang";
+
+        $detailsMap = $this->_fetchDetailsGrouped($dtlTbl, 'id_pkk', $ids, $dtlSelect, '', 'id_dpkk ASC');
+
         $out = [];
         $jMap = [1 => '[Biaya Operasional] ', 2 => '[Biaya Dinas] ', 3 => '[Catatan Finance] '];
-        foreach ($res as $r) {
-            $ket = trim((string)$r->ket_detail);
-            $nom = $this->_cleanNum($r->nominal);
-            if ($ket === '' && $nom == 0) {
-                continue;
-            }
-            if ((int)$r->stat_persetujuan === 0) {
+        foreach ($headers as $r) {
+            $id = (int)$r->id_pkk;
+            $stat = $this->_getSuratStatus($katId, $id);
+            if ($stat === 0) {
                 $st = 'Baru Diajukan';
                 $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
+            } elseif ($stat === 1) {
                 if ((string)$r->ttd_3 === '1') {
                     $st = 'Disetujui';
                     $sg = 'disetujui';
@@ -531,16 +687,34 @@ class Md_export_persetujuan extends CI_Model
                 $sg = 'ditolak';
             }
 
+            $pengaju = $this->_getNamaPengguna($r->id_pengguna);
             $namaTrx = $jenisLabel . ' (' . ($r->type ?: '-') . ') - ' . ($r->keterangan_pengaju ?: $r->ats_nama ?: '-');
-            $prefix = isset($jMap[(int)$r->jenis_pengajuan]) ? $jMap[(int)$r->jenis_pengajuan] : '';
-            $kartu = trim((string)$r->nokartu) !== '' ? ' [Kartu: ' . trim($r->nokartu) . ']' : '';
-            $muCode = !empty($r->item_mu) ? $r->item_mu : (!empty($r->header_mu) ? $r->header_mu : 1);
+            $link = 'surat/show/detail_surat/' . $urlSlug . '/' . $id . '/1';
+            $items = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
 
-            $out[] = $this->_row(
-                $jenisKey, $jenisLabel, $r->tgl, $r->kode_pkk, $r->pengaju,
-                $namaTrx, $prefix . ($ket ?: '-') . $kartu, 1, mata_uang($muCode), $nom,
-                $st, $sg, 'surat/show/detail_surat/' . $urlSlug . '/' . $r->id_pkk . '/1'
-            );
+            $emitted = 0;
+            foreach ($items as $d) {
+                $ket = trim((string)$d->ket_detail);
+                $nom = $this->_cleanNum($d->nominal);
+                if ($ket === '' && $nom == 0) continue;
+                $prefix = isset($jMap[(int)$d->jenis_pengajuan]) ? $jMap[(int)$d->jenis_pengajuan] : '';
+                $kartu = trim((string)$d->nokartu) !== '' ? ' [Kartu: ' . trim($d->nokartu) . ']' : '';
+                $muCode = !empty($d->mata_uang) ? $d->mata_uang : (!empty($r->header_mu) ? $r->header_mu : 1);
+
+                $out[] = $this->_row(
+                    $jenisKey, $jenisLabel, $r->tgl, $r->kode_pkk, $pengaju,
+                    $namaTrx, $prefix . ($ket ?: '-') . $kartu, 1, mata_uang($muCode), $nom,
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    $jenisKey, $jenisLabel, $r->tgl, $r->kode_pkk, $pengaju,
+                    $namaTrx, $r->keterangan_pengaju ?: '-', 1, mata_uang($r->header_mu ?: 1), 0,
+                    $st, $sg, $link
+                );
+            }
         }
         return $out;
     }
@@ -548,38 +722,54 @@ class Md_export_persetujuan extends CI_Model
     // 7. Limit Grab
     private function _fetch_gc($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters);
-        $sql = "
-            SELECT h.id, h.kode, h.tgl_pengajuan AS tgl, h.kota, h.keperluan,
-                   s.status AS stat_persetujuan, p.nama AS pengaju,
-                   d.keterangan AS item_ket, d.nominal
+        $whereDate = $this->_buildDateWhere('h.tgl_pengajuan', $filters, true);
+        $headers = $this->db->query("
+            SELECT h.id, h.kode, h.tgl_pengajuan AS tgl, h.id_pengaju, h.kota, h.keperluan
             FROM surat_gojek_corp h
-            LEFT JOIN surat_list s ON s.id_srt = h.id AND s.id_kat_surat = 3
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
-            LEFT JOIN surat_gojek_corp_detail d ON d.id_srt = h.id
             WHERE $whereDate
-            ORDER BY h.tgl_pengajuan DESC, h.id DESC, d.id ASC
-        ";
-        $res = $this->db->query($sql)->result();
-        $out = [];
-        foreach ($res as $r) {
-            if ((int)$r->stat_persetujuan === 0) {
-                $st = 'Baru Diajukan';
-                $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
-                $st = 'Disetujui';
-                $sg = 'disetujui';
-            } else {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
-            }
+            ORDER BY h.tgl_pengajuan DESC, h.id DESC
+        ")->result();
 
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id; }, $headers);
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_gojek_corp_detail', 'id_srt', $ids,
+            'id, id_srt, keterangan, nominal', '', 'id ASC'
+        );
+
+        $out = [];
+        foreach ($headers as $r) {
+            $id = (int)$r->id;
+            $stat = $this->_getSuratStatus(3, $id);
+            if ($stat === 0) { $st = 'Baru Diajukan'; $sg = 'proses'; }
+            elseif ($stat === 1) { $st = 'Disetujui'; $sg = 'disetujui'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
+
+            $pengaju = $this->_getNamaPengguna($r->id_pengaju);
             $namaTrx = 'Limit Grab - ' . $this->_cleanParts([$r->keperluan, $r->kota], ' / ');
-            $out[] = $this->_row(
-                'gc', 'Limit Grab', $r->tgl, $r->kode, $r->pengaju,
-                $namaTrx, $r->item_ket ?: $r->keperluan ?: '-', 1, 'Rp', $this->_cleanNum($r->nominal),
-                $st, $sg, 'surat/show/detail_surat/gc/' . $r->id . '/1'
-            );
+            $link = 'surat/show/detail_surat/gc/' . $id . '/1';
+            $items = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
+
+            $emitted = 0;
+            foreach ($items as $d) {
+                $ket = trim((string)$d->keterangan);
+                $nom = $this->_cleanNum($d->nominal);
+                if ($ket === '' && $nom == 0) continue;
+                $out[] = $this->_row(
+                    'gc', 'Limit Grab', $r->tgl, $r->kode, $pengaju,
+                    $namaTrx, $ket ?: $r->keperluan ?: '-', 1, 'Rp', $nom,
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    'gc', 'Limit Grab', $r->tgl, $r->kode, $pengaju,
+                    $namaTrx, $r->keperluan ?: '-', 1, 'Rp', 0,
+                    $st, $sg, $link
+                );
+            }
         }
         return $out;
     }
@@ -587,30 +777,23 @@ class Md_export_persetujuan extends CI_Model
     // 8. Pengajuan LTA
     private function _fetch_lta($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.created_at', $filters);
-        $sql = "
-            SELECT h.*, p.nama AS pengaju, t.nama AS teknisi
+        $whereDate = $this->_buildDateWhere('h.created_at', $filters, true);
+        $res = $this->db->query("
+            SELECT h.*
             FROM helpdesk_lta_pengajuan h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.pengguna_id
-            LEFT JOIN pengguna t ON t.pengguna_id = h.teknisi_id
             WHERE (h.is_active = 1 OR h.is_active IS NULL) AND $whereDate
             ORDER BY h.created_at DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
-            if ((int)$r->status === 5) {
-                $st = 'Disetujui';
-                $sg = 'disetujui';
-            } elseif ((int)$r->status === 99) {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
-            } else {
-                $st = 'Proses Persetujuan';
-                $sg = 'proses';
-            }
+            if ((int)$r->status === 5) { $st = 'Disetujui'; $sg = 'disetujui'; }
+            elseif ((int)$r->status === 99) { $st = 'Ditolak'; $sg = 'ditolak'; }
+            else { $st = 'Proses Persetujuan'; $sg = 'proses'; }
 
-            $namaTrx = 'Pengajuan LTA - ' . ($r->customer_name ?: '-') . (!empty($r->teknisi) ? ' (Teknisi: ' . $r->teknisi . ')' : '');
+            $pengaju = $this->_getNamaPengguna($r->pengguna_id);
+            $teknisi = $this->_getNamaPengguna($r->teknisi_id);
+            $namaTrx = 'Pengajuan LTA - ' . ($r->customer_name ?: '-') . ($teknisi !== '' ? ' (Teknisi: ' . $teknisi . ')' : '');
             $rincian = [];
             if ((int)$r->hari_dinas > 0) $rincian[] = $r->hari_dinas . ' hari dinas';
             if ((float)$r->udara > 0) $rincian[] = 'Udara: Rp ' . number_format($r->udara, 0, ',', '.');
@@ -623,7 +806,7 @@ class Md_export_persetujuan extends CI_Model
             if (!empty($r->catatan_pengaju)) $rincian[] = 'Catatan: ' . $r->catatan_pengaju;
 
             $out[] = $this->_row(
-                'lta', 'Pengajuan LTA', $r->created_at, $r->kode_pengajuan, $r->pengaju,
+                'lta', 'Pengajuan LTA', $r->created_at, $r->kode_pengajuan, $pengaju,
                 $namaTrx, implode(' | ', $rincian) ?: '-', 1, 'Rp', $this->_cleanNum($r->total),
                 $st, $sg, 'lta_pengajuan/show/persetujuan'
             );
@@ -636,16 +819,14 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(tg.tanggal_invoice, '0000-00-00'), DATE(tg.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT tg.id_tagihan, tg.no_invoice, $dateExpr AS tgl, tg.tagihan_type,
+        $res = $this->db->query("
+            SELECT tg.id_tagihan, tg.no_invoice, $dateExpr AS tgl, tg.tagihan_type, tg.created_by,
                    tg.nilai_tagihan, tg.biaya_asuransi, tg.total_tagihan, tg.status_approval, tg.status_bayar,
-                   p.nama AS pengaju,
                    t.no_sj, t.nama_barang, t.no_resi AS resi_trk, c.nama_customer AS cust_trk,
                    e1.nama_ekspedisi AS eks_trk, e2.nama_ekspedisi AS eks_krm, e3.nama_ekspedisi AS eks_direct,
                    kd.kode AS kode_kirim, kd.nama_customer AS cust_krm, kd.keterangan AS ket_krm, kd.no_resi AS resi_krm, kd.ekspedisi AS eks_krm_txt,
                    cfg.role_label AS pending_role
             FROM tagihan_ekspedisi tg
-            LEFT JOIN pengguna p ON p.pengguna_id = tg.created_by
             LEFT JOIN tracking_barang t ON tg.id_tracking = t.id_tracking
             LEFT JOIN customer c ON t.id_customer = c.id_customer
             LEFT JOIN ekspedisi e1 ON t.id_ekspedisi = e1.id_ekspedisi
@@ -655,8 +836,8 @@ class Md_export_persetujuan extends CI_Model
             LEFT JOIN tagihan_approval_config cfg ON tg.status_approval = cfg.status_code
             WHERE $whereDate
             ORDER BY tgl DESC, tg.id_tagihan DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
             if ((int)$r->status_approval === 5) {
@@ -692,8 +873,8 @@ class Md_export_persetujuan extends CI_Model
 
             $nom = (float)$r->total_tagihan > 0 ? (float)$r->total_tagihan : (float)$r->nilai_tagihan;
             $out[] = $this->_row(
-                'tagihan_ekspedisi', 'Tagihan Ekspedisi', $r->tgl, $r->no_invoice ?: ('TAG-' . $r->id_tagihan), $r->pengaju,
-                $namaTrx, implode(' | ', $parts), 1, 'Rp', $nom,
+                'tagihan_ekspedisi', 'Tagihan Ekspedisi', $r->tgl, $r->no_invoice ?: ('TAG-' . $r->id_tagihan),
+                $this->_getNamaPengguna($r->created_by), $namaTrx, implode(' | ', $parts), 1, 'Rp', $nom,
                 $st, $sg, 'tagihan'
             );
         }
@@ -703,17 +884,16 @@ class Md_export_persetujuan extends CI_Model
     // 10. SPP Ekspedisi
     private function _fetch_spp_ekspedisi($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.created_at', $filters);
-        $sql = "
-            SELECT h.id_spp, h.no_spp, h.no_invoice, h.atas_nama, h.nama_bank, h.grand_total, h.total_nilai,
-                   h.jumlah_tagihan, h.status_approval, h.status_bayar, h.catatan, h.created_at AS tgl,
-                   p.nama AS pengaju, cfg.role_label AS pending_role,
+        $whereDate = $this->_buildDateWhere('h.created_at', $filters, true);
+        $res = $this->db->query("
+            SELECT h.id_spp, h.no_spp, h.no_invoice, h.atas_nama, h.grand_total, h.total_nilai,
+                   h.jumlah_tagihan, h.status_approval, h.status_bayar, h.catatan, h.created_at AS tgl, h.created_by,
+                   cfg.role_label AS pending_role,
                    tg.no_invoice AS tg_inv, tg.total_tagihan AS tg_total, tg.nilai_tagihan AS tg_nilai, tg.tagihan_type,
                    t.no_sj, t.nama_barang, c.nama_customer AS cust_trk,
                    kd.kode AS kode_kirim, kd.nama_customer AS cust_krm, kd.keterangan AS ket_krm,
                    COALESCE(e3.nama_ekspedisi, e1.nama_ekspedisi, e2.nama_ekspedisi, kd.ekspedisi) AS nama_ekspedisi
             FROM spp h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.created_by
             LEFT JOIN spp_approval_config cfg ON h.status_approval = cfg.status_code
             LEFT JOIN spp_detail sd ON sd.id_spp = h.id_spp
             LEFT JOIN tagihan_ekspedisi tg ON tg.id_tagihan = sd.id_tagihan
@@ -725,8 +905,8 @@ class Md_export_persetujuan extends CI_Model
             LEFT JOIN ekspedisi e3 ON tg.id_ekspedisi = e3.id_ekspedisi
             WHERE $whereDate
             ORDER BY h.created_at DESC, h.id_spp DESC, sd.id_spp_detail ASC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
             if ((int)$r->status_approval === 5) {
@@ -761,8 +941,8 @@ class Md_export_persetujuan extends CI_Model
             }
 
             $out[] = $this->_row(
-                'spp_ekspedisi', 'SPP Ekspedisi', $r->tgl, $r->no_spp, $r->pengaju,
-                $namaTrx, $itemParts ?: '-', 1, 'Rp', $nom,
+                'spp_ekspedisi', 'SPP Ekspedisi', $r->tgl, $r->no_spp,
+                $this->_getNamaPengguna($r->created_by), $namaTrx, $itemParts ?: '-', 1, 'Rp', $nom,
                 $st, $sg, 'spp'
             );
         }
@@ -774,29 +954,38 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tanggal, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.id, h.kode, $dateExpr AS tgl, h.nama_customer, h.tujuan, h.nama_barang, h.no_sj,
-                   h.gudang_asal, h.rencana_expedisi, h.harga_expedisi, h.status, p.nama AS pengaju,
-                   (SELECT GROUP_CONCAT(CONCAT(d.namaekspedisi, ' (Rp ', d.harga, ')') SEPARATOR '; ')
-                    FROM surat_aprv_detail d WHERE d.id_aprv = h.id AND d.approval = 1) AS eks_disetujui,
-                   (SELECT d.harga FROM surat_aprv_detail d WHERE d.id_aprv = h.id AND d.approval = 1 ORDER BY d.id ASC LIMIT 1) AS harga_disetujui
+        $headers = $this->db->query("
+            SELECT h.id, h.kode, $dateExpr AS tgl, h.id_pengaju, h.nama_customer, h.tujuan, h.nama_barang,
+                   h.no_sj, h.gudang_asal, h.rencana_expedisi, h.harga_expedisi, h.status
             FROM surat_aprv h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id; }, $headers);
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_aprv_detail', 'id_aprv', $ids,
+            'id, id_aprv, namaekspedisi, harga', 'approval = 1', 'id ASC'
+        );
+
         $out = [];
-        foreach ($res as $r) {
-            if ((int)$r->status === 0) {
-                $st = 'Baru Diajukan';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 1 || (int)$r->status === 2) {
-                $st = 'Disetujui';
-                $sg = 'disetujui';
-            } else {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
+        foreach ($headers as $r) {
+            $id = (int)$r->id;
+            if ((int)$r->status === 0) { $st = 'Baru Diajukan'; $sg = 'proses'; }
+            elseif ((int)$r->status === 1 || (int)$r->status === 2) { $st = 'Disetujui'; $sg = 'disetujui'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
+
+            $eksDipilih = [];
+            $hargaDipilih = 0.0;
+            if (!empty($detailsMap[$id])) {
+                foreach ($detailsMap[$id] as $d) {
+                    $eksDipilih[] = trim((string)$d->namaekspedisi) . ' (Rp ' . $d->harga . ')';
+                    if ($hargaDipilih == 0) {
+                        $hargaDipilih = $this->_cleanNum($d->harga);
+                    }
+                }
             }
 
             $namaTrx = 'Approval Ekspedisi - ' . $this->_cleanParts([$r->nama_customer, $r->rencana_expedisi ? 'Eks: ' . $r->rencana_expedisi : ''], ' | ');
@@ -805,14 +994,14 @@ class Md_export_persetujuan extends CI_Model
                 $r->no_sj ? 'Berat/Dimensi: ' . $r->no_sj : '',
                 $r->gudang_asal ? 'Asal: ' . $r->gudang_asal : '',
                 $r->tujuan ? 'Tujuan: ' . $r->tujuan : '',
-                $r->eks_disetujui ? 'Dipilih: ' . $r->eks_disetujui : ''
+                !empty($eksDipilih) ? 'Dipilih: ' . implode('; ', $eksDipilih) : ''
             ], ' | ');
-            $nom = $this->_cleanNum($r->harga_disetujui) > 0 ? $this->_cleanNum($r->harga_disetujui) : $this->_cleanNum($r->harga_expedisi);
+            $nom = $hargaDipilih > 0 ? $hargaDipilih : $this->_cleanNum($r->harga_expedisi);
 
             $out[] = $this->_row(
-                'appeks', 'Approval Ekspedisi', $r->tgl, $r->kode, $r->pengaju,
+                'appeks', 'Approval Ekspedisi', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengaju),
                 $namaTrx, $itemParts ?: '-', 1, 'Rp', $nom,
-                $st, $sg, 'surat_new/show/detail/appeks/' . $r->id
+                $st, $sg, 'surat_new/show/detail/appeks/' . $id
             );
         }
         return $out;
@@ -824,16 +1013,13 @@ class Md_export_persetujuan extends CI_Model
         $dateExpr = "COALESCE(NULLIF(h.tgl_aju, '0000-00-00'), NULLIF(h.tanggal, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
         $headers = $this->db->query("
-            SELECT h.*, $dateExpr AS tgl, p.nama AS pengaju
+            SELECT h.*, $dateExpr AS tgl
             FROM approval_forwarder h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
         ")->result();
 
-        if (empty($headers)) {
-            return [];
-        }
+        if (empty($headers)) return [];
 
         $ids = array_map(function ($x) { return (int)$x->id; }, $headers);
         $detailsRaw = $this->db->query("
@@ -844,6 +1030,7 @@ class Md_export_persetujuan extends CI_Model
             ORDER BY d.dipilih DESC, d.id ASC
         ")->result();
 
+        // Sama persis dengan perhitungan TOTAL ONGKOS KIRIM pada v_detail_forwarder.php (tanpa ppn teks & ins_nilai)
         $costFields = [
             'asal_thc', 'asal_bl_fee', 'asal_vgm', 'asal_agaency_fee', 'asal_handling_fee',
             'asal_transportasi', 'asal_loading', 'asal_custom', 'asal_pickup', 'asal_seal',
@@ -852,9 +1039,8 @@ class Md_export_persetujuan extends CI_Model
             'tuj_cfs', 'tuj_doc', 'tuj_agency_fee', 'tuj_handling', 'tuj_do',
             'tuj_admin', 'tuj_devanning', 'tuj_fordwarding_fee', 'tuj_mechanics', 'tuj_other',
             'cust_clearance', 'cust_red_line', 'cust_handling', 'cust_admin_fee', 'cust_pib_fee',
-            'cust_transfer', 'cust_storage', 'cust_lift', 'cust_asu', 'cust_other',
-            'oth_do', 'oth_storage', 'oth_trucking', 'oth_handling', 'oth_buruh', 'oth_adm', 'oth_other',
-            'ins_nilai', 'ppn'
+            'cust_transfer', 'cust_storage', 'cust_asu', 'cust_other',
+            'oth_storage', 'oth_trucking', 'oth_handling', 'oth_buruh', 'oth_adm', 'oth_other'
         ];
 
         $byApp = [];
@@ -870,22 +1056,11 @@ class Md_export_persetujuan extends CI_Model
         $out = [];
         foreach ($headers as $r) {
             $id = (int)$r->id;
-            if ((int)$r->status === 0) {
-                $st = 'Proses Pengajuan';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 1) {
-                $st = 'Baru Diajukan';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 2) {
-                $st = 'Disetujui Director of Corp Planning';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 3) {
-                $st = 'Disetujui Director';
-                $sg = 'disetujui';
-            } else {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
-            }
+            if ((int)$r->status === 0) { $st = 'Proses Pengajuan'; $sg = 'proses'; }
+            elseif ((int)$r->status === 1) { $st = 'Baru Diajukan'; $sg = 'proses'; }
+            elseif ((int)$r->status === 2) { $st = 'Disetujui Director of Corp Planning'; $sg = 'proses'; }
+            elseif ((int)$r->status === 3) { $st = 'Disetujui Director'; $sg = 'disetujui'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
 
             $chosen = null;
             $allForNames = [];
@@ -905,14 +1080,14 @@ class Md_export_persetujuan extends CI_Model
                 $r->sistem_pengiriman ? 'Via: ' . $r->sistem_pengiriman : '',
                 ($r->pol || $r->pod) ? 'Rute: ' . $r->pol . ' -> ' . $r->pod : '',
                 $r->berat_dimensi ? 'Berat/Dimensi: ' . $r->berat_dimensi : '',
-                $chosen ? 'Forwarder Dipilih: ' . $chosen->nama_forwarder : (!empty($allForNames) ? 'Perbandingan: ' . implode(', ', $allForNames) : ''),
+                $chosen ? 'Forwarder Dipilih: ' . $chosen->nama_forwarder . (!empty($chosen->ppn) ? ' [' . $chosen->ppn . ']' : '') : (!empty($allForNames) ? 'Perbandingan: ' . implode(', ', $allForNames) : ''),
                 $r->nilai_inv ? 'Nilai Inv: ' . $r->mata_nilai_inv . ' ' . $r->nilai_inv : '',
                 $r->keterangan
             ], ' | ');
 
             $nom = $chosen ? $chosen->_total_biaya : 0.0;
             $out[] = $this->_row(
-                'forwarder', 'Approval Forwarder', $r->tgl, $r->kode, $r->pengaju,
+                'forwarder', 'Approval Forwarder', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengguna),
                 $namaTrx, $itemParts ?: '-', 1, 'Rp', $nom,
                 $st, $sg, 'forwarder/show/detail_data/' . $id
             );
@@ -923,26 +1098,31 @@ class Md_export_persetujuan extends CI_Model
     // 13. Approval Harga
     private function _fetch_approval_harga($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.tgl', $filters);
-        $sql = "
-            SELECT h.id_approval, h.kode, h.tgl, h.nama AS nama_marketing, h.nama_customer, h.sistem_pembayaran,
-                   h.ttd_gm, h.pengajuan_ttd_1, h.ttd_2, h.ttd_1,
-                   s.status AS stat_persetujuan, p.nama AS pengaju,
-                   d.nama_barang, d.acuan_hrg, d.hrg_ditawarkan, d.approvall, d.catatan AS item_catatan
+        $whereDate = $this->_buildDateWhere('h.tgl', $filters, true);
+        $headers = $this->db->query("
+            SELECT h.id_approval, h.kode, h.tgl, h.id_pengguna, h.nama AS nama_marketing, h.nama_customer,
+                   h.sistem_pembayaran, h.ttd_gm, h.pengajuan_ttd_1, h.ttd_2, h.ttd_1
             FROM surat_approval h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_approval AND s.id_kat_surat = 8
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
-            LEFT JOIN surat_approval_detail d ON d.id_approval = h.id_approval
             WHERE $whereDate
-            ORDER BY h.tgl DESC, h.id_approval DESC, d.id ASC
-        ";
-        $res = $this->db->query($sql)->result();
+            ORDER BY h.tgl DESC, h.id_approval DESC
+        ")->result();
+
+        if (empty($headers)) return [];
+
+        $ids = array_map(function ($x) { return (int)$x->id_approval; }, $headers);
+        $detailsMap = $this->_fetchDetailsGrouped(
+            'surat_approval_detail', 'id_approval', $ids,
+            'id, id_approval, nama_barang, acuan_hrg, hrg_ditawarkan, catatan', '', 'id ASC'
+        );
+
         $out = [];
-        foreach ($res as $r) {
-            if ((int)$r->stat_persetujuan === 0) {
+        foreach ($headers as $r) {
+            $id = (int)$r->id_approval;
+            $stat = $this->_getSuratStatus(8, $id);
+            if ($stat === 0) {
                 $st = 'Baru Diajukan';
                 $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 1) {
+            } elseif ($stat === 1) {
                 if ((string)$r->ttd_2 === '1' || (string)$r->ttd_1 === '1') {
                     $st = 'Disetujui';
                     $sg = 'disetujui';
@@ -961,19 +1141,37 @@ class Md_export_persetujuan extends CI_Model
                 $sg = 'ditolak';
             }
 
+            $pengaju = $this->_getNamaPengguna($r->id_pengguna) ?: $r->nama_marketing;
             $namaTrx = 'Approval Harga - ' . $this->_cleanParts([$r->nama_customer, $r->nama_marketing ? 'Mkt: ' . $r->nama_marketing : ''], ' | ');
-            $itemParts = $this->_cleanParts([
-                $r->nama_barang,
-                $r->acuan_hrg ? 'Acuan: ' . $r->acuan_hrg : '',
-                $r->sistem_pembayaran ? 'Bayar: ' . $r->sistem_pembayaran : '',
-                $r->item_catatan ? 'Catatan: ' . $r->item_catatan : ''
-            ], ' | ');
+            $link = 'surat/show/detail_surat/approval/' . $id;
+            $items = isset($detailsMap[$id]) ? $detailsMap[$id] : [];
 
-            $out[] = $this->_row(
-                'approval_harga', 'Approval Harga', $r->tgl, $r->kode, $r->pengaju ?: $r->nama_marketing,
-                $namaTrx, $itemParts ?: '-', 1, 'Rp', $this->_cleanNum($r->hrg_ditawarkan),
-                $st, $sg, 'surat/show/detail_surat/approval/' . $r->id_approval
-            );
+            $emitted = 0;
+            foreach ($items as $d) {
+                $brg = trim((string)$d->nama_barang);
+                $nom = $this->_cleanNum($d->hrg_ditawarkan);
+                if ($brg === '' && $nom == 0) continue;
+                $itemParts = $this->_cleanParts([
+                    $brg,
+                    $d->acuan_hrg ? 'Acuan: ' . $d->acuan_hrg : '',
+                    $r->sistem_pembayaran ? 'Bayar: ' . $r->sistem_pembayaran : '',
+                    $d->catatan ? 'Catatan: ' . $d->catatan : ''
+                ], ' | ');
+
+                $out[] = $this->_row(
+                    'approval_harga', 'Approval Harga', $r->tgl, $r->kode, $pengaju,
+                    $namaTrx, $itemParts ?: '-', 1, 'Rp', $nom,
+                    $st, $sg, $link
+                );
+                $emitted++;
+            }
+            if ($emitted === 0) {
+                $out[] = $this->_row(
+                    'approval_harga', 'Approval Harga', $r->tgl, $r->kode, $pengaju,
+                    $namaTrx, '-', 1, 'Rp', 0,
+                    $st, $sg, $link
+                );
+            }
         }
         return $out;
     }
@@ -983,33 +1181,21 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tanggal, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.*, $dateExpr AS tgl, p.nama AS pengaju, pl.identitas_pelanggan
+        $res = $this->db->query("
+            SELECT h.*, $dateExpr AS tgl, pl.identitas_pelanggan
             FROM surat_po h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             LEFT JOIN pelanggan pl ON pl.id_pelanggan = h.id_pelanggan
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
-            if ((string)$r->status === '0' || $r->status === null) {
-                $st = 'Baru Diajukan';
-                $sg = 'proses';
-            } elseif ((string)$r->status === '1') {
-                $st = 'Disetujui Director';
-                $sg = 'disetujui';
-            } elseif ((string)$r->status === '3') {
-                $st = 'Disetujui HR & Legal';
-                $sg = 'proses';
-            } elseif ((string)$r->status === '5') {
-                $st = 'Disetujui General Manager';
-                $sg = 'proses';
-            } else {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
-            }
+            if ((string)$r->status === '0' || $r->status === null) { $st = 'Baru Diajukan'; $sg = 'proses'; }
+            elseif ((string)$r->status === '1') { $st = 'Disetujui Director'; $sg = 'disetujui'; }
+            elseif ((string)$r->status === '3') { $st = 'Disetujui HR & Legal'; $sg = 'proses'; }
+            elseif ((string)$r->status === '5') { $st = 'Disetujui General Manager'; $sg = 'proses'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
 
             $items = [];
             for ($i = 1; $i <= 11; $i++) {
@@ -1025,7 +1211,7 @@ class Md_export_persetujuan extends CI_Model
             ], ' | ');
 
             $out[] = $this->_row(
-                'approval_po', 'Approval PO', $r->tgl, $r->kode, $r->pengaju,
+                'approval_po', 'Approval PO', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengaju),
                 $namaTrx, $ditrx ?: '-', count($items) ?: 1, 'Rp', 0,
                 $st, $sg, 'surat_new/show/detail/po/' . $r->id
             );
@@ -1038,51 +1224,37 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tanggal, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.*, $dateExpr AS tgl, p1.nama AS pengaju, p2.nama AS marketing, pl.identitas_pelanggan AS nama_customer
+        $res = $this->db->query("
+            SELECT h.*, $dateExpr AS tgl, pl.identitas_pelanggan AS nama_customer
             FROM approval_faktur_pajak h
-            LEFT JOIN pengguna p1 ON p1.pengguna_id = h.id_pengaju
-            LEFT JOIN pengguna p2 ON p2.pengguna_id = h.id_marketing
             LEFT JOIN pelanggan pl ON pl.id_pelanggan = h.id_customer
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
-            if ((int)$r->status === 0) {
-                $st = 'Baru Diajukan';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 1) {
-                $st = 'Disetujui General Manager';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 2) {
-                $st = 'Disetujui Staff Tax';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 3) {
-                $st = 'Disetujui Director of Corp Planning';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 4) {
-                $st = 'Disetujui Director';
-                $sg = 'disetujui';
-            } else {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
-            }
+            if ((int)$r->status === 0) { $st = 'Baru Diajukan'; $sg = 'proses'; }
+            elseif ((int)$r->status === 1) { $st = 'Disetujui General Manager'; $sg = 'proses'; }
+            elseif ((int)$r->status === 2) { $st = 'Disetujui Staff Tax'; $sg = 'proses'; }
+            elseif ((int)$r->status === 3) { $st = 'Disetujui Director of Corp Planning'; $sg = 'proses'; }
+            elseif ((int)$r->status === 4) { $st = 'Disetujui Director'; $sg = 'disetujui'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
 
             $dpp = $this->_cleanNum($r->dpp);
             $ppn = $this->_cleanNum($r->ppn);
+            $mkt = $this->_getNamaPengguna($r->id_marketing);
             $namaTrx = 'Approval Faktur Pajak - ' . $this->_cleanParts([$r->nama_customer, $r->no_po ? 'PO: ' . $r->no_po : ''], ' | ');
             $ditrx = $this->_cleanParts([
                 'DPP: Rp ' . number_format($dpp, 0, ',', '.'),
                 'PPN: Rp ' . number_format($ppn, 0, ',', '.'),
                 $r->pembayaran ? 'Pembayaran: ' . $r->pembayaran : '',
-                $r->marketing ? 'Mkt: ' . $r->marketing : '',
+                $mkt !== '' ? 'Mkt: ' . $mkt : '',
                 $r->alasan ? 'Alasan: ' . $r->alasan : ''
             ], ' | ');
 
             $out[] = $this->_row(
-                'app_pajak', 'Approval Faktur Pajak', $r->tgl, $r->kode, $r->pengaju,
+                'app_pajak', 'Approval Faktur Pajak', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengaju),
                 $namaTrx, $ditrx, 1, 'Rp', $dpp + $ppn,
                 $st, $sg, 'surat_new/show/detail/app_pajak/' . $r->id
             );
@@ -1093,34 +1265,26 @@ class Md_export_persetujuan extends CI_Model
     // 16. Approval Director
     private function _fetch_appdir($filters)
     {
-        $whereDate = $this->_buildDateWhere('h.created_at', $filters);
-        $sql = "
-            SELECT h.*, p.nama AS pengaju
+        $whereDate = $this->_buildDateWhere('h.created_at', $filters, true);
+        $res = $this->db->query("
+            SELECT h.*
             FROM approval_director h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             WHERE $whereDate
             ORDER BY h.created_at DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
-            if ((int)$r->status === 0) {
-                $st = 'Baru Diajukan';
-                $sg = 'proses';
-            } elseif ((int)$r->status === 1) {
-                $st = 'Disetujui';
-                $sg = 'disetujui';
-            } else {
-                $st = 'Ditolak';
-                $sg = 'ditolak';
-            }
+            if ((int)$r->status === 0) { $st = 'Baru Diajukan'; $sg = 'proses'; }
+            elseif ((int)$r->status === 1) { $st = 'Disetujui'; $sg = 'disetujui'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
 
             $jenisDok = ((int)$r->jenis === 1) ? 'Tempel (Soft File)' : (((int)$r->jenis === 2) ? 'Cap Basah (Hard File)' : '');
             $namaTrx = 'Approval Director - ' . ($r->nama_dokumen ?: '-');
             $ditrx = $this->_cleanParts([$r->ket, $jenisDok ? '[' . $jenisDok . ']' : ''], ' ');
 
             $out[] = $this->_row(
-                'appdir', 'Approval Director', $r->created_at, $r->kode, $r->pengaju,
+                'appdir', 'Approval Director', $r->created_at, $r->kode, $this->_getNamaPengguna($r->id_pengaju),
                 $namaTrx, $ditrx ?: '-', 1, 'Rp', 0,
                 $st, $sg, 'surat_new/show/detail/appdir/' . $r->id
             );
@@ -1133,33 +1297,27 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tgl_pengajuan, '0000-00-00'), NULLIF(h.tgl_dinas, '0000-00-00'))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.*, $dateExpr AS tgl, s.status AS stat_persetujuan, p.nama AS pengaju
+        $res = $this->db->query("
+            SELECT h.*, $dateExpr AS tgl
             FROM surat_kunjungan_gudang h
-            LEFT JOIN surat_list s ON s.id_srt = h.id AND s.id_kat_surat = 6
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
-            if ((int)$r->stat_persetujuan === 0) {
+            $stat = $this->_getSuratStatus(6, (int)$r->id);
+            if ($stat === 0) {
                 if ((int)$r->persetujuan_ga === 1) { $st = 'Disetujui GA'; $sg = 'proses'; }
                 elseif ((int)$r->persetujuan_ga === 2) { $st = 'Ditolak GA'; $sg = 'ditolak'; }
                 else { $st = 'Baru Diajukan'; $sg = 'proses'; }
-            } elseif ((int)$r->stat_persetujuan === 1) {
-                $st = 'Pengajuan Disetujui'; $sg = 'disetujui';
-            } elseif ((int)$r->stat_persetujuan === 2) {
-                $st = 'Laporan Diajukan'; $sg = 'proses';
-            } elseif ((int)$r->stat_persetujuan === 3) {
-                $st = 'Laporan Diterima GA'; $sg = 'disetujui';
-            } else {
-                $st = 'Ditolak'; $sg = 'ditolak';
-            }
+            } elseif ($stat === 1) { $st = 'Pengajuan Disetujui'; $sg = 'disetujui'; }
+            elseif ($stat === 2) { $st = 'Laporan Diajukan'; $sg = 'proses'; }
+            elseif ($stat === 3) { $st = 'Laporan Diterima GA'; $sg = 'disetujui'; }
+            else { $st = 'Ditolak'; $sg = 'ditolak'; }
 
             $out[] = $this->_row(
-                'kg', 'Kunjungan Gudang', $r->tgl, $r->kode, $r->pengaju,
+                'kg', 'Kunjungan Gudang', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengguna),
                 'Kunjungan Gudang', $this->_cleanParts([$r->perihal, $r->tgl_dinas ? 'Tgl Kunjungan: ' . $r->tgl_dinas : ''], ' | ') ?: '-',
                 1, 'Rp', 0, $st, $sg, 'surat/show/detail_surat/kg/' . $r->id . '/1'
             );
@@ -1171,63 +1329,78 @@ class Md_export_persetujuan extends CI_Model
     private function _fetch_pd($filters)
     {
         $out = [];
-        // surat_pd (kat 9 = Marketing, kat 12 = Karyawan)
         $where1 = $this->_buildDateWhere('h.tgl_pengajuan', $filters);
+
         $rows1 = $this->db->query("
-            SELECT h.id_pd, h.kode, h.id_kat_surat, h.tgl_pengajuan AS tgl, h.wilayah_dinas, h.tujuan, h.mulai, h.akhir,
-                   h.transportasi, h.persetujuan_ga, s.status AS stat_persetujuan, p.nama AS pengaju,
-                   (SELECT GROUP_CONCAT(CONCAT(d.nama_customer, ' - ', d.tujuan_dinas) SEPARATOR '; ')
-                    FROM surat_pd_detail d WHERE d.id_pd = h.id_pd) AS detail_kunjungan
+            SELECT h.id_pd, h.kode, h.id_kat_surat, h.tgl_pengajuan AS tgl, h.id_pengguna,
+                   h.wilayah_dinas, h.tujuan, h.mulai, h.akhir, h.transportasi, h.persetujuan_ga
             FROM surat_pd h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_pd AND s.id_kat_surat = h.id_kat_surat
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
             WHERE $where1
             ORDER BY h.tgl_pengajuan DESC, h.id_pd DESC
         ")->result();
 
-        foreach ($rows1 as $r) {
-            $subLabel = ((int)$r->id_kat_surat === 12) ? 'Permintaan Dinas Karyawan' : 'Permintaan Dinas Marketing';
-            $slug = ((int)$r->id_kat_surat === 12) ? 'pd_karyawan' : 'pd';
-            list($st, $sg) = $this->_mapDinasStatus($r->stat_persetujuan, $r->persetujuan_ga);
-            $ditrx = $this->_cleanParts([
-                $r->tujuan,
-                ($r->mulai && $r->akhir) ? 'Jadwal: ' . $r->mulai . ' s/d ' . $r->akhir : '',
-                $r->transportasi ? 'Transport: ' . $r->transportasi : '',
-                $r->detail_kunjungan ? 'Kunjungan: ' . $r->detail_kunjungan : ''
-            ], ' | ');
-            $out[] = $this->_row(
-                'pd', 'Permintaan Dinas', $r->tgl, $r->kode, $r->pengaju,
-                $subLabel . ($r->wilayah_dinas ? ' - ' . $r->wilayah_dinas : ''), $ditrx ?: '-',
-                1, 'Rp', 0, $st, $sg, 'surat/show/detail_surat/' . $slug . '/' . $r->id_pd . '/1'
-            );
+        if (!empty($rows1)) {
+            $ids1 = array_map(function ($x) { return (int)$x->id_pd; }, $rows1);
+            $dtl1 = $this->_fetchDetailsGrouped('surat_pd_detail', 'id_pd', $ids1, 'id_pd, nama_customer, tujuan_dinas', '', 'id ASC');
+            foreach ($rows1 as $r) {
+                $id = (int)$r->id_pd;
+                $subLabel = ((int)$r->id_kat_surat === 12) ? 'Permintaan Dinas Karyawan' : 'Permintaan Dinas Marketing';
+                $slug = ((int)$r->id_kat_surat === 12) ? 'pd_karyawan' : 'pd';
+                list($st, $sg) = $this->_mapDinasStatus($this->_getSuratStatus((int)$r->id_kat_surat, $id), $r->persetujuan_ga);
+                $kunj = [];
+                if (!empty($dtl1[$id])) {
+                    foreach ($dtl1[$id] as $d) {
+                        $txt = $this->_cleanParts([$d->nama_customer, $d->tujuan_dinas], ' - ');
+                        if ($txt !== '') $kunj[] = $txt;
+                    }
+                }
+                $ditrx = $this->_cleanParts([
+                    $r->tujuan,
+                    ($r->mulai && $r->akhir) ? 'Jadwal: ' . $r->mulai . ' s/d ' . $r->akhir : '',
+                    $r->transportasi ? 'Transport: ' . $r->transportasi : '',
+                    !empty($kunj) ? 'Kunjungan: ' . implode('; ', $kunj) : ''
+                ], ' | ');
+                $out[] = $this->_row(
+                    'pd', 'Permintaan Dinas', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengguna),
+                    $subLabel . ($r->wilayah_dinas ? ' - ' . $r->wilayah_dinas : ''), $ditrx ?: '-',
+                    1, 'Rp', 0, $st, $sg, 'surat/show/detail_surat/' . $slug . '/' . $id . '/1'
+                );
+            }
         }
 
-        // surat_pdt (kat 11 = Teknisi)
         $rows2 = $this->db->query("
-            SELECT h.id_pd, h.kode, h.tgl_pengajuan AS tgl, h.wilayah_dinas, h.tujuan, h.mulai, h.akhir,
-                   h.transportasi, h.persetujuan_ga, s.status AS stat_persetujuan, p.nama AS pengaju,
-                   (SELECT GROUP_CONCAT(CONCAT(d.nama_customer, ' - ', d.tujuan_dinas) SEPARATOR '; ')
-                    FROM surat_pdt_detail d WHERE d.id_pd = h.id_pd) AS detail_kunjungan
+            SELECT h.id_pd, h.kode, h.tgl_pengajuan AS tgl, h.id_pengguna,
+                   h.wilayah_dinas, h.tujuan, h.mulai, h.akhir, h.transportasi, h.persetujuan_ga
             FROM surat_pdt h
-            LEFT JOIN surat_list s ON s.id_srt = h.id_pd AND s.id_kat_surat = 11
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
             WHERE $where1
             ORDER BY h.tgl_pengajuan DESC, h.id_pd DESC
         ")->result();
 
-        foreach ($rows2 as $r) {
-            list($st, $sg) = $this->_mapDinasStatus($r->stat_persetujuan, $r->persetujuan_ga);
-            $ditrx = $this->_cleanParts([
-                $r->tujuan,
-                ($r->mulai && $r->akhir) ? 'Jadwal: ' . $r->mulai . ' s/d ' . $r->akhir : '',
-                $r->transportasi ? 'Transport: ' . $r->transportasi : '',
-                $r->detail_kunjungan ? 'Kunjungan: ' . $r->detail_kunjungan : ''
-            ], ' | ');
-            $out[] = $this->_row(
-                'pd', 'Permintaan Dinas', $r->tgl, $r->kode, $r->pengaju,
-                'Permintaan Dinas Teknisi' . ($r->wilayah_dinas ? ' - ' . $r->wilayah_dinas : ''), $ditrx ?: '-',
-                1, 'Rp', 0, $st, $sg, 'surat/show/detail_surat/pd_teknisi/' . $r->id_pd . '/1'
-            );
+        if (!empty($rows2)) {
+            $ids2 = array_map(function ($x) { return (int)$x->id_pd; }, $rows2);
+            $dtl2 = $this->_fetchDetailsGrouped('surat_pdt_detail', 'id_pd', $ids2, 'id_pd, nama_customer, tujuan_dinas', '', 'id ASC');
+            foreach ($rows2 as $r) {
+                $id = (int)$r->id_pd;
+                list($st, $sg) = $this->_mapDinasStatus($this->_getSuratStatus(11, $id), $r->persetujuan_ga);
+                $kunj = [];
+                if (!empty($dtl2[$id])) {
+                    foreach ($dtl2[$id] as $d) {
+                        $txt = $this->_cleanParts([$d->nama_customer, $d->tujuan_dinas], ' - ');
+                        if ($txt !== '') $kunj[] = $txt;
+                    }
+                }
+                $ditrx = $this->_cleanParts([
+                    $r->tujuan,
+                    ($r->mulai && $r->akhir) ? 'Jadwal: ' . $r->mulai . ' s/d ' . $r->akhir : '',
+                    $r->transportasi ? 'Transport: ' . $r->transportasi : '',
+                    !empty($kunj) ? 'Kunjungan: ' . implode('; ', $kunj) : ''
+                ], ' | ');
+                $out[] = $this->_row(
+                    'pd', 'Permintaan Dinas', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengguna),
+                    'Permintaan Dinas Teknisi' . ($r->wilayah_dinas ? ' - ' . $r->wilayah_dinas : ''), $ditrx ?: '-',
+                    1, 'Rp', 0, $st, $sg, 'surat/show/detail_surat/pd_teknisi/' . $id . '/1'
+                );
+            }
         }
 
         return $out;
@@ -1238,26 +1411,25 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tgl_pengajuan, '0000-00-00'), NULLIF(h.tgl_dinas, '0000-00-00'))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.*, $dateExpr AS tgl, s.status AS stat_persetujuan, p.nama AS pengaju
+        $res = $this->db->query("
+            SELECT h.*, $dateExpr AS tgl
             FROM surat_pd_dinas h
-            LEFT JOIN surat_list s ON s.id_srt = h.id AND s.id_kat_surat = 10
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengguna
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
-            list($st, $sg) = $this->_mapDinasStatus($r->stat_persetujuan, $r->persetujuan_ga);
+            list($st, $sg) = $this->_mapDinasStatus($this->_getSuratStatus(10, (int)$r->id), $r->persetujuan_ga);
+            $pengaju = $this->_getNamaPengguna($r->id_pengguna) ?: $r->nama_karyawan;
             $ditrx = $this->_cleanParts([
                 $r->perihal,
                 $r->lokasi_dinas ? 'Lokasi: ' . $r->lokasi_dinas : '',
                 ($r->tgl_dinas) ? 'Tgl Dinas: ' . $r->tgl_dinas . ($r->tgl_dinas_akhir ? ' s/d ' . $r->tgl_dinas_akhir : '') : ''
             ], ' | ');
             $out[] = $this->_row(
-                'sd', 'Surat Dinas', $r->tgl, $r->kode, $r->pengaju ?: $r->nama_karyawan,
-                'Surat Dinas - ' . ($r->nama_karyawan ?: $r->pengaju ?: '-'), $ditrx ?: '-',
+                'sd', 'Surat Dinas', $r->tgl, $r->kode, $pengaju,
+                'Surat Dinas - ' . ($r->nama_karyawan ?: $pengaju ?: '-'), $ditrx ?: '-',
                 1, 'Rp', 0, $st, $sg, 'surat/show/detail_surat/sd/' . $r->id . '/1'
             );
         }
@@ -1280,14 +1452,13 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tanggal, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.*, $dateExpr AS tgl, p.nama AS pengaju
+        $res = $this->db->query("
+            SELECT h.*, $dateExpr AS tgl
             FROM surat_kendaraan h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
             if ((int)$r->status === 0) { $st = 'Baru Diajukan'; $sg = 'proses'; }
@@ -1298,7 +1469,7 @@ class Md_export_persetujuan extends CI_Model
             $namaTrx = 'Penggunaan Kendaraan - ' . $this->_cleanParts([$r->mobil, $r->nopol], ' ');
             $ditrx = $this->_cleanParts([$r->keperluan, $r->lama ? 'Lama: ' . $r->lama . ' Hari' : ''], ' | ');
             $out[] = $this->_row(
-                'kendaraan', 'Penggunaan Kendaraan', $r->tgl, $r->kode, $r->pengaju,
+                'kendaraan', 'Penggunaan Kendaraan', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengaju),
                 $namaTrx, $ditrx ?: '-', 1, 'Rp', 0, $st, $sg, 'surat_new/show/detail/kendaraan/' . $r->id
             );
         }
@@ -1310,14 +1481,13 @@ class Md_export_persetujuan extends CI_Model
     {
         $dateExpr = "COALESCE(NULLIF(h.tgl_pengajuan, '0000-00-00'), DATE(h.created_at))";
         $whereDate = $this->_buildDateWhere($dateExpr, $filters);
-        $sql = "
-            SELECT h.*, $dateExpr AS tgl, p.nama AS pengaju
+        $res = $this->db->query("
+            SELECT h.*, $dateExpr AS tgl
             FROM surat_meetingroom h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             WHERE $whereDate
             ORDER BY tgl DESC, h.id DESC
-        ";
-        $res = $this->db->query($sql)->result();
+        ")->result();
+
         $out = [];
         foreach ($res as $r) {
             if ((int)$r->status === 0) { $st = 'Baru Diajukan'; $sg = 'proses'; }
@@ -1327,7 +1497,7 @@ class Md_export_persetujuan extends CI_Model
 
             $ditrx = $this->_cleanParts([$r->perihal, ($r->jam_mulai || $r->jam_akhir) ? 'Pukul: ' . $r->jam_mulai . ' s/d ' . $r->jam_akhir : ''], ' | ');
             $out[] = $this->_row(
-                'meetingroom', 'Ruang Meeting', $r->tgl, $r->kode, $r->pengaju,
+                'meetingroom', 'Ruang Meeting', $r->tgl, $r->kode, $this->_getNamaPengguna($r->id_pengaju),
                 'Ruang Meeting - ' . ($r->perihal ?: '-'), $ditrx ?: '-', 1, 'Rp', 0,
                 $st, $sg, 'surat_part_two/show/detail/meetingroom/' . $r->id
             );
@@ -1339,13 +1509,11 @@ class Md_export_persetujuan extends CI_Model
     private function _fetch_izin_cuti($filters)
     {
         $out = [];
-        // surat_izin_jam_kerja (jenis 1 = Izin Jam Kerja, jenis 2 = Izin Meninggalkan Pekerjaan)
         $dateExpr1 = "COALESCE(NULLIF(DATE(h.tgl_pengajuan), '0000-00-00'), NULLIF(h.tanggal, '0000-00-00'), DATE(h.created_at))";
         $where1 = $this->_buildDateWhere($dateExpr1, $filters);
         $rows1 = $this->db->query("
-            SELECT h.*, $dateExpr1 AS tgl, p.nama AS pengaju
+            SELECT h.*, $dateExpr1 AS tgl
             FROM surat_izin_jam_kerja h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             WHERE $where1
             ORDER BY tgl DESC, h.id DESC
         ")->result();
@@ -1360,20 +1528,18 @@ class Md_export_persetujuan extends CI_Model
                 : ($r->tanggal ? $r->tanggal . ' ' . $r->jam_mulai . ' s/d ' . $r->jam_akhir : '');
 
             $out[] = $this->_row(
-                'izin_cuti', 'Izin & Cuti', $r->tgl, $r->kode_ijk, $r->pengaju,
+                'izin_cuti', 'Izin & Cuti', $r->tgl, $r->kode_ijk, $this->_getNamaPengguna($r->id_pengaju),
                 $subLabel . ($r->jenis_izin ? ' - ' . $r->jenis_izin : ''),
                 $this->_cleanParts([$r->alasan, $waktu ? 'Waktu: ' . $waktu : ''], ' | ') ?: '-',
                 1, 'Rp', 0, $st, $sg, 'surat_part_two/show/detail/' . $slug . '/' . $r->id
             );
         }
 
-        // surat_cuti_tahunan
         $dateExpr2 = "COALESCE(NULLIF(DATE(h.tgl_pengajuan), '0000-00-00'), NULLIF(h.tgl_awal, '0000-00-00'), DATE(h.created_at))";
         $where2 = $this->_buildDateWhere($dateExpr2, $filters);
         $rows2 = $this->db->query("
-            SELECT h.*, $dateExpr2 AS tgl, p.nama AS pengaju
+            SELECT h.*, $dateExpr2 AS tgl
             FROM surat_cuti_tahunan h
-            LEFT JOIN pengguna p ON p.pengguna_id = h.id_pengaju
             WHERE $where2
             ORDER BY tgl DESC, h.id DESC
         ")->result();
@@ -1382,7 +1548,7 @@ class Md_export_persetujuan extends CI_Model
             list($st, $sg) = $this->_mapIzinStatus($r->status);
             $waktu = $r->tgl_awal ? $r->tgl_awal . ' s/d ' . $r->tgl_akhir . ($r->total ? ' (' . $r->total . ')' : '') : '';
             $out[] = $this->_row(
-                'izin_cuti', 'Izin & Cuti', $r->tgl, $r->kode_cuti, $r->pengaju,
+                'izin_cuti', 'Izin & Cuti', $r->tgl, $r->kode_cuti, $this->_getNamaPengguna($r->id_pengaju),
                 'Cuti Tahunan' . ($r->jenis_izin ? ' - ' . $r->jenis_izin : ''),
                 $this->_cleanParts([$r->alasan, $waktu ? 'Tanggal: ' . $waktu : ''], ' | ') ?: '-',
                 1, 'Rp', 0, $st, $sg, 'surat_part_two/show/detail/cuti/' . $r->id
