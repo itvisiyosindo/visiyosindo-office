@@ -8,9 +8,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * melalui akun Fonnte terpisah (nomor 0895410953259) tanpa mengubah
  * konfigurasi/API notifikasi yang sudah ada.
  *
- * Jadwal Cron (Senin - Jumat):
+ * Jadwal Cron:
  * - Pagi  (09:00 WIB): https://office.visiyosindo.id/cron_absensi/pagi
- * - Siang (13:10 WIB): https://office.visiyosindo.id/cron_absensi/siang
+ * - Siang (Senin - Kamis 13:10 WIB, Khusus Jumat 14:00 WIB): https://office.visiyosindo.id/cron_absensi/siang
  * - Sore  (17:15 WIB): https://office.visiyosindo.id/cron_absensi/sore
  */
 class Cron_absensi extends CI_Controller
@@ -49,7 +49,7 @@ class Cron_absensi extends CI_Controller
     }
 
     /**
-     * Jadwal Siang - 13:10 WIB (Belum Absen Istirahat)
+     * Jadwal Siang - 13:10 WIB (Senin - Kamis) / 14:00 WIB (Jumat) (Belum Absen Istirahat)
      */
     public function siang()
     {
@@ -196,6 +196,23 @@ class Cron_absensi extends CI_Controller
                     'message' => 'Hari ini tercatat sebagai hari libur.',
                 ]);
                 return;
+            }
+
+            // Khusus hari Jumat, sesi siang baru boleh dikirim pukul 14:00 WIB ke atas
+            if ($sesi === 'siang') {
+                $dayOfWeek = (int)date('N', strtotime($today));
+                $currentTime = date('H:i');
+                if ($dayOfWeek === 5 && $currentTime < '14:00') {
+                    $this->_jsonResponse([
+                        'status'       => 'skipped',
+                        'reason'       => 'jumat_schedule',
+                        'tanggal'      => $today,
+                        'sesi'         => $sesi,
+                        'current_time' => $currentTime,
+                        'message'      => 'Khusus hari Jumat, laporan siang dikirim pada pukul 14:00 WIB.',
+                    ]);
+                    return;
+                }
             }
 
             if ($this->_hasSentToday($today, $sesi)) {
