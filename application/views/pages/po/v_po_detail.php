@@ -834,7 +834,7 @@
                                 <?php endif; ?>
                             </div>
                             <div style="font-size: 0.82rem;" class="mb-3">
-                                <div><b>Persetujuan PO:</b> <?= ($po->gm_status === 'disetujui') ? '<span class="badge badge-success px-2 py-1">🟢 PO BISA DIPROSES</span>' : '-' ?></div>
+                                <div><b>Persetujuan PO:</b> <?= ($po->gm_status === 'disetujui') ? '<span class="badge badge-success px-2 py-1">🟢 PO BISA DIPROSES</span>' : (($po->gm_status === 'ditolak') ? '<span class="badge badge-danger px-2 py-1">🔴 PO DITOLAK</span>' : '-') ?></div>
                                 <?php if (!empty($po->gm_catatan)): ?>
                                     <div class="text-muted font-italic mt-1">"<?= htmlspecialchars($po->gm_catatan) ?>"</div>
                                 <?php endif; ?>
