@@ -305,8 +305,8 @@ $dataDetail = $detail_aprv;
 					<thead>
 						<tr>
 							<th style="text-align:center" bgcolor="#d3d3d3"> Nama Forwarder </th>
-							<?php foreach ($forwarderNames as $name): ?>
-								<th style="text-align:center" bgcolor="#d3d3d3"><?= htmlspecialchars($name) ?></th>
+							<?php foreach (array_values($dataDetail) as $row): ?>
+								<th style="text-align:center" bgcolor="#d3d3d3"><?= htmlspecialchars($row->nama_forwarder) ?></th>
 							<?php endforeach; ?>
 						</tr>
 					</thead>

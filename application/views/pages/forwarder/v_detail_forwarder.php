@@ -245,9 +245,9 @@
 					<tr>
 						<!--<th style="text-align:center" bgcolor="#d3d3d3" width="3%"> No </th>-->
 						<th style="text-align:center" bgcolor="#d3d3d3"> Nama Forwarder </th>
-						<?php foreach ($forwarderNames as $name): ?>
+						<?php foreach (array_values($data) as $row): ?>
 							<th style="text-align:center" bgcolor="#d3d3d3"><?= htmlspecialchars(
-																				$name
+																				$row->nama_forwarder
 																			) ?></th>
 						<?php endforeach; ?>
 					</tr>

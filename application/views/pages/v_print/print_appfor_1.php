@@ -273,9 +273,9 @@
 									<tr>
 										<!--<th style="text-align:center" bgcolor="#d3d3d3" width="3%"> No </th>-->
 										<th style="text-align:center" bgcolor="#d3d3d3"> Nama Forwarder </th>
-										<?php foreach ($forwarderNames as $name): ?>
-											<th style="text-align:center" bgcolor="#d3d3d3"><?= htmlspecialchars($name) ?></th>
-										<?php endforeach; ?>
+										<?php foreach (array_values($detail_aprv) as $row): ?>
+										<th style="text-align:center" bgcolor="#d3d3d3"><?= htmlspecialchars($row->nama_forwarder) ?></th>
+									<?php endforeach; ?>
 									</tr>
 								</thead>
 								<tbody>
@@ -379,7 +379,7 @@
 															if ($kolomDb === 'alasan') {
 																echo nl2br(htmlspecialchars($value));
 															}	elseif ($kolomDb === 'dipilih') {
-																		echo ($value == 1) ? htmlspecialchars($forwarderNames[$i]) : '';
+																		echo ($value == 1) ? htmlspecialchars($row->nama_forwarder) : '';
 															} else {
 																echo is_numeric($value) ? 'Rp ' . number_format($value, 0, ',', '.') : $value;
 															}

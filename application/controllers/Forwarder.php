@@ -199,11 +199,9 @@ class Forwarder extends CI_Controller
             $page_data["detail_aprv"] = $this->md_forwarder->getDetailAppById(
                 $param2
             );
-            $page_data["forwarderNames"] = array_unique(
-                array_map(function ($item) {
-                    return $item->nama_forwarder;
-                }, $page_data["detail_aprv"])
-            );
+            $page_data["forwarderNames"] = array_map(function ($item) {
+                return $item->nama_forwarder;
+            }, $page_data["detail_aprv"]);
             $page_data["list_for"] = $this->md_forwarder->getForByWhere([
                 "g.status" => 1,
             ]);
@@ -222,11 +220,9 @@ class Forwarder extends CI_Controller
             $page_data["detail_aprv"] = $this->md_forwarder->getDetailAppById(
                 $param2
             );
-            $page_data["forwarderNames"] = array_unique(
-                array_map(function ($item) {
-                    return $item->nama_forwarder;
-                }, $page_data["detail_aprv"])
-            );
+            $page_data["forwarderNames"] = array_map(function ($item) {
+                return $item->nama_forwarder;
+            }, $page_data["detail_aprv"]);
             $page_data["list_for"] = $this->md_forwarder->getForByWhere([
                 "g.status" => 1,
             ]);
@@ -1488,11 +1484,9 @@ class Forwarder extends CI_Controller
                 "object" => $param1,
                 "data_aprv" => $this->md_forwarder->getAppByID($param2),
                 "detail_aprv" => $this->md_forwarder->getDetailAppById($param2),
-                "forwarderNames" => array_unique(
-                    array_map(function ($item) {
-                        return $item->nama_forwarder;
-                    }, $detailApp)
-                ),
+                "forwarderNames" => array_map(function ($item) {
+                    return $item->nama_forwarder;
+                }, $detailApp),
             ];
 
             //load mpdf dan membuat page size
