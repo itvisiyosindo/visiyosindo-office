@@ -354,7 +354,7 @@
 
 					<!-- Menu Audit (Audit Kinerja & Audit Keuangan: Hanya untuk Atasan, HRD, Auditor, & Manajemen) -->
 					<?php
-					$is_auditor_or_head = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array((string)sessPenggunaId(), ['1', '744', '69', '33', '23', '54', '107']));
+					$is_auditor_or_head = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array((string)sessPenggunaId(), ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
 					if ($is_auditor_or_head):
 					?>
 					<li class="nav-parent <?= in_array($page_name, ['audit/v_audit_kinerja', 'audit/v_audit_keuangan', 'v_audit_kinerja', 'v_audit_keuangan']) ? 'nav-active nav-expanded' : ''; ?>">

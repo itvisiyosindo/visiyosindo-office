@@ -27,7 +27,7 @@ class Audit extends CI_Controller
         grantAccessFor('all');
 
         $user_id = (string)sessPenggunaId();
-        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '69', '33', '23', '54', '107']));
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
         if (!$isAllowed) {
             $this->session->set_flashdata('error', 'Halaman Audit Kinerja hanya dapat diakses oleh Atasan, HRD, dan Auditor.');
             redirect(base_url('sasaran_mutu'));
@@ -134,7 +134,7 @@ class Audit extends CI_Controller
         grantAccessFor('all');
 
         $user_id = (string)sessPenggunaId();
-        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || isAccountingUser() || in_array($user_id, ['1', '744', '69', '33', '23', '54', '107']));
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || isAccountingUser() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
         if (!$isAllowed) {
             $this->session->set_flashdata('error', 'Halaman Audit Keuangan hanya dapat diakses oleh Manajemen, Keuangan, dan Auditor.');
             redirect(base_url('dashboard'));
@@ -234,7 +234,7 @@ class Audit extends CI_Controller
         grantAccessFor('all');
 
         $user_id = (string)sessPenggunaId();
-        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '69', '33', '23', '54', '107']));
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
         if (!$isAllowed) {
             echo json_encode(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses untuk melakukan sinkronisasi massal audit.']);
             return;
@@ -302,7 +302,7 @@ class Audit extends CI_Controller
         grantAccessFor('all');
 
         $user_id = (string)sessPenggunaId();
-        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '69', '33', '23', '54', '107']));
+        $isAllowed = (isAdmin() || isHrd() || isEksekutif() || isKepalaDivisi() || in_array($user_id, ['1', '744', '29', '69', '58', '33', '23', '54', '107']));
         if (!$isAllowed) {
             $this->session->set_flashdata('error', 'Anda tidak memiliki hak akses untuk mengunduh rekap audit kinerja.');
             redirect(base_url('sasaran_mutu'));
