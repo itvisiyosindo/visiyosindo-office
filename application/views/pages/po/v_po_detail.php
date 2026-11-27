@@ -1195,10 +1195,15 @@
                     </div>
 
                     <?php
+                    $is_cro_after_revisi = ($po->status === 'revisi' || (!empty($po->cro_status) && $po->cro_status === 'revisi'));
                     $cro_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($po->created_at ?? $po->tanggal_po) : 0.0;
-                    $cro_is_late = ($cro_wait_h > 2.0);
+                    $cro_is_late = (!$is_cro_after_revisi && $cro_wait_h > 2.0);
                     ?>
-                    <?php if ($cro_is_late): ?>
+                    <?php if ($is_cro_after_revisi): ?>
+                        <div class="alert alert-info py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
+                            <i class="fas fa-info-circle mr-1"></i> <b>VERIFIKASI TAHAP REVISI:</b> Verifikasi lanjutan setelah data direvisi oleh pihak pengaju/marketing. Peringatan keterlambatan SLA dinonaktifkan karena waktu tunggu berada di pihak pengaju revisi.
+                        </div>
+                    <?php elseif ($cro_is_late): ?>
                         <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
                             <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon approval telah berjalan <u><?= $cro_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
                         </div>
@@ -1275,11 +1280,16 @@
                     </div>
 
                     <?php
+                    $is_acc_after_revisi = ($po->status === 'revisi' || (!empty($po->acc_status) && $po->acc_status === 'revisi'));
                     $acc_prev_t = $po->cro_date ?: ($po->created_at ?? $po->tanggal_po);
                     $acc_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($acc_prev_t) : 0.0;
-                    $acc_is_late = ($acc_wait_h > 2.0);
+                    $acc_is_late = (!$is_acc_after_revisi && $acc_wait_h > 2.0);
                     ?>
-                    <?php if ($acc_is_late): ?>
+                    <?php if ($is_acc_after_revisi): ?>
+                        <div class="alert alert-info py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
+                            <i class="fas fa-info-circle mr-1"></i> <b>VERIFIKASI TAHAP REVISI:</b> Verifikasi lanjutan setelah data direvisi oleh pihak pengaju/marketing. Peringatan keterlambatan SLA dinonaktifkan karena waktu tunggu berada di pihak pengaju revisi.
+                        </div>
+                    <?php elseif ($acc_is_late): ?>
                         <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
                             <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon approval telah berjalan <u><?= $acc_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
                         </div>
@@ -1352,11 +1362,16 @@
                     </div>
 
                     <?php
+                    $is_pjk_after_revisi = ($po->status === 'revisi' || (!empty($po->pajak_status) && $po->pajak_status === 'revisi'));
                     $pjk_prev_t = $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po));
                     $pjk_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($pjk_prev_t) : 0.0;
-                    $pjk_is_late = ($pjk_wait_h > 2.0);
+                    $pjk_is_late = (!$is_pjk_after_revisi && $pjk_wait_h > 2.0);
                     ?>
-                    <?php if ($pjk_is_late): ?>
+                    <?php if ($is_pjk_after_revisi): ?>
+                        <div class="alert alert-info py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
+                            <i class="fas fa-info-circle mr-1"></i> <b>VERIFIKASI TAHAP REVISI:</b> Verifikasi lanjutan setelah data direvisi oleh pihak pengaju/marketing. Peringatan keterlambatan SLA dinonaktifkan karena waktu tunggu berada di pihak pengaju revisi.
+                        </div>
+                    <?php elseif ($pjk_is_late): ?>
                         <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
                             <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon approval telah berjalan <u><?= $pjk_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
                         </div>
@@ -1412,11 +1427,16 @@
                     </div>
 
                     <?php
+                    $is_gm_after_revisi = ($po->status === 'revisi' || (!empty($po->gm_status) && in_array($po->gm_status, ['revisi', 'ditolak'], true)));
                     $gm_prev_t = $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)));
                     $gm_wait_h = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($gm_prev_t) : 0.0;
-                    $gm_is_late = ($gm_wait_h > 2.0);
+                    $gm_is_late = (!$is_gm_after_revisi && $gm_wait_h > 2.0);
                     ?>
-                    <?php if ($gm_is_late): ?>
+                    <?php if ($is_gm_after_revisi): ?>
+                        <div class="alert alert-info py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #0284c7; background: #f0f9ff; color: #0369a1;">
+                            <i class="fas fa-info-circle mr-1"></i> <b>VERIFIKASI TAHAP REVISI:</b> Verifikasi lanjutan setelah data direvisi oleh pihak pengaju/marketing. Peringatan keterlambatan SLA dinonaktifkan karena waktu tunggu berada di pihak pengaju revisi.
+                        </div>
+                    <?php elseif ($gm_is_late): ?>
                         <div class="alert alert-danger py-2 px-3 small font-weight-bold mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
                             <i class="fas fa-exclamation-triangle mr-1"></i> <b>PERINGATAN SLA APPROVAL (>2 JAM KERJA):</b> Waktu respon persetujuan GM telah berjalan <u><?= $gm_wait_h ?> jam kerja</u> (maksimal 2 jam). Anda wajib mengisi alasan keterlambatan di bawah ini.
                         </div>

@@ -919,9 +919,11 @@ class Po_system extends CI_Controller
         $cro_alasan_terlambat = trim($this->input->post('cro_alasan_terlambat') ?? '');
 
         // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        // Waktu tunggu revisi pihak pengaju/marketing dikecualikan dari penilaian keterlambatan verifikator
+        $is_after_revisi = ($po->status === 'revisi' || (!empty($po->cro_status) && $po->cro_status === 'revisi'));
         $cro_prev_time = $po->created_at ?? $po->tanggal_po;
         $cro_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($cro_prev_time) : 0.0;
-        if ($cro_wait_hours > 2.0 && empty($cro_alasan_terlambat)) {
+        if (!$is_after_revisi && $cro_wait_hours > 2.0 && empty($cro_alasan_terlambat)) {
             $this->session->set_flashdata('error', 'Waktu respon approval CRO telah melebihi batas 2 jam kerja (' . $cro_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
             redirect('po_system/detail/' . $id_encrypted);
             return;
@@ -1083,9 +1085,11 @@ class Po_system extends CI_Controller
         $acc_alasan_terlambat  = trim($this->input->post('acc_alasan_terlambat') ?? '');
 
         // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        // Waktu tunggu revisi pihak pengaju/marketing dikecualikan dari penilaian keterlambatan verifikator
+        $is_after_revisi = ($po->status === 'revisi' || (!empty($po->acc_status) && $po->acc_status === 'revisi'));
         $acc_prev_time = $po->cro_date ?: ($po->created_at ?? $po->tanggal_po);
         $acc_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($acc_prev_time) : 0.0;
-        if ($acc_wait_hours > 2.0 && empty($acc_alasan_terlambat)) {
+        if (!$is_after_revisi && $acc_wait_hours > 2.0 && empty($acc_alasan_terlambat)) {
             $this->session->set_flashdata('error', 'Waktu respon approval Accounting telah melebihi batas 2 jam kerja (' . $acc_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
             redirect('po_system/detail/' . $id_encrypted);
             return;
@@ -1186,9 +1190,11 @@ class Po_system extends CI_Controller
         $pajak_alasan_terlambat    = trim($this->input->post('pajak_alasan_terlambat') ?? '');
 
         // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        // Waktu tunggu revisi pihak pengaju/marketing dikecualikan dari penilaian keterlambatan verifikator
+        $is_after_revisi = ($po->status === 'revisi' || (!empty($po->pajak_status) && $po->pajak_status === 'revisi'));
         $pajak_prev_time = $po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po));
         $pajak_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($pajak_prev_time) : 0.0;
-        if ($pajak_wait_hours > 2.0 && empty($pajak_alasan_terlambat)) {
+        if (!$is_after_revisi && $pajak_wait_hours > 2.0 && empty($pajak_alasan_terlambat)) {
             $this->session->set_flashdata('error', 'Waktu respon approval Pajak telah melebihi batas 2 jam kerja (' . $pajak_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
             redirect('po_system/detail/' . $id_encrypted);
             return;
@@ -1283,9 +1289,11 @@ class Po_system extends CI_Controller
         $gm_alasan_terlambat = trim($this->input->post('gm_alasan_terlambat') ?? '');
 
         // Validasi Keterlambatan Approval (>2 Jam Kerja)
+        // Waktu tunggu revisi pihak pengaju/marketing dikecualikan dari penilaian keterlambatan verifikator
+        $is_after_revisi = ($po->status === 'revisi' || (!empty($po->gm_status) && in_array($po->gm_status, ['revisi', 'ditolak'], true)));
         $gm_prev_time = $po->pajak_date ?: ($po->acc_date ?: ($po->cro_date ?: ($po->created_at ?? $po->tanggal_po)));
         $gm_wait_hours = function_exists('getApprovalWaitWorkingHours') ? getApprovalWaitWorkingHours($gm_prev_time) : 0.0;
-        if ($gm_wait_hours > 2.0 && empty($gm_alasan_terlambat)) {
+        if (!$is_after_revisi && $gm_wait_hours > 2.0 && empty($gm_alasan_terlambat)) {
             $this->session->set_flashdata('error', 'Waktu respon persetujuan GM telah melebihi batas 2 jam kerja (' . $gm_wait_hours . ' jam). Anda wajib mengisi alasan keterlambatan!');
             redirect('po_system/detail/' . $id_encrypted);
             return;

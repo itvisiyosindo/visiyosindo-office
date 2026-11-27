@@ -3255,8 +3255,17 @@ $namaBulanList = [
                                                         </div>
                                                     <?php endif; ?>
                                                     <?php if (!empty($lb->sla_penalty_pts) && (float)$lb->sla_penalty_pts > 0): ?>
+                                                        <?php
+                                                            $slaIncidentLines = [];
+                                                            if (!empty($lb->sla_incidents) && is_array($lb->sla_incidents)) {
+                                                                foreach ($lb->sla_incidents as $inc) {
+                                                                    $slaIncidentLines[] = '• ' . $inc['doc_type'] . ' ' . $inc['doc_no'] . ' (' . $inc['stage'] . '): ' . number_format($inc['hours'], 1) . ' jam kerja (-' . number_format($inc['pts'], 1) . ' poin)';
+                                                                }
+                                                            }
+                                                            $slaTitle = "Penalti SLA Approval TTD Dokumen (-" . number_format($lb->sla_penalty_pts, 1) . " poin, " . (int)$lb->sla_total_late . " dokumen):\n" . implode("\n", $slaIncidentLines);
+                                                        ?>
                                                         <div class="mt-1">
-                                                            <span class="badge badge-danger px-2 py-0" style="font-size: 9.5px; border-radius: 999px; cursor: help; background:#ef4444;" title="Penalti SLA Approval: Telat <?= (int)$lb->sla_total_late ?>x TTD dokumen (PO/SPH) > 1-2 hari kerja. Nilai dipotong -<?= number_format($lb->sla_penalty_pts, 1) ?> poin.">
+                                                            <span class="badge badge-danger px-2 py-0" style="font-size: 9.5px; border-radius: 999px; cursor: help; background:#ef4444;" title="<?= htmlspecialchars($slaTitle) ?>">
                                                                 <i class="fas fa-exclamation-triangle mr-1"></i>SLA -<?= number_format($lb->sla_penalty_pts, 1) ?>
                                                             </span>
                                                         </div>

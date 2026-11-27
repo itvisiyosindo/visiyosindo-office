@@ -450,6 +450,76 @@ class Md_kpi_leaderboard extends CI_Model
                 'gm'    => 33
             ];
 
+            // Pre-load log PO untuk mengecualikan masa tunggu revisi pengaju/marketing dari SLA verifikator
+            $poIds = array_map(function($r) { return (int)$r->id_po; }, $poRows);
+            $poLogsMap = [];
+            if (!empty($poIds)) {
+                $pLogs = $this->db->query("
+                    SELECT id_po, status_sebelumnya, status_baru, catatan, created_at, user_id
+                    FROM po_masuk_log
+                    WHERE id_po IN (" . implode(',', $poIds) . ")
+                    ORDER BY id_log ASC
+                ")->result();
+                foreach ($pLogs as $pl) {
+                    $poLogsMap[$pl->id_po][] = $pl;
+                }
+            }
+
+            // Helper untuk menghitung jam kerja efektif verifikator dengan mengecualikan masa tunggu revisi marketing/pengaju
+            $calcStageWorkingHours = function ($idPo, $stageKey, $stageStart, $stageEnd) use (&$poLogsMap, $holidaySet) {
+                if (empty($stageStart) || empty($stageEnd) || $stageStart === '0000-00-00 00:00:00' || $stageEnd === '0000-00-00 00:00:00') {
+                    return 0.0;
+                }
+                $logs = isset($poLogsMap[$idPo]) ? $poLogsMap[$idPo] : [];
+                if (empty($logs)) {
+                    return $this->countEffectiveWorkingHours($stageStart, $stageEnd, $holidaySet);
+                }
+
+                // Cari log revisi yang diajukan oleh tahap ini antara stageStart dan stageEnd
+                $revisiLog = null;
+                foreach ($logs as $l) {
+                    if ($l->created_at < $stageStart || $l->created_at > $stageEnd) continue;
+                    $isRevisi = ($l->status_baru === 'revisi' || stripos($l->catatan, '(REVISI)') !== false);
+                    if (!$isRevisi) continue;
+
+                    $match = false;
+                    if ($stageKey === 'cro' && (stripos($l->catatan, 'CRO') !== false || stripos($l->catatan, 'hold_indent') !== false)) $match = true;
+                    if ($stageKey === 'acc' && (stripos($l->catatan, 'Accounting') !== false || stripos($l->catatan, 'ACC') !== false)) $match = true;
+                    if ($stageKey === 'pajak' && stripos($l->catatan, 'Pajak') !== false) $match = true;
+                    if ($stageKey === 'gm' && (stripos($l->catatan, 'GM') !== false || stripos($l->catatan, 'Penolakan PO oleh GM') !== false)) $match = true;
+
+                    if ($match) {
+                        $revisiLog = $l;
+                        break;
+                    }
+                }
+
+                if (!$revisiLog) {
+                    return $this->countEffectiveWorkingHours($stageStart, $stageEnd, $holidaySet);
+                }
+
+                // Verifikator merespon dengan revisi pada $revisiLog->created_at
+                $whPart1 = $this->countEffectiveWorkingHours($stageStart, $revisiLog->created_at, $holidaySet);
+
+                // Cari apakah pengaju/marketing mengirim revisi (log 'diedit/direvisi' atau 'Pembaruan Dokumen')
+                $editLog = null;
+                foreach ($logs as $l) {
+                    if ($l->created_at <= $revisiLog->created_at || $l->created_at > $stageEnd) continue;
+                    if (stripos($l->catatan, 'diedit/direvisi') !== false || stripos($l->catatan, 'Pembaruan Dokumen') !== false || $l->status_baru === 'menunggu_kroscek') {
+                        $editLog = $l;
+                        break;
+                    }
+                }
+
+                $whPart2 = 0.0;
+                if ($editLog) {
+                    // Waktu respon verifikator setelah revisi diserahkan sampai selesai verifikasi
+                    $whPart2 = $this->countEffectiveWorkingHours($editLog->created_at, $stageEnd, $holidaySet);
+                }
+
+                return round($whPart1 + $whPart2, 2);
+            };
+
             foreach ($poRows as $po) {
                 $baseStart = (!empty($po->created_at) && $po->created_at !== '0000-00-00 00:00:00')
                     ? $po->created_at
@@ -461,10 +531,10 @@ class Md_kpi_leaderboard extends CI_Model
                 if (isset($accountMergeMap[$croUid])) $croUid = (int)$accountMergeMap[$croUid];
                 
                 if (!empty($po->cro_date) && $po->cro_date !== '0000-00-00 00:00:00') {
-                    $wh = $this->countEffectiveWorkingHours($baseStart, $po->cro_date, $holidaySet);
+                    $wh = $calcStageWorkingHours($po->id_po, 'cro', $baseStart, $po->cro_date);
                     $recordPenalty($croUid, 'PO Masuk', $docNo, 'Verifikasi CRO', $wh, 'approved');
-                } elseif (empty($po->cro_status) || $po->cro_status === 'pending') {
-                    $wh = $this->countEffectiveWorkingHours($baseStart, $nowStr, $holidaySet);
+                } elseif ((empty($po->cro_status) || $po->cro_status === 'pending') && $po->status !== 'revisi' && $po->cro_status !== 'revisi' && $po->cro_status !== 'hold_indent') {
+                    $wh = $calcStageWorkingHours($po->id_po, 'cro', $baseStart, $nowStr);
                     $recordPenalty($croUid, 'PO Masuk', $docNo, 'Verifikasi CRO', $wh, 'pending');
                 }
 
@@ -474,10 +544,10 @@ class Md_kpi_leaderboard extends CI_Model
                     if (isset($accountMergeMap[$accUid])) $accUid = (int)$accountMergeMap[$accUid];
 
                     if (!empty($po->acc_date) && $po->acc_date !== '0000-00-00 00:00:00') {
-                        $wh = $this->countEffectiveWorkingHours($po->cro_date, $po->acc_date, $holidaySet);
+                        $wh = $calcStageWorkingHours($po->id_po, 'acc', $po->cro_date, $po->acc_date);
                         $recordPenalty($accUid, 'PO Masuk', $docNo, 'Verifikasi Accounting', $wh, 'approved');
-                    } elseif (empty($po->acc_status) || $po->acc_status === 'pending') {
-                        $wh = $this->countEffectiveWorkingHours($po->cro_date, $nowStr, $holidaySet);
+                    } elseif ((empty($po->acc_status) || $po->acc_status === 'pending') && $po->status !== 'revisi' && $po->acc_status !== 'revisi') {
+                        $wh = $calcStageWorkingHours($po->id_po, 'acc', $po->cro_date, $nowStr);
                         $recordPenalty($accUid, 'PO Masuk', $docNo, 'Verifikasi Accounting', $wh, 'pending');
                     }
                 }
@@ -488,10 +558,10 @@ class Md_kpi_leaderboard extends CI_Model
                     if (isset($accountMergeMap[$pjkUid])) $pjkUid = (int)$accountMergeMap[$pjkUid];
 
                     if (!empty($po->pajak_date) && $po->pajak_date !== '0000-00-00 00:00:00') {
-                        $wh = $this->countEffectiveWorkingHours($po->acc_date, $po->pajak_date, $holidaySet);
+                        $wh = $calcStageWorkingHours($po->id_po, 'pajak', $po->acc_date, $po->pajak_date);
                         $recordPenalty($pjkUid, 'PO Masuk', $docNo, 'Verifikasi Pajak', $wh, 'approved');
-                    } elseif (empty($po->pajak_status) || $po->pajak_status === 'pending') {
-                        $wh = $this->countEffectiveWorkingHours($po->acc_date, $nowStr, $holidaySet);
+                    } elseif ((empty($po->pajak_status) || $po->pajak_status === 'pending') && $po->status !== 'revisi' && $po->pajak_status !== 'revisi') {
+                        $wh = $calcStageWorkingHours($po->id_po, 'pajak', $po->acc_date, $nowStr);
                         $recordPenalty($pjkUid, 'PO Masuk', $docNo, 'Verifikasi Pajak', $wh, 'pending');
                     }
                 }
@@ -502,10 +572,10 @@ class Md_kpi_leaderboard extends CI_Model
                     if (isset($accountMergeMap[$gmUid])) $gmUid = (int)$accountMergeMap[$gmUid];
 
                     if (!empty($po->gm_date) && $po->gm_date !== '0000-00-00 00:00:00') {
-                        $wh = $this->countEffectiveWorkingHours($po->pajak_date, $po->gm_date, $holidaySet);
+                        $wh = $calcStageWorkingHours($po->id_po, 'gm', $po->pajak_date, $po->gm_date);
                         $recordPenalty($gmUid, 'PO Masuk', $docNo, 'Approval GM', $wh, 'approved');
-                    } elseif (empty($po->gm_status) || $po->gm_status === 'pending') {
-                        $wh = $this->countEffectiveWorkingHours($po->pajak_date, $nowStr, $holidaySet);
+                    } elseif ((empty($po->gm_status) || $po->gm_status === 'pending') && $po->status !== 'revisi' && !in_array($po->gm_status, ['revisi', 'ditolak'], true)) {
+                        $wh = $calcStageWorkingHours($po->id_po, 'gm', $po->pajak_date, $nowStr);
                         $recordPenalty($gmUid, 'PO Masuk', $docNo, 'Approval GM', $wh, 'pending');
                     }
                 }
