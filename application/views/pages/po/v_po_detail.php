@@ -208,6 +208,11 @@
                                 <span class="badge badge-secondary ml-1 px-2 py-1" title="PO telah disetujui General Manager dan tidak dapat diedit">
                                     <i class="fas fa-lock mr-1"></i> Terkunci (Approved GM)
                                 </span>
+                                <?php if ($can_gm): ?>
+                                    <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold ml-1 shadow-sm" data-toggle="modal" data-target="#modalGmReject" title="Khusus GM: Batalkan persetujuan dan tolak PO ini">
+                                        <i class="fas fa-times-circle mr-1"></i> Tolak PO (GM)
+                                    </button>
+                                <?php endif; ?>
                             <?php elseif (in_array($po->status, ['revisi', 'menunggu_kroscek']) || isAdmin() || isCRO()): ?>
                                 <a href="<?= base_url('po_system/edit/' . $id_encrypt) ?>" class="btn btn-xs btn-warning text-dark font-weight-bold ml-1 shadow-sm">
                                     <i class="fas fa-edit mr-1"></i> Edit / Revisi PO
@@ -850,8 +855,11 @@
 
                             <?php if ($can_gm): ?>
                                 <?php if ($is_gm_locked): ?>
-                                    <button type="button" class="btn btn-sm btn-light border btn-block text-success font-weight-bold" disabled title="PO sudah disetujui General Manager">
+                                    <button type="button" class="btn btn-sm btn-light border btn-block text-success font-weight-bold mb-2" disabled title="PO sudah disetujui General Manager">
                                         <i class="fas fa-check-double mr-1"></i> Sudah Disetujui GM
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-block font-weight-bold shadow-sm" data-toggle="modal" data-target="#modalGmReject" title="Khusus GM: Batalkan persetujuan dan tolak PO ini">
+                                        <i class="fas fa-times-circle mr-1"></i> Tolak PO Ini (Khusus GM)
                                     </button>
                                 <?php elseif ($po->pajak_status === 'sesuai'): ?>
                                     <button type="button" class="btn btn-sm btn-success btn-block" data-toggle="modal" data-target="#modalGm">
@@ -1416,6 +1424,37 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
                     <button type="submit" class="btn btn-success font-weight-bold">Simpan Persetujuan GM</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL TOLAK PO KHUSUS GM (POST-APPROVAL) ==================== -->
+<div class="modal fade" id="modalGmReject" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-danger">
+            <form action="<?= base_url('po_system/tolak_po_gm') ?>" method="post">
+                <input type="hidden" name="id_po" value="<?= $id_encrypt ?>">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title font-weight-bold text-white"><i class="fas fa-exclamation-triangle mr-2"></i>Penolakan PO (Revisi Keputusan GM)</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" style="background: #fffbeb; border-color: #fde68a; color: #92400e;">
+                        <i class="fas fa-info-circle mr-1"></i> Tindakan ini akan <b>membatalkan status ACC</b> yang sebelumnya diberikan oleh General Manager, dan mengubah status PO menjadi <b>DITOLAK</b>.
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold text-danger">Alasan Penolakan PO <span class="text-danger">*</span></label>
+                        <textarea name="gm_catatan" class="form-control" rows="3" required placeholder="Tuliskan alasan lengkap penolakan / pembatalan ACC PO ini..."></textarea>
+                        <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Alasan penolakan akan dicatat dalam riwayat log PO dan dikirimkan sebagai notifikasi ke tim terkait.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger font-weight-bold" onclick="return confirm('Apakah Anda yakin ingin MENOLAK PO ini dan membatalkan persetujuan sebelumnya?')">
+                        <i class="fas fa-times-circle mr-1"></i> Ya, Tolak PO Ini
+                    </button>
                 </div>
             </form>
         </div>

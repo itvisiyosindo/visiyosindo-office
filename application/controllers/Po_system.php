@@ -1335,6 +1335,70 @@ class Po_system extends CI_Controller
     }
 
     /**
+     * Fitur Khusus GM: Menolak PO yang sebelumnya sudah disetujui (ACC)
+     */
+    public function tolak_po_gm()
+    {
+        $id_encrypted = $this->input->post('id_po');
+        $id_po        = decrypt($id_encrypted);
+        $po           = $this->md_po_system->getPoById($id_po);
+
+        if (!$po) {
+            show_404();
+            return;
+        }
+
+        $user = $this->md_pengguna->getById(sessPenggunaId());
+        $nama_user  = is_array($user) ? $user[0]->nama : ($user->nama ?? 'GM');
+        $my_jabatan = is_array($user) ? $user[0]->jabatan : ($user->jabatan ?? '');
+        $my_level   = is_array($user) ? $user[0]->level : ($user->level ?? '');
+        $can_gm     = (isAdmin() || (function_exists('isEksekutif') && isEksekutif()) || stripos($my_jabatan, 'General Manager') !== false || stripos($my_jabatan, 'Direktur') !== false || stripos($my_jabatan, 'Director') !== false || $my_level == 'Hrd');
+
+        if (!$can_gm) {
+            $this->session->set_flashdata('error', 'Hanya General Manager atau Administrator yang berhak menolak PO!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
+        $gm_catatan = trim($this->input->post('gm_catatan') ?? '');
+        if (empty($gm_catatan)) {
+            $this->session->set_flashdata('error', 'Alasan penolakan PO wajib diisi!');
+            redirect('po_system/detail/' . $id_encrypted);
+            return;
+        }
+
+        $data_update = [
+            'gm_status'     => 'ditolak',
+            'gm_catatan'    => $gm_catatan,
+            'gm_user_id'    => sessPenggunaId(),
+            'gm_date'       => date('Y-m-d H:i:s'),
+            'status'        => 'ditolak',
+            'status_proses' => 'DITOLAK',
+            'updated_at'    => date('Y-m-d H:i:s')
+        ];
+
+        $this->md_po_system->updatePo($id_po, $data_update);
+
+        $logMsg = "Penolakan PO oleh GM (Revisi Keputusan ACC) oleh " . $nama_user . " | Alasan Penolakan: " . $gm_catatan;
+        $this->md_po_system->addLog($id_po, $po->status, 'ditolak', $logMsg, sessPenggunaId(), $nama_user);
+
+        // Notifikasi WA Progres Penolakan ke Grup Marketing & Gudang
+        $po_updated   = $this->md_po_system->getPoById($id_po);
+        $indent_items = $this->md_po_system->getIndentItemsByPoId($id_po);
+        waPoProgressGroup([
+            'po'            => $po_updated,
+            'stage'         => 'gm',
+            'action_by'     => $nama_user,
+            'action_status' => 'ditolak',
+            'indent_items'  => $indent_items,
+            'link'          => base_url('po_system/detail/' . $id_encrypted)
+        ]);
+
+        $this->session->set_flashdata('success', 'Status PO No: ' . ($po->no_po ?: $po->kode_masuk) . ' berhasil diubah menjadi DITOLAK oleh General Manager.');
+        redirect('po_system/detail/' . $id_encrypted);
+    }
+
+    /**
      * Simpan Dokumen Pemenuhan / Kelengkapan (Fulfillment Post-Approval GM)
      */
     public function simpan_dokumen()
