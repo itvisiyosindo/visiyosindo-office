@@ -3021,6 +3021,8 @@ class Tracking extends CI_Controller
         $page_data['list_pbok']            = $this->md_tracking->getAllPbokForImport();
         $page_data['list_app_forwarder']   = $this->md_tracking->getAllApprovalForwarderForImport();
         $page_data['list_forwarder']       = $this->md_tracking->getAllForwarderMaster();
+        $page_data['list_hs_code']         = $this->md_tracking->getAllHsCodeMaster();
+        $page_data['hs_code_kat_id']       = $this->md_tracking->getHsCodeKategoriId();
         $page_data['page_name']            = 'tracking/v_detail_tracking_import';
         $page_data['page_title']           = 'Detail Tracking Import - ' . $import_row->kode_import;
         $page_data['page_desc']            = 'Checklist 14 Tahapan Import, Dokumen Drive/Office & Settlement Forwarder';
@@ -3052,6 +3054,183 @@ class Tracking extends CI_Controller
 
         addlog('Tracking Import', 'Update Tahap ' . $stage . ' (ID Import: ' . $id_import . ')');
         ajaxReturnDie('success', $res['msg'], TRUE);
+    }
+
+    /**
+     * Kirim Notifikasi WhatsApp Manual per Tahap Tracking Import
+     * Tahap 2 (hanya jika Ada Lartas) -> IZIN K3 ISO CDAKB VYM
+     * Tahap 3, 6, 10, 13 -> MEDIKAL IMPORT / PO
+     * Tahap 7 -> Gudang PT. VYM & MEDIKAL IMPORT / PO
+     * Tahap 9 -> IZIN K3 ISO CDAKB VYM
+     * Tahap 11 -> Gudang PT. VYM
+     */
+    public function send_import_stage_wa()
+    {
+        grantAccessFor('all');
+
+        $id_import_enc = $this->input->post('id_import', TRUE);
+        $id_import     = decrypt($id_import_enc);
+        $stage         = (int)$this->input->post('stage', TRUE);
+
+        $row = $this->md_tracking->getTrackingImportById($id_import);
+        if (!$row) {
+            ajaxReturnDie('error', 'Data Tracking Import tidak ditemukan!', FALSE);
+            return;
+        }
+
+        $stage_defs = $this->md_tracking->getImportStageDefinitions();
+        if (!isset($stage_defs[$stage]) || empty($stage_defs[$stage]['wa_groups'])) {
+            ajaxReturnDie('error', 'Tahap ini tidak memiliki konfigurasi notifikasi WhatsApp.', FALSE);
+            return;
+        }
+
+        $def       = $stage_defs[$stage];
+        $steps_map = $this->md_tracking->getImportStepsMap($id_import);
+        $stepObj   = $steps_map[$stage] ?? null;
+        $stepData  = ($stepObj && !empty($stepObj->data)) ? $stepObj->data : [];
+        $stepDocs  = ($stepObj && !empty($stepObj->docs)) ? $stepObj->docs : [];
+        $catatan   = ($stepObj && !empty($stepObj->catatan)) ? trim((string)$stepObj->catatan) : '';
+
+        // Tahap 2: notif hanya jika dipilih Ada Lartas
+        if ($stage === 2) {
+            $adaLartas = $stepData['ada_lartas'] ?? ($row->ada_lartas ?? '');
+            if ($adaLartas !== 'ada') {
+                ajaxReturnDie('error', 'Notifikasi WA Tahap 2 hanya dapat dikirim jika Status Lartas = Ada Lartas (dan sudah disimpan).', FALSE);
+                return;
+            }
+        }
+
+        $pengaju     = $this->md_pengguna->getById(sessPenggunaId());
+        $namaPengaju = !empty($pengaju[0]->nama) ? $pengaju[0]->nama : 'Staff Import';
+        $detailUrl   = 'https://office.visiyosindo.id/tracking/detail_import/' . encrypt($id_import);
+        $fmtRp       = function ($val) {
+            $num = (float)preg_replace('/[^0-9.]/', '', str_replace(',', '', (string)$val));
+            return 'Rp ' . number_format($num, 0, ',', '.');
+        };
+        $fmtDate     = function ($val) {
+            if (empty($val) || strpos((string)$val, '0000-00-00') !== false) return '-';
+            $ts = strtotime((string)$val);
+            return $ts ? date('d/m/Y', $ts) : (string)$val;
+        };
+
+        $lines = [
+            "*NOTIFIKASI TRACKING IMPORT - TAHAP {$stage}*",
+            "*" . $def['label'] . "*",
+            "",
+            "• Kode Import : " . $row->kode_import,
+            "• No. PO : " . ($row->no_po_manufacture ?: '-'),
+            "• Supplier/Manufacture : " . ($row->nama_manufacture ?: '-'),
+            "• Produk/Unit : " . trim((string)($row->daftar_unit ?: '-')),
+        ];
+
+        if ($stage === 2) {
+            $hsCode   = trim((string)($stepData['hs_code'] ?? ($row->hs_code ?? ''))) ?: '-';
+            $ketLartas = trim((string)($stepData['keterangan_lartas'] ?? ($row->keterangan_lartas ?? '')));
+            $linkLartas = trim((string)($stepDocs['doc_hs_intr'] ?? '')) ?: '-';
+            $lines[] = "";
+            $lines[] = "*Detail HS Code & Lartas:*";
+            $lines[] = "• Kode HS Code : " . $hsCode;
+            $lines[] = "• Status Lartas : *Ada Lartas* (Perlu Koordinasi Regulatory)";
+            if ($ketLartas !== '') {
+                $lines[] = "• Keterangan Lartas : " . $ketLartas;
+            }
+            $lines[] = "• Link Lartas / HS Code : " . $linkLartas;
+        } elseif ($stage === 3) {
+            $lines[] = "";
+            $lines[] = "*Detail Kirim PO & Proforma Invoice:*";
+            $lines[] = "• Status Permintaan PI : " . (($stepData['status_permintaan_pi'] ?? '') ?: '-');
+            if (!empty($stepDocs['doc_bukti_kirim_po'])) $lines[] = "• Bukti Kirim PO : " . $stepDocs['doc_bukti_kirim_po'];
+            if (!empty($stepDocs['doc_proforma_invoice'])) $lines[] = "• Proforma Invoice (PI) : " . $stepDocs['doc_proforma_invoice'];
+        } elseif ($stage === 6) {
+            $lines[] = "";
+            $lines[] = "*Detail Dokumen CIPL:*";
+            $lines[] = "• Status CIPL : " . (($stepData['status_cipl'] ?? '') ?: '-');
+            if (!empty($stepDocs['doc_commercial_invoice'])) $lines[] = "• Commercial Invoice : " . $stepDocs['doc_commercial_invoice'];
+            if (!empty($stepDocs['doc_packing_list'])) $lines[] = "• Packing List : " . $stepDocs['doc_packing_list'];
+        } elseif ($stage === 7) {
+            $lines[] = "• Gudang Tujuan : " . ($row->nama_gudang_tujuan ?: 'Gudang Pusat');
+            $lines[] = "";
+            $lines[] = "*Detail Dokumen AWB / BL:*";
+            $lines[] = "• Status AWB / BL : " . (($stepData['status_awb_bl'] ?? '') ?: '-');
+            $lines[] = "• Nomor AWB / B/L : " . (($stepData['no_bl_awb'] ?? ($row->no_bl_awb ?? '')) ?: '-');
+            if (!empty($stepDocs['doc_foto_produk'])) $lines[] = "• Foto Produk : " . $stepDocs['doc_foto_produk'];
+            if (!empty($stepDocs['doc_awb_bl'])) $lines[] = "• Dokumen AWB / BL : " . $stepDocs['doc_awb_bl'];
+        } elseif ($stage === 9) {
+            $lines[] = "";
+            $lines[] = "*Detail Dokumen Lartas:*";
+            $lines[] = "• Kode HS Code : " . ($row->hs_code ?: '-');
+            $lines[] = "• Status Dokumen Lartas : " . (($stepData['status_dokumen_lartas'] ?? '') ?: '-');
+            if (!empty($stepDocs['doc_lartas'])) $lines[] = "• Link Dokumen Lartas : " . $stepDocs['doc_lartas'];
+        } elseif ($stage === 10) {
+            $bm    = $stepData['bea_masuk'] ?? 0;
+            $ppn   = $stepData['ppn_impor'] ?? 0;
+            $pph   = $stepData['pph_impor'] ?? 0;
+            $total = $stepData['nominal_pajak_import'] ?? ($row->nominal_pajak_import ?? 0);
+            $lines[] = "";
+            $lines[] = "*Detail Pajak Impor:*";
+            $lines[] = "• Status Pajak Impor : " . (($stepData['status_pajak_impor'] ?? '') ?: '-');
+            $lines[] = "• Bea Masuk : " . $fmtRp($bm);
+            $lines[] = "• PPN Impor : " . $fmtRp($ppn);
+            $lines[] = "• PPh Impor : " . $fmtRp($pph);
+            $lines[] = "• *Total Pajak Impor* : *" . $fmtRp($total) . "*";
+            if (!empty($stepDocs['doc_billing_pajak'])) $lines[] = "• Billing Pajak : " . $stepDocs['doc_billing_pajak'];
+            if (!empty($stepDocs['doc_pbok_pajak'])) $lines[] = "• Link PBOK : " . $stepDocs['doc_pbok_pajak'];
+            if (!empty($stepDocs['doc_bukti_bayar_pajak'])) $lines[] = "• Bukti Bayar Pajak : " . $stepDocs['doc_bukti_bayar_pajak'];
+        } elseif ($stage === 11) {
+            $lines[] = "• Gudang Tujuan : " . ($row->nama_gudang_tujuan ?: 'Gudang Pusat');
+            $lines[] = "";
+            $lines[] = "*Detail Pengeluaran Barang / SPPB:*";
+            $lines[] = "• Status Pengeluaran : " . (($stepData['status_pengeluaran'] ?? '') ?: '-');
+            $lines[] = "• Tgl Siap Jemput / Kirim : " . $fmtDate($stepData['tgl_siap_jemput'] ?? ($row->tgl_siap_jemput ?? ''));
+            if (!empty($stepDocs['doc_sppb'])) $lines[] = "• Link SPPB : " . $stepDocs['doc_sppb'];
+        } elseif ($stage === 13) {
+            $lines[] = "• Forwarder : " . ($row->nama_forwarder ?: '-');
+            $lines[] = "";
+            $lines[] = "*Detail Invoice Forwarder:*";
+            $lines[] = "• Status Pembayaran : " . (($stepData['status_inv_forwarder'] ?? '') ?: '-');
+            $lines[] = "• Jatuh Tempo Pembayaran : " . $fmtDate($stepData['tgl_jatuh_tempo_forwarder'] ?? ($row->tgl_jatuh_tempo_forwarder ?? ''));
+            if (!empty($stepDocs['doc_invoice_forwarder'])) $lines[] = "• Invoice Forwarder : " . $stepDocs['doc_invoice_forwarder'];
+            if (!empty($stepDocs['doc_faktur_pajak_forwarder'])) $lines[] = "• Faktur Pajak Forwarder : " . $stepDocs['doc_faktur_pajak_forwarder'];
+        }
+
+        if ($catatan !== '') {
+            $lines[] = "";
+            $lines[] = "• Catatan : " . $catatan;
+        }
+        $lines[] = "";
+        $lines[] = "Dikirim oleh: {$namaPengaju}";
+        $lines[] = "Detail Tracking: {$detailUrl}";
+
+        $pesanRaw = implode("\n", $lines);
+        $pesanEncoded = rawurlencode($pesanRaw);
+
+        $sentGroups = [];
+        foreach ($def['wa_groups'] as $grp) {
+            if (function_exists('sendWaGroup')) {
+                @sendWaGroup([
+                    'devId'    => hostWa('2'),
+                    'penerima' => $grp,
+                    'pesan'    => $pesanEncoded
+                ]);
+                $sentGroups[] = $grp;
+            }
+        }
+
+        $groupStr = implode(' & ', $sentGroups);
+        $now = date('Y-m-d H:i:s');
+        $this->db->insert('tracking_import_log', [
+            'id_import'       => (int)$id_import,
+            'stage'           => $stage,
+            'stage_label'     => $def['label'],
+            'waktu_milestone' => $now,
+            'catatan'         => '[NOTIF WA] Notifikasi WA Tahap ' . $stage . ' dikirim ke grup: ' . $groupStr,
+            'bukti_link'      => null,
+            'id_pengguna'     => sessPenggunaId(),
+            'created_at'      => $now
+        ]);
+
+        addlog('Tracking Import WA', 'Kirim Notif WA Tahap ' . $stage . ' (' . $row->kode_import . ') ke grup: ' . $groupStr);
+        ajaxReturnDie('success', 'Notifikasi WhatsApp Tahap ' . $stage . ' berhasil dikirim ke grup: ' . $groupStr, FALSE);
     }
 
     public function update_import_header()
@@ -3175,7 +3354,14 @@ class Tracking extends CI_Controller
             $sheet->setCellValue('F' . $r, $item->hs_code ?: '-');
             $sheet->setCellValue('G' . $r, $lartasLabel);
             $sheet->setCellValue('H' . $r, $item->no_bl_awb ?: '-');
-            $sheet->setCellValue('I' . $r, ($item->no_pib ?: '-') . ' / Rp ' . number_format((float)$item->nominal_pajak_import, 0, ',', '.'));
+            $st10Data = (isset($sMap[10]) && !empty($sMap[10]->data_json)) ? (json_decode($sMap[10]->data_json, true) ?: []) : [];
+            $pajakStr = ($item->no_pib ?: '-') . ' / Rp ' . number_format((float)$item->nominal_pajak_import, 0, ',', '.');
+            if (!empty($st10Data['bea_masuk']) || !empty($st10Data['ppn_impor']) || !empty($st10Data['pph_impor'])) {
+                $pajakStr .= ' (BM: Rp ' . number_format((float)($st10Data['bea_masuk'] ?? 0), 0, ',', '.')
+                    . ', PPN: Rp ' . number_format((float)($st10Data['ppn_impor'] ?? 0), 0, ',', '.')
+                    . ', PPh: Rp ' . number_format((float)($st10Data['pph_impor'] ?? 0), 0, ',', '.') . ')';
+            }
+            $sheet->setCellValue('I' . $r, $pajakStr);
             $sheet->setCellValue('J' . $r, $item->tgl_siap_jemput ?: '-');
             $sheet->setCellValue('K' . $r, ($item->nama_gudang_tujuan ?: '-') . ($item->nama_ekspedisi_domestik ? ' (' . $item->nama_ekspedisi_domestik . ')' : ''));
             $sheet->setCellValue('L' . $r, $m['jatuh_tempo']['label']);

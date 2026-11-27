@@ -314,11 +314,25 @@ foreach ($import_list as $r) {
                                     data-nopo="<?= htmlspecialchars($noPoText) ?>"
                                     data-supplier="<?= htmlspecialchars($po->supplier ?: '') ?>"
                                     data-items="<?= htmlspecialchars($po->items_summary ?: '') ?>"
+                                    data-items-json="<?= htmlspecialchars(json_encode($po->items ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>"
                                     data-url="<?= htmlspecialchars($poUrl) ?>">
                                     <?= htmlspecialchars($noPoText) ?> <?= !empty($po->supplier) ? (' - ' . htmlspecialchars($po->supplier)) : '' ?> (<?= htmlspecialchars(mb_strimwidth((string)$po->items_summary, 0, 55, '...')) ?>)
                                 </option>
                             <?php endforeach; ?>
                         </select>
+
+                        <div id="poProductsPickerBox" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="font-weight-bold small text-dark mb-0">
+                                    <i class="fas fa-boxes text-primary mr-1"></i> Pilih Produk dari PO Supplier (nama produk sama persis dengan PO):
+                                </label>
+                                <div>
+                                    <button type="button" class="btn btn-link btn-sm p-0 mr-2 small" id="btnCheckAllPoItems">Pilih Semua</button>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-muted small" id="btnUncheckAllPoItems">Batal Semua</button>
+                                </div>
+                            </div>
+                            <div id="poProductsList" class="bg-white border rounded p-2" style="max-height:170px; overflow-y:auto; font-size:0.82rem;"></div>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -407,16 +421,108 @@ foreach ($import_list as $r) {
             });
         }
 
-        // Auto-fill dari dropdown PO Supplier Office
+        // Auto-fill dari dropdown PO Supplier Office + munculkan daftar produk persis seperti di PO
         var selPo = document.getElementById('selectPoSupplier');
+        var poProductsBox = document.getElementById('poProductsPickerBox');
+        var poProductsList = document.getElementById('poProductsList');
+
+        function syncSelectedPoProducts() {
+            if (!poProductsList) return;
+            var checked = poProductsList.querySelectorAll('input.chk-po-product:checked');
+            var parts = [];
+            var firstSup = '';
+            checked.forEach(function(cb) {
+                var nama = cb.getAttribute('data-nama') || '';
+                var qty = cb.getAttribute('data-qty') || '1';
+                var sup = cb.getAttribute('data-sup') || '';
+                if (nama) parts.push(nama + ' (' + qty + ')');
+                if (!firstSup && sup) firstSup = sup;
+            });
+            document.getElementById('inp_daftar_unit').value = parts.join(', ');
+            if (firstSup) {
+                document.getElementById('inp_manufacture').value = firstSup;
+            }
+        }
+
         if (selPo) {
             selPo.addEventListener('change', function() {
                 var opt = selPo.options[selPo.selectedIndex];
-                if (!opt || !opt.value) return;
+                if (!opt || !opt.value) {
+                    if (poProductsBox) poProductsBox.style.display = 'none';
+                    if (poProductsList) poProductsList.innerHTML = '';
+                    return;
+                }
                 document.getElementById('inp_no_po').value = opt.getAttribute('data-nopo') || '';
                 document.getElementById('inp_manufacture').value = opt.getAttribute('data-supplier') || '';
-                document.getElementById('inp_daftar_unit').value = opt.getAttribute('data-items') || '';
                 document.getElementById('inp_doc_po').value = opt.getAttribute('data-url') || '';
+
+                var items = [];
+                try {
+                    items = JSON.parse(opt.getAttribute('data-items-json') || '[]');
+                } catch (e) {
+                    items = [];
+                }
+
+                if (poProductsBox && poProductsList && items.length > 0) {
+                    poProductsList.innerHTML = '';
+                    items.forEach(function(item, idx) {
+                        var wrap = document.createElement('div');
+                        wrap.className = 'custom-control custom-checkbox mb-1';
+
+                        var cb = document.createElement('input');
+                        cb.type = 'checkbox';
+                        cb.className = 'custom-control-input chk-po-product';
+                        cb.id = 'chkPoProd_' + idx;
+                        cb.checked = true;
+                        cb.setAttribute('data-nama', item.nama_barang || '');
+                        cb.setAttribute('data-qty', item.qty || '1');
+                        cb.setAttribute('data-sup', item.supplier || '');
+                        cb.addEventListener('change', syncSelectedPoProducts);
+
+                        var lbl = document.createElement('label');
+                        lbl.className = 'custom-control-label d-block';
+                        lbl.htmlFor = cb.id;
+                        lbl.style.cursor = 'pointer';
+
+                        var title = document.createElement('strong');
+                        title.textContent = item.nama_barang || '-';
+                        lbl.appendChild(title);
+
+                        var meta = document.createElement('span');
+                        meta.className = 'text-muted ml-1';
+                        var metaTxt = '(Qty: ' + (item.qty || '1') + ')';
+                        if (item.kode_barang) metaTxt += ' [' + item.kode_barang + ']';
+                        if (item.supplier) metaTxt += ' — ' + item.supplier;
+                        meta.textContent = metaTxt;
+                        lbl.appendChild(meta);
+
+                        wrap.appendChild(cb);
+                        wrap.appendChild(lbl);
+                        poProductsList.appendChild(wrap);
+                    });
+                    poProductsBox.style.display = 'block';
+                    syncSelectedPoProducts();
+                } else {
+                    if (poProductsBox) poProductsBox.style.display = 'none';
+                    document.getElementById('inp_daftar_unit').value = opt.getAttribute('data-items') || '';
+                }
+            });
+        }
+
+        var btnCheckAll = document.getElementById('btnCheckAllPoItems');
+        if (btnCheckAll) {
+            btnCheckAll.addEventListener('click', function() {
+                if (!poProductsList) return;
+                poProductsList.querySelectorAll('input.chk-po-product').forEach(function(cb) { cb.checked = true; });
+                syncSelectedPoProducts();
+            });
+        }
+        var btnUncheckAll = document.getElementById('btnUncheckAllPoItems');
+        if (btnUncheckAll) {
+            btnUncheckAll.addEventListener('click', function() {
+                if (!poProductsList) return;
+                poProductsList.querySelectorAll('input.chk-po-product').forEach(function(cb) { cb.checked = false; });
+                syncSelectedPoProducts();
             });
         }
 

@@ -1356,6 +1356,8 @@ class Md_tracking extends CI_Model
                 'short' => 'Cek HS Code & Lartas',
                 'role'  => 'Staff Import & Regulatory',
                 'desc'  => 'Staff Import update pengecekan HS Code dan Lartas. Apabila ada lartas, berikan informasi rencana import ke Regulatory dan pastikan lartas terpenuhi saat barang tiba di Indonesia.',
+                'wa_groups' => ['IZIN K3 ISO CDAKB VYM'],
+                'wa_only_if_lartas' => true,
                 'fields' => [
                     'hs_code' => [
                         'label' => 'Kode HS Code',
@@ -1379,7 +1381,7 @@ class Md_tracking extends CI_Model
                 ],
                 'docs' => [
                     'doc_hs_intr' => [
-                        'label' => 'Print Check HS Code dari website INTR (Link Drive)',
+                        'label' => 'Print Check HS Code / Link Lartas dari INTR (Link Drive)',
                         'type'  => 'link'
                     ]
                 ]
@@ -1391,6 +1393,7 @@ class Md_tracking extends CI_Model
                 'short' => 'Kirim PO & Minta PI',
                 'role'  => 'Staff Import',
                 'desc'  => 'Mengirimkan PO ke supplier luar negeri dan meminta dokumen Proforma Invoice (PI).',
+                'wa_groups' => ['MEDIKAL IMPORT / PO'],
                 'fields' => [
                     'status_permintaan_pi' => [
                         'label' => 'Status Permintaan Invoice (PI)',
@@ -1493,6 +1496,7 @@ class Md_tracking extends CI_Model
                 'short' => 'Dokumen CIPL',
                 'role'  => 'Staff Import & Supplier',
                 'desc'  => 'Koordinasi kelengkapan dan validasi dokumen Commercial Invoice & Packing List.',
+                'wa_groups' => ['MEDIKAL IMPORT / PO'],
                 'fields' => [
                     'status_cipl' => [
                         'label' => 'Update Status Dokumen CIPL',
@@ -1524,6 +1528,7 @@ class Md_tracking extends CI_Model
                 'short' => 'Dokumen AWB / BL',
                 'role'  => 'Staff Import & Forwarder',
                 'desc'  => 'Koordinasi dokumen Air Way Bill (AWB) / Bill of Lading (BL) serta foto produk sebelum dikirim.',
+                'wa_groups' => ['Gudang PT. VYM', 'MEDIKAL IMPORT / PO'],
                 'fields' => [
                     'status_awb_bl' => [
                         'label' => 'Update Status Dokumen AWB / BL',
@@ -1592,6 +1597,7 @@ class Md_tracking extends CI_Model
                 'role'  => 'Staff Import & Regulatory',
                 'conditional_lartas' => true,
                 'desc'  => 'Pastikan kebutuhan dokumen pengurusan lartas sudah lengkap dan sesuai informasi di PIB, AWB/BL, dan CIPL. Koordinasi dengan Regulatory (jika ada lartas).',
+                'wa_groups' => ['IZIN K3 ISO CDAKB VYM'],
                 'fields' => [
                     'status_dokumen_lartas' => [
                         'label' => 'Update Status Dokumen Lartas',
@@ -1618,11 +1624,13 @@ class Md_tracking extends CI_Model
                 'label' => '10. Koordinasi Dokumen Pajak Impor',
                 'short' => 'Pajak Impor',
                 'role'  => 'Staff Import & Finance',
-                'desc'  => 'Pengurusan Billing Pajak Impor, pengajuan PBOK, hingga bukti bayar pajak impor.',
+                'desc'  => 'Pengurusan Billing Pajak Impor (Bea Masuk, PPN, PPh), pengajuan PBOK, hingga bukti bayar pajak impor.',
+                'wa_groups' => ['MEDIKAL IMPORT / PO'],
                 'fields' => [
                     'status_pajak_impor' => [
                         'label' => 'Update Status Dokumen Pajak Impor',
                         'type'  => 'select',
+                        'col'   => 'col-md-12',
                         'options' => [
                             '' => '-- Pilih Status --',
                             'Menunggu Billing' => 'Menunggu Billing',
@@ -1631,10 +1639,30 @@ class Md_tracking extends CI_Model
                             'Pajak Sudah Dibayar' => 'Pajak Sudah Dibayar'
                         ]
                     ],
-                    'nominal_pajak_import' => [
-                        'label' => 'Nominal Pajak Impor (Rp)',
+                    'bea_masuk' => [
+                        'label' => 'Bea Masuk (Rp)',
                         'type'  => 'number',
-                        'placeholder' => 'Total Bea Masuk + PPN + PPh Impor'
+                        'col'   => 'col-md-4',
+                        'placeholder' => 'Nominal Bea Masuk'
+                    ],
+                    'ppn_impor' => [
+                        'label' => 'PPN Impor (Rp)',
+                        'type'  => 'number',
+                        'col'   => 'col-md-4',
+                        'placeholder' => 'Nominal PPN Impor'
+                    ],
+                    'pph_impor' => [
+                        'label' => 'PPh Impor (Rp)',
+                        'type'  => 'number',
+                        'col'   => 'col-md-4',
+                        'placeholder' => 'Nominal PPh Impor'
+                    ],
+                    'nominal_pajak_import' => [
+                        'label' => 'Total Pajak Impor (Rp) — Otomatis Bea Masuk + PPN + PPh',
+                        'type'  => 'number',
+                        'col'   => 'col-md-12',
+                        'readonly' => true,
+                        'placeholder' => 'Otomatis dijumlahkan dari Bea Masuk + PPN + PPh'
                     ]
                 ],
                 'docs' => [
@@ -1659,6 +1687,7 @@ class Md_tracking extends CI_Model
                 'short' => 'Pengeluaran / SPPB',
                 'role'  => 'Staff Import & Forwarder',
                 'desc'  => 'Follow up SPPB, proses bongkar barang di pelabuhan/bandara, pemindahan ke gudang forwarder/perusahaan, dan tanggal barang siap dijemput/dikirim.',
+                'wa_groups' => ['Gudang PT. VYM'],
                 'fields' => [
                     'status_pengeluaran' => [
                         'label' => 'Update Status Pengeluaran Barang (Bongkar Port / Pindah Gudang Forwarder)',
@@ -1730,6 +1759,7 @@ class Md_tracking extends CI_Model
                 'short' => 'Invoice Forwarder',
                 'role'  => 'Staff Import & Forwarder',
                 'desc'  => 'Pengumpulan Invoice Forwarder, Faktur Pajak Forwarder, dan pencatatan tanggal jatuh tempo pembayaran.',
+                'wa_groups' => ['MEDIKAL IMPORT / PO'],
                 'fields' => [
                     'status_inv_forwarder' => [
                         'label' => 'Update Status Dokumen Pembayaran',
@@ -1825,12 +1855,71 @@ class Md_tracking extends CI_Model
                     po.no_po,
                     po.tgl_pengajuan,
                     (SELECT pod.supplier FROM purchase_order_detail pod WHERE pod.id_po = po.id AND pod.supplier IS NOT NULL AND pod.supplier != '' LIMIT 1) as supplier,
-                    (SELECT GROUP_CONCAT(CONCAT(pod.nama_barang, ' (', COALESCE(pod.rencana_po, pod.kebutuhan_po, '1'), ')') SEPARATOR ', ') FROM purchase_order_detail pod WHERE pod.id_po = po.id) as items_summary
+                    (SELECT GROUP_CONCAT(CONCAT(pod.nama_barang, ' (', COALESCE(NULLIF(pod.rencana_po,''), NULLIF(pod.kebutuhan_po,''), '1'), ')') SEPARATOR ', ') FROM purchase_order_detail pod WHERE pod.id_po = po.id) as items_summary
                 FROM purchase_order po
                 WHERE po.status != 5
                 ORDER BY po.id DESC
                 LIMIT 150";
-        return $this->db->query($sql)->result();
+        $rows = $this->db->query($sql)->result();
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Batch-load detail produk per PO agar nama produk sama persis dengan PO Supplier
+        $poIds = array_map(function ($r) { return (int)$r->id_po; }, $rows);
+        $itemsByPo = [];
+        if ($this->db->table_exists('purchase_order_detail') && !empty($poIds)) {
+            $detailRows = $this->db->select('id_pod, id_po, nama_barang, kode_barang, rencana_po, kebutuhan_po, supplier')
+                ->from('purchase_order_detail')
+                ->where_in('id_po', $poIds)
+                ->order_by('id_pod', 'ASC')
+                ->get()
+                ->result();
+            foreach ($detailRows as $dr) {
+                $qty = (trim((string)$dr->rencana_po) !== '' && (float)$dr->rencana_po > 0)
+                    ? trim((string)$dr->rencana_po)
+                    : ((trim((string)$dr->kebutuhan_po) !== '' && (float)$dr->kebutuhan_po > 0) ? trim((string)$dr->kebutuhan_po) : '1');
+                $itemsByPo[(int)$dr->id_po][] = [
+                    'id_pod'      => (int)$dr->id_pod,
+                    'nama_barang' => trim((string)$dr->nama_barang),
+                    'kode_barang' => trim((string)$dr->kode_barang),
+                    'qty'         => $qty,
+                    'supplier'    => trim((string)$dr->supplier)
+                ];
+            }
+        }
+        foreach ($rows as $r) {
+            $r->items = $itemsByPo[(int)$r->id_po] ?? [];
+        }
+        return $rows;
+    }
+
+    public function getHsCodeKategoriId()
+    {
+        if (!$this->db->table_exists('masterdokumenproduct')) {
+            return 0;
+        }
+        $kat = $this->db->query("SELECT id FROM masterdokumenproduct WHERE UPPER(TRIM(keterangan)) = 'HS CODE' LIMIT 1")->row();
+        return $kat ? (int)$kat->id : 0;
+    }
+
+    public function getAllHsCodeMaster()
+    {
+        if (!$this->db->table_exists('dokumen_product') || !$this->db->table_exists('masterdokumenproduct')) {
+            return [];
+        }
+        $katId = $this->getHsCodeKategoriId();
+        if ($katId <= 0) {
+            return [];
+        }
+        return $this->db->select('id, nama_dokumen, kode_hs_code, keterangan, dokumen_lartas, tarif_impor, file')
+            ->from('dokumen_product')
+            ->where('id_kategori', $katId)
+            ->where('status', 1)
+            ->where("kode_hs_code IS NOT NULL AND TRIM(kode_hs_code) != ''", null, false)
+            ->order_by('kode_hs_code', 'ASC')
+            ->get()
+            ->result();
     }
 
     public function getAllPbokForImport()
@@ -2337,6 +2426,28 @@ class Md_tracking extends CI_Model
                 if (array_key_exists($fk, $payload['data'])) {
                     $stepData[$fk] = trim((string)$payload['data'][$fk]);
                 }
+            }
+        }
+
+        // Tahap 10: otomatis hitung Total Pajak Impor = Bea Masuk + PPN + PPh
+        if ($stage === 10) {
+            $parseRp = function ($v) {
+                $clean = preg_replace('/[^0-9.]/', '', str_replace(',', '', trim((string)$v)));
+                return $clean !== '' ? (float)$clean : 0.0;
+            };
+            $hasBreakdown = (
+                (isset($stepData['bea_masuk']) && trim((string)$stepData['bea_masuk']) !== '') ||
+                (isset($stepData['ppn_impor']) && trim((string)$stepData['ppn_impor']) !== '') ||
+                (isset($stepData['pph_impor']) && trim((string)$stepData['pph_impor']) !== '')
+            );
+            if ($hasBreakdown) {
+                $bm  = $parseRp($stepData['bea_masuk'] ?? '');
+                $ppn = $parseRp($stepData['ppn_impor'] ?? '');
+                $pph = $parseRp($stepData['pph_impor'] ?? '');
+                $stepData['bea_masuk'] = $bm > 0 ? (string)$bm : '0';
+                $stepData['ppn_impor'] = $ppn > 0 ? (string)$ppn : '0';
+                $stepData['pph_impor'] = $pph > 0 ? (string)$pph : '0';
+                $stepData['nominal_pajak_import'] = (string)($bm + $ppn + $pph);
             }
         }
 

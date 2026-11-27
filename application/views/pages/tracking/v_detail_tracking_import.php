@@ -124,7 +124,22 @@ $statusMeta = [
                     <span><strong>Forwarder:</strong> <?= htmlspecialchars($import_row->nama_forwarder ?: '-') ?></span>
                     <span><strong>AWB/BL:</strong> <?= htmlspecialchars($import_row->no_bl_awb ?: '-') ?></span>
                     <span><strong>PIB:</strong> <?= htmlspecialchars($import_row->no_pib ?: '-') ?></span>
-                    <span><strong>Pajak:</strong> <?= (float)$import_row->nominal_pajak_import > 0 ? ('Rp ' . number_format((float)$import_row->nominal_pajak_import, 0, ',', '.')) : '-' ?></span>
+                    <?php
+                        $st10D = isset($steps_map[10]) && !empty($steps_map[10]->data) ? $steps_map[10]->data : [];
+                        $pajakTitle = '';
+                        if (!empty($st10D['bea_masuk']) || !empty($st10D['ppn_impor']) || !empty($st10D['pph_impor'])) {
+                            $pajakTitle = 'BM: Rp ' . number_format((float)($st10D['bea_masuk'] ?? 0), 0, ',', '.')
+                                . ' | PPN: Rp ' . number_format((float)($st10D['ppn_impor'] ?? 0), 0, ',', '.')
+                                . ' | PPh: Rp ' . number_format((float)($st10D['pph_impor'] ?? 0), 0, ',', '.');
+                        }
+                    ?>
+                    <span title="<?= htmlspecialchars($pajakTitle) ?>">
+                        <strong>Pajak:</strong>
+                        <?= (float)$import_row->nominal_pajak_import > 0 ? ('Rp ' . number_format((float)$import_row->nominal_pajak_import, 0, ',', '.')) : '-' ?>
+                        <?php if ($pajakTitle !== ''): ?>
+                            <small class="text-muted">(<?= htmlspecialchars($pajakTitle) ?>)</small>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
             <div class="col-lg-4">
@@ -267,6 +282,43 @@ $statusMeta = [
                                 </div>
                             </div>
 
+                            <?php if ($stNum === 2): ?>
+                                <!-- PILIH MASTER HS CODE DARI DOKUMEN PRODUK -> HS CODE -->
+                                <div class="form-group p-2 rounded mb-3" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-1" style="gap:6px;">
+                                        <label class="font-weight-bold small text-primary mb-0">
+                                            <i class="fas fa-barcode mr-1"></i> Pilih dari Master HS Code (Dokumen Produk &rarr; HS CODE)
+                                        </label>
+                                        <?php if (!empty($hs_code_kat_id)): ?>
+                                            <a href="<?= base_url('dokumen/index/product/' . encrypt($hs_code_kat_id)) ?>" target="_blank" class="btn btn-outline-primary btn-xs py-0 px-2" style="font-size:0.72rem;">
+                                                <i class="fas fa-external-link-alt mr-1"></i> Kelola Data HS Code
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                    <select id="selMasterHsCode" class="form-control form-control-sm">
+                                        <option value="">-- Pilih HS Code dari Master (atau isi manual di bawah) --</option>
+                                        <?php if (!empty($list_hs_code)): foreach ($list_hs_code as $hs):
+                                            $lartasRaw = trim((string)($hs->dokumen_lartas ?? ''));
+                                            $hasLartas = ($lartasRaw !== '' && !preg_match('/^(tidak ada|tidak|none|-)$/i', $lartasRaw)) ? 'ada' : 'tidak';
+                                            $lartasTag = ($hasLartas === 'ada') ? 'Ada Lartas' : 'Tidak Ada Lartas';
+                                            $curHs     = trim((string)($stepData['hs_code'] ?? ($import_row->hs_code ?? '')));
+                                        ?>
+                                            <option value="<?= (int)$hs->id ?>"
+                                                <?= ($curHs !== '' && strcasecmp($curHs, trim((string)$hs->kode_hs_code)) === 0) ? 'selected' : '' ?>
+                                                data-kode="<?= htmlspecialchars(trim((string)$hs->kode_hs_code)) ?>"
+                                                data-ket="<?= htmlspecialchars(trim((string)$hs->keterangan)) ?>"
+                                                data-has-lartas="<?= $hasLartas ?>"
+                                                data-lartas-text="<?= htmlspecialchars($lartasRaw) ?>"
+                                                data-tarif="<?= htmlspecialchars(trim((string)$hs->tarif_impor)) ?>"
+                                                data-link="<?= htmlspecialchars(trim((string)$hs->file)) ?>">
+                                                <?= htmlspecialchars(trim((string)$hs->kode_hs_code)) ?> — <?= htmlspecialchars(mb_strimwidth(trim((string)$hs->keterangan), 0, 60, '...')) ?> [<?= $lartasTag ?>]
+                                            </option>
+                                        <?php endforeach; endif; ?>
+                                    </select>
+                                    <div id="hsTarifPreview" class="small text-info mt-1" style="display:none;"></div>
+                                </div>
+                            <?php endif; ?>
+
                             <!-- FIELD DATA SPESIFIK TAHAP -->
                             <?php if (!empty($def['fields'])): ?>
                                 <div class="row">
@@ -276,7 +328,14 @@ $statusMeta = [
                                         if ($val === '' && isset($import_row->$fk)) {
                                             $val = (string)$import_row->$fk;
                                         }
-                                        $colClass = ($fmeta['type'] === 'textarea') ? 'col-md-12' : 'col-md-6';
+                                        $colClass = !empty($fmeta['col']) ? $fmeta['col'] : (($fmeta['type'] === 'textarea') ? 'col-md-12' : 'col-md-6');
+                                        $isReadonly = !empty($fmeta['readonly']);
+                                        $extraInputClass = '';
+                                        if (in_array($fk, ['bea_masuk', 'ppn_impor', 'pph_impor'], true)) {
+                                            $extraInputClass = ' inp-pajak-part';
+                                        } elseif ($fk === 'nominal_pajak_import') {
+                                            $extraInputClass = ' inp-pajak-total';
+                                        }
                                     ?>
                                         <div class="<?= $colClass ?>">
                                             <div class="form-group">
@@ -294,7 +353,7 @@ $statusMeta = [
                                                 <?php elseif ($fmeta['type'] === 'date'): ?>
                                                     <input type="date" name="data[<?= $fk ?>]" class="form-control form-control-sm" value="<?= htmlspecialchars($val) ?>">
                                                 <?php elseif ($fmeta['type'] === 'number'): ?>
-                                                    <input type="number" step="0.01" name="data[<?= $fk ?>]" class="form-control form-control-sm" value="<?= htmlspecialchars($val) ?>" placeholder="<?= htmlspecialchars($fmeta['placeholder'] ?? '') ?>">
+                                                    <input type="number" step="0.01" name="data[<?= $fk ?>]" class="form-control form-control-sm<?= $extraInputClass ?>" value="<?= htmlspecialchars($val) ?>" placeholder="<?= htmlspecialchars($fmeta['placeholder'] ?? '') ?>" <?= $isReadonly ? 'readonly style="background:#f1f5f9;font-weight:700;color:#0f172a;"' : '' ?>>
                                                 <?php else: ?>
                                                     <input type="text" name="data[<?= $fk ?>]" class="form-control form-control-sm" value="<?= htmlspecialchars($val) ?>" placeholder="<?= htmlspecialchars($fmeta['placeholder'] ?? '') ?>">
                                                 <?php endif; ?>
@@ -375,10 +434,33 @@ $statusMeta = [
                                 <textarea name="catatan" class="form-control form-control-sm" rows="2" placeholder="Catatan tambahan / kendala / progres tahap ini..."><?= htmlspecialchars($stepObj->catatan ?: '') ?></textarea>
                             </div>
 
-                            <div class="text-right">
-                                <button type="submit" class="btn btn-primary btn-sm font-weight-bold px-3">
-                                    <i class="fas fa-save mr-1"></i> Simpan Tahap <?= $stNum ?>
-                                </button>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mt-2" style="gap:8px;">
+                                <div>
+                                    <?php if (!empty($def['wa_groups'])):
+                                        $waGroupLabel = implode(' & ', $def['wa_groups']);
+                                        $isStage2LartasOnly = !empty($def['wa_only_if_lartas']);
+                                        $curAdaLartas = $stepData['ada_lartas'] ?? ($import_row->ada_lartas ?? '');
+                                        $showWaBtnNow = (!$isStage2LartasOnly || $curAdaLartas === 'ada');
+                                    ?>
+                                        <button type="button"
+                                            class="btn btn-success btn-sm font-weight-bold btn-send-stage-wa <?= $isStage2LartasOnly ? 'btn-wa-stage2-lartas' : '' ?>"
+                                            data-stage="<?= $stNum ?>"
+                                            data-groups="<?= htmlspecialchars($waGroupLabel) ?>"
+                                            style="<?= $showWaBtnNow ? '' : 'display:none;' ?>">
+                                            <i class="fab fa-whatsapp mr-1"></i> Kirim Notif WA (<?= htmlspecialchars($waGroupLabel) ?>)
+                                        </button>
+                                        <?php if ($isStage2LartasOnly): ?>
+                                            <small class="text-muted stage2-wa-hint" style="<?= $showWaBtnNow ? 'display:none;' : '' ?>">
+                                                <i class="fab fa-whatsapp text-muted mr-1"></i>Tombol Notif WA ke <strong>IZIN K3 ISO CDAKB VYM</strong> muncul jika Status Lartas = <strong>Ada Lartas</strong>.
+                                            </small>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold px-3">
+                                        <i class="fas fa-save mr-1"></i> Simpan Tahap <?= $stNum ?>
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -537,8 +619,120 @@ $statusMeta = [
             var url = $(this).val();
             var target = $(this).data('target');
             if (url && target) {
-                $(target).val(url);
+                $(target).val(url).trigger('change');
             }
+        });
+
+        // Master HS Code Picker (Tahap 2) -> auto isi HS Code, Status Lartas, Keterangan, dan Link HS Code
+        function toggleStage2WaBtn(form) {
+            var val = form.find('select[name="data[ada_lartas]"]').val();
+            if (val === 'ada') {
+                form.find('.btn-wa-stage2-lartas').show();
+                form.find('.stage2-wa-hint').hide();
+            } else {
+                form.find('.btn-wa-stage2-lartas').hide();
+                form.find('.stage2-wa-hint').show();
+            }
+        }
+
+        $(document).on('change', '#selMasterHsCode', function() {
+            var opt = this.options[this.selectedIndex];
+            var form = $(this).closest('form');
+            var preview = $('#hsTarifPreview');
+            if (!opt || !opt.value) {
+                preview.hide().text('');
+                return;
+            }
+            var kode       = opt.getAttribute('data-kode') || '';
+            var hasLartas  = opt.getAttribute('data-has-lartas') || '';
+            var lartasText = opt.getAttribute('data-lartas-text') || '';
+            var tarif      = opt.getAttribute('data-tarif') || '';
+            var link       = opt.getAttribute('data-link') || '';
+
+            form.find('input[name="data[hs_code]"]').val(kode);
+            form.find('select[name="data[ada_lartas]"]').val(hasLartas);
+            form.find('textarea[name="data[keterangan_lartas]"]').val(lartasText);
+            if (link) {
+                form.find('#doc_2_doc_hs_intr').val(link);
+            }
+            if (tarif) {
+                preview.text('Info Tarif Master HS Code: ' + tarif).show();
+            } else {
+                preview.hide().text('');
+            }
+            form.attr('data-dirty', '1');
+            toggleStage2WaBtn(form);
+        });
+
+        $(document).on('change', 'select[name="data[ada_lartas]"]', function() {
+            toggleStage2WaBtn($(this).closest('form'));
+        });
+
+        // Tahap 10: auto hitung Total Pajak Impor = Bea Masuk + PPN + PPh
+        $(document).on('input', '.inp-pajak-part', function() {
+            var form = $(this).closest('form');
+            var sum = 0;
+            var hasVal = false;
+            form.find('.inp-pajak-part').each(function() {
+                var raw = ($(this).val() || '').toString().replace(/,/g, '').trim();
+                if (raw !== '') {
+                    hasVal = true;
+                    var n = parseFloat(raw);
+                    if (!isNaN(n)) sum += n;
+                }
+            });
+            if (hasVal) {
+                form.find('.inp-pajak-total').val(Math.round(sum * 100) / 100);
+            }
+        });
+
+        // Tandai form sudah diubah agar user tidak lupa klik Simpan sebelum kirim Notif WA
+        $(document).on('input change', '.form-save-step input, .form-save-step select, .form-save-step textarea', function() {
+            if ($(this).attr('id') !== 'selMasterHsCode') {
+                $(this).closest('.form-save-step').attr('data-dirty', '1');
+            }
+        });
+
+        // Tombol Kirim Notif WA Manual per Tahap
+        $(document).on('click', '.btn-send-stage-wa', function() {
+            var btn    = $(this);
+            var form   = btn.closest('.form-save-step');
+            var stage  = btn.data('stage');
+            var groups = btn.data('groups');
+
+            if (form.attr('data-dirty') === '1') {
+                alert('Ada perubahan yang belum disimpan pada Tahap ' + stage + '. Silakan klik "Simpan Tahap ' + stage + '" terlebih dahulu sebelum mengirim Notif WA.');
+                return;
+            }
+            if (!confirm('Kirim notifikasi WhatsApp Tahap ' + stage + ' ke grup:\n' + groups + '?')) {
+                return;
+            }
+
+            var origHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengirim WA...');
+
+            $.ajax({
+                url: '<?= base_url('tracking/send_import_stage_wa') ?>',
+                type: 'POST',
+                data: {
+                    id_import: '<?= $id_import_enc ?>',
+                    stage: stage
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        alert(res.msg || 'Notifikasi WA berhasil dikirim!');
+                        window.location.reload();
+                    } else {
+                        alert(res.msg || 'Gagal mengirim notifikasi WA.');
+                        btn.prop('disabled', false).html(origHtml);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan server saat mengirim notifikasi WA.');
+                    btn.prop('disabled', false).html(origHtml);
+                }
+            });
         });
 
         // Simpan per Tahap (AJAX)
