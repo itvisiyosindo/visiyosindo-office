@@ -14,7 +14,11 @@
 
 <div class="row">
 	<div class="col">
-		<br>
+		<div class="d-flex justify-content-end mb-2">
+			<a href="<?= base_url('export_persetujuan?jenis=forwarder') ?>" class="btn btn-sm btn-success shadow-sm">
+				<i class="fas fa-file-excel mr-1"></i> Export Excel
+			</a>
+		</div>
 		<div class="card-body">
 			<div class="table-responsive">
 					<table class="table table-striped table-sm table-bordered table-hover" id="kt_table_1">

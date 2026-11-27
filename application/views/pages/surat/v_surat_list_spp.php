@@ -16,6 +16,9 @@
 					<i class="fas fa-file-invoice-dollar text-primary"></i> <?= $page_title ?>
 				</div>
 				<div class="d-flex align-items-center" style="gap: 10px;">
+					<a href="<?= base_url('export_persetujuan?jenis=spp_bayar') ?>" class="btn btn-sm btn-success shadow-sm">
+						<i class="fas fa-file-excel mr-1"></i> Export Excel
+					</a>
 					<div class="input-group input-group-sm" style="width: auto;">
 						<div class="input-group-prepend">
 							<span class="input-group-text bg-white border-right-0"><i class="far fa-calendar-alt text-muted"></i></span>

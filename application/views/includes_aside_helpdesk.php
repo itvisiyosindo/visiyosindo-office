@@ -185,6 +185,7 @@
 													'spp/v_detail_spp',
 													'spp/v_edit_spp',
 													'spp/v_config_spp',
+													'surat/v_export_persetujuan',
 												]
 											) ? 'nav-active nav-expanded' : ''; ?>">
 						<a class="nav-link" href="#">
@@ -238,11 +239,17 @@
 															'spp/v_detail_spp',
 															'spp/v_edit_spp',
 															'spp/v_config_spp',
+															'surat/v_export_persetujuan',
 														])  ? 'nav-expanded' : ''; ?>">
 									<a class="nav-link" href="#">
 										Daftar Persetujuan
 									</a>
 									<ul class="nav nav-children">
+										<li class="<?= $page_name == 'surat/v_export_persetujuan' ? 'nav-active' : '' ?>">
+											<a class="nav-link" href="<?= base_url('export_persetujuan') ?>">
+												<i class="fas fa-file-excel text-success mr-1" aria-hidden="true"></i> Export Excel Persetujuan
+											</a>
+										</li>
 										<?php if (sessPenggunaId() == '1' || sessPenggunaId() == '58' || sessPenggunaId() == '107' || sessPenggunaId() == '81' || sessPenggunaId() == '81' || sessPenggunaId() == '23' || sessPenggunaId() == '33' || isGa() || sessPenggunaId() == '64' || sessPenggunaId() == '777' || sessPenggunaId() == '106' || sessPenggunaId() == '107' || sessPenggunaId() == '749' || sessPenggunaId() == '763' || sessPenggunaId() == '764' || sessPenggunaId() == '769') { ?>
 											<li class="<?= in_array($page_name, ['tagihan/v_detail_tagihan', 'tagihan/v_list_tagihan']) ? 'nav-active' : '' ?>">
 												<a class="nav-link" href="<?= base_url('tagihan') ?>">

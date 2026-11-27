@@ -81,6 +81,13 @@
 						</a>
 					</li>
 
+					<li class="<?= $page_name == 'surat/v_export_persetujuan' ? 'nav-active' : '' ?>">
+						<a class="nav-link" href="<?= base_url('export_persetujuan?from=accounting') ?>">
+							<i class="fas fa-file-excel text-success" aria-hidden="true"></i>
+							<span>Export Excel Persetujuan</span>
+						</a>
+					</li>
+
 					<?php if (isAdmin() || isHrd() || sessPenggunaId() == 64) { ?>
 					<li class="<?= ($this->uri->segment(1) == 'salary') ? 'nav-active' : ''; ?>">
 						<a class="nav-link" href="<?= base_url('salary') ?>">

@@ -21,6 +21,11 @@ if (!isset($list_pengaju) || empty($list_pengaju)) {
 				<div class="d-flex align-items-center">
 					<span class="badge badge-primary mr-2" style="font-size: 13px; padding: 6px 12px;"><i class="fas fa-list mr-1"></i> Data PBOK</span>
 				</div>
+				<div class="table-actions">
+					<a href="<?= base_url('export_persetujuan?jenis=pbok') ?>" class="btn btn-sm btn-success shadow-sm">
+						<i class="fas fa-file-excel mr-1"></i> Export Excel
+					</a>
+				</div>
 			</div>
 			<div class="card-body p-3">
 				<!-- Filter & Action Menu -->

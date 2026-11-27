@@ -9,11 +9,10 @@
 
 <div class="row">
 	<div class="col">
-		<div class="">
-			<!-- <a href="fpp/show/pengajuan/penawaran" id="btn-a-gc" class="btn btn-sm btn-success"><i class="fas fa-plus"></i>&nbsp;&nbsp;Ajukan</a>
-				<?php if (isAdmin() || isHrd() || isCRO() || isGa()) { ?>
-				<a href="javascript:;" id="btn-laporan-form" class="btn btn-sm btn-success"><i class="fas fa-print"></i>&nbsp;&nbsp;Cetak Laporan</a> -->
-		<?php } ?>
+		<div class="d-flex justify-content-end">
+			<a href="<?= base_url('export_persetujuan?jenis=appeks') ?>" class="btn btn-sm btn-success shadow-sm">
+				<i class="fas fa-file-excel mr-1"></i> Export Excel
+			</a>
 		</div>
 		<br>
 		<div class="card-body">
