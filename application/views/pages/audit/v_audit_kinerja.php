@@ -1,4 +1,4 @@
-<header class="page-header">
+﻿<header class="page-header">
 	<h2><i class="fas fa-users-cog text-primary"></i>&nbsp;<?= $page_title ?></h2>
 	<div class="right-wrapper text-left">
 		<ol class="breadcrumbs">
@@ -546,12 +546,13 @@
 						<thead>
 							<tr>
 								<th style="width: 40px;">No</th>
-								<th style="width: 150px;">Divisi & Posisi</th>
-								<th style="width: 220px;">Jobdesk</th>
-								<th style="width: 230px;">List Detail Proyek</th>
-								<th style="width: 260px;">Implementasi Nyata Kinerja</th>
-								<th style="width: 210px;">Link Dokumen Pekerjaan</th>
-								<th style="width: 140px;">Status Audit</th>
+								<th style="width: 140px;">Divisi &amp; Posisi / Auditee</th>
+								<th style="width: 200px;">Jobdesk</th>
+								<th style="width: 240px; background-color: #f0fdf4;"><i class="fas fa-bullseye text-success mr-1"></i> Sasaran Mutu 2026 &amp; Indikator</th>
+								<th style="width: 160px; background-color: #f0fdf4;"><i class="fas fa-chart-line text-success mr-1"></i> Target Kuantitatif 2026</th>
+								<th style="width: 230px;">Realisasi Capaian Lapangan</th>
+								<th style="width: 190px;">Link Bukti Dokumen Sampling</th>
+								<th style="width: 130px;">Status Temuan</th>
 								<th style="width: 160px;">Catatan Auditor</th>
 								<th style="width: 80px;">Aksi</th>
 							</tr>
@@ -559,7 +560,7 @@
 						<tbody>
 							<?php if (empty($items)): ?>
 								<tr>
-									<td colspan="9" class="text-center py-5 text-muted">
+									<td colspan="11" class="text-center py-5 text-muted">
 										<i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
 										Tidak ada data audit kinerja yang sesuai untuk pegawai atau filter ini.
 									</td>
@@ -575,8 +576,18 @@
 										<td class="font-weight-600 text-dark">
 											<?= htmlspecialchars($row['jobdesk']) ?>
 										</td>
-										<td class="multiline-text text-secondary font-italic small">
-											<?= !empty($row['detail_proyek']) ? htmlspecialchars($row['detail_proyek']) : '<span class="text-muted small">-</span>' ?>
+										<td class="small" style="background-color: #f0fdf4;">
+											<?php if (!empty($row['sasaran_mutu'])): ?>
+												<div class="font-weight-bold text-success small"><?= htmlspecialchars($row['sasaran_mutu']) ?></div>
+												<?php if (!empty($row['indikator_keberhasilan'])): ?>
+												<div class="text-muted mt-1" style="font-size: 10px;"><?= htmlspecialchars($row['indikator_keberhasilan']) ?></div>
+												<?php endif; ?>
+											<?php else: ?>
+												<span class="badge badge-light text-muted border font-weight-normal">-</span>
+											<?php endif; ?>
+										</td>
+										<td class="small" style="background-color: #f0fdf4;">
+											<?= !empty($row['metode_pengukuran']) ? '<span class="font-weight-bold text-dark">' . htmlspecialchars($row['metode_pengukuran']) . '</span>' : '<span class="text-muted">-</span>' ?>
 										</td>
 										<td class="multiline-text" id="imp-kinerja-<?= htmlspecialchars($row['id']) ?>">
 											<?php if (!empty($row['implementasi'])): ?>
@@ -668,6 +679,16 @@
 						</div>
 					</div>
 
+					<!-- Sasaran Mutu & Target (Referensi Auditor) -->
+					<div class="card p-3 mb-3 border bg-white" style="border-left: 4px solid #10b981 !important;">
+						<div class="small font-weight-bold text-uppercase text-muted mb-1">
+							<i class="fas fa-bullseye text-success mr-1"></i> Sasaran Mutu 2026 &amp; Target Kuantitatif
+						</div>
+						<div class="font-weight-bold text-dark" id="kinerjaTextSasaranMutu">-</div>
+						<div class="small text-muted mt-1" id="kinerjaTextIndikator">-</div>
+						<div class="small text-success font-weight-bold mt-1" id="kinerjaTextTarget">-</div>
+					</div>
+
 					<!-- Form Input Link Dokumen Pekerjaan -->
 					<div class="card p-3 mb-3 border bg-white" style="border-left: 4px solid #3b82f6 !important;">
 						<label class="font-weight-bold text-dark mb-1">
@@ -683,7 +704,7 @@
 					<div class="card p-3 mb-3 border bg-white">
 						<div class="d-flex justify-content-between align-items-center flex-wrap mb-1" style="gap: 8px;">
 							<label class="font-weight-bold text-dark mb-0">
-								<i class="fas fa-tasks text-success mr-1"></i> Implementasi Nyata Kinerja / Realisasi Pekerjaan
+								<i class="fas fa-tasks text-success mr-1"></i> Realisasi Capaian Lapangan
 							</label>
 							<button type="button" class="btn btn-xs btn-outline-success font-weight-bold" id="btnFetchSyncModal" onclick="fetchSyncForKinerjaModal();" title="Otomatis ambil rangkuman task selesai & laporan mingguan karyawan">
 								<i class="fas fa-sync-alt mr-1"></i> Tarik Otomatis dari Task & Laporan
@@ -767,6 +788,11 @@
 		document.getElementById('kinerjaBadgeDivisi').textContent = row.divisi;
 		document.getElementById('kinerjaTextPosisi').textContent = row.posisi;
 		document.getElementById('kinerjaTextJobdesk').textContent = row.jobdesk;
+
+		// Sasaran Mutu referensi auditor
+		document.getElementById('kinerjaTextSasaranMutu').textContent = row.sasaran_mutu || '-';
+		document.getElementById('kinerjaTextIndikator').textContent = row.indikator_keberhasilan || '-';
+		document.getElementById('kinerjaTextTarget').textContent = row.metode_pengukuran ? ('Target: ' + row.metode_pengukuran) : '-';
 
 		document.getElementById('kinerjaInputLink').value = row.link_dokumen || '';
 		document.getElementById('kinerjaInputImplementasi').value = row.implementasi || '';
