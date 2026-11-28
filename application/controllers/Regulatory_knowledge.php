@@ -87,6 +87,11 @@ class Regulatory_knowledge extends CI_Controller
         $catalog   = $this->md_rkc->getInstansiCatalog();
         $canManage = $this->_canManage();
 
+        if (!empty($this->md_rkc->lastSchemaError)) {
+            show_error('Gagal menginisialisasi tabel Knowledge Center di database: ' . htmlspecialchars($this->md_rkc->lastSchemaError, ENT_QUOTES, 'UTF-8'), 500);
+            return;
+        }
+
         $page_data['switch']          = $this->id_navbar();
         $page_data['page_name']       = 'dokumen/v_regulatory_knowledge';
         $page_data['page_title']      = 'Knowledge Center — ' . $catalog[$instansi]['nama'];

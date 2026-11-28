@@ -79,6 +79,11 @@ class Perizinan_visilab extends CI_Controller
             APPPATH . 'views/pages/kirim/v_detail_tagihan.php',
             APPPATH . 'views/pages/tagihan/v_list_tagihan.php',
             APPPATH . 'views/pages/tagihan/v_my_tagihan.php',
+            APPPATH . 'controllers/Regulatory_knowledge.php',
+            APPPATH . 'models/Md_regulatory_knowledge.php',
+            APPPATH . 'views/pages/dokumen/v_regulatory_knowledge.php',
+            APPPATH . 'views/includes_aside_dokumen.php',
+            APPPATH . 'config/routes.php',
         ];
         $targetLapView = APPPATH . 'views/pages/laporan/v_lap_detail_rev2.php';
         foreach ($viewFiles as $vf) {

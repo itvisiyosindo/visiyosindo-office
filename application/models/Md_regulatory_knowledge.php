@@ -7,6 +7,7 @@ class Md_regulatory_knowledge extends CI_Model
     protected $table_konsultasi = 'rkc_konsultasi';
     protected $table_guidance   = 'rkc_guidance_document';
     protected static $tablesChecked = false;
+    public $lastSchemaError = '';
 
     public function __construct()
     {
@@ -69,6 +70,23 @@ class Md_regulatory_knowledge extends CI_Model
         return ($q && $q->num_rows() > 0);
     }
 
+    private function _runCreateTable($sqlUtf8mb4)
+    {
+        $ok = @$this->db->query($sqlUtf8mb4);
+        if ($ok) {
+            return true;
+        }
+        $sqlUtf8 = str_replace('DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci', 'DEFAULT CHARSET=utf8', $sqlUtf8mb4);
+        $ok2 = @$this->db->query($sqlUtf8);
+        if ($ok2) {
+            return true;
+        }
+        $err = $this->db->error();
+        $this->lastSchemaError = isset($err['message']) ? ($err['code'] . ': ' . $err['message']) : 'Unknown CREATE TABLE error';
+        log_message('error', 'Md_regulatory_knowledge CREATE TABLE failed: ' . $this->lastSchemaError);
+        return false;
+    }
+
     /**
      * Pastikan tabel Knowledge Center tersedia di database.
      * Data contoh awal hanya di-seed sekali saat tabel baru pertama kali dibuat.
@@ -101,24 +119,24 @@ class Md_regulatory_knowledge extends CI_Model
             $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_update}` (
                 `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `instansi` ENUM('oss','kemenkes','bapeten') NOT NULL DEFAULT 'oss',
-                `nomor_peraturan` VARCHAR(150) DEFAULT NULL,
+                `nomor_peraturan` VARCHAR(150) NULL,
                 `judul` VARCHAR(255) NOT NULL,
-                `tanggal_berlaku` DATE DEFAULT NULL,
+                `tanggal_berlaku` DATE NULL,
                 `status_peraturan` ENUM('berlaku','akan_berlaku','revisi','dicabut') NOT NULL DEFAULT 'berlaku',
-                `ringkasan` TEXT DEFAULT NULL,
-                `file_path` VARCHAR(255) DEFAULT NULL,
-                `file_nama_asli` VARCHAR(255) DEFAULT NULL,
-                `link_eksternal` VARCHAR(500) DEFAULT NULL,
-                `created_by` INT(11) DEFAULT NULL,
-                `updated_by` INT(11) DEFAULT NULL,
-                `created_at` DATETIME DEFAULT NULL,
-                `updated_at` DATETIME DEFAULT NULL,
+                `ringkasan` TEXT NULL,
+                `file_path` VARCHAR(255) NULL,
+                `file_nama_asli` VARCHAR(255) NULL,
+                `link_eksternal` VARCHAR(500) NULL,
+                `created_by` INT(11) NULL,
+                `updated_by` INT(11) NULL,
+                `created_at` DATETIME NULL,
+                `updated_at` DATETIME NULL,
                 `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
                 PRIMARY KEY (`id`),
                 KEY `idx_rkc_upd_instansi` (`instansi`, `is_deleted`),
                 KEY `idx_rkc_upd_tgl` (`tanggal_berlaku`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-            if (@$db->query($sql)) {
+            if ($this->_runCreateTable($sql)) {
                 $this->_seedRegulatoryUpdates();
             }
         }
@@ -129,24 +147,24 @@ class Md_regulatory_knowledge extends CI_Model
                 `instansi` ENUM('oss','kemenkes','bapeten') NOT NULL DEFAULT 'oss',
                 `judul` VARCHAR(255) NOT NULL,
                 `jenis_layanan` ENUM('offline','online','hybrid') NOT NULL DEFAULT 'offline',
-                `estimasi_waktu` VARCHAR(150) DEFAULT NULL,
-                `ringkasan` TEXT DEFAULT NULL,
-                `catatan_penting` TEXT DEFAULT NULL,
-                `langkah_json` LONGTEXT DEFAULT NULL,
-                `flowchart_file` VARCHAR(255) DEFAULT NULL,
-                `flowchart_nama_asli` VARCHAR(255) DEFAULT NULL,
-                `link_eksternal` VARCHAR(500) DEFAULT NULL,
+                `estimasi_waktu` VARCHAR(150) NULL,
+                `ringkasan` TEXT NULL,
+                `catatan_penting` TEXT NULL,
+                `langkah_json` LONGTEXT NULL,
+                `flowchart_file` VARCHAR(255) NULL,
+                `flowchart_nama_asli` VARCHAR(255) NULL,
+                `link_eksternal` VARCHAR(500) NULL,
                 `urutan` INT(11) NOT NULL DEFAULT 0,
                 `status` ENUM('aktif','draft') NOT NULL DEFAULT 'aktif',
-                `created_by` INT(11) DEFAULT NULL,
-                `updated_by` INT(11) DEFAULT NULL,
-                `created_at` DATETIME DEFAULT NULL,
-                `updated_at` DATETIME DEFAULT NULL,
+                `created_by` INT(11) NULL,
+                `updated_by` INT(11) NULL,
+                `created_at` DATETIME NULL,
+                `updated_at` DATETIME NULL,
                 `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
                 PRIMARY KEY (`id`),
                 KEY `idx_rkc_kon_instansi` (`instansi`, `is_deleted`, `urutan`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-            if (@$db->query($sql)) {
+            if ($this->_runCreateTable($sql)) {
                 $this->_seedKonsultasi();
             }
         }
@@ -158,27 +176,27 @@ class Md_regulatory_knowledge extends CI_Model
                 `judul` VARCHAR(255) NOT NULL,
                 `kategori` VARCHAR(120) NOT NULL DEFAULT 'Panduan Umum',
                 `versi` VARCHAR(50) NOT NULL DEFAULT 'v1.0',
-                `tanggal_dokumen` DATE DEFAULT NULL,
-                `deskripsi` TEXT DEFAULT NULL,
-                `file_path` VARCHAR(255) DEFAULT NULL,
-                `file_nama_asli` VARCHAR(255) DEFAULT NULL,
-                `link_eksternal` VARCHAR(500) DEFAULT NULL,
-                `created_by` INT(11) DEFAULT NULL,
-                `updated_by` INT(11) DEFAULT NULL,
-                `created_at` DATETIME DEFAULT NULL,
-                `updated_at` DATETIME DEFAULT NULL,
+                `tanggal_dokumen` DATE NULL,
+                `deskripsi` TEXT NULL,
+                `file_path` VARCHAR(255) NULL,
+                `file_nama_asli` VARCHAR(255) NULL,
+                `link_eksternal` VARCHAR(500) NULL,
+                `created_by` INT(11) NULL,
+                `updated_by` INT(11) NULL,
+                `created_at` DATETIME NULL,
+                `updated_at` DATETIME NULL,
                 `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
                 PRIMARY KEY (`id`),
                 KEY `idx_rkc_gui_instansi` (`instansi`, `is_deleted`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-            if (@$db->query($sql)) {
+            if ($this->_runCreateTable($sql)) {
                 $this->_seedGuidanceDocuments();
             }
         }
 
         $db->db_debug = $origDebug;
         self::$tablesChecked = true;
-        return true;
+        return ($this->lastSchemaError === '');
     }
 
     private function _seedRegulatoryUpdates()
