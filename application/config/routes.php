@@ -194,3 +194,13 @@ $route['survey_monitoring/(:any)'] = 'Survey_monitoring/$1';
 $route['visiyosindo_afiliasi'] = 'Member_visiacademy/index';
 $route['visiyosindo_afiliasi/(:any)'] = 'Member_visiacademy/$1';
 $route['visiyosindo_afiliasi/(:any)/(:any)'] = 'Member_visiacademy/$1/$2';
+
+// Knowledge Center Regulatory Advice (OSS, Kemenkes, BAPETEN)
+$route['knowledge_center'] = 'Regulatory_knowledge/index';
+$route['knowledge_center/(:any)'] = 'Regulatory_knowledge/instansi/$1';
+$route['knowledge_center/(:any)/(:any)'] = 'Regulatory_knowledge/instansi/$1/$2';
+$route['regulatory_knowledge'] = 'Regulatory_knowledge/index';
+$route['regulatory_knowledge/instansi/(:any)'] = 'Regulatory_knowledge/instansi/$1';
+$route['regulatory_knowledge/instansi/(:any)/(:any)'] = 'Regulatory_knowledge/instansi/$1/$2';
+$route['regulatory_knowledge/(:any)'] = 'Regulatory_knowledge/$1';
+$route['regulatory_knowledge/(:any)/(:any)'] = 'Regulatory_knowledge/$1/$2';

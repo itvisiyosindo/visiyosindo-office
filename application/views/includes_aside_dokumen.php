@@ -90,6 +90,29 @@
 							<span>Dokumen Umum</span>
 						</a>
 					</li>
+					<li class="nav-parent <?= in_array($page_name, ["dokumen/v_regulatory_knowledge"]) ? "nav-active nav-expanded" : "" ?>">
+						<a class="nav-link" href="#">
+							<i class="fas fa-balance-scale" aria-hidden="true"></i>
+							<span>Knowledge Center</span>
+						</a>
+						<ul class="nav nav-children">
+							<li class="<?= ($page_name == "dokumen/v_regulatory_knowledge" && isset($instansi_aktif) && $instansi_aktif == "oss") ? "nav-active" : "" ?>">
+								<a class="nav-link" href="<?= base_url("regulatory_knowledge/instansi/oss") ?>">
+									OSS
+								</a>
+							</li>
+							<li class="<?= ($page_name == "dokumen/v_regulatory_knowledge" && isset($instansi_aktif) && $instansi_aktif == "kemenkes") ? "nav-active" : "" ?>">
+								<a class="nav-link" href="<?= base_url("regulatory_knowledge/instansi/kemenkes") ?>">
+									Kemenkes
+								</a>
+							</li>
+							<li class="<?= ($page_name == "dokumen/v_regulatory_knowledge" && isset($instansi_aktif) && $instansi_aktif == "bapeten") ? "nav-active" : "" ?>">
+								<a class="nav-link" href="<?= base_url("regulatory_knowledge/instansi/bapeten") ?>">
+									BAPETEN
+								</a>
+							</li>
+						</ul>
+					</li>
 					<li class="nav-parent <?= in_array($page_name, ["v_dok_product", "dokumen/v_dok_product", "v_bhn_presentasi", "v_brosur", "v_manual_book", "v_e_suket"])
 												? "nav-active nav-expanded"
 												: "" ?>">
