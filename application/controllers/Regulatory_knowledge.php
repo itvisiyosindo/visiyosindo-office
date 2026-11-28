@@ -11,6 +11,7 @@ class Regulatory_knowledge extends CI_Controller
     {
         parent::__construct();
         date_default_timezone_set('Asia/Jakarta');
+        $this->load->model('md_dokumen');
         $this->load->model('Md_regulatory_knowledge', 'md_rkc');
     }
 
