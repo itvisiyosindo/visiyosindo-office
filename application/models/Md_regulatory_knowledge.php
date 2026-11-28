@@ -63,111 +63,122 @@ class Md_regulatory_knowledge extends CI_Model
         return isset($catalog[strtolower(trim((string) $kode))]);
     }
 
+    private function _tableExistsDirect($tableName)
+    {
+        $q = @$this->db->query("SHOW TABLES LIKE " . $this->db->escape($tableName));
+        return ($q && $q->num_rows() > 0);
+    }
+
     /**
      * Pastikan tabel Knowledge Center tersedia di database.
      * Data contoh awal hanya di-seed sekali saat tabel baru pertama kali dibuat.
      */
     public function ensureTables()
     {
-        if (self::$tablesChecked || !isset($this->db) || !$this->db->conn_id) {
-            return;
+        if (self::$tablesChecked) {
+            return true;
         }
-        self::$tablesChecked = true;
 
-        $origDebug = $this->db->db_debug;
-        $this->db->db_debug = FALSE;
+        $db = $this->db;
+        if (!$db) {
+            return false;
+        }
+        if (empty($db->conn_id)) {
+            $db->initialize();
+        }
+        if (empty($db->conn_id)) {
+            return false;
+        }
 
-        $createdUpdate     = false;
-        $createdKonsultasi = false;
-        $createdGuidance   = false;
+        $origDebug = $db->db_debug;
+        $db->db_debug = FALSE;
 
-        if (!$this->db->table_exists($this->table_update)) {
+        $hadUpdate     = $this->_tableExistsDirect($this->table_update);
+        $hadKonsultasi = $this->_tableExistsDirect($this->table_konsultasi);
+        $hadGuidance   = $this->_tableExistsDirect($this->table_guidance);
+
+        if (!$hadUpdate) {
             $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_update}` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `instansi` ENUM('oss','kemenkes','bapeten') NOT NULL DEFAULT 'oss',
-                `nomor_peraturan` VARCHAR(150) NULL DEFAULT NULL,
+                `nomor_peraturan` VARCHAR(150) DEFAULT NULL,
                 `judul` VARCHAR(255) NOT NULL,
-                `tanggal_berlaku` DATE NULL DEFAULT NULL,
+                `tanggal_berlaku` DATE DEFAULT NULL,
                 `status_peraturan` ENUM('berlaku','akan_berlaku','revisi','dicabut') NOT NULL DEFAULT 'berlaku',
-                `ringkasan` TEXT NULL,
-                `file_path` VARCHAR(255) NULL DEFAULT NULL,
-                `file_nama_asli` VARCHAR(255) NULL DEFAULT NULL,
-                `link_eksternal` VARCHAR(500) NULL DEFAULT NULL,
-                `created_by` INT NULL DEFAULT NULL,
-                `updated_by` INT NULL DEFAULT NULL,
-                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                `ringkasan` TEXT DEFAULT NULL,
+                `file_path` VARCHAR(255) DEFAULT NULL,
+                `file_nama_asli` VARCHAR(255) DEFAULT NULL,
+                `link_eksternal` VARCHAR(500) DEFAULT NULL,
+                `created_by` INT(11) DEFAULT NULL,
+                `updated_by` INT(11) DEFAULT NULL,
+                `created_at` DATETIME DEFAULT NULL,
+                `updated_at` DATETIME DEFAULT NULL,
                 `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
+                PRIMARY KEY (`id`),
                 KEY `idx_rkc_upd_instansi` (`instansi`, `is_deleted`),
                 KEY `idx_rkc_upd_tgl` (`tanggal_berlaku`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-            if (@$this->db->query($sql)) {
-                $createdUpdate = true;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+            if (@$db->query($sql)) {
+                $this->_seedRegulatoryUpdates();
             }
         }
 
-        if (!$this->db->table_exists($this->table_konsultasi)) {
+        if (!$hadKonsultasi) {
             $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_konsultasi}` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `instansi` ENUM('oss','kemenkes','bapeten') NOT NULL DEFAULT 'oss',
                 `judul` VARCHAR(255) NOT NULL,
                 `jenis_layanan` ENUM('offline','online','hybrid') NOT NULL DEFAULT 'offline',
-                `estimasi_waktu` VARCHAR(150) NULL DEFAULT NULL,
-                `ringkasan` TEXT NULL,
-                `catatan_penting` TEXT NULL,
-                `langkah_json` LONGTEXT NULL,
-                `flowchart_file` VARCHAR(255) NULL DEFAULT NULL,
-                `flowchart_nama_asli` VARCHAR(255) NULL DEFAULT NULL,
-                `link_eksternal` VARCHAR(500) NULL DEFAULT NULL,
-                `urutan` INT NOT NULL DEFAULT 0,
+                `estimasi_waktu` VARCHAR(150) DEFAULT NULL,
+                `ringkasan` TEXT DEFAULT NULL,
+                `catatan_penting` TEXT DEFAULT NULL,
+                `langkah_json` LONGTEXT DEFAULT NULL,
+                `flowchart_file` VARCHAR(255) DEFAULT NULL,
+                `flowchart_nama_asli` VARCHAR(255) DEFAULT NULL,
+                `link_eksternal` VARCHAR(500) DEFAULT NULL,
+                `urutan` INT(11) NOT NULL DEFAULT 0,
                 `status` ENUM('aktif','draft') NOT NULL DEFAULT 'aktif',
-                `created_by` INT NULL DEFAULT NULL,
-                `updated_by` INT NULL DEFAULT NULL,
-                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                `created_by` INT(11) DEFAULT NULL,
+                `updated_by` INT(11) DEFAULT NULL,
+                `created_at` DATETIME DEFAULT NULL,
+                `updated_at` DATETIME DEFAULT NULL,
                 `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
+                PRIMARY KEY (`id`),
                 KEY `idx_rkc_kon_instansi` (`instansi`, `is_deleted`, `urutan`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-            if (@$this->db->query($sql)) {
-                $createdKonsultasi = true;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+            if (@$db->query($sql)) {
+                $this->_seedKonsultasi();
             }
         }
 
-        if (!$this->db->table_exists($this->table_guidance)) {
+        if (!$hadGuidance) {
             $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_guidance}` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `instansi` ENUM('oss','kemenkes','bapeten') NOT NULL DEFAULT 'oss',
                 `judul` VARCHAR(255) NOT NULL,
                 `kategori` VARCHAR(120) NOT NULL DEFAULT 'Panduan Umum',
                 `versi` VARCHAR(50) NOT NULL DEFAULT 'v1.0',
-                `tanggal_dokumen` DATE NULL DEFAULT NULL,
-                `deskripsi` TEXT NULL,
-                `file_path` VARCHAR(255) NULL DEFAULT NULL,
-                `file_nama_asli` VARCHAR(255) NULL DEFAULT NULL,
-                `link_eksternal` VARCHAR(500) NULL DEFAULT NULL,
-                `created_by` INT NULL DEFAULT NULL,
-                `updated_by` INT NULL DEFAULT NULL,
-                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                `tanggal_dokumen` DATE DEFAULT NULL,
+                `deskripsi` TEXT DEFAULT NULL,
+                `file_path` VARCHAR(255) DEFAULT NULL,
+                `file_nama_asli` VARCHAR(255) DEFAULT NULL,
+                `link_eksternal` VARCHAR(500) DEFAULT NULL,
+                `created_by` INT(11) DEFAULT NULL,
+                `updated_by` INT(11) DEFAULT NULL,
+                `created_at` DATETIME DEFAULT NULL,
+                `updated_at` DATETIME DEFAULT NULL,
                 `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
+                PRIMARY KEY (`id`),
                 KEY `idx_rkc_gui_instansi` (`instansi`, `is_deleted`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-            if (@$this->db->query($sql)) {
-                $createdGuidance = true;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+            if (@$db->query($sql)) {
+                $this->_seedGuidanceDocuments();
             }
         }
 
-        if ($createdUpdate) {
-            $this->_seedRegulatoryUpdates();
-        }
-        if ($createdKonsultasi) {
-            $this->_seedKonsultasi();
-        }
-        if ($createdGuidance) {
-            $this->_seedGuidanceDocuments();
-        }
-
-        $this->db->db_debug = $origDebug;
+        $db->db_debug = $origDebug;
+        self::$tablesChecked = true;
+        return true;
     }
 
     private function _seedRegulatoryUpdates()
